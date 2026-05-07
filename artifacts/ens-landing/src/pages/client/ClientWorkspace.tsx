@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+import { BoothCanvas } from "@/components/workspace/BoothCanvas";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -151,47 +152,27 @@ export default function ClientWorkspace() {
         </aside>
 
         {/* Center Canvas */}
-        <main className="flex-1 relative bg-[#0a0a0c] overflow-hidden">
-          {/* Blueprint Grid */}
-          <div className="absolute inset-0 opacity-20" style={{ 
-            backgroundImage: 'linear-gradient(#3b82f6 1px, transparent 1px), linear-gradient(90deg, #3b82f6 1px, transparent 1px)',
-            backgroundSize: '40px 40px'
-          }} />
-
-          {/* 3D Wireframe Mockup */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-             <div 
-              className="relative transition-transform duration-700 ease-out"
-              style={{ 
-                width: '400px', 
-                height: '300px',
-                transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg) scale(${zoom})`,
-                transformStyle: 'preserve-3d'
-              }}
-            >
-              {/* Floor */}
-              <div className="absolute inset-0 bg-primary/5 border-2 border-primary/30" style={{ transform: 'rotateX(90deg) translateZ(-150px)' }} />
-              
-              {/* Walls */}
-              <div className="absolute inset-y-0 left-0 w-[300px] bg-primary/10 border-2 border-primary/30" style={{ transform: 'rotateY(90deg) translateZ(-150px)' }} />
-              <div className="absolute inset-x-0 top-0 h-[300px] bg-primary/10 border-2 border-primary/30" style={{ transform: 'translateZ(-150px)' }} />
-              
-              {/* Furniture placeholders */}
-              <div className="absolute w-20 h-24 bg-cyan-500/20 border border-cyan-500/50" style={{ transform: 'translate3d(100px, 150px, 50px)' }} />
-              <div className="absolute w-16 h-16 rounded-full border-2 border-purple-500/50" style={{ transform: 'translate3d(200px, 180px, 80px) rotateX(90deg)' }} />
-            </div>
+        <main className="flex-1 relative bg-[#080d18] overflow-hidden">
+          {/* Booth Canvas SVG — Maxima system for client view */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <BoothCanvas config={{
+              width: 8, depth: 6, height: 3,
+              system: 'maxima',
+              companyName: 'TECHCORP INDUSTRIES',
+              openFront: true,
+            }} />
           </div>
 
           {/* Camera Controls */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1 rounded-full bg-card/80 border backdrop-blur-md shadow-2xl">
-            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => setRotation({ x: 20, y: rotation.y - 15 })}>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1 rounded-full bg-card/80 border backdrop-blur-md shadow-2xl z-10">
+            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
               <RotateCcw className="h-4 w-4" />
             </Button>
             <Separator orientation="vertical" className="h-4" />
-            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => setZoom(Math.min(zoom + 0.1, 2))}>
+            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
               <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => setZoom(Math.max(zoom - 0.1, 0.5))}>
+            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
               <ZoomOut className="h-4 w-4" />
             </Button>
             <Separator orientation="vertical" className="h-4" />
@@ -201,9 +182,9 @@ export default function ClientWorkspace() {
           </div>
 
           {/* View Indicator */}
-          <div className="absolute top-6 left-6 flex flex-col gap-1">
+          <div className="absolute top-6 left-6 flex flex-col gap-1 z-10">
             <div className="px-3 py-1 rounded bg-background/50 border backdrop-blur-md text-[10px] font-bold text-primary">PERSPECTIVE VIEW</div>
-            <div className="px-3 py-1 rounded bg-background/50 border backdrop-blur-md text-[10px] font-bold text-muted-foreground uppercase">ZOOM: {Math.round(zoom * 100)}%</div>
+            <div className="px-3 py-1 rounded bg-background/50 border backdrop-blur-md text-[10px] font-bold text-muted-foreground uppercase">MAXIMA SYSTEM · 8×6m</div>
           </div>
         </main>
 

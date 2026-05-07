@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
+import { BoothCanvas } from "@/components/workspace/BoothCanvas";
 import { 
   Box, 
   Layers, 
@@ -161,47 +162,19 @@ export default function PMWorkspace() {
         </aside>
 
         {/* Center Canvas */}
-        <main className="flex-1 relative overflow-hidden bg-[radial-gradient(circle_at_center,#1a1a20_0%,#0a0a0c_100%)]">
-          {/* Blueprint Grid Overlay */}
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-          <div className="absolute inset-0 opacity-[0.01] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '8px 8px' }} />
-
-          {/* 3D Scene Mockup */}
-          <div className="absolute inset-0 flex items-center justify-center perspective-[1200px]">
-            <div 
-              className="relative w-[400px] h-[300px] transition-transform duration-75 preserve-3d"
-              style={{ transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)` }}
-              onMouseDown={() => setIsRotating(false)}
-              onMouseUp={() => setIsRotating(true)}
-            >
-              {/* Floor */}
-              <div className="absolute inset-0 bg-slate-800/40 border-2 border-primary/20 rounded-sm shadow-[0_0_50px_rgba(59,130,246,0.1)]" />
-              
-              {/* Back Wall */}
-              <div className="absolute bottom-full left-0 w-full h-[150px] bg-slate-900/60 border border-white/10 origin-bottom rotateX-90" 
-                   style={{ transform: 'rotateX(-90deg)' }} />
-              
-              {/* Left Wall */}
-              <div className="absolute top-0 right-full w-[300px] h-[150px] bg-slate-900/40 border border-white/10 origin-right rotateY-90" 
-                   style={{ transformOrigin: 'right', transform: 'rotateY(90deg) rotateX(0deg) translateY(-150px)' }} />
-
-              {/* Fascia Strip */}
-              <div className="absolute -top-[150px] left-0 w-full h-[30px] bg-primary/20 border-b border-primary/40 flex items-center px-4"
-                   style={{ transform: 'translateZ(300px)' }}>
-                <span className="text-[8px] font-bold text-primary tracking-widest">TECHCORP INDUSTRIES</span>
-              </div>
-
-              {/* Furniture Objects (CSS Cuboids) */}
-              <div className="absolute bottom-4 right-10 w-20 h-10 bg-blue-500/30 border border-blue-500/50" />
-              <div className="absolute bottom-20 left-10 w-40 h-12 bg-white/10 border border-white/20" />
-              
-              {/* Selected Highlight Mock */}
-              <div className="absolute bottom-20 left-10 w-40 h-12 ring-2 ring-primary animate-pulse opacity-50" />
-            </div>
+        <main className="flex-1 relative overflow-hidden bg-[#080d18]">
+          {/* Booth Canvas SVG */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <BoothCanvas config={{
+              width: 8, depth: 6, height: 3,
+              system: 'octanorm',
+              companyName: 'TECHCORP INDUSTRIES',
+              openFront: true,
+            }} />
           </div>
 
           {/* Canvas Controls */}
-          <div className="absolute bottom-6 left-6 flex items-center gap-3">
+          <div className="absolute bottom-6 left-6 flex items-center gap-3 z-10">
             <div className="flex bg-background/80 backdrop-blur-md rounded-lg border border-white/10 p-1">
               <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white"><ZoomIn className="h-4 w-4" /></Button>
               <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white"><ZoomOut className="h-4 w-4" /></Button>
@@ -217,8 +190,8 @@ export default function PMWorkspace() {
             </div>
           </div>
 
-          {/* Selected Indicator */}
-          <div className="absolute top-6 left-6">
+          {/* Live indicator */}
+          <div className="absolute top-6 left-6 z-10">
             <Badge className="bg-primary/20 text-primary border-primary/30 gap-2 px-3 py-1">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               LIVE WORKSPACE
