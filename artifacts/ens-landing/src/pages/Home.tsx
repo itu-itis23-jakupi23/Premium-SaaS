@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'framer-motion';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { 
@@ -19,12 +19,29 @@ import {
   LayoutDashboard,
   Eye,
   Settings,
-  ArrowRight
+  ArrowRight,
+  TrendingUp,
+  BoxSelect,
+  Package,
+  History,
+  Activity,
+  CheckCircle2,
+  FileText,
+  DollarSign,
+  Star,
+  Quote
 } from 'lucide-react';
 
-const FADE_UP = {
+const FADE_UP: Variants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      duration: 0.6, 
+      ease: [0.22, 1, 0.36, 1] 
+    } 
+  }
 };
 
 const STAGGER = {
@@ -119,11 +136,43 @@ export default function Home() {
                 <Button size="lg" variant="outline" className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border-border hover:bg-muted/50" data-testid="btn-hero-cta2">
                   Book a Demo
                 </Button>
+                <Button size="lg" variant="ghost" className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border border-primary/20 hover:bg-primary/5" data-testid="btn-hero-cta3">
+                  Book Consultation
+                </Button>
               </motion.div>
             </motion.div>
           </div>
         </div>
       </section>
+
+      {/* Hero Stats (floating) */}
+      <div className="container mx-auto px-6 -mt-10 mb-20 relative z-20">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: "Project Progress", value: "84%", icon: TrendingUp, color: "text-blue-500" },
+            { label: "Booth Dimensions", value: "6m x 9m", icon: BoxSelect, color: "text-purple-500" },
+            { label: "Approval Status", value: "Pending", icon: CheckCircle2, color: "text-yellow-500" },
+            { label: "Furniture Count", value: "18 items", icon: Package, color: "text-cyan-500" }
+          ].map((stat, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="bg-card/50 backdrop-blur-md border border-border/50 p-4 rounded-xl flex items-center gap-4 glow-box"
+            >
+              <div className={`p-2 rounded-lg bg-background/50 ${stat.color}`}>
+                <stat.icon className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{stat.label}</div>
+                <div className="text-sm font-bold">{stat.value}</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
 
       {/* Interactive 3D Preview Mockup */}
       <section className="py-20 relative z-10">
@@ -242,32 +291,103 @@ export default function Home() {
       <section id="features" className="py-24 bg-muted/10">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 uppercase tracking-tighter">System Comparison</h2>
+            <p className="text-muted-foreground">Choose the framework that matches your client's brand and budget.</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto mb-32">
+            {/* Octanorm Card */}
+            <motion.div 
+              whileHover={{ y: -10 }}
+              className="relative group p-8 rounded-3xl border border-blue-500/20 bg-blue-500/5 backdrop-blur-xl overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl -z-10" />
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                  <Box className="w-6 h-6" />
+                </div>
+                <h3 className="text-3xl font-bold">OCTANORM</h3>
+              </div>
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                The global standard for modular exhibitions. Practical, efficient, and highly customizable structure.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {["4mm Groove System", "Aluminum Extrusion", "Modular Flexibility", "Standard Panels"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-blue-400/80">
+                    <Zap className="w-4 h-4" /> {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="aspect-video rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 grid-pattern opacity-20" />
+                <div className="w-24 h-24 border-2 border-blue-400/50 rotate-45 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="w-16 h-16 border border-blue-400/30" />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Maxima Card */}
+            <motion.div 
+              whileHover={{ y: -10 }}
+              className="relative group p-8 rounded-3xl border border-purple-500/20 bg-purple-500/5 backdrop-blur-xl overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-3xl -z-10" />
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <h3 className="text-3xl font-bold">MAXIMA</h3>
+              </div>
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                Premium architectural system for high-impact presence. Large spans and smooth, seamless finishes.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {["Large Format Spans", "Clean Geometry", "Premium Visuals", "Integrated Lighting"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-purple-400/80">
+                    <Zap className="w-4 h-4" /> {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="aspect-video rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 grid-pattern opacity-20" />
+                <div className="w-32 h-16 bg-purple-400/20 border border-purple-400/50 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
+                   <div className="w-full h-[2px] bg-purple-400/30" />
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Precision Engineering for Exhibition Spaces</h2>
             <p className="text-muted-foreground">Built specifically for the nuances of trade show design. Move beyond rigid CAD software and flimsy drawing tools.</p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
             {[
-              { icon: <MonitorPlay className="w-6 h-6" />, title: "Real-time 3D editor", desc: "Experience fluid performance directly in your browser. No downloads, no heavy rendering times." },
-              { icon: <Layers className="w-6 h-6" />, title: "Octanorm & Maxima", desc: "Native support for industry-standard systems. Snapping logic built for real-world structural integrity." },
-              { icon: <MousePointer2 className="w-6 h-6" />, title: "Drag & drop objects", desc: "Extensive library of furniture, lighting, and accessories. Place items with intelligent surface snapping." },
-              { icon: <Users className="w-6 h-6" />, title: "Client & project management", desc: "Organize briefs, floor plans, and assets in one unified workspace per client." },
-              { icon: <Save className="w-6 h-6" />, title: "Save and load designs", desc: "Version control for your booths. Re-use successful layouts across different shows." },
-              { icon: <Share2 className="w-6 h-6" />, title: "Interactive Sharing", desc: "Send clients a link to explore the 3D model themselves. Stop sending static PDFs." }
+              { icon: <MonitorPlay className="w-6 h-6" />, title: "3D Booth Workspace", desc: "Real-time interactive editor with perspective controls." },
+              { icon: <Box className="w-6 h-6" />, title: "Octanorm Support", desc: "Native modular snapping logic for standard system walls." },
+              { icon: <Sparkles className="w-6 h-6" />, title: "Maxima Support", desc: "Architectural spans and premium structural components." },
+              { icon: <MousePointer2 className="w-6 h-6" />, title: "Furniture Placement", desc: "Intelligent surface snapping for tables, chairs, and racks." },
+              { icon: <Users className="w-6 h-6" />, title: "Client Collaboration", desc: "Live feedback loop between managers and clients." },
+              { icon: <Save className="w-6 h-6" />, title: "Workspace Snapshots", desc: "Capture design states and instantly switch between them." },
+              { icon: <History className="w-6 h-6" />, title: "Version History", desc: "Track changes across the entire design lifecycle." },
+              { icon: <Activity className="w-6 h-6" />, title: "Approval Workflow", desc: "Streamlined sign-off process for structural designs." },
+              { icon: <LayoutDashboard className="w-6 h-6" />, title: "Project Management", desc: "Comprehensive dashboard for tracking multiple shows." },
+              { icon: <Eye className="w-6 h-6" />, title: "Live Monitoring", desc: "Chief managers can monitor all active workspaces." }
             ].map((feature, i) => (
               <motion.div 
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/30 transition-colors group"
+                transition={{ delay: i * 0.05 }}
+                className="p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/30 transition-all hover:shadow-[0_0_20px_rgba(109,40,217,0.1)] group"
               >
-                <div className="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
+                <h3 className="text-base font-semibold mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground text-xs leading-relaxed">{feature.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -275,296 +395,323 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-24">
+      <section id="how-it-works" className="py-24 relative overflow-hidden">
+        <div className="absolute top-1/2 left-0 w-64 h-64 bg-primary/5 blur-3xl -z-10" />
         <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center gap-16">
-            <div className="w-full md:w-1/2">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">From Brief to Build in Minutes</h2>
-              <p className="text-muted-foreground mb-10 text-lg">Streamline your workflow. ENS provides a seamless transition from initial concept to client approval.</p>
-              
-              <div className="space-y-8">
-                {[
-                  { step: "01", title: "Create Booth Parameters", desc: "Input the floor space dimensions and select your base system." },
-                  { step: "02", title: "Customize Structure", desc: "Snap walls, fascias, and counters together. Add custom graphics." },
-                  { step: "03", title: "Share with Clients", desc: "Generate a secure link for clients to review the 3D model." }
-                ].map((item, i) => (
-                  <motion.div 
-                    key={i}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.2 }}
-                    className="flex gap-6"
-                  >
-                    <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center font-mono font-bold text-sm">
-                        {item.step}
+          <div className="text-center max-w-2xl mx-auto mb-20">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">From Brief to Build in 7 Steps</h2>
+            <p className="text-muted-foreground">The most efficient workflow in the exhibition industry.</p>
+          </div>
+
+          <div className="max-w-4xl mx-auto relative">
+            {/* Vertical Line */}
+            <div className="absolute left-[20px] md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary/50 via-border to-transparent -translate-x-1/2" />
+            
+            <div className="space-y-12">
+              {[
+                { title: "Initial Brief", desc: "Define exhibition goals, floor space, and brand requirements.", icon: <FileText className="w-5 h-5" /> },
+                { title: "Workspace Setup", desc: "Create a new project and set your base booth dimensions.", icon: <Settings className="w-5 h-5" /> },
+                { title: "3D Construction", desc: "Build walls, fascias, and structural elements using Octanorm or Maxima.", icon: <Box className="w-5 h-5" /> },
+                { title: "Furniture & Styling", desc: "Drag and drop items from our extensive library into your space.", icon: <Package className="w-5 h-5" /> },
+                { title: "Client Review", desc: "Share a live link for clients to explore the booth in their browser.", icon: <Eye className="w-5 h-5" /> },
+                { title: "Revision Cycle", desc: "Make adjustments in real-time based on client feedback and requests.", icon: <History className="w-5 h-5" /> },
+                { title: "Final Approval", desc: "Get structural sign-off and export documentation for production.", icon: <CheckCircle2 className="w-5 h-5" /> }
+              ].map((step, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  className={`flex items-center gap-8 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}
+                >
+                  <div className="flex-1 hidden md:block" />
+                  <div className="relative z-10 w-10 h-10 rounded-full bg-background border-2 border-primary flex items-center justify-center font-bold text-primary shadow-[0_0_15px_rgba(109,40,217,0.3)]">
+                    {i + 1}
+                  </div>
+                  <div className="flex-1">
+                    <div className={`p-6 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 transition-colors shadow-xl ${i % 2 === 0 ? 'md:text-left' : 'md:text-right'}`}>
+                      <div className={`w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4 ${i % 2 === 0 ? '' : 'md:ml-auto'}`}>
+                        {step.icon}
                       </div>
-                      {i !== 2 && <div className="w-px h-full bg-border mt-2" />}
+                      <h3 className="text-xl font-bold mb-2">{step.title}</h3>
+                      <p className="text-muted-foreground text-sm">{step.desc}</p>
                     </div>
-                    <div className="pb-8">
-                      <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                      <p className="text-muted-foreground">{item.desc}</p>
-                    </div>
-                  </motion.div>
-                ))}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Workspace Preview Section */}
+      <section className="py-24 bg-black/40 relative overflow-hidden border-y border-border/50">
+        <div className="absolute inset-0 grid-pattern opacity-10" />
+        <div className="container mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Professional Design Environment</h2>
+            <p className="text-muted-foreground">A clean, technical interface designed for high-performance booth planning.</p>
+          </div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-xl border border-border/50 bg-background shadow-2xl overflow-hidden flex flex-col aspect-[16/10] max-w-6xl mx-auto"
+          >
+            {/* Toolbar */}
+            <div className="h-12 border-b border-border/50 bg-muted/30 flex items-center justify-between px-4">
+              <div className="flex items-center gap-6">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                </div>
+                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <Button variant="ghost" size="sm" className="h-7 px-2">Save</Button>
+                  <Button variant="ghost" size="sm" className="h-7 px-2">Undo</Button>
+                  <Button variant="ghost" size="sm" className="h-7 px-2">Redo</Button>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-primary">Snapshot</Button>
+                  <Button size="sm" className="h-7 px-3 bg-primary/20 text-primary hover:bg-primary/30 border border-primary/30">Send to Client</Button>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 text-[10px] text-muted-foreground font-mono">
+                <span>PROJECT: TECH_CON_2024</span>
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               </div>
             </div>
-            
-            <div className="w-full md:w-1/2">
-              <div className="relative rounded-2xl overflow-hidden border border-border/50 aspect-square bg-muted/20 flex items-center justify-center p-8">
-                <div className="absolute inset-0 grid-pattern opacity-[0.05]" />
-                {/* Abstract visual for workflow */}
-                <div className="relative w-full h-full">
-                  <motion.div 
-                    className="absolute top-1/4 left-1/4 w-32 h-32 rounded-lg border border-primary/40 bg-primary/5 backdrop-blur-sm"
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 4, repeat: Infinity }}
-                  />
-                  <motion.div 
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-blue-500/40 bg-blue-500/5 backdrop-blur-sm flex items-center justify-center"
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  >
-                    <Zap className="w-8 h-8 text-blue-500/50" />
-                  </motion.div>
-                  <motion.div 
-                    className="absolute bottom-1/4 right-1/4 w-40 h-24 rounded-lg border border-purple-500/40 bg-purple-500/5 backdrop-blur-sm"
-                    animate={{ y: [0, 10, 0] }}
-                    transition={{ duration: 5, repeat: Infinity }}
-                  />
+
+            <div className="flex flex-1 overflow-hidden">
+              {/* Left Panel: Furniture */}
+              <div className="w-56 border-r border-border/50 bg-muted/10 p-4 flex flex-col">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center justify-between">
+                  <span>Furniture Library</span>
+                  <ChevronRight className="w-3 h-3" />
+                </div>
+                <div className="space-y-4">
+                  {['Counters', 'Seating', 'Display', 'Lighting'].map((cat, i) => (
+                    <div key={i}>
+                      <div className="text-[9px] font-bold uppercase text-primary mb-2 tracking-widest">{cat}</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[1, 2].map(j => (
+                          <div key={j} className="aspect-square rounded border border-border bg-background/50 flex flex-col items-center justify-center gap-1 hover:border-primary/50 cursor-pointer transition-colors">
+                            <Box className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-[8px] text-muted-foreground">Item {i}{j}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Center Canvas */}
+              <div className="flex-1 relative bg-black/50 overflow-hidden flex items-center justify-center perspective-[1200px]">
+                <div className="absolute inset-0 grid-pattern opacity-20" />
+                
+                {/* 3D Booth Wireframe Simulation */}
+                <div className="relative w-[500px] h-[350px] transform-gpu rotate-x-12 rotate-y-[-20deg] preserve-3d">
+                  {/* Floor Grid */}
+                  <div className="absolute inset-0 border border-primary/20 bg-primary/5 grid-pattern rotate-x-90 translate-y-[175px]" />
                   
-                  {/* Connecting lines */}
-                  <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ filter: 'drop-shadow(0 0 4px rgba(109,40,217,0.3))' }}>
-                    <path d="M 30% 35% L 50% 50% L 70% 65%" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" className="text-primary/40" />
-                  </svg>
+                  {/* Walls */}
+                  <div className="absolute bottom-[175px] left-0 w-full h-[200px] border border-primary/30 bg-primary/5 transform-gpu -translate-z-[250px]" />
+                  <div className="absolute bottom-[175px] left-0 w-[500px] h-[200px] border border-primary/30 bg-primary/5 transform-gpu rotate-y-90 origin-left" />
+                  
+                  {/* Fascia */}
+                  <div className="absolute top-0 left-0 w-full h-10 border border-primary/40 bg-primary/20 backdrop-blur-md flex items-center justify-center transform-gpu -translate-z-[100px]">
+                    <span className="text-xs font-mono text-primary-foreground opacity-30">ENS PLATFORM</span>
+                  </div>
+
+                  {/* Placed Items */}
+                  <div className="absolute bottom-[175px] left-20 w-32 h-20 border border-blue-500/50 bg-blue-500/10 transform-gpu translate-z-20" />
+                  <div className="absolute bottom-[175px] right-20 w-20 h-40 border border-purple-500/50 bg-purple-500/10 transform-gpu -translate-z-40" />
+                </div>
+
+                {/* Compass UI */}
+                <div className="absolute bottom-6 left-6 flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    {['Front', 'Top', 'Side'].map(view => (
+                      <button key={view} className="px-3 py-1 bg-background/50 border border-border text-[9px] rounded hover:bg-primary/20 transition-colors uppercase font-bold">{view}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Panel: Properties */}
+              <div className="w-64 border-l border-border/50 bg-muted/10 p-4">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-6">Properties Panel</div>
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <div className="text-[9px] font-bold uppercase text-primary">Dimensions</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {['Width', 'Depth', 'Height'].map(dim => (
+                        <div key={dim}>
+                          <label className="text-[8px] text-muted-foreground block mb-1">{dim}</label>
+                          <div className="h-7 bg-background border border-border rounded flex items-center px-2 text-[10px] font-mono">6000mm</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="text-[9px] font-bold uppercase text-primary">System Type</div>
+                    <div className="flex gap-2">
+                      <button className="flex-1 h-8 rounded border-2 border-primary bg-primary/10 text-[9px] font-bold">MAXIMA</button>
+                      <button className="flex-1 h-8 rounded border border-border bg-background text-[9px] font-bold text-muted-foreground">OCTANORM</button>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="text-[9px] font-bold uppercase text-primary">Selected Object</div>
+                    <div className="p-3 bg-background border border-border rounded space-y-2">
+                      <div className="flex justify-between text-[9px]">
+                        <span className="text-muted-foreground">Type</span>
+                        <span>Aluminum Post</span>
+                      </div>
+                      <div className="flex justify-between text-[9px]">
+                        <span className="text-muted-foreground">Material</span>
+                        <span>Brushed Silver</span>
+                      </div>
+                      <div className="flex justify-between text-[9px]">
+                        <span className="text-muted-foreground">Position</span>
+                        <span className="font-mono">X: 1200, Y: 0</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Product Showcase */}
-      <section id="showcase" className="py-24 bg-card border-y border-border/50 overflow-hidden">
+      {/* Testimonials */}
+      <section className="py-24">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">A Workspace for Every Stakeholder</h2>
-            <p className="text-muted-foreground">ENS connects the entire exhibition lifecycle, from internal admin management to client-facing approvals.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Trusted by Industry Leaders</h2>
+            <p className="text-muted-foreground">See how ENS is transforming exhibition delivery for top design firms.</p>
           </div>
 
-          <div className="flex flex-col items-center">
-            {/* Tabs */}
-            <div className="flex bg-muted/50 p-1 rounded-full border border-border/50 mb-12">
-              {[
-                { id: 'workspace', label: '3D Workspace', icon: <Layers className="w-4 h-4 mr-2" /> },
-                { id: 'admin', label: 'Admin Dashboard', icon: <LayoutDashboard className="w-4 h-4 mr-2" /> },
-                { id: 'client', label: 'Client View', icon: <Eye className="w-4 h-4 mr-2" /> }
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
-                    activeTab === tab.id 
-                      ? 'bg-background text-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  data-testid={`tab-${tab.id}`}
-                >
-                  {tab.icon} {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Content Area */}
-            <div className="w-full max-w-5xl relative aspect-video md:aspect-[16/9]">
-              <AnimatePresence mode="wait">
-                {activeTab === 'workspace' && (
-                  <motion.div
-                    key="workspace"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.4 }}
-                    className="absolute inset-0 rounded-xl border border-border/50 bg-background/50 overflow-hidden shadow-2xl flex flex-col"
-                  >
-                    <div className="h-10 bg-muted/30 border-b border-border/50 flex items-center px-4 justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-border" /><div className="w-2.5 h-2.5 rounded-full bg-border" /><div className="w-2.5 h-2.5 rounded-full bg-border" /></div>
-                        <span className="text-xs text-muted-foreground ml-4">workspace.ens.app</span>
-                      </div>
-                    </div>
-                    <div className="flex-1 bg-black/10 relative p-8 flex items-center justify-center">
-                      <div className="absolute inset-0 grid-pattern opacity-10" />
-                      <div className="relative w-64 h-64 border-2 border-primary/20 bg-primary/5 rounded-lg flex items-center justify-center transform -rotate-12 skew-x-12 shadow-[0_20px_50px_rgba(109,40,217,0.15)]">
-                        <Box className="w-16 h-16 text-primary opacity-50" />
-                        <div className="absolute top-2 right-2 flex gap-1">
-                          <div className="w-4 h-4 bg-primary/30 rounded" />
-                          <div className="w-4 h-4 bg-blue-500/30 rounded" />
-                        </div>
-                      </div>
-                      <div className="absolute left-4 top-4 bottom-4 w-48 bg-background border border-border/50 rounded-lg p-4">
-                        <div className="h-4 w-20 bg-muted rounded mb-4" />
-                        <div className="space-y-2">
-                          {[1,2,3,4,5].map(i => <div key={i} className="h-8 bg-muted/50 rounded" />)}
-                        </div>
-                      </div>
-                      <div className="absolute right-4 top-4 w-48 bg-background border border-border/50 rounded-lg p-4">
-                        <div className="h-4 w-24 bg-muted rounded mb-4" />
-                        <div className="h-32 bg-muted/30 rounded border border-border" />
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {activeTab === 'admin' && (
-                  <motion.div
-                    key="admin"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.4 }}
-                    className="absolute inset-0 rounded-xl border border-border/50 bg-background overflow-hidden shadow-2xl flex flex-col"
-                  >
-                    <div className="h-12 border-b border-border/50 flex items-center px-4 gap-4">
-                      <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center"><LayoutDashboard className="w-3 h-3 text-primary" /></div>
-                      <span className="text-sm font-medium">Projects Dashboard</span>
-                    </div>
-                    <div className="flex-1 flex">
-                      <div className="w-48 border-r border-border/50 p-4 space-y-2">
-                        <div className="h-8 bg-primary/10 rounded flex items-center px-3"><span className="text-xs text-primary">All Projects</span></div>
-                        <div className="h-8 hover:bg-muted/50 rounded flex items-center px-3"><span className="text-xs text-muted-foreground">Team</span></div>
-                        <div className="h-8 hover:bg-muted/50 rounded flex items-center px-3"><span className="text-xs text-muted-foreground">Settings</span></div>
-                      </div>
-                      <div className="flex-1 p-6">
-                        <div className="flex gap-4 mb-6">
-                          <div className="flex-1 h-24 rounded-xl border border-border/50 bg-muted/20 p-4"><div className="text-xs text-muted-foreground">Active Booths</div><div className="text-2xl font-bold mt-2">14</div></div>
-                          <div className="flex-1 h-24 rounded-xl border border-border/50 bg-muted/20 p-4"><div className="text-xs text-muted-foreground">Pending Review</div><div className="text-2xl font-bold mt-2">3</div></div>
-                          <div className="flex-1 h-24 rounded-xl border border-border/50 bg-muted/20 p-4"><div className="text-xs text-muted-foreground">Total Assets</div><div className="text-2xl font-bold mt-2">842</div></div>
-                        </div>
-                        <div className="h-48 border border-border/50 rounded-xl bg-muted/10 p-4">
-                          <div className="space-y-3">
-                            {[1,2,3].map(i => (
-                              <div key={i} className="h-10 bg-background border border-border/50 rounded flex items-center px-4 justify-between">
-                                <div className="flex items-center gap-3"><div className="w-6 h-6 rounded bg-muted" /><div className="h-3 w-32 bg-muted rounded" /></div>
-                                <div className="h-5 w-16 bg-primary/10 rounded-full" />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {activeTab === 'client' && (
-                  <motion.div
-                    key="client"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.4 }}
-                    className="absolute inset-0 rounded-xl border border-border/50 bg-background overflow-hidden shadow-2xl flex flex-col"
-                  >
-                    <div className="flex-1 relative flex items-center justify-center bg-black/5">
-                      {/* Client Viewer Simulation */}
-                      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/80 pointer-events-none" />
-                      <div className="w-64 h-64 border border-primary/30 bg-primary/5 rounded-lg flex items-center justify-center transform rotate-6 shadow-xl backdrop-blur-sm">
-                         <span className="text-primary/40 font-mono text-sm tracking-widest">Interactive Review</span>
-                      </div>
-                      
-                      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur-md border border-border/50 rounded-full px-6 py-3 flex gap-6 items-center shadow-lg">
-                        <div className="flex items-center gap-2"><Eye className="w-4 h-4 text-muted-foreground" /><span className="text-sm">Orbit Mode</span></div>
-                        <div className="w-px h-4 bg-border" />
-                        <Button size="sm" className="h-8 rounded-full">Approve Design</Button>
-                        <Button size="sm" variant="outline" className="h-8 rounded-full">Add Comment</Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { name: "Sarah Chen", company: "Global Exhibits Inc.", quote: "ENS has cut our design-to-approval time by 60%. The real-time 3D collaboration is a game changer for our international clients.", ref: "CES 2024" },
+              { name: "Marcus Weber", company: "Exhibito Group", quote: "Finally, a tool that understands Octanorm structural logic. We no longer worry about structural impossibilities during the design phase.", ref: "Hannover Messe" },
+              { name: "Elena Rossi", company: "Milano Design Studio", quote: "The Maxima support is incredible. We can build complex architectural stands that look premium and are technically accurate.", ref: "Salone del Mobile" }
+            ].map((t, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="p-8 rounded-3xl border border-border/50 bg-card hover:border-primary/30 transition-all flex flex-col"
+              >
+                <Quote className="w-10 h-10 text-primary/20 mb-6" />
+                <p className="text-lg mb-8 italic text-muted-foreground leading-relaxed">"{t.quote}"</p>
+                <div className="mt-auto flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-blue-500" />
+                  <div>
+                    <div className="font-bold">{t.name}</div>
+                    <div className="text-xs text-muted-foreground">{t.company}</div>
+                    <div className="text-[10px] text-primary mt-1 font-mono">{t.ref}</div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Benefits */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute left-0 top-0 w-1/3 h-full bg-gradient-to-r from-primary/5 to-transparent -z-10" />
-        
+      {/* Pricing */}
+      <section className="py-24 bg-muted/5 border-t border-border/50">
         <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-12 text-center">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <div className="text-4xl font-bold text-primary mb-4 glow-text">3x</div>
-              <h3 className="text-xl font-semibold mb-2">Faster design process</h3>
-              <p className="text-muted-foreground text-sm">Stop fighting generic tools. Use components built specifically for your systems.</p>
-            </motion.div>
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-            >
-              <div className="text-4xl font-bold text-blue-500 mb-4 glow-text">100%</div>
-              <h3 className="text-xl font-semibold mb-2">Better collaboration</h3>
-              <p className="text-muted-foreground text-sm">Clients understand 3D immediately. Reduce revisions caused by misinterpreting 2D plans.</p>
-            </motion.div>
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="text-4xl font-bold text-purple-500 mb-4 glow-text">Pro</div>
-              <h3 className="text-xl font-semibold mb-2">Professional results</h3>
-              <p className="text-muted-foreground text-sm">Export clean, accurate part lists and high-quality renders for production.</p>
-            </motion.div>
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 uppercase tracking-tighter">Pricing Tiers</h2>
+            <p className="text-muted-foreground">Scale your exhibition business with the right plan.</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              { tier: "Starter", price: "$99", features: ["5 Active Projects", "Octanorm Only", "Standard Library", "Email Support"] },
+              { tier: "Professional", price: "$299", features: ["Unlimited Projects", "Octanorm & Maxima", "Full Furniture Library", "Client Review Links", "Priority Support"], recommended: true },
+              { tier: "Enterprise", price: "Custom", features: ["White-label Links", "Custom Object Imports", "API Access", "Dedicated Success Manager", "SLA Support"] }
+            ].map((p, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -10 }}
+                className={`p-8 rounded-3xl border flex flex-col ${p.recommended ? 'border-primary bg-primary/5 shadow-[0_0_40px_rgba(109,40,217,0.15)] relative' : 'border-border/50 bg-card'}`}
+              >
+                {p.recommended && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full uppercase tracking-widest">
+                    Recommended
+                  </div>
+                )}
+                <div className="text-xl font-bold mb-2">{p.tier}</div>
+                <div className="flex items-baseline gap-1 mb-8">
+                  <span className="text-4xl font-bold">{p.price}</span>
+                  {p.price !== 'Custom' && <span className="text-muted-foreground text-sm">/mo</span>}
+                </div>
+                <ul className="space-y-4 mb-10">
+                  {p.features.map((f, j) => (
+                    <li key={j} className="flex items-center gap-3 text-sm">
+                      <CheckCircle2 className={`w-4 h-4 ${p.recommended ? 'text-primary' : 'text-muted-foreground'}`} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Button className={`mt-auto w-full rounded-xl h-12 font-bold ${p.recommended ? 'bg-primary shadow-lg' : 'variant-outline'}`}>
+                  Get Started
+                </Button>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-32 relative overflow-hidden border-t border-border/50">
-        <div className="absolute inset-0 bg-primary/5" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[500px] bg-primary/20 blur-[150px] pointer-events-none -z-10" />
-        
-        <div className="container mx-auto px-6 relative z-10 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to upgrade your studio?</h2>
-          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">Join the industry leaders designing the next generation of exhibition spaces.</p>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="w-full sm:w-auto rounded-full px-10 h-14 text-base font-semibold shadow-[0_0_20px_rgba(109,40,217,0.4)] hover:shadow-[0_0_40px_rgba(109,40,217,0.6)] transition-all" data-testid="btn-footer-cta1">
-              Start Designing Now
-            </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto rounded-full px-10 h-14 text-base font-semibold bg-background/50 backdrop-blur-sm" data-testid="btn-footer-cta2">
-              Talk to Sales
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-12 border-t border-border/50 bg-muted/20">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm font-mono">
-              E
+      {/* Cinematic CTA */}
+      <section className="py-32 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent" />
+        <div className="absolute inset-0 grid-pattern opacity-10" />
+        <div className="container mx-auto px-6 relative text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl md:text-6xl font-bold mb-8 glow-text tracking-tighter">
+              Start building your booth today
+            </h2>
+            <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto">
+              Join the future of exhibition design. Create, collaborate, and close deals faster than ever before.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <Button size="lg" className="rounded-full px-12 h-16 text-lg font-bold shadow-[0_0_30px_rgba(109,40,217,0.5)]">
+                Get Access Now
+              </Button>
+              <Button variant="outline" size="lg" className="rounded-full px-12 h-16 text-lg font-bold border-border">
+                Contact Sales
+              </Button>
             </div>
-            <span className="font-bold tracking-tight">ENS Studio</span>
-          </div>
-          
-          <div className="flex gap-6 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
-            <a href="#" className="hover:text-foreground transition-colors">Terms</a>
-            <a href="#" className="hover:text-foreground transition-colors">Support</a>
-          </div>
-          
-          <div className="text-sm text-muted-foreground">
-            © 2025 ENS Platform. All rights reserved.
+          </motion.div>
+        </div>
+      </section>
+
+      <footer className="py-12 border-t border-border/50 bg-background">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">E</div>
+              <span className="font-bold tracking-tight">ENS PLATFORM</span>
+            </div>
+            <div className="flex gap-8 text-sm text-muted-foreground">
+              <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
+              <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
+              <a href="#" className="hover:text-primary transition-colors">Security</a>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              © 2024 ENS Expo Solutions. All rights reserved.
+            </div>
           </div>
         </div>
       </footer>

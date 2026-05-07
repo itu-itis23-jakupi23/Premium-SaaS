@@ -1,0 +1,374 @@
+Create a premium enterprise-level SaaS web platform called “ENS” for exhibition booth design, project management, and client collaboration. The platform must feel modern, cinematic, highly interactive, and visually impressive — not like a basic dashboard or student project. The system is built around Octanorm and Maxima exhibition stand systems and includes a full workflow between Chief Managers, Project Managers, and Clients.
+
+The entire website must use a modern dark UI with charcoal and navy backgrounds, electric blue and cyan accents, subtle purple gradients, glassmorphism cards, smooth animations, rounded corners, blueprint/grid-inspired backgrounds, premium typography, and soft shadows. The design should look like a combination of a high-end SaaS platform, a project management system, and a professional 3D design workspace.
+
+The platform includes:
+
+1. Public Landing Page
+2. Authentication System
+3. Chief Manager Dashboard
+4. Project Manager Dashboard
+5. Client Dashboard
+6. 3D Workspace Interface
+7. Messaging & Approval System
+8. Workspace Monitoring System
+
+The landing page must be extremely visually impressive. Create a cinematic hero section with a large realistic 3D exhibition booth render using Octanorm and Maxima structures. Include branding panels, shelves, counters, furniture, lighting, and exhibition atmosphere. Add floating UI cards around the booth showing project progress, booth dimensions, approval status, furniture count, and workspace activity. Use smooth parallax effects, animated gradients, glowing lines, and interactive motion effects.
+
+The hero section headline should say:
+“Design and Manage Exhibition Booths in 3D”
+
+The subtitle:
+“Professional booth planning platform for Octanorm and Maxima exhibition systems with project management, client collaboration, and interactive workspace previews.”
+
+Include CTA buttons:
+
+* Start Project
+* View Demo
+* Book Consultation
+
+Below the hero section, create a features section with premium cards explaining:
+
+* 3D Booth Workspace
+* Octanorm Support
+* Maxima Support
+* Furniture Placement
+* Client Collaboration
+* Workspace Snapshots
+* Version History
+* Approval Workflow
+* Project Management
+* Live Workspace Monitoring
+
+Create a dedicated section comparing Octanorm and Maxima systems using large visuals, animated comparison cards, and technical descriptions. Octanorm should feel modular and practical; Maxima should feel premium and luxury-focused.
+
+Create a “How It Works” section using an animated workflow timeline:
+
+1. Client creates project
+2. Chief Manager assigns Project Manager
+3. Project Manager designs booth
+4. Client reviews workspace
+5. Revisions are applied
+6. Final approval is sent
+7. Booth goes to production
+
+Create a workspace preview section showing a professional 3D editor interface with:
+
+* Large booth canvas
+* Furniture sidebar
+* Toolbar
+* Properties panel
+* Camera controls
+* Snapshot/version controls
+
+Create a testimonials section with company cards and exhibition references.
+
+Create a premium pricing section with:
+
+* Starter
+* Professional
+* Enterprise
+
+Create a final cinematic CTA section with a dark exhibition environment background.
+
+Build authentication pages with premium modern design:
+
+* Login
+* Signup
+* Forgot Password
+
+Use blurred 3D exhibition visuals in the background.
+
+The platform has three major user roles:
+
+CHIEF MANAGER:
+The Chief Manager is the central system orchestrator. They do not design booths. Their responsibility is managing project flow, assigning clients to Project Managers, balancing workloads, monitoring projects, and ensuring smooth delivery.
+
+Create a Chief Manager dashboard with:
+
+* Collapsible left sidebar
+* Top navigation bar
+* Search
+* Notifications
+* Messages
+* Profile menu
+* Dark mode toggle
+
+Sidebar items:
+
+* Dashboard
+* Clients
+* Project Managers
+* Projects
+* Workspace Monitor
+* Reports
+* Messages
+* Settings
+* Logout
+
+The Chief Manager dashboard homepage should contain:
+
+* Statistic cards
+* Project activity charts
+* Status charts
+* Manager performance charts
+* Activity timeline
+* AI insights cards
+
+Top statistic cards:
+
+* Total Clients
+* Active Projects
+* Managers
+* Delayed Projects
+* Pending Assignments
+* Active Workspaces
+
+Create a client management page showing:
+
+* Client name
+* Company
+* Assigned Project Manager
+* Exhibition
+* Booth size
+* Status
+* Last activity
+
+Actions:
+
+* Assign Manager
+* Reassign Manager
+* Open Workspace
+* View Client
+
+Create a Project Manager management page showing:
+
+* Profile image
+* Workload
+* Active projects
+* Performance
+* Status
+
+Actions:
+
+* Assign clients
+* View projects
+* Send reminders
+
+Create a Workspace Monitor page with live workspace cards showing:
+
+* Mini booth preview
+* Client
+* Project Manager
+* Last update
+* Furniture count
+* Workspace status
+
+Add AI insight panels such as:
+
+* “Manager A is overloaded”
+* “Project B has no activity”
+* “Client C has not reviewed design”
+* “Suggested reassignment available”
+
+PROJECT MANAGER:
+The Project Manager is responsible for execution and booth design. They manage assigned clients, edit workspaces, communicate with clients, and send designs for approval.
+
+Create a Project Manager dashboard with:
+Sidebar:
+
+* Dashboard
+* My Clients
+* My Projects
+* Workspace
+* Client Requests
+* Messages
+* Tasks
+* Reports
+* Settings
+
+Dashboard cards:
+
+* My Clients
+* Active Projects
+* Pending Reviews
+* Completed Projects
+* Messages
+
+Include:
+
+* Project timeline
+* Task lists
+* Activity feed
+
+Create a My Clients page showing:
+
+* Client
+* Exhibition
+* Booth dimensions
+* Status
+* Last interaction
+
+Actions:
+
+* Open Workspace
+* Send Design
+* Message Client
+
+Create the core Workspace page as a professional 3D booth editor interface.
+
+Workspace layout:
+LEFT PANEL:
+
+* Structure
+* Walls
+* Fascia
+* Furniture
+* Shelves
+* Lighting
+* Decorations
+
+CENTER:
+Large 3D booth canvas.
+
+RIGHT PANEL:
+
+* Booth dimensions
+* Stand type
+* Selected object properties
+* Position/rotation controls
+
+TOP TOOLBAR:
+
+* Save
+* Undo
+* Redo
+* Snapshot
+* Restore Version
+* Send to Client
+
+BOTTOM BAR:
+
+* Zoom
+* Camera presets
+* Last save time
+* Version history
+
+Workspace functionality:
+
+* Configure booth dimensions
+* Choose Octanorm or Maxima structure
+* Configure open sides
+* Add/remove walls
+* Add fascia
+* Add shelves
+* Add lighting
+* Place furniture
+* Save workspace state
+* Create snapshots
+* Restore previous versions
+* Send design to client
+
+Create a Client Requests page showing revision requests and client feedback.
+
+Create messaging pages with modern chat interfaces, file attachments, timestamps, and design comments.
+
+Add Project Manager AI assistant cards such as:
+
+* “3 pending revisions”
+* “Client waiting for update”
+* “Project ready for approval”
+
+CLIENT SIDE:
+The client side must feel elegant, simple, and premium.
+
+Create a Client Dashboard with sidebar:
+
+* Dashboard
+* My Projects
+* Workspace
+* Messages
+* Approvals
+* Documents
+* Profile
+
+Dashboard should display:
+
+* Active Project
+* Assigned Project Manager
+* Project Status
+* Last Update
+* Pending Approval
+
+Include:
+
+* Workspace preview
+* Timeline
+* Recent messages
+* Approval progress
+
+Create a Project Details page showing:
+
+* Exhibition details
+* Booth dimensions
+* Stand type
+* Timeline
+* Revision history
+* Approval status
+
+Create a Client Workspace page where the client can:
+
+* View booth in 3D
+* Rotate camera
+* Zoom
+* Navigate through the booth
+* Add comments
+* Request changes
+* Compare snapshots
+* Approve final design
+
+Clients must NOT be able to:
+
+* Change booth dimensions
+* Modify structural systems
+* Delete core booth walls
+
+Client workspace layout:
+LEFT PANEL:
+Furniture and object categories.
+
+CENTER:
+Large 3D booth canvas.
+
+RIGHT PANEL:
+Comments, project details, approval status.
+
+TOP TOOLBAR:
+
+* Request Changes
+* Compare Versions
+* Approve Design
+
+Create a Messages page for communication between Client and Project Manager.
+
+Create an Approvals page with approval cards for:
+
+* Booth layout
+* Branding placement
+* Final design
+* Production-ready version
+
+Buttons:
+
+* Approve
+* Request Changes
+
+Create a Profile page where clients manage:
+
+* Company information
+* Contact information
+* Notifications
+* Password
+* Company logo
+
+Throughout the platform, use smooth animations, enterprise-level layouts, advanced dashboard UI patterns, and realistic workspace previews. The final result should feel like a real commercial SaaS product used by exhibition companies and event management teams.
