@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'framer-motion';
+import { useLocation } from 'wouter';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { 
@@ -60,6 +61,7 @@ export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('workspace');
+  const [, navigate] = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -90,7 +92,10 @@ export default function Home() {
             <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How it Works</a>
             <a href="#showcase" className="text-muted-foreground hover:text-foreground transition-colors">Showcase</a>
             <ThemeToggle />
-            <Button className="rounded-full px-6 font-semibold shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)] transition-all">
+            <Button variant="ghost" className="rounded-full px-5 font-semibold" onClick={() => navigate('/login')} data-testid="btn-nav-login">
+              Log In
+            </Button>
+            <Button className="rounded-full px-6 font-semibold shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)] transition-all" onClick={() => navigate('/login')} data-testid="btn-nav-start">
               Start Designing
             </Button>
           </nav>
@@ -130,13 +135,13 @@ export default function Home() {
               </motion.p>
               
               <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button size="lg" className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)] transition-all gap-2" data-testid="btn-hero-cta1">
+                <Button size="lg" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)] transition-all gap-2" data-testid="btn-hero-cta1">
                   Start Designing <ChevronRight className="w-4 h-4" />
                 </Button>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border-border hover:bg-muted/50" data-testid="btn-hero-cta2">
+                <Button size="lg" variant="outline" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border-border hover:bg-muted/50" data-testid="btn-hero-cta2">
                   Book a Demo
                 </Button>
-                <Button size="lg" variant="ghost" className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border border-primary/20 hover:bg-primary/5" data-testid="btn-hero-cta3">
+                <Button size="lg" variant="ghost" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border border-primary/20 hover:bg-primary/5" data-testid="btn-hero-cta3">
                   Book Consultation
                 </Button>
               </motion.div>
@@ -172,6 +177,37 @@ export default function Home() {
             </motion.div>
           ))}
         </div>
+      </div>
+
+      {/* Demo Access Strip */}
+      <div className="container mx-auto px-6 mb-16 relative z-20">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-card/60 backdrop-blur-md border border-primary/20 rounded-2xl p-6"
+        >
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-1">Try the platform instantly</p>
+              <p className="text-sm text-muted-foreground">Jump directly into any dashboard — no account required for the demo.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button size="sm" onClick={() => navigate('/chief')} className="gap-2 rounded-full px-5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30" variant="ghost" data-testid="btn-demo-chief">
+                <LayoutDashboard className="w-4 h-4" /> Chief Manager
+              </Button>
+              <Button size="sm" onClick={() => navigate('/pm')} className="gap-2 rounded-full px-5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30" variant="ghost" data-testid="btn-demo-pm">
+                <Settings className="w-4 h-4" /> Project Manager
+              </Button>
+              <Button size="sm" onClick={() => navigate('/client')} className="gap-2 rounded-full px-5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" variant="ghost" data-testid="btn-demo-client">
+                <Eye className="w-4 h-4" /> Client View
+              </Button>
+              <Button size="sm" onClick={() => navigate('/pm/workspace')} className="gap-2 rounded-full px-5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30" variant="ghost" data-testid="btn-demo-workspace">
+                <Box className="w-4 h-4" /> 3D Workspace
+              </Button>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Interactive 3D Preview Mockup */}
@@ -686,10 +722,10 @@ export default function Home() {
               Join the future of exhibition design. Create, collaborate, and close deals faster than ever before.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              <Button size="lg" className="rounded-full px-12 h-16 text-lg font-bold shadow-[0_0_30px_rgba(109,40,217,0.5)]">
+              <Button size="lg" onClick={() => navigate('/login')} className="rounded-full px-12 h-16 text-lg font-bold shadow-[0_0_30px_rgba(109,40,217,0.5)]">
                 Get Access Now
               </Button>
-              <Button variant="outline" size="lg" className="rounded-full px-12 h-16 text-lg font-bold border-border">
+              <Button variant="outline" size="lg" onClick={() => navigate('/login')} className="rounded-full px-12 h-16 text-lg font-bold border-border">
                 Contact Sales
               </Button>
             </div>
