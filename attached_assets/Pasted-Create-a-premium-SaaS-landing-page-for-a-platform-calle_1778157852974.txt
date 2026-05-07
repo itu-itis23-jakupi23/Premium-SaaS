@@ -1,0 +1,68 @@
+Create a premium SaaS landing page for a platform called "ENS".
+
+ENS is a web-based platform that allows users to design exhibition booths (Octanorm and Maxima systems) in a real-time 3D interactive environment.
+
+The platform includes:
+- A 3D booth builder where users can move, rotate, and place elements
+- Parametric booth structures (walls, frames, layouts)
+- Furniture and structure libraries
+- Role-based dashboards (Admin, Project Manager, Client)
+
+STYLE:
+- Dark mode (black, deep blue, purple glow)
+- Ultra-modern, futuristic UI
+- Smooth animations and transitions
+- Clean layout like Stripe, Linear, Framer
+
+LAYOUT:
+
+1. HERO SECTION
+- Headline: "Design Exhibition Booths in Real-Time 3D"
+- Subheadline: "Build, customize, and manage Octanorm and Maxima stands directly in your browser."
+- CTA: "Start Designing" / "Book Demo"
+- Include a large interactive 3D preview area (mockup of a booth builder)
+
+2. INTERACTIVE 3D SECTION
+- Showcase a booth model
+- Show ability to:
+  - Rotate the booth
+  - Move furniture
+  - Customize layout
+- Add text: "Fully interactive 3D environment"
+
+3. FEATURES
+- Real-time 3D editor
+- Drag & drop objects
+- Octanorm & Maxima structure system
+- Client & project management dashboard
+- Save and load designs
+
+4. HOW IT WORKS
+- Create booth
+- Customize structure
+- Share with clients
+
+5. PRODUCT SHOWCASE
+- Show:
+  - Admin dashboard
+  - 3D workspace
+  - Client view
+
+6. BENEFITS
+- Faster design process
+- Better collaboration
+- Professional results
+
+7. CTA
+- "Start building your booth today"
+
+IMPORTANT:
+- The design should visually simulate a 3D editor even if not fully functional
+- Use UI mockups that look real
+- Keep it clean and premium
+- Focus on selling a high-end product
+
+GOAL:
+Make the website look like a real startup product with interactive 3D capabilities that can be sold to businesses.
+
+make it with a theme button so i can change the theme from black to white and anything like thay but do not make it too crowded
