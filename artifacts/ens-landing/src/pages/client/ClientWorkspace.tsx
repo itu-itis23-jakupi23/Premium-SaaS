@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
-import { BoothCanvas } from "@/components/workspace/BoothCanvas";
+import { Booth3D } from "@/components/workspace/Booth3D";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -154,11 +154,13 @@ export default function ClientWorkspace() {
         {/* Center Canvas */}
         <main className="flex-1 relative bg-[#080d18] overflow-hidden">
           {/* Booth Canvas SVG — Maxima system for client view */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <BoothCanvas config={{
+          <div className="absolute inset-0">
+            <Booth3D config={{
               width: 8, depth: 6, height: 3,
               system: 'maxima',
               companyName: 'TECHCORP INDUSTRIES',
+              primaryColor: '#4a1a8a',
+              carpetColor: '#1e1830',
               openFront: true,
             }} />
           </div>

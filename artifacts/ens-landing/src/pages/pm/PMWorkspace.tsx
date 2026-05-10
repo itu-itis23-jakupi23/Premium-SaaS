@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
-import { BoothCanvas } from "@/components/workspace/BoothCanvas";
+import { Booth3D } from "@/components/workspace/Booth3D";
 import { 
   Box, 
   Layers, 
@@ -164,8 +164,8 @@ export default function PMWorkspace() {
         {/* Center Canvas */}
         <main className="flex-1 relative overflow-hidden bg-[#080d18]">
           {/* Booth Canvas SVG */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <BoothCanvas config={{
+          <div className="absolute inset-0">
+            <Booth3D config={{
               width: 8, depth: 6, height: 3,
               system: 'octanorm',
               companyName: 'TECHCORP INDUSTRIES',

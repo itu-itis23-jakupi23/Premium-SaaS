@@ -8,35 +8,36 @@ export interface BoothConfig {
   height: number;
   system: BoothSystem;
   companyName: string;
+  primaryColor?: string;
+  carpetColor?: string;
   openFront?: boolean;
-  openRight?: boolean;
   openLeft?: boolean;
+  openRight?: boolean;
 }
 
-const DEFAULT_CONFIG: BoothConfig = {
-  width: 8,
-  depth: 6,
-  height: 3,
+const DEFAULTS: BoothConfig = {
+  width: 8, depth: 6, height: 3,
   system: 'octanorm',
   companyName: 'TECHCORP INDUSTRIES',
-  openFront: true,
-  openRight: false,
-  openLeft: false,
+  primaryColor: '#1a3a7a',
+  carpetColor: '#1a2640',
+  openFront: true, openLeft: false, openRight: false,
 };
 
-// Scale: pixels per meter
-const SH = 24;
-const SV = 28;
-// SVG canvas center origin (where front-left floor corner projects to)
-const CX = 188;
-const CY = 158;
+// Isometric projection — scale in pixels per meter
+const SH = 26;   // horizontal
+const SV = 30;   // vertical
 
-function isoXY(x: number, y: number, z: number): [number, number] {
+function iso(x: number, y: number, z: number): [number, number] {
   return [(x - y) * 0.866 * SH, (x + y) * 0.5 * SH - z * SV];
 }
 
+// Offset so (0,0,0) [front-left floor] is at SVG origin
+const CX = 192;
+const CY = 170;
+
 function pt(x: number, y: number, z: number): string {
-  const [px, py] = isoXY(x, y, z);
+  const [px, py] = iso(x, y, z);
   return `${(px + CX).toFixed(1)},${(py + CY).toFixed(1)}`;
 }
 
@@ -44,601 +45,577 @@ function poly(...coords: [number, number, number][]): string {
   return coords.map(([x, y, z]) => pt(x, y, z)).join(' ');
 }
 
-function textAnchor(x: number, y: number, z: number): { x: number; y: number } {
-  const [px, py] = isoXY(x, y, z);
+function scrXY(x: number, y: number, z: number): { x: number; y: number } {
+  const [px, py] = iso(x, y, z);
   return { x: px + CX, y: py + CY };
 }
 
-interface BoxProps {
+// ─────────────────────────────────────────────────────────────────
+// Gradient-shaded box — 3 visible faces with proper depth cues
+// ─────────────────────────────────────────────────────────────────
+interface ShadedBoxProps {
   x: number; y: number; z: number;
   w: number; d: number; h: number;
-  top: string; front: string; side: string;
-  stroke?: string; strokeWidth?: number;
+  topG: string; frontG: string; sideG: string;
+  stroke?: string; strokeW?: number;
 }
 
-function Box({ x, y, z, w, d, h, top, front, side, stroke = 'none', strokeWidth = 0.5 }: BoxProps) {
+function ShadedBox({ x, y, z, w, d, h, topG, frontG, sideG, stroke = 'rgba(0,0,0,0.18)', strokeW = 0.4 }: ShadedBoxProps) {
   return (
     <g>
-      <polygon points={poly([x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h])} fill={side} stroke={stroke} strokeWidth={strokeWidth} />
-      <polygon points={poly([x,y,z],[x+w,y,z],[x+w,y,z+h],[x,y,z+h])} fill={front} stroke={stroke} strokeWidth={strokeWidth} />
-      <polygon points={poly([x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h])} fill={top} stroke={stroke} strokeWidth={strokeWidth} />
+      {/* Right / side face (x+w) — darkest */}
+      <polygon points={poly([x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h])}
+        fill={`url(#${sideG})`} stroke={stroke} strokeWidth={strokeW} />
+      {/* Front face (y=y) — medium */}
+      <polygon points={poly([x,y,z],[x+w,y,z],[x+w,y,z+h],[x,y,z+h])}
+        fill={`url(#${frontG})`} stroke={stroke} strokeWidth={strokeW} />
+      {/* Top face — brightest */}
+      <polygon points={poly([x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h])}
+        fill={`url(#${topG})`} stroke={stroke} strokeWidth={strokeW} />
     </g>
   );
 }
 
-// Thin horizontal rail/beam drawn as a flat plane
-function Rail({ x1, y1, x2, y2, z, thickness, color }: {
-  x1:number; y1:number; x2:number; y2:number; z:number; thickness:number; color:string;
-}) {
-  return (
-    <polygon
-      points={poly([x1,y1,z],[x2,y2,z],[x2,y2,z+thickness],[x1,y1,z+thickness])}
-      fill={color}
-    />
-  );
-}
-
-// A thin upright post column
-function Post({ x, y, h, pw, pd, postColor, capColor }: {
-  x:number; y:number; h:number; pw:number; pd:number; postColor:string; capColor:string;
-}) {
-  const cx2 = x - pw / 2;
-  const cy2 = y - pd / 2;
+// ─────────────────────────────────────────────────────────────────
+// Structural post — tall thin box
+// ─────────────────────────────────────────────────────────────────
+function Post({ x, y, h, s, isMax }: { x: number; y: number; h: number; s: number; isMax: boolean }) {
+  const hw = s / 2;
+  const g = isMax ? 'gold' : 'alum';
   return (
     <g>
-      {/* Post body */}
-      <polygon points={poly([cx2+pw,cy2,0],[cx2+pw,cy2+pd,0],[cx2+pw,cy2+pd,h],[cx2+pw,cy2,h])} fill={postColor} />
-      <polygon points={poly([cx2,cy2,0],[cx2+pw,cy2,0],[cx2+pw,cy2,h],[cx2,cy2,h])} fill={postColor} />
-      <polygon points={poly([cx2,cy2,h],[cx2+pw,cy2,h],[cx2+pw,cy2+pd,h],[cx2,cy2+pd,h])} fill={capColor} />
-    </g>
-  );
-}
-
-// Octanorm connector node (small cube at joint)
-function Connector({ x, y, z, size, color }: { x:number; y:number; z:number; size:number; color:string }) {
-  const s = size / 2;
-  return (
-    <Box x={x-s} y={y-s} z={z-s} w={size} d={size} h={size}
-      top={color} front={color} side={color} />
-  );
-}
-
-// A shelf panel (thin horizontal slab)
-function ShelfPanel({ x, y, z, w, d, color }: { x:number; y:number; z:number; w:number; d:number; color:string }) {
-  return (
-    <polygon
-      points={poly([x,y,z],[x+w,y,z],[x+w,y+d,z],[x,y+d,z])}
-      fill={color} stroke="rgba(0,0,0,0.3)" strokeWidth="0.5"
-    />
-  );
-}
-
-const OCTANORM = {
-  postColor: '#8a9bae',
-  postCapColor: '#6a7f90',
-  railColor: '#7a8fa0',
-  panelFill: 'rgba(195,215,232,0.22)',
-  panelStroke: 'rgba(140,170,200,0.5)',
-  fasciaColor: '#1a3a6e',
-  fasciaAccent: '#2a5fa8',
-  carpetColor: '#1c2844',
-  carpetAlt: '#1a2640',
-  module: 1,
-  postW: 0.07,
-  postD: 0.07,
-  fasciaH: 0.34,
-  railH: 0.05,
-  connectorSize: 0.10,
-  midRail: true,
-};
-
-const MAXIMA = {
-  postColor: '#b09060',
-  postCapColor: '#c8a870',
-  railColor: '#a08050',
-  panelFill: 'rgba(230,218,200,0.28)',
-  panelStroke: 'rgba(180,155,120,0.5)',
-  fasciaColor: '#2a1648',
-  fasciaAccent: '#4a2880',
-  carpetColor: '#1e1830',
-  carpetAlt: '#1c162a',
-  module: 2,
-  postW: 0.10,
-  postD: 0.10,
-  fasciaH: 0.42,
-  railH: 0.06,
-  connectorSize: 0.0,
-  midRail: false,
-};
-
-function OctanormBackWall({ W, D, H, cfg }: { W:number; D:number; H:number; cfg: typeof OCTANORM }) {
-  const { module, postW, postD, postColor, postCapColor, railColor, panelFill, panelStroke, railH, midRail, connectorSize } = cfg;
-  const posts: number[] = [];
-  for (let xi = 0; xi <= W; xi += module) posts.push(xi);
-
-  const railZs = [0, H];
-  if (midRail) railZs.push(H * 0.45);
-
-  return (
-    <g>
-      {/* Wall panel fill */}
-      <polygon points={poly([0,D,0],[W,D,0],[W,D,H],[0,D,H])} fill={panelFill} stroke={panelStroke} strokeWidth="0.5" />
-
-      {/* Panel grid lines (inner horizontal divisions) */}
-      {[H * 0.45].map(zr => (
-        <line
-          key={zr}
-          x1={textAnchor(0, D, zr).x} y1={textAnchor(0, D, zr).y}
-          x2={textAnchor(W, D, zr).x} y2={textAnchor(W, D, zr).y}
-          stroke={panelStroke} strokeWidth="0.7" strokeDasharray="2,2"
-        />
-      ))}
-
-      {/* Horizontal rails */}
-      {railZs.map(zr => (
-        <polygon key={zr}
-          points={poly([0,D,zr],[W,D,zr],[W,D,zr+railH],[0,D,zr+railH])}
-          fill={railColor} stroke="rgba(0,0,0,0.3)" strokeWidth="0.3"
-        />
-      ))}
-
-      {/* Vertical posts */}
-      {posts.map(xi => (
-        <Post key={xi} x={xi} y={D} h={H} pw={postW} pd={postD} postColor={postColor} capColor={postCapColor} />
-      ))}
-
-      {/* Octanorm connector nodes at joints */}
-      {connectorSize > 0 && posts.map(xi =>
-        railZs.map(zr => (
-          <Connector key={`${xi}-${zr}`} x={xi} y={D} z={zr} size={connectorSize} color={postCapColor} />
-        ))
+      {/* Right face */}
+      <polygon points={poly([x+hw,y-hw,0],[x+hw,y+hw,0],[x+hw,y+hw,h],[x+hw,y-hw,h])}
+        fill={`url(#${g}_side)`} stroke="rgba(0,0,0,0.25)" strokeWidth={0.3} />
+      {/* Front face */}
+      <polygon points={poly([x-hw,y-hw,0],[x+hw,y-hw,0],[x+hw,y-hw,h],[x-hw,y-hw,h])}
+        fill={`url(#${g}_front)`} stroke="rgba(0,0,0,0.2)" strokeWidth={0.3} />
+      {/* Cap */}
+      <polygon points={poly([x-hw,y-hw,h],[x+hw,y-hw,h],[x+hw,y+hw,h],[x-hw,y+hw,h])}
+        fill={`url(#${g}_top)`} stroke="rgba(0,0,0,0.2)" strokeWidth={0.3} />
+      {/* Octanorm connector node */}
+      {!isMax && (
+        <polygon points={poly([x-0.07,y-0.07,h-0.05],[x+0.07,y-0.07,h-0.05],[x+0.07,y+0.07,h-0.05],[x-0.07,y+0.07,h-0.05])}
+          fill="#7080a0" stroke="rgba(0,0,0,0.3)" strokeWidth={0.5} />
       )}
     </g>
   );
 }
 
-function OctanormLeftWall({ W, D, H, cfg }: { W:number; D:number; H:number; cfg: typeof OCTANORM }) {
-  const { module, postW, postD, postColor, postCapColor, railColor, panelFill, panelStroke, railH, midRail } = cfg;
-  const posts: number[] = [];
-  for (let yi = 0; yi <= D; yi += module) posts.push(yi);
-
-  const railZs = [0, H];
-  if (midRail) railZs.push(H * 0.45);
-
+// ─────────────────────────────────────────────────────────────────
+// Horizontal rail beam on a wall face
+// ─────────────────────────────────────────────────────────────────
+function BackRail({ x1, x2, y, z, isMax }: { x1: number; x2: number; y: number; z: number; isMax: boolean }) {
+  const th = 0.055;
+  const g = isMax ? 'gold' : 'alum';
   return (
-    <g>
-      {/* Wall panel fill */}
-      <polygon points={poly([0,0,0],[0,D,0],[0,D,H],[0,0,H])} fill={panelFill} stroke={panelStroke} strokeWidth="0.5" />
-
-      {/* Horizontal rails */}
-      {railZs.map(zr => (
-        <polygon key={zr}
-          points={poly([0,0,zr],[0,D,zr],[0,D,zr+railH],[0,0,zr+railH])}
-          fill={railColor} stroke="rgba(0,0,0,0.3)" strokeWidth="0.3"
-        />
-      ))}
-
-      {/* Vertical posts */}
-      {posts.map(yi => (
-        <Post key={yi} x={0} y={yi} h={H} pw={postW} pd={postD} postColor={postColor} capColor={postCapColor} />
-      ))}
-    </g>
+    <polygon points={poly([x1,y,z],[x2,y,z],[x2,y,z+th],[x1,y,z+th])}
+      fill={`url(#${g}_front)`} stroke="rgba(0,0,0,0.15)" strokeWidth={0.3} />
   );
 }
 
-function OctanormRightWall({ W, D, H, cfg }: { W:number; D:number; H:number; cfg: typeof OCTANORM }) {
-  const { module, postW, postD, postColor, postCapColor, railColor, panelFill, panelStroke, railH, midRail } = cfg;
-  const posts: number[] = [];
-  for (let yi = 0; yi <= D; yi += module) posts.push(yi);
-  const railZs = [0, H];
-  if (midRail) railZs.push(H * 0.45);
-
+function LeftRail({ y1, y2, x, z, isMax }: { y1: number; y2: number; x: number; z: number; isMax: boolean }) {
+  const th = 0.055;
+  const g = isMax ? 'gold' : 'alum';
   return (
-    <g>
-      <polygon points={poly([W,0,0],[W,D,0],[W,D,H],[W,0,H])} fill={panelFill} stroke={panelStroke} strokeWidth="0.5" />
-      {railZs.map(zr => (
-        <polygon key={zr}
-          points={poly([W,0,zr],[W,D,zr],[W,D,zr+railH],[W,0,zr+railH])}
-          fill={railColor} stroke="rgba(0,0,0,0.3)" strokeWidth="0.3"
-        />
-      ))}
-      {posts.map(yi => (
-        <Post key={yi} x={W} y={yi} h={H} pw={postW} pd={postD} postColor={postColor} capColor={postCapColor} />
-      ))}
-    </g>
+    <polygon points={poly([x,y1,z],[x,y2,z],[x,y2,z+th],[x,y1,z+th])}
+      fill={`url(#${g}_front)`} stroke="rgba(0,0,0,0.15)" strokeWidth={0.3} />
   );
 }
 
-function Fascia({ W, D, H, cfg, companyName, system }: {
-  W:number; D:number; H:number; cfg: typeof OCTANORM; companyName: string; system: BoothSystem;
-}) {
-  const { fasciaH, fasciaColor, fasciaAccent } = cfg;
-  const fH = H;
-  const fTop = H + fasciaH;
-
-  // Fascia labels - text using SVG text
-  // We project a center point on each fascia face for text placement
-  const backCenter = textAnchor(W / 2, D, fH + fasciaH / 2);
-  const leftCenter = textAnchor(0, D / 2, fH + fasciaH / 2);
-
+// ─────────────────────────────────────────────────────────────────
+// Wall panel (glass-like, semi-transparent)
+// ─────────────────────────────────────────────────────────────────
+function BackPanel({ x1, x2, y, h }: { x1: number; x2: number; y: number; h: number }) {
   return (
-    <g>
-      {/* Back fascia face */}
-      <polygon
-        points={poly([0,D,fH],[W,D,fH],[W,D,fTop],[0,D,fTop])}
-        fill={fasciaColor} stroke={fasciaAccent} strokeWidth="0.8"
-      />
-      {/* Left fascia face */}
-      <polygon
-        points={poly([0,0,fH],[0,D,fH],[0,D,fTop],[0,0,fTop])}
-        fill={fasciaColor} stroke={fasciaAccent} strokeWidth="0.8"
-      />
-      {/* Fascia top cap */}
-      <polygon
-        points={poly([0,D,fTop],[W,D,fTop],[W,D+0.05,fTop],[0,D+0.05,fTop])}
-        fill={fasciaAccent}
-      />
-      {/* Accent LED strip at bottom of fascia - back */}
-      <polygon
-        points={poly([0,D,fH],[W,D,fH],[W,D,fH+0.04],[0,D,fH+0.04])}
-        fill={system === 'maxima' ? '#9966ff' : '#4488ff'} opacity="0.9"
-      />
-      {/* Accent LED strip - left wall */}
-      <polygon
-        points={poly([0,0,fH],[0,D,fH],[0,D,fH+0.04],[0,0,fH+0.04])}
-        fill={system === 'maxima' ? '#9966ff' : '#4488ff'} opacity="0.9"
-      />
-      {/* Company name on back fascia */}
-      <text
-        x={backCenter.x}
-        y={backCenter.y}
-        fill="white"
-        fontSize="7"
-        fontFamily="'Space Mono', monospace"
-        fontWeight="bold"
-        letterSpacing="2"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        transform={`skewX(-${Math.atan2((isoXY(W, D, 0)[1] - isoXY(0, D, 0)[1]), (isoXY(W, D, 0)[0] - isoXY(0, D, 0)[0])) * 180 / Math.PI})`}
-      >
-        {companyName}
-      </text>
-    </g>
+    <polygon points={poly([x1,y,0],[x2,y,0],[x2,y,h],[x1,y,h])}
+      fill="url(#wall_panel)" stroke="rgba(150,180,220,0.3)" strokeWidth={0.4} />
   );
 }
 
-// Spotlight fixture on fascia
-function Spotlight({ x, y, z }: { x:number; y:number; z:number }) {
-  const p = textAnchor(x, y, z);
+function LeftPanel({ y1, y2, x, h }: { y1: number; y2: number; x: number; h: number }) {
   return (
-    <g>
-      <circle cx={p.x} cy={p.y} r={3} fill="#e0e8f0" stroke="#c0ccd8" strokeWidth="0.5" />
-      <circle cx={p.x} cy={p.y} r={5} fill="none" stroke="rgba(200,220,255,0.3)" strokeWidth="0.5" />
-      {/* Light cone */}
-      <ellipse cx={p.x} cy={p.y + 8} rx={4} ry={2} fill="rgba(200,220,255,0.08)" />
-    </g>
+    <polygon points={poly([x,y1,0],[x,y2,0],[x,y2,h],[x,y1,h])}
+      fill="url(#wall_panel_l)" stroke="rgba(150,180,220,0.3)" strokeWidth={0.4} />
   );
 }
 
-function OctanormFurniture({ W, D, system }: { W:number; D:number; system: BoothSystem }) {
-  const isMax = system === 'maxima';
-  // Color schemes
-  const counterColors = isMax
-    ? { top: '#f0ece4', front: '#c8c0b0', side: '#a0987e' }
-    : { top: '#edf2f7', front: '#b8c8d8', side: '#8090a8' };
-  const woodColors = isMax
-    ? { top: '#d4a870', front: '#a8804c', side: '#806030' }
-    : { top: '#c89860', front: '#9a7040', side: '#785030' };
-  const whiteBoxColors = isMax
-    ? { top: '#e8e0d4', front: '#c0b8a8', side: '#9890808' }
-    : { top: '#dfe8f0', front: '#b0c0d0', side: '#8898b0' };
-  const shelfColor = isMax ? '#d8d0c0' : '#d0dce8';
-  const productColors = ['#e05050', '#50a0e0', '#50c050', '#e0a020', '#a050e0'];
-
+// ─────────────────────────────────────────────────────────────────
+// Furniture components
+// ─────────────────────────────────────────────────────────────────
+function ReceptionCounter({ W, D }: { W: number; D: number }) {
+  const bx = W - 3.0, by = 0.4;
   return (
     <g>
-      {/* ── BACK WALL AREA ─────────────────────────────────────── */}
-
-      {/* Left shelving unit (against back wall) */}
-      <Box x={0.4} y={D-0.5} z={0} w={2.2} d={0.45} h={0.04}
-        top={shelfColor} front="#b0bcc8" side="#8898a8" />
-      <Box x={0.4} y={D-0.5} z={0.6} w={2.2} d={0.45} h={0.04}
-        top={shelfColor} front="#b0bcc8" side="#8898a8" />
-      <Box x={0.4} y={D-0.5} z={1.2} w={2.2} d={0.45} h={0.04}
-        top={shelfColor} front="#b0bcc8" side="#8898a8" />
-      <Box x={0.4} y={D-0.5} z={1.8} w={2.2} d={0.45} h={0.04}
-        top={shelfColor} front="#b0bcc8" side="#8898a8" />
-      {/* Side uprights of shelving */}
-      <Box x={0.4} y={D-0.5} z={0} w={0.04} d={0.45} h={1.85}
-        top="#b0bcc8" front="#b0bcc8" side="#8090a0" />
-      <Box x={2.56} y={D-0.5} z={0} w={0.04} d={0.45} h={1.85}
-        top="#b0bcc8" front="#b0bcc8" side="#8090a0" />
-      {/* Products on shelves (colored items) */}
-      {[0, 0.6, 1.2].map((shz, si) =>
-        [0, 0.35, 0.7, 1.05, 1.55].map((xi, pi) => (
-          <Box key={`prod-${si}-${pi}`}
-            x={0.5+xi} y={D-0.49} z={shz+0.04} w={0.25} d={0.3} h={0.45}
-            top={productColors[(si * 5 + pi) % 5]}
-            front={productColors[(si * 5 + pi) % 5] + 'cc'}
-            side={productColors[(si * 5 + pi) % 5] + '88'}
-          />
-        ))
-      )}
-
-      {/* Central large display totem */}
-      <Box x={W/2-0.35} y={D-0.45} z={0} w={0.7} d={0.3} h={0.06}
-        top="#a0b0c0" front="#8090a0" side="#708090" />
-      {/* Totem body */}
-      <Box x={W/2-0.2} y={D-0.44} z={0.06} w={0.4} d={0.25} h={2.2}
-        top={whiteBoxColors.top} front={whiteBoxColors.front} side={whiteBoxColors.side}
-        stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-      {/* Monitor on totem */}
-      <Box x={W/2-0.35} y={D-0.46} z={1.0} w={0.7} d={0.06} h={0.5}
-        top="#1a2840" front="#0a1828" side="#0a1828" />
+      {/* Counter body */}
+      <ShadedBox x={bx} y={by} z={0} w={2.6} d={0.72} h={1.04} topG="white_top" frontG="white_front" sideG="white_side" />
+      {/* Top accent edge */}
+      <polygon points={poly([bx,by,1.04],[bx+2.6,by,1.04],[bx+2.6,by,1.07],[bx,by,1.07])}
+        fill="url(#alum_front)" />
+      {/* Graphic front panel (brand color) */}
+      <polygon points={poly([bx,by,0.08],[bx+2.6,by,0.08],[bx+2.6,by,0.95],[bx,by,0.95])}
+        fill="url(#fascia_front)" opacity="0.9" />
+      {/* Return unit */}
+      <ShadedBox x={bx+2.45} y={by} z={0} w={0.38} d={1.25} h={1.04} topG="white_top" frontG="white_front" sideG="white_side" />
+      {/* Monitor stand */}
+      <ShadedBox x={bx+0.6} y={by+0.15} z={1.04} w={0.04} d={0.04} h={0.3} topG="alum_top" frontG="alum_front" sideG="alum_side" />
+      {/* Monitor screen */}
+      <ShadedBox x={bx+0.35} y={by+0.12} z={1.34} w={0.55} d={0.06} h={0.35} topG="screen_top" frontG="screen_front" sideG="screen_side" />
       {/* Screen glow */}
-      <polygon
-        points={poly([W/2-0.33, D-0.455, 1.01],[W/2+0.33, D-0.455, 1.01],[W/2+0.33, D-0.455, 1.49],[W/2-0.33, D-0.455, 1.49])}
-        fill={isMax ? '#3a2060' : '#0a2a5a'} opacity="0.9"
-      />
+      <polygon points={poly([bx+0.37,by+0.118,1.35],[bx+0.88,by+0.118,1.35],[bx+0.88,by+0.118,1.68],[bx+0.37,by+0.118,1.68])}
+        fill="url(#screen_glow)" filter="url(#ledGlow)" opacity="0.9" />
+      {/* Laptop */}
+      <ShadedBox x={bx+1.5} y={by+0.1} z={1.04} w={0.4} d={0.28} h={0.02} topG="alum_top" frontG="alum_front" sideG="alum_side" />
+    </g>
+  );
+}
 
-      {/* Right shelving unit */}
-      <Box x={W-2.6} y={D-0.5} z={0} w={2.2} d={0.45} h={0.04}
-        top={shelfColor} front="#b0bcc8" side="#8898a8" />
-      <Box x={W-2.6} y={D-0.5} z={0.6} w={2.2} d={0.45} h={0.04}
-        top={shelfColor} front="#b0bcc8" side="#8898a8" />
-      <Box x={W-2.6} y={D-0.5} z={1.2} w={2.2} d={0.45} h={0.04}
-        top={shelfColor} front="#b0bcc8" side="#8898a8" />
-      <Box x={W-2.6} y={D-0.5} z={1.8} w={2.2} d={0.45} h={0.04}
-        top={shelfColor} front="#b0bcc8" side="#8898a8" />
-      <Box x={W-2.6} y={D-0.5} z={0} w={0.04} d={0.45} h={1.85}
-        top="#b0bcc8" front="#b0bcc8" side="#8090a0" />
-      <Box x={W-0.44} y={D-0.5} z={0} w={0.04} d={0.45} h={1.85}
-        top="#b0bcc8" front="#b0bcc8" side="#8090a0" />
-      {[0, 0.6, 1.2].map((shz, si) =>
-        [0, 0.35, 0.7, 1.05, 1.55].map((xi, pi) => (
-          <Box key={`rprod-${si}-${pi}`}
-            x={W-2.5+xi} y={D-0.49} z={shz+0.04} w={0.25} d={0.3} h={0.45}
-            top={productColors[(si * 3 + pi + 2) % 5]}
-            front={productColors[(si * 3 + pi + 2) % 5] + 'cc'}
-            side={productColors[(si * 3 + pi + 2) % 5] + '88'}
+function ShelvingUnit({ W, D }: { W: number; D: number }) {
+  const bx = 0.4, by = D - 0.5;
+  const colors = ['#dd4444','#3388dd','#44bb55','#ddaa22','#9944cc'];
+  return (
+    <g>
+      {/* Back panel */}
+      <ShadedBox x={bx} y={by} z={0} w={2.4} d={0.45} h={0.04} topG="white_top" frontG="white_front" sideG="white_side" />
+      <ShadedBox x={bx} y={by} z={0.62} w={2.4} d={0.45} h={0.04} topG="white_top" frontG="white_front" sideG="white_side" />
+      <ShadedBox x={bx} y={by} z={1.24} w={2.4} d={0.45} h={0.04} topG="white_top" frontG="white_front" sideG="white_side" />
+      <ShadedBox x={bx} y={by} z={1.86} w={2.4} d={0.45} h={0.04} topG="white_top" frontG="white_front" sideG="white_side" />
+      {/* Side uprights */}
+      <ShadedBox x={bx} y={by} z={0} w={0.04} d={0.45} h={1.9} topG="alum_top" frontG="alum_front" sideG="alum_side" />
+      <ShadedBox x={bx+2.36} y={by} z={0} w={0.04} d={0.45} h={1.9} topG="alum_top" frontG="alum_front" sideG="alum_side" />
+      {/* Products on 3 shelves */}
+      {[0, 0.62, 1.24].map((sz, si) =>
+        [0, 0.36, 0.72, 1.08, 1.44, 1.8].map((sx, pi) => (
+          <ShadedBox key={`p${si}${pi}`}
+            x={bx+0.06+sx} y={by+0.04} z={sz+0.04} w={0.28} d={0.35} h={0.48}
+            topG={`prod${(si*6+pi)%5}_top`} frontG={`prod${(si*6+pi)%5}_front`} sideG={`prod${(si*6+pi)%5}_side`}
+            strokeW={0.3}
           />
         ))
       )}
+    </g>
+  );
+}
 
-      {/* ── CENTER AREA ─────────────────────────────────────────── */}
+function RightShelvingUnit({ W, D }: { W: number; D: number }) {
+  const bx = W - 2.84, by = D - 0.5;
+  const colors = ['#9944cc','#dd4444','#44bb55','#3388dd','#ddaa22'];
+  return (
+    <g>
+      <ShadedBox x={bx} y={by} z={0} w={2.4} d={0.45} h={0.04} topG="white_top" frontG="white_front" sideG="white_side" />
+      <ShadedBox x={bx} y={by} z={0.62} w={2.4} d={0.45} h={0.04} topG="white_top" frontG="white_front" sideG="white_side" />
+      <ShadedBox x={bx} y={by} z={1.24} w={2.4} d={0.45} h={0.04} topG="white_top" frontG="white_front" sideG="white_side" />
+      <ShadedBox x={bx} y={by} z={1.86} w={2.4} d={0.45} h={0.04} topG="white_top" frontG="white_front" sideG="white_side" />
+      <ShadedBox x={bx} y={by} z={0} w={0.04} d={0.45} h={1.9} topG="alum_top" frontG="alum_front" sideG="alum_side" />
+      <ShadedBox x={bx+2.36} y={by} z={0} w={0.04} d={0.45} h={1.9} topG="alum_top" frontG="alum_front" sideG="alum_side" />
+      {[0, 0.62, 1.24].map((sz, si) =>
+        [0, 0.36, 0.72, 1.08, 1.44, 1.8].map((sx, pi) => (
+          <ShadedBox key={`rp${si}${pi}`}
+            x={bx+0.06+sx} y={by+0.04} z={sz+0.04} w={0.28} d={0.35} h={0.48}
+            topG={`prod${(si*6+pi+2)%5}_top`} frontG={`prod${(si*6+pi+2)%5}_front`} sideG={`prod${(si*6+pi+2)%5}_side`}
+            strokeW={0.3}
+          />
+        ))
+      )}
+    </g>
+  );
+}
 
-      {/* Meeting table */}
-      {/* Table legs */}
-      {([[2.2, 2.1],[4.3,2.1],[4.3,3.2],[2.2,3.2]] as [number,number][]).map(([tx, ty], i) => (
-        <Box key={`leg-${i}`} x={tx} y={ty} z={0} w={0.06} d={0.06} h={0.72}
-          top={woodColors.side} front={woodColors.side} side={woodColors.side} />
+function MeetingTable({ W, D }: { W: number; D: number }) {
+  const bx = W/2 - 1.3, by = D/2 - 0.8;
+  return (
+    <g>
+      {/* Legs */}
+      {([[bx+0.08,by+0.08],[bx+2.4,by+0.08],[bx+2.4,by+1.3],[bx+0.08,by+1.3]] as [number,number][]).map(([lx,ly],i) => (
+        <ShadedBox key={i} x={lx} y={ly} z={0} w={0.06} d={0.06} h={0.73} topG="alum_top" frontG="alum_front" sideG="alum_side" />
       ))}
       {/* Table top */}
-      <Box x={2.1} y={2.0} z={0.72} w={2.3} d={1.35} h={0.06}
-        top={woodColors.top} front={woodColors.front} side={woodColors.side}
-        stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-      {/* Table items: laptop + papers */}
-      <Box x={2.7} y={2.15} z={0.78} w={0.5} d={0.35} h={0.02}
-        top="#e8edf2" front="#b0bcc8" side="#8898a8" />
-      <Box x={3.5} y={2.2} z={0.78} w={0.6} d={0.4} h={0.01}
-        top="white" front="white" side="#d0d8e0" />
-
-      {/* Chairs (4 around table) */}
-      {/* Front chairs */}
-      <Box x={2.3} y={1.4} z={0} w={0.55} d={0.5} h={0.45}
-        top={counterColors.top} front={counterColors.front} side={counterColors.side} />
-      <Box x={2.3} y={1.4} z={0.45} w={0.55} d={0.06} h={0.45}
-        top={counterColors.top} front={counterColors.front} side={counterColors.side} />
-      <Box x={3.2} y={1.4} z={0} w={0.55} d={0.5} h={0.45}
-        top={counterColors.top} front={counterColors.front} side={counterColors.side} />
-      <Box x={3.2} y={1.4} z={0.45} w={0.55} d={0.06} h={0.45}
-        top={counterColors.top} front={counterColors.front} side={counterColors.side} />
-      {/* Back chairs */}
-      <Box x={2.3} y={3.35} z={0} w={0.55} d={0.5} h={0.45}
-        top={counterColors.top} front={counterColors.front} side={counterColors.side} />
-      <Box x={3.2} y={3.35} z={0} w={0.55} d={0.5} h={0.45}
-        top={counterColors.top} front={counterColors.front} side={counterColors.side} />
-
-      {/* ── FRONT AREA ──────────────────────────────────────────── */}
-
-      {/* Left info kiosk / brochure stand */}
-      <Box x={0.4} y={0.5} z={0} w={0.5} d={0.5} h={0.04}
-        top="#a0b0c0" front="#8090a0" side="#708090" />
-      <Box x={0.6} y={0.6} z={0.04} w={0.1} d={0.3} h={1.2}
-        top={counterColors.top} front={counterColors.front} side={counterColors.side} />
-      {/* Brochure pockets */}
-      {[0.3, 0.6, 0.9].map((bz, i) => (
-        <Box key={`broch-${i}`} x={0.4} y={0.5} z={bz} w={0.55} d={0.06} h={0.22}
-          top={productColors[i]} front={productColors[i]+'cc'} side={productColors[i]+'88'} />
-      ))}
-
-      {/* Reception counter (front-right area, L-shape) */}
-      {/* Main counter body */}
-      <Box x={W-3.0} y={0.4} z={0} w={2.6} d={0.75} h={1.05}
-        top={counterColors.top} front={counterColors.front} side={counterColors.side}
-        stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-      {/* Counter top detail edge */}
-      <polygon
-        points={poly([W-3.0,0.4,1.05],[W-0.4,0.4,1.05],[W-0.4,0.4,1.08],[W-3.0,0.4,1.08])}
-        fill={isMax ? '#c8a870' : '#6090b8'}
-      />
-      {/* Counter return (right side extension) */}
-      <Box x={W-0.75} y={0.4} z={0} w={0.35} d={1.2} h={1.05}
-        top={counterColors.top} front={counterColors.front} side={counterColors.side} />
-      {/* Reception desk items */}
-      <Box x={W-2.6} y={0.42} z={1.05} w={0.45} d={0.35} h={0.04}
-        top="#e8edf2" front="#b0bcc8" side="#8898a8" />
-      {/* Monitor at reception */}
-      <Box x={W-1.8} y={0.38} z={1.05} w={0.04} d={0.02} h={0.3}
-        top="#2a3040" front="#1a2030" side="#1a2030" />
-      <Box x={W-1.95} y={0.34} z={1.35} w={0.34} d={0.04} h={0.24}
-        top="#1a2840" front="#0a1828" side="#0a1828" />
-      <polygon
-        points={poly([W-1.93,0.35,1.36],[W-1.63,0.35,1.36],[W-1.63,0.35,1.58],[W-1.93,0.35,1.58])}
-        fill={isMax ? '#3a2060' : '#0a2a5a'}
-      />
+      <ShadedBox x={bx} y={by} z={0.73} w={2.55} d={1.42} h={0.055} topG="wood_top" frontG="wood_front" sideG="wood_side" />
+      {/* Chairs */}
+      {/* Front 2 */}
+      <ShadedBox x={bx+0.3} y={by-0.7} z={0} w={0.52} d={0.5} h={0.44} topG="chair_top" frontG="chair_front" sideG="chair_side" />
+      <ShadedBox x={bx+0.3} y={by-0.7} z={0.44} w={0.52} d={0.05} h={0.42} topG="chair_top" frontG="chair_front" sideG="chair_side" />
+      <ShadedBox x={bx+1.7} y={by-0.7} z={0} w={0.52} d={0.5} h={0.44} topG="chair_top" frontG="chair_front" sideG="chair_side" />
+      <ShadedBox x={bx+1.7} y={by-0.7} z={0.44} w={0.52} d={0.05} h={0.42} topG="chair_top" frontG="chair_front" sideG="chair_side" />
+      {/* Back 2 */}
+      <ShadedBox x={bx+0.3} y={by+1.5} z={0} w={0.52} d={0.5} h={0.44} topG="chair_top" frontG="chair_front" sideG="chair_side" />
+      <ShadedBox x={bx+1.7} y={by+1.5} z={0} w={0.52} d={0.5} h={0.44} topG="chair_top" frontG="chair_front" sideG="chair_side" />
+      {/* Laptop on table */}
+      <ShadedBox x={bx+0.7} y={by+0.3} z={0.785} w={0.38} d={0.28} h={0.015} topG="alum_top" frontG="alum_front" sideG="alum_side" />
+      {/* Papers */}
+      <ShadedBox x={bx+1.6} y={by+0.25} z={0.785} w={0.55} d={0.38} h={0.008} topG="white_top" frontG="white_front" sideG="white_side" />
     </g>
   );
 }
 
+function DisplayTotem({ W, D, primaryColor }: { W: number; D: number; primaryColor: string }) {
+  const bx = 0.4, by = 0.5;
+  return (
+    <g>
+      {/* Base plate */}
+      <ShadedBox x={bx} y={by} z={0} w={0.68} d={0.55} h={0.06} topG="alum_top" frontG="alum_front" sideG="alum_side" />
+      {/* Body */}
+      <ShadedBox x={bx+0.04} y={by+0.04} z={0.06} w={0.6} d={0.47} h={2.28} topG="white_top" frontG="white_front" sideG="white_side" />
+      {/* Brand panel */}
+      <polygon points={poly([bx+0.05,by+0.045,1.5],[bx+0.62,by+0.045,1.5],[bx+0.62,by+0.045,2.3],[bx+0.05,by+0.045,2.3])}
+        fill="url(#fascia_front)" opacity="0.95" />
+      {/* Screen */}
+      <ShadedBox x={bx+0.06} y={by+0.038} z={0.85} w={0.56} d={0.06} h={0.42} topG="screen_top" frontG="screen_front" sideG="screen_side" />
+      <polygon points={poly([bx+0.08,by+0.034,0.86],[bx+0.6,by+0.034,0.86],[bx+0.6,by+0.034,1.26],[bx+0.08,by+0.034,1.26])}
+        fill="url(#screen_glow)" filter="url(#ledGlow)" opacity="0.85" />
+    </g>
+  );
+}
+
+function BrochureStand({ W, D }: { W: number; D: number }) {
+  const bx = W - 0.7, by = 0.45;
+  return (
+    <g>
+      <ShadedBox x={bx} y={by} z={0} w={0.04} d={0.04} h={1.2} topG="alum_top" frontG="alum_front" sideG="alum_side" />
+      <ShadedBox x={bx-0.22} y={by-0.04} z={0} w={0.48} d={0.5} h={0.04} topG="alum_top" frontG="alum_front" sideG="alum_side" />
+      {[0.28, 0.6, 0.92].map((sz, i) => (
+        <ShadedBox key={i} x={bx-0.22} y={by-0.02} z={sz} w={0.48} d={0.04} h={0.22}
+          topG={`prod${i}_top`} frontG={`prod${i}_front`} sideG={`prod${i}_side`} />
+      ))}
+    </g>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Wall + structure for Octanorm / Maxima
+// ─────────────────────────────────────────────────────────────────
+function BoothWalls({ W, D, H, isMax, primaryColor }: { W: number; D: number; H: number; isMax: boolean; primaryColor: string }) {
+  const mod = isMax ? 2 : 1;
+  const ps = isMax ? 0.10 : 0.075;
+  const railZs = isMax ? [0.001, H * 0.48, H] : [0.001, H * 0.38, H * 0.76, H];
+
+  const backXs: number[] = useMemo(() => { const a = []; for (let x = 0; x <= W; x += mod) a.push(x); return a; }, [W, mod]);
+  const depthZs: number[] = useMemo(() => { const a = []; for (let y = 0; y <= D; y += mod) a.push(y); return a; }, [D, mod]);
+
+  const fasciaH = isMax ? 0.44 : 0.36;
+
+  return (
+    <g>
+      {/* ── Wall panels (drawn first, behind posts) ─────────── */}
+      {/* Back wall */}
+      {backXs.slice(0, -1).map((xi, i) => (
+        <BackPanel key={`bwp${i}`} x1={xi + ps / 2} x2={backXs[i + 1] - ps / 2} y={D} h={H} />
+      ))}
+      {/* Left wall */}
+      {!isMax && depthZs.slice(0, -1).map((yi, i) => (
+        <LeftPanel key={`lwp${i}`} y1={yi + ps / 2} y2={depthZs[i + 1] - ps / 2} x={0} h={H} />
+      ))}
+      {!isMax && depthZs.slice(0, -1).map((yi, i) => (
+        <polygon key={`rwp${i}`}
+          points={poly([W,yi+ps/2,0],[W,depthZs[i+1]-ps/2,0],[W,depthZs[i+1]-ps/2,H],[W,yi+ps/2,H])}
+          fill="url(#wall_panel_l)" stroke="rgba(150,180,220,0.3)" strokeWidth={0.4} />
+      ))}
+      {isMax && (
+        <>
+          <polygon points={poly([0,0,0],[0,D,0],[0,D,H],[0,0,H])} fill="url(#wall_panel_l)" stroke="rgba(150,180,220,0.25)" strokeWidth={0.5} />
+          <polygon points={poly([W,0,0],[W,D,0],[W,D,H],[W,0,H])} fill="url(#wall_panel_l)" stroke="rgba(150,180,220,0.25)" strokeWidth={0.5} />
+        </>
+      )}
+
+      {/* ── Horizontal rails ──────────────────────────────────── */}
+      {railZs.map(rz => (
+        <g key={rz}>
+          <BackRail x1={0} x2={W} y={D} z={rz} isMax={isMax} />
+          <LeftRail y1={0} y2={D} x={0} z={rz} isMax={isMax} />
+          <polygon points={poly([W,0,rz],[W,D,rz],[W,D,rz+0.055],[W,0,rz+0.055])}
+            fill={`url(#${isMax ? 'gold' : 'alum'}_front)`} strokeWidth={0.3} />
+        </g>
+      ))}
+
+      {/* ── Vertical posts ────────────────────────────────────── */}
+      {backXs.map(xi => <Post key={`bk${xi}`} x={xi} y={D} h={H} s={ps} isMax={isMax} />)}
+      {depthZs.map(yi => <Post key={`lt${yi}`} x={0} y={yi} h={H} s={ps} isMax={isMax} />)}
+      {depthZs.map(yi => <Post key={`rt${yi}`} x={W} y={yi} h={H} s={ps} isMax={isMax} />)}
+      <Post x={0} y={0} h={H} s={ps} isMax={isMax} />
+      <Post x={W} y={0} h={H} s={ps} isMax={isMax} />
+
+      {/* ── Fascia headers ───────────────────────────────────── */}
+      {/* Back fascia */}
+      <polygon points={poly([0,D,H],[W,D,H],[W,D,H+fasciaH],[0,D,H+fasciaH])}
+        fill="url(#fascia_front)" stroke="rgba(0,0,0,0.2)" strokeWidth={0.5} />
+      {/* Left fascia */}
+      <polygon points={poly([0,0,H],[0,D,H],[0,D,H+fasciaH],[0,0,H+fasciaH])}
+        fill="url(#fascia_side)" stroke="rgba(0,0,0,0.2)" strokeWidth={0.5} />
+      {/* Right fascia */}
+      <polygon points={poly([W,0,H],[W,D,H],[W,D,H+fasciaH],[W,0,H+fasciaH])}
+        fill="url(#fascia_side)" stroke="rgba(0,0,0,0.2)" strokeWidth={0.5} />
+      {/* Front fascia (top beam) */}
+      <polygon points={poly([0,0,H],[W,0,H],[W,0,H+fasciaH],[0,0,H+fasciaH])}
+        fill="url(#fascia_front)" stroke="rgba(0,0,0,0.2)" strokeWidth={0.5} />
+      {/* Fascia top cap */}
+      <polygon points={poly([0,0,H+fasciaH],[W,0,H+fasciaH],[W,D,H+fasciaH],[0,D,H+fasciaH])}
+        fill="url(#alum_top)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.4} />
+
+      {/* LED accent strip on back fascia */}
+      <polygon points={poly([0.2,D-0.03,H+0.03],[W-0.2,D-0.03,H+0.03],[W-0.2,D-0.03,H+0.07],[0.2,D-0.03,H+0.07])}
+        fill={isMax ? '#cc88ff' : '#4488ff'} filter="url(#ledGlow)" opacity="0.95" />
+      {/* LED on front fascia */}
+      <polygon points={poly([0.2,0.03,H+0.03],[W-0.2,0.03,H+0.03],[W-0.2,0.03,H+0.07],[0.2,0.03,H+0.07])}
+        fill={isMax ? '#cc88ff' : '#4488ff'} filter="url(#ledGlow)" opacity="0.7" />
+
+      {/* Spotlight dots on fascia */}
+      {backXs.filter(xi => xi > 0 && xi < W).map(xi => {
+        const sp = scrXY(xi, D, H + fasciaH - 0.05);
+        return (
+          <g key={`sp${xi}`}>
+            <circle cx={sp.x} cy={sp.y} r={3.5} fill="#d0dce8" stroke="#a0b0c0" strokeWidth={0.5} />
+            <circle cx={sp.x} cy={sp.y + 6} r={4} fill="rgba(255,245,220,0.06)" />
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Main exported component
+// ─────────────────────────────────────────────────────────────────
 export function BoothCanvas({ config }: { config?: Partial<BoothConfig> }) {
-  const cfg = { ...DEFAULT_CONFIG, ...config };
-  const { width: W, depth: D, height: H, system, companyName } = cfg;
-  const wallCfg = system === 'octanorm' ? OCTANORM : MAXIMA;
+  const cfg: BoothConfig = { ...DEFAULTS, ...config };
+  const { width: W, depth: D, height: H, system, companyName, primaryColor = '#1a3a7a', carpetColor = '#1a2640' } = cfg;
+  const isMax = system === 'maxima';
 
-  // Exhibition hall floor (large parallelogram, extends beyond booth)
-  const hallExt = 1.5;
+  const hallExt = 2;
 
-  const hallFloorColor = '#0d1220';
-  const carpetColor = wallCfg.carpetColor;
-
-  // Grid lines on hall floor
   const gridLines = useMemo(() => {
-    const lines = [];
-    const ext = hallExt;
-    // Along X axis
-    for (let yi = -ext; yi <= D + ext; yi += 0.5) {
-      lines.push({ type: 'x', y: yi });
+    const lines: { x1: number; y1: number; x2: number; y2: number }[] = [];
+    const ext = hallExt + 0.5;
+    for (let yi = -hallExt; yi <= D + ext; yi += 0.5) {
+      const a = scrXY(-ext, yi, 0), b = scrXY(W + ext, yi, 0);
+      lines.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y });
     }
-    // Along Y axis
     for (let xi = -ext; xi <= W + ext; xi += 0.5) {
-      lines.push({ type: 'y', x: xi });
+      const a = scrXY(xi, -hallExt, 0), b = scrXY(xi, D + ext, 0);
+      lines.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y });
     }
     return lines;
   }, [W, D]);
 
-  // Spotlights along fascia
-  const spotlightPositions = useMemo(() => {
-    const spots: { x: number; y: number }[] = [];
-    for (let xi = 1; xi < W; xi += 2) spots.push({ x: xi, y: D });
-    for (let yi = 1; yi < D; yi += 2) spots.push({ x: 0, y: yi });
-    return spots;
-  }, [W, D]);
+  const pc = primaryColor;
+  // Derive lighter/darker shades of primary
+  const pcDark = isMax ? '#2e1050' : '#0e2050';
+  const pcSide = isMax ? '#220c3c' : '#091838';
 
   return (
-    <svg
-      viewBox="0 0 500 380"
-      width="100%"
-      height="100%"
-      style={{ display: 'block' }}
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg viewBox="0 0 520 400" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
       <defs>
-        {/* Ambient glow for the scene */}
-        <radialGradient id="sceneGlow" cx="50%" cy="50%" r="60%">
-          <stop offset="0%" stopColor={system === 'maxima' ? '#3a1860' : '#0a2050'} stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#050810" stopOpacity="0" />
+        {/* ── Drop shadow for booth ─────────────────────── */}
+        <filter id="boothShadow" x="-15%" y="-15%" width="130%" height="140%">
+          <feDropShadow dx="3" dy="10" stdDeviation="8" floodColor="#000820" floodOpacity="0.75" />
+        </filter>
+
+        {/* ── LED glow ─────────────────────────────────── */}
+        <filter id="ledGlow" x="-100%" y="-400%" width="300%" height="900%">
+          <feGaussianBlur stdDeviation="3.5" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+
+        {/* ── Aluminum gradients ───────────────────────── */}
+        <linearGradient id="alum_top" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#eef3f8" /><stop offset="100%" stopColor="#d0dce8" />
+        </linearGradient>
+        <linearGradient id="alum_front" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#c0ceda" /><stop offset="100%" stopColor="#98a8b8" />
+        </linearGradient>
+        <linearGradient id="alum_side" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#8898aa" /><stop offset="100%" stopColor="#607080" />
+        </linearGradient>
+
+        {/* ── Gold (Maxima) gradients ──────────────────── */}
+        <linearGradient id="gold_top" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#f0d898" /><stop offset="100%" stopColor="#d4b060" />
+        </linearGradient>
+        <linearGradient id="gold_front" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#c8a050" /><stop offset="100%" stopColor="#a07830" />
+        </linearGradient>
+        <linearGradient id="gold_side" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#906020" /><stop offset="100%" stopColor="#684010" />
+        </linearGradient>
+
+        {/* ── White/light (panels, counter) ───────────── */}
+        <linearGradient id="white_top" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#f8fafc" /><stop offset="100%" stopColor="#e0e8f0" />
+        </linearGradient>
+        <linearGradient id="white_front" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#d4dfe8" /><stop offset="100%" stopColor="#b0bcc8" />
+        </linearGradient>
+        <linearGradient id="white_side" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#98a8b8" /><stop offset="100%" stopColor="#708090" />
+        </linearGradient>
+
+        {/* ── Wood (table) ─────────────────────────────── */}
+        <linearGradient id="wood_top" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#d8aa72" /><stop offset="100%" stopColor="#b88848" />
+        </linearGradient>
+        <linearGradient id="wood_front" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#a87840" /><stop offset="100%" stopColor="#7a5828" />
+        </linearGradient>
+        <linearGradient id="wood_side" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#6a4820" /><stop offset="100%" stopColor="#4a3010" />
+        </linearGradient>
+
+        {/* ── Chairs ───────────────────────────────────── */}
+        <linearGradient id="chair_top" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#eaf0f8" /><stop offset="100%" stopColor="#d0dce8" />
+        </linearGradient>
+        <linearGradient id="chair_front" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#b8c8d8" /><stop offset="100%" stopColor="#98a8b8" />
+        </linearGradient>
+        <linearGradient id="chair_side" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7888a0" /><stop offset="100%" stopColor="#586880" />
+        </linearGradient>
+
+        {/* ── Fascia (primary color) ───────────────────── */}
+        <linearGradient id="fascia_front" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={pc} /><stop offset="100%" stopColor={pcDark} />
+        </linearGradient>
+        <linearGradient id="fascia_side" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={pcDark} /><stop offset="100%" stopColor={pcSide} />
+        </linearGradient>
+
+        {/* ── Screen ───────────────────────────────────── */}
+        <linearGradient id="screen_top" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#1a2030" /><stop offset="100%" stopColor="#0a1020" />
+        </linearGradient>
+        <linearGradient id="screen_front" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#0a1828" /><stop offset="100%" stopColor="#050e18" />
+        </linearGradient>
+        <linearGradient id="screen_side" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#050e18" /><stop offset="100%" stopColor="#020810" />
+        </linearGradient>
+        <linearGradient id="screen_glow" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={isMax ? '#6030c0' : '#1048b0'} />
+          <stop offset="100%" stopColor={isMax ? '#4020a0' : '#0830a0'} />
+        </linearGradient>
+
+        {/* ── Wall panels ──────────────────────────────── */}
+        <linearGradient id="wall_panel" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="rgba(210,228,248,0.28)" />
+          <stop offset="100%" stopColor="rgba(180,205,230,0.15)" />
+        </linearGradient>
+        <linearGradient id="wall_panel_l" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgba(190,210,235,0.22)" />
+          <stop offset="100%" stopColor="rgba(160,185,215,0.12)" />
+        </linearGradient>
+
+        {/* ── Product colors (5) ───────────────────────── */}
+        {[['#ee4444','#cc2222','#aa1010'],['#3399ee','#1177cc','#0055aa'],
+          ['#44cc55','#22aa33','#108820'],['#eebb22','#cc9900','#aa7700'],
+          ['#aa44dd','#8822bb','#661099']].map(([t,f,s],i) => (
+          <g key={i}>
+            <linearGradient id={`prod${i}_top`} gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor={t} /><stop offset="100%" stopColor={f} />
+            </linearGradient>
+            <linearGradient id={`prod${i}_front`} gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={f} /><stop offset="100%" stopColor={s} />
+            </linearGradient>
+            <linearGradient id={`prod${i}_side`} gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={s} /><stop offset="100%" stopColor="#101010" />
+            </linearGradient>
+          </g>
+        ))}
+
+        {/* ── Ambient shadow under booth ────────────────── */}
+        <radialGradient id="boothAmbient" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#000820" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#000820" stopOpacity="0" />
         </radialGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-          <feMerge>
-            <feMergeNode in="coloredBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <filter id="softGlow">
-          <feGaussianBlur stdDeviation="4" result="coloredBlur" />
-          <feMerge>
-            <feMergeNode in="coloredBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
       </defs>
 
-      {/* Background */}
-      <rect width="500" height="380" fill="#080d18" />
+      {/* ── Background ───────────────────────────────────── */}
+      <rect width="520" height="400" fill="#080d18" />
+      {/* Atmospheric gradient */}
+      <radialGradient id="atmo" cx="45%" cy="55%" r="55%">
+        <stop offset="0%" stopColor={isMax ? '#1a0830' : '#04142a'} stopOpacity="0.8" />
+        <stop offset="100%" stopColor="#080d18" stopOpacity="0" />
+      </radialGradient>
+      <rect width="520" height="400" fill="url(#atmo)" />
 
-      {/* Scene ambient glow */}
-      <rect width="500" height="380" fill="url(#sceneGlow)" />
-
-      {/* ── 1. Exhibition hall floor ──────────────────────────── */}
+      {/* ── Exhibition hall floor ─────────────────────────── */}
       <polygon
-        points={poly(
-          [-hallExt, -hallExt, 0],
-          [W + hallExt, -hallExt, 0],
-          [W + hallExt, D + hallExt, 0],
-          [-hallExt, D + hallExt, 0]
-        )}
-        fill={hallFloorColor}
+        points={poly([-hallExt,-hallExt,0],[W+hallExt,-hallExt,0],[W+hallExt,D+hallExt,0],[-hallExt,D+hallExt,0])}
+        fill="#111820"
       />
-
-      {/* Hall floor grid */}
-      <g opacity="0.18" stroke="#2a4060" strokeWidth="0.4">
-        {gridLines.map((gl, i) => gl.type === 'x'
-          ? <line key={i}
-              x1={textAnchor(-hallExt, gl.y!, 0).x} y1={textAnchor(-hallExt, gl.y!, 0).y}
-              x2={textAnchor(W+hallExt, gl.y!, 0).x} y2={textAnchor(W+hallExt, gl.y!, 0).y}
-            />
-          : <line key={i}
-              x1={textAnchor(gl.x!, -hallExt, 0).x} y1={textAnchor(gl.x!, -hallExt, 0).y}
-              x2={textAnchor(gl.x!, D+hallExt, 0).x} y2={textAnchor(gl.x!, D+hallExt, 0).y}
-            />
-        )}
+      {/* Floor grid */}
+      <g stroke={isMax ? '#2a1a40' : '#182038'} strokeWidth="0.5" opacity="0.55">
+        {gridLines.map((l, i) => (
+          <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} />
+        ))}
       </g>
 
-      {/* ── 2. Booth carpet floor ─────────────────────────────── */}
-      <polygon
-        points={poly([0,0,0],[W,0,0],[W,D,0],[0,D,0])}
-        fill={carpetColor}
-        stroke="rgba(100,140,200,0.3)"
-        strokeWidth="0.6"
-      />
-      {/* Carpet subtle pattern */}
-      <polygon
-        points={poly([0.05,0.05,0.001],[W-0.05,0.05,0.001],[W-0.05,D-0.05,0.001],[0.05,D-0.05,0.001])}
-        fill="none"
-        stroke={system === 'maxima' ? 'rgba(160,130,80,0.15)' : 'rgba(80,120,180,0.12)'}
-        strokeWidth="1"
+      {/* ── Ambient shadow under booth ────────────────────── */}
+      <ellipse
+        cx={scrXY(W/2, D*0.6, 0).x}
+        cy={scrXY(W/2, D*0.6, 0).y + 5}
+        rx={160} ry={40}
+        fill="url(#boothAmbient)"
       />
 
-      {/* ── 3. Right wall (before back wall in painter order) ──── */}
-      {!cfg.openRight && <OctanormRightWall W={W} D={D} H={H} cfg={wallCfg} />}
+      {/* ── Carpet ────────────────────────────────────────── */}
+      <polygon points={poly([0,0,0],[W,0,0],[W,D,0],[0,D,0])} fill={carpetColor} />
+      {/* Carpet border */}
+      <polygon points={poly([0.05,0.05,0.002],[W-0.05,0.05,0.002],[W-0.05,D-0.05,0.002],[0.05,D-0.05,0.002])}
+        fill="none" stroke={isMax ? 'rgba(160,100,230,0.2)' : 'rgba(80,120,200,0.18)'} strokeWidth="1" />
 
-      {/* ── 4. Back wall ──────────────────────────────────────── */}
-      <OctanormBackWall W={W} D={D} H={H} cfg={wallCfg} />
-
-      {/* ── 5. Left wall ─────────────────────────────────────── */}
-      {!cfg.openLeft && <OctanormLeftWall W={W} D={D} H={H} cfg={wallCfg} />}
-
-      {/* ── 6. Furniture ─────────────────────────────────────── */}
-      <OctanormFurniture W={W} D={D} system={system} />
-
-      {/* ── 7. Fascia headers ─────────────────────────────────── */}
-      <Fascia W={W} D={D} H={H} cfg={wallCfg} companyName={companyName} system={system} />
-
-      {/* ── 8. Spotlights on fascia ───────────────────────────── */}
-      {spotlightPositions.map((sp, i) => (
-        <Spotlight key={i} x={sp.x} y={sp.y} z={H + wallCfg.fasciaH + 0.05} />
-      ))}
-
-      {/* ── 9. Corner caps on top of posts ───────────────────── */}
-      {/* Top corner connectors */}
-      <Box x={-0.05} y={D-0.05} z={H} w={0.12} d={0.12} h={0.06}
-        top={wallCfg.postCapColor} front={wallCfg.postCapColor} side={wallCfg.postColor} />
-      <Box x={W-0.05} y={D-0.05} z={H} w={0.12} d={0.12} h={0.06}
-        top={wallCfg.postCapColor} front={wallCfg.postCapColor} side={wallCfg.postColor} />
-      {!cfg.openLeft && (
-        <Box x={-0.05} y={-0.05} z={H} w={0.12} d={0.12} h={0.06}
-          top={wallCfg.postCapColor} front={wallCfg.postCapColor} side={wallCfg.postColor} />
-      )}
-
-      {/* System label badge */}
-      <g transform="translate(14, 14)">
-        <rect rx="4" ry="4" width="90" height="20" fill={wallCfg.fasciaColor} opacity="0.9" />
-        <text x="8" y="14" fill="white" fontSize="8" fontFamily="monospace" fontWeight="bold" letterSpacing="1">
-          {system === 'octanorm' ? '⬡ OCTANORM' : '◈ MAXIMA'}
-        </text>
+      {/* ── Full booth with shadow filter ─────────────────── */}
+      <g filter="url(#boothShadow)">
+        <BoothWalls W={W} D={D} H={H} isMax={isMax} primaryColor={pc} />
       </g>
 
-      {/* Scale indicator */}
-      <g transform={`translate(14, 350)`}>
-        <line
-          x1={textAnchor(0,0,0).x - CX + 14} y1={textAnchor(0,0,0).y - CY}
-          x2={textAnchor(1,0,0).x - CX + 14} y2={textAnchor(1,0,0).y - CY}
-          stroke="#4060a0" strokeWidth="1"
-        />
-        <text x={textAnchor(0.5, 0, 0).x - CX + 11} y={textAnchor(0, 0, 0).y - CY + 8}
-          fill="#4060a0" fontSize="6" fontFamily="monospace" textAnchor="middle">1m</text>
+      {/* ── Furniture (drawn on top of walls) ─────────────── */}
+      <RightShelvingUnit W={W} D={D} />
+      <ShelvingUnit W={W} D={D} />
+      <MeetingTable W={W} D={D} />
+      <ReceptionCounter W={W} D={D} />
+      <DisplayTotem W={W} D={D} primaryColor={pc} />
+      <BrochureStand W={W} D={D} />
+
+      {/* ── System badge ──────────────────────────────────── */}
+      <rect x="12" y="12" width="100" height="22" rx="5" ry="5" fill={pc} opacity="0.9" />
+      <text x="62" y="27" fill="white" fontSize="8.5" fontFamily="'Courier New',monospace" fontWeight="bold"
+        letterSpacing="1.5" textAnchor="middle">
+        {isMax ? '◈ MAXIMA' : '⬡ OCTANORM'}
+      </text>
+
+      {/* ── Company name on fascia ────────────────────────── */}
+      {(() => {
+        const a = scrXY(W * 0.25, D, H + 0.18);
+        const b = scrXY(W * 0.75, D, H + 0.18);
+        const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+        return (
+          <text
+            x={mid.x} y={mid.y}
+            fill="rgba(255,255,255,0.92)"
+            fontSize="7.5"
+            fontFamily="'Courier New',monospace"
+            fontWeight="bold"
+            letterSpacing="2.5"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            transform={`rotate(${ang},${mid.x},${mid.y})`}
+          >
+            {companyName}
+          </text>
+        );
+      })()}
+
+      {/* ── Scale bar ─────────────────────────────────────── */}
+      <g opacity="0.5">
+        {(() => {
+          const a = scrXY(0, 0, 0), b = scrXY(1, 0, 0);
+          return (
+            <>
+              <line x1={a.x} y1={a.y + 10} x2={b.x} y2={b.y + 10} stroke="#4060a0" strokeWidth="1.5" />
+              <text x={(a.x + b.x) / 2} y={a.y + 20} fill="#4060a0" fontSize="6" fontFamily="monospace" textAnchor="middle">1m</text>
+            </>
+          );
+        })()}
       </g>
     </svg>
   );
