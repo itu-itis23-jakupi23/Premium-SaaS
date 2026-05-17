@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { Booth3D } from "@/components/workspace/Booth3D";
+import type { BoothSystem } from "@/components/workspace/BoothCanvas";
 import { 
-  Box, 
   Layers, 
   Layout, 
   Maximize, 
@@ -17,9 +17,6 @@ import {
   ZoomOut,
   ChevronRight,
   Plus,
-  Info,
-  ChevronDown,
-  Monitor,
   Lightbulb,
   Table as TableIcon,
   Palette,
@@ -49,30 +46,54 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-const furnitureItems = [
-  { id: "wall-1", name: "Solid Wall", icon: Wall, category: "Walls" },
-  { id: "wall-2", name: "Glass Wall", icon: Wall, category: "Walls" },
+const libraryItems = [
+  { id: "wall-solid", name: "Solid Wall", icon: Wall, category: "Structure" },
+  { id: "wall-glass", name: "Glass Wall", icon: Wall, category: "Structure" },
+  { id: "fascia-std", name: "Standard Fascia", icon: Layout, category: "Fascia" },
   { id: "counter-1", name: "Reception Counter", icon: TableIcon, category: "Furniture" },
   { id: "chair-1", name: "Design Chair", icon: Square, category: "Furniture" },
-  { id: "light-1", name: "Spotlight", icon: Lightbulb, category: "Lighting" },
-  { id: "fascia-1", name: "Standard Fascia", icon: Layout, category: "Fascia" },
+  { id: "light-spot", name: "Spotlight", icon: Lightbulb, category: "Lighting" },
+  { id: "light-arm", name: "Arm Light", icon: Lightbulb, category: "Lighting" },
 ];
 
-export default function PMWorkspace() {
-  const [rotation, setRotation] = useState({ x: 20, y: -45 });
-  const [isRotating, setIsRotating] = useState(true);
+interface BoothState {
+  width: number;
+  depth: number;
+  height: number;
+  system: BoothSystem;
+  companyName: string;
+  openFront: boolean;
+  openBack: boolean;
+  openLeft: boolean;
+  openRight: boolean;
+}
 
-  useEffect(() => {
-    if (!isRotating) return;
-    const interval = setInterval(() => {
-      setRotation(prev => ({ ...prev, y: prev.y + 0.5 }));
-    }, 50);
-    return () => clearInterval(interval);
-  }, [isRotating]);
+export default function PMWorkspace() {
+  const [booth, setBooth] = useState<BoothState>({
+    width: 6,
+    depth: 3,
+    height: 2.5,
+    system: 'octanorm',
+    companyName: 'TECHCORP INDUSTRIES',
+    openFront: true,
+    openBack: false,
+    openLeft: false,
+    openRight: false,
+  });
+
+  const set = useCallback(<K extends keyof BoothState>(key: K, val: BoothState[K]) => {
+    setBooth(prev => ({ ...prev, [key]: val }));
+  }, []);
+
+  const parseDim = (raw: string, fallback: number) => {
+    const n = parseFloat(raw);
+    return isNaN(n) || n <= 0 ? fallback : Math.min(n, 40);
+  };
 
   return (
     <div className="flex h-screen w-full flex-col bg-[#0a0a0c] text-slate-200 overflow-hidden">
-      {/* Top Toolbar */}
+
+      {/* ── Top Toolbar ─────────────────────────────────────────── */}
       <header className="flex h-14 items-center justify-between border-b border-white/5 bg-background/50 px-4 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <Link href="/pm">
@@ -85,25 +106,17 @@ export default function PMWorkspace() {
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Project</span>
             <span className="text-sm font-bold text-white leading-none">TechCon 2024 - Global Exhibit</span>
           </div>
-          <Badge variant="outline" className="ml-2 border-primary/20 bg-primary/5 text-primary text-[10px]">
-            v2.4.1
-          </Badge>
+          <Badge variant="outline" className="ml-2 border-primary/20 bg-primary/5 text-primary text-[10px]">v2.4.1</Badge>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="flex items-center bg-white/5 rounded-md p-0.5">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white"><Undo2 className="h-4 w-4" /></Button>
-              </TooltipTrigger>
-              <TooltipContent>Undo</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white"><Redo2 className="h-4 w-4" /></Button>
-              </TooltipTrigger>
-              <TooltipContent>Redo</TooltipContent>
-            </Tooltip>
+            <Tooltip><TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white"><Undo2 className="h-4 w-4" /></Button>
+            </TooltipTrigger><TooltipContent>Undo</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white"><Redo2 className="h-4 w-4" /></Button>
+            </TooltipTrigger><TooltipContent>Redo</TooltipContent></Tooltip>
           </div>
           <div className="h-4 w-px bg-white/10 mx-1" />
           <Button variant="outline" size="sm" className="h-9 gap-2 bg-white/5 border-white/10 hover:bg-white/10">
@@ -122,7 +135,8 @@ export default function PMWorkspace() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel - Furniture Library */}
+
+        {/* ── Left Panel — Component Library ──────────────────────── */}
         <aside className="w-[240px] border-r border-white/5 bg-background/30 backdrop-blur-sm overflow-y-auto">
           <div className="p-4 border-b border-white/5">
             <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
@@ -134,16 +148,16 @@ export default function PMWorkspace() {
             </div>
           </div>
           <Accordion type="multiple" defaultValue={["Structure", "Furniture"]} className="w-full">
-            {["Structure", "Walls", "Fascia", "Furniture", "Lighting", "Decoration"].map((cat) => (
+            {["Structure", "Fascia", "Furniture", "Lighting"].map((cat) => (
               <AccordionItem key={cat} value={cat} className="border-white/5">
                 <AccordionTrigger className="px-4 py-3 text-xs font-medium hover:bg-white/5 no-underline">
                   {cat}
                 </AccordionTrigger>
                 <AccordionContent className="p-2 pt-0">
                   <div className="grid grid-cols-2 gap-2">
-                    {furnitureItems.filter(i => i.category === cat || (cat === "Structure" && i.category === "Walls")).map((item) => (
-                      <div 
-                        key={item.id} 
+                    {libraryItems.filter(i => i.category === cat).map((item) => (
+                      <div
+                        key={item.id}
                         className="group flex flex-col items-center justify-center rounded-lg border border-white/5 bg-white/5 p-3 transition-all hover:border-primary/50 hover:bg-white/10 cursor-grab active:cursor-grabbing"
                       >
                         <item.icon className="h-6 w-6 text-slate-400 group-hover:text-primary transition-colors mb-2" />
@@ -161,15 +175,19 @@ export default function PMWorkspace() {
           </Accordion>
         </aside>
 
-        {/* Center Canvas */}
+        {/* ── Center Canvas ──────────────────────────────────────── */}
         <main className="flex-1 relative overflow-hidden bg-[#080d18]">
-          {/* Booth Canvas SVG */}
           <div className="absolute inset-0">
             <Booth3D config={{
-              width: 8, depth: 6, height: 3,
-              system: 'octanorm',
-              companyName: 'TECHCORP INDUSTRIES',
-              openFront: true,
+              width:       booth.width,
+              depth:       booth.depth,
+              height:      booth.height,
+              system:      booth.system,
+              companyName: booth.companyName,
+              openFront:   booth.openFront,
+              openBack:    booth.openBack,
+              openLeft:    booth.openLeft,
+              openRight:   booth.openRight,
             }} />
           </div>
 
@@ -191,46 +209,78 @@ export default function PMWorkspace() {
           </div>
 
           {/* Live indicator */}
-          <div className="absolute top-6 left-6 z-10">
+          <div className="absolute top-6 left-6 z-10 flex flex-col gap-1">
             <Badge className="bg-primary/20 text-primary border-primary/30 gap-2 px-3 py-1">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               LIVE WORKSPACE
             </Badge>
+            <div className="px-3 py-1 rounded bg-background/50 border border-white/10 backdrop-blur-md text-[10px] font-bold text-slate-400 uppercase">
+              {booth.system === 'octanorm' ? '⬡ OCTANORM' : '◈ MAXIMA'} · {booth.width}×{booth.depth}m
+            </div>
           </div>
         </main>
 
-        {/* Right Panel - Properties */}
+        {/* ── Right Panel — Properties ───────────────────────────── */}
         <aside className="w-[280px] border-l border-white/5 bg-background/30 backdrop-blur-sm overflow-y-auto">
           <div className="p-4 border-b border-white/5">
             <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
               <SettingsIcon className="h-3 w-3" /> Properties
             </h3>
-            
+
             <div className="space-y-6">
-              {/* Structure Settings */}
+
+              {/* Stand Dimensions */}
               <div className="space-y-3">
                 <Label className="text-[10px] uppercase font-bold text-slate-500">Stand Configuration</Label>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <Label className="text-[10px] text-slate-400">Width (m)</Label>
-                    <Input defaultValue="10" className="h-8 text-xs bg-white/5 border-white/10" />
+                    <Input
+                      type="number" min={1} max={40} step={1}
+                      value={booth.width}
+                      onChange={e => set('width', parseDim(e.target.value, booth.width))}
+                      className="h-8 text-xs bg-white/5 border-white/10"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[10px] text-slate-400">Depth (m)</Label>
-                    <Input defaultValue="10" className="h-8 text-xs bg-white/5 border-white/10" />
+                    <Input
+                      type="number" min={1} max={40} step={1}
+                      value={booth.depth}
+                      onChange={e => set('depth', parseDim(e.target.value, booth.depth))}
+                      className="h-8 text-xs bg-white/5 border-white/10"
+                    />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-[10px] text-slate-400">Stand Type</Label>
-                  <Select defaultValue="maxima">
+                  <Label className="text-[10px] text-slate-400">Height (m)</Label>
+                  <Input
+                    type="number" min={1.5} max={6} step={0.5}
+                    value={booth.height}
+                    onChange={e => set('height', parseDim(e.target.value, booth.height))}
+                    className="h-8 text-xs bg-white/5 border-white/10"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-slate-400">System</Label>
+                  <Select value={booth.system} onValueChange={v => set('system', v as BoothSystem)}>
                     <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="octanorm">Octanorm</SelectItem>
-                      <SelectItem value="maxima">Maxima</SelectItem>
+                      <SelectItem value="octanorm">Octanorm (1m module)</SelectItem>
+                      <SelectItem value="maxima">Maxima (2m module)</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-slate-400">Fascia / Company Name</Label>
+                  <Input
+                    value={booth.companyName}
+                    onChange={e => set('companyName', e.target.value.toUpperCase())}
+                    className="h-8 text-xs bg-white/5 border-white/10"
+                    placeholder="COMPANY NAME"
+                  />
                 </div>
               </div>
 
@@ -240,10 +290,19 @@ export default function PMWorkspace() {
               <div className="space-y-3">
                 <Label className="text-[10px] uppercase font-bold text-slate-500">Open Sides</Label>
                 <div className="grid grid-cols-2 gap-3">
-                  {["Front", "Back", "Left", "Right"].map((side) => (
-                    <div key={side} className="flex items-center gap-2">
-                      <Checkbox id={`side-${side}`} checked={side === "Front" || side === "Right"} />
-                      <Label htmlFor={`side-${side}`} className="text-xs text-slate-300">{side}</Label>
+                  {([
+                    ['openFront', 'Front'],
+                    ['openBack',  'Back'],
+                    ['openLeft',  'Left'],
+                    ['openRight', 'Right'],
+                  ] as [keyof BoothState, string][]).map(([key, label]) => (
+                    <div key={key} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`side-${key}`}
+                        checked={booth[key] as boolean}
+                        onCheckedChange={v => set(key, !!v)}
+                      />
+                      <Label htmlFor={`side-${key}`} className="text-xs text-slate-300 cursor-pointer">{label}</Label>
                     </div>
                   ))}
                 </div>
@@ -251,34 +310,31 @@ export default function PMWorkspace() {
 
               <Separator className="bg-white/5" />
 
-              {/* Object Properties */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] uppercase font-bold text-slate-500">Selected Object</Label>
-                  <Badge variant="outline" className="h-5 text-[8px] bg-primary/10 text-primary">Wall_04</Badge>
-                </div>
-                <div className="space-y-4 pt-2">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Label className="text-[10px] text-slate-400">Position X</Label>
-                      <span className="text-[10px] text-slate-500">4.2m</span>
-                    </div>
-                    <Slider defaultValue={[42]} max={100} step={1} className="[&_[role=slider]]:h-3 [&_[role=slider]]:w-3" />
+              {/* Quick stats */}
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase font-bold text-slate-500">Stand Stats</Label>
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <div className="bg-white/5 rounded p-2">
+                    <p className="text-slate-500">Floor Area</p>
+                    <p className="font-bold text-white">{(booth.width * booth.depth).toFixed(1)} m²</p>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Label className="text-[10px] text-slate-400">Rotation</Label>
-                      <span className="text-[10px] text-slate-500">90°</span>
-                    </div>
-                    <Slider defaultValue={[90]} max={360} step={45} className="[&_[role=slider]]:h-3 [&_[role=slider]]:w-3" />
+                  <div className="bg-white/5 rounded p-2">
+                    <p className="text-slate-500">Volume</p>
+                    <p className="font-bold text-white">{(booth.width * booth.depth * booth.height).toFixed(1)} m³</p>
                   </div>
-                  <div className="pt-2">
-                    <Button variant="outline" size="sm" className="w-full text-[10px] h-8 border-red-500/20 text-red-400 hover:bg-red-500/10">
-                      Delete Object
-                    </Button>
+                  <div className="bg-white/5 rounded p-2">
+                    <p className="text-slate-500">Modules</p>
+                    <p className="font-bold text-white">
+                      {booth.system === 'octanorm' ? `${booth.width}×${booth.depth}` : `${Math.ceil(booth.width/2)}×${Math.ceil(booth.depth/2)}`}
+                    </p>
+                  </div>
+                  <div className="bg-white/5 rounded p-2">
+                    <p className="text-slate-500">Height</p>
+                    <p className="font-bold text-white">{booth.height} m</p>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </aside>
@@ -292,11 +348,11 @@ export default function PMWorkspace() {
             <span>Connected to TechCorp_Workspace_A</span>
           </div>
           <Separator orientation="vertical" className="h-4 bg-white/10" />
-          <span>Objects: 42</span>
-          <span>Polygons: 1,204</span>
+          <span>System: {booth.system === 'octanorm' ? 'Octanorm' : 'Maxima'}</span>
+          <span>Floor: {(booth.width * booth.depth).toFixed(0)} m²</span>
         </div>
         <div className="flex items-center gap-4">
-          <span>Zoom: 120%</span>
+          <span>{booth.width}m × {booth.depth}m × {booth.height}m</span>
           <Separator orientation="vertical" className="h-4 bg-white/10" />
           <span>Last Saved: Just now</span>
         </div>
