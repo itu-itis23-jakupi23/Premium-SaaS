@@ -55,6 +55,50 @@ const STAGGER = {
   }
 };
 
+const HERO_SLIDES = [
+  { src: '/mockup-2.png', label: '3D Booth Renderer' },
+  { src: '/mockup-3.png', label: 'Design Workspace' },
+  { src: '/mockup-1.png', label: 'Component Library' },
+];
+
+function HeroCarousel() {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setActive(i => (i + 1) % HERO_SLIDES.length), 3500);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="relative overflow-hidden bg-[#f4f5f7]" style={{ aspectRatio: '16/9' }}>
+      {HERO_SLIDES.map((s, i) => (
+        <motion.img
+          key={s.src}
+          src={s.src}
+          alt={s.label}
+          className="absolute inset-0 w-full h-full object-cover object-top"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: i === active ? 1 : 0 }}
+          transition={{ duration: 0.7, ease: 'easeInOut' }}
+          draggable={false}
+        />
+      ))}
+      {/* Dot indicators */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+        {HERO_SLIDES.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setActive(i)}
+            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === active ? 'bg-primary w-5' : 'bg-white/40 hover:bg-white/70'}`}
+          />
+        ))}
+      </div>
+      {/* Bottom fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+    </div>
+  );
+}
+
 export default function Home() {
   const { scrollYProgress } = useScroll();
   const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
@@ -171,16 +215,8 @@ export default function Home() {
                     </div>
                     <span className="text-[10px] text-muted-foreground font-mono hidden sm:block flex-shrink-0">TechCon 2024</span>
                   </div>
-                  {/* Actual booth renderer */}
-                  <div className="relative h-[480px] overflow-hidden bg-[#f0f2f5]">
-                    <iframe
-                      src="/booth-render.html?w=9&d=6&h=2.2&name=TECHCORP+INDUSTRIES&style=octa&open=front,left"
-                      className="w-full h-full border-0"
-                      style={{ pointerEvents: 'none' }}
-                      title="ENS 3D Booth Preview"
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-background via-background/60 to-transparent pointer-events-none" />
-                  </div>
+                  {/* Product screenshot carousel */}
+                  <HeroCarousel />
                 </div>
               </motion.div>
             </motion.div>
