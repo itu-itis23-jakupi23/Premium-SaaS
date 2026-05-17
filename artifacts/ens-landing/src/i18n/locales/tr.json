@@ -1,0 +1,174 @@
+{
+  "common": {
+    "startDesigning": "Tasarlamaya Başla",
+    "watchDemo": "Demo İzle",
+    "getAccess": "Hemen Erişim Al",
+    "contactSales": "Satış ile İletişim",
+    "signIn": "Giriş Yap",
+    "getStarted": "Başla",
+    "logIn": "Giriş Yap",
+    "learnMore": "Daha Fazla Bilgi",
+    "copyright": "© {{year}} ENS Expo Solutions Ltd. Tüm hakları saklıdır.",
+    "internalOnly": "Yalnızca dahili kullanım"
+  },
+  "nav": {
+    "features": "Özellikler",
+    "howItWorks": "Nasıl Çalışır",
+    "showcase": "Portföy",
+    "staffPortal": "Personel Portalı",
+    "roles": "Roller",
+    "workflow": "İş Akışı",
+    "clientSite": "Müşteri Sitesi"
+  },
+  "home": {
+    "hero": {
+      "badge": "Fuar sektörü için 3D tasarım stüdyosu",
+      "titlePart1": "Fuar Standlarını",
+      "titlePart2": "Gerçek Zamanlı 3D'de Tasarla",
+      "subtitle": "Octanorm ve Maxima standlarını doğrudan tarayıcınızda oluşturun, özelleştirin ve yönetin. Ciddi fuar tasarımcıları için profesyonel araçlar."
+    },
+    "trustedBy": "Güvenen markalar",
+    "stats": {
+      "projectProgress": "Proje İlerlemesi",
+      "boothDimensions": "Stand Boyutları",
+      "approvalStatus": "Onay Durumu",
+      "furnitureCount": "Mobilya Sayısı",
+      "pending": "Beklemede"
+    },
+    "demo": {
+      "badge": "Canlı Demo Erişimi",
+      "title": "Platformun tüm özelliklerini canlı görün",
+      "subtitle": "Ürün uzmanlarımızdan biriyle kişiselleştirilmiş bir tur alın.",
+      "cta": "Demo Talep Et"
+    },
+    "features": {
+      "heading": "Tasarlamak ve teslim etmek için",
+      "headingAccent": "ihtiyacınız olan her şey",
+      "subheading": "Fuar sektörü için özel olarak geliştirilmiş eksiksiz bir tasarım ve proje yönetim paketi.",
+      "realtime": { "title": "Gerçek Zamanlı 3D Tuval", "desc": "Sistem bileşenlerini canlı 3D sahneye sürükleyip bırakın. Gördüğünüz inşa edilendir." },
+      "octanorm": { "title": "Octanorm Sistemi", "desc": "Hassas 40mm ve 50mm profiller, konektörler ve panellerle eksiksiz Octanorm modüler sistem." },
+      "maxima": { "title": "Maxima Çerçevesi", "desc": "Yapılandırılabilir açıklıklar ve dolgu seçenekleriyle ağır hizmet Maxima alüminyum ekstrüzyon sistemi." },
+      "client": { "title": "Müşteri Önizlemesi", "desc": "Müşterilerle canlı 3D bağlantısı paylaşın. Hesap gerekmeksizin doğrudan model üzerinde not alabilirler." },
+      "analytics": { "title": "Proje Analitiği", "desc": "Proje hızını, onay döngülerini, maliyet tahminlerini ve ekip kullanımını gerçek zamanlı takip edin." },
+      "automation": { "title": "Akıllı Otomasyon", "desc": "Tek tıklamayla otomatik olarak kat planları, yükseklik çizimleri, parça listeleri ve maliyet tahminleri oluşturun." }
+    },
+    "howItWorks": {
+      "heading": "Briften inşaata",
+      "headingAccent": "dört adımda",
+      "brief": { "step": "01", "title": "Brifing Yükle", "desc": "Müşterinizin etkinlik brifingini, kat planını veya stand teknik şartnamesini içe aktarın." },
+      "design": { "step": "02", "title": "3D'de Tasarla", "desc": "Octanorm veya Maxima sistem bileşenleri ve mobilya kütüphanesi kullanarak standı oluşturun." },
+      "review": { "step": "03", "title": "Müşteri İncelemesi", "desc": "Paylaşılabilir bir bağlantı gönderin. Müşteri doğrudan 3D model üzerinde inceler ve onaylar." },
+      "deliver": { "step": "04", "title": "Dışa Aktar ve Teslim Et", "desc": "Üretim belgelerine, çizimlere ve parça çizelgelerine tek tıklamayla dışa aktarın." }
+    },
+    "testimonials": {
+      "heading": "Sektörün",
+      "headingAccent": "en iyileri tarafından tercih edildi"
+    },
+    "pricing": {
+      "heading": "Fiyat Planları",
+      "subheading": "Doğru planla fuar işinizi büyütün.",
+      "perMonth": "/ay",
+      "recommended": "Önerilen",
+      "custom": "Özel"
+    },
+    "cta": {
+      "heading": "Bugün standınızı oluşturmaya başlayın",
+      "subheading": "Fuar tasarımının geleceğine katılın. Her zamankinden daha hızlı oluşturun, iş birliği yapın ve anlaşmalar kapatın."
+    },
+    "footer": {
+      "tagline": "Küresel fuar ve ticaret fuarı sektörü için profesyonel 3D stand tasarım platformu.",
+      "platform": "Platform",
+      "company": "Şirket",
+      "support": "Destek",
+      "needHelp": "Yardıma mı ihtiyacınız var?",
+      "supportHours": "Pzt–Cum, 09:00–18:00 CET",
+      "workspace": "3D Çalışma Alanı",
+      "octanorm": "Octanorm Sistemi",
+      "maxima": "Maxima Sistemi",
+      "furnitureLib": "Mobilya Kütüphanesi",
+      "clientReview": "Müşteri İncelemesi",
+      "apiAccess": "API Erişimi",
+      "about": "ENS Hakkında",
+      "blog": "Blog",
+      "careers": "Kariyer",
+      "press": "Basın Kiti",
+      "partners": "Ortaklar",
+      "contact": "İletişim",
+      "docs": "Dokümantasyon",
+      "tutorials": "Eğitimler",
+      "releaseNotes": "Sürüm Notları",
+      "systemStatus": "Sistem Durumu",
+      "community": "Topluluk",
+      "privacy": "Gizlilik Politikası",
+      "terms": "Hizmet Koşulları",
+      "security": "Güvenlik",
+      "cookies": "Çerez Politikası",
+      "gdpr": "KVKK / GDPR"
+    }
+  },
+  "team": {
+    "hero": {
+      "badge": "Personel ve Yönetim Portalı",
+      "titlePart1": "Fuar Mükemmeliyeti İçin",
+      "titlePart2": "Komuta Merkeziniz",
+      "subtitle": "Operasyonları denetleyen Baş Yöneticiler ve dünya standartlarında fuar standları tasarlayan Proje Yöneticileri için özel araçlar.",
+      "cta1": "Baş Yönetici Paneli",
+      "cta2": "Proje Yöneticisi"
+    },
+    "stats": {
+      "boothsDesigned": "Tasarlanan Stand",
+      "approvalRate": "Onay Oranı",
+      "fasterTurnaround": "Daha Hızlı Teslimat",
+      "activeProjects": "Aktif Proje"
+    },
+    "roles": {
+      "heading": "Bir platform,",
+      "headingAccent": "iki güçlü rol",
+      "subheading": "Bir fuar şirketi yönetmenin gerçeklerine göre sıfırdan tasarlandı.",
+      "chiefTitle": "Baş Yönetici",
+      "chiefBadge": "Yönetici",
+      "chiefDesc": "Tam operasyonel kontrol. Proje atayın, tüm aktif çalışma alanlarını gerçek zamanlı izleyin, finansları gözden geçirin ve tüm portföyünüzdeki müşteri ilişkilerini yönetin.",
+      "chiefEnter": "Baş Yönetici Portalına Gir",
+      "pmTitle": "Proje Yöneticisi",
+      "pmBadge": "Tasarımcı",
+      "pmDesc": "Eksiksiz tasarım çalışma alanı. 3D standlar oluşturun, proje zaman çizelgelerini yönetin, müşterilerle iletişim kurun ve üretime hazır belgeler teslim edin.",
+      "pmEnter": "PM Portalına Gir"
+    },
+    "features": {
+      "heading": "Ekibinizin teslim etmesi için",
+      "headingAccent": "ihtiyaç duyduğu her şey"
+    },
+    "workflow": {
+      "heading": "ENS",
+      "headingAccent": "üretim iş akışı"
+    },
+    "footer": {
+      "tagline": "Fuar profesyonelleri için özel yönetim araçları — ilk brifingden üretime hazır belgelere kadar.",
+      "chiefPortal": "Baş Yönetici Portalı",
+      "pmPortal": "PM Portalı",
+      "chiefManager": "Baş Yönetici",
+      "projectManager": "Proje Yöneticisi",
+      "resources": "Kaynaklar",
+      "internalSupport": "Dahili destek",
+      "clientPortal": "Müşteri Portalı",
+      "dashboard": "Kontrol Paneli",
+      "wsMonitor": "ÇA Monitörü",
+      "teamMgmt": "Ekip Yönetimi",
+      "clientPortfolio": "Müşteri Portföyü",
+      "reports": "Raporlar",
+      "settings": "Ayarlar",
+      "workspace": "3D Çalışma Alanı",
+      "projects": "Projelerim",
+      "clients": "Müşteriler",
+      "tasks": "Görevler",
+      "messages": "Mesajlar",
+      "docs": "Dokümantasyon",
+      "training": "Eğitim Videoları",
+      "releaseNotes": "Sürüm Notları",
+      "systemStatus": "Sistem Durumu",
+      "itSupport": "BT Desteği",
+      "privacy": "Gizlilik Politikası",
+      "security": "Güvenlik"
+    }
+  }
+}

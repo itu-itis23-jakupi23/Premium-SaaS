@@ -12,6 +12,7 @@ import zh from './locales/zh.json';
 import ja from './locales/ja.json';
 import ar from './locales/ar.json';
 import nl from './locales/nl.json';
+import tr from './locales/tr.json';
 
 export const LANGUAGES = [
   { code: 'en', label: 'English',    flag: '🇬🇧', dir: 'ltr' },
@@ -24,6 +25,7 @@ export const LANGUAGES = [
   { code: 'ja', label: '日本語',      flag: '🇯🇵', dir: 'ltr' },
   { code: 'ar', label: 'العربية',    flag: '🇦🇪', dir: 'rtl' },
   { code: 'nl', label: 'Nederlands', flag: '🇳🇱', dir: 'ltr' },
+  { code: 'tr', label: 'Türkçe',     flag: '🇹🇷', dir: 'ltr' },
 ] as const;
 
 export type LangCode = typeof LANGUAGES[number]['code'];
@@ -32,7 +34,7 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources: { en: { translation: en }, de: { translation: de }, fr: { translation: fr }, es: { translation: es }, it: { translation: it }, pt: { translation: pt }, zh: { translation: zh }, ja: { translation: ja }, ar: { translation: ar }, nl: { translation: nl } },
+    resources: { en: { translation: en }, de: { translation: de }, fr: { translation: fr }, es: { translation: es }, it: { translation: it }, pt: { translation: pt }, zh: { translation: zh }, ja: { translation: ja }, ar: { translation: ar }, nl: { translation: nl }, tr: { translation: tr } },
     fallbackLng: 'en',
     supportedLngs: LANGUAGES.map(l => l.code),
     detection: {
