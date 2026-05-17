@@ -43,10 +43,10 @@ const PM_FEATURES = [
 ];
 
 const PLATFORM_STATS = [
-  { value: '2,400+', label: 'Booths Designed',   color: 'text-primary'   },
-  { value: '98%',    label: 'Approval Rate',     color: 'text-blue-400'  },
-  { value: '60%',    label: 'Faster Turnaround', color: 'text-cyan-400'  },
-  { value: '40+',    label: 'Active Projects',   color: 'text-purple-400'},
+  { value: '2,400+', label: 'Booths Designed',   color: 'text-primary',    bg: 'bg-primary/10',    icon: Box         },
+  { value: '98%',    label: 'Approval Rate',     color: 'text-blue-400',  bg: 'bg-blue-500/10',   icon: CheckCircle2 },
+  { value: '60%',    label: 'Faster Turnaround', color: 'text-cyan-400',  bg: 'bg-cyan-500/10',   icon: TrendingUp   },
+  { value: '40+',    label: 'Active Projects',   color: 'text-purple-400', bg: 'bg-purple-500/10', icon: Globe        },
 ];
 
 const WORKFLOW_STEPS = [
@@ -131,10 +131,14 @@ export default function TeamLanding() {
 
       {/* ── Hero ────────────────────────────────────────────────── */}
       <section className="relative pt-44 pb-16 md:pt-56 md:pb-24 overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute inset-0 grid-pattern opacity-[0.04] dark:opacity-[0.08] -z-10" />
-        <motion.div style={{ y }} className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[500px] rounded-full bg-primary/15 blur-[140px] pointer-events-none -z-10" />
-        <div className="absolute top-1/3 right-0 w-[400px] h-[400px] rounded-full bg-blue-500/10 blur-[100px] pointer-events-none -z-10" />
+        {/* Background glow layers */}
+        <div className="absolute inset-0 grid-pattern opacity-[0.05] dark:opacity-[0.12] -z-10" />
+        <motion.div style={{ y }} className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[950px] h-[600px] rounded-full bg-primary/18 blur-[150px] pointer-events-none -z-10" />
+        <div className="absolute top-1/4 right-0 w-[500px] h-[500px] rounded-full bg-blue-500/12 blur-[120px] pointer-events-none -z-10" />
+        <div className="absolute bottom-0 left-1/4 w-[350px] h-[350px] rounded-full bg-cyan-500/8 blur-[100px] pointer-events-none -z-10" />
+        {/* Subtle decorative rings */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[720px] rounded-full border border-primary/5 pointer-events-none -z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] rounded-full border border-blue-500/5 pointer-events-none -z-10" />
 
         <div className="container mx-auto px-6">
           <motion.div initial="hidden" animate="visible" variants={STAGGER} className="max-w-5xl mx-auto text-center">
@@ -183,9 +187,14 @@ export default function TeamLanding() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.08 }}
-              className="bg-card/50 backdrop-blur-md border border-border/50 rounded-xl p-4 text-center">
-              <div className={`text-3xl font-black mb-1 ${s.color}`}>{s.value}</div>
-              <div className="text-xs text-muted-foreground">{s.label}</div>
+              className="bg-card/50 backdrop-blur-md border border-border/50 rounded-xl p-5 flex items-center gap-4">
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${s.bg}`}>
+                <s.icon className={`w-5 h-5 ${s.color}`} />
+              </div>
+              <div>
+                <div className={`text-2xl font-black leading-none mb-1 ${s.color}`}>{s.value}</div>
+                <div className="text-xs text-muted-foreground">{s.label}</div>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -609,17 +618,76 @@ export default function TeamLanding() {
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────── */}
-      <footer className="border-t border-border/50 py-8">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm font-mono">E</div>
-            <span className="font-bold tracking-tight">ENS</span>
-            <span className="text-muted-foreground text-xs ml-2">Exhibition Network System</span>
+      <footer className="border-t border-border/50 bg-background pt-16 pb-8">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
+            {/* Brand */}
+            <div className="col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg font-mono shadow-[0_0_12px_rgba(109,40,217,0.4)]">E</div>
+                <span className="font-bold text-lg tracking-tight">ENS Platform</span>
+                <Badge className="text-[10px] bg-primary/10 text-primary border border-primary/20 py-0 px-2 ml-1">Staff</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-6">
+                Purpose-built management tools for exhibition professionals — from initial brief to production-ready documentation.
+              </p>
+              <div className="flex gap-3">
+                {['Chief Portal', 'PM Portal'].map((label, i) => (
+                  <button key={label}
+                    onClick={() => navigate(i === 0 ? '/chief' : '/pm')}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-full border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors">
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Chief tools */}
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-primary/60 mb-4">Chief Manager</div>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                {['Dashboard', 'WS Monitor', 'Team Management', 'Client Portfolio', 'Reports', 'Settings'].map(l => (
+                  <li key={l}><button onClick={() => navigate('/chief')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
+                ))}
+              </ul>
+            </div>
+
+            {/* PM tools */}
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400/60 mb-4">Project Manager</div>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                {['Dashboard', '3D Workspace', 'My Projects', 'Clients', 'Tasks', 'Messages'].map(l => (
+                  <li key={l}><button onClick={() => navigate('/pm')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Support */}
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Resources</div>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                {['Documentation', 'Training Videos', 'Release Notes', 'System Status', 'IT Support'].map(l => (
+                  <li key={l}><a href="#" className="hover:text-foreground transition-colors">{l}</a></li>
+                ))}
+              </ul>
+              <div className="mt-6 p-3 rounded-xl bg-primary/5 border border-primary/15">
+                <div className="text-xs font-semibold mb-1">Internal support</div>
+                <a href="mailto:it@ens.io" className="text-[11px] text-primary hover:underline">it@ens.io</a>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-6 text-xs text-muted-foreground">
-            <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors">Client Portal</button>
-            <button onClick={() => navigate('/login')} className="hover:text-foreground transition-colors">Sign In</button>
-            <span>© {new Date().getFullYear()} ENS Platform</span>
+
+          <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-muted-foreground">© {new Date().getFullYear()} ENS Expo Solutions Ltd.</span>
+              <span className="text-xs text-muted-foreground/40">Internal use only</span>
+            </div>
+            <div className="flex gap-6 text-xs text-muted-foreground">
+              <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors">Client Portal</button>
+              <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
+              <a href="#" className="hover:text-foreground transition-colors">Security</a>
+              <button onClick={() => navigate('/login')} className="hover:text-foreground transition-colors">Sign In</button>
+            </div>
           </div>
         </div>
       </footer>

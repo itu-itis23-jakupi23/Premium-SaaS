@@ -113,9 +113,12 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-40 pb-20 md:pt-52 md:pb-32 overflow-hidden">
-        <div className="absolute inset-0 grid-pattern opacity-[0.03] dark:opacity-[0.1] -z-10" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/20 blur-[120px] rounded-full pointer-events-none -z-10" />
+      <section className="relative pt-40 pb-0 md:pt-52 overflow-hidden">
+        <div className="absolute inset-0 grid-pattern opacity-[0.04] dark:opacity-[0.12] -z-10" />
+        {/* Multi-layer ambient glows */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[600px] bg-primary/20 blur-[140px] rounded-full pointer-events-none -z-10" />
+        <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan-500/8 blur-[100px] rounded-full pointer-events-none -z-10" />
         
         <div className="container mx-auto px-6 relative">
           <div className="max-w-4xl mx-auto text-center">
@@ -137,16 +140,48 @@ export default function Home() {
                 Build, customize, and manage Octanorm and Maxima stands directly in your browser. Professional tools for serious exhibition designers.
               </motion.p>
               
-              <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button size="lg" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)] transition-all gap-2" data-testid="btn-hero-cta1">
+              <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+                <Button size="lg" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold shadow-[0_0_20px_rgba(109,40,217,0.4)] hover:shadow-[0_0_35px_rgba(109,40,217,0.6)] transition-all gap-2" data-testid="btn-hero-cta1">
                   Start Designing <ChevronRight className="w-4 h-4" />
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border-border hover:bg-muted/50" data-testid="btn-hero-cta2">
-                  Book a Demo
+                <Button size="lg" variant="outline" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border-border/80 hover:bg-muted/50" data-testid="btn-hero-cta2">
+                  Watch Demo
                 </Button>
-                <Button size="lg" variant="ghost" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border border-primary/20 hover:bg-primary/5" data-testid="btn-hero-cta3">
-                  Book Consultation
-                </Button>
+              </motion.div>
+
+              {/* ── Product Preview ── */}
+              <motion.div
+                variants={FADE_UP}
+                className="relative"
+              >
+                <div className="absolute -inset-6 bg-primary/8 blur-3xl rounded-3xl -z-10 pointer-events-none" />
+                <div className="rounded-2xl border border-border/60 bg-card/20 backdrop-blur-sm shadow-[0_40px_80px_rgba(0,0,0,0.6)] overflow-hidden">
+                  {/* Browser chrome */}
+                  <div className="h-10 bg-muted/50 border-b border-border/50 flex items-center gap-3 px-4">
+                    <div className="flex gap-1.5 flex-shrink-0">
+                      <div className="w-3 h-3 rounded-full bg-red-500/70" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
+                      <div className="w-3 h-3 rounded-full bg-green-500/70" />
+                    </div>
+                    <div className="flex-1 flex justify-center">
+                      <div className="bg-background/60 border border-border/40 rounded-md h-6 flex items-center px-3 gap-2 w-60">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
+                        <span className="text-[10px] text-muted-foreground font-mono truncate">app.ens.io/pm/workspace</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground font-mono hidden sm:block flex-shrink-0">TechCon 2024</span>
+                  </div>
+                  {/* Actual booth renderer */}
+                  <div className="relative h-[480px] overflow-hidden bg-[#f0f2f5]">
+                    <iframe
+                      src="/booth-render.html?w=9&d=6&h=2.2&name=TECHCORP+INDUSTRIES&style=octa&open=front,left"
+                      className="w-full h-full border-0"
+                      style={{ pointerEvents: 'none' }}
+                      title="ENS 3D Booth Preview"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-background via-background/60 to-transparent pointer-events-none" />
+                  </div>
+                </div>
               </motion.div>
             </motion.div>
           </div>
@@ -179,6 +214,22 @@ export default function Home() {
               </div>
             </motion.div>
           ))}
+        </div>
+      </div>
+
+      {/* ── Trusted By Strip ──────────────────────────────────── */}
+      <div className="container mx-auto px-6 mb-8 relative z-20">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 py-6 border-y border-border/30">
+          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 flex-shrink-0">
+            Trusted by
+          </span>
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+            {['Global Exhibits Inc.', 'Exhibito Group', 'Milano Design Studio', 'ExpoVision GmbH', 'ShowCraft Asia', 'NordExpo'].map((name) => (
+              <span key={name} className="text-sm font-bold text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors tracking-wide whitespace-nowrap">
+                {name}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -699,7 +750,7 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <Button className={`mt-auto w-full rounded-xl h-12 font-bold ${p.recommended ? 'bg-primary shadow-lg' : 'variant-outline'}`}>
+                <Button variant={p.recommended ? 'default' : 'outline'} className={`mt-auto w-full rounded-xl h-12 font-bold ${p.recommended ? 'shadow-lg' : ''}`}>
                   Get Started
                 </Button>
               </motion.div>
@@ -736,20 +787,76 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="py-12 border-t border-border/50 bg-background">
+      <footer className="border-t border-border/50 bg-background pt-16 pb-8">
         <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">E</div>
-              <span className="font-bold tracking-tight">ENS PLATFORM</span>
+          {/* Main footer grid */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
+            {/* Brand column */}
+            <div className="col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg font-mono shadow-[0_0_12px_rgba(109,40,217,0.4)]">E</div>
+                <span className="font-bold text-lg tracking-tight">ENS Platform</span>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-6">
+                The professional 3D booth design platform for the global exhibition and trade show industry.
+              </p>
+              <div className="flex gap-3">
+                {[
+                  { label: 'LinkedIn', path: 'M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z M2 9h4v12H2z M4 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4z' },
+                  { label: 'Twitter', path: 'M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z' },
+                  { label: 'Instagram', path: 'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a3.999 3.999 0 1 1 0-7.998 3.999 3.999 0 0 1 0 7.998zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z' },
+                ].map(s => (
+                  <a key={s.label} href="#" aria-label={s.label}
+                    className="w-8 h-8 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d={s.path} /></svg>
+                  </a>
+                ))}
+              </div>
             </div>
-            <div className="flex gap-8 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-primary transition-colors">Security</a>
+
+            {/* Platform links */}
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Platform</div>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                {['3D Workspace', 'Octanorm System', 'Maxima System', 'Furniture Library', 'Client Review', 'API Access'].map(l => (
+                  <li key={l}><a href="#" className="hover:text-foreground transition-colors">{l}</a></li>
+                ))}
+              </ul>
             </div>
-            <div className="text-xs text-muted-foreground">
-              © 2024 ENS Expo Solutions. All rights reserved.
+
+            {/* Company links */}
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Company</div>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                {['About ENS', 'Blog', 'Careers', 'Press Kit', 'Partners', 'Contact'].map(l => (
+                  <li key={l}><a href="#" className="hover:text-foreground transition-colors">{l}</a></li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Support links */}
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Support</div>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                {['Documentation', 'Tutorials', 'Release Notes', 'System Status', 'Community'].map(l => (
+                  <li key={l}><a href="#" className="hover:text-foreground transition-colors">{l}</a></li>
+                ))}
+              </ul>
+              <div className="mt-6 p-3 rounded-xl bg-primary/5 border border-primary/15">
+                <div className="text-xs font-semibold mb-1">Need help?</div>
+                <div className="text-[11px] text-muted-foreground mb-2">Mon–Fri, 9am–6pm CET</div>
+                <a href="mailto:support@ens.io" className="text-[11px] text-primary hover:underline">support@ens.io</a>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <span className="text-xs text-muted-foreground">© {new Date().getFullYear()} ENS Expo Solutions Ltd. All rights reserved.</span>
+            <div className="flex flex-wrap justify-center gap-6 text-xs text-muted-foreground">
+              {['Privacy Policy', 'Terms of Service', 'Security', 'Cookie Policy', 'GDPR'].map(l => (
+                <a key={l} href="#" className="hover:text-primary transition-colors">{l}</a>
+              ))}
             </div>
           </div>
         </div>
