@@ -289,6 +289,7 @@ const EX = 0.04;                                           // profile thickness 
 let COMPANY_NAME = decodeURIComponent(_P.get('name') || 'Company Name');
 let PANELS_BACK = Math.max(1, Math.round(BW));
 let PANELS_SIDE = Math.max(1, Math.round(BD));
+let CARPET_COLOR = _P.get('carpet') || '#3b3e44';
 
 const _openInit = new Set((_P.get('open') || 'front').split(',').map(s=>s.trim()).filter(Boolean));
 let wallsVisible = {
@@ -581,7 +582,7 @@ function buildCarpet() {
       [ BW/2 - EX*1.2, 0.012, BD - EX*0.2],
       [-BW/2 + EX*1.2, 0.012, BD - EX*0.2],
     ],
-    fill: '#3b3e44', normal: [0,1,0], isCarpet: true,
+    fill: CARPET_COLOR, normal: [0,1,0], isCarpet: true,
     partId: 'carpet', partLabel: 'Carpet · interior',
     partMeta: 'Charcoal needle-punch · ' + BW.toFixed(1) + ' × ' + BD.toFixed(1) + ' m',
   });
@@ -942,10 +943,11 @@ window.addEventListener('resize', renderAll);
 window.addEventListener('message', (e) => {
   if (!e.data || e.data.type !== 'boothUpdate') return;
   const d = e.data;
-  if (d.w  != null) BW = Math.max(1, parseFloat(d.w));
-  if (d.d  != null) BD = Math.max(1, parseFloat(d.d));
-  if (d.h  != null) BH = Math.max(0.8, parseFloat(d.h));
-  if (d.name != null) COMPANY_NAME = String(d.name);
+  if (d.w      != null) BW = Math.max(1, parseFloat(d.w));
+  if (d.d      != null) BD = Math.max(1, parseFloat(d.d));
+  if (d.h      != null) BH = Math.max(0.8, parseFloat(d.h));
+  if (d.name   != null) COMPANY_NAME = String(d.name);
+  if (d.carpet != null) CARPET_COLOR = String(d.carpet);
   if (d.style != null) {
     columnStyle = d.style === 'maxima' ? 'maxima' : 'octa';
     document.querySelectorAll('#profile-toolbar button[data-prof]').forEach(btn => {

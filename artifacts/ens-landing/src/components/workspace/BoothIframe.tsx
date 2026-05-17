@@ -26,15 +26,15 @@ function buildOpenParam(cfg: Required<BoothConfig>): string {
 }
 
 function buildSrc(cfg: Required<BoothConfig>): string {
-  // BH = total height minus fascia (0.30m)
   const bh = Math.max(0.8, cfg.height - 0.30).toFixed(2);
   const params = new URLSearchParams({
-    w:     cfg.width.toString(),
-    d:     cfg.depth.toString(),
-    h:     bh,
-    name:  encodeURIComponent(cfg.companyName),
-    style: cfg.system === 'maxima' ? 'maxima' : 'octa',
-    open:  buildOpenParam(cfg),
+    w:      cfg.width.toString(),
+    d:      cfg.depth.toString(),
+    h:      bh,
+    name:   encodeURIComponent(cfg.companyName),
+    style:  cfg.system === 'maxima' ? 'maxima' : 'octa',
+    open:   buildOpenParam(cfg),
+    carpet: cfg.carpetColor ?? '#3b3e44',
   });
   return `/booth-render.html?${params.toString()}`;
 }
@@ -44,7 +44,6 @@ export function BoothIframe({ config }: { config?: Partial<BoothConfig> }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
 
-  // Stable initial src — set once on mount so the iframe doesn't hard-reload
   const [src] = useState(() => buildSrc(cfg));
 
   const sendUpdate = useCallback(() => {
@@ -52,21 +51,21 @@ export function BoothIframe({ config }: { config?: Partial<BoothConfig> }) {
     if (!win) return;
     const bh = Math.max(0.8, cfg.height - 0.30).toFixed(2);
     win.postMessage({
-      type:  'boothUpdate',
-      w:     cfg.width,
-      d:     cfg.depth,
-      h:     parseFloat(bh),
-      name:  cfg.companyName,
-      style: cfg.system === 'maxima' ? 'maxima' : 'octa',
-      open:  buildOpenParam(cfg),
+      type:   'boothUpdate',
+      w:      cfg.width,
+      d:      cfg.depth,
+      h:      parseFloat(bh),
+      name:   cfg.companyName,
+      style:  cfg.system === 'maxima' ? 'maxima' : 'octa',
+      open:   buildOpenParam(cfg),
+      carpet: cfg.carpetColor ?? '#3b3e44',
     }, '*');
   }, [
     cfg.width, cfg.depth, cfg.height,
-    cfg.system, cfg.companyName,
+    cfg.system, cfg.companyName, cfg.carpetColor,
     cfg.openFront, cfg.openBack, cfg.openLeft, cfg.openRight,
   ]);
 
-  // Send live updates whenever config changes (after first load)
   useEffect(() => {
     if (ready) sendUpdate();
   }, [ready, sendUpdate]);
@@ -77,12 +76,7 @@ export function BoothIframe({ config }: { config?: Partial<BoothConfig> }) {
       src={src}
       title="Booth Renderer"
       style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-      onLoad={() => {
-        setReady(true);
-        // Push current config immediately on first load
-        // (params already baked in, but this handles any timing edge-cases)
-        setTimeout(sendUpdate, 50);
-      }}
+      onLoad={() => { setReady(true); setTimeout(sendUpdate, 50); }}
     />
   );
 }
