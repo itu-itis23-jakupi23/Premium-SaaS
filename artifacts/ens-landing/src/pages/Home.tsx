@@ -92,6 +92,9 @@ export default function Home() {
             <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How it Works</a>
             <a href="#showcase" className="text-muted-foreground hover:text-foreground transition-colors">Showcase</a>
             <ThemeToggle />
+            <Button variant="ghost" className="rounded-full px-5 font-semibold border border-border/40" onClick={() => navigate('/team')} data-testid="btn-nav-team">
+              Staff Portal
+            </Button>
             <Button variant="ghost" className="rounded-full px-5 font-semibold" onClick={() => navigate('/login')} data-testid="btn-nav-login">
               Log In
             </Button>

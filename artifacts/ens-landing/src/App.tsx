@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
+import TeamLanding from "@/pages/TeamLanding";
 
 // Auth Pages
 import Login from "@/pages/auth/Login";
@@ -47,6 +48,7 @@ function Router() {
     <Switch>
       {/* Public Routes */}
       <Route path="/" component={Home} />
+      <Route path="/team" component={TeamLanding} />
       
       {/* Auth Routes */}
       <Route path="/login" component={Login} />
