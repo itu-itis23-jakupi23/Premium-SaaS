@@ -1,0 +1,174 @@
+{
+  "common": {
+    "startDesigning": "Start Designing",
+    "watchDemo": "Watch Demo",
+    "getAccess": "Get Access Now",
+    "contactSales": "Contact Sales",
+    "signIn": "Sign In",
+    "getStarted": "Get Started",
+    "logIn": "Log In",
+    "learnMore": "Learn More",
+    "copyright": "© {{year}} ENS Expo Solutions Ltd. All rights reserved.",
+    "internalOnly": "Internal use only"
+  },
+  "nav": {
+    "features": "Features",
+    "howItWorks": "How it Works",
+    "showcase": "Showcase",
+    "staffPortal": "Staff Portal",
+    "roles": "Roles",
+    "workflow": "Workflow",
+    "clientSite": "Client Site"
+  },
+  "home": {
+    "hero": {
+      "badge": "The 3D design studio for the exhibition industry",
+      "titlePart1": "Design Exhibition Booths in",
+      "titlePart2": "Real-Time 3D",
+      "subtitle": "Build, customize, and manage Octanorm and Maxima stands directly in your browser. Professional tools for serious exhibition designers."
+    },
+    "trustedBy": "Trusted by",
+    "stats": {
+      "projectProgress": "Project Progress",
+      "boothDimensions": "Booth Dimensions",
+      "approvalStatus": "Approval Status",
+      "furnitureCount": "Furniture Count",
+      "pending": "Pending"
+    },
+    "demo": {
+      "badge": "Live Demo Access",
+      "title": "See the full platform in action",
+      "subtitle": "Get a personalised walkthrough with one of our product specialists.",
+      "cta": "Book a Demo"
+    },
+    "features": {
+      "heading": "Everything you need to",
+      "headingAccent": "design and deliver",
+      "subheading": "A complete design and project management suite built specifically for the exhibition industry.",
+      "realtime": { "title": "Real-Time 3D Canvas", "desc": "Drag-and-drop system components onto a live 3D stage. What you see is what gets built." },
+      "octanorm": { "title": "Octanorm System", "desc": "Full Octanorm modular system with accurate 40mm and 50mm profiles, connectors, and panels." },
+      "maxima": { "title": "Maxima Framework", "desc": "Heavy-duty Maxima aluminium extrusion system with configurable spans and infill options." },
+      "client": { "title": "Client Preview", "desc": "Share a live 3D link with clients. They annotate directly on the model — no account needed." },
+      "analytics": { "title": "Project Analytics", "desc": "Track project velocity, approval cycles, cost forecasts, and team utilisation in real time." },
+      "automation": { "title": "Smart Automation", "desc": "Auto-generate floor plans, elevation drawings, parts lists and cost estimates at the click of a button." }
+    },
+    "howItWorks": {
+      "heading": "From brief to build in",
+      "headingAccent": "four steps",
+      "brief": { "step": "01", "title": "Upload Brief", "desc": "Import your client's event brief, floor plan, or booth specification sheet." },
+      "design": { "step": "02", "title": "Design in 3D", "desc": "Build the stand using Octanorm or Maxima system components and the furniture library." },
+      "review": { "step": "03", "title": "Client Review", "desc": "Send a shareable link. Client reviews and approves directly in the 3D model." },
+      "deliver": { "step": "04", "title": "Export & Deliver", "desc": "One-click export to production documents, drawings, and part schedules." }
+    },
+    "testimonials": {
+      "heading": "Trusted by the",
+      "headingAccent": "best in the business"
+    },
+    "pricing": {
+      "heading": "Pricing Tiers",
+      "subheading": "Scale your exhibition business with the right plan.",
+      "perMonth": "/mo",
+      "recommended": "Recommended",
+      "custom": "Custom"
+    },
+    "cta": {
+      "heading": "Start building your booth today",
+      "subheading": "Join the future of exhibition design. Create, collaborate, and close deals faster than ever before."
+    },
+    "footer": {
+      "tagline": "The professional 3D booth design platform for the global exhibition and trade show industry.",
+      "platform": "Platform",
+      "company": "Company",
+      "support": "Support",
+      "needHelp": "Need help?",
+      "supportHours": "Mon–Fri, 9am–6pm CET",
+      "workspace": "3D Workspace",
+      "octanorm": "Octanorm System",
+      "maxima": "Maxima System",
+      "furnitureLib": "Furniture Library",
+      "clientReview": "Client Review",
+      "apiAccess": "API Access",
+      "about": "About ENS",
+      "blog": "Blog",
+      "careers": "Careers",
+      "press": "Press Kit",
+      "partners": "Partners",
+      "contact": "Contact",
+      "docs": "Documentation",
+      "tutorials": "Tutorials",
+      "releaseNotes": "Release Notes",
+      "systemStatus": "System Status",
+      "community": "Community",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "security": "Security",
+      "cookies": "Cookie Policy",
+      "gdpr": "GDPR"
+    }
+  },
+  "team": {
+    "hero": {
+      "badge": "Staff & Management Portal",
+      "titlePart1": "Your Command Centre for",
+      "titlePart2": "Exhibition Excellence",
+      "subtitle": "Purpose-built tools for Chief Managers overseeing operations and Project Managers designing world-class exhibition stands.",
+      "cta1": "Chief Dashboard",
+      "cta2": "Project Manager"
+    },
+    "stats": {
+      "boothsDesigned": "Booths Designed",
+      "approvalRate": "Approval Rate",
+      "fasterTurnaround": "Faster Turnaround",
+      "activeProjects": "Active Projects"
+    },
+    "roles": {
+      "heading": "One platform,",
+      "headingAccent": "two powerful roles",
+      "subheading": "Designed from the ground up for the realities of running an exhibition company.",
+      "chiefTitle": "Chief Manager",
+      "chiefBadge": "Executive",
+      "chiefDesc": "Full operational control. Assign projects, monitor all active workspaces in real-time, review financials, and maintain client relationships across your entire portfolio.",
+      "chiefEnter": "Enter Chief Portal",
+      "pmTitle": "Project Manager",
+      "pmBadge": "Designer",
+      "pmDesc": "The complete design workspace. Build 3D booths, manage project timelines, communicate with clients, and deliver production-ready documentation.",
+      "pmEnter": "Enter PM Portal"
+    },
+    "features": {
+      "heading": "Everything your team",
+      "headingAccent": "needs to deliver"
+    },
+    "workflow": {
+      "heading": "The ENS",
+      "headingAccent": "production workflow"
+    },
+    "footer": {
+      "tagline": "Purpose-built management tools for exhibition professionals — from initial brief to production-ready documentation.",
+      "chiefPortal": "Chief Portal",
+      "pmPortal": "PM Portal",
+      "chiefManager": "Chief Manager",
+      "projectManager": "Project Manager",
+      "resources": "Resources",
+      "internalSupport": "Internal support",
+      "clientPortal": "Client Portal",
+      "dashboard": "Dashboard",
+      "wsMonitor": "WS Monitor",
+      "teamMgmt": "Team Management",
+      "clientPortfolio": "Client Portfolio",
+      "reports": "Reports",
+      "settings": "Settings",
+      "workspace": "3D Workspace",
+      "projects": "My Projects",
+      "clients": "Clients",
+      "tasks": "Tasks",
+      "messages": "Messages",
+      "docs": "Documentation",
+      "training": "Training Videos",
+      "releaseNotes": "Release Notes",
+      "systemStatus": "System Status",
+      "itSupport": "IT Support",
+      "privacy": "Privacy Policy",
+      "security": "Security"
+    }
+  }
+}

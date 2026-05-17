@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -43,10 +45,10 @@ const PM_FEATURES = [
 ];
 
 const PLATFORM_STATS = [
-  { value: '2,400+', label: 'Booths Designed',   color: 'text-primary',    bg: 'bg-primary/10',    icon: Box         },
-  { value: '98%',    label: 'Approval Rate',     color: 'text-blue-400',  bg: 'bg-blue-500/10',   icon: CheckCircle2 },
-  { value: '60%',    label: 'Faster Turnaround', color: 'text-cyan-400',  bg: 'bg-cyan-500/10',   icon: TrendingUp   },
-  { value: '40+',    label: 'Active Projects',   color: 'text-purple-400', bg: 'bg-purple-500/10', icon: Globe        },
+  { value: '2,400+', tKey: 'team.stats.boothsDesigned',   color: 'text-primary',    bg: 'bg-primary/10',    icon: Box         },
+  { value: '98%',    tKey: 'team.stats.approvalRate',     color: 'text-blue-400',  bg: 'bg-blue-500/10',   icon: CheckCircle2 },
+  { value: '60%',    tKey: 'team.stats.fasterTurnaround', color: 'text-cyan-400',  bg: 'bg-cyan-500/10',   icon: TrendingUp   },
+  { value: '40+',    tKey: 'team.stats.activeProjects',   color: 'text-purple-400', bg: 'bg-purple-500/10', icon: Globe        },
 ];
 
 const WORKFLOW_STEPS = [
@@ -72,6 +74,7 @@ export default function TeamLanding() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [, navigate] = useLocation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fn = () => setIsScrolled(window.scrollY > 20);
@@ -98,14 +101,15 @@ export default function TeamLanding() {
           </div>
 
           <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
-            <a href="#roles" className="text-muted-foreground hover:text-foreground transition-colors">Roles</a>
-            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
-            <a href="#workflow" className="text-muted-foreground hover:text-foreground transition-colors">Workflow</a>
+            <a href="#roles" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.roles')}</a>
+            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.features')}</a>
+            <a href="#workflow" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.workflow')}</a>
+            <LanguageSwitcher />
             <ThemeToggle />
             <Button variant="outline" size="sm" className="rounded-full px-5 font-semibold border-border/60"
-              onClick={() => navigate('/')}>Client Site</Button>
+              onClick={() => navigate('/')}>{t('nav.clientSite')}</Button>
             <Button size="sm" className="rounded-full px-6 font-semibold shadow-[0_0_20px_rgba(109,40,217,0.3)]"
-              onClick={() => navigate('/login')}>Sign In</Button>
+              onClick={() => navigate('/login')}>{t('common.signIn')}</Button>
           </nav>
 
           <div className="md:hidden flex items-center gap-3">
@@ -146,32 +150,31 @@ export default function TeamLanding() {
             <motion.div variants={FADE_UP}
               className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-6 border border-primary/20">
               <Shield className="w-3.5 h-3.5" />
-              Staff & Management Portal
+              {t('team.hero.badge')}
             </motion.div>
 
             <motion.h1 variants={FADE_UP}
               className="text-5xl md:text-7xl font-bold tracking-tight mb-7 leading-[1.08]">
-              Your Command Centre for
+              {t('team.hero.titlePart1')}
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-cyan-400 glow-text">
-                Exhibition Excellence
+                {t('team.hero.titlePart2')}
               </span>
             </motion.h1>
 
             <motion.p variants={FADE_UP}
               className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-              Purpose-built tools for Chief Managers overseeing operations and Project Managers
-              designing world-class exhibition stands.
+              {t('team.hero.subtitle')}
             </motion.p>
 
             <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" onClick={() => navigate('/chief')}
                 className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold gap-2 shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)]">
-                <LayoutDashboard className="w-5 h-5" /> Chief Dashboard <ChevronRight className="w-4 h-4" />
+                <LayoutDashboard className="w-5 h-5" /> {t('team.hero.cta1')} <ChevronRight className="w-4 h-4" />
               </Button>
               <Button size="lg" variant="outline" onClick={() => navigate('/pm')}
                 className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold gap-2 border-blue-500/40 text-blue-400 hover:bg-blue-500/5">
-                <Settings className="w-5 h-5" /> Project Manager <ChevronRight className="w-4 h-4" />
+                <Settings className="w-5 h-5" /> {t('team.hero.cta2')} <ChevronRight className="w-4 h-4" />
               </Button>
             </motion.div>
           </motion.div>
@@ -193,7 +196,7 @@ export default function TeamLanding() {
               </div>
               <div>
                 <div className={`text-2xl font-black leading-none mb-1 ${s.color}`}>{s.value}</div>
-                <div className="text-xs text-muted-foreground">{s.label}</div>
+                <div className="text-xs text-muted-foreground">{t(s.tKey)}</div>
               </div>
             </motion.div>
           ))}
@@ -206,8 +209,8 @@ export default function TeamLanding() {
         <div className="container mx-auto px-6">
 
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Choose Your Portal</h2>
-            <p className="text-muted-foreground">Two dedicated environments, each tailored to your responsibilities within the platform.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('team.roles.heading')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">{t('team.roles.headingAccent')}</span></h2>
+            <p className="text-muted-foreground">{t('team.roles.subheading')}</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -231,7 +234,7 @@ export default function TeamLanding() {
                   </div>
                   <div>
                     <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-0.5">Senior Role</div>
-                    <h3 className="text-2xl font-black">Chief Manager</h3>
+                    <h3 className="text-2xl font-black">{t('team.roles.chiefTitle')}</h3>
                   </div>
                 </div>
                 <ArrowRight className="w-5 h-5 text-primary/60 group-hover:text-primary group-hover:translate-x-1 transition-all mt-1" />
@@ -274,7 +277,7 @@ export default function TeamLanding() {
 
               <Button className="w-full mt-6 rounded-full gap-2 shadow-[0_0_15px_rgba(109,40,217,0.2)]"
                 onClick={e => { e.stopPropagation(); navigate('/chief'); }}>
-                <LayoutDashboard className="w-4 h-4" /> Enter Chief Dashboard
+                <LayoutDashboard className="w-4 h-4" /> {t('team.roles.chiefEnter')}
               </Button>
             </motion.div>
 
@@ -297,7 +300,7 @@ export default function TeamLanding() {
                   </div>
                   <div>
                     <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-0.5">Design Role</div>
-                    <h3 className="text-2xl font-black">Project Manager</h3>
+                    <h3 className="text-2xl font-black">{t('team.roles.pmTitle')}</h3>
                   </div>
                 </div>
                 <ArrowRight className="w-5 h-5 text-blue-400/60 group-hover:text-blue-400 group-hover:translate-x-1 transition-all mt-1" />
@@ -341,7 +344,7 @@ export default function TeamLanding() {
               <Button variant="outline"
                 className="w-full mt-6 rounded-full gap-2 border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
                 onClick={e => { e.stopPropagation(); navigate('/pm'); }}>
-                <Settings className="w-4 h-4" /> Enter PM Dashboard
+                <Settings className="w-4 h-4" /> {t('team.roles.pmEnter')}
               </Button>
             </motion.div>
           </div>
@@ -602,15 +605,15 @@ export default function TeamLanding() {
             <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" onClick={() => navigate('/chief')}
                 className="w-full sm:w-auto rounded-full px-8 h-12 font-semibold gap-2">
-                <UserCog className="w-4 h-4" /> Chief Manager
+                <UserCog className="w-4 h-4" /> {t('team.roles.chiefTitle')}
               </Button>
               <Button size="lg" variant="outline" onClick={() => navigate('/pm')}
                 className="w-full sm:w-auto rounded-full px-8 h-12 font-semibold gap-2 border-blue-500/40 text-blue-400">
-                <Settings className="w-4 h-4" /> Project Manager
+                <Settings className="w-4 h-4" /> {t('team.roles.pmTitle')}
               </Button>
               <Button size="lg" variant="ghost" onClick={() => navigate('/login')}
                 className="w-full sm:w-auto rounded-full px-8 h-12 font-semibold border border-border/50">
-                Sign In →
+                {t('common.signIn')} →
               </Button>
             </motion.div>
           </motion.div>
@@ -629,10 +632,10 @@ export default function TeamLanding() {
                 <Badge className="text-[10px] bg-primary/10 text-primary border border-primary/20 py-0 px-2 ml-1">Staff</Badge>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-6">
-                Purpose-built management tools for exhibition professionals — from initial brief to production-ready documentation.
+                {t('team.footer.tagline')}
               </p>
               <div className="flex gap-3">
-                {['Chief Portal', 'PM Portal'].map((label, i) => (
+                {[t('team.footer.chiefPortal'), t('team.footer.pmPortal')].map((label, i) => (
                   <button key={label}
                     onClick={() => navigate(i === 0 ? '/chief' : '/pm')}
                     className="text-xs font-semibold px-3 py-1.5 rounded-full border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors">
@@ -644,9 +647,9 @@ export default function TeamLanding() {
 
             {/* Chief tools */}
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-primary/60 mb-4">Chief Manager</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-primary/60 mb-4">{t('team.footer.chiefManager')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                {['Dashboard', 'WS Monitor', 'Team Management', 'Client Portfolio', 'Reports', 'Settings'].map(l => (
+                {[t('team.footer.dashboard'), t('team.footer.wsMonitor'), t('team.footer.teamMgmt'), t('team.footer.clientPortfolio'), t('team.footer.reports'), t('team.footer.settings')].map(l => (
                   <li key={l}><button onClick={() => navigate('/chief')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
                 ))}
               </ul>
@@ -654,9 +657,9 @@ export default function TeamLanding() {
 
             {/* PM tools */}
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400/60 mb-4">Project Manager</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400/60 mb-4">{t('team.footer.projectManager')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                {['Dashboard', '3D Workspace', 'My Projects', 'Clients', 'Tasks', 'Messages'].map(l => (
+                {[t('team.footer.dashboard'), t('team.footer.workspace'), t('team.footer.projects'), t('team.footer.clients'), t('team.footer.tasks'), t('team.footer.messages')].map(l => (
                   <li key={l}><button onClick={() => navigate('/pm')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
                 ))}
               </ul>
@@ -664,14 +667,14 @@ export default function TeamLanding() {
 
             {/* Support */}
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Resources</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('team.footer.resources')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                {['Documentation', 'Training Videos', 'Release Notes', 'System Status', 'IT Support'].map(l => (
+                {[t('team.footer.docs'), t('team.footer.training'), t('team.footer.releaseNotes'), t('team.footer.systemStatus'), t('team.footer.itSupport')].map(l => (
                   <li key={l}><a href="#" className="hover:text-foreground transition-colors">{l}</a></li>
                 ))}
               </ul>
               <div className="mt-6 p-3 rounded-xl bg-primary/5 border border-primary/15">
-                <div className="text-xs font-semibold mb-1">Internal support</div>
+                <div className="text-xs font-semibold mb-1">{t('team.footer.internalSupport')}</div>
                 <a href="mailto:it@ens.io" className="text-[11px] text-primary hover:underline">it@ens.io</a>
               </div>
             </div>
@@ -679,14 +682,14 @@ export default function TeamLanding() {
 
           <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <span className="text-xs text-muted-foreground">© {new Date().getFullYear()} ENS Expo Solutions Ltd.</span>
-              <span className="text-xs text-muted-foreground/40">Internal use only</span>
+              <span className="text-xs text-muted-foreground">{t('common.copyright', { year: new Date().getFullYear() })}</span>
+              <span className="text-xs text-muted-foreground/40">{t('common.internalOnly')}</span>
             </div>
             <div className="flex gap-6 text-xs text-muted-foreground">
-              <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors">Client Portal</button>
-              <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-foreground transition-colors">Security</a>
-              <button onClick={() => navigate('/login')} className="hover:text-foreground transition-colors">Sign In</button>
+              <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors">{t('team.footer.clientPortal')}</button>
+              <a href="#" className="hover:text-foreground transition-colors">{t('team.footer.privacy')}</a>
+              <a href="#" className="hover:text-foreground transition-colors">{t('team.footer.security')}</a>
+              <button onClick={() => navigate('/login')} className="hover:text-foreground transition-colors">{t('common.signIn')}</button>
             </div>
           </div>
         </div>

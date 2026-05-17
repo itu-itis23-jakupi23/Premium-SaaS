@@ -1,0 +1,174 @@
+{
+  "common": {
+    "startDesigning": "Jetzt gestalten",
+    "watchDemo": "Demo ansehen",
+    "getAccess": "Jetzt Zugang erhalten",
+    "contactSales": "Vertrieb kontaktieren",
+    "signIn": "Anmelden",
+    "getStarted": "Loslegen",
+    "logIn": "Einloggen",
+    "learnMore": "Mehr erfahren",
+    "copyright": "© {{year}} ENS Expo Solutions Ltd. Alle Rechte vorbehalten.",
+    "internalOnly": "Nur für interne Nutzung"
+  },
+  "nav": {
+    "features": "Funktionen",
+    "howItWorks": "So funktioniert's",
+    "showcase": "Referenzen",
+    "staffPortal": "Mitarbeiterportal",
+    "roles": "Rollen",
+    "workflow": "Arbeitsablauf",
+    "clientSite": "Kundenseite"
+  },
+  "home": {
+    "hero": {
+      "badge": "Das 3D-Designstudio für die Messebranche",
+      "titlePart1": "Messestände gestalten in",
+      "titlePart2": "Echtzeit-3D",
+      "subtitle": "Octanorm- und Maxima-Stände direkt im Browser bauen, anpassen und verwalten. Professionelle Werkzeuge für ernsthafte Messedesigner."
+    },
+    "trustedBy": "Vertrauen von",
+    "stats": {
+      "projectProgress": "Projektfortschritt",
+      "boothDimensions": "Standmaße",
+      "approvalStatus": "Genehmigungsstatus",
+      "furnitureCount": "Möbelanzahl",
+      "pending": "Ausstehend"
+    },
+    "demo": {
+      "badge": "Live-Demo-Zugang",
+      "title": "Sehen Sie die Plattform in Aktion",
+      "subtitle": "Erhalten Sie eine persönliche Führung durch einen unserer Produktspezialisten.",
+      "cta": "Demo buchen"
+    },
+    "features": {
+      "heading": "Alles was Sie brauchen zum",
+      "headingAccent": "Gestalten und Liefern",
+      "subheading": "Eine vollständige Design- und Projektmanagement-Suite, speziell für die Messebranche entwickelt.",
+      "realtime": { "title": "Echtzeit-3D-Canvas", "desc": "Systemkomponenten per Drag-and-Drop auf eine Live-3D-Bühne ziehen. Was Sie sehen, wird gebaut." },
+      "octanorm": { "title": "Octanorm-System", "desc": "Vollständiges Octanorm-Modulsystem mit präzisen 40-mm- und 50-mm-Profilen, Verbindern und Platten." },
+      "maxima": { "title": "Maxima-Rahmen", "desc": "Schweres Maxima-Aluminiumextrusionssystem mit konfigurierbaren Spannweiten und Fülloptionen." },
+      "client": { "title": "Kundenvorschau", "desc": "Teilen Sie einen Live-3D-Link mit Kunden. Sie kommentieren direkt am Modell – kein Konto erforderlich." },
+      "analytics": { "title": "Projektanalyse", "desc": "Verfolgen Sie Projektgeschwindigkeit, Genehmigungszyklen, Kostenprognosen und Teamauslastung in Echtzeit." },
+      "automation": { "title": "Intelligente Automatisierung", "desc": "Grundrisse, Aufrisszeichnungen, Teilelisten und Kostenschätzungen per Knopfdruck automatisch generieren." }
+    },
+    "howItWorks": {
+      "heading": "Vom Briefing zum Aufbau in",
+      "headingAccent": "vier Schritten",
+      "brief": { "step": "01", "title": "Briefing hochladen", "desc": "Importieren Sie das Eventbriefing, den Grundriss oder das Stand-Spec-Blatt Ihres Kunden." },
+      "design": { "step": "02", "title": "In 3D gestalten", "desc": "Bauen Sie den Stand mit Octanorm- oder Maxima-Systemkomponenten und der Möbelbibliothek." },
+      "review": { "step": "03", "title": "Kundenkontrolle", "desc": "Senden Sie einen teilbaren Link. Der Kunde prüft und genehmigt direkt im 3D-Modell." },
+      "deliver": { "step": "04", "title": "Exportieren & Liefern", "desc": "Ein-Klick-Export in Produktionsdokumente, Zeichnungen und Teilepläne." }
+    },
+    "testimonials": {
+      "heading": "Vertrauen der",
+      "headingAccent": "Besten der Branche"
+    },
+    "pricing": {
+      "heading": "Preismodelle",
+      "subheading": "Skalieren Sie Ihr Messegeschäft mit dem richtigen Plan.",
+      "perMonth": "/Monat",
+      "recommended": "Empfohlen",
+      "custom": "Individuell"
+    },
+    "cta": {
+      "heading": "Beginnen Sie noch heute mit dem Standbau",
+      "subheading": "Treten Sie der Zukunft des Messedesigns bei. Erstellen, zusammenarbeiten und Deals schneller abschließen als je zuvor."
+    },
+    "footer": {
+      "tagline": "Die professionelle 3D-Standdesign-Plattform für die globale Messe- und Ausstellungsbranche.",
+      "platform": "Plattform",
+      "company": "Unternehmen",
+      "support": "Support",
+      "needHelp": "Hilfe benötigt?",
+      "supportHours": "Mo–Fr, 9–18 Uhr MEZ",
+      "workspace": "3D-Arbeitsbereich",
+      "octanorm": "Octanorm-System",
+      "maxima": "Maxima-System",
+      "furnitureLib": "Möbelbibliothek",
+      "clientReview": "Kundenkontrolle",
+      "apiAccess": "API-Zugang",
+      "about": "Über ENS",
+      "blog": "Blog",
+      "careers": "Karriere",
+      "press": "Pressemappe",
+      "partners": "Partner",
+      "contact": "Kontakt",
+      "docs": "Dokumentation",
+      "tutorials": "Tutorials",
+      "releaseNotes": "Versionshinweise",
+      "systemStatus": "Systemstatus",
+      "community": "Community",
+      "privacy": "Datenschutz",
+      "terms": "Nutzungsbedingungen",
+      "security": "Sicherheit",
+      "cookies": "Cookie-Richtlinie",
+      "gdpr": "DSGVO"
+    }
+  },
+  "team": {
+    "hero": {
+      "badge": "Personal- & Managementportal",
+      "titlePart1": "Ihr Kommandozentrum für",
+      "titlePart2": "Messeexzellenz",
+      "subtitle": "Maßgeschneiderte Tools für Chefmanager, die den Betrieb überwachen, und Projektmanager, die weltklasse Messestände gestalten.",
+      "cta1": "Chef-Dashboard",
+      "cta2": "Projektmanager"
+    },
+    "stats": {
+      "boothsDesigned": "Gestaltete Stände",
+      "approvalRate": "Genehmigungsrate",
+      "fasterTurnaround": "Schnellere Abwicklung",
+      "activeProjects": "Aktive Projekte"
+    },
+    "roles": {
+      "heading": "Eine Plattform,",
+      "headingAccent": "zwei leistungsstarke Rollen",
+      "subheading": "Von Grund auf für die Realitäten eines Messeunternehmens entwickelt.",
+      "chiefTitle": "Chefmanager",
+      "chiefBadge": "Führungskraft",
+      "chiefDesc": "Volle operative Kontrolle. Projekte zuweisen, alle aktiven Arbeitsbereiche in Echtzeit überwachen, Finanzen prüfen und Kundenbeziehungen über Ihr gesamtes Portfolio pflegen.",
+      "chiefEnter": "Chef-Portal betreten",
+      "pmTitle": "Projektmanager",
+      "pmBadge": "Designer",
+      "pmDesc": "Der vollständige Design-Arbeitsbereich. 3D-Stände bauen, Projektzeitpläne verwalten, mit Kunden kommunizieren und produktionsreife Dokumentation liefern.",
+      "pmEnter": "PM-Portal betreten"
+    },
+    "features": {
+      "heading": "Alles was Ihr Team",
+      "headingAccent": "zum Liefern braucht"
+    },
+    "workflow": {
+      "heading": "Der ENS",
+      "headingAccent": "Produktions-Workflow"
+    },
+    "footer": {
+      "tagline": "Maßgeschneiderte Management-Tools für Messeprofis — vom ersten Briefing bis zur produktionsfertigen Dokumentation.",
+      "chiefPortal": "Chef-Portal",
+      "pmPortal": "PM-Portal",
+      "chiefManager": "Chefmanager",
+      "projectManager": "Projektmanager",
+      "resources": "Ressourcen",
+      "internalSupport": "Interner Support",
+      "clientPortal": "Kundenportal",
+      "dashboard": "Dashboard",
+      "wsMonitor": "WS-Monitor",
+      "teamMgmt": "Teamverwaltung",
+      "clientPortfolio": "Kundenportfolio",
+      "reports": "Berichte",
+      "settings": "Einstellungen",
+      "workspace": "3D-Arbeitsbereich",
+      "projects": "Meine Projekte",
+      "clients": "Kunden",
+      "tasks": "Aufgaben",
+      "messages": "Nachrichten",
+      "docs": "Dokumentation",
+      "training": "Schulungsvideos",
+      "releaseNotes": "Versionshinweise",
+      "systemStatus": "Systemstatus",
+      "itSupport": "IT-Support",
+      "privacy": "Datenschutz",
+      "security": "Sicherheit"
+    }
+  }
+}

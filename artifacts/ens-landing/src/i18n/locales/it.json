@@ -1,0 +1,174 @@
+{
+  "common": {
+    "startDesigning": "Inizia a progettare",
+    "watchDemo": "Guarda la demo",
+    "getAccess": "Ottieni l'accesso",
+    "contactSales": "Contatta le vendite",
+    "signIn": "Accedi",
+    "getStarted": "Inizia",
+    "logIn": "Accedi",
+    "learnMore": "Scopri di più",
+    "copyright": "© {{year}} ENS Expo Solutions Ltd. Tutti i diritti riservati.",
+    "internalOnly": "Solo uso interno"
+  },
+  "nav": {
+    "features": "Funzionalità",
+    "howItWorks": "Come funziona",
+    "showcase": "Portfolio",
+    "staffPortal": "Portale del personale",
+    "roles": "Ruoli",
+    "workflow": "Flusso di lavoro",
+    "clientSite": "Sito cliente"
+  },
+  "home": {
+    "hero": {
+      "badge": "Lo studio di design 3D per il settore fieristico",
+      "titlePart1": "Progetta stand fieristici in",
+      "titlePart2": "3D in tempo reale",
+      "subtitle": "Costruisci, personalizza e gestisci stand Octanorm e Maxima direttamente nel browser. Strumenti professionali per i designer fieristici seri."
+    },
+    "trustedBy": "Si fidano di noi",
+    "stats": {
+      "projectProgress": "Avanzamento progetto",
+      "boothDimensions": "Dimensioni stand",
+      "approvalStatus": "Stato approvazione",
+      "furnitureCount": "Conteggio arredi",
+      "pending": "In attesa"
+    },
+    "demo": {
+      "badge": "Accesso demo live",
+      "title": "Vedi la piattaforma completa in azione",
+      "subtitle": "Ottieni una guida personalizzata con uno dei nostri specialisti del prodotto.",
+      "cta": "Prenota una demo"
+    },
+    "features": {
+      "heading": "Tutto ciò di cui hai bisogno per",
+      "headingAccent": "progettare e consegnare",
+      "subheading": "Una suite completa di progettazione e gestione progetti costruita specificamente per il settore fieristico.",
+      "realtime": { "title": "Canvas 3D in tempo reale", "desc": "Trascina e rilascia i componenti di sistema su un palco 3D live. Ciò che vedi è ciò che viene costruito." },
+      "octanorm": { "title": "Sistema Octanorm", "desc": "Sistema modulare Octanorm completo con profili 40 mm e 50 mm precisi, connettori e pannelli." },
+      "maxima": { "title": "Telaio Maxima", "desc": "Sistema robusto di estrusione in alluminio Maxima con campate configurabili e opzioni di riempimento." },
+      "client": { "title": "Anteprima cliente", "desc": "Condividi un link 3D live con i clienti. Annotano direttamente sul modello — nessun account necessario." },
+      "analytics": { "title": "Analisi del progetto", "desc": "Monitora la velocità del progetto, i cicli di approvazione, le previsioni di costo e l'utilizzo del team in tempo reale." },
+      "automation": { "title": "Automazione intelligente", "desc": "Genera automaticamente planimetrie, prospetti, distinte materiali e stime dei costi con un clic." }
+    },
+    "howItWorks": {
+      "heading": "Dal brief alla costruzione in",
+      "headingAccent": "quattro passi",
+      "brief": { "step": "01", "title": "Carica brief", "desc": "Importa il brief dell'evento, la planimetria o la scheda tecnica dello stand del tuo cliente." },
+      "design": { "step": "02", "title": "Progetta in 3D", "desc": "Costruisci lo stand usando i componenti di sistema Octanorm o Maxima e la libreria di arredi." },
+      "review": { "step": "03", "title": "Revisione cliente", "desc": "Invia un link condivisibile. Il cliente esamina e approva direttamente nel modello 3D." },
+      "deliver": { "step": "04", "title": "Esporta e consegna", "desc": "Esportazione in un clic verso documenti di produzione, disegni e nomenclature." }
+    },
+    "testimonials": {
+      "heading": "La fiducia dei",
+      "headingAccent": "migliori del settore"
+    },
+    "pricing": {
+      "heading": "Piani tariffari",
+      "subheading": "Scala il tuo business fieristico con il piano giusto.",
+      "perMonth": "/mese",
+      "recommended": "Consigliato",
+      "custom": "Personalizzato"
+    },
+    "cta": {
+      "heading": "Inizia a costruire il tuo stand oggi",
+      "subheading": "Unisciti al futuro del design fieristico. Crea, collabora e chiudi accordi più velocemente che mai."
+    },
+    "footer": {
+      "tagline": "La piattaforma professionale di progettazione stand 3D per il settore globale delle esposizioni e delle fiere.",
+      "platform": "Piattaforma",
+      "company": "Azienda",
+      "support": "Supporto",
+      "needHelp": "Hai bisogno di aiuto?",
+      "supportHours": "Lun–Ven, 9–18 CET",
+      "workspace": "Area di lavoro 3D",
+      "octanorm": "Sistema Octanorm",
+      "maxima": "Sistema Maxima",
+      "furnitureLib": "Libreria arredi",
+      "clientReview": "Revisione cliente",
+      "apiAccess": "Accesso API",
+      "about": "Chi siamo",
+      "blog": "Blog",
+      "careers": "Lavora con noi",
+      "press": "Kit stampa",
+      "partners": "Partner",
+      "contact": "Contatti",
+      "docs": "Documentazione",
+      "tutorials": "Tutorial",
+      "releaseNotes": "Note di rilascio",
+      "systemStatus": "Stato del sistema",
+      "community": "Community",
+      "privacy": "Privacy",
+      "terms": "Termini di servizio",
+      "security": "Sicurezza",
+      "cookies": "Cookie",
+      "gdpr": "GDPR"
+    }
+  },
+  "team": {
+    "hero": {
+      "badge": "Portale del personale e della direzione",
+      "titlePart1": "Il tuo centro di comando per",
+      "titlePart2": "l'eccellenza fieristica",
+      "subtitle": "Strumenti appositamente costruiti per i responsabili che supervisionano le operazioni e i project manager che progettano stand fieristici di classe mondiale.",
+      "cta1": "Dashboard responsabile",
+      "cta2": "Project Manager"
+    },
+    "stats": {
+      "boothsDesigned": "Stand progettati",
+      "approvalRate": "Tasso di approvazione",
+      "fasterTurnaround": "Consegna più rapida",
+      "activeProjects": "Progetti attivi"
+    },
+    "roles": {
+      "heading": "Una piattaforma,",
+      "headingAccent": "due ruoli potenti",
+      "subheading": "Progettata dall'inizio per le realtà della gestione di un'azienda fieristica.",
+      "chiefTitle": "Responsabile generale",
+      "chiefBadge": "Dirigente",
+      "chiefDesc": "Pieno controllo operativo. Assegna progetti, monitora tutti i workspace attivi in tempo reale, esamina le finanze e mantieni le relazioni con i clienti in tutto il portfolio.",
+      "chiefEnter": "Entra nel portale responsabile",
+      "pmTitle": "Project Manager",
+      "pmBadge": "Designer",
+      "pmDesc": "L'area di lavoro di design completa. Costruisci stand 3D, gestisci le tempistiche del progetto, comunica con i clienti e consegna documentazione pronta per la produzione.",
+      "pmEnter": "Entra nel portale PM"
+    },
+    "features": {
+      "heading": "Tutto ciò di cui il tuo team",
+      "headingAccent": "ha bisogno per consegnare"
+    },
+    "workflow": {
+      "heading": "Il flusso di lavoro",
+      "headingAccent": "di produzione ENS"
+    },
+    "footer": {
+      "tagline": "Strumenti di gestione appositamente costruiti per i professionisti fieristici — dal brief iniziale alla documentazione pronta per la produzione.",
+      "chiefPortal": "Portale responsabile",
+      "pmPortal": "Portale PM",
+      "chiefManager": "Responsabile generale",
+      "projectManager": "Project Manager",
+      "resources": "Risorse",
+      "internalSupport": "Supporto interno",
+      "clientPortal": "Portale cliente",
+      "dashboard": "Dashboard",
+      "wsMonitor": "Monitor WS",
+      "teamMgmt": "Gestione team",
+      "clientPortfolio": "Portfolio clienti",
+      "reports": "Report",
+      "settings": "Impostazioni",
+      "workspace": "Area di lavoro 3D",
+      "projects": "I miei progetti",
+      "clients": "Clienti",
+      "tasks": "Attività",
+      "messages": "Messaggi",
+      "docs": "Documentazione",
+      "training": "Video di formazione",
+      "releaseNotes": "Note di rilascio",
+      "systemStatus": "Stato del sistema",
+      "itSupport": "Supporto IT",
+      "privacy": "Privacy",
+      "security": "Sicurezza"
+    }
+  }
+}

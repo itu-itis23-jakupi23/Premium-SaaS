@@ -1,0 +1,174 @@
+{
+  "common": {
+    "startDesigning": "Empezar a diseñar",
+    "watchDemo": "Ver demo",
+    "getAccess": "Obtener acceso",
+    "contactSales": "Contactar ventas",
+    "signIn": "Iniciar sesión",
+    "getStarted": "Comenzar",
+    "logIn": "Entrar",
+    "learnMore": "Saber más",
+    "copyright": "© {{year}} ENS Expo Solutions Ltd. Todos los derechos reservados.",
+    "internalOnly": "Solo uso interno"
+  },
+  "nav": {
+    "features": "Funciones",
+    "howItWorks": "Cómo funciona",
+    "showcase": "Galería",
+    "staffPortal": "Portal del personal",
+    "roles": "Roles",
+    "workflow": "Flujo de trabajo",
+    "clientSite": "Sitio del cliente"
+  },
+  "home": {
+    "hero": {
+      "badge": "El estudio de diseño 3D para la industria de exposiciones",
+      "titlePart1": "Diseña stands de exposición en",
+      "titlePart2": "3D en tiempo real",
+      "subtitle": "Construye, personaliza y gestiona stands Octanorm y Maxima directamente en tu navegador. Herramientas profesionales para diseñadores de exposiciones serios."
+    },
+    "trustedBy": "Con la confianza de",
+    "stats": {
+      "projectProgress": "Progreso del proyecto",
+      "boothDimensions": "Dimensiones del stand",
+      "approvalStatus": "Estado de aprobación",
+      "furnitureCount": "Recuento de mobiliario",
+      "pending": "Pendiente"
+    },
+    "demo": {
+      "badge": "Acceso a demo en vivo",
+      "title": "Vea la plataforma completa en acción",
+      "subtitle": "Obtenga una visita guiada personalizada con uno de nuestros especialistas de producto.",
+      "cta": "Reservar una demo"
+    },
+    "features": {
+      "heading": "Todo lo que necesitas para",
+      "headingAccent": "diseñar y entregar",
+      "subheading": "Una suite completa de diseño y gestión de proyectos construida específicamente para la industria de exposiciones.",
+      "realtime": { "title": "Canvas 3D en tiempo real", "desc": "Arrastra y suelta componentes del sistema en un escenario 3D en vivo. Lo que ves es lo que se construye." },
+      "octanorm": { "title": "Sistema Octanorm", "desc": "Sistema modular Octanorm completo con perfiles de 40 mm y 50 mm precisos, conectores y paneles." },
+      "maxima": { "title": "Marco Maxima", "desc": "Sistema de extrusión de aluminio Maxima resistente con vanos configurables y opciones de relleno." },
+      "client": { "title": "Vista previa del cliente", "desc": "Comparte un enlace 3D en vivo con los clientes. Anotan directamente en el modelo — sin necesidad de cuenta." },
+      "analytics": { "title": "Analítica de proyectos", "desc": "Sigue la velocidad del proyecto, los ciclos de aprobación, las previsiones de costes y la utilización del equipo en tiempo real." },
+      "automation": { "title": "Automatización inteligente", "desc": "Genera automáticamente planos, alzados, listas de piezas y estimaciones de costes con un solo clic." }
+    },
+    "howItWorks": {
+      "heading": "Del briefing a la construcción en",
+      "headingAccent": "cuatro pasos",
+      "brief": { "step": "01", "title": "Subir briefing", "desc": "Importa el briefing del evento, el plano o la ficha de especificaciones del stand de tu cliente." },
+      "design": { "step": "02", "title": "Diseñar en 3D", "desc": "Construye el stand usando componentes del sistema Octanorm o Maxima y la biblioteca de mobiliario." },
+      "review": { "step": "03", "title": "Revisión del cliente", "desc": "Envía un enlace compartible. El cliente revisa y aprueba directamente en el modelo 3D." },
+      "deliver": { "step": "04", "title": "Exportar y entregar", "desc": "Exportación con un clic a documentos de producción, planos y calendarios de piezas." }
+    },
+    "testimonials": {
+      "heading": "Con la confianza de los",
+      "headingAccent": "mejores del sector"
+    },
+    "pricing": {
+      "heading": "Niveles de precios",
+      "subheading": "Escala tu negocio de exposiciones con el plan adecuado.",
+      "perMonth": "/mes",
+      "recommended": "Recomendado",
+      "custom": "Personalizado"
+    },
+    "cta": {
+      "heading": "Empieza a construir tu stand hoy",
+      "subheading": "Únete al futuro del diseño de exposiciones. Crea, colabora y cierra tratos más rápido que nunca."
+    },
+    "footer": {
+      "tagline": "La plataforma profesional de diseño de stands 3D para la industria global de exposiciones y ferias.",
+      "platform": "Plataforma",
+      "company": "Empresa",
+      "support": "Soporte",
+      "needHelp": "¿Necesitas ayuda?",
+      "supportHours": "Lun–Vie, 9h–18h CET",
+      "workspace": "Espacio de trabajo 3D",
+      "octanorm": "Sistema Octanorm",
+      "maxima": "Sistema Maxima",
+      "furnitureLib": "Biblioteca de mobiliario",
+      "clientReview": "Revisión del cliente",
+      "apiAccess": "Acceso API",
+      "about": "Sobre ENS",
+      "blog": "Blog",
+      "careers": "Empleo",
+      "press": "Prensa",
+      "partners": "Socios",
+      "contact": "Contacto",
+      "docs": "Documentación",
+      "tutorials": "Tutoriales",
+      "releaseNotes": "Notas de versión",
+      "systemStatus": "Estado del sistema",
+      "community": "Comunidad",
+      "privacy": "Política de privacidad",
+      "terms": "Términos de servicio",
+      "security": "Seguridad",
+      "cookies": "Política de cookies",
+      "gdpr": "RGPD"
+    }
+  },
+  "team": {
+    "hero": {
+      "badge": "Portal del personal y la dirección",
+      "titlePart1": "Tu centro de mando para",
+      "titlePart2": "la excelencia en exposiciones",
+      "subtitle": "Herramientas diseñadas para directores generales que supervisan operaciones y gerentes de proyecto que diseñan stands de exposición de clase mundial.",
+      "cta1": "Panel del director",
+      "cta2": "Gestor de proyectos"
+    },
+    "stats": {
+      "boothsDesigned": "Stands diseñados",
+      "approvalRate": "Tasa de aprobación",
+      "fasterTurnaround": "Entrega más rápida",
+      "activeProjects": "Proyectos activos"
+    },
+    "roles": {
+      "heading": "Una plataforma,",
+      "headingAccent": "dos roles poderosos",
+      "subheading": "Diseñada desde cero para las realidades de gestionar una empresa de exposiciones.",
+      "chiefTitle": "Director general",
+      "chiefBadge": "Ejecutivo",
+      "chiefDesc": "Control operativo total. Asigna proyectos, monitorea todos los espacios de trabajo activos en tiempo real, revisa las finanzas y mantiene las relaciones con los clientes en toda tu cartera.",
+      "chiefEnter": "Entrar al portal del director",
+      "pmTitle": "Gestor de proyectos",
+      "pmBadge": "Diseñador",
+      "pmDesc": "El espacio de trabajo de diseño completo. Construye stands 3D, gestiona cronogramas de proyectos, comunícate con clientes y entrega documentación lista para producción.",
+      "pmEnter": "Entrar al portal PM"
+    },
+    "features": {
+      "heading": "Todo lo que tu equipo",
+      "headingAccent": "necesita para entregar"
+    },
+    "workflow": {
+      "heading": "El flujo de trabajo",
+      "headingAccent": "de producción ENS"
+    },
+    "footer": {
+      "tagline": "Herramientas de gestión diseñadas para profesionales de exposiciones — desde el briefing inicial hasta la documentación lista para producción.",
+      "chiefPortal": "Portal del director",
+      "pmPortal": "Portal PM",
+      "chiefManager": "Director general",
+      "projectManager": "Gestor de proyectos",
+      "resources": "Recursos",
+      "internalSupport": "Soporte interno",
+      "clientPortal": "Portal del cliente",
+      "dashboard": "Panel de control",
+      "wsMonitor": "Monitor WS",
+      "teamMgmt": "Gestión de equipo",
+      "clientPortfolio": "Cartera de clientes",
+      "reports": "Informes",
+      "settings": "Configuración",
+      "workspace": "Espacio de trabajo 3D",
+      "projects": "Mis proyectos",
+      "clients": "Clientes",
+      "tasks": "Tareas",
+      "messages": "Mensajes",
+      "docs": "Documentación",
+      "training": "Vídeos de formación",
+      "releaseNotes": "Notas de versión",
+      "systemStatus": "Estado del sistema",
+      "itSupport": "Soporte TI",
+      "privacy": "Política de privacidad",
+      "security": "Seguridad"
+    }
+  }
+}

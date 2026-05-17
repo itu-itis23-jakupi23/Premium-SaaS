@@ -1,0 +1,174 @@
+{
+  "common": {
+    "startDesigning": "开始设计",
+    "watchDemo": "观看演示",
+    "getAccess": "立即获取访问权限",
+    "contactSales": "联系销售",
+    "signIn": "登录",
+    "getStarted": "开始使用",
+    "logIn": "登录",
+    "learnMore": "了解更多",
+    "copyright": "© {{year}} ENS Expo Solutions Ltd. 保留所有权利。",
+    "internalOnly": "仅供内部使用"
+  },
+  "nav": {
+    "features": "功能",
+    "howItWorks": "使用方法",
+    "showcase": "展示案例",
+    "staffPortal": "员工门户",
+    "roles": "角色",
+    "workflow": "工作流程",
+    "clientSite": "客户网站"
+  },
+  "home": {
+    "hero": {
+      "badge": "专为展览行业打造的3D设计工作室",
+      "titlePart1": "实时3D设计",
+      "titlePart2": "展览展位",
+      "subtitle": "直接在浏览器中构建、定制和管理Octanorm和Maxima展位。专业展览设计师的专业工具。"
+    },
+    "trustedBy": "受到以下机构信任",
+    "stats": {
+      "projectProgress": "项目进度",
+      "boothDimensions": "展位尺寸",
+      "approvalStatus": "审批状态",
+      "furnitureCount": "家具数量",
+      "pending": "待审批"
+    },
+    "demo": {
+      "badge": "实时演示访问",
+      "title": "查看完整平台的实际效果",
+      "subtitle": "与我们的产品专家预约个性化演示。",
+      "cta": "预约演示"
+    },
+    "features": {
+      "heading": "您设计和交付所需的",
+      "headingAccent": "一切工具",
+      "subheading": "专为展览行业构建的完整设计和项目管理套件。",
+      "realtime": { "title": "实时3D画布", "desc": "将系统组件拖放到实时3D舞台上。所见即所建。" },
+      "octanorm": { "title": "Octanorm系统", "desc": "完整的Octanorm模块系统，具有精确的40mm和50mm型材、连接件和面板。" },
+      "maxima": { "title": "Maxima框架", "desc": "重型Maxima铝型材挤压系统，具有可配置的跨度和填充选项。" },
+      "client": { "title": "客户预览", "desc": "与客户分享实时3D链接。他们直接在模型上注释——无需账户。" },
+      "analytics": { "title": "项目分析", "desc": "实时跟踪项目进度、审批周期、成本预测和团队利用率。" },
+      "automation": { "title": "智能自动化", "desc": "一键自动生成平面图、立面图、零件清单和成本估算。" }
+    },
+    "howItWorks": {
+      "heading": "从简报到竣工",
+      "headingAccent": "四个步骤",
+      "brief": { "step": "01", "title": "上传简报", "desc": "导入客户的活动简报、平面图或展位规格表。" },
+      "design": { "step": "02", "title": "3D设计", "desc": "使用Octanorm或Maxima系统组件和家具库构建展位。" },
+      "review": { "step": "03", "title": "客户审核", "desc": "发送可共享链接。客户直接在3D模型中审核和批准。" },
+      "deliver": { "step": "04", "title": "导出并交付", "desc": "一键导出到生产文件、图纸和零件清单。" }
+    },
+    "testimonials": {
+      "heading": "业内",
+      "headingAccent": "顶尖企业的信赖之选"
+    },
+    "pricing": {
+      "heading": "价格方案",
+      "subheading": "选择合适的方案，扩展您的展览业务。",
+      "perMonth": "/月",
+      "recommended": "推荐",
+      "custom": "定制"
+    },
+    "cta": {
+      "heading": "立即开始构建您的展位",
+      "subheading": "加入展览设计的未来。比以往更快地创建、协作和达成交易。"
+    },
+    "footer": {
+      "tagline": "面向全球展览和贸易展行业的专业3D展位设计平台。",
+      "platform": "平台",
+      "company": "公司",
+      "support": "支持",
+      "needHelp": "需要帮助？",
+      "supportHours": "周一至周五，上午9点至下午6点（欧洲中部时间）",
+      "workspace": "3D工作区",
+      "octanorm": "Octanorm系统",
+      "maxima": "Maxima系统",
+      "furnitureLib": "家具库",
+      "clientReview": "客户审核",
+      "apiAccess": "API访问",
+      "about": "关于ENS",
+      "blog": "博客",
+      "careers": "招聘",
+      "press": "新闻资料",
+      "partners": "合作伙伴",
+      "contact": "联系我们",
+      "docs": "文档",
+      "tutorials": "教程",
+      "releaseNotes": "发版说明",
+      "systemStatus": "系统状态",
+      "community": "社区",
+      "privacy": "隐私政策",
+      "terms": "服务条款",
+      "security": "安全",
+      "cookies": "Cookie政策",
+      "gdpr": "GDPR"
+    }
+  },
+  "team": {
+    "hero": {
+      "badge": "员工与管理门户",
+      "titlePart1": "您的展览卓越",
+      "titlePart2": "指挥中心",
+      "subtitle": "专为监督运营的总经理和设计世界级展览展位的项目经理打造的工具。",
+      "cta1": "总经理仪表板",
+      "cta2": "项目经理"
+    },
+    "stats": {
+      "boothsDesigned": "已设计展位",
+      "approvalRate": "审批率",
+      "fasterTurnaround": "更快交付",
+      "activeProjects": "活跃项目"
+    },
+    "roles": {
+      "heading": "一个平台，",
+      "headingAccent": "两个强大角色",
+      "subheading": "从头开始，为展览公司运营的实际需求而设计。",
+      "chiefTitle": "总经理",
+      "chiefBadge": "管理层",
+      "chiefDesc": "全面的运营控制。分配项目、实时监控所有活跃工作区、审查财务状况，并维护整个业务组合中的客户关系。",
+      "chiefEnter": "进入总经理门户",
+      "pmTitle": "项目经理",
+      "pmBadge": "设计师",
+      "pmDesc": "完整的设计工作区。构建3D展位、管理项目时间表、与客户沟通，并交付可直接用于生产的文档。",
+      "pmEnter": "进入PM门户"
+    },
+    "features": {
+      "heading": "您的团队交付",
+      "headingAccent": "所需的一切"
+    },
+    "workflow": {
+      "heading": "ENS",
+      "headingAccent": "生产工作流程"
+    },
+    "footer": {
+      "tagline": "专为展览专业人士打造的管理工具——从初始简报到可直接用于生产的文档。",
+      "chiefPortal": "总经理门户",
+      "pmPortal": "PM门户",
+      "chiefManager": "总经理",
+      "projectManager": "项目经理",
+      "resources": "资源",
+      "internalSupport": "内部支持",
+      "clientPortal": "客户门户",
+      "dashboard": "仪表板",
+      "wsMonitor": "WS监控",
+      "teamMgmt": "团队管理",
+      "clientPortfolio": "客户组合",
+      "reports": "报告",
+      "settings": "设置",
+      "workspace": "3D工作区",
+      "projects": "我的项目",
+      "clients": "客户",
+      "tasks": "任务",
+      "messages": "消息",
+      "docs": "文档",
+      "training": "培训视频",
+      "releaseNotes": "发版说明",
+      "systemStatus": "系统状态",
+      "itSupport": "IT支持",
+      "privacy": "隐私政策",
+      "security": "安全"
+    }
+  }
+}

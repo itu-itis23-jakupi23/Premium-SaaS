@@ -1,0 +1,174 @@
+{
+  "common": {
+    "startDesigning": "デザインを始める",
+    "watchDemo": "デモを見る",
+    "getAccess": "今すぐアクセス",
+    "contactSales": "営業に問い合わせ",
+    "signIn": "サインイン",
+    "getStarted": "始める",
+    "logIn": "ログイン",
+    "learnMore": "詳細を見る",
+    "copyright": "© {{year}} ENS Expo Solutions Ltd. All rights reserved.",
+    "internalOnly": "社内利用のみ"
+  },
+  "nav": {
+    "features": "機能",
+    "howItWorks": "使い方",
+    "showcase": "事例",
+    "staffPortal": "スタッフポータル",
+    "roles": "役割",
+    "workflow": "ワークフロー",
+    "clientSite": "クライアントサイト"
+  },
+  "home": {
+    "hero": {
+      "badge": "展示業界のための3Dデザインスタジオ",
+      "titlePart1": "リアルタイム3Dで",
+      "titlePart2": "展示ブースをデザイン",
+      "subtitle": "OctanormとMaximaのスタンドをブラウザで直接構築、カスタマイズ、管理できます。本格的な展示デザイナーのためのプロフェッショナルツール。"
+    },
+    "trustedBy": "導入実績",
+    "stats": {
+      "projectProgress": "プロジェクト進捗",
+      "boothDimensions": "ブース寸法",
+      "approvalStatus": "承認状況",
+      "furnitureCount": "家具点数",
+      "pending": "承認待ち"
+    },
+    "demo": {
+      "badge": "ライブデモアクセス",
+      "title": "プラットフォームの全機能をご覧ください",
+      "subtitle": "製品スペシャリストによる個別ツアーをご予約ください。",
+      "cta": "デモを予約"
+    },
+    "features": {
+      "heading": "デザインと納品に必要な",
+      "headingAccent": "すべての機能",
+      "subheading": "展示業界向けに特化した、完全なデザイン・プロジェクト管理スイート。",
+      "realtime": { "title": "リアルタイム3Dキャンバス", "desc": "システムコンポーネントをライブ3Dステージにドラッグ＆ドロップ。見たままが実際に構築されます。" },
+      "octanorm": { "title": "Octanormシステム", "desc": "精密な40mm・50mmプロファイル、コネクター、パネルを備えた完全なOctanormモジュールシステム。" },
+      "maxima": { "title": "Maximaフレーム", "desc": "設定可能なスパンと充填オプションを備えた頑丈なMaximaアルミ押出システム。" },
+      "client": { "title": "クライアントプレビュー", "desc": "ライブ3Dリンクをクライアントと共有。アカウント不要でモデルに直接注釈できます。" },
+      "analytics": { "title": "プロジェクト分析", "desc": "プロジェクト速度、承認サイクル、コスト予測、チーム稼働率をリアルタイムで追跡。" },
+      "automation": { "title": "スマート自動化", "desc": "フロアプラン、立面図、部品リスト、費用見積もりをワンクリックで自動生成。" }
+    },
+    "howItWorks": {
+      "heading": "ブリーフから施工まで",
+      "headingAccent": "4つのステップ",
+      "brief": { "step": "01", "title": "ブリーフのアップロード", "desc": "クライアントのイベントブリーフ、フロアプラン、またはブース仕様書をインポート。" },
+      "design": { "step": "02", "title": "3Dでデザイン", "desc": "OctanormまたはMaximaシステムコンポーネントと家具ライブラリを使ってスタンドを構築。" },
+      "review": { "step": "03", "title": "クライアントレビュー", "desc": "共有リンクを送信。クライアントは3Dモデルで直接確認・承認できます。" },
+      "deliver": { "step": "04", "title": "エクスポートと納品", "desc": "製作書類、図面、部品スケジュールにワンクリックでエクスポート。" }
+    },
+    "testimonials": {
+      "heading": "業界トップ企業が",
+      "headingAccent": "信頼するプラットフォーム"
+    },
+    "pricing": {
+      "heading": "料金プラン",
+      "subheading": "最適なプランで展示ビジネスを拡大しましょう。",
+      "perMonth": "/月",
+      "recommended": "おすすめ",
+      "custom": "カスタム"
+    },
+    "cta": {
+      "heading": "今日からブース制作を始めましょう",
+      "subheading": "展示デザインの未来に参加しましょう。これまで以上に速く作成、協力、成約できます。"
+    },
+    "footer": {
+      "tagline": "グローバル展示・見本市業界向けのプロフェッショナル3Dブースデザインプラットフォーム。",
+      "platform": "プラットフォーム",
+      "company": "企業情報",
+      "support": "サポート",
+      "needHelp": "お困りですか？",
+      "supportHours": "月〜金、午前9時〜午後6時（CET）",
+      "workspace": "3Dワークスペース",
+      "octanorm": "Octanormシステム",
+      "maxima": "Maximaシステム",
+      "furnitureLib": "家具ライブラリ",
+      "clientReview": "クライアントレビュー",
+      "apiAccess": "APIアクセス",
+      "about": "ENSについて",
+      "blog": "ブログ",
+      "careers": "採用情報",
+      "press": "プレスキット",
+      "partners": "パートナー",
+      "contact": "お問い合わせ",
+      "docs": "ドキュメント",
+      "tutorials": "チュートリアル",
+      "releaseNotes": "リリースノート",
+      "systemStatus": "システム状態",
+      "community": "コミュニティ",
+      "privacy": "プライバシーポリシー",
+      "terms": "利用規約",
+      "security": "セキュリティ",
+      "cookies": "Cookieポリシー",
+      "gdpr": "GDPR"
+    }
+  },
+  "team": {
+    "hero": {
+      "badge": "スタッフ・管理ポータル",
+      "titlePart1": "展示の卓越性のための",
+      "titlePart2": "あなたの指揮センター",
+      "subtitle": "オペレーションを監督するチーフマネージャーと世界クラスの展示スタンドをデザインするプロジェクトマネージャーのための専用ツール。",
+      "cta1": "チーフダッシュボード",
+      "cta2": "プロジェクトマネージャー"
+    },
+    "stats": {
+      "boothsDesigned": "設計済みブース",
+      "approvalRate": "承認率",
+      "fasterTurnaround": "納期短縮",
+      "activeProjects": "進行中プロジェクト"
+    },
+    "roles": {
+      "heading": "1つのプラットフォーム、",
+      "headingAccent": "2つの強力な役割",
+      "subheading": "展示会社の運営の現実に対応するために最初から設計されています。",
+      "chiefTitle": "チーフマネージャー",
+      "chiefBadge": "エグゼクティブ",
+      "chiefDesc": "完全な運営管理。プロジェクトを割り当て、すべてのアクティブワークスペースをリアルタイムで監視し、財務を確認し、ポートフォリオ全体でクライアント関係を維持します。",
+      "chiefEnter": "チーフポータルへ",
+      "pmTitle": "プロジェクトマネージャー",
+      "pmBadge": "デザイナー",
+      "pmDesc": "完全なデザインワークスペース。3Dブースを構築し、プロジェクトスケジュールを管理し、クライアントとコミュニケーションを取り、制作準備完了のドキュメントを納品します。",
+      "pmEnter": "PMポータルへ"
+    },
+    "features": {
+      "heading": "チームが納品するために",
+      "headingAccent": "必要なすべて"
+    },
+    "workflow": {
+      "heading": "ENSの",
+      "headingAccent": "制作ワークフロー"
+    },
+    "footer": {
+      "tagline": "展示専門家のために作られた管理ツール — 最初のブリーフから製作準備完了のドキュメントまで。",
+      "chiefPortal": "チーフポータル",
+      "pmPortal": "PMポータル",
+      "chiefManager": "チーフマネージャー",
+      "projectManager": "プロジェクトマネージャー",
+      "resources": "リソース",
+      "internalSupport": "社内サポート",
+      "clientPortal": "クライアントポータル",
+      "dashboard": "ダッシュボード",
+      "wsMonitor": "WSモニター",
+      "teamMgmt": "チーム管理",
+      "clientPortfolio": "クライアントポートフォリオ",
+      "reports": "レポート",
+      "settings": "設定",
+      "workspace": "3Dワークスペース",
+      "projects": "マイプロジェクト",
+      "clients": "クライアント",
+      "tasks": "タスク",
+      "messages": "メッセージ",
+      "docs": "ドキュメント",
+      "training": "トレーニング動画",
+      "releaseNotes": "リリースノート",
+      "systemStatus": "システム状態",
+      "itSupport": "ITサポート",
+      "privacy": "プライバシーポリシー",
+      "security": "セキュリティ"
+    }
+  }
+}

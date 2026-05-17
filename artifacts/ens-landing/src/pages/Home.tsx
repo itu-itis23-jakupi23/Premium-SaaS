@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Button } from '@/components/ui/button';
 import { 
   Box, 
@@ -106,6 +108,7 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('workspace');
   const [, navigate] = useLocation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -132,18 +135,19 @@ export default function Home() {
           </div>
           
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
-            <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How it Works</a>
-            <a href="#showcase" className="text-muted-foreground hover:text-foreground transition-colors">Showcase</a>
+            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.features')}</a>
+            <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.howItWorks')}</a>
+            <a href="#showcase" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.showcase')}</a>
+            <LanguageSwitcher />
             <ThemeToggle />
             <Button variant="ghost" className="rounded-full px-5 font-semibold border border-border/40" onClick={() => navigate('/team')} data-testid="btn-nav-team">
-              Staff Portal
+              {t('nav.staffPortal')}
             </Button>
             <Button variant="ghost" className="rounded-full px-5 font-semibold" onClick={() => navigate('/login')} data-testid="btn-nav-login">
-              Log In
+              {t('common.logIn')}
             </Button>
             <Button className="rounded-full px-6 font-semibold shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)] transition-all" onClick={() => navigate('/login')} data-testid="btn-nav-start">
-              Start Designing
+              {t('common.startDesigning')}
             </Button>
           </nav>
 
@@ -173,23 +177,23 @@ export default function Home() {
             >
               <motion.div variants={FADE_UP} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
                 <Sparkles className="w-4 h-4" />
-                <span>The 3D design studio for the exhibition industry</span>
+                <span>{t('home.hero.badge')}</span>
               </motion.div>
               
               <motion.h1 variants={FADE_UP} className="text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-[1.1]">
-                Design Exhibition Booths in <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500 glow-text">Real-Time 3D</span>
+                {t('home.hero.titlePart1')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500 glow-text">{t('home.hero.titlePart2')}</span>
               </motion.h1>
               
               <motion.p variants={FADE_UP} className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-                Build, customize, and manage Octanorm and Maxima stands directly in your browser. Professional tools for serious exhibition designers.
+                {t('home.hero.subtitle')}
               </motion.p>
               
               <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
                 <Button size="lg" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold shadow-[0_0_20px_rgba(109,40,217,0.4)] hover:shadow-[0_0_35px_rgba(109,40,217,0.6)] transition-all gap-2" data-testid="btn-hero-cta1">
-                  Start Designing <ChevronRight className="w-4 h-4" />
+                  {t('common.startDesigning')} <ChevronRight className="w-4 h-4" />
                 </Button>
                 <Button size="lg" variant="outline" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border-border/80 hover:bg-muted/50" data-testid="btn-hero-cta2">
-                  Watch Demo
+                  {t('common.watchDemo')}
                 </Button>
               </motion.div>
 
@@ -228,10 +232,10 @@ export default function Home() {
       <div className="container mx-auto px-6 -mt-10 mb-20 relative z-20">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Project Progress", value: "84%", icon: TrendingUp, color: "text-blue-500" },
-            { label: "Booth Dimensions", value: "6m x 9m", icon: BoxSelect, color: "text-purple-500" },
-            { label: "Approval Status", value: "Pending", icon: CheckCircle2, color: "text-yellow-500" },
-            { label: "Furniture Count", value: "18 items", icon: Package, color: "text-cyan-500" }
+            { label: t('home.stats.projectProgress'), value: "84%", icon: TrendingUp, color: "text-blue-500" },
+            { label: t('home.stats.boothDimensions'), value: "6m x 9m", icon: BoxSelect, color: "text-purple-500" },
+            { label: t('home.stats.approvalStatus'), value: t('home.stats.pending'), icon: CheckCircle2, color: "text-yellow-500" },
+            { label: t('home.stats.furnitureCount'), value: "18 items", icon: Package, color: "text-cyan-500" }
           ].map((stat, i) => (
             <motion.div
               key={i}
@@ -257,7 +261,7 @@ export default function Home() {
       <div className="container mx-auto px-6 mb-8 relative z-20">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 py-6 border-y border-border/30">
           <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 flex-shrink-0">
-            Trusted by
+            {t('home.trustedBy')}
           </span>
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
             {['Global Exhibits Inc.', 'Exhibito Group', 'Milano Design Studio', 'ExpoVision GmbH', 'ShowCraft Asia', 'NordExpo'].map((name) => (
@@ -484,8 +488,8 @@ export default function Home() {
           </div>
 
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Precision Engineering for Exhibition Spaces</h2>
-            <p className="text-muted-foreground">Built specifically for the nuances of trade show design. Move beyond rigid CAD software and flimsy drawing tools.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('home.features.heading')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">{t('home.features.headingAccent')}</span></h2>
+            <p className="text-muted-foreground">{t('home.features.subheading')}</p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -753,8 +757,8 @@ export default function Home() {
       <section className="py-24 bg-muted/5 border-t border-border/50">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 uppercase tracking-tighter">Pricing Tiers</h2>
-            <p className="text-muted-foreground">Scale your exhibition business with the right plan.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 uppercase tracking-tighter">{t('home.pricing.heading')}</h2>
+            <p className="text-muted-foreground">{t('home.pricing.subheading')}</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -806,17 +810,17 @@ export default function Home() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl md:text-6xl font-bold mb-8 glow-text tracking-tighter">
-              Start building your booth today
+              {t('home.cta.heading')}
             </h2>
             <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto">
-              Join the future of exhibition design. Create, collaborate, and close deals faster than ever before.
+              {t('home.cta.subheading')}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <Button size="lg" onClick={() => navigate('/login')} className="rounded-full px-12 h-16 text-lg font-bold shadow-[0_0_30px_rgba(109,40,217,0.5)]">
-                Get Access Now
+                {t('common.getAccess')}
               </Button>
               <Button variant="outline" size="lg" onClick={() => navigate('/login')} className="rounded-full px-12 h-16 text-lg font-bold border-border">
-                Contact Sales
+                {t('common.contactSales')}
               </Button>
             </div>
           </motion.div>
@@ -834,7 +838,7 @@ export default function Home() {
                 <span className="font-bold text-lg tracking-tight">ENS Platform</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-6">
-                The professional 3D booth design platform for the global exhibition and trade show industry.
+                {t('home.footer.tagline')}
               </p>
               <div className="flex gap-3">
                 {[
@@ -852,9 +856,9 @@ export default function Home() {
 
             {/* Platform links */}
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Platform</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('home.footer.platform')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                {['3D Workspace', 'Octanorm System', 'Maxima System', 'Furniture Library', 'Client Review', 'API Access'].map(l => (
+                {[t('home.footer.workspace'), t('home.footer.octanorm'), t('home.footer.maxima'), t('home.footer.furnitureLib'), t('home.footer.clientReview'), t('home.footer.apiAccess')].map(l => (
                   <li key={l}><a href="#" className="hover:text-foreground transition-colors">{l}</a></li>
                 ))}
               </ul>
@@ -862,9 +866,9 @@ export default function Home() {
 
             {/* Company links */}
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Company</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('home.footer.company')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                {['About ENS', 'Blog', 'Careers', 'Press Kit', 'Partners', 'Contact'].map(l => (
+                {[t('home.footer.about'), t('home.footer.blog'), t('home.footer.careers'), t('home.footer.press'), t('home.footer.partners'), t('home.footer.contact')].map(l => (
                   <li key={l}><a href="#" className="hover:text-foreground transition-colors">{l}</a></li>
                 ))}
               </ul>
@@ -872,15 +876,15 @@ export default function Home() {
 
             {/* Support links */}
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Support</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('home.footer.support')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                {['Documentation', 'Tutorials', 'Release Notes', 'System Status', 'Community'].map(l => (
+                {[t('home.footer.docs'), t('home.footer.tutorials'), t('home.footer.releaseNotes'), t('home.footer.systemStatus'), t('home.footer.community')].map(l => (
                   <li key={l}><a href="#" className="hover:text-foreground transition-colors">{l}</a></li>
                 ))}
               </ul>
               <div className="mt-6 p-3 rounded-xl bg-primary/5 border border-primary/15">
-                <div className="text-xs font-semibold mb-1">Need help?</div>
-                <div className="text-[11px] text-muted-foreground mb-2">Mon–Fri, 9am–6pm CET</div>
+                <div className="text-xs font-semibold mb-1">{t('home.footer.needHelp')}</div>
+                <div className="text-[11px] text-muted-foreground mb-2">{t('home.footer.supportHours')}</div>
                 <a href="mailto:support@ens.io" className="text-[11px] text-primary hover:underline">support@ens.io</a>
               </div>
             </div>
@@ -888,9 +892,9 @@ export default function Home() {
 
           {/* Bottom bar */}
           <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <span className="text-xs text-muted-foreground">© {new Date().getFullYear()} ENS Expo Solutions Ltd. All rights reserved.</span>
+            <span className="text-xs text-muted-foreground">{t('common.copyright', { year: new Date().getFullYear() })}</span>
             <div className="flex flex-wrap justify-center gap-6 text-xs text-muted-foreground">
-              {['Privacy Policy', 'Terms of Service', 'Security', 'Cookie Policy', 'GDPR'].map(l => (
+              {[t('home.footer.privacy'), t('home.footer.terms'), t('home.footer.security'), t('home.footer.cookies'), t('home.footer.gdpr')].map(l => (
                 <a key={l} href="#" className="hover:text-primary transition-colors">{l}</a>
               ))}
             </div>

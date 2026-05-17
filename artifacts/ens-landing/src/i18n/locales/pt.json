@@ -1,0 +1,174 @@
+{
+  "common": {
+    "startDesigning": "Começar a projetar",
+    "watchDemo": "Ver demo",
+    "getAccess": "Obter acesso",
+    "contactSales": "Contatar vendas",
+    "signIn": "Entrar",
+    "getStarted": "Começar",
+    "logIn": "Login",
+    "learnMore": "Saiba mais",
+    "copyright": "© {{year}} ENS Expo Solutions Ltd. Todos os direitos reservados.",
+    "internalOnly": "Somente uso interno"
+  },
+  "nav": {
+    "features": "Funcionalidades",
+    "howItWorks": "Como funciona",
+    "showcase": "Portfólio",
+    "staffPortal": "Portal da equipe",
+    "roles": "Funções",
+    "workflow": "Fluxo de trabalho",
+    "clientSite": "Site do cliente"
+  },
+  "home": {
+    "hero": {
+      "badge": "O estúdio de design 3D para a indústria de exposições",
+      "titlePart1": "Projete estandes de exposição em",
+      "titlePart2": "3D em tempo real",
+      "subtitle": "Construa, personalize e gerencie estandes Octanorm e Maxima diretamente no seu navegador. Ferramentas profissionais para designers de exposições sérios."
+    },
+    "trustedBy": "Confiado por",
+    "stats": {
+      "projectProgress": "Progresso do projeto",
+      "boothDimensions": "Dimensões do estande",
+      "approvalStatus": "Status de aprovação",
+      "furnitureCount": "Contagem de móveis",
+      "pending": "Pendente"
+    },
+    "demo": {
+      "badge": "Acesso à demo ao vivo",
+      "title": "Veja a plataforma completa em ação",
+      "subtitle": "Obtenha um tour personalizado com um de nossos especialistas de produto.",
+      "cta": "Agendar uma demo"
+    },
+    "features": {
+      "heading": "Tudo que você precisa para",
+      "headingAccent": "projetar e entregar",
+      "subheading": "Uma suite completa de design e gestão de projetos construída especificamente para a indústria de exposições.",
+      "realtime": { "title": "Canvas 3D em tempo real", "desc": "Arraste e solte componentes do sistema em um palco 3D ao vivo. O que você vê é o que será construído." },
+      "octanorm": { "title": "Sistema Octanorm", "desc": "Sistema modular Octanorm completo com perfis precisos de 40 mm e 50 mm, conectores e painéis." },
+      "maxima": { "title": "Estrutura Maxima", "desc": "Sistema robusto de extrusão de alumínio Maxima com vãos configuráveis e opções de preenchimento." },
+      "client": { "title": "Visualização do cliente", "desc": "Compartilhe um link 3D ao vivo com clientes. Eles anotam diretamente no modelo — sem necessidade de conta." },
+      "analytics": { "title": "Análise de projetos", "desc": "Acompanhe a velocidade do projeto, ciclos de aprovação, previsões de custo e utilização da equipe em tempo real." },
+      "automation": { "title": "Automação inteligente", "desc": "Gere automaticamente plantas baixas, elevações, listas de peças e estimativas de custo com um clique." }
+    },
+    "howItWorks": {
+      "heading": "Do briefing à construção em",
+      "headingAccent": "quatro etapas",
+      "brief": { "step": "01", "title": "Enviar briefing", "desc": "Importe o briefing do evento, a planta baixa ou a ficha de especificações do estande do seu cliente." },
+      "design": { "step": "02", "title": "Projetar em 3D", "desc": "Construa o estande usando componentes do sistema Octanorm ou Maxima e a biblioteca de móveis." },
+      "review": { "step": "03", "title": "Revisão do cliente", "desc": "Envie um link compartilhável. O cliente revisa e aprova diretamente no modelo 3D." },
+      "deliver": { "step": "04", "title": "Exportar e entregar", "desc": "Exportação com um clique para documentos de produção, desenhos e cronogramas de peças." }
+    },
+    "testimonials": {
+      "heading": "Confiado pelos",
+      "headingAccent": "melhores do setor"
+    },
+    "pricing": {
+      "heading": "Planos de preços",
+      "subheading": "Escale seu negócio de exposições com o plano certo.",
+      "perMonth": "/mês",
+      "recommended": "Recomendado",
+      "custom": "Personalizado"
+    },
+    "cta": {
+      "heading": "Comece a construir seu estande hoje",
+      "subheading": "Junte-se ao futuro do design de exposições. Crie, colabore e feche negócios mais rápido do que nunca."
+    },
+    "footer": {
+      "tagline": "A plataforma profissional de design de estandes 3D para a indústria global de exposições e feiras.",
+      "platform": "Plataforma",
+      "company": "Empresa",
+      "support": "Suporte",
+      "needHelp": "Precisa de ajuda?",
+      "supportHours": "Seg–Sex, 9h–18h CET",
+      "workspace": "Espaço de trabalho 3D",
+      "octanorm": "Sistema Octanorm",
+      "maxima": "Sistema Maxima",
+      "furnitureLib": "Biblioteca de móveis",
+      "clientReview": "Revisão do cliente",
+      "apiAccess": "Acesso API",
+      "about": "Sobre a ENS",
+      "blog": "Blog",
+      "careers": "Carreiras",
+      "press": "Kit de imprensa",
+      "partners": "Parceiros",
+      "contact": "Contato",
+      "docs": "Documentação",
+      "tutorials": "Tutoriais",
+      "releaseNotes": "Notas de versão",
+      "systemStatus": "Status do sistema",
+      "community": "Comunidade",
+      "privacy": "Política de privacidade",
+      "terms": "Termos de serviço",
+      "security": "Segurança",
+      "cookies": "Política de cookies",
+      "gdpr": "LGPD"
+    }
+  },
+  "team": {
+    "hero": {
+      "badge": "Portal da equipe e gestão",
+      "titlePart1": "Seu centro de comando para",
+      "titlePart2": "excelência em exposições",
+      "subtitle": "Ferramentas desenvolvidas para gerentes gerais supervisionando operações e gerentes de projeto projetando estandes de exposição de classe mundial.",
+      "cta1": "Painel do gerente",
+      "cta2": "Gerente de projetos"
+    },
+    "stats": {
+      "boothsDesigned": "Estandes projetados",
+      "approvalRate": "Taxa de aprovação",
+      "fasterTurnaround": "Entrega mais rápida",
+      "activeProjects": "Projetos ativos"
+    },
+    "roles": {
+      "heading": "Uma plataforma,",
+      "headingAccent": "dois papéis poderosos",
+      "subheading": "Projetada do zero para as realidades de gerenciar uma empresa de exposições.",
+      "chiefTitle": "Gerente geral",
+      "chiefBadge": "Executivo",
+      "chiefDesc": "Controle operacional total. Atribua projetos, monitore todos os espaços de trabalho ativos em tempo real, revise finanças e mantenha relacionamentos com clientes em todo o seu portfólio.",
+      "chiefEnter": "Entrar no portal do gerente",
+      "pmTitle": "Gerente de projetos",
+      "pmBadge": "Designer",
+      "pmDesc": "O espaço de trabalho de design completo. Construa estandes 3D, gerencie cronogramas de projetos, comunique-se com clientes e entregue documentação pronta para produção.",
+      "pmEnter": "Entrar no portal PM"
+    },
+    "features": {
+      "heading": "Tudo que sua equipe",
+      "headingAccent": "precisa para entregar"
+    },
+    "workflow": {
+      "heading": "O fluxo de trabalho",
+      "headingAccent": "de produção ENS"
+    },
+    "footer": {
+      "tagline": "Ferramentas de gestão desenvolvidas para profissionais de exposições — do briefing inicial à documentação pronta para produção.",
+      "chiefPortal": "Portal do gerente",
+      "pmPortal": "Portal PM",
+      "chiefManager": "Gerente geral",
+      "projectManager": "Gerente de projetos",
+      "resources": "Recursos",
+      "internalSupport": "Suporte interno",
+      "clientPortal": "Portal do cliente",
+      "dashboard": "Painel",
+      "wsMonitor": "Monitor WS",
+      "teamMgmt": "Gestão de equipe",
+      "clientPortfolio": "Portfólio de clientes",
+      "reports": "Relatórios",
+      "settings": "Configurações",
+      "workspace": "Espaço de trabalho 3D",
+      "projects": "Meus projetos",
+      "clients": "Clientes",
+      "tasks": "Tarefas",
+      "messages": "Mensagens",
+      "docs": "Documentação",
+      "training": "Vídeos de treinamento",
+      "releaseNotes": "Notas de versão",
+      "systemStatus": "Status do sistema",
+      "itSupport": "Suporte de TI",
+      "privacy": "Política de privacidade",
+      "security": "Segurança"
+    }
+  }
+}

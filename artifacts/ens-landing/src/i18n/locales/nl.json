@@ -1,0 +1,174 @@
+{
+  "common": {
+    "startDesigning": "Start ontwerpen",
+    "watchDemo": "Bekijk demo",
+    "getAccess": "Krijg toegang",
+    "contactSales": "Neem contact op",
+    "signIn": "Inloggen",
+    "getStarted": "Aan de slag",
+    "logIn": "Inloggen",
+    "learnMore": "Meer informatie",
+    "copyright": "© {{year}} ENS Expo Solutions Ltd. Alle rechten voorbehouden.",
+    "internalOnly": "Alleen intern gebruik"
+  },
+  "nav": {
+    "features": "Functies",
+    "howItWorks": "Hoe het werkt",
+    "showcase": "Portfolio",
+    "staffPortal": "Personeelsportaal",
+    "roles": "Rollen",
+    "workflow": "Werkstroom",
+    "clientSite": "Klantsite"
+  },
+  "home": {
+    "hero": {
+      "badge": "Het 3D-designstudio voor de tentoonstellingsindustrie",
+      "titlePart1": "Ontwerp beursstandsn in",
+      "titlePart2": "Real-Time 3D",
+      "subtitle": "Bouw, pas aan en beheer Octanorm- en Maxima-stands direct in uw browser. Professionele tools voor serieuze tentoonstellingsontwerpers."
+    },
+    "trustedBy": "Vertrouwd door",
+    "stats": {
+      "projectProgress": "Projectvoortgang",
+      "boothDimensions": "Standafmetingen",
+      "approvalStatus": "Goedkeuringsstatus",
+      "furnitureCount": "Meubelaantal",
+      "pending": "In behandeling"
+    },
+    "demo": {
+      "badge": "Live demo-toegang",
+      "title": "Bekijk het volledige platform in actie",
+      "subtitle": "Ontvang een gepersonaliseerde rondleiding met een van onze productspecialisten.",
+      "cta": "Demo boeken"
+    },
+    "features": {
+      "heading": "Alles wat u nodig heeft om",
+      "headingAccent": "te ontwerpen en te leveren",
+      "subheading": "Een complete ontwerp- en projectbeheersuite speciaal gebouwd voor de tentoonstellingsindustrie.",
+      "realtime": { "title": "Real-time 3D canvas", "desc": "Sleep systeemcomponenten naar een live 3D-podium. Wat u ziet, wordt gebouwd." },
+      "octanorm": { "title": "Octanorm-systeem", "desc": "Volledig Octanorm-modulair systeem met nauwkeurige 40 mm en 50 mm profielen, connectors en panelen." },
+      "maxima": { "title": "Maxima-raamwerk", "desc": "Zwaar Maxima-aluminium extrusiessysteem met configureerbare overspanningen en opvullopties." },
+      "client": { "title": "Klantbeoordeling", "desc": "Deel een live 3D-link met klanten. Ze annoteren direct op het model — geen account nodig." },
+      "analytics": { "title": "Projectanalyse", "desc": "Volg projectsnelheid, goedkeuringscycli, kostenprognoses en teamgebruik in realtime." },
+      "automation": { "title": "Slimme automatisering", "desc": "Genereer automatisch plattegronden, aanzichttekeningen, onderdelenlijsten en kostenramingen met één klik." }
+    },
+    "howItWorks": {
+      "heading": "Van briefing tot bouw in",
+      "headingAccent": "vier stappen",
+      "brief": { "step": "01", "title": "Briefing uploaden", "desc": "Importeer de evenementbriefing, plattegrond of standspecificatieblad van uw klant." },
+      "design": { "step": "02", "title": "Ontwerpen in 3D", "desc": "Bouw de stand met Octanorm- of Maxima-systeemcomponenten en de meubelbibliotheek." },
+      "review": { "step": "03", "title": "Klantbeoordeling", "desc": "Stuur een deelbare link. De klant beoordeelt en keurt goed direct in het 3D-model." },
+      "deliver": { "step": "04", "title": "Exporteren en leveren", "desc": "Met één klik exporteren naar productiedocumenten, tekeningen en onderdelenplanningen." }
+    },
+    "testimonials": {
+      "heading": "Vertrouwd door de",
+      "headingAccent": "besten in de branche"
+    },
+    "pricing": {
+      "heading": "Prijsniveaus",
+      "subheading": "Schaal uw tentoonstellingsbedrijf met het juiste plan.",
+      "perMonth": "/maand",
+      "recommended": "Aanbevolen",
+      "custom": "Op maat"
+    },
+    "cta": {
+      "heading": "Begin vandaag nog met bouwen",
+      "subheading": "Doe mee aan de toekomst van tentoonstellingsontwerp. Creëer, werk samen en sluit deals sneller dan ooit."
+    },
+    "footer": {
+      "tagline": "Het professionele 3D-standontwerp platform voor de wereldwijde tentoonstellings- en beursindustrie.",
+      "platform": "Platform",
+      "company": "Bedrijf",
+      "support": "Ondersteuning",
+      "needHelp": "Hulp nodig?",
+      "supportHours": "Ma–Vr, 9u–18u CET",
+      "workspace": "3D-werkruimte",
+      "octanorm": "Octanorm-systeem",
+      "maxima": "Maxima-systeem",
+      "furnitureLib": "Meubelbibliotheek",
+      "clientReview": "Klantbeoordeling",
+      "apiAccess": "API-toegang",
+      "about": "Over ENS",
+      "blog": "Blog",
+      "careers": "Vacatures",
+      "press": "Perskit",
+      "partners": "Partners",
+      "contact": "Contact",
+      "docs": "Documentatie",
+      "tutorials": "Tutorials",
+      "releaseNotes": "Release-opmerkingen",
+      "systemStatus": "Systeemstatus",
+      "community": "Community",
+      "privacy": "Privacybeleid",
+      "terms": "Servicevoorwaarden",
+      "security": "Beveiliging",
+      "cookies": "Cookiebeleid",
+      "gdpr": "AVG"
+    }
+  },
+  "team": {
+    "hero": {
+      "badge": "Personeel- en managementportaal",
+      "titlePart1": "Uw commandocentrum voor",
+      "titlePart2": "tentoonstellingsexcellentie",
+      "subtitle": "Speciaal gebouwde tools voor hoofdmanagers die operaties leiden en projectmanagers die wereldklasse tentoonstellingsstands ontwerpen.",
+      "cta1": "Hoofd dashboard",
+      "cta2": "Projectmanager"
+    },
+    "stats": {
+      "boothsDesigned": "Ontworpen stands",
+      "approvalRate": "Goedkeuringspercentage",
+      "fasterTurnaround": "Snellere doorlooptijd",
+      "activeProjects": "Actieve projecten"
+    },
+    "roles": {
+      "heading": "Één platform,",
+      "headingAccent": "twee krachtige rollen",
+      "subheading": "Ontworpen van de grond af aan voor de realiteiten van het runnen van een tentoonstellingsbedrijf.",
+      "chiefTitle": "Hoofdmanager",
+      "chiefBadge": "Directeur",
+      "chiefDesc": "Volledige operationele controle. Wijs projecten toe, monitor alle actieve werkruimten in realtime, bekijk financiën en onderhoud klantrelaties in uw hele portfolio.",
+      "chiefEnter": "Ga naar hoofdportaal",
+      "pmTitle": "Projectmanager",
+      "pmBadge": "Ontwerper",
+      "pmDesc": "De complete ontwerpwerkruimte. Bouw 3D-stands, beheer projecttijdlijnen, communiceer met klanten en lever productieklare documentatie.",
+      "pmEnter": "Ga naar PM-portaal"
+    },
+    "features": {
+      "heading": "Alles wat uw team",
+      "headingAccent": "nodig heeft om te leveren"
+    },
+    "workflow": {
+      "heading": "De ENS",
+      "headingAccent": "productieworkflow"
+    },
+    "footer": {
+      "tagline": "Speciaal gebouwde beheertools voor tentoonstellingsprofessionals — van eerste briefing tot productieklare documentatie.",
+      "chiefPortal": "Hoofdportaal",
+      "pmPortal": "PM-portaal",
+      "chiefManager": "Hoofdmanager",
+      "projectManager": "Projectmanager",
+      "resources": "Bronnen",
+      "internalSupport": "Interne ondersteuning",
+      "clientPortal": "Klantportaal",
+      "dashboard": "Dashboard",
+      "wsMonitor": "WS-monitor",
+      "teamMgmt": "Teambeheer",
+      "clientPortfolio": "Klantportfolio",
+      "reports": "Rapporten",
+      "settings": "Instellingen",
+      "workspace": "3D-werkruimte",
+      "projects": "Mijn projecten",
+      "clients": "Klanten",
+      "tasks": "Taken",
+      "messages": "Berichten",
+      "docs": "Documentatie",
+      "training": "Trainingsvideo's",
+      "releaseNotes": "Release-opmerkingen",
+      "systemStatus": "Systeemstatus",
+      "itSupport": "IT-ondersteuning",
+      "privacy": "Privacybeleid",
+      "security": "Beveiliging"
+    }
+  }
+}
