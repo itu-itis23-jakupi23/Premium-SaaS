@@ -11,6 +11,7 @@ import TeamLanding from "@/pages/TeamLanding";
 import Login from "@/pages/auth/Login";
 import Signup from "@/pages/auth/Signup";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
+import ResetPassword from "@/pages/auth/ResetPassword";
 
 // Chief Pages
 import ChiefDashboard from "@/pages/chief/ChiefDashboard";
@@ -54,6 +55,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
 
       {/* Chief Routes */}
       <Route path="/chief" component={ChiefDashboard} />

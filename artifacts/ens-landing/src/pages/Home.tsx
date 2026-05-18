@@ -107,8 +107,10 @@ export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('workspace');
+  const [billingAnnual, setBillingAnnual] = useState(false);
   const [, navigate] = useLocation();
   const { t } = useTranslation();
+  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -135,9 +137,9 @@ export default function Home() {
           </div>
           
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.features')}</a>
-            <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.howItWorks')}</a>
-            <a href="#showcase" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.showcase')}</a>
+            <button onClick={() => scrollTo('features')} className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.features')}</button>
+            <button onClick={() => scrollTo('how-it-works')} className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.howItWorks')}</button>
+            <button onClick={() => scrollTo('showcase')} className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.showcase')}</button>
             <LanguageSwitcher />
             <ThemeToggle />
             <Button variant="ghost" className="rounded-full px-5 font-semibold border border-border/40" onClick={() => navigate('/team')} data-testid="btn-nav-team">
@@ -159,6 +161,74 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* ── Mobile Navigation Drawer ── */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 md:hidden"
+          >
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute right-0 top-0 h-full w-80 max-w-[90vw] bg-card/98 backdrop-blur-2xl border-l border-border/60 shadow-2xl flex flex-col"
+            >
+              <div className="flex items-center justify-between px-6 py-5 border-b border-border/40">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold font-mono shadow-[0_0_10px_rgba(109,40,217,0.4)]">E</div>
+                  <span className="font-bold tracking-tight">ENS</span>
+                </div>
+                <button onClick={() => setMobileMenuOpen(false)} className="p-2 rounded-full hover:bg-muted/50 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <nav className="flex flex-col gap-1 p-4 flex-1 overflow-y-auto">
+                {[
+                  { label: t('nav.features'), id: 'features' },
+                  { label: t('nav.howItWorks'), id: 'how-it-works' },
+                  { label: t('nav.showcase'), id: 'showcase' },
+                ].map(({ label, id }) => (
+                  <button
+                    key={id}
+                    onClick={() => { scrollTo(id); setMobileMenuOpen(false); }}
+                    className="text-left py-3 px-4 rounded-xl text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  >
+                    {label}
+                  </button>
+                ))}
+
+                <div className="border-t border-border/40 mt-4 pt-4 px-4 flex items-center gap-4">
+                  <LanguageSwitcher />
+                  <ThemeToggle />
+                </div>
+              </nav>
+
+              <div className="p-4 border-t border-border/40 space-y-2">
+                <Button variant="outline" className="w-full rounded-full h-11 font-semibold"
+                  onClick={() => { navigate('/team'); setMobileMenuOpen(false); }}>
+                  {t('nav.staffPortal')}
+                </Button>
+                <Button variant="ghost" className="w-full rounded-full h-11 font-semibold"
+                  onClick={() => { navigate('/login'); setMobileMenuOpen(false); }}>
+                  {t('common.logIn')}
+                </Button>
+                <Button className="w-full rounded-full h-11 font-semibold shadow-[0_0_15px_rgba(109,40,217,0.3)]"
+                  onClick={() => { navigate('/login'); setMobileMenuOpen(false); }}>
+                  {t('common.startDesigning')}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Hero Section */}
       <section className="relative pt-40 pb-0 md:pt-52 overflow-hidden">
@@ -725,26 +795,31 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { name: "Sarah Chen", company: "Global Exhibits Inc.", quote: "ENS has cut our design-to-approval time by 60%. The real-time 3D collaboration is a game changer for our international clients.", ref: "CES 2024" },
-              { name: "Marcus Weber", company: "Exhibito Group", quote: "Finally, a tool that understands Octanorm structural logic. We no longer worry about structural impossibilities during the design phase.", ref: "Hannover Messe" },
-              { name: "Elena Rossi", company: "Milano Design Studio", quote: "The Maxima support is incredible. We can build complex architectural stands that look premium and are technically accurate.", ref: "Salone del Mobile" }
-            ].map((t, i) => (
+              { name: "Sarah Chen", role: "Creative Director", company: "Global Exhibits Inc.", quote: "ENS cut our design-to-approval time by 60%. The real-time 3D collaboration is a game changer for our international clients.", ref: "CES 2024", gradient: "from-primary to-blue-500" },
+              { name: "Marcus Weber", role: "Head of Design", company: "Exhibito Group", quote: "Finally, a tool that understands Octanorm structural logic. We no longer worry about impossibilities during the design phase.", ref: "Hannover Messe", gradient: "from-blue-500 to-cyan-500" },
+              { name: "Elena Rossi", role: "Studio Principal", company: "Milano Design Studio", quote: "The Maxima support is incredible. We build complex architectural stands that look premium and are technically accurate.", ref: "Salone del Mobile", gradient: "from-purple-500 to-pink-500" }
+            ].map((testimonial, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="p-8 rounded-3xl border border-border/50 bg-card hover:border-primary/30 transition-all flex flex-col"
+                className="p-8 rounded-3xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-all flex flex-col group"
               >
-                <Quote className="w-10 h-10 text-primary/20 mb-6" />
-                <p className="text-lg mb-8 italic text-muted-foreground leading-relaxed">"{t.quote}"</p>
-                <div className="mt-auto flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-blue-500" />
+                <div className="flex gap-1 mb-5">
+                  {[1,2,3,4,5].map(s => (
+                    <Star key={s} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <Quote className="w-8 h-8 text-primary/20 mb-4" />
+                <p className="text-base mb-8 text-muted-foreground leading-relaxed flex-1">"{testimonial.quote}"</p>
+                <div className="flex items-center gap-4">
+                  <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${testimonial.gradient} flex-shrink-0`} />
                   <div>
-                    <div className="font-bold">{t.name}</div>
-                    <div className="text-xs text-muted-foreground">{t.company}</div>
-                    <div className="text-[10px] text-primary mt-1 font-mono">{t.ref}</div>
+                    <div className="font-bold text-sm">{testimonial.name}</div>
+                    <div className="text-xs text-muted-foreground">{testimonial.role} · {testimonial.company}</div>
+                    <div className="text-[10px] text-primary mt-0.5 font-mono tracking-wide">{testimonial.ref}</div>
                   </div>
                 </div>
               </motion.div>
@@ -761,37 +836,73 @@ export default function Home() {
             <p className="text-muted-foreground">{t('home.pricing.subheading')}</p>
           </div>
 
+          {/* Billing toggle */}
+          <div className="flex items-center justify-center gap-4 mb-12">
+            <span className={`text-sm font-medium transition-colors ${!billingAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>Monthly</span>
+            <button
+              onClick={() => setBillingAnnual(v => !v)}
+              className={`relative w-12 h-6 rounded-full border-2 transition-all duration-200 ${billingAnnual ? 'bg-primary border-primary' : 'bg-muted border-border'}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${billingAnnual ? 'translate-x-6' : 'translate-x-0'}`} />
+            </button>
+            <span className={`text-sm font-medium transition-colors flex items-center gap-2 ${billingAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+              Annual
+              <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">Save 20%</span>
+            </span>
+          </div>
+
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
-              { tier: "Starter", price: "$99", features: ["5 Active Projects", "Octanorm Only", "Standard Library", "Email Support"] },
-              { tier: "Professional", price: "$299", features: ["Unlimited Projects", "Octanorm & Maxima", "Full Furniture Library", "Client Review Links", "Priority Support"], recommended: true },
-              { tier: "Enterprise", price: "Custom", features: ["White-label Links", "Custom Object Imports", "API Access", "Dedicated Success Manager", "SLA Support"] }
+              {
+                tier: "Starter", monthlyPrice: "$99", annualPrice: "$79",
+                features: ["5 Active Projects", "Octanorm System", "Standard Furniture Library", "2 GB Storage", "Email Support"]
+              },
+              {
+                tier: "Professional", monthlyPrice: "$299", annualPrice: "$239",
+                features: ["Unlimited Projects", "Octanorm & Maxima", "Full Furniture Library", "Client Review Links", "Priority Support", "Advanced Analytics"], recommended: true
+              },
+              {
+                tier: "Enterprise", monthlyPrice: "Custom", annualPrice: "Custom",
+                features: ["White-label Client Links", "Custom Object Imports", "Full API Access", "Dedicated Success Manager", "99.9% SLA", "On-site Training"]
+              }
             ].map((p, i) => (
               <motion.div
                 key={i}
-                whileHover={{ y: -10 }}
+                whileHover={{ y: -8 }}
                 className={`p-8 rounded-3xl border flex flex-col ${p.recommended ? 'border-primary bg-primary/5 shadow-[0_0_40px_rgba(109,40,217,0.15)] relative' : 'border-border/50 bg-card'}`}
               >
                 {p.recommended && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full uppercase tracking-widest">
-                    Recommended
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full uppercase tracking-widest shadow-lg">
+                    {t('home.pricing.recommended')}
                   </div>
                 )}
                 <div className="text-xl font-bold mb-2">{p.tier}</div>
-                <div className="flex items-baseline gap-1 mb-8">
-                  <span className="text-4xl font-bold">{p.price}</span>
-                  {p.price !== 'Custom' && <span className="text-muted-foreground text-sm">/mo</span>}
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-4xl font-black">{billingAnnual ? p.annualPrice : p.monthlyPrice}</span>
+                  {p.monthlyPrice !== 'Custom' && (
+                    <span className="text-muted-foreground text-sm">{billingAnnual ? '/mo · billed annually' : t('home.pricing.perMonth')}</span>
+                  )}
                 </div>
-                <ul className="space-y-4 mb-10">
+                {p.monthlyPrice !== 'Custom' && billingAnnual && (
+                  <p className="text-xs text-green-500 font-medium mb-6">
+                    Save ${(parseInt(p.monthlyPrice.replace('$','')) - parseInt(p.annualPrice.replace('$',''))) * 12}/year
+                  </p>
+                )}
+                {(p.monthlyPrice === 'Custom' || !billingAnnual) && <div className="mb-8" />}
+                <ul className="space-y-3 mb-10 flex-1">
                   {p.features.map((f, j) => (
                     <li key={j} className="flex items-center gap-3 text-sm">
-                      <CheckCircle2 className={`w-4 h-4 ${p.recommended ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${p.recommended ? 'text-primary' : 'text-muted-foreground'}`} />
                       {f}
                     </li>
                   ))}
                 </ul>
-                <Button variant={p.recommended ? 'default' : 'outline'} className={`mt-auto w-full rounded-xl h-12 font-bold ${p.recommended ? 'shadow-lg' : ''}`}>
-                  Get Started
+                <Button
+                  variant={p.recommended ? 'default' : 'outline'}
+                  className={`mt-auto w-full rounded-xl h-12 font-bold ${p.recommended ? 'shadow-lg shadow-primary/20' : ''}`}
+                  onClick={() => navigate('/signup')}
+                >
+                  {p.monthlyPrice === 'Custom' ? 'Contact Sales' : 'Get Started'}
                 </Button>
               </motion.div>
             ))}

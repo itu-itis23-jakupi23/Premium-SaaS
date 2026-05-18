@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, useScroll, useTransform, Variants } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView, Variants } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -45,11 +45,37 @@ const PM_FEATURES = [
 ];
 
 const PLATFORM_STATS = [
-  { value: '2,400+', tKey: 'team.stats.boothsDesigned',   color: 'text-primary',    bg: 'bg-primary/10',    icon: Box         },
-  { value: '98%',    tKey: 'team.stats.approvalRate',     color: 'text-blue-400',  bg: 'bg-blue-500/10',   icon: CheckCircle2 },
-  { value: '60%',    tKey: 'team.stats.fasterTurnaround', color: 'text-cyan-400',  bg: 'bg-cyan-500/10',   icon: TrendingUp   },
-  { value: '40+',    tKey: 'team.stats.activeProjects',   color: 'text-purple-400', bg: 'bg-purple-500/10', icon: Globe        },
+  { numericValue: 2400, valueSuffix: '+', tKey: 'team.stats.boothsDesigned',   color: 'text-primary',    bg: 'bg-primary/10',    icon: Box         },
+  { numericValue: 98,   valueSuffix: '%', tKey: 'team.stats.approvalRate',     color: 'text-blue-400',  bg: 'bg-blue-500/10',   icon: CheckCircle2 },
+  { numericValue: 60,   valueSuffix: '%', tKey: 'team.stats.fasterTurnaround', color: 'text-cyan-400',  bg: 'bg-cyan-500/10',   icon: TrendingUp   },
+  { numericValue: 40,   valueSuffix: '+', tKey: 'team.stats.activeProjects',   color: 'text-purple-400', bg: 'bg-purple-500/10', icon: Globe        },
 ];
+
+function CountUp({ target, suffix = '', className = '' }: { target: number; suffix?: string; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-60px' });
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!isInView) return;
+    const duration = 1800;
+    const startTime = performance.now();
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [isInView, target]);
+
+  return (
+    <div ref={ref} className={className}>
+      {count.toLocaleString()}{suffix}
+    </div>
+  );
+}
 
 const WORKFLOW_STEPS = [
   { icon: FileText,     title: 'Client Brief',      desc: 'Chief receives and assigns the show brief to a Project Manager.',       role: 'chief' },
@@ -195,7 +221,7 @@ export default function TeamLanding() {
                 <s.icon className={`w-5 h-5 ${s.color}`} />
               </div>
               <div>
-                <div className={`text-2xl font-black leading-none mb-1 ${s.color}`}>{s.value}</div>
+                <CountUp target={s.numericValue} suffix={s.valueSuffix} className={`text-2xl font-black leading-none mb-1 ${s.color}`} />
                 <div className="text-xs text-muted-foreground">{t(s.tKey)}</div>
               </div>
             </motion.div>
@@ -387,7 +413,7 @@ export default function TeamLanding() {
                 <UserCog className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-0.5">For Chief Managers</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-0.5">For {t('team.roles.chiefTitle')}s</div>
                 <h2 className="text-2xl md:text-3xl font-bold">Operational Command Tools</h2>
               </div>
             </div>
@@ -416,7 +442,7 @@ export default function TeamLanding() {
                 <Settings className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-0.5">For Project Managers</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-0.5">For {t('team.roles.pmTitle')}s</div>
                 <h2 className="text-2xl md:text-3xl font-bold">Design & Delivery Tools</h2>
               </div>
             </div>
@@ -445,8 +471,8 @@ export default function TeamLanding() {
         <div className="absolute top-0 right-0 w-72 h-72 bg-primary/5 blur-[80px] -z-10" />
         <div className="container mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-20">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">From Brief to Build</h2>
-            <p className="text-muted-foreground">See exactly how Chief Managers and Project Managers collaborate through the 7-stage delivery process.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('team.workflow.heading')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">{t('team.workflow.headingAccent')}</span></h2>
+            <p className="text-muted-foreground">{t('team.hero.subtitle')}</p>
           </div>
 
           <div className="max-w-3xl mx-auto relative">
