@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
@@ -81,9 +82,19 @@ const sidebarItems: Record<string, SidebarItem[]> = {
 import { BarChart3 } from "lucide-react";
 
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { user, logout } = useAuth();
   const items = sidebarItems[role];
+
+  function handleLogout() {
+    logout();
+    navigate('/login');
+  }
+
+  const displayName = user?.name ?? (role === 'chief' ? 'Chief Manager' : role === 'pm' ? 'Project Manager' : 'Client User');
+  const displayEmail = user?.email ?? `${role}@ens-expo.com`;
+  const initials = displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -141,12 +152,10 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           >
             {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </Button>
-          <Link href="/login">
-            <div className="mt-2 flex items-center gap-3 rounded-lg px-3 py-2 text-red-500 hover:bg-red-500/10 cursor-pointer transition-colors">
-              <LogOut className="h-5 w-5 flex-shrink-0" />
-              {!isCollapsed && <span className="font-medium">Logout</span>}
-            </div>
-          </Link>
+          <button onClick={handleLogout} className="mt-2 w-full flex items-center gap-3 rounded-lg px-3 py-2 text-red-500 hover:bg-red-500/10 cursor-pointer transition-colors">
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            {!isCollapsed && <span className="font-medium">Logout</span>}
+          </button>
         </div>
       </aside>
 
@@ -182,25 +191,28 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src="" alt="User" />
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold">JD</AvatarFallback>
+                    <AvatarImage src="" alt={displayName} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">{initials}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none capitalize">{role} Manager</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {role === 'chief' ? 'admin@ens-expo.com' : 'user@ens-expo.com'}
-                    </p>
+                    <p className="text-sm font-medium leading-none">{displayName}</p>
+                    <p className="text-xs leading-none text-muted-foreground truncate">{displayEmail}</p>
+                    {user?.company && (
+                      <p className="text-[10px] leading-none text-muted-foreground/60 capitalize">{user.company}</p>
+                    )}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-500">Log out</DropdownMenuItem>
+                <DropdownMenuItem className="text-red-500 cursor-pointer" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" /> Log out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

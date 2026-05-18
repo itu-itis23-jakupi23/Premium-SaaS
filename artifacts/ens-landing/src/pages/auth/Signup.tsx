@@ -16,10 +16,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Shield, Briefcase, User, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { useAuth, UserRole, getRoleDashboard } from '@/contexts/AuthContext';
 
-const ROLES = [
+const ROLES: { value: UserRole; label: string; desc: string; icon: React.ElementType; color: string; activeRing: string; hoverBorder: string }[] = [
   {
-    value: 'chief' as const,
+    value: 'chief',
     label: 'Chief Manager',
     desc: 'Manage teams, assign projects & oversee delivery',
     icon: Shield,
@@ -28,7 +29,7 @@ const ROLES = [
     hoverBorder: 'hover:border-primary/40',
   },
   {
-    value: 'pm' as const,
+    value: 'pm',
     label: 'Project Manager',
     desc: 'Design booths, manage clients & deliver projects',
     icon: Briefcase,
@@ -37,7 +38,7 @@ const ROLES = [
     hoverBorder: 'hover:border-blue-500/40',
   },
   {
-    value: 'client' as const,
+    value: 'client',
     label: 'Exhibitor / Client',
     desc: 'Review designs, provide feedback & approve stands',
     icon: User,
@@ -45,7 +46,7 @@ const ROLES = [
     activeRing: 'ring-2 ring-cyan-500 border-cyan-500 bg-cyan-500/5',
     hoverBorder: 'hover:border-cyan-500/40',
   },
-] as const;
+];
 
 function PasswordStrength({ password }: { password: string }) {
   if (!password) return null;
@@ -93,6 +94,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function Signup() {
   const [, navigate] = useLocation();
+  const auth = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,11 +115,17 @@ export default function Signup() {
   const selectedRole = form.watch('role');
   const passwordValue = form.watch('password');
 
-  async function onSubmit(_values: SignupFormValues) {
+  async function onSubmit(values: SignupFormValues) {
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setIsSubmitting(false);
-    navigate('/login');
+    await new Promise(r => setTimeout(r, 1000));
+    auth.login({
+      id: crypto.randomUUID(),
+      name: values.name,
+      email: values.email,
+      company: values.company,
+      role: values.role,
+    });
+    navigate(getRoleDashboard(values.role));
   }
 
   return (
@@ -180,9 +188,7 @@ export default function Signup() {
                       type="button"
                       onClick={() => field.onChange(value)}
                       className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                        selectedRole === value
-                          ? activeRing
-                          : `border-border/50 ${hoverBorder}`
+                        selectedRole === value ? activeRing : `border-border/50 ${hoverBorder}`
                       }`}
                     >
                       <div className={`w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center flex-shrink-0 ${color}`}>
@@ -192,9 +198,7 @@ export default function Signup() {
                         <div className={`text-sm font-semibold ${selectedRole === value ? color : ''}`}>{label}</div>
                         <div className="text-[11px] text-muted-foreground">{desc}</div>
                       </div>
-                      {selectedRole === value && (
-                        <CheckCircle2 className={`h-4 w-4 flex-shrink-0 ${color}`} />
-                      )}
+                      {selectedRole === value && <CheckCircle2 className={`h-4 w-4 flex-shrink-0 ${color}`} />}
                     </button>
                   ))}
                 </div>
@@ -219,11 +223,8 @@ export default function Signup() {
                       className="pr-10"
                       data-testid="input-password"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
+                    <button type="button" onClick={() => setShowPassword(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
@@ -250,11 +251,8 @@ export default function Signup() {
                       className="pr-10"
                       data-testid="input-confirm-password"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirm((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
+                    <button type="button" onClick={() => setShowConfirm(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                       {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>

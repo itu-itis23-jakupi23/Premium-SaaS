@@ -11,7 +11,7 @@ import {
   AlertCircle, 
   CheckCircle2, 
   MessageSquare,
-  Sparkles,
+  ClipboardCheck,
   ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ const tasks = [
   { id: 4, title: "Finalize Octanorm structure for GlobalExhibit", priority: "High", deadline: "Today" },
 ];
 
-const assistantCards = [
+const actionItems = [
   { title: "3 pending revisions", description: "TechCorp Industries requested changes to the lighting.", action: "View Revisions", color: "border-yellow-500" },
   { title: "Client waiting", description: "MediLife has been waiting for an update for 2 days.", action: "Send Update", color: "border-red-500" },
   { title: "Ready for approval", description: "AutoShow Premium Stand is ready for final review.", action: "Send for Approval", color: "border-blue-500" },
@@ -87,13 +87,13 @@ export default function PMDashboard() {
           </CardContent>
         </Card>
 
-        {/* AI Assistant */}
+        {/* Action Items */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold flex items-center gap-2 px-1">
-            <Sparkles className="h-5 w-5 text-primary" />
-            AI Assistant
+            <ClipboardCheck className="h-5 w-5 text-primary" />
+            Action Items
           </h3>
-          {assistantCards.map((card, i) => (
+          {actionItems.map((card, i) => (
             <Card key={i} className={cn("bg-card/50 backdrop-blur-sm border-l-4", card.color)}>
               <CardContent className="p-4">
                 <h4 className="font-semibold text-sm">{card.title}</h4>
