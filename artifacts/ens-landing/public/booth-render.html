@@ -522,44 +522,63 @@ function buildBoothGeometry() {
 }
 
 function buildFascia() {
-  const yB = BH, yT = BH + FH, T = EX;
+  const yB = BH, yT = BH + FH;
+  // Use a thicker fascia depth so it reads as a solid band from all view angles
+  const D = EX * 0.5;   // half-depth of fascia panel (was EX*0.15 — now more visible)
+  const T = EX;
 
-  // Back wall fascia
-  faces.push({ pts: [[-BW/2,yB,T*0.15],[BW/2,yB,T*0.15],[BW/2,yT,T*0.15],[-BW/2,yT,T*0.15]],
+  // ── BACK WALL FASCIA ── (visible from front, z>0 side)
+  faces.push({ pts: [[-BW/2,yB,D],[BW/2,yB,D],[BW/2,yT,D],[-BW/2,yT,D]],
     fill:'url(#fascia)', normal:[0,0,1], isFascia:'back',
     partId:'fascia-back', partLabel:'Fascia · back wall', partMeta:'Header signage band · '+Math.round(FH*1000)+' mm' });
-  faces.push({ pts: [[-BW/2,yT,-T*0.15],[BW/2,yT,-T*0.15],[BW/2,yT,T*0.15],[-BW/2,yT,T*0.15]],
+  faces.push({ pts: [[-BW/2,yT,-D],[BW/2,yT,-D],[BW/2,yT,D],[-BW/2,yT,D]],
     fill:'url(#alu-cap)', normal:[0,1,0] });
-  faces.push({ pts: [[-BW/2,yB,-T*0.15],[BW/2,yB,-T*0.15],[BW/2,yT,-T*0.15],[-BW/2,yT,-T*0.15]],
-    fill:'url(#panel-side)', normal:[0,0,-1] });
+  faces.push({ pts: [[-BW/2,yB,-D],[BW/2,yB,-D],[BW/2,yT,-D],[-BW/2,yT,-D]],
+    fill:'url(#fascia)', normal:[0,0,-1] });
+  faces.push({ pts: [[-BW/2,yB,-D],[-BW/2,yB,D],[-BW/2,yT,D],[-BW/2,yT,-D]],
+    fill:'url(#alu-h)', isAlu:true, normal:[-1,0,0] });
+  faces.push({ pts: [[BW/2,yB,D],[BW/2,yB,-D],[BW/2,yT,-D],[BW/2,yT,D]],
+    fill:'url(#alu-h)', isAlu:true, normal:[1,0,0] });
 
-  // Right side wall fascia
-  faces.push({ pts: [[BW/2-T*0.15,yB,0],[BW/2-T*0.15,yB,BD],[BW/2-T*0.15,yT,BD],[BW/2-T*0.15,yT,0]],
+  // ── RIGHT SIDE WALL FASCIA ── (both faces white — visible from interior AND exterior)
+  faces.push({ pts: [[BW/2-D,yB,0],[BW/2-D,yB,BD],[BW/2-D,yT,BD],[BW/2-D,yT,0]],
     fill:'url(#fascia)', normal:[-1,0,0], isFascia:'side-right',
     partId:'fascia-right', partLabel:'Fascia · right wall', partMeta:'Header signage band · '+Math.round(FH*1000)+' mm' });
-  faces.push({ pts: [[BW/2-T*0.15,yT,0],[BW/2+T*0.15,yT,0],[BW/2+T*0.15,yT,BD],[BW/2-T*0.15,yT,BD]],
+  faces.push({ pts: [[BW/2-D,yT,0],[BW/2+D,yT,0],[BW/2+D,yT,BD],[BW/2-D,yT,BD]],
     fill:'url(#alu-cap)', normal:[0,1,0] });
-  faces.push({ pts: [[BW/2+T*0.15,yB,0],[BW/2+T*0.15,yB,BD],[BW/2+T*0.15,yT,BD],[BW/2+T*0.15,yT,0]],
-    fill:'url(#panel-side)', normal:[1,0,0] });
+  faces.push({ pts: [[BW/2+D,yB,0],[BW/2+D,yB,BD],[BW/2+D,yT,BD],[BW/2+D,yT,0]],
+    fill:'url(#fascia)', normal:[1,0,0] });
+  faces.push({ pts: [[BW/2-D,yB,0],[BW/2+D,yB,0],[BW/2+D,yT,0],[BW/2-D,yT,0]],
+    fill:'url(#alu-h)', isAlu:true, normal:[0,0,-1] });
+  faces.push({ pts: [[BW/2+D,yB,BD],[BW/2-D,yB,BD],[BW/2-D,yT,BD],[BW/2+D,yT,BD]],
+    fill:'url(#alu-h)', isAlu:true, normal:[0,0,1] });
 
-  // Left side wall fascia
-  faces.push({ pts: [[-BW/2+T*0.15,yB,BD],[-BW/2+T*0.15,yB,0],[-BW/2+T*0.15,yT,0],[-BW/2+T*0.15,yT,BD]],
+  // ── LEFT SIDE WALL FASCIA ── (both faces white)
+  faces.push({ pts: [[-BW/2+D,yB,BD],[-BW/2+D,yB,0],[-BW/2+D,yT,0],[-BW/2+D,yT,BD]],
     fill:'url(#fascia)', normal:[1,0,0], isFascia:'side-left',
     partId:'fascia-left', partLabel:'Fascia · left wall', partMeta:'Header signage band · '+Math.round(FH*1000)+' mm' });
-  faces.push({ pts: [[-BW/2-T*0.15,yT,0],[-BW/2+T*0.15,yT,0],[-BW/2+T*0.15,yT,BD],[-BW/2-T*0.15,yT,BD]],
+  faces.push({ pts: [[-BW/2-D,yT,0],[-BW/2+D,yT,0],[-BW/2+D,yT,BD],[-BW/2-D,yT,BD]],
     fill:'url(#alu-cap)', normal:[0,1,0] });
-  faces.push({ pts: [[-BW/2-T*0.15,yB,BD],[-BW/2-T*0.15,yB,0],[-BW/2-T*0.15,yT,0],[-BW/2-T*0.15,yT,BD]],
-    fill:'url(#panel-side)', normal:[-1,0,0] });
+  faces.push({ pts: [[-BW/2-D,yB,BD],[-BW/2-D,yB,0],[-BW/2-D,yT,0],[-BW/2-D,yT,BD]],
+    fill:'url(#fascia)', normal:[-1,0,0] });
+  faces.push({ pts: [[-BW/2+D,yB,0],[-BW/2-D,yB,0],[-BW/2-D,yT,0],[-BW/2+D,yT,0]],
+    fill:'url(#alu-h)', isAlu:true, normal:[0,0,-1] });
+  faces.push({ pts: [[-BW/2-D,yB,BD],[-BW/2+D,yB,BD],[-BW/2+D,yT,BD],[-BW/2-D,yT,BD]],
+    fill:'url(#alu-h)', isAlu:true, normal:[0,0,1] });
 
-  // Front fascia (entrance header)
-  faces.push({ pts: [[-BW/2,yB,BD-T*0.15],[BW/2,yB,BD-T*0.15],[BW/2,yT,BD-T*0.15],[-BW/2,yT,BD-T*0.15]],
+  // ── FRONT FASCIA (entrance header) ──
+  faces.push({ pts: [[-BW/2,yB,BD-D],[BW/2,yB,BD-D],[BW/2,yT,BD-D],[-BW/2,yT,BD-D]],
     fill:'url(#fascia)', normal:[0,0,1], isFascia:'front',
     partId:'fascia-front', partLabel:'Fascia · front (entrance)', partMeta:'Header signage band · '+Math.round(FH*1000)+' mm · entrance span' });
-  faces.push({ pts: [[-BW/2,yT,BD-T*0.15],[BW/2,yT,BD-T*0.15],[BW/2,yT,BD+T*0.15],[-BW/2,yT,BD+T*0.15]],
+  faces.push({ pts: [[-BW/2,yT,BD-D],[BW/2,yT,BD-D],[BW/2,yT,BD+D],[-BW/2,yT,BD+D]],
     fill:'url(#alu-cap)', normal:[0,1,0] });
-  faces.push({ pts: [[BW/2,yB,BD+T*0.15],[-BW/2,yB,BD+T*0.15],[-BW/2,yT,BD+T*0.15],[BW/2,yT,BD+T*0.15]],
-    fill:'url(#panel-side)', normal:[0,0,-1] });
-  faces.push({ pts: [[-BW/2,yB,BD-T*0.15],[-BW/2,yB,BD+T*0.15],[BW/2,yB,BD+T*0.15],[BW/2,yB,BD-T*0.15]],
+  faces.push({ pts: [[BW/2,yB,BD+D],[-BW/2,yB,BD+D],[-BW/2,yT,BD+D],[BW/2,yT,BD+D]],
+    fill:'url(#fascia)', normal:[0,0,-1] });
+  faces.push({ pts: [[-BW/2,yB,BD-D],[-BW/2,yB,BD+D],[-BW/2,yT,BD+D],[-BW/2,yT,BD-D]],
+    fill:'url(#alu-h)', isAlu:true, normal:[-1,0,0] });
+  faces.push({ pts: [[BW/2,yB,BD+D],[BW/2,yB,BD-D],[BW/2,yT,BD-D],[BW/2,yT,BD+D]],
+    fill:'url(#alu-h)', isAlu:true, normal:[1,0,0] });
+  faces.push({ pts: [[-BW/2,yB,BD-D],[-BW/2,yB,BD+D],[BW/2,yB,BD+D],[BW/2,yB,BD-D]],
     fill:'url(#alu-cap)', normal:[0,-1,0] });
 }
 
