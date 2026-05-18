@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<title>Octanorm Corner Booth · Render</title>
+<title>Booth Render</title>
 <style>
   :root {
     --bg-top:    #eef0f2;
@@ -86,7 +86,6 @@
   }
   .ruler .bar::before { left: 0; } .ruler .bar::after { right: 0; }
 
-  /* Dimension labels rendered in screen-space */
   .ann { position: absolute; pointer-events: none; font-size: 10px;
     color: var(--ink-dim); letter-spacing: 0.04em;
     animation: hudIn .5s ease-out 0.7s backwards;
@@ -117,21 +116,16 @@
 
   <svg class="scene" id="scene" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
     <defs>
-      <!-- Soft background: light gray gradient -->
       <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%"  stop-color="#f3f4f6"/>
         <stop offset="60%" stop-color="#dadde1"/>
         <stop offset="100%" stop-color="#b8bcc1"/>
       </linearGradient>
-
-      <!-- Polished gray floor -->
       <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#bcbfc4"/>
         <stop offset="50%" stop-color="#ced1d5"/>
         <stop offset="100%" stop-color="#dfe1e4"/>
       </linearGradient>
-
-      <!-- Matte white laminated panel -->
       <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#ffffff"/>
         <stop offset="100%" stop-color="#eef0f2"/>
@@ -144,8 +138,6 @@
         <stop offset="0%" stop-color="#dee0e3"/>
         <stop offset="100%" stop-color="#b5b8bd"/>
       </linearGradient>
-
-      <!-- Brushed silver aluminum extrusion -->
       <linearGradient id="alu" x1="0" y1="0" x2="1" y2="0">
         <stop offset="0%"  stop-color="#8e9298"/>
         <stop offset="30%" stop-color="#c8ccd0"/>
@@ -162,71 +154,51 @@
         <stop offset="0%" stop-color="#e2e5e8"/>
         <stop offset="100%" stop-color="#a8acb1"/>
       </linearGradient>
-
-      <!-- Fascia (white band) -->
       <linearGradient id="fascia" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#fbfcfd"/>
         <stop offset="100%" stop-color="#e6e8eb"/>
       </linearGradient>
-
-      <!-- Floor tile big squares pattern (subtle) -->
       <pattern id="tile" x="0" y="0" width="180" height="180" patternUnits="userSpaceOnUse">
         <rect width="180" height="180" fill="none"/>
         <line x1="0" y1="0" x2="180" y2="0" stroke="rgba(20,22,26,0.07)" stroke-width="0.7"/>
         <line x1="0" y1="0" x2="0" y2="180" stroke="rgba(20,22,26,0.07)" stroke-width="0.7"/>
       </pattern>
-
-      <!-- Soft contact shadow under booth -->
       <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5">
         <stop offset="0%" stop-color="rgba(20,22,26,0.35)"/>
         <stop offset="65%" stop-color="rgba(20,22,26,0.08)"/>
         <stop offset="100%" stop-color="rgba(20,22,26,0)"/>
       </radialGradient>
-
-      <!-- Reflection fade (mask) -->
       <linearGradient id="reflect-fade" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="rgba(0,0,0,0.20)"/>
         <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
       </linearGradient>
-
-      <!-- Subtle vignette (very light) -->
       <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.75">
         <stop offset="65%" stop-color="rgba(0,0,0,0)"/>
         <stop offset="100%" stop-color="rgba(0,0,0,0.18)"/>
       </radialGradient>
-
-      <!-- Floor reflection blur -->
       <filter id="blur-soft" x="-5%" y="-5%" width="110%" height="110%">
         <feGaussianBlur stdDeviation="2.2"/>
       </filter>
     </defs>
 
-    <!-- BACKGROUND -->
     <rect x="0" y="0" width="1600" height="1000" fill="url(#sky)"/>
-
-    <!-- FLOOR (built in JS) -->
     <g id="floorGroup"></g>
-
-    <!-- BOOTH (built in JS) -->
     <g id="boothGroup"></g>
-
-    <!-- VIGNETTE -->
     <rect x="0" y="0" width="1600" height="1000" fill="url(#vignette)" pointer-events="none"/>
   </svg>
 
-  <!-- Minimal HUD -->
   <div class="hud tr">
     <div class="card toolbar" id="view-toolbar">
-      <button data-view="front" title="Front corner">
+      <button data-view="front" title="Front">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 21l9-5 9 5M3 21V9l9-5 9 5v12"/></svg>
       </button>
-      <button class="active" data-view="3q" title="3/4 perspective">
+      <button class="active" data-view="3q" title="3/4 view">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
       </button>
       <button data-view="side" title="Side">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="5" width="16" height="14"/><path d="M4 9h16"/></svg>
       </button>
-      <button data-view="top" title="Top / plan">
+      <button data-view="top" title="Top plan">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="4" width="16" height="16"/><path d="M4 9h16M9 4v16"/></svg>
       </button>
       <span class="div"></span>
@@ -238,7 +210,7 @@
       <button data-prof="maxima" title="Maxima · square 40×40">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="6" y="6" width="12" height="12" rx="0.5"/><path d="M12 6v12M6 12h12" opacity="0.45"/></svg>
       </button>
-      <button class="active" data-prof="octa" title="Octanorm · round Ø40 / 8 grooves">
+      <button data-prof="octa" title="Octanorm · Ø40 / 8 grooves">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="6"/><path d="M12 6v12M6 12h12M7.76 7.76l8.48 8.48M16.24 7.76l-8.48 8.48" opacity="0.45"/></svg>
       </button>
     </div>
@@ -247,13 +219,13 @@
   <div class="hud bl">
     <div class="card">
       <div class="meta-title">
-        <span>Octanorm S Maxima</span>
-        <span class="pill">Corner Booth</span>
+        <span id="hud-system">Octanorm</span>
+        <span class="pill" id="hud-type">Stand</span>
       </div>
       <div class="crumb" style="margin-top:6px;">
-        <span id="hud-size">6.0 × 3.0 m</span>
+        <span id="hud-dims">6.0 × 3.0 m</span>
         <span class="sep">·</span>
-        <span>2.50 m fascia</span>
+        <span id="hud-height">2.50 m total</span>
         <span class="sep">·</span>
         <span>40 mm profile</span>
       </div>
@@ -299,14 +271,35 @@
 
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
-// Octanorm corner booth — perspective-projected SVG render.
-// Open corner: back wall + right side wall only. Empty interior.
-// Bright catalog/configurator aesthetic.
+// Booth renderer — perspective-projected SVG.
+// Config via URL params: w, d, h, name, style (octa|maxima), open (front,back,left,right)
+// Live updates via postMessage: { type:'boothUpdate', w, d, h, name, style, open }
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SVG = 'http://www.w3.org/2000/svg';
-const W = 1600, H = 1000;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const VW = 1600, VH = 1000;
 
+// ── Read URL params ──────────────────────────────────────────────────────────
+const _P = new URLSearchParams(location.search);
+let BW = Math.max(1, parseFloat(_P.get('w')  || '6'));    // booth width (X)
+let BD = Math.max(1, parseFloat(_P.get('d')  || '3'));    // booth depth (Z)
+let BH = Math.max(0.8, parseFloat(_P.get('h') || '2.20')); // wall panel height
+const FH = 0.30;                                           // fascia height (fixed)
+const EX = 0.04;                                           // profile thickness 40mm
+let COMPANY_NAME = decodeURIComponent(_P.get('name') || 'Company Name');
+let PANELS_BACK = Math.max(1, Math.round(BW));
+let PANELS_SIDE = Math.max(1, Math.round(BD));
+let CARPET_COLOR = _P.get('carpet') || '#3b3e44';
+
+const _openInit = new Set((_P.get('open') || 'front').split(',').map(s=>s.trim()).filter(Boolean));
+let wallsVisible = {
+  back:  !_openInit.has('back'),
+  left:  !_openInit.has('left'),
+  right: !_openInit.has('right'),
+  front: !_openInit.has('front'),
+};
+
+// ── Camera ───────────────────────────────────────────────────────────────────
 const VIEWS = {
   '3q':    { azimuth: Math.PI * 0.22,  elevation: Math.PI * 0.13, distance: 13.5 },
   'front': { azimuth: 0,               elevation: Math.PI * 0.06, distance: 14.5 },
@@ -332,19 +325,20 @@ function updateCamera() {
   up    = cross(right, fwd);
 }
 
-// Soft studio light coming from upper-left
+// ── Studio lighting ──────────────────────────────────────────────────────────
 const lightDir = norm([-0.45, 1.0, 0.55]);
 const fillDir  = norm([ 0.7,  0.4, 0.2]);
 
+// ── Math helpers ─────────────────────────────────────────────────────────────
 function sub(a,b){ return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]; }
 function add(a,b){ return [a[0]+b[0], a[1]+b[1], a[2]+b[2]]; }
 function dot(a,b){ return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
 function cross(a,b){ return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
 function len(a){ return Math.hypot(a[0],a[1],a[2]); }
-function norm(a){ const l = len(a); return [a[0]/l, a[1]/l, a[2]/l]; }
+function norm(a){ const l=len(a); return l<1e-9?[0,1,0]:[a[0]/l,a[1]/l,a[2]/l]; }
 
 const fScale = 1 / Math.tan((fov * Math.PI / 180) / 2);
-const aspect = W / H;
+const aspect = VW / VH;
 updateCamera();
 
 function project(p) {
@@ -353,34 +347,14 @@ function project(p) {
   const y = dot(v, up);
   const z = dot(v, fwd);
   if (z <= 0.05) return null;
-  const sx = (x * fScale / aspect / z) * (W/2) + W/2;
-  const sy = -(y * fScale / z) * (H/2) + H/2 + 90;
+  const sx = (x * fScale / aspect / z) * (VW/2) + VW/2;
+  const sy = -(y * fScale / z) * (VH/2) + VH/2 + 90;
   return { x: sx, y: sy, depth: z };
 }
 
-// ── Booth dimensions (URL params + live postMessage updates) ──
-const _P = new URLSearchParams(location.search);
-let BW = Math.max(1, parseFloat(_P.get('w')  || '6'));
-let BD = Math.max(1, parseFloat(_P.get('d')  || '3'));
-let BH = Math.max(0.8, parseFloat(_P.get('h') || '2.20'));
-const FH = 0.30;
-const EX = 0.04;
-let COMPANY_NAME = decodeURIComponent(_P.get('name') || 'Company Name');
-let PANELS_BACK = Math.max(1, Math.round(BW));
-let PANELS_SIDE = Math.max(1, Math.round(BD));
-let CARPET_COLOR = _P.get('carpet') || '#3b3e44';
-const _openInit = new Set((_P.get('open') || 'front').split(',').map(s => s.trim()).filter(Boolean));
-let wallsVisible = {
-  back:  !_openInit.has('back'),
-  right: !_openInit.has('right'),
-  left:  !_openInit.has('left'),
-  front: !_openInit.has('front'),
-};
-
+// ── Geometry builder ─────────────────────────────────────────────────────────
 let faces = [];
 let _gid = 0;
-
-// Column profile style: 'octa' (round Octanorm 8-groove) or 'maxima' (square 40x40)
 let columnStyle = (_P.get('style') === 'maxima') ? 'maxima' : 'octa';
 
 function pushBox(min, max, props) {
@@ -400,22 +374,18 @@ function pushBox(min, max, props) {
   return gid;
 }
 
-// ── Octagonal prism (round Octanorm cross-section, 8 grooves) ──
 function pushPrism(cx, cz, y0, y1, radius, segments, props) {
   const gid = ++_gid;
   const verts = [];
-  // Rotate so a flat face points along +z (toward viewer-side normals are clean)
   const offset = Math.PI / segments;
   for (let i = 0; i < segments; i++) {
     const a = (i / segments) * Math.PI * 2 + offset;
     verts.push([cx + Math.cos(a) * radius, cz + Math.sin(a) * radius, a]);
   }
-  // Side facets
   for (let i = 0; i < segments; i++) {
     const j = (i + 1) % segments;
-    const [xi, , ] = verts[i];
-    const [xj, , ] = verts[j];
     const zi = verts[i][1], zj = verts[j][1];
+    const xi = verts[i][0], xj = verts[j][0];
     const ma = ((i + 0.5) / segments) * Math.PI * 2 + offset;
     faces.push({
       pts: [[xi, y0, zi], [xj, y0, zj], [xj, y1, zj], [xi, y1, zi]],
@@ -426,115 +396,77 @@ function pushPrism(cx, cz, y0, y1, radius, segments, props) {
       ...props,
     });
   }
-  // Top face
-  faces.push({
-    pts: verts.map(([x, z]) => [x, y1, z]),
-    normal: [0, 1, 0], gid,
-    partId: (props.partId || 'part') + '-' + gid + ':+y',
-    ...props,
-  });
-  // Bottom face
-  faces.push({
-    pts: verts.slice().reverse().map(([x, z]) => [x, y0, z]),
-    normal: [0, -1, 0], gid,
-    partId: (props.partId || 'part') + '-' + gid + ':-y',
-    ...props,
-  });
+  faces.push({ pts: verts.map(([x, z]) => [x, y1, z]), normal: [0,1,0], gid,
+    partId: (props.partId||'part')+'-'+gid+':+y', ...props });
+  faces.push({ pts: verts.slice().reverse().map(([x, z]) => [x, y0, z]), normal: [0,-1,0], gid,
+    partId: (props.partId||'part')+'-'+gid+':-y', ...props });
   return gid;
 }
 
-// ── Unified post builder (switches on columnStyle) ──
 function pushPost(cx, cz, y0, y1, props) {
   const T = EX;
-  // Foot cap (small dark base under post)
   pushBox(
     [cx - T*0.55, y0 - 0.005, cz - T*0.55],
     [cx + T*0.55, y0 + 0.018, cz + T*0.55],
-    {
-      fill: '#2a2d33', isAlu: true,
-      partId: (props.partId || 'post') + '-foot',
-      partLabel: 'Foot cap',
-      partMeta: 'Adjustable base · nylon',
-    }
+    { fill: '#2a2d33', isAlu: true, partId: (props.partId||'post')+'-foot',
+      partLabel: 'Foot cap', partMeta: 'Adjustable base · nylon' }
   );
-  // Joint connector cube on top (accurate to Octanorm cube connectors)
   pushBox(
     [cx - T*0.58, y1 - T*0.55, cz - T*0.58],
     [cx + T*0.58, y1 + T*0.05, cz + T*0.58],
-    {
-      fill: 'url(#alu-cap)', isAlu: true,
-      partId: (props.partId || 'post') + '-cube',
-      partLabel: 'Connector cube',
-      partMeta: 'K-block joint · die-cast aluminum',
-    }
+    { fill: 'url(#alu-cap)', isAlu: true, partId: (props.partId||'post')+'-cube',
+      partLabel: 'Connector cube', partMeta: 'K-block joint · die-cast aluminum' }
   );
-
   if (columnStyle === 'octa') {
-    return pushPrism(cx, cz, y0 + 0.018, y1 - T*0.55, T * 0.5, 8, {
-      fill: 'url(#alu)',
-      isAlu: true,
-      isOctaPost: true,
-      ...props,
-    });
+    return pushPrism(cx, cz, y0 + 0.018, y1 - T*0.55, T * 0.5, 8,
+      { fill: 'url(#alu)', isAlu: true, isOctaPost: true, ...props });
   }
   return pushBox(
     [cx - T/2, y0 + 0.018, cz - T/2],
     [cx + T/2, y1 - T*0.55, cz + T/2],
-    {
-      fill: 'url(#alu)',
-      isAlu: true,
-      isMaximaPost: true,
-      ...props,
-    }
+    { fill: 'url(#alu)', isAlu: true, isMaximaPost: true, ...props }
   );
 }
 
-// ── Build wall ──
-// Returns the panels created (so fascia can sit above them).
-// Each wall is described by two endpoints in the XZ plane (p1, p2),
-// height BH, with `numPanels` infill bays.
+function cz_clamp(v, off) { return v + off; }
+
 function buildWall(name, p1, p2, numPanels, normal) {
   const wallLen = Math.hypot(p2[0]-p1[0], p2[2]-p1[2]);
   const dir = [(p2[0]-p1[0])/wallLen, 0, (p2[2]-p1[2])/wallLen];
-  const perp = [-dir[2], 0, dir[0]];  // outward normal direction (into the room)
+  const perp = [-dir[2], 0, dir[0]];
   const T = EX;
   const bayLen = wallLen / numPanels;
 
-  // Infill panels — slightly inset so the extrusion frame is visible
   for (let i = 0; i < numPanels; i++) {
     const s0 = i * bayLen + EX * 0.6;
     const s1 = (i + 1) * bayLen - EX * 0.6;
-    const x1 = p1[0] + dir[0] * s0, z1 = p1[2] + dir[2] * s0;
-    const x2 = p1[0] + dir[0] * s1, z2 = p1[2] + dir[2] * s1;
-    // Panel slightly behind the post centerline (toward interior side)
+    const x1p = p1[0] + dir[0] * s0, z1p = p1[2] + dir[2] * s0;
+    const x2p = p1[0] + dir[0] * s1, z2p = p1[2] + dir[2] * s1;
     const off = EX * 0.15;
     faces.push({
       pts: [
-        [x1 - perp[0]*off, EX*0.5, z1 - perp[2]*off],
-        [x2 - perp[0]*off, EX*0.5, z2 - perp[2]*off],
-        [x2 - perp[0]*off, BH - EX*0.5, z2 - perp[2]*off],
-        [x1 - perp[0]*off, BH - EX*0.5, z1 - perp[2]*off],
+        [x1p - perp[0]*off, EX*0.5, z1p - perp[2]*off],
+        [x2p - perp[0]*off, EX*0.5, z2p - perp[2]*off],
+        [x2p - perp[0]*off, BH - EX*0.5, z2p - perp[2]*off],
+        [x1p - perp[0]*off, BH - EX*0.5, z1p - perp[2]*off],
       ],
-      fill: 'url(#panel)',
-      normal,
+      fill: 'url(#panel)', normal,
       partId: 'panel-' + name + '-' + i,
       partLabel: 'Infill panel · ' + name + ' bay ' + (i+1),
-      partMeta: '985 × 2300 mm · white laminate',
+      partMeta: Math.round(bayLen*1000-40) + ' × ' + Math.round((BH-EX)*1000) + ' mm · white laminate',
     });
-    // Back of panel (only visible from outside or in plan view)
     faces.push({
       pts: [
-        [x2 + perp[0]*off, EX*0.5, z2 + perp[2]*off],
-        [x1 + perp[0]*off, EX*0.5, z1 + perp[2]*off],
-        [x1 + perp[0]*off, BH - EX*0.5, z1 + perp[2]*off],
-        [x2 + perp[0]*off, BH - EX*0.5, z2 + perp[2]*off],
+        [x2p + perp[0]*off, EX*0.5, z2p + perp[2]*off],
+        [x1p + perp[0]*off, EX*0.5, z1p + perp[2]*off],
+        [x1p + perp[0]*off, BH - EX*0.5, z1p + perp[2]*off],
+        [x2p + perp[0]*off, BH - EX*0.5, z2p + perp[2]*off],
       ],
       fill: 'url(#panel-side)',
       normal: [-normal[0], -normal[1], -normal[2]],
     });
   }
 
-  // Vertical extrusions at every bay seam + ends
   for (let i = 0; i <= numPanels; i++) {
     const s = i * bayLen;
     const cx = p1[0] + dir[0] * s;
@@ -543,342 +475,159 @@ function buildWall(name, p1, p2, numPanels, normal) {
       partId: 'post-' + name + '-' + i,
       partLabel: 'Vertical post · ' + name + ' #' + (i+1),
       partMeta: columnStyle === 'octa'
-        ? 'Ø 40 mm Octanorm round profile · 8 grooves · anodized'
+        ? 'Ø 40 mm Octanorm profile · 8 grooves · anodized'
         : '40 × 40 mm Maxima profile · anodized',
     });
   }
 
-  // Top horizontal rail (just under fascia)
-  {
-    // Extend slightly to overlap corner posts
+  const isAlongX = Math.abs(dir[0]) > Math.abs(dir[2]);
+  if (isAlongX) {
     const xMin = Math.min(p1[0], p2[0]) - T/2;
     const xMax = Math.max(p1[0], p2[0]) + T/2;
+    pushBox([xMin, BH - T*0.4, cz_clamp(p1[2], -T/2)],
+            [xMax, BH + T*0.4, cz_clamp(p1[2], +T/2)],
+            { fill: 'url(#alu-h)', isAlu: true, partId: 'rail-top-' + name,
+              partLabel: 'Top rail · ' + name, partMeta: 'Header beam · brushed aluminum' });
+    pushBox([xMin, 0, cz_clamp(p1[2], -T/2)],
+            [xMax, T*0.5, cz_clamp(p1[2], +T/2)],
+            { fill: 'url(#alu-h)', isAlu: true, partId: 'rail-bot-' + name,
+              partLabel: 'Bottom rail · ' + name, partMeta: 'Floor profile · brushed aluminum' });
+  } else {
     const zMin = Math.min(p1[2], p2[2]) - T/2;
     const zMax = Math.max(p1[2], p2[2]) + T/2;
-    // Pick correct dim along wall
-    const isAlongX = Math.abs(dir[0]) > Math.abs(dir[2]);
-    if (isAlongX) {
-      pushBox([xMin, BH - T*0.4, cz_clamp(p1[2], -T/2)],
-              [xMax, BH + T*0.4, cz_clamp(p1[2], +T/2)], {
-        fill: 'url(#alu-h)', isAlu: true,
-        partId: 'rail-top-' + name,
-        partLabel: 'Top rail · ' + name,
-        partMeta: 'Header beam · brushed aluminum',
-      });
-      pushBox([xMin, 0, cz_clamp(p1[2], -T/2)],
-              [xMax, T*0.5, cz_clamp(p1[2], +T/2)], {
-        fill: 'url(#alu-h)', isAlu: true,
-        partId: 'rail-bot-' + name,
-        partLabel: 'Bottom rail · ' + name,
-        partMeta: 'Floor profile · brushed aluminum',
-      });
-    } else {
-      pushBox([cz_clamp(p1[0], -T/2), BH - T*0.4, zMin],
-              [cz_clamp(p1[0], +T/2), BH + T*0.4, zMax], {
-        fill: 'url(#alu-h)', isAlu: true,
-        partId: 'rail-top-' + name,
-        partLabel: 'Top rail · ' + name,
-        partMeta: 'Header beam · brushed aluminum',
-      });
-      pushBox([cz_clamp(p1[0], -T/2), 0, zMin],
-              [cz_clamp(p1[0], +T/2), T*0.5, zMax], {
-        fill: 'url(#alu-h)', isAlu: true,
-        partId: 'rail-bot-' + name,
-        partLabel: 'Bottom rail · ' + name,
-        partMeta: 'Floor profile · brushed aluminum',
-      });
-    }
+    pushBox([cz_clamp(p1[0], -T/2), BH - T*0.4, zMin],
+            [cz_clamp(p1[0], +T/2), BH + T*0.4, zMax],
+            { fill: 'url(#alu-h)', isAlu: true, partId: 'rail-top-' + name,
+              partLabel: 'Top rail · ' + name, partMeta: 'Header beam · brushed aluminum' });
+    pushBox([cz_clamp(p1[0], -T/2), 0, zMin],
+            [cz_clamp(p1[0], +T/2), T*0.5, zMax],
+            { fill: 'url(#alu-h)', isAlu: true, partId: 'rail-bot-' + name,
+              partLabel: 'Bottom rail · ' + name, partMeta: 'Floor profile · brushed aluminum' });
   }
-
-  // Per-bay intermediate horizontal rails just under fascia (separates infill from fascia)
-  // Already covered by top rail above.
   return { dir, perp, wallLen, numPanels, bayLen };
 }
 
-// Small helper used above
-function cz_clamp(v, off) { return v + off; }
-
-// ── Build all booth geometry (rebuildable on toggle) ──
 function buildBoothGeometry() {
   faces = [];
   _gid = 0;
 
-  if (wallsVisible.back)  buildWall('back',  [-BW/2, 0, 0],  [ BW/2, 0, 0],  PANELS_BACK, [0, 0,  1]);
-  if (wallsVisible.right) buildWall('right', [ BW/2, 0, 0],  [ BW/2, 0, BD], PANELS_SIDE, [-1, 0, 0]);
-  if (wallsVisible.left)  buildWall('left',  [-BW/2, 0, 0],  [-BW/2, 0, BD], PANELS_SIDE, [1, 0,  0]);
-  if (wallsVisible.front) buildWall('front', [-BW/2, 0, BD], [ BW/2, 0, BD], PANELS_BACK, [0, 0,  1]);
+  if (wallsVisible.back)  buildWall('back',  [-BW/2, 0,  0],  [ BW/2, 0,  0],  PANELS_BACK, [0, 0,  1]);
+  if (wallsVisible.right) buildWall('right', [ BW/2, 0,  0],  [ BW/2, 0, BD],  PANELS_SIDE, [-1,0,  0]);
+  if (wallsVisible.left)  buildWall('left',  [-BW/2, 0,  0],  [-BW/2, 0, BD],  PANELS_SIDE, [1, 0,  0]);
+  if (wallsVisible.front) buildWall('front', [-BW/2, 0, BD],  [ BW/2, 0, BD],  PANELS_BACK, [0, 0,  1]);
 
   buildFascia();
   if (!wallsVisible.front) buildFrontRail();
   buildCarpet();
 }
 
-// ── FASCIA: top header band on back wall (front-facing) + side wall ──
 function buildFascia() {
-  const yB = BH;
-  const yT = BH + FH;
-  const T  = EX;
+  const yB = BH, yT = BH + FH, T = EX;
 
-  // Back wall fascia — front face (visible from camera)
-  faces.push({
-    pts: [
-      [-BW/2, yB, T*0.15],
-      [ BW/2, yB, T*0.15],
-      [ BW/2, yT, T*0.15],
-      [-BW/2, yT, T*0.15],
-    ],
-    fill: 'url(#fascia)',
-    normal: [0, 0, 1],
-    isFascia: 'back',
-    partId: 'fascia-back',
-    partLabel: 'Fascia · back wall',
-    partMeta: 'Header signage band · 300 mm',
-  });
-  // Back fascia — top cap
-  faces.push({
-    pts: [
-      [-BW/2, yT, -T*0.15],
-      [ BW/2, yT, -T*0.15],
-      [ BW/2, yT,  T*0.15],
-      [-BW/2, yT,  T*0.15],
-    ],
-    fill: 'url(#alu-cap)',
-    normal: [0, 1, 0],
-  });
-  // Back fascia — back face
-  faces.push({
-    pts: [
-      [-BW/2, yB, -T*0.15],
-      [ BW/2, yB, -T*0.15],
-      [ BW/2, yT, -T*0.15],
-      [-BW/2, yT, -T*0.15],
-    ],
-    fill: 'url(#panel-side)',
-    normal: [0, 0, -1],
-  });
+  // Back wall fascia
+  faces.push({ pts: [[-BW/2,yB,T*0.15],[BW/2,yB,T*0.15],[BW/2,yT,T*0.15],[-BW/2,yT,T*0.15]],
+    fill:'url(#fascia)', normal:[0,0,1], isFascia:'back',
+    partId:'fascia-back', partLabel:'Fascia · back wall', partMeta:'Header signage band · '+Math.round(FH*1000)+' mm' });
+  faces.push({ pts: [[-BW/2,yT,-T*0.15],[BW/2,yT,-T*0.15],[BW/2,yT,T*0.15],[-BW/2,yT,T*0.15]],
+    fill:'url(#alu-cap)', normal:[0,1,0] });
+  faces.push({ pts: [[-BW/2,yB,-T*0.15],[BW/2,yB,-T*0.15],[BW/2,yT,-T*0.15],[-BW/2,yT,-T*0.15]],
+    fill:'url(#panel-side)', normal:[0,0,-1] });
 
-  // Right side wall fascia — interior face (faces -x toward viewer)
-  faces.push({
-    pts: [
-      [BW/2 - T*0.15, yB, 0],
-      [BW/2 - T*0.15, yB, BD],
-      [BW/2 - T*0.15, yT, BD],
-      [BW/2 - T*0.15, yT, 0],
-    ],
-    fill: 'url(#fascia)',
-    normal: [-1, 0, 0],
-    isFascia: 'side',
-    partId: 'fascia-right',
-    partLabel: 'Fascia · right wall',
-    partMeta: 'Header signage band · 300 mm',
-  });
-  faces.push({
-    pts: [
-      [BW/2 - T*0.15, yT, 0],
-      [BW/2 + T*0.15, yT, 0],
-      [BW/2 + T*0.15, yT, BD],
-      [BW/2 - T*0.15, yT, BD],
-    ],
-    fill: 'url(#alu-cap)',
-    normal: [0, 1, 0],
-  });
-  faces.push({
-    pts: [
-      [BW/2 + T*0.15, yB, 0],
-      [BW/2 + T*0.15, yB, BD],
-      [BW/2 + T*0.15, yT, BD],
-      [BW/2 + T*0.15, yT, 0],
-    ],
-    fill: 'url(#panel-side)',
-    normal: [1, 0, 0],
-  });
+  // Right side wall fascia
+  faces.push({ pts: [[BW/2-T*0.15,yB,0],[BW/2-T*0.15,yB,BD],[BW/2-T*0.15,yT,BD],[BW/2-T*0.15,yT,0]],
+    fill:'url(#fascia)', normal:[-1,0,0], isFascia:'side-right',
+    partId:'fascia-right', partLabel:'Fascia · right wall', partMeta:'Header signage band · '+Math.round(FH*1000)+' mm' });
+  faces.push({ pts: [[BW/2-T*0.15,yT,0],[BW/2+T*0.15,yT,0],[BW/2+T*0.15,yT,BD],[BW/2-T*0.15,yT,BD]],
+    fill:'url(#alu-cap)', normal:[0,1,0] });
+  faces.push({ pts: [[BW/2+T*0.15,yB,0],[BW/2+T*0.15,yB,BD],[BW/2+T*0.15,yT,BD],[BW/2+T*0.15,yT,0]],
+    fill:'url(#panel-side)', normal:[1,0,0] });
 
-  // Left side wall fascia — interior face (faces +x toward viewer)
-  faces.push({
-    pts: [
-      [-BW/2 + T*0.15, yB, BD],
-      [-BW/2 + T*0.15, yB, 0],
-      [-BW/2 + T*0.15, yT, 0],
-      [-BW/2 + T*0.15, yT, BD],
-    ],
-    fill: 'url(#fascia)',
-    normal: [1, 0, 0],
-    isFascia: 'side',
-    partId: 'fascia-left',
-    partLabel: 'Fascia · left wall',
-    partMeta: 'Header signage band · 300 mm',
-  });
-  faces.push({
-    pts: [
-      [-BW/2 - T*0.15, yT, 0],
-      [-BW/2 + T*0.15, yT, 0],
-      [-BW/2 + T*0.15, yT, BD],
-      [-BW/2 - T*0.15, yT, BD],
-    ],
-    fill: 'url(#alu-cap)',
-    normal: [0, 1, 0],
-  });
-  faces.push({
-    pts: [
-      [-BW/2 - T*0.15, yB, BD],
-      [-BW/2 - T*0.15, yB, 0],
-      [-BW/2 - T*0.15, yT, 0],
-      [-BW/2 - T*0.15, yT, BD],
-    ],
-    fill: 'url(#panel-side)',
-    normal: [-1, 0, 0],
-  });
+  // Left side wall fascia
+  faces.push({ pts: [[-BW/2+T*0.15,yB,BD],[-BW/2+T*0.15,yB,0],[-BW/2+T*0.15,yT,0],[-BW/2+T*0.15,yT,BD]],
+    fill:'url(#fascia)', normal:[1,0,0], isFascia:'side-left',
+    partId:'fascia-left', partLabel:'Fascia · left wall', partMeta:'Header signage band · '+Math.round(FH*1000)+' mm' });
+  faces.push({ pts: [[-BW/2-T*0.15,yT,0],[-BW/2+T*0.15,yT,0],[-BW/2+T*0.15,yT,BD],[-BW/2-T*0.15,yT,BD]],
+    fill:'url(#alu-cap)', normal:[0,1,0] });
+  faces.push({ pts: [[-BW/2-T*0.15,yB,BD],[-BW/2-T*0.15,yB,0],[-BW/2-T*0.15,yT,0],[-BW/2-T*0.15,yT,BD]],
+    fill:'url(#panel-side)', normal:[-1,0,0] });
 
-  // ── FRONT FASCIA: spans the open front between left and right walls at top ──
-  // Visible front face (toward viewer)
-  faces.push({
-    pts: [
-      [-BW/2, yB, BD - T*0.15],
-      [ BW/2, yB, BD - T*0.15],
-      [ BW/2, yT, BD - T*0.15],
-      [-BW/2, yT, BD - T*0.15],
-    ],
-    fill: 'url(#fascia)',
-    normal: [0, 0, 1],
-    isFascia: 'front',
-    partId: 'fascia-front',
-    partLabel: 'Fascia · front (entrance)',
-    partMeta: 'Header signage band · 300 mm · entrance span',
-  });
-  // Front fascia — top cap
-  faces.push({
-    pts: [
-      [-BW/2, yT, BD - T*0.15],
-      [ BW/2, yT, BD - T*0.15],
-      [ BW/2, yT, BD + T*0.15],
-      [-BW/2, yT, BD + T*0.15],
-    ],
-    fill: 'url(#alu-cap)',
-    normal: [0, 1, 0],
-  });
-  // Front fascia — interior face
-  faces.push({
-    pts: [
-      [ BW/2, yB, BD + T*0.15],
-      [-BW/2, yB, BD + T*0.15],
-      [-BW/2, yT, BD + T*0.15],
-      [ BW/2, yT, BD + T*0.15],
-    ],
-    fill: 'url(#panel-side)',
-    normal: [0, 0, -1],
-  });
-  // Front fascia — bottom cap (top rail underside, slim)
-  faces.push({
-    pts: [
-      [-BW/2, yB, BD - T*0.15],
-      [-BW/2, yB, BD + T*0.15],
-      [ BW/2, yB, BD + T*0.15],
-      [ BW/2, yB, BD - T*0.15],
-    ],
-    fill: 'url(#alu-cap)',
-    normal: [0, -1, 0],
-  });
+  // Front fascia (entrance header)
+  faces.push({ pts: [[-BW/2,yB,BD-T*0.15],[BW/2,yB,BD-T*0.15],[BW/2,yT,BD-T*0.15],[-BW/2,yT,BD-T*0.15]],
+    fill:'url(#fascia)', normal:[0,0,1], isFascia:'front',
+    partId:'fascia-front', partLabel:'Fascia · front (entrance)', partMeta:'Header signage band · '+Math.round(FH*1000)+' mm · entrance span' });
+  faces.push({ pts: [[-BW/2,yT,BD-T*0.15],[BW/2,yT,BD-T*0.15],[BW/2,yT,BD+T*0.15],[-BW/2,yT,BD+T*0.15]],
+    fill:'url(#alu-cap)', normal:[0,1,0] });
+  faces.push({ pts: [[BW/2,yB,BD+T*0.15],[-BW/2,yB,BD+T*0.15],[-BW/2,yT,BD+T*0.15],[BW/2,yT,BD+T*0.15]],
+    fill:'url(#panel-side)', normal:[0,0,-1] });
+  faces.push({ pts: [[-BW/2,yB,BD-T*0.15],[-BW/2,yB,BD+T*0.15],[BW/2,yB,BD+T*0.15],[BW/2,yB,BD-T*0.15]],
+    fill:'url(#alu-cap)', normal:[0,-1,0] });
 }
 
-// ── FRONT TOP RAIL: aluminum beam spanning the entrance between front posts ──
 function buildFrontRail() {
   const T = EX;
   pushBox(
     [-BW/2 - T/2, BH - T*0.4, BD - T/2],
     [ BW/2 + T/2, BH + T*0.4, BD + T/2],
-    {
-      fill: 'url(#alu-h)',
-      isAlu: true,
-      partId: 'rail-front',
-      partLabel: 'Front top rail · entrance beam',
-      partMeta: '40 × 40 mm Octanorm profile · spans 6.0 m',
-    }
+    { fill:'url(#alu-h)', isAlu:true, partId:'rail-front',
+      partLabel:'Front top rail · entrance beam',
+      partMeta:'40 × 40 mm profile · spans ' + BW.toFixed(1) + ' m' }
   );
 }
 
-// ── CARPET: dark gray exhibition carpet covering the booth interior floor ──
 function buildCarpet() {
   faces.push({
     pts: [
-      [-BW/2 + EX*1.2, 0.012, 0      + EX*1.2],
-      [ BW/2 - EX*1.2, 0.012, 0      + EX*1.2],
-      [ BW/2 - EX*1.2, 0.012, BD     - EX*0.2],
-      [-BW/2 + EX*1.2, 0.012, BD     - EX*0.2],
+      [-BW/2 + EX*1.2, 0.012,  0 + EX*1.2],
+      [ BW/2 - EX*1.2, 0.012,  0 + EX*1.2],
+      [ BW/2 - EX*1.2, 0.012, BD - EX*0.2],
+      [-BW/2 + EX*1.2, 0.012, BD - EX*0.2],
     ],
-    fill: CARPET_COLOR,
-    normal: [0, 1, 0],
-    isCarpet: true,
-    partId: 'carpet',
-    partLabel: 'Carpet · interior',
-    partMeta: 'Needle-punch · ' + BW.toFixed(1) + ' x ' + BD.toFixed(1) + ' m',
+    fill: CARPET_COLOR, normal: [0,1,0], isCarpet: true,
+    partId: 'carpet', partLabel: 'Carpet · interior',
+    partMeta: 'Charcoal needle-punch · ' + BW.toFixed(1) + ' × ' + BD.toFixed(1) + ' m',
   });
 }
 
-// Initial build
 buildBoothGeometry();
 
-// ── Outer (back) face of back wall — single continuous panel for cleanliness ──
-// This avoids seeing the gap between panels from behind.
-
-// ── FLOOR ──
+// ── Floor ────────────────────────────────────────────────────────────────────
 function buildFloor() {
   const g = document.getElementById('floorGroup');
-  // Floor plane: large polished tile
-  const floorVerts = [
-    [-22, 0, -10], [22, 0, -10], [22, 0, 22], [-22, 0, 22]
-  ].map(project);
+  const floorVerts = [[-22,0,-10],[22,0,-10],[22,0,22],[-22,0,22]].map(project);
   if (floorVerts.every(Boolean)) {
-    const path = floorVerts.map(p => `${p.x},${p.y}`).join(' ');
-    const fp = document.createElementNS(SVG, 'polygon');
-    fp.setAttribute('points', path);
-    fp.setAttribute('fill', 'url(#floor)');
+    const path = floorVerts.map(p=>`${p.x},${p.y}`).join(' ');
+    const fp = document.createElementNS(SVG_NS, 'polygon');
+    fp.setAttribute('points', path); fp.setAttribute('fill', 'url(#floor)');
     g.appendChild(fp);
-
-    // Tile lines overlay
-    const tilePoly = document.createElementNS(SVG, 'polygon');
-    tilePoly.setAttribute('points', path);
-    tilePoly.setAttribute('fill', 'url(#tile)');
-    tilePoly.setAttribute('opacity', '0.5');
-    g.appendChild(tilePoly);
+    const tilePoly = document.createElementNS(SVG_NS, 'polygon');
+    tilePoly.setAttribute('points', path); tilePoly.setAttribute('fill', 'url(#tile)');
+    tilePoly.setAttribute('opacity', '0.5'); g.appendChild(tilePoly);
   }
-
-  // Faint receding floor grid (~2m squares) for depth cue
   for (let i = -20; i <= 22; i += 2) {
-    const a = project([i, 0, -10]); const b = project([i, 0, 22]);
-    if (a && b) {
-      const ln = document.createElementNS(SVG, 'line');
-      ln.setAttribute('x1', a.x); ln.setAttribute('y1', a.y);
-      ln.setAttribute('x2', b.x); ln.setAttribute('y2', b.y);
-      ln.setAttribute('stroke', 'rgba(20,22,26,0.06)');
-      ln.setAttribute('stroke-width', '0.7');
-      g.appendChild(ln);
-    }
-    const c = project([-22, 0, i]); const d = project([22, 0, i]);
-    if (c && d) {
-      const ln = document.createElementNS(SVG, 'line');
-      ln.setAttribute('x1', c.x); ln.setAttribute('y1', c.y);
-      ln.setAttribute('x2', d.x); ln.setAttribute('y2', d.y);
-      ln.setAttribute('stroke', 'rgba(20,22,26,0.06)');
-      ln.setAttribute('stroke-width', '0.7');
-      g.appendChild(ln);
-    }
+    const a=project([i,0,-10]), b=project([i,0,22]);
+    if (a&&b) { const ln=document.createElementNS(SVG_NS,'line');
+      ln.setAttribute('x1',a.x); ln.setAttribute('y1',a.y);
+      ln.setAttribute('x2',b.x); ln.setAttribute('y2',b.y);
+      ln.setAttribute('stroke','rgba(20,22,26,0.06)'); ln.setAttribute('stroke-width','0.7');
+      g.appendChild(ln); }
+    const c=project([-22,0,i]), d=project([22,0,i]);
+    if (c&&d) { const ln=document.createElementNS(SVG_NS,'line');
+      ln.setAttribute('x1',c.x); ln.setAttribute('y1',c.y);
+      ln.setAttribute('x2',d.x); ln.setAttribute('y2',d.y);
+      ln.setAttribute('stroke','rgba(20,22,26,0.06)'); ln.setAttribute('stroke-width','0.7');
+      g.appendChild(ln); }
   }
-
-  // Contact shadow under the L-shape
-  const shCenter = project([BW * 0.05, 0, BD * 0.35]);
+  const shCenter = project([0, 0, BD * 0.35]);
   if (shCenter) {
-    const sh = document.createElementNS(SVG, 'ellipse');
-    sh.setAttribute('cx', shCenter.x);
-    sh.setAttribute('cy', shCenter.y + 14);
-    sh.setAttribute('rx', 560);
-    sh.setAttribute('ry', 100);
-    sh.setAttribute('fill', 'url(#shadow)');
-    sh.setAttribute('opacity', '0.7');
+    const sh = document.createElementNS(SVG_NS, 'ellipse');
+    sh.setAttribute('cx', shCenter.x); sh.setAttribute('cy', shCenter.y + 14);
+    sh.setAttribute('rx', Math.max(300, BW*90)); sh.setAttribute('ry', Math.max(60, BD*30));
+    sh.setAttribute('fill', 'url(#shadow)'); sh.setAttribute('opacity', '0.7');
     g.appendChild(sh);
   }
 }
 
-// ── SHADING ──
+// ── Shading ───────────────────────────────────────────────────────────────────
 function faceIntensity(face) {
   let n = face.normal;
   if (!n) {
@@ -886,9 +635,9 @@ function faceIntensity(face) {
     const v2 = sub(face.pts[2], face.pts[0]);
     n = norm(cross(v1, v2));
   }
-  const key   = Math.max(0, dot(n, lightDir));
-  const fill  = Math.max(0, dot(n, fillDir)) * 0.35;
-  const amb   = 0.55;
+  const key  = Math.max(0, dot(n, lightDir));
+  const fill = Math.max(0, dot(n, fillDir)) * 0.35;
+  const amb  = 0.55;
   return Math.min(1, amb + key * 0.45 + fill);
 }
 
@@ -898,69 +647,49 @@ function avgDepth(face) {
   return sum / face.pts.length;
 }
 
-// ── RENDER ──
-function renderBooth(reflected) {
+// ── Render ────────────────────────────────────────────────────────────────────
+let selectedKey = null;
+
+function renderBooth() {
   const g = document.getElementById('boothGroup');
+  const sorted = [...faces].map((f,i)=>({...f, idx:i, depth:avgDepth(f)}))
+    .sort((a,b) => b.depth - a.depth);
 
-  const sorted = [...faces]
-    .map((f, i) => ({ ...f, idx: i, depth: avgDepth(f) }))
-    .sort((a, b) => b.depth - a.depth);
-
-  const container = document.createElementNS(SVG, 'g');
-  if (reflected) {
-    const floorScreenY = (project([0, 0, 0]) || { y: H * 0.7 }).y;
-    container.setAttribute('transform', `matrix(1 0 0 -1 0 ${(2 * floorScreenY).toFixed(2)})`);
-    container.setAttribute('opacity', '0.22');
-    container.setAttribute('filter', 'url(#blur-soft)');
-  }
+  const container = document.createElementNS(SVG_NS, 'g');
   g.appendChild(container);
 
   for (const face of sorted) {
     const proj = face.pts.map(project);
     if (proj.some(p => !p)) continue;
 
-    // Back-face cull
     if (face.normal) {
       const camDir = norm(sub(face.pts[0], cam));
       if (dot(face.normal, camDir) > 0.08) continue;
     }
 
     const intensity = faceIntensity(face);
-    const points = proj.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+    const points = proj.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
 
-    const poly = document.createElementNS(SVG, 'polygon');
+    const poly = document.createElementNS(SVG_NS, 'polygon');
     poly.setAttribute('points', points);
     poly.setAttribute('fill', face.fill);
-    if (!reflected && face.partId) {
+    if (face.partId) {
       poly.setAttribute('data-pid', face.partId);
       poly.setAttribute('data-label', face.partLabel || face.partId);
       poly.setAttribute('data-meta', face.partMeta || '');
-      if (selectedKey && (face.partId === selectedKey || (face.gid && face.partId.startsWith(face.partId.split(':')[0])))) {
-        // selection ring drawn separately
-      }
     }
     container.appendChild(poly);
 
-    // Light/shade overlay (multiply against white)
     if (intensity < 0.98) {
-      const sh = document.createElementNS(SVG, 'polygon');
+      const sh = document.createElementNS(SVG_NS, 'polygon');
       sh.setAttribute('points', points);
       const alpha = Math.max(0, (1 - intensity)) * 0.55;
-      sh.setAttribute('fill', '#000');
-      sh.setAttribute('opacity', alpha.toFixed(3));
+      sh.setAttribute('fill', '#000'); sh.setAttribute('opacity', alpha.toFixed(3));
       sh.setAttribute('pointer-events', 'none');
       container.appendChild(sh);
-    } else if (intensity > 1.0) {
-      const hi = document.createElementNS(SVG, 'polygon');
-      hi.setAttribute('points', points);
-      hi.setAttribute('fill', '#fff');
-      hi.setAttribute('opacity', '0.05');
-      hi.setAttribute('pointer-events', 'none');
-      container.appendChild(hi);
     }
 
-    // Edges
-    const edge = document.createElementNS(SVG, 'polygon');
+    const edge = document.createElementNS(SVG_NS, 'polygon');
     edge.setAttribute('points', points);
     edge.setAttribute('fill', 'none');
     edge.setAttribute('stroke', face.isAlu ? 'rgba(80,85,92,0.55)' : 'rgba(170,175,182,0.42)');
@@ -969,21 +698,21 @@ function renderBooth(reflected) {
     edge.setAttribute('pointer-events', 'none');
     container.appendChild(edge);
 
-    // Fascia "Company Name" text on the back fascia only
-    if (face.isFascia === 'back' && !reflected) {
-      // Project a centered point on the fascia
-      const midL = [-0.9, BH + FH/2, EX*0.16];
-      const midR = [ 0.9, BH + FH/2, EX*0.16];
-      const mid  = [   0, BH + FH/2, EX*0.16];
+    // Company name on back fascia
+    if (face.isFascia === 'back') {
+      const midX = 0, midY_world = BH + FH/2, midZ_world = EX*0.16;
+      const halfW = Math.min(BW * 0.42, 2.2);
+      const midL = [-halfW, midY_world, midZ_world];
+      const midR = [ halfW, midY_world, midZ_world];
+      const mid  = [    0,  midY_world, midZ_world];
       const pL = project(midL), pR = project(midR), pM = project(mid);
       if (pL && pR && pM) {
-        // Inner box behind the text (slight inset frame, like the reference)
-        const frameL = project([-1.1, BH + FH*0.18, EX*0.155]);
-        const frameR = project([ 1.1, BH + FH*0.18, EX*0.155]);
-        const frameLT = project([-1.1, BH + FH*0.82, EX*0.155]);
-        const frameRT = project([ 1.1, BH + FH*0.82, EX*0.155]);
+        const frameL  = project([-halfW*1.08, BH + FH*0.18, EX*0.155]);
+        const frameR  = project([ halfW*1.08, BH + FH*0.18, EX*0.155]);
+        const frameLT = project([-halfW*1.08, BH + FH*0.82, EX*0.155]);
+        const frameRT = project([ halfW*1.08, BH + FH*0.82, EX*0.155]);
         if (frameL && frameR && frameLT && frameRT) {
-          const inset = document.createElementNS(SVG, 'polygon');
+          const inset = document.createElementNS(SVG_NS, 'polygon');
           inset.setAttribute('points',
             `${frameL.x},${frameL.y} ${frameR.x},${frameR.y} ${frameRT.x},${frameRT.y} ${frameLT.x},${frameLT.y}`);
           inset.setAttribute('fill', '#fbfcfd');
@@ -992,18 +721,16 @@ function renderBooth(reflected) {
           inset.setAttribute('pointer-events', 'none');
           container.appendChild(inset);
         }
-        const t = document.createElementNS(SVG, 'text');
-        t.setAttribute('x', pM.x);
-        t.setAttribute('y', pM.y + 5);
+        const fascH = Math.abs(pL.y - (project([-halfW, BH, EX*0.16]) || pL).y);
+        const fontSize = Math.max(8, Math.min(22, fascH * 0.42));
+        const t = document.createElementNS(SVG_NS, 'text');
+        t.setAttribute('x', pM.x); t.setAttribute('y', pM.y + 5);
         t.setAttribute('text-anchor', 'middle');
         t.setAttribute('fill', '#23262c');
         t.setAttribute('font-family', 'Inter, system-ui, sans-serif');
-        // Scale text by approximate fascia screen height
-        const fascH = Math.abs(pL.y - project([-0.9, BH, EX*0.16]).y);
-        const fontSize = Math.max(8, Math.min(22, fascH * 0.42));
         t.setAttribute('font-size', fontSize.toFixed(1));
         t.setAttribute('font-weight', '600');
-        t.setAttribute('letter-spacing', '0.005em');
+        t.setAttribute('letter-spacing', '0.04em');
         t.textContent = COMPANY_NAME;
         t.setAttribute('pointer-events', 'none');
         container.appendChild(t);
@@ -1011,54 +738,38 @@ function renderBooth(reflected) {
     }
   }
 
-  // Selection outline drawn on top
-  if (!reflected && selectedKey) {
+  // Selection highlight
+  if (selectedKey) {
     for (const face of sorted) {
       if (face.partId !== selectedKey) continue;
       const proj = face.pts.map(project);
-      if (proj.some(p => !p)) continue;
+      if (proj.some(p=>!p)) continue;
       if (face.normal) {
         const camDir = norm(sub(face.pts[0], cam));
         if (dot(face.normal, camDir) > 0.08) continue;
       }
-      const points = proj.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
-      const sel = document.createElementNS(SVG, 'polygon');
+      const points = proj.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+      const sel = document.createElementNS(SVG_NS, 'polygon');
       sel.setAttribute('points', points);
       sel.setAttribute('fill', 'rgba(91,140,255,0.18)');
-      sel.setAttribute('stroke', '#3a6dd9');
-      sel.setAttribute('stroke-width', '1.4');
+      sel.setAttribute('stroke', '#3a6dd9'); sel.setAttribute('stroke-width', '1.4');
       sel.setAttribute('pointer-events', 'none');
       container.appendChild(sel);
     }
   }
 }
 
-// ── Selection state ──
-let selectedKey = null;
-
-function updateAnnotationLabels() {
-  const dimW = document.getElementById('dim-w');
-  const dimD = document.getElementById('dim-d');
-  const dimH = document.getElementById('dim-h');
-  if (dimW) dimW.querySelector('.lbl').textContent = BW.toFixed(1) + ' m';
-  if (dimD) dimD.querySelector('.lbl').textContent = BD.toFixed(1) + ' m';
-  if (dimH) dimH.querySelector('.lbl').textContent = (BH + FH).toFixed(2) + ' m';
-  const hudSize = document.getElementById('hud-size');
-  if (hudSize) hudSize.textContent = BW.toFixed(1) + ' \xd7 ' + BD.toFixed(1) + ' m';
-}
-
 function renderAll() {
   document.getElementById('floorGroup').innerHTML = '';
   document.getElementById('boothGroup').innerHTML = '';
   buildFloor();
-  renderBooth(false);
+  renderBooth();
   placeAnnotations();
   updateHud();
-  updateAnnotationLabels();
 }
 renderAll();
 
-// ── INTERACTION ──
+// ── Interaction ───────────────────────────────────────────────────────────────
 const svgEl = document.getElementById('scene');
 let dragging = false, lastX = 0, lastY = 0, didDrag = false;
 svgEl.style.cursor = 'grab';
@@ -1075,60 +786,51 @@ svgEl.addEventListener('pointerdown', (e) => {
   } else if (pointers.size === 2) {
     dragging = false;
     const p = [...pointers.values()];
-    pinchPrev = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+    pinchPrev = Math.hypot(p[0].x-p[1].x, p[0].y-p[1].y);
   }
 });
 
 svgEl.addEventListener('pointermove', (e) => {
   if (!pointers.has(e.pointerId)) return;
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
   if (pointers.size === 2) {
     const p = [...pointers.values()];
-    const dist = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+    const dist = Math.hypot(p[0].x-p[1].x, p[0].y-p[1].y);
     if (pinchPrev > 0) {
       const f = pinchPrev / dist;
       camState.distance = Math.max(7, Math.min(28, camState.distance * f));
     }
     pinchPrev = dist;
-    updateCamera(); renderAll();
-    return;
+    updateCamera(); renderAll(); return;
   }
-
   if (!dragging) return;
   const dx = e.clientX - lastX, dy = e.clientY - lastY;
   if (Math.abs(dx) + Math.abs(dy) > 3) didDrag = true;
   lastX = e.clientX; lastY = e.clientY;
   camState.azimuth   -= dx * 0.005;
   camState.elevation += dy * 0.0035;
-  camState.elevation = Math.max(-0.1, Math.min(1.35, camState.elevation));
+  camState.elevation  = Math.max(-0.1, Math.min(1.35, camState.elevation));
   updateCamera(); renderAll();
 });
 
 function endPointer(e) {
   pointers.delete(e.pointerId);
   if (pointers.size < 2) pinchPrev = 0;
-  if (pointers.size === 0) {
-    dragging = false; svgEl.style.cursor = 'grab';
-  }
+  if (pointers.size === 0) { dragging = false; svgEl.style.cursor = 'grab'; }
 }
+
 svgEl.addEventListener('pointerup', (e) => {
-  // Click-to-select if pointer barely moved
   if (!didDrag && e.target.tagName === 'polygon' && e.target.getAttribute('data-pid')) {
     const pid = e.target.getAttribute('data-pid');
-    const lbl = e.target.getAttribute('data-label');
-    const meta = e.target.getAttribute('data-meta');
     selectedKey = selectedKey === pid ? null : pid;
-    document.getElementById('sel-label').textContent = selectedKey ? lbl : '—';
-    document.getElementById('sel-meta').textContent  = selectedKey ? meta : '';
+    document.getElementById('sel-label').textContent = selectedKey ? e.target.getAttribute('data-label') : '—';
+    document.getElementById('sel-meta').textContent  = selectedKey ? e.target.getAttribute('data-meta')  : '';
     document.getElementById('sel-card').style.display = selectedKey ? 'block' : 'none';
     renderAll();
-  } else if (!didDrag && e.target.tagName === 'svg') {
-    if (selectedKey) {
-      selectedKey = null;
-      document.getElementById('sel-card').style.display = 'none';
-      renderAll();
-    }
+  } else if (!didDrag && e.target.tagName === 'svg' && selectedKey) {
+    selectedKey = null;
+    document.getElementById('sel-card').style.display = 'none';
+    renderAll();
   }
   endPointer(e);
 });
@@ -1140,11 +842,10 @@ svgEl.addEventListener('wheel', (e) => {
   updateCamera(); renderAll();
 }, { passive: false });
 
-// ── View buttons ──
+// ── View preset buttons ───────────────────────────────────────────────────────
 function animateTo(target, ms = 600) {
   const start = { azimuth: camState.azimuth, elevation: camState.elevation, distance: camState.distance };
   const startT = performance.now();
-  // Shortest-path azimuth
   let dAz = target.azimuth - start.azimuth;
   while (dAz >  Math.PI) dAz -= Math.PI * 2;
   while (dAz < -Math.PI) dAz += Math.PI * 2;
@@ -1161,111 +862,115 @@ function animateTo(target, ms = 600) {
 }
 document.querySelectorAll('#view-toolbar button[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#view-toolbar button[data-view]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#view-toolbar button[data-view]').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     animateTo(VIEWS[btn.dataset.view]);
   });
 });
 document.getElementById('btn-reset').addEventListener('click', () => {
-  document.querySelectorAll('#view-toolbar button[data-view]').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#view-toolbar button[data-view]').forEach(b=>b.classList.remove('active'));
   document.querySelector('#view-toolbar button[data-view="3q"]').classList.add('active');
-  camState.target = [0, 1.1, 0];
+  camState.target = defaultTarget();
   animateTo(VIEWS['3q']);
 });
 
-// ── Column profile toggle ──
-// Sync toolbar button to initial columnStyle derived from URL param
-document.querySelectorAll('#profile-toolbar button[data-prof]').forEach(b => b.classList.toggle('active', b.dataset.prof === columnStyle));
+// ── Column profile toggle ─────────────────────────────────────────────────────
+// Sync button active state to initial columnStyle param
 document.querySelectorAll('#profile-toolbar button[data-prof]').forEach(btn => {
+  btn.classList.toggle('active', btn.dataset.prof === columnStyle);
   btn.addEventListener('click', () => {
     if (btn.classList.contains('active')) return;
-    document.querySelectorAll('#profile-toolbar button[data-prof]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#profile-toolbar button[data-prof]').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     columnStyle = btn.dataset.prof;
-    buildBoothGeometry();
-    renderAll();
+    buildBoothGeometry(); renderAll();
   });
 });
 
+// ── HUD text update ───────────────────────────────────────────────────────────
 function updateHud() {
   let az = (camState.azimuth * 180 / Math.PI) % 360;
   if (az < 0) az += 360;
   document.getElementById('cam-az').textContent = Math.round(az) + '°';
+  document.getElementById('hud-dims').textContent = BW.toFixed(1) + ' × ' + BD.toFixed(1) + ' m';
+  document.getElementById('hud-height').textContent = (BH + FH).toFixed(2) + ' m total';
+  document.getElementById('hud-system').textContent = columnStyle === 'maxima' ? 'Maxima' : 'Octanorm';
+  // Determine booth type from open sides
+  const openCount = [!wallsVisible.back,!wallsVisible.left,!wallsVisible.right,!wallsVisible.front].filter(Boolean).length;
+  const typeMap = ['Enclosed','Corner','Island'];
+  document.getElementById('hud-type').textContent = openCount >= 3 ? 'Island' : openCount === 2 ? 'Corner' : openCount === 1 ? 'Open Side' : 'Enclosed';
 }
 
-// ── Dimension annotations (screen-space) ──
+// ── Dimension annotations (screen-space) ─────────────────────────────────────
 function placeAnnotations() {
   const svg = document.getElementById('scene');
   const rect = svg.getBoundingClientRect();
   function toScreen(p) {
-    return { x: rect.left + (p.x / W) * rect.width, y: rect.top + (p.y / H) * rect.height };
+    return { x: rect.left + (p.x / VW) * rect.width, y: rect.top + (p.y / VH) * rect.height };
   }
-
-  // Width: along back wall, offset toward viewer
   const wA = project([-BW/2, 0, 0.35]);
   const wB = project([ BW/2, 0, 0.35]);
   const dimW = document.getElementById('dim-w');
+  dimW.querySelector('.lbl').textContent = BW.toFixed(1) + ' m';
   if (wA && wB) {
-    const cx = (wA.x + wB.x) / 2, cy = (wA.y + wB.y) / 2 + 18;
-    const s = toScreen({ x: cx, y: cy });
-    dimW.style.left = (s.x - 22) + 'px';
-    dimW.style.top  = s.y + 'px';
-    dimW.style.opacity = '1';
+    const cx=(wA.x+wB.x)/2, cy=(wA.y+wB.y)/2+18;
+    const s=toScreen({x:cx,y:cy});
+    dimW.style.left=(s.x-22)+'px'; dimW.style.top=s.y+'px'; dimW.style.opacity='1';
   }
-
-  // Depth: along side wall
-  const dA = project([BW/2 + 0.4, 0, 0]);
-  const dB = project([BW/2 + 0.4, 0, BD]);
+  const dA = project([BW/2+0.4, 0, 0]);
+  const dB = project([BW/2+0.4, 0, BD]);
   const dimD = document.getElementById('dim-d');
+  dimD.querySelector('.lbl').textContent = BD.toFixed(1) + ' m';
   if (dA && dB) {
-    const cx = (dA.x + dB.x) / 2, cy = (dA.y + dB.y) / 2;
-    const s = toScreen({ x: cx, y: cy });
-    dimD.style.left = (s.x) + 'px';
-    dimD.style.top  = (s.y - 8) + 'px';
-    dimD.style.opacity = '1';
+    const cx=(dA.x+dB.x)/2, cy=(dA.y+dB.y)/2;
+    const s=toScreen({x:cx,y:cy});
+    dimD.style.left=s.x+'px'; dimD.style.top=(s.y-8)+'px'; dimD.style.opacity='1';
   }
-
-  // Height
-  const hA = project([-BW/2 - 0.45, 0,     0]);
-  const hB = project([-BW/2 - 0.45, BH+FH, 0]);
+  const hA = project([-BW/2-0.45, 0,      0]);
+  const hB = project([-BW/2-0.45, BH+FH,  0]);
   const dimH = document.getElementById('dim-h');
+  dimH.querySelector('.lbl').textContent = (BH+FH).toFixed(2) + ' m';
   if (hA && hB) {
-    const cx = (hA.x + hB.x) / 2, cy = (hA.y + hB.y) / 2;
-    const s = toScreen({ x: cx, y: cy });
-    dimH.style.left = (s.x - 46) + 'px';
-    dimH.style.top  = (s.y - 8) + 'px';
-    dimH.style.opacity = '1';
+    const cx=(hA.x+hB.x)/2, cy=(hA.y+hB.y)/2;
+    const s=toScreen({x:cx,y:cy});
+    dimH.style.left=(s.x-46)+'px'; dimH.style.top=(s.y-8)+'px'; dimH.style.opacity='1';
   }
 }
 
-// ── Live postMessage updates from parent frame ──
+window.addEventListener('resize', renderAll);
+
+// ── Live config via postMessage ───────────────────────────────────────────────
 window.addEventListener('message', (e) => {
+  if (!e.data || e.data.type !== 'boothUpdate') return;
   const d = e.data;
-  if (!d || d.type !== 'boothUpdate') return;
-  if (d.w    != null) { BW = Math.max(1, +d.w);   PANELS_BACK = Math.max(1, Math.round(BW)); }
-  if (d.d    != null) { BD = Math.max(1, +d.d);   PANELS_SIDE = Math.max(1, Math.round(BD)); }
-  if (d.h    != null) BH = Math.max(0.8, +d.h);
-  if (d.name != null) COMPANY_NAME = String(d.name);
+  if (d.w      != null) BW = Math.max(1, parseFloat(d.w));
+  if (d.d      != null) BD = Math.max(1, parseFloat(d.d));
+  if (d.h      != null) BH = Math.max(0.8, parseFloat(d.h));
+  if (d.name   != null) COMPANY_NAME = String(d.name);
+  if (d.carpet != null) CARPET_COLOR = String(d.carpet);
   if (d.style != null) {
-    columnStyle = d.style;
-    document.querySelectorAll('#profile-toolbar button[data-prof]').forEach(b => b.classList.toggle('active', b.dataset.prof === columnStyle));
+    columnStyle = d.style === 'maxima' ? 'maxima' : 'octa';
+    document.querySelectorAll('#profile-toolbar button[data-prof]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.prof === columnStyle);
+    });
   }
-  if (d.carpet != null) CARPET_COLOR = d.carpet;
-  if (d.open   != null) {
-    const openSet = new Set(String(d.open).split(',').map(s => s.trim()).filter(Boolean));
+  PANELS_BACK = Math.max(1, Math.round(BW));
+  PANELS_SIDE = Math.max(1, Math.round(BD));
+  if (d.open != null) {
+    const open = new Set(String(d.open).split(',').map(s=>s.trim()).filter(Boolean));
     wallsVisible = {
-      back:  !openSet.has('back'),
-      right: !openSet.has('right'),
-      left:  !openSet.has('left'),
-      front: !openSet.has('front'),
+      back:  !open.has('back'),
+      left:  !open.has('left'),
+      right: !open.has('right'),
+      front: !open.has('front'),
     };
   }
+  // Smoothly re-center camera on the new booth size
   camState.target = defaultTarget();
+  updateCamera();
   buildBoothGeometry();
   renderAll();
 });
-
-window.addEventListener('resize', renderAll);
 </script>
 </body>
 </html>
