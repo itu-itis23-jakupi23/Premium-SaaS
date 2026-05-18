@@ -3,571 +3,502 @@ import { Link } from "wouter";
 import { Booth3D } from "@/components/workspace/Booth3D";
 import type { BoothSystem } from "@/components/workspace/BoothCanvas";
 import {
-  Layers, Layout, Maximize, Save, Undo2, Redo2, Camera, History,
-  Send, ZoomIn, ZoomOut, ChevronRight, Plus, Lightbulb,
-  Table as TableIcon, Columns as Wall, Square, Settings as SettingsIcon,
+  ChevronLeft, Undo2, Redo2, Save, Camera, History, Send,
+  ZoomIn, ZoomOut, Maximize2, Search, Plus, ChevronDown,
+  Square, LayoutTemplate, Lightbulb, Home, Monitor, Layers, Map, Box, PanelLeft,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-// ─────────────────────────────────────────────────────────────────
-// Theme system
-// ─────────────────────────────────────────────────────────────────
-type ThemeName = 'dark' | 'light' | 'warm' | 'ocean';
+// ── Drafting palette ─────────────────────────────────────────────
+const C = {
+  bg:     '#f3f1ec',
+  panel:  '#ffffff',
+  ink:    '#181613',
+  hair:   '#d8d3c9',
+  blue:   '#1d4ed8',
+  orange: '#c2410c',
+  green:  '#2f7d3a',
+  muted:  '#6b6560',
+  bgHover:'#ece9e3',
+} as const;
 
-interface ThemeCfg {
-  label: string;
-  swatch: string;
-  outerBg: string;
-  canvasBg: string;
-  panelBg: string;
-  headerBg: string;
-  border: string;
-  cardBg: string;
-  inputBg: string;
-  inputBorder: string;
-  text: string;
-  textMuted: string;
-  textLabel: string;
-  sep: string;
-  glass: boolean;
-  accent: string;
-  accentFg: string;
-}
+const MONO = '"JetBrains Mono","Courier New",monospace';
+const UI   = 'Inter,system-ui,sans-serif';
 
-const THEMES: Record<ThemeName, ThemeCfg> = {
-  dark: {
-    label: 'Dark', swatch: '#1a1e2c',
-    outerBg: '#0a0a0c', canvasBg: '#080d18',
-    panelBg: 'rgba(10,12,20,0.88)', headerBg: 'rgba(10,12,20,0.75)',
-    border: 'rgba(255,255,255,0.06)', cardBg: 'rgba(255,255,255,0.04)',
-    inputBg: 'rgba(255,255,255,0.05)', inputBorder: 'rgba(255,255,255,0.10)',
-    text: '#e2e8f0', textMuted: '#64748b', textLabel: '#94a3b8',
-    sep: 'rgba(255,255,255,0.05)',
-    glass: true, accent: '#6366f1', accentFg: '#818cf8',
-  },
-  light: {
-    label: 'Light', swatch: '#f0f2f5',
-    outerBg: '#f0f2f5', canvasBg: '#e4e8ef',
-    panelBg: '#ffffff', headerBg: '#ffffff',
-    border: '#e2e5ea', cardBg: '#f5f7fa',
-    inputBg: '#f8f9fb', inputBorder: '#d4d8e0',
-    text: '#1e2530', textMuted: '#6b7380', textLabel: '#8a929e',
-    sep: '#e8eaee',
-    glass: false, accent: '#4f46e5', accentFg: '#4f46e5',
-  },
-  warm: {
-    label: 'Warm', swatch: '#1c1008',
-    outerBg: '#120e08', canvasBg: '#0e0a04',
-    panelBg: 'rgba(30,18,8,0.92)', headerBg: 'rgba(30,18,8,0.80)',
-    border: 'rgba(251,180,60,0.09)', cardBg: 'rgba(251,180,60,0.05)',
-    inputBg: 'rgba(251,180,60,0.05)', inputBorder: 'rgba(251,180,60,0.14)',
-    text: '#f0e6d4', textMuted: '#9a8060', textLabel: '#b09070',
-    sep: 'rgba(251,180,60,0.07)',
-    glass: true, accent: '#f59e0b', accentFg: '#fbbf24',
-  },
-  ocean: {
-    label: 'Ocean', swatch: '#0a1628',
-    outerBg: '#060d1a', canvasBg: '#040910',
-    panelBg: 'rgba(6,14,32,0.92)', headerBg: 'rgba(6,14,32,0.80)',
-    border: 'rgba(56,189,248,0.09)', cardBg: 'rgba(56,189,248,0.04)',
-    inputBg: 'rgba(56,189,248,0.04)', inputBorder: 'rgba(56,189,248,0.13)',
-    text: '#bfdbfe', textMuted: '#4a7a9a', textLabel: '#5a90b0',
-    sep: 'rgba(56,189,248,0.07)',
-    glass: true, accent: '#38bdf8', accentFg: '#38bdf8',
-  },
+// ── Catalog ──────────────────────────────────────────────────────
+interface CatItem { id: string; name: string; sku: string; dim: string; inStand: number; icon: React.ElementType; }
+
+const CATALOG: Record<string, CatItem[]> = {
+  Structure: [
+    { id:'s1', name:'Solid Wall',      sku:'OCT-SW-100', dim:'1.0 × 2.5', inStand:6, icon:Square },
+    { id:'s2', name:'Glass Wall',      sku:'OCT-GW-100', dim:'1.0 × 2.5', inStand:2, icon:Square },
+    { id:'s3', name:'Curved Wall',     sku:'OCT-CW-100', dim:'1.0 × 2.5', inStand:0, icon:Square },
+    { id:'s4', name:'Header Beam',     sku:'OCT-HB-200', dim:'2.0 × 0.85', inStand:0, icon:LayoutTemplate },
+  ],
+  Fascia: [
+    { id:'f1', name:'Std Fascia',      sku:'FAS-STD-01', dim:'1.0 × 0.3', inStand:6, icon:LayoutTemplate },
+    { id:'f2', name:'Corner Fascia',   sku:'FAS-COR-01', dim:'0.3 × 0.3', inStand:4, icon:LayoutTemplate },
+  ],
+  Furniture: [
+    { id:'u1', name:'Reception Counter', sku:'FUR-RC-04', dim:'1.2 × 0.6', inStand:1, icon:Monitor },
+    { id:'u2', name:'Design Chair',      sku:'FUR-DC-12', dim:'0.45 × 0.6', inStand:2, icon:PanelLeft },
+    { id:'u3', name:'Bar Stool',         sku:'FUR-BS-08', dim:'0.4 × 0.4', inStand:0, icon:PanelLeft },
+    { id:'u4', name:'Meeting Table',     sku:'FUR-MT-01', dim:'1.8 × 0.8', inStand:0, icon:Monitor },
+    { id:'u5', name:'Display Shelf',     sku:'FUR-DS-02', dim:'1.0 × 0.35', inStand:0, icon:Layers },
+    { id:'u6', name:'Storage Cabinet',   sku:'FUR-SC-01', dim:'0.8 × 0.5', inStand:0, icon:Box },
+  ],
+  Lighting: [
+    { id:'l1', name:'Spotlight',  sku:'LIT-SP-100', dim:'0.15 × 0.15', inStand:4, icon:Lightbulb },
+    { id:'l2', name:'LED Strip',  sku:'LIT-LED-01', dim:'1.0 × 0.03',  inStand:8, icon:Lightbulb },
+    { id:'l3', name:'Arm Light',  sku:'LIT-AR-100', dim:'0.4 × 0.3',   inStand:2, icon:Lightbulb },
+  ],
 };
 
-// ─────────────────────────────────────────────────────────────────
-// Workplane presets (carpet colour inside the booth)
-// ─────────────────────────────────────────────────────────────────
-const WORKPLANES = [
-  { label: 'Charcoal',   color: '#3b3e44' },
-  { label: 'Off White',  color: '#dde0e4' },
-  { label: 'Concrete',   color: '#7a7e84' },
-  { label: 'Navy',       color: '#1a2640' },
-  { label: 'Forest',     color: '#1e3a28' },
-  { label: 'Terracotta', color: '#5a2316' },
+const CAT_COUNT: Record<string, number> = { Structure:4, Fascia:2, Furniture:6, Lighting:3 };
+
+const THEMES = [
+  { label:'Charcoal',   color:'#3b3e44' },
+  { label:'White',      color:'#dde0e4' },
+  { label:'Walnut',     color:'#7a4a2a' },
+  { label:'Navy',       color:'#1a2640' },
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// Library items
-// ─────────────────────────────────────────────────────────────────
-const libraryItems = [
-  { id: "wall-solid", name: "Solid Wall",       icon: Wall,      category: "Structure" },
-  { id: "wall-glass", name: "Glass Wall",       icon: Wall,      category: "Structure" },
-  { id: "fascia-std", name: "Standard Fascia",  icon: Layout,    category: "Fascia"    },
-  { id: "counter-1",  name: "Reception Counter",icon: TableIcon, category: "Furniture" },
-  { id: "chair-1",    name: "Design Chair",     icon: Square,    category: "Furniture" },
-  { id: "light-spot", name: "Spotlight",        icon: Lightbulb, category: "Lighting"  },
-  { id: "light-arm",  name: "Arm Light",        icon: Lightbulb, category: "Lighting"  },
+const CARPETS = [
+  { label:'Black',      color:'#1a1a1a' },
+  { label:'Bone',       color:'#dde0e4' },
+  { label:'Gray',       color:'#7a7e84' },
+  { label:'Navy',       color:'#1a2640' },
+  { label:'Forest',     color:'#1e3a28' },
+  { label:'Terracotta', color:'#5a2316' },
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// Booth state
-// ─────────────────────────────────────────────────────────────────
-interface BoothState {
-  width: number; depth: number; height: number;
-  system: BoothSystem; companyName: string;
-  openFront: boolean; openBack: boolean; openLeft: boolean; openRight: boolean;
+// ── Sub-components ────────────────────────────────────────────────
+function Hairline({ margin = 16 }: { margin?: number }) {
+  return <div style={{ height: 1, background: C.hair, margin: `0 -${margin}px` }} />;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Component
-// ─────────────────────────────────────────────────────────────────
+function MonoLabel({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
+  return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:7 }}>
+      <span style={{ fontFamily:MONO, fontSize:9.5, fontWeight:700, letterSpacing:'0.1em', color:C.muted, textTransform:'uppercase' as const }}>{children}</span>
+      {right && <span style={{ fontFamily:MONO, fontSize:9, color:C.muted }}>{right}</span>}
+    </div>
+  );
+}
+
+function PropBlock({ label, right, children }: { label: string; right?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div style={{ padding:'12px 0' }}>
+      <MonoLabel right={right}>{label}</MonoLabel>
+      {children}
+    </div>
+  );
+}
+
+function DimInput({ label, value, min, max, step, onChange }: { label:string; value:number; min:number; max:number; step:number; onChange:(v:number)=>void }) {
+  return (
+    <div>
+      <label style={{ fontFamily:MONO, fontSize:9, color:C.muted, textTransform:'uppercase' as const, letterSpacing:'0.05em', display:'block', marginBottom:3 }}>{label}</label>
+      <div style={{ position:'relative' }}>
+        <input type="number" min={min} max={max} step={step} value={value}
+          onChange={e => { const n=parseFloat(e.target.value); if (!isNaN(n) && n>=min && n<=max) onChange(n); }}
+          style={{ width:'100%', height:30, border:`1px solid ${C.hair}`, borderRadius:4, background:C.bg, fontFamily:MONO, fontSize:12.5, fontWeight:600, color:C.ink, paddingLeft:8, paddingRight:22, boxSizing:'border-box' as const, outline:'none' }}
+        />
+        <span style={{ position:'absolute', right:6, top:'50%', transform:'translateY(-50%)', fontFamily:MONO, fontSize:9, color:C.muted }}>m</span>
+      </div>
+    </div>
+  );
+}
+
+function Swatch({ color, active, onClick, size=28 }: { color:string; active:boolean; onClick:()=>void; size?:number }) {
+  const light = color === '#dde0e4';
+  return (
+    <button onClick={onClick} title={color} style={{ width:size, height:size, borderRadius:4, background:color, cursor:'pointer', flexShrink:0, border:`${active?2:1}px solid ${active ? C.ink : C.hair}`, position:'relative' }}>
+      {active && (
+        <span style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <svg width="10" height="10" viewBox="0 0 10 10">
+            <polyline points="1.5,5 4,7.5 8.5,2.5" stroke={light ? C.ink : '#fff'} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </span>
+      )}
+    </button>
+  );
+}
+
+function OpenSidesPlan({ openFront, openBack, openLeft, openRight }: { openFront:boolean; openBack:boolean; openLeft:boolean; openRight:boolean; }) {
+  const open = (on: boolean) => ({ stroke: on ? C.orange : C.ink, strokeDasharray: on ? '5 3.5' : undefined });
+  return (
+    <svg width="188" height="116" viewBox="0 0 188 116" style={{ fontFamily:MONO }}>
+      {/* Walls */}
+      <line x1="30" y1="24" x2="158" y2="24" strokeWidth="2" {...open(openBack)} />
+      <line x1="30" y1="24" x2="30" y2="92" strokeWidth="2" {...open(openLeft)} />
+      <line x1="158" y1="24" x2="158" y2="92" strokeWidth="2" {...open(openRight)} />
+      <line x1="30" y1="92" x2="158" y2="92" strokeWidth="2" {...open(openFront)} />
+      {/* Camera/viewer indicator (T symbol centered) */}
+      <text x="94" y="62" textAnchor="middle" fontSize="18" fill={C.muted} opacity={0.18} fontWeight="700">T</text>
+      {/* Side labels */}
+      <text x="94" y="15" textAnchor="middle" fontSize="7.5" fill={openBack  ? C.orange : C.muted}>BACK</text>
+      <text x="94" y="110" textAnchor="middle" fontSize="7.5" fill={openFront ? C.orange : C.muted}>FRONT{openFront?' · OPEN':''}</text>
+      <text x="16" y="60" textAnchor="middle" fontSize="7.5" fill={openLeft  ? C.orange : C.muted} transform="rotate(-90,16,60)">LEFT</text>
+      <text x="172" y="60" textAnchor="middle" fontSize="7.5" fill={openRight ? C.orange : C.muted} transform="rotate(90,172,60)">RIGHT</text>
+    </svg>
+  );
+}
+
+function AxisGizmo() {
+  return (
+    <svg width="58" height="58" viewBox="0 0 58 58">
+      <line x1="29" y1="29" x2="50" y2="39" stroke="#c53030" strokeWidth="1.5" />
+      <text x="52" y="43" fontSize="8" fill="#c53030" fontFamily={MONO} fontWeight="700">X</text>
+      <line x1="29" y1="29" x2="29" y2="7"  stroke="#2f855a" strokeWidth="1.5" />
+      <text x="25" y="5"  fontSize="8" fill="#2f855a" fontFamily={MONO} fontWeight="700">Y</text>
+      <line x1="29" y1="29" x2="8"  y2="39" stroke="#2b6cb0" strokeWidth="1.5" />
+      <text x="1"  y="43" fontSize="8" fill="#2b6cb0" fontFamily={MONO} fontWeight="700">Z</text>
+      <circle cx="29" cy="29" r="2.5" fill={C.ink} />
+    </svg>
+  );
+}
+
+// ── Booth state ───────────────────────────────────────────────────
+interface BoothState {
+  width:number; depth:number; height:number; system:BoothSystem; companyName:string;
+  openFront:boolean; openBack:boolean; openLeft:boolean; openRight:boolean;
+}
+
+// ── Main ──────────────────────────────────────────────────────────
 export default function PMWorkspace() {
-  const [booth, setBooth] = useState<BoothState>({
-    width: 6, depth: 3, height: 2.5,
-    system: 'octanorm', companyName: 'TECHCORP INDUSTRIES',
-    openFront: true, openBack: false, openLeft: false, openRight: false,
-  });
-  const [themeName, setThemeName] = useState<ThemeName>('dark');
-  const [carpetColor, setCarpetColor] = useState(WORKPLANES[0].color);
+  const [booth, setBooth] = useState<BoothState>({ width:6, depth:3, height:2.5, system:'octanorm', companyName:'TECHCORP INDUSTRIES', openFront:true, openBack:false, openLeft:false, openRight:false });
+  const [themeIdx,  setThemeIdx]  = useState(0);
+  const [carpetIdx, setCarpetIdx] = useState(0);
+  const [search,    setSearch]    = useState('');
+  const [openCats,  setOpenCats]  = useState<Set<string>>(new Set(['Structure', 'Furniture']));
+  const [activeId,  setActiveId]  = useState('s1');
+  const [viewMode,  setViewMode]  = useState('iso');
 
-  const t = THEMES[themeName];
-  const isLight = themeName === 'light';
+  const set = useCallback(<K extends keyof BoothState>(k:K, v:BoothState[K]) =>
+    setBooth(p => ({ ...p, [k]:v })), []);
 
-  const set = useCallback(<K extends keyof BoothState>(key: K, val: BoothState[K]) => {
-    setBooth(prev => ({ ...prev, [key]: val }));
-  }, []);
+  const toggleCat = (cat: string) =>
+    setOpenCats(prev => { const s = new Set(prev); s.has(cat) ? s.delete(cat) : s.add(cat); return s; });
 
-  const parseDim = (raw: string, fallback: number) => {
-    const n = parseFloat(raw);
-    return isNaN(n) || n <= 0 ? fallback : Math.min(n, 40);
-  };
+  const floorArea = (booth.width * booth.depth).toFixed(1);
+  const carpetColor = CARPETS[carpetIdx].color;
+  const openCount = [booth.openFront, booth.openBack, booth.openLeft, booth.openRight].filter(Boolean).length;
 
-  // Inline style helpers
-  const panelStyle = {
-    background: t.panelBg,
-    borderColor: t.border,
-    color: t.text,
-    ...(t.glass ? { backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' } : {}),
-  } as React.CSSProperties;
+  const filteredCatalog = Object.fromEntries(
+    Object.entries(CATALOG).map(([cat, items]) => [cat,
+      search ? items.filter(i => `${i.name} ${i.sku}`.toLowerCase().includes(search.toLowerCase())) : items
+    ])
+  );
 
-  const headerStyle = {
-    background: t.headerBg,
-    borderColor: t.border,
-    color: t.text,
-    ...(t.glass ? { backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } : {}),
-  } as React.CSSProperties;
-
-  const cardStyle    = { background: t.cardBg, borderColor: t.border } as React.CSSProperties;
-  const inputStyle   = { background: t.inputBg, borderColor: t.inputBorder, color: t.text } as React.CSSProperties;
-  const sepStyle     = { background: t.sep } as React.CSSProperties;
+  // ── Icon-button helper
+  const iconBtn = (Icon: React.ElementType, tooltip: string, onClick?: () => void, style?: React.CSSProperties) => (
+    <button title={tooltip} onClick={onClick} style={{ background:'none', border:'none', cursor:'pointer', padding:'5px 7px', color:C.muted, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:3, ...style }}>
+      <Icon size={13} />
+    </button>
+  );
 
   return (
-    <div
-      className="flex h-screen w-full flex-col overflow-hidden"
-      style={{ background: t.outerBg, color: t.text }}
-    >
-      {/* ── Top Toolbar ──────────────────────────────────────────── */}
-      <header
-        className="flex h-14 items-center justify-between border-b px-4 flex-shrink-0"
-        style={headerStyle}
-      >
-        <div className="flex items-center gap-4">
+    <div style={{ display:'flex', flexDirection:'column', height:'100vh', background:C.bg, color:C.ink, fontFamily:UI, overflow:'hidden', userSelect:'none' }}>
+
+      {/* ── Top Bar ─────────────────────────────────────────────── */}
+      <header style={{ height:46, borderBottom:`1px solid ${C.hair}`, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 12px', background:C.panel, flexShrink:0, gap:8 }}>
+        {/* Left: back + project info */}
+        <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0 }}>
           <Link href="/pm">
-            <Button variant="ghost" size="icon" className="h-8 w-8"
-              style={{ color: t.textMuted }}>
-              <ChevronRight className="h-4 w-4 rotate-180" />
-            </Button>
+            <button style={{ background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:4, color:C.muted, padding:'4px 6px', borderRadius:4, flexShrink:0 }}>
+              <ChevronLeft size={13} />
+              <span style={{ fontFamily:MONO, fontSize:10 }}>Back</span>
+            </button>
           </Link>
-          <div className="h-4 w-px" style={{ background: t.border }} />
-          <div className="flex flex-col">
-            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: t.textMuted }}>Project</span>
-            <span className="text-sm font-bold leading-none" style={{ color: t.text }}>TechCon 2024 – Global Exhibit</span>
+          <div style={{ width:1, height:18, background:C.hair, flexShrink:0 }} />
+          <div style={{ display:'flex', flexDirection:'column', lineHeight:1.2, minWidth:0 }}>
+            <span style={{ fontFamily:MONO, fontSize:8.5, color:C.muted, letterSpacing:'0.1em', textTransform:'uppercase' }}>Project</span>
+            <span style={{ fontSize:12.5, fontWeight:700, letterSpacing:'-0.01em', whiteSpace:'nowrap' }}>TechCon 2024 — Global Exhibit</span>
           </div>
-          <Badge className="ml-2 text-[10px]"
-            style={{ background: `${t.accent}18`, color: t.accentFg, borderColor: `${t.accent}30` }}>
-            v2.4.1
-          </Badge>
+          <span style={{ fontFamily:MONO, fontSize:9.5, background:`${C.blue}12`, color:C.blue, border:`1px solid ${C.blue}28`, borderRadius:4, padding:'2px 7px', flexShrink:0 }}>v2.4.1</span>
+          <div style={{ width:1, height:18, background:C.hair, flexShrink:0 }} />
+          {/* LIVE badge */}
+          <span style={{ fontFamily:MONO, fontSize:9.5, display:'flex', alignItems:'center', gap:5, color:C.green, flexShrink:0 }}>
+            <span style={{ width:6, height:6, borderRadius:'50%', background:C.green, display:'inline-block', flexShrink:0 }} />
+            LIVE WORKSPACE
+          </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center rounded-md p-0.5" style={{ background: t.cardBg }}>
-            <Tooltip><TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" style={{ color: t.textMuted }}>
-                <Undo2 className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger><TooltipContent>Undo</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" style={{ color: t.textMuted }}>
-                <Redo2 className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger><TooltipContent>Redo</TooltipContent></Tooltip>
+        {/* Right: toolbar actions */}
+        <div style={{ display:'flex', alignItems:'center', gap:5, flexShrink:0 }}>
+          {/* Undo / Redo */}
+          <div style={{ display:'flex', border:`1px solid ${C.hair}`, borderRadius:4, overflow:'hidden' }}>
+            {iconBtn(Undo2, 'Undo', undefined, { borderRight:`1px solid ${C.hair}` })}
+            {iconBtn(Redo2, 'Redo')}
           </div>
-          <div className="h-4 w-px mx-1" style={{ background: t.border }} />
-          {[
-            { icon: Save,    label: 'Save'     },
-            { icon: Camera,  label: 'Snapshot' },
-            { icon: History, label: 'History'  },
-          ].map(({ icon: Icon, label }) => (
-            <Button key={label} variant="outline" size="sm"
-              className="h-9 gap-2 text-xs"
-              style={{ background: t.cardBg, borderColor: t.border, color: t.text }}>
-              <Icon className="h-4 w-4" /> {label}
-            </Button>
+          <div style={{ width:1, height:18, background:C.hair }} />
+          {/* Action buttons */}
+          {([{ icon:Save, label:'Save' }, { icon:Camera, label:'Snapshot' }, { icon:History, label:'History' }] as const).map(({ icon:Icon, label }) => (
+            <button key={label} title={label} style={{ background:'none', border:`1px solid ${C.hair}`, borderRadius:4, padding:'5px 10px', cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:11.5, fontFamily:UI, color:C.ink }}>
+              <Icon size={12} /> {label}
+            </button>
           ))}
-          <Button size="sm" className="h-9 gap-2 text-xs"
-            style={{ background: t.accent, color: '#fff', border: 'none' }}>
-            <Send className="h-4 w-4" /> Send to Client
-          </Button>
+          {/* CTA */}
+          <button style={{ background:C.blue, border:'none', color:'#fff', borderRadius:4, padding:'6px 14px', cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontSize:12, fontWeight:600, fontFamily:UI }}>
+            <Send size={12} /> Send to Client
+          </button>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div style={{ display:'flex', flex:1, overflow:'hidden' }}>
 
-        {/* ── Left Panel — Component Library ──────────────────────── */}
-        <aside
-          className="w-[240px] border-r overflow-y-auto flex-shrink-0"
-          style={panelStyle}
-        >
-          <div className="p-4 border-b" style={{ borderColor: t.border }}>
-            <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2"
-              style={{ color: t.textLabel }}>
-              <Layers className="h-3 w-3" /> Components
-            </h3>
-            <div className="relative">
-              <SearchIcon className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2" style={{ color: t.textMuted }} />
-              <Input placeholder="Search items…"
-                className="h-8 pl-8 text-xs border"
-                style={inputStyle} />
+        {/* ── Left — Component Catalog ────────────────────────── */}
+        <aside style={{ width:240, borderRight:`1px solid ${C.hair}`, background:C.panel, display:'flex', flexDirection:'column', flexShrink:0, overflow:'hidden' }}>
+          {/* Panel header */}
+          <div style={{ padding:'8px 14px', borderBottom:`1px solid ${C.hair}`, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
+            <span style={{ fontFamily:MONO, fontSize:9.5, fontWeight:700, letterSpacing:'0.12em', color:C.muted, textTransform:'uppercase' }}>§ Components</span>
+            <span style={{ fontFamily:MONO, fontSize:9.5, color:C.muted }}>{Object.values(CATALOG).reduce((a,b)=>a+b.length,0)} items</span>
+          </div>
+
+          {/* Search */}
+          <div style={{ padding:'8px 10px', borderBottom:`1px solid ${C.hair}`, flexShrink:0 }}>
+            <div style={{ position:'relative' }}>
+              <Search size={11} style={{ position:'absolute', left:8, top:'50%', transform:'translateY(-50%)', color:C.muted }} />
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search items, SKUs…"
+                style={{ width:'100%', height:28, paddingLeft:26, paddingRight:32, border:`1px solid ${C.hair}`, borderRadius:4, background:C.bg, fontFamily:UI, fontSize:11.5, color:C.ink, outline:'none', boxSizing:'border-box' }} />
+              <span style={{ position:'absolute', right:7, top:'50%', transform:'translateY(-50%)', fontFamily:MONO, fontSize:8.5, color:C.muted, border:`1px solid ${C.hair}`, borderRadius:3, padding:'1px 4px', lineHeight:1.2 }}>⌘K</span>
             </div>
           </div>
-          <Accordion type="multiple" defaultValue={["Structure", "Furniture"]} className="w-full">
-            {["Structure", "Fascia", "Furniture", "Lighting"].map((cat) => (
-              <AccordionItem key={cat} value={cat}
-                className="border-b" style={{ borderColor: t.border }}>
-                <AccordionTrigger
-                  className="px-4 py-3 text-xs font-medium no-underline hover:no-underline"
-                  style={{ color: t.text }}>
-                  {cat}
-                </AccordionTrigger>
-                <AccordionContent className="p-2 pt-0">
-                  <div className="grid grid-cols-2 gap-2">
-                    {libraryItems.filter(i => i.category === cat).map((item) => (
-                      <div key={item.id}
-                        className="group flex flex-col items-center justify-center rounded-lg border p-3 transition-all cursor-grab active:cursor-grabbing"
-                        style={{ background: t.cardBg, borderColor: t.border }}>
-                        <item.icon className="h-6 w-6 mb-2 transition-colors"
-                          style={{ color: t.textMuted }} />
-                        <span className="text-[10px] text-center font-medium"
-                          style={{ color: t.textMuted }}>{item.name}</span>
-                      </div>
-                    ))}
-                    <button
-                      className="flex flex-col items-center justify-center rounded-lg border border-dashed p-3 transition-colors"
-                      style={{ borderColor: t.border }}>
-                      <Plus className="h-5 w-5" style={{ color: t.textMuted }} />
-                      <span className="text-[10px] mt-1" style={{ color: t.textMuted }}>Add</span>
-                    </button>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+
+          {/* Accordion categories */}
+          <div style={{ flex:1, overflowY:'auto' }}>
+            {Object.entries(filteredCatalog).map(([cat, items]) => {
+              const isOpen = openCats.has(cat);
+              return (
+                <div key={cat} style={{ borderBottom:`1px solid ${C.hair}` }}>
+                  <button onClick={()=>toggleCat(cat)}
+                    style={{ width:'100%', background:'none', border:'none', cursor:'pointer', padding:'7px 14px', display:'flex', alignItems:'center', justifyContent:'space-between', textAlign:'left' }}>
+                    <span style={{ fontFamily:MONO, fontSize:9.5, fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', color:C.ink }}>
+                      {cat} · {String(CAT_COUNT[cat]).padStart(2,'0')}
+                    </span>
+                    <ChevronDown size={11} style={{ color:C.muted, transform:isOpen?'rotate(0deg)':'rotate(-90deg)', transition:'transform 0.15s', flexShrink:0 }} />
+                  </button>
+
+                  {isOpen && (
+                    <div style={{ padding:'6px 10px 10px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:5 }}>
+                      {items.map(item => {
+                        const isActive = activeId === item.id;
+                        const hasCount = item.inStand > 0;
+                        const Icon = item.icon;
+                        return (
+                          <button key={item.id} onClick={()=>setActiveId(item.id)}
+                            style={{ position:'relative', background: isActive ? '#f0ecff' : C.bg, border:`1px ${isActive?'solid':hasCount?'solid':'dashed'} ${isActive?C.ink:hasCount?C.hair:C.hair}`, borderRadius:4, padding:'9px 7px 7px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:3, textAlign:'center', transition:'all 0.1s' }}>
+                            {/* Active checkbox */}
+                            {isActive && (
+                              <div style={{ position:'absolute', top:3, right:3, width:13, height:13, background:C.ink, borderRadius:2, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                                <svg width="8" height="8" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              </div>
+                            )}
+                            {/* Count chip */}
+                            {hasCount && !isActive && (
+                              <span style={{ position:'absolute', top:3, right:3, fontFamily:MONO, fontSize:8, color:C.blue, fontWeight:700 }}>×{item.inStand}</span>
+                            )}
+                            <Icon size={17} style={{ color: isActive ? C.ink : C.muted, flexShrink:0 }} />
+                            <span style={{ fontSize:10.5, fontWeight:600, color:C.ink, lineHeight:1.2, wordBreak:'break-word' as const }}>{item.name}</span>
+                            <span style={{ fontFamily:MONO, fontSize:8, color:C.muted }}>{item.sku}</span>
+                          </button>
+                        );
+                      })}
+                      <button style={{ background:'none', border:`1px dashed ${C.hair}`, borderRadius:4, padding:'9px 7px', display:'flex', flexDirection:'column', alignItems:'center', gap:3, cursor:'pointer', color:C.muted }}>
+                        <Plus size={13} />
+                        <span style={{ fontFamily:MONO, fontSize:9 }}>Add</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </aside>
 
-        {/* ── Center Canvas ──────────────────────────────────────── */}
-        <main className="flex-1 relative overflow-hidden" style={{ background: t.canvasBg }}>
-          <div className="absolute inset-0">
-            <Booth3D config={{
-              width:       booth.width,
-              depth:       booth.depth,
-              height:      booth.height,
-              system:      booth.system,
-              companyName: booth.companyName,
-              carpetColor: carpetColor,
-              openFront:   booth.openFront,
-              openBack:    booth.openBack,
-              openLeft:    booth.openLeft,
-              openRight:   booth.openRight,
-            }} />
+        {/* ── Center — Canvas ─────────────────────────────────── */}
+        <main style={{ flex:1, position:'relative', overflow:'hidden', backgroundColor:C.bg,
+          backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 39px,#d8d3c9 39px,#d8d3c9 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,#d8d3c9 39px,#d8d3c9 40px)' }}>
+
+          {/* Booth3D fills canvas */}
+          <div style={{ position:'absolute', inset:0 }}>
+            <Booth3D config={{ width:booth.width, depth:booth.depth, height:booth.height, system:booth.system, companyName:booth.companyName, carpetColor, openFront:booth.openFront, openBack:booth.openBack, openLeft:booth.openLeft, openRight:booth.openRight }} />
           </div>
 
-          {/* Live badge */}
-          <div className="absolute top-4 left-4 z-10 flex flex-col gap-1 pointer-events-none">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest"
-              style={{ background: `${t.accent}18`, color: t.accentFg, border: `1px solid ${t.accent}30` }}>
-              <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: t.accent }} />
-              Live Workspace
-            </div>
-            <div className="px-3 py-1 rounded text-[10px] font-bold uppercase"
-              style={{ background: `${t.panelBg}`, border: `1px solid ${t.border}`, color: t.textMuted,
-                ...(t.glass ? { backdropFilter: 'blur(8px)' } : {}) }}>
-              {booth.system === 'octanorm' ? '⬡ OCTANORM' : '◈ MAXIMA'} · {booth.width}×{booth.depth}m
+          {/* Top-left floating badges */}
+          <div style={{ position:'absolute', top:12, left:12, display:'flex', gap:6, zIndex:10, pointerEvents:'none' }}>
+            {[
+              { text:'● LIVE WORKSPACE', color:C.green },
+              { text:`⬡ OCTANORM · ${booth.width}×${booth.depth}M`, color:C.muted },
+            ].map(b => (
+              <span key={b.text} style={{ fontFamily:MONO, fontSize:9.5, display:'flex', alignItems:'center', gap:5, background:C.panel, border:`1px solid ${C.hair}`, borderRadius:4, padding:'4px 9px', color:b.color, letterSpacing:'0.04em' }}>{b.text}</span>
+            ))}
+          </div>
+
+          {/* View mode toggle — top right */}
+          <div style={{ position:'absolute', top:12, right:12, display:'flex', gap:1, background:C.panel, border:`1px solid ${C.hair}`, borderRadius:4, padding:2, zIndex:10 }}>
+            {([{icon:Home,key:'home'},{icon:Box,key:'iso'},{icon:Map,key:'plan'},{icon:Layers,key:'front'}] as const).map(({icon:Icon,key}) => (
+              <button key={key} onClick={()=>setViewMode(key)}
+                style={{ background:viewMode===key?C.ink:'none', border:'none', borderRadius:3, padding:'5px 8px', cursor:'pointer', color:viewMode===key?'#fff':C.muted, transition:'all 0.1s' }}>
+                <Icon size={12} />
+              </button>
+            ))}
+          </div>
+
+          {/* Axis gizmo — top right below toggles */}
+          <div style={{ position:'absolute', top:58, right:12, zIndex:10, background:`${C.panel}e0`, border:`1px solid ${C.hair}`, borderRadius:4, padding:5 }}>
+            <AxisGizmo />
+          </div>
+
+          {/* Height dimension label — left center */}
+          <div style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', zIndex:10, pointerEvents:'none' }}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+              <div style={{ width:1, height:28, background:C.muted, opacity:0.5 }} />
+              <div style={{ transform:'rotate(-90deg)', whiteSpace:'nowrap', fontFamily:MONO, fontSize:9.5, color:C.muted, letterSpacing:'0.04em' }}>
+                {booth.height.toFixed(2)} m
+              </div>
+              <div style={{ width:1, height:28, background:C.muted, opacity:0.5 }} />
             </div>
           </div>
 
-          {/* Canvas tool strip */}
-          <div className="absolute bottom-4 left-4 flex items-center gap-2 z-10">
-            <div className="flex rounded-lg border p-0.5"
-              style={{ background: t.panelBg, borderColor: t.border,
-                ...(t.glass ? { backdropFilter: 'blur(12px)' } : {}) }}>
-              <Button variant="ghost" size="icon" className="h-8 w-8" style={{ color: t.textMuted }}>
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" style={{ color: t.textMuted }}>
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <div className="w-px my-1.5 mx-0.5" style={{ background: t.border }} />
-              <Button variant="ghost" size="icon" className="h-8 w-8" style={{ color: t.textMuted }}>
-                <Maximize className="h-4 w-4" />
-              </Button>
+          {/* Zoom controls — bottom left (above status bar) */}
+          <div style={{ position:'absolute', bottom:38, left:12, display:'flex', background:C.panel, border:`1px solid ${C.hair}`, borderRadius:4, overflow:'hidden', zIndex:10 }}>
+            {([ZoomIn, ZoomOut, Maximize2] as const).map((Icon, i) => (
+              <button key={i} style={{ background:'none', border:'none', cursor:'pointer', padding:'6px 8px', color:C.muted, borderRight:i<2?`1px solid ${C.hair}`:'none' }}>
+                <Icon size={13} />
+              </button>
+            ))}
+          </div>
+
+          {/* Bottom viewport info bar */}
+          <div style={{ position:'absolute', bottom:0, left:0, right:0, height:32, background:C.panel, borderTop:`1px solid ${C.hair}`, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 12px', zIndex:10 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:0 }}>
+              {[
+                { text:'Octanorm', style:{ fontWeight:700 } },
+                { text:'|', style:{ color:C.hair, margin:'0 8px' } },
+                { text:`OPEN SIDE · FRONT`, style:{ color:C.orange } },
+                { text:'|', style:{ color:C.hair, margin:'0 8px' } },
+                { text:`${booth.width.toFixed(1)} × ${booth.depth.toFixed(1)} m` },
+                { text:`H ${booth.height.toFixed(2)} m`, style:{ marginLeft:10 } },
+                { text:'40 mm profile', style:{ marginLeft:10 } },
+              ].map((item, i) => (
+                <span key={i} style={{ fontFamily:MONO, fontSize:9.5, color:C.ink, letterSpacing:'0.04em', ...item.style }}>{item.text}</span>
+              ))}
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+              <span style={{ fontFamily:MONO, fontSize:9, color:C.muted }}>SCROLL zoom · CLICK inspect part · CAM 40° · FOV 32mm</span>
+              {/* Scale bar */}
+              <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+                <div style={{ position:'relative', width:40, height:10 }}>
+                  <div style={{ position:'absolute', left:0, right:0, top:'50%', height:1, background:C.ink }} />
+                  <div style={{ position:'absolute', left:0, top:0, bottom:0, width:1, background:C.ink }} />
+                  <div style={{ position:'absolute', right:0, top:0, bottom:0, width:1, background:C.ink }} />
+                  {/* Mid ticks */}
+                  {[0.25, 0.5, 0.75].map(f => (
+                    <div key={f} style={{ position:'absolute', left:`${f*100}%`, top:'30%', height:'40%', width:1, background:C.ink, opacity:0.5 }} />
+                  ))}
+                </div>
+                <span style={{ fontFamily:MONO, fontSize:9, color:C.muted }}>1.0 m</span>
+              </div>
             </div>
           </div>
         </main>
 
-        {/* ── Right Panel — Properties ──────────────────────────── */}
-        <aside
-          className="w-[280px] border-l overflow-y-auto flex-shrink-0"
-          style={panelStyle}
-        >
-          <div className="p-4">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2"
-              style={{ color: t.textLabel }}>
-              <SettingsIcon className="h-3 w-3" /> Properties
-            </h3>
+        {/* ── Right — Properties ──────────────────────────────── */}
+        <aside style={{ width:282, borderLeft:`1px solid ${C.hair}`, background:C.panel, display:'flex', flexDirection:'column', flexShrink:0, overflowY:'auto' }}>
+          {/* Panel header */}
+          <div style={{ padding:'8px 16px', borderBottom:`1px solid ${C.hair}`, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
+            <span style={{ fontFamily:MONO, fontSize:9.5, fontWeight:700, letterSpacing:'0.12em', color:C.muted, textTransform:'uppercase' }}>§ Properties</span>
+            <span style={{ fontFamily:MONO, fontSize:9.5, color:C.muted }}>Stand · 01</span>
+          </div>
 
-            <div className="space-y-5">
+          <div style={{ padding:'0 16px', display:'flex', flexDirection:'column' }}>
 
-              {/* ── Appearance ──────────────────────────────────── */}
-              <div className="space-y-3">
-                <Label className="text-[10px] uppercase font-bold" style={{ color: t.textLabel }}>
-                  Workspace Theme
-                </Label>
-                <div className="flex gap-2">
-                  {(Object.keys(THEMES) as ThemeName[]).map(name => {
-                    const th = THEMES[name];
-                    const active = themeName === name;
-                    return (
-                      <Tooltip key={name}>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={() => setThemeName(name)}
-                            className="relative w-8 h-8 rounded-full border-2 transition-all flex-shrink-0"
-                            style={{
-                              background: th.swatch,
-                              borderColor: active ? t.accent : t.border,
-                              boxShadow: active ? `0 0 0 2px ${t.accent}40` : 'none',
-                            }}
-                          >
-                            {active && (
-                              <span className="absolute inset-0 flex items-center justify-center">
-                                <svg width="12" height="12" viewBox="0 0 12 12">
-                                  <polyline points="2,6 5,9 10,3"
-                                    stroke={name === 'light' ? '#1e2530' : '#fff'}
-                                    strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                              </span>
-                            )}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>{th.label}</TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
-                </div>
+            {/* Workspace Theme */}
+            <PropBlock label="Workspace Theme">
+              <div style={{ display:'flex', gap:6 }}>
+                {THEMES.map((t,i) => <Swatch key={t.label} color={t.color} active={themeIdx===i} onClick={()=>setThemeIdx(i)} />)}
               </div>
+            </PropBlock>
 
-              {/* ── Workplane ───────────────────────────────────── */}
-              <div className="space-y-3">
-                <Label className="text-[10px] uppercase font-bold" style={{ color: t.textLabel }}>
-                  Workplane (Carpet)
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {WORKPLANES.map(wp => {
-                    const active = carpetColor === wp.color;
-                    return (
-                      <Tooltip key={wp.color}>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={() => setCarpetColor(wp.color)}
-                            className="w-7 h-7 rounded-md border-2 transition-all flex-shrink-0 relative"
-                            style={{
-                              background: wp.color,
-                              borderColor: active ? t.accent : t.border,
-                              boxShadow: active ? `0 0 0 2px ${t.accent}40` : 'none',
-                            }}
-                          >
-                            {active && (
-                              <span className="absolute inset-0 flex items-center justify-center">
-                                <svg width="10" height="10" viewBox="0 0 10 10">
-                                  <polyline points="1.5,5 4,7.5 8.5,2.5"
-                                    stroke={wp.color === '#dde0e4' ? '#1e2530' : '#fff'}
-                                    strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                              </span>
-                            )}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>{wp.label}</TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
-                </div>
+            <Hairline />
+
+            {/* Workplane / Carpet */}
+            <PropBlock label="Workplane · Carpet" right="6 swatches">
+              <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
+                {CARPETS.map((c,i) => <Swatch key={c.label} color={c.color} active={carpetIdx===i} onClick={()=>setCarpetIdx(i)} size={24} />)}
               </div>
+            </PropBlock>
 
-              <div className="h-px" style={{ background: t.sep }} />
+            <Hairline />
 
-              {/* ── Stand Configuration ─────────────────────────── */}
-              <div className="space-y-3">
-                <Label className="text-[10px] uppercase font-bold" style={{ color: t.textLabel }}>
-                  Stand Configuration
-                </Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {([
-                    ['Width (m)',  'width',  1, 40, 1],
-                    ['Depth (m)',  'depth',  1, 40, 1],
-                  ] as [string, keyof BoothState, number, number, number][]).map(([lbl, key, min, max, step]) => (
-                    <div key={key} className="space-y-1">
-                      <Label className="text-[10px]" style={{ color: t.textMuted }}>{lbl}</Label>
-                      <Input
-                        type="number" min={min} max={max} step={step}
-                        value={booth[key] as number}
-                        onChange={e => set(key, parseDim(e.target.value, booth[key] as number))}
-                        className="h-8 text-xs border"
-                        style={inputStyle}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px]" style={{ color: t.textMuted }}>Height (m)</Label>
-                  <Input
-                    type="number" min={1.5} max={6} step={0.5}
-                    value={booth.height}
-                    onChange={e => set('height', parseDim(e.target.value, booth.height))}
-                    className="h-8 text-xs border"
-                    style={inputStyle}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px]" style={{ color: t.textMuted }}>System</Label>
-                  <Select value={booth.system} onValueChange={v => set('system', v as BoothSystem)}>
-                    <SelectTrigger className="h-8 text-xs border" style={inputStyle}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="octanorm">Octanorm (1m module)</SelectItem>
-                      <SelectItem value="maxima">Maxima (2m module)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px]" style={{ color: t.textMuted }}>Fascia / Company Name</Label>
-                  <Input
-                    value={booth.companyName}
-                    onChange={e => set('companyName', e.target.value.toUpperCase())}
-                    className="h-8 text-xs border"
-                    style={inputStyle}
-                    placeholder="COMPANY NAME"
-                  />
-                </div>
+            {/* Stand Configuration */}
+            <PropBlock label="Stand Configuration" right="metric">
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
+                <DimInput label="Width" value={booth.width}  min={1} max={40} step={0.5} onChange={v=>set('width',v)} />
+                <DimInput label="Depth" value={booth.depth}  min={1} max={40} step={0.5} onChange={v=>set('depth',v)} />
               </div>
-
-              <div className="h-px" style={{ background: t.sep }} />
-
-              {/* ── Open Sides ──────────────────────────────────── */}
-              <div className="space-y-3">
-                <Label className="text-[10px] uppercase font-bold" style={{ color: t.textLabel }}>
-                  Open Sides
-                </Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {([
-                    ['openFront', 'Front'],
-                    ['openBack',  'Back'],
-                    ['openLeft',  'Left'],
-                    ['openRight', 'Right'],
-                  ] as [keyof BoothState, string][]).map(([key, label]) => (
-                    <div key={key} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`side-${key}`}
-                        checked={booth[key] as boolean}
-                        onCheckedChange={v => set(key, !!v)}
-                      />
-                      <Label htmlFor={`side-${key}`}
-                        className="text-xs cursor-pointer"
-                        style={{ color: t.text }}>{label}</Label>
-                    </div>
-                  ))}
-                </div>
+              <DimInput label="Height" value={booth.height} min={1.5} max={6} step={0.5} onChange={v=>set('height',v)} />
+              <div style={{ marginTop:8 }}>
+                <label style={{ fontFamily:MONO, fontSize:9, color:C.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:3 }}>System</label>
+                <select value={booth.system} onChange={e=>set('system',e.target.value as BoothSystem)}
+                  style={{ width:'100%', height:30, border:`1px solid ${C.hair}`, borderRadius:4, background:C.bg, fontFamily:UI, fontSize:12, color:C.ink, paddingLeft:8, boxSizing:'border-box', outline:'none', cursor:'pointer' }}>
+                  <option value="octanorm">Octanorm (1 m module)</option>
+                  <option value="maxima">Maxima (2 m module)</option>
+                </select>
               </div>
+            </PropBlock>
 
-              <div className="h-px" style={{ background: t.sep }} />
+            <Hairline />
 
-              {/* ── Stand Stats ─────────────────────────────────── */}
-              <div className="space-y-2">
-                <Label className="text-[10px] uppercase font-bold" style={{ color: t.textLabel }}>
-                  Stand Stats
-                </Label>
-                <div className="grid grid-cols-2 gap-2 text-[10px]">
-                  {[
-                    ['Floor Area', `${(booth.width * booth.depth).toFixed(1)} m²`],
-                    ['Volume',     `${(booth.width * booth.depth * booth.height).toFixed(1)} m³`],
-                    ['Modules',    booth.system === 'octanorm'
-                      ? `${booth.width}×${booth.depth}`
-                      : `${Math.ceil(booth.width/2)}×${Math.ceil(booth.depth/2)}`],
-                    ['Height',     `${booth.height} m`],
-                  ].map(([k, v]) => (
-                    <div key={k} className="rounded p-2" style={cardStyle}>
-                      <p style={{ color: t.textMuted }}>{k}</p>
-                      <p className="font-bold mt-0.5" style={{ color: t.text }}>{v}</p>
-                    </div>
-                  ))}
-                </div>
+            {/* Fascia */}
+            <PropBlock label="Fascia / Company Name" right={`${booth.companyName.length}/22`}>
+              <input value={booth.companyName} onChange={e=>set('companyName',e.target.value.toUpperCase().slice(0,22))}
+                style={{ width:'100%', height:34, border:`1px solid ${C.hair}`, borderRadius:4, background:C.bg, fontFamily:MONO, fontSize:12, fontWeight:700, color:C.ink, paddingLeft:10, boxSizing:'border-box', outline:'none', letterSpacing:'0.06em' }} />
+            </PropBlock>
+
+            <Hairline />
+
+            {/* Open Sides */}
+            <PropBlock label="Open Sides" right={`${openCount} of 4 open`}>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:2, marginBottom:10 }}>
+                {([['openFront','Front'],['openBack','Back'],['openLeft','Left'],['openRight','Right']] as [keyof BoothState, string][]).map(([key, label]) => {
+                  const on = !!booth[key];
+                  return (
+                    <label key={key} style={{ display:'flex', alignItems:'center', gap:7, cursor:'pointer', padding:'5px 4px' }}>
+                      <div onClick={()=>set(key,!on)} style={{ width:14, height:14, borderRadius:3, flexShrink:0, border:`1px solid ${on?C.blue:C.hair}`, background:on?C.blue:'transparent', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+                        {on && <svg width="9" height="9" viewBox="0 0 9 9"><polyline points="1,4.5 3.5,7 8,2" stroke="#fff" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </div>
+                      <span style={{ fontSize:12, color: on?C.blue:C.ink }}>{label}</span>
+                    </label>
+                  );
+                })}
               </div>
-
-            </div>
+              {/* Plan diagram */}
+              <div style={{ border:`1px solid ${C.hair}`, borderRadius:4, background:C.bg, display:'flex', justifyContent:'center', padding:'6px 0' }}>
+                <OpenSidesPlan openFront={booth.openFront} openBack={booth.openBack} openLeft={booth.openLeft} openRight={booth.openRight} />
+              </div>
+            </PropBlock>
           </div>
         </aside>
       </div>
 
-      {/* ── Bottom Bar ───────────────────────────────────────────── */}
-      <footer
-        className="h-10 flex items-center justify-between px-4 border-t text-[10px] font-medium flex-shrink-0"
-        style={headerStyle}
-      >
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-green-500" />
-            <span style={{ color: t.textMuted }}>Connected to TechCorp_Workspace_A</span>
-          </div>
-          <div className="h-3.5 w-px" style={{ background: t.border }} />
-          <span style={{ color: t.textMuted }}>
-            System: {booth.system === 'octanorm' ? 'Octanorm' : 'Maxima'}
+      {/* ── Status Bar ────────────────────────────────────────────── */}
+      <footer style={{ height:26, background:'#1a1815', borderTop:'1px solid #111', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 12px', flexShrink:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:3, overflow:'hidden' }}>
+          <span style={{ fontFamily:MONO, fontSize:9.5, color:'#4a8a5e', display:'flex', alignItems:'center', gap:4, flexShrink:0 }}>
+            <span style={{ width:5, height:5, borderRadius:'50%', background:'#4a8a5e', display:'inline-block' }} />
+            Connected
           </span>
-          <span style={{ color: t.textMuted }}>
-            Floor: {(booth.width * booth.depth).toFixed(0)} m²
-          </span>
+          {[`TechCorp_Workspace_A`,`System Octanorm`,`Floor ${floorArea} m²`,`Bounds ${booth.width} × ${booth.depth} × ${booth.height} m`,`Parts 24`,`Weight 184 kg`].map((s,i) => (
+            <span key={i} style={{ fontFamily:MONO, fontSize:9.5, color:'#6b6058', marginLeft:4, whiteSpace:'nowrap' }}>· {s}</span>
+          ))}
         </div>
-        <div className="flex items-center gap-4">
-          <span style={{ color: t.textMuted }}>
-            {booth.width}m × {booth.depth}m × {booth.height}m
-          </span>
-          <div className="h-3.5 w-px" style={{ background: t.border }} />
-          <span style={{ color: t.textMuted }}>Last Saved: Just now</span>
+        <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+          <span style={{ fontFamily:MONO, fontSize:9.5, color:'#6b6058' }}>Auto-save ON</span>
+          <span style={{ fontFamily:MONO, fontSize:9.5, color:'#4a8a5e' }}>Last saved Just now</span>
         </div>
       </footer>
     </div>
   );
 }
-
-const SearchIcon = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
-  <svg className={className} style={style} xmlns="http://www.w3.org/2000/svg"
-    width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-  </svg>
-);
