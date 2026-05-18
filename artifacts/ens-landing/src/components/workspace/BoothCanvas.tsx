@@ -142,7 +142,7 @@ function PlanView({cfg}:{cfg:Required<BoothConfig>}) {
   const ty = (y:number) => by0 + y*scale;
 
   // Grid
-  const gridEls: JSX.Element[] = [];
+  const gridEls: React.ReactElement[] = [];
   const gridExt = 1.5;
   for(let xi=-gridExt; xi<=W+gridExt; xi+=0.5) {
     const x=tx(xi), ya=ty(-gridExt), yb=ty(D+gridExt);
@@ -299,7 +299,7 @@ export function BoothCanvas({ config }: { config?: Partial<BoothConfig> }) {
   // ── Floor grid ─────────────────────────────────────────────────
   const FEX=3;
   const gridLines = useMemo(()=>{
-    const els:JSX.Element[]=[];
+    const els:React.ReactElement[]=[];
     for(let xi=-FEX;xi<=W+FEX;xi++){
       const[ax,ay]=project(cam,xi,-FEX,0.002);const[bx,by]=project(cam,xi,D+FEX,0.002);
       els.push(<line key={`gx${xi}`} x1={ax} y1={ay} x2={bx} y2={by} stroke="#161c2a" strokeWidth="0.5"/>);

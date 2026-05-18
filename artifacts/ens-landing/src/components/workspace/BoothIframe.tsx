@@ -1,21 +1,38 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import type { BoothConfig } from './BoothCanvas';
+import type { BoothSystem } from './BoothCanvas';
 
-const DEFAULTS: Required<BoothConfig> = {
-  width: 6,
-  depth: 3,
-  height: 2.5,
-  system: 'octanorm',
-  companyName: 'Company Name',
+// ── Minimal config interface — only what the iframe renderer needs ──
+interface IframeBoothConfig {
+  width?: number;
+  depth?: number;
+  height?: number;
+  system?: BoothSystem;
+  companyName?: string;
+  primaryColor?: string;
+  carpetColor?: string;
+  openFront?: boolean;
+  openLeft?: boolean;
+  openRight?: boolean;
+  openBack?: boolean;
+}
+
+type RequiredIframeConfig = Required<IframeBoothConfig>;
+
+const DEFAULTS: RequiredIframeConfig = {
+  width:        6,
+  depth:        3,
+  height:       2.5,
+  system:       'octanorm',
+  companyName:  'Company Name',
   primaryColor: '#1a3a7a',
-  carpetColor: '#3b3e44',
-  openFront: true,
-  openLeft: false,
-  openRight: false,
-  openBack: false,
+  carpetColor:  '#3b3e44',
+  openFront:    true,
+  openLeft:     false,
+  openRight:    false,
+  openBack:     false,
 };
 
-function buildOpenParam(cfg: Required<BoothConfig>): string {
+function buildOpenParam(cfg: RequiredIframeConfig): string {
   const open = [
     cfg.openFront  && 'front',
     cfg.openBack   && 'back',
@@ -25,7 +42,7 @@ function buildOpenParam(cfg: Required<BoothConfig>): string {
   return open.length ? open.join(',') : 'none';
 }
 
-function buildSrc(cfg: Required<BoothConfig>): string {
+function buildSrc(cfg: RequiredIframeConfig): string {
   const bh = Math.max(0.8, cfg.height - 0.30).toFixed(2);
   const params = new URLSearchParams({
     w:      cfg.width.toString(),
@@ -39,8 +56,8 @@ function buildSrc(cfg: Required<BoothConfig>): string {
   return `/booth-render.html?${params.toString()}`;
 }
 
-export function BoothIframe({ config }: { config?: Partial<BoothConfig> }) {
-  const cfg: Required<BoothConfig> = { ...DEFAULTS, ...config };
+export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
+  const cfg: RequiredIframeConfig = { ...DEFAULTS, ...config };
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
 
