@@ -392,22 +392,20 @@ export function BoothCanvas({ config }: { config?: Partial<BoothConfig> }) {
         )}
 
         {/* ── HORIZONTAL RAILS ───────────────────────────────────── */}
-        {/* Base channel at z≈0 and top rail at z=H are implicit; mid rails shown */}
-        {/* Back wall */}
+        {/* Always render all rails — open sides only remove panels, not the frame */}
         {railZs.map(rz=>(
           <g key={`br${rz}`}>
-            {!openBack && <RailX cam={cam} x0={0} x1={W} y={D} z={rz-bth/2} th={bth} fill={P_MID}/>}
-            {!openLeft && <RailY cam={cam} x={0} y0={0} y1={D} z={rz-bth/2} th={bth} fillF={P_MID} fillR={P_DARK}/>}
-            {!openRight && <RailY cam={cam} x={W} y0={0} y1={D} z={rz-bth/2} th={bth} fillF={P_MID} fillR={P_DARK}/>}
-            {/* Front rail always */}
+            <RailX cam={cam} x0={0} x1={W} y={D} z={rz-bth/2} th={bth} fill={P_MID}/>
+            <RailY cam={cam} x={0} y0={0} y1={D} z={rz-bth/2} th={bth} fillF={P_MID} fillR={P_DARK}/>
+            <RailY cam={cam} x={W} y0={0} y1={D} z={rz-bth/2} th={bth} fillF={P_MID} fillR={P_DARK}/>
             <RailX cam={cam} x0={0} x1={W} y={0} z={rz-bth/2} th={bth} fill={P_MID}/>
           </g>
         ))}
 
-        {/* Top rail on all walls (at z=H) */}
-        {!openBack  && <RailX cam={cam} x0={0} x1={W} y={D} z={H-bth} th={bth} fill={P_MID}/>}
-        {!openLeft  && <RailY cam={cam} x={0} y0={0} y1={D} z={H-bth} th={bth} fillF={P_MID} fillR={P_DARK}/>}
-        {!openRight && <RailY cam={cam} x={W} y0={0} y1={D} z={H-bth} th={bth} fillF={P_MID} fillR={P_DARK}/>}
+        {/* Top rail on all walls (at z=H) — always visible */}
+        <RailX cam={cam} x0={0} x1={W} y={D} z={H-bth} th={bth} fill={P_MID}/>
+        <RailY cam={cam} x={0} y0={0} y1={D} z={H-bth} th={bth} fillF={P_MID} fillR={P_DARK}/>
+        <RailY cam={cam} x={W} y0={0} y1={D} z={H-bth} th={bth} fillF={P_MID} fillR={P_DARK}/>
         <RailX cam={cam} x0={0} x1={W} y={0} z={H-bth} th={bth} fill={P_MID}/>
 
         {/* ── POSTS ──────────────────────────────────────────────── */}
