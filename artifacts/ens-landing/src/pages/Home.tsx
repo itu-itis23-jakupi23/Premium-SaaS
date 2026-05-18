@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ENSLogo } from '@/components/ENSLogo';
 import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -129,12 +130,7 @@ export default function Home() {
         }`}
       >
         <div className="container mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl font-mono shadow-[0_0_15px_rgba(109,40,217,0.5)]">
-              E
-            </div>
-            <span className="font-bold text-xl tracking-tight">ENS</span>
-          </div>
+          <ENSLogo size="sm" href="/" />
           
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
             <button onClick={() => scrollTo('features')} className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.features')}</button>
@@ -181,10 +177,7 @@ export default function Home() {
               className="absolute right-0 top-0 h-full w-80 max-w-[90vw] bg-card/98 backdrop-blur-2xl border-l border-border/60 shadow-2xl flex flex-col"
             >
               <div className="flex items-center justify-between px-6 py-5 border-b border-border/40">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold font-mono shadow-[0_0_10px_rgba(109,40,217,0.4)]">E</div>
-                  <span className="font-bold tracking-tight">ENS</span>
-                </div>
+                <ENSLogo size="sm" href="/" />
                 <button onClick={() => setMobileMenuOpen(false)} className="p-2 rounded-full hover:bg-muted/50 transition-colors">
                   <X className="w-5 h-5" />
                 </button>
@@ -944,9 +937,8 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
             {/* Brand column */}
             <div className="col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg font-mono shadow-[0_0_12px_rgba(109,40,217,0.4)]">E</div>
-                <span className="font-bold text-lg tracking-tight">ENS Platform</span>
+              <div className="mb-4">
+                <ENSLogo size="sm" href="/" />
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-6">
                 {t('home.footer.tagline')}

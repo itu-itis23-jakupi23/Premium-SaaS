@@ -1,0 +1,65 @@
+Build this project — a design exploration with three layout variants for an exhibit booth designer tool.
+
+Tech stack
+Plain static site, no build step. One HTML root that loads React via UMD + Babel standalone for JSX. Use these pinned versions:
+react@18.3.1, react-dom@18.3.1, @babel/standalone@7.29.0
+Google Fonts: Inter (400/500/600/700), JetBrains Mono (400/500/600), Geist (400/500/600/700), Geist Mono (400/500/600), Instrument Serif (italic).
+Each variant is its own <script type="text/babel"> file that wraps in an IIFE and assigns its component to window.BoothV1Drafting, window.BoothV2Stage, window.BoothV3Atlas. No shared module scope; style objects must be uniquely named per file.
+File structure
+boothbuilder.html         # root, mounts <App/> into #root
+design-canvas.jsx         # Figma-style pan/zoom canvas with sections,
+                          # reorderable/deletable artboards, focus overlay.
+                          # Exposes <DesignCanvas>, <DCSection>, <DCArtboard>.
+booth-shared.jsx          # exposes window.Booth3D — SVG isometric booth
+booth-v1-drafting.jsx     # Variant 1
+booth-v2-stage.jsx        # Variant 2
+booth-v3-atlas.jsx        # Variant 3
+The root HTML renders:
+
+<DesignCanvas>
+  <DCSection id="layouts" title="Booth Builder — Layout Explorations" subtitle="...">
+    <DCArtboard id="v1" label="01 · Drafting — light, CAD-inspired" width={1600} height={1000}><V1/></DCArtboard>
+    <DCArtboard id="v2" label="02 · Stage — dark, Apple pro-app" width={1600} height={1000}><V2/></DCArtboard>
+    <DCArtboard id="v3" label="03 · Atlas — editorial, dense" width={1600} height={1000}><V3/></DCArtboard>
+  </DCSection>
+</DesignCanvas>
+The shared Booth3D SVG helper
+A pure SVG isometric rendering of an Octanorm trade-show booth. Accepts width, depth, height in meters (default 6, 3, 2.5), company string, and a theme object (floor, floorEdge, wallFill, wallStroke, frame, fascia, fasciaText, lightBar, dimText, dimLine). Projection: x-axis to right-down (1, 0.5), z-axis (depth) to right-up (1, -0.5), y-axis straight up (0, -1), 60 px per meter. Render: dark carpet floor parallelogram, three white walls (back/left/right — front is open), vertical Octanorm posts at 1 m intervals on every wall, top frame rails, a 25 cm fascia band across the top with the company name on the back skewed to follow the wall plane, three warm LED bars along the back ceiling, and three small floating dimension labels (6.0 m, 3.0 m, 2.50 m).
+
+Common booth content all three variants share
+Top bar: back arrow, "PROJECT · TechCon 2024 — Global Exhibit", v2.4.1 chip, undo/redo, Save / Snapshot / History / Send to Client primary button.
+Left rail: searchable component catalog. Categories: Structure, Fascia, Furniture, Lighting. Items must include: Solid Wall (OCT-SW-100, 6×, active), Glass Wall (OCT-GW-100, 2×), Reception Counter (FUR-RC-04, 1×), Design Chair (FUR-DC-12, 2×).
+Center: live 3D viewport with view-mode toggle (Plan / Iso / Front / Grid), tiny RGB axis gizmo (X red, Y green, Z blue), zoom controls, scale bar showing 1.0 m, "SCROLL zoom · CLICK inspect part · CAM 40° · FOV 32mm" hints, and a floating info card: Octanorm · OPEN SIDE · 6.0 × 3.0 m · 2.50 m H · 40 mm profile.
+Right rail (Properties): Workspace Theme swatches (4: charcoal active, white, walnut, navy), Workplane / Carpet (6: black active, bone, gray, navy, forest, terracotta), Stand Configuration with Width 6.0, Depth 3.0, Height 2.50 m number fields, System dropdown Octanorm (1 m module), Fascia text field TECHCORP INDUSTRIES, Open Sides — Front ON, Back/Left/Right off.
+Bottom status bar: connection state, system, floor area 18 m², bounds 6 × 3 × 2.5 m, parts 24, weight 184 kg, auto-save / last-saved.
+Variant 1 — Drafting (light, CAD-inspired)
+Palette: warm paper bg #f3f1ec, white panels, ink #181613, hairlines #d8d3c9, blueprint blue #1d4ed8, drafting orange #c2410c, green #2f7d3a.
+Type: Inter UI + JetBrains Mono for SKUs, dimensions, hints.
+1px square borders, 4 px corners, section headers as § COMPONENTS in mono uppercase with item counts. Components shown as 2-col tiles with icon, name, SKU, an active state with a black filled checkbox top-right.
+Viewport has a faint 40 px grid via repeating-linear-gradient and a real-looking 1 m scale bar with tick marks.
+Properties: stacked sections with hairline dividers, fields are Inter with mono unit. Open Sides shows a small SVG plan diagram of the booth with the open front rendered as a dashed orange line.
+Status bar is dark #1a1815 with monospace stats.
+Variant 2 — Stage (dark, Apple pro-app)
+Palette: bg #16161a, panels #1d1d22 / #222228, raised #2e2e36, lines #2c2c34 / #3a3a44, text #ecebe8, warm amber accent #d39d4f with rgba(211,157,79,0.16) soft variant.
+Type: Geist + Geist Mono.
+Three rounded panels (10 px radius) on a near-black canvas with 10 px gutters. Top bar has a centered segmented transport (undo/redo · home/iso/plan/grid · rotate) showing 40° · 32 mm. "Send to Client" is a glossy gradient amber button.
+Left components shown as full-width cards: 48 px square thumbnail in a subtle gradient + name + mono SKU+dim + count chip; active card has the amber border + soft glow.
+Center viewport has a radial gradient skydome, faint dotted ground grid, glass/backdrop-blur floating chips, and a glass-blur axis gizmo in a square card.
+Right inspector is tabbed (Theme / Stand / Sides / Render) and uses right-aligned label rows like a Mac inspector. Open Sides are 2×2 toggle switches with little iOS-style sliders. There's a 62% lighting power slider with a gradient fill.
+Status bar shows two overlapping circular avatars representing live collaborators.
+Variant 3 — Atlas (editorial, engineering-print)
+Palette: bg #0e0e10, panels #15151a / #1c1c22, hairlines #262630 / #34343f, text #f0eee8, electric blue accent #3a78ff with rgba(58,120,255,0.18) soft variant.
+Type: Geist UI, Geist Mono for data, Instrument Serif italic for the project name "TechCon 2024" and section labels like "Structure" and "Stand 01."
+Layout has FOUR columns: a 72 px icon rail (Struct / Fascia / Furn / Light / Power with item counts), a 248 px list rail with full-width component rows (icon, name, mono SKU+weight, count badge), the central viewport, then a 360 px inspector that renders properties as a real key/value table with mono uppercase keys on the left and values on the right, including focused row (blue left border + ↑↓ ±0.5 hint) and locked rows (lock glyph). Section dividers labelled §01 · Theme, §02 · Configuration, §03 · Fascia / Company, §04 · Open sides.
+Viewport has thin gray corner crop marks at all four corners.
+Bottom-of-viewport dossier card splits System / Footprint / Height / Profile / Open across five vertical cells separated by hairlines.
+A small floating 140×86 mini-map shows "HALL B" with neighbor booths in dim gray and the current booth highlighted in accent blue.
+Status bar reads like a drawing sheet: DWG · ATL-0247-A.dxf · SCALE 1:50 · SHEET 01/04 · REV 2.4.1 · AUTHOR L. Mendez · Saved 12:04.
+Reference image
+The original product being redesigned: top bar with project info + Save/Snapshot/History/Send to Client; left "COMPONENTS" rail with Structure / Fascia / Furniture / Lighting accordions; center 3D isometric booth labelled with dimensions, "OCTANORM · 6×3M" pill, "LIVE WORKSPACE" pill, and "TECHCORP INDUSTRIES" fascia text; right "PROPERTIES" panel with Workspace Theme swatches, Workplane (Carpet) swatches, Stand Configuration Width/Depth/Height inputs, System dropdown, Fascia name field, and Open Sides checkboxes. All three variants must keep this information architecture — only the visual treatment differs.
+
+Acceptance
+Each variant fits 1600×1000 with no overflow.
+Hover affordances visible on buttons/cards but no real wiring required.
+No console errors. Pinned versions only.
+That's the full brief. If you want me to also save it as a BRIEF.md in the project so you can hand it off as a download, say the word.

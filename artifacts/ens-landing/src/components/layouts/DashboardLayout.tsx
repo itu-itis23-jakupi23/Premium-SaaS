@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
+import { ENSLogo } from "@/components/ENSLogo";
 import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
@@ -106,16 +107,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         )}
       >
         <div className="flex h-16 items-center border-b px-4">
-          <Link href="/" className="flex items-center gap-2 overflow-hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground">
-              E
-            </div>
-            {!isCollapsed && (
-              <span className="text-xl font-bold tracking-tight text-foreground">
-                ENS <span className="text-primary">PLATFORM</span>
-              </span>
-            )}
-          </Link>
+          <ENSLogo size="sm" iconOnly={isCollapsed} href="/" />
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3">

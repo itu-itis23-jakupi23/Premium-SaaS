@@ -1,6 +1,6 @@
-import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
+import { ENSLogo } from "@/components/ENSLogo";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -21,12 +21,9 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
 
       <div className="relative z-10 w-full max-w-md px-4">
         <div className="flex flex-col items-center mb-8">
-          <Link href="/" className="flex items-center gap-2 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground text-xl shadow-lg shadow-primary/20">
-              E
-            </div>
-            <span className="text-2xl font-bold tracking-tighter">ENS PLATFORM</span>
-          </Link>
+          <div className="mb-4">
+            <ENSLogo size="md" showTagline href="/" />
+          </div>
           <h1 className="text-3xl font-bold tracking-tight text-center">{title}</h1>
           {description && (
             <p className="text-muted-foreground text-center mt-2">{description}</p>

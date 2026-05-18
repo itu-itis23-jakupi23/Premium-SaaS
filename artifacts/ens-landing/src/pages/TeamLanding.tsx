@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ENSLogo } from '@/components/ENSLogo';
 import { motion, useScroll, useTransform, useInView, Variants } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -117,10 +118,7 @@ export default function TeamLanding() {
       }`}>
         <div className="container mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl font-mono shadow-[0_0_15px_rgba(109,40,217,0.5)]">
-              E
-            </div>
-            <span className="font-bold text-xl tracking-tight">ENS</span>
+            <ENSLogo size="sm" href="/" />
             <Badge className="text-[10px] bg-primary/10 text-primary border border-primary/20 py-0 px-2 hidden sm:flex">
               Internal Portal
             </Badge>
@@ -653,8 +651,7 @@ export default function TeamLanding() {
             {/* Brand */}
             <div className="col-span-2">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg font-mono shadow-[0_0_12px_rgba(109,40,217,0.4)]">E</div>
-                <span className="font-bold text-lg tracking-tight">ENS Platform</span>
+                <ENSLogo size="sm" href="/" />
                 <Badge className="text-[10px] bg-primary/10 text-primary border border-primary/20 py-0 px-2 ml-1">Staff</Badge>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-6">
