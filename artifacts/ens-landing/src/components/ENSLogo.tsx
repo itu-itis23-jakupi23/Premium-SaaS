@@ -1,5 +1,5 @@
 import { Link } from 'wouter';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface ENSLogoProps {
@@ -12,7 +12,7 @@ interface ENSLogoProps {
 
 type SquareDef = { delay: number; isLast: boolean };
 
-const squareVariants = {
+const squareVariants: Variants = {
   rest: (sq: SquareDef) => ({
     scale: 1,
     opacity: sq.isLast ? 0.15 : 1,

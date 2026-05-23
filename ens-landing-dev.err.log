@@ -1,0 +1,22 @@
+$ vite --config vite.config.ts --host 0.0.0.0 "--" "--port" "5173"
+(node:11176) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[RUNTIME_ERROR]{"type":"runtime-error","timestamp":1779369531353,"name":"Error","message":"ColumnSilhouette is not defined","stack":"    at Home C:/Users/User/Downloads/Premium-SaaS-Builder (2)/Premium-SaaS-Builder/artifacts/ens-landing/src/pages/Home.tsx:355:18\n\n\n\n\n\n\n\n\n","loc":{"line":355,"column":18,"file":"C:/Users/User/Downloads/Premium-SaaS-Builder (2)/Premium-SaaS-Builder/artifacts/ens-landing/src/pages/Home.tsx"},"frame":"353|                    ))}\n354|                  </svg>\n355|                  <ColumnSilhouette variant=\"octanorm\" />\n   |                   ^\n356|                </div>\n357|              </motion.div>"}
+[RUNTIME_ERROR]{"type":"runtime-error","timestamp":1779369531377,"name":"Error","message":"ColumnSilhouette is not defined","stack":"    at Home C:/Users/User/Downloads/Premium-SaaS-Builder (2)/Premium-SaaS-Builder/artifacts/ens-landing/src/pages/Home.tsx:355:18\n\n\n\n\n\n\n\n\n","loc":{"line":355,"column":18,"file":"C:/Users/User/Downloads/Premium-SaaS-Builder (2)/Premium-SaaS-Builder/artifacts/ens-landing/src/pages/Home.tsx"},"frame":"353|                    ))}\n354|                  </svg>\n355|                  <ColumnSilhouette variant=\"octanorm\" />\n   |                   ^\n356|                </div>\n357|              </motion.div>"}
+X [ERROR] "await" can only be used inside an "async" function
+
+    vite.config.ts:24:10:
+      24 │           await import("@replit/vite-plugin-cartographer").then((m...
+         ╵           ~~~~~
+
+  Consider adding the "async" keyword here:
+
+    vite.config.ts:7:28:
+      7 │ export default defineConfig(({ mode }) => {
+        │                             ^
+        ╵                             async
+
+[31mfailed to load config from C:\Users\User\Downloads\Premium-SaaS-Builder (2)\Premium-SaaS-Builder\artifacts\ens-landing\vite.config.ts[39m
+[2m4:26:40 PM[22m [31m[1m[vite][22m[39m Build failed with 1 error:
+vite.config.ts:24:10: ERROR: "await" can only be used inside an "async" function
+[2m4:26:40 PM[22m [31m[1m[vite][22m[39m server restart failed

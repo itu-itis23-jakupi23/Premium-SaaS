@@ -1,0 +1,101 @@
+
+  [32m[1mVITE[22m v7.3.2[39m  [42m [1mstaff[22m [49m  [2mready in [0m[1m799[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5174[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.56.1:[1m5174[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://161.9.109.152:[1m5174[22m/[39m
+[2m4:29:36 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/auth/Login.tsx, /src/index.css[22m
+[2m4:30:11 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/booth-render.html[22m
+[2m4:30:12 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/index.html[22m
+[2m4:30:12 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/booth-render.html[22m
+[2m4:30:12 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:30:15 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/index.html[22m
+[2m4:30:20 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:32:48 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m4:33:36 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/Home.tsx, /src/index.css[22m
+[2m4:33:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/booth-render.html[22m
+[2m4:33:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/index.html[22m
+[2m4:33:58 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/booth-render.html[22m
+[2m4:33:58 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:34:00 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/index.html[22m
+[2m4:34:05 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:34:47 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/TeamLanding.tsx, /src/index.css[22m
+[2m4:35:02 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/TeamLanding.tsx, /src/index.css[22m
+[2m4:35:16 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/booth-render.html[22m
+[2m4:35:16 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/index.html[22m
+[2m4:35:16 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/booth-render.html[22m
+[2m4:35:16 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:35:17 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/index.html[22m
+[2m4:35:19 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:35:19 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:43:04 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/layouts/AuthLayout.tsx[22m
+[2m4:43:24 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m4:43:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/booth-render.html[22m
+[2m4:43:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/index.html[22m
+[2m4:43:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/booth-render.html[22m
+[2m4:43:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:43:58 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/index.html[22m
+[2m4:44:00 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:49:24 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/auth/Login.tsx, /src/index.css[22m
+[2m4:50:13 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/auth/Signup.tsx, /src/index.css[22m
+[2m4:50:25 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/auth/ForgotPassword.tsx, /src/index.css[22m
+[2m4:50:36 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/auth/ResetPassword.tsx, /src/index.css[22m
+[2m4:51:02 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/booth-render.html[22m
+[2m4:51:02 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/index.html[22m
+[2m4:51:02 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/booth-render.html[22m
+[2m4:51:02 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:51:03 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/index.html[22m
+[2m4:51:07 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:53:01 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/ui/spinner.tsx[22m
+[2m4:53:25 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/ProtectedRoute.tsx, /src/index.css[22m
+[2m4:53:38 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/ui/button.tsx[22m
+[2m4:53:38 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/ui/button.tsx[22m Could not Fast Refresh ("buttonVariants" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m4:53:38 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefManagers.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/auth/Login.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/client/ClientMessages.tsx, /src/pages/auth/ForgotPassword.tsx, /src/pages/TeamLanding.tsx, /src/pages/auth/Signup.tsx, /src/pages/auth/ResetPassword.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/not-found.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/Home.tsx, /src/pages/client/ClientProfile.tsx, /src/components/LanguageSwitcher.tsx, /src/components/theme-toggle.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m4:53:54 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/layouts/DashboardLayout.tsx[22m
+[2m4:54:09 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m4:54:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m4:54:32 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/ui/card.tsx[22m
+[2m4:54:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/booth-render.html[22m
+[2m4:54:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/index.html[22m
+[2m4:54:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/booth-render.html[22m
+[2m4:54:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:54:48 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/client/index.html[22m
+[2m4:54:51 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m4:54:51 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m5:02:12 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefManagers.tsx, /src/index.css[22m
+[2m5:02:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ new dependencies optimized: [33m@radix-ui/react-dialog[32m[39m
+[2m5:02:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[2m5:02:59 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefMessages.tsx, /src/index.css[22m
+[2m5:03:09 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefMessages.tsx, /src/index.css[22m
+[2m5:11:01 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefClients.tsx, /src/index.css[22m
+[2m5:12:07 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefDashboard.tsx, /src/index.css[22m
+[2m5:12:54 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefReports.tsx, /src/index.css[22m
+[2m5:13:37 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefSettings.tsx, /src/index.css[22m
+[2m5:14:25 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m5:15:03 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/index.css[22m
+[2m5:15:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/booth-render.html[22m
+[2m5:15:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m5:15:27 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m5:15:27 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m5:16:39 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefClients.tsx, /src/index.css[22m
+[2m5:16:58 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m5:17:05 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/layouts/DashboardLayout.tsx[22m
+[2m5:17:28 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/booth-render.html[22m
+[2m5:17:28 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m5:17:31 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m5:22:45 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/chief/ChiefClients.tsx, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/client/ClientWorkspace.tsx[22m
+[2m5:22:52 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefMessages.tsx, /src/index.css[22m
+[2m5:23:49 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefMessages.tsx, /src/index.css[22m
+[2m5:23:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m5:25:01 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m5:25:34 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/booth-render.html[22m
+[2m5:25:34 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m5:25:37 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m5:25:37 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m5:28:41 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/chief/ChiefClients.tsx, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/pm/PMMessages.tsx[22m
+[2m5:30:00 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/contexts/AuthContext.tsx, /src/index.css[22m
+[2m5:30:00 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/contexts/AuthContext.tsx[22m Could not Fast Refresh ("getRoleDashboard" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m5:30:00 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/components/ProtectedRoute.tsx, /src/pages/auth/Login.tsx, /src/pages/auth/Signup.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m5:30:16 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/booth-render.html[22m
+[2m5:30:16 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m5:30:23 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m

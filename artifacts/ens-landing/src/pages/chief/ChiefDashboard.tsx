@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "wouter";
 import { 
   AreaChart, 
   Area, 
@@ -15,56 +17,166 @@ import {
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
-import { mockStats, chartData, mockActivity } from "@/lib/mock-data";
+import { getPlatformOverview, type PlatformOverview } from "@/lib/platform-api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { 
   ArrowRight, 
   BrainCircuit, 
+  Briefcase,
   Clock, 
-  Download
+  Download,
+  AlertCircle,
+  Monitor,
+  UserSquare2,
+  Users
 } from "lucide-react";
 
-const insights = [
-  {
-    title: "Manager Overloaded",
-    description: "John Doe is currently handling 12 projects, 30% above average.",
-    type: "warning",
-    action: "Reassign",
-    color: "border-yellow-500"
+const EMPTY_OVERVIEW: PlatformOverview = {
+  organization: null,
+  metrics: {
+    clients: 0,
+    projects: 0,
+    projectManagers: 0,
+    delayedProjects: 0,
+    pendingApprovals: 0,
+    activeWorkspaces: 0,
+    documents: 0,
+    comments: 0,
+    completedProjects: 0,
   },
-  {
-    title: "Project Stagnation",
-    description: "HealthExpo Booth has had no activity for the last 48 hours.",
-    type: "danger",
-    action: "View Project",
-    color: "border-red-500"
+  projects: [],
+  clients: [],
+  activity: [],
+  charts: {
+    activity: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => ({ day, projects: 0 })),
+    distribution: [
+      { name: "Active", value: 0, color: "#3b82f6" },
+      { name: "Pending", value: 0, color: "#eab308" },
+      { name: "Delayed", value: 0, color: "#ef4444" },
+      { name: "Completed", value: 0, color: "#22c55e" },
+    ],
+    activityCount: 0,
   },
-  {
-    title: "Pending Review",
-    description: "Client (MediLife) has not reviewed the latest design version.",
-    type: "info",
-    action: "Send Reminder",
-    color: "border-blue-500"
-  },
-  {
-    title: "Optimization Opportunity",
-    description: "Suggested reassignment for AutoShow project to Mike Ross.",
-    type: "success",
-    action: "Review",
-    color: "border-green-500"
-  }
-];
-
-const managerPerformance = [
-  { name: "John Doe", completed: 45 },
-  { name: "Jane Smith", completed: 52 },
-  { name: "Mike Ross", completed: 38 },
-  { name: "Sarah J.", completed: 41 },
-];
+};
 
 export default function ChiefDashboard() {
+  const [, navigate] = useLocation();
+  const [overview, setOverview] = useState<PlatformOverview>(EMPTY_OVERVIEW);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showAllActivity, setShowAllActivity] = useState(false);
+  const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    getPlatformOverview()
+      .then((data) => {
+        if (!mounted) return;
+        setOverview(data);
+        setError(null);
+      })
+      .catch((reason: unknown) => {
+        if (!mounted) return;
+        setError(reason instanceof Error ? reason.message : "Unable to load dashboard data");
+      })
+      .finally(() => {
+        if (mounted) setIsLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const stats = useMemo(() => [
+    { label: "Total Clients", value: String(overview.metrics.clients), icon: Users, trend: "DB", trendUp: true },
+    { label: "Active Projects", value: String(overview.metrics.projects), icon: Briefcase, trend: "Live", trendUp: true },
+    { label: "Managers", value: String(overview.metrics.projectManagers), icon: UserSquare2, trend: "Assigned", trendUp: true },
+    { label: "Delayed Projects", value: String(overview.metrics.delayedProjects), icon: AlertCircle, trend: overview.metrics.delayedProjects ? "Needs action" : "Clear", trendUp: false },
+    { label: "Pending Approvals", value: String(overview.metrics.pendingApprovals), icon: Clock, trend: "Open", trendUp: overview.metrics.pendingApprovals === 0 },
+    { label: "Active Workspaces", value: String(overview.metrics.activeWorkspaces), icon: Monitor, trend: "Saved", trendUp: true },
+  ], [overview.metrics]);
+
+  const managerPerformance = useMemo(() => {
+    const byPm = new Map<string, number>();
+    overview.projects.forEach((project) => {
+      byPm.set(project.pm, (byPm.get(project.pm) ?? 0) + 1);
+    });
+    return Array.from(byPm, ([name, projects]) => ({ name, projects }));
+  }, [overview.projects]);
+
+  const insights = useMemo(() => [
+    {
+      title: `${overview.metrics.delayedProjects} delayed projects`,
+      description: overview.metrics.delayedProjects
+        ? "Review blocked or delayed projects before assigning new work."
+        : "No delayed projects are currently recorded in PostgreSQL.",
+      action: "Review",
+      color: overview.metrics.delayedProjects ? "border-red-500" : "border-green-500",
+    },
+    {
+      title: `${overview.metrics.pendingApprovals} pending approvals`,
+      description: overview.metrics.pendingApprovals
+        ? "Client approvals are waiting for action."
+        : "No approval bottleneck is currently recorded.",
+      action: "Open Queue",
+      color: overview.metrics.pendingApprovals ? "border-yellow-500" : "border-green-500",
+    },
+    {
+      title: `${overview.metrics.activeWorkspaces} active workspaces`,
+      description: "Workspace count is pulled from saved booth designs in PostgreSQL.",
+      action: "Monitor",
+      color: "border-blue-500",
+    },
+    {
+      title: overview.organization?.plan ? `${overview.organization.plan} plan` : "No organization",
+      description: overview.organization
+        ? `${overview.organization.name} is the active tenant for this database-backed view.`
+        : "Create an organization to start tracking live SaaS data.",
+      action: "Settings",
+      color: "border-primary",
+    },
+  ], [overview]);
+
+  const visibleActivity = showAllActivity ? overview.activity : overview.activity.slice(0, 3);
+
+  function showToast(message: string) {
+    setToast(message);
+    window.setTimeout(() => setToast(""), 2400);
+  }
+
+  function exportReport() {
+    const rows = [
+      ["Metric", "Value"],
+      ["Clients", overview.metrics.clients],
+      ["Projects", overview.metrics.projects],
+      ["Project Managers", overview.metrics.projectManagers],
+      ["Delayed Projects", overview.metrics.delayedProjects],
+      ["Pending Approvals", overview.metrics.pendingApprovals],
+      ["Active Workspaces", overview.metrics.activeWorkspaces],
+    ];
+    const csv = rows.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "chief-dashboard-report.csv";
+    anchor.click();
+    URL.revokeObjectURL(url);
+    showToast("Report exported");
+  }
+
+  function runInsight(action: string) {
+    if (action === "Review") navigate("/chief/projects");
+    else if (action === "Open Queue") navigate("/chief/clients");
+    else if (action === "Monitor") navigate("/chief/workspace-monitor");
+    else if (action === "Settings") navigate("/chief/settings");
+    else showToast(`${action} opened`);
+  }
+
   return (
     <DashboardLayout role="chief">
       <div className="space-y-8">
@@ -72,14 +184,22 @@ export default function ChiefDashboard() {
           title="Chief Dashboard" 
           breadcrumbs={[{ label: "Chief", href: "/chief" }, { label: "Dashboard" }]}
         >
-          <Button data-testid="button-export-reports">
+          <Button onClick={exportReport} data-testid="button-export-reports">
             <Download className="mr-2 h-4 w-4" /> Export Reports
           </Button>
         </PageHeader>
 
+        {error && (
+          <Card className="border-red-500/30 bg-red-500/5">
+            <CardContent className="p-4 text-sm text-red-500">
+              {error}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {mockStats.chief.map((stat, i) => (
+          {stats.map((stat, i) => (
             <StatCard key={i} {...stat} />
           ))}
         </div>
@@ -93,7 +213,7 @@ export default function ChiefDashboard() {
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData.activity}>
+                <AreaChart data={overview.charts.activity}>
                   <defs>
                     <linearGradient id="colorProjects" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
@@ -141,7 +261,7 @@ export default function ChiefDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={chartData.distribution}
+                    data={overview.charts.distribution}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -149,7 +269,7 @@ export default function ChiefDashboard() {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {chartData.distribution.map((entry, index) => (
+                    {overview.charts.distribution.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -163,7 +283,7 @@ export default function ChiefDashboard() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex flex-col gap-2 ml-4">
-                {chartData.distribution.map((item, i) => (
+                {overview.charts.distribution.map((item, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
                     <span className="text-xs text-muted-foreground whitespace-nowrap">{item.name} ({item.value}%)</span>
@@ -179,7 +299,7 @@ export default function ChiefDashboard() {
           <Card className="lg:col-span-4 bg-card/50 backdrop-blur-sm border-border">
             <CardHeader>
               <CardTitle>Manager Performance</CardTitle>
-              <CardDescription>Projects completed per manager</CardDescription>
+              <CardDescription>Projects assigned per manager from PostgreSQL</CardDescription>
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -204,9 +324,12 @@ export default function ChiefDashboard() {
                       borderRadius: '8px'
                     }}
                   />
-                  <Bar dataKey="completed" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="projects" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+              {!managerPerformance.length && !isLoading && (
+                <div className="mt-3 text-center text-xs text-muted-foreground">No manager assignments found.</div>
+              )}
             </CardContent>
           </Card>
 
@@ -220,7 +343,7 @@ export default function ChiefDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {mockActivity.map((event) => (
+                {visibleActivity.map((event) => (
                   <div key={event.id} className="flex gap-4">
                     <div className={cn(
                       "mt-1.5 h-2 w-2 rounded-full flex-shrink-0",
@@ -236,9 +359,12 @@ export default function ChiefDashboard() {
                     </div>
                   </div>
                 ))}
+                {!overview.activity.length && !isLoading && (
+                  <p className="text-sm text-muted-foreground">No activity has been recorded yet.</p>
+                )}
               </div>
-              <Button variant="ghost" className="mt-6 w-full text-xs text-primary" data-testid="button-view-all-activity">
-                View All Activity
+              <Button variant="ghost" className="mt-6 w-full text-xs text-primary" onClick={() => setShowAllActivity((value) => !value)} data-testid="button-view-all-activity">
+                {showAllActivity ? "Show Recent Activity" : "View All Activity"}
               </Button>
             </CardContent>
           </Card>
@@ -260,7 +386,7 @@ export default function ChiefDashboard() {
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     {insight.description}
                   </p>
-                  <Button variant="outline" size="sm" className="w-full text-[10px] h-8" data-testid={`button-insight-action-${i}`}>
+                  <Button variant="outline" size="sm" className="w-full text-[10px] h-8" onClick={() => runInsight(insight.action)} data-testid={`button-insight-action-${i}`}>
                     {insight.action} <ArrowRight className="ml-2 h-3 w-3" />
                   </Button>
                 </CardContent>
@@ -268,6 +394,11 @@ export default function ChiefDashboard() {
             ))}
           </div>
         </div>
+        {toast && (
+          <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-primary/30 bg-card px-4 py-3 text-sm shadow-xl">
+            {toast}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

@@ -15,38 +15,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Shield, Briefcase, User, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
-import { useAuth, UserRole, getRoleDashboard } from '@/contexts/AuthContext';
-
-const ROLES: { value: UserRole; label: string; desc: string; icon: React.ElementType; color: string; activeRing: string; hoverBorder: string }[] = [
-  {
-    value: 'chief',
-    label: 'Chief Manager',
-    desc: 'Manage teams, assign projects & oversee delivery',
-    icon: Shield,
-    color: 'text-primary',
-    activeRing: 'ring-2 ring-primary border-primary bg-primary/5',
-    hoverBorder: 'hover:border-primary/40',
-  },
-  {
-    value: 'pm',
-    label: 'Project Manager',
-    desc: 'Design booths, manage clients & deliver projects',
-    icon: Briefcase,
-    color: 'text-blue-400',
-    activeRing: 'ring-2 ring-blue-500 border-blue-500 bg-blue-500/5',
-    hoverBorder: 'hover:border-blue-500/40',
-  },
-  {
-    value: 'client',
-    label: 'Exhibitor / Client',
-    desc: 'Review designs, provide feedback & approve stands',
-    icon: User,
-    color: 'text-cyan-400',
-    activeRing: 'ring-2 ring-cyan-500 border-cyan-500 bg-cyan-500/5',
-    hoverBorder: 'hover:border-cyan-500/40',
-  },
-];
+import { Spinner } from '@/components/ui/spinner';
+import { Eye, EyeOff, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { useAuth, getRoleDashboard } from '@/contexts/AuthContext';
 
 function PasswordStrength({ password }: { password: string }) {
   if (!password) return null;
@@ -76,7 +47,6 @@ const signupSchema = z
     name: z.string().min(2, 'Name must be at least 2 characters'),
     company: z.string().min(2, 'Company must be at least 2 characters'),
     email: z.string().email('Invalid email address'),
-    role: z.enum(['chief', 'pm', 'client'], { required_error: 'Please select a role' }),
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
@@ -85,7 +55,7 @@ const signupSchema = z
     confirmPassword: z.string().min(1, 'Please confirm your password'),
     terms: z.literal(true, { errorMap: () => ({ message: 'You must accept the terms' }) }),
   })
-  .refine((d) => d.password === d.confirmPassword, {
+  .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ['confirmPassword'],
   });
@@ -98,6 +68,7 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -105,31 +76,49 @@ export default function Signup() {
       name: '',
       company: '',
       email: '',
-      role: 'client',
       password: '',
       confirmPassword: '',
       terms: undefined as unknown as true,
     },
   });
 
-  const selectedRole = form.watch('role');
   const passwordValue = form.watch('password');
 
   async function onSubmit(values: SignupFormValues) {
     setIsSubmitting(true);
-    await new Promise(r => setTimeout(r, 1000));
-    auth.login({
-      id: crypto.randomUUID(),
-      name: values.name,
-      email: values.email,
-      company: values.company,
-      role: values.role,
-    });
-    navigate(getRoleDashboard(values.role));
+    setError('');
+
+    try {
+      const user = await auth.signup({
+        name: values.name,
+        company: values.company,
+        email: values.email,
+        password: values.password,
+      });
+      navigate(getRoleDashboard(user.role));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not create account.');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
-    <AuthLayout title="Create account" description="Join ENS and start delivering world-class exhibition stands">
+    <AuthLayout title="Create client account" description="Client signup creates a review account pending agency approval">
+      {error && (
+        <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+          <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-400">{error}</p>
+        </div>
+      )}
+
+      <div className="mb-4 flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+        <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-muted-foreground">
+          Public signup is limited to clients. Project managers and chiefs must be invited by an organization owner.
+        </p>
+      </div>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -177,38 +166,6 @@ export default function Signup() {
 
           <FormField
             control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>I am a…</FormLabel>
-                <div className="grid grid-cols-1 gap-2 mt-1">
-                  {ROLES.map(({ value, label, desc, icon: Icon, color, activeRing, hoverBorder }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => field.onChange(value)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                        selectedRole === value ? activeRing : `border-border/50 ${hoverBorder}`
-                      }`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center flex-shrink-0 ${color}`}>
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className={`text-sm font-semibold ${selectedRole === value ? color : ''}`}>{label}</div>
-                        <div className="text-[11px] text-muted-foreground">{desc}</div>
-                      </div>
-                      {selectedRole === value && <CheckCircle2 className={`h-4 w-4 flex-shrink-0 ${color}`} />}
-                    </button>
-                  ))}
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="password"
             render={({ field }) => (
               <FormItem>
@@ -217,14 +174,18 @@ export default function Signup() {
                   <div className="relative">
                     <Input
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
+                      placeholder="Create a password"
                       autoComplete="new-password"
                       {...field}
                       className="pr-10"
                       data-testid="input-password"
                     />
-                    <button type="button" onClick={() => setShowPassword(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((value) => !value)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
@@ -245,14 +206,18 @@ export default function Signup() {
                   <div className="relative">
                     <Input
                       type={showConfirm ? 'text' : 'password'}
-                      placeholder="••••••••"
+                      placeholder="Confirm your password"
                       autoComplete="new-password"
                       {...field}
                       className="pr-10"
                       data-testid="input-confirm-password"
                     />
-                    <button type="button" onClick={() => setShowConfirm(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm((value) => !value)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={showConfirm ? 'Hide confirmation password' : 'Show confirmation password'}
+                    >
                       {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
@@ -271,7 +236,7 @@ export default function Signup() {
                   <Checkbox
                     id="terms"
                     checked={field.value === true}
-                    onCheckedChange={(v) => field.onChange(v === true ? true : undefined)}
+                    onCheckedChange={(value) => field.onChange(value === true ? true : undefined)}
                     className="mt-0.5"
                     data-testid="checkbox-terms"
                   />
@@ -295,11 +260,11 @@ export default function Signup() {
           >
             {isSubmitting ? (
               <span className="flex items-center gap-2">
-                <span className="h-4 w-4 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin" />
-                Creating account…
+                <Spinner className="text-primary-foreground" />
+                Creating account...
               </span>
             ) : (
-              'Create Account'
+              'Create Client Account'
             )}
           </Button>
         </form>

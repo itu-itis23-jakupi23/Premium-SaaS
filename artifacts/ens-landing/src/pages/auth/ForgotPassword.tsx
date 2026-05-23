@@ -5,6 +5,7 @@ import { Link } from 'wouter';
 import { useState, useEffect } from 'react';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Form,
   FormControl,
@@ -85,7 +86,7 @@ export default function ForgotPassword() {
             >
               {isResending ? (
                 <span className="flex items-center gap-2">
-                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <Spinner />
                   Sending…
                 </span>
               ) : resendCooldown > 0 ? (
@@ -155,7 +156,7 @@ export default function ForgotPassword() {
           >
             {isSubmitting ? (
               <span className="flex items-center gap-2">
-                <span className="h-4 w-4 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin" />
+                <Spinner className="text-primary-foreground" />
                 Sending link…
               </span>
             ) : (

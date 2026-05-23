@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { Booth3D } from "@/components/workspace/Booth3D";
 import {
+  getCurrentWorkspace,
+  type ProjectWorkspace,
+  type WorkspaceState,
+} from "@/lib/platform-api";
+import {
   Lock, ZoomIn, ZoomOut, Maximize2, Send, CheckCircle2, AlertCircle,
   Eye, ChevronDown, Layers, RotateCcw, MessageSquare, Download,
   Pin, X, StickyNote, GitCompare, CheckSquare, Square,
@@ -10,14 +15,16 @@ const C = {
   bg:'#f3f1ec', panel:'#ffffff', ink:'#181613', hair:'#d8d3c9',
   blue:'#1d4ed8', orange:'#c2410c', green:'#2f7d3a', muted:'#6b6560',
 } as const;
-const MONO = '"JetBrains Mono","Courier New",monospace';
-const UI   = 'Inter,system-ui,sans-serif';
+const MONO = '"SamsungOne","SamsungOne UI","SamsungOneKorean","Samsung Sharp Sans",system-ui,sans-serif';
+const UI   = '"SamsungOne","SamsungOne UI","SamsungOneKorean","Samsung Sharp Sans",system-ui,sans-serif';
 
 const CATALOG = [
   { name:'Structure', items:['Solid Wall','Glass Wall','Corner Post','Fascia'] },
   { name:'Furniture', items:['Reception Counter','Bar Stool','Meeting Table','Design Chair'] },
   { name:'Lighting',  items:['Spotlight','LED Strip','Arm Light'] },
 ];
+const THEME_COLORS = ['#3b3e44','#dde0e4','#7a4a2a','#1a2640'];
+const CARPET_COLORS = ['#1a1a1a','#dde0e4','#7a7e84','#1a2640','#1e3a28','#5a2316'];
 interface Comment { id:number; user:string; initials:string; text:string; time:string; type?:'comment'|'change'|'pin'; }
 const INITIAL_COMMENTS: Comment[] = [
   { id:1, user:'Sarah M. (PM)', initials:'PM', text:"I've added the lighting fixtures as requested, and updated the fascia to show the new branding.", time:'2h ago' },
@@ -43,8 +50,27 @@ function MonoLabel({ children }: { children:React.ReactNode }) {
   return <span style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,letterSpacing:'0.1em',color:C.muted,textTransform:'uppercase' as const}}>{children}</span>;
 }
 function Hairline() { return <div style={{height:1,background:C.hair}}/>; }
+function workspaceToBoothConfig(workspace?: WorkspaceState | null) {
+  const booth = workspace?.booth;
+
+  return {
+    width: booth?.width ?? 8,
+    depth: booth?.depth ?? 6,
+    height: booth?.height ?? 3,
+    system: booth?.system ?? 'maxima',
+    companyName: booth?.companyName ?? 'TECHCORP INDUSTRIES',
+    primaryColor: THEME_COLORS[workspace?.themeIdx ?? 0] ?? THEME_COLORS[0],
+    carpetColor: CARPET_COLORS[workspace?.carpetIdx ?? 0] ?? CARPET_COLORS[0],
+    openFront: booth?.openFront ?? true,
+    openBack: booth?.openBack ?? false,
+    openLeft: booth?.openLeft ?? false,
+    openRight: booth?.openRight ?? false,
+  };
+}
 
 export default function ClientWorkspace() {
+  const [workspaceRecord, setWorkspaceRecord] = useState<ProjectWorkspace | null>(null);
+  const [workspaceError, setWorkspaceError] = useState('');
   const [comments,       setComments]      = useState<Comment[]>(INITIAL_COMMENTS);
   const [newComment,     setNewComment]    = useState('');
   const [version,        setVersion]       = useState('2.4');
@@ -67,10 +93,40 @@ export default function ClientWorkspace() {
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
   const allApproved = Object.values(elementStatus).every(s => s === 'approved');
+  const versionOptions = workspaceRecord?.versions.map(v => ({
+    label: `v${v.versionNumber} - ${v.title}`,
+    value: String(v.versionNumber),
+  })) ?? VERSIONS;
+  const selectedWorkspace = workspaceRecord?.versions.find(v => String(v.versionNumber) === version)?.workspace ?? workspaceRecord?.workspace;
+  const comparedWorkspace = workspaceRecord?.versions.find(v => String(v.versionNumber) === compareVersion)?.workspace ?? selectedWorkspace;
+  const selectedBoothConfig = workspaceToBoothConfig(selectedWorkspace);
+  const comparedBoothConfig = workspaceToBoothConfig(comparedWorkspace);
+  const selectedBooth = selectedWorkspace?.booth;
+  const projectTitle = workspaceRecord?.project.name ?? 'Loading workspace';
 
   useEffect(() => {
     if(allApproved && !approved) { setApproved(true); showToast('All elements approved — design confirmed!'); }
   }, [allApproved]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getCurrentWorkspace()
+      .then(record => {
+        if(!isMounted) return;
+        setWorkspaceRecord(record);
+        const current = String(record.currentVersion?.versionNumber ?? record.design.currentVersionNumber);
+        setVersion(current);
+        setCompareVersion(String(record.versions[1]?.versionNumber ?? record.versions[0]?.versionNumber ?? current));
+        setWorkspaceError('');
+      })
+      .catch(err => {
+        if(!isMounted) return;
+        setWorkspaceError(err instanceof Error ? err.message : 'Could not load workspace');
+      });
+
+    return () => { isMounted = false; };
+  }, []);
 
   const addComment = () => {
     if(!newComment.trim()) return;
@@ -114,7 +170,7 @@ export default function ClientWorkspace() {
       <header style={{height:46,borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px',background:C.panel,flexShrink:0,gap:8}}>
         <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
           <Layers size={14} style={{color:C.blue,flexShrink:0}}/>
-          <span style={{fontSize:13,fontWeight:700,letterSpacing:'-0.01em',whiteSpace:'nowrap'}}>TechCon 2024 — Global Exhibit</span>
+          <span style={{fontSize:13,fontWeight:700,letterSpacing:'-0.01em',whiteSpace:'nowrap'}}>{projectTitle}</span>
           <div style={{width:1,height:18,background:C.hair,flexShrink:0}}/>
           <span style={{fontFamily:MONO,fontSize:9.5,display:'flex',alignItems:'center',gap:5,background:`${C.orange}12`,color:C.orange,border:`1px solid ${C.orange}30`,borderRadius:4,padding:'3px 9px',flexShrink:0}}>
             <Eye size={10}/> VIEW ONLY
@@ -128,7 +184,7 @@ export default function ClientWorkspace() {
             </button>
             {showVersions&&(
               <div style={{position:'absolute',top:'calc(100% + 4px)',right:0,background:C.panel,border:`1px solid ${C.hair}`,borderRadius:4,zIndex:50,minWidth:180,boxShadow:'0 4px 16px rgba(0,0,0,0.08)'}}>
-                {VERSIONS.map(v=>(
+                {versionOptions.map(v=>(
                   <button key={v.value} onClick={()=>{setVersion(v.value);setShowVersions(false);}}
                     style={{display:'block',width:'100%',textAlign:'left',padding:'8px 12px',fontFamily:MONO,fontSize:11,color:version===v.value?C.blue:C.ink,background:version===v.value?`${C.blue}08`:'none',border:'none',cursor:'pointer'}}>
                     {v.label}
@@ -211,18 +267,18 @@ export default function ClientWorkspace() {
             /* Split compare view */
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',height:'100%',position:'absolute',inset:0,gap:0}}>
               <div style={{position:'relative',borderRight:`2px solid ${C.blue}`}}>
-                <Booth3D config={{width:8,depth:6,height:3,system:'maxima',companyName:'TECHCORP INDUSTRIES',carpetColor:'#1e1830',openFront:true}}/>
+                <Booth3D config={selectedBoothConfig}/>
                 <div style={{position:'absolute',top:8,left:8,fontFamily:MONO,fontSize:9.5,background:C.blue,color:'#fff',borderRadius:4,padding:'4px 9px'}}>v{version} (Current)</div>
               </div>
               <div style={{position:'relative'}}>
-                <Booth3D config={{width:8,depth:6,height:3,system:'maxima',companyName:'TECHCORP INDUSTRIES',carpetColor:'#3b3e44',openFront:true,openLeft:false}}/>
+                <Booth3D config={comparedBoothConfig}/>
                 <div style={{position:'absolute',top:8,left:8,fontFamily:MONO,fontSize:9.5,background:C.muted,color:'#fff',borderRadius:4,padding:'4px 9px'}}>v{compareVersion} (Previous)</div>
               </div>
             </div>
           ) : (
             /* Normal view */
             <div style={{position:'absolute',inset:0,cursor:pinMode?'crosshair':'default'}} onClick={handleCanvasClick}>
-              <Booth3D config={{width:8,depth:6,height:3,system:'maxima',companyName:'TECHCORP INDUSTRIES',carpetColor:'#1e1830',openFront:true}}/>
+              <Booth3D config={selectedBoothConfig}/>
 
               {/* Annotation pins */}
               {pins.map(pin=>(
@@ -256,7 +312,7 @@ export default function ClientWorkspace() {
 
           {/* Top badges */}
           <div style={{position:'absolute',top:12,left:12,display:'flex',gap:6,zIndex:10,pointerEvents:'none'}}>
-            {[{text:'◈ MAXIMA SYSTEM',color:C.muted},{text:'8 × 6 M',color:C.muted}].map(b=>(
+            {[{text:`${selectedBooth?.system === 'maxima' ? 'MAXIMA' : 'OCTANORM'} SYSTEM`,color:C.muted},{text:`${selectedBoothConfig.width} x ${selectedBoothConfig.depth} M`,color:C.muted}].map(b=>(
               <span key={b.text} style={{fontFamily:MONO,fontSize:9.5,background:C.panel,border:`1px solid ${C.hair}`,borderRadius:4,padding:'4px 9px',color:b.color}}>{b.text}</span>
             ))}
             {pinMode&&<span style={{fontFamily:MONO,fontSize:9.5,background:`${C.orange}14`,border:`1px solid ${C.orange}30`,borderRadius:4,padding:'4px 9px',color:C.orange,pointerEvents:'none',animation:'pulse 1.5s infinite'}}>◉ CLICK CANVAS TO PIN</span>}
@@ -279,11 +335,11 @@ export default function ClientWorkspace() {
           {/* Bottom info bar */}
           <div style={{position:'absolute',bottom:0,left:0,right:0,height:32,background:C.panel,borderTop:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px',zIndex:10}}>
             <div style={{display:'flex',alignItems:'center',gap:0}}>
-              {[{text:'Maxima Premium',style:{fontWeight:700}},{text:'|',style:{color:C.hair,margin:'0 8px'}},{text:'OPEN SIDE · FRONT',style:{color:C.orange}},{text:'|',style:{color:C.hair,margin:'0 8px'}},{text:'8.0 × 6.0 m'},{text:'H 3.00 m',style:{marginLeft:10}}].map((s,i)=>(
+              {[{text:selectedBooth?.system === 'maxima' ? 'Maxima Premium' : 'Octanorm',style:{fontWeight:700}},{text:'|',style:{color:C.hair,margin:'0 8px'}},{text:selectedBooth?.openFront?'OPEN SIDE - FRONT':'REVIEW MODE',style:{color:selectedBooth?.openFront?C.orange:C.muted}},{text:'|',style:{color:C.hair,margin:'0 8px'}},{text:`${selectedBoothConfig.width.toFixed(1)} x ${selectedBoothConfig.depth.toFixed(1)} m`},{text:`H ${selectedBoothConfig.height.toFixed(2)} m`,style:{marginLeft:10}}].map((s,i)=>(
                 <span key={i} style={{fontFamily:MONO,fontSize:9.5,color:C.ink,letterSpacing:'0.04em',...s.style}}>{s.text}</span>
               ))}
             </div>
-            <span style={{fontFamily:MONO,fontSize:9,color:C.muted}}>v{version} · {compareMode?'COMPARE MODE':'READ-ONLY'} · PERSPECTIVE VIEW</span>
+            <span style={{fontFamily:MONO,fontSize:9,color:workspaceError?C.orange:C.muted}}>v{version} - {workspaceError || (compareMode?'COMPARE MODE':'READ-ONLY')} - PERSPECTIVE VIEW</span>
           </div>
         </main>
 
@@ -337,7 +393,7 @@ export default function ClientWorkspace() {
             <div style={{padding:'12px 16px',flexShrink:0}}>
               <MonoLabel>§ Project Info</MonoLabel>
               <div style={{display:'flex',flexDirection:'column',gap:7,marginTop:8}}>
-                {[['System','Maxima (2 m module)'],['Floor Area','48.0 m²'],['Dimensions','8 × 6 × 3 m'],['Approval',approved?'✓ Approved':'Awaiting']].map(([l,v])=>(
+                {[['System',selectedBooth?.system === 'maxima' ? 'Maxima (2 m module)' : 'Octanorm (1 m module)'],['Floor Area',`${(selectedBoothConfig.width * selectedBoothConfig.depth).toFixed(1)} m²`],['Dimensions',`${selectedBoothConfig.width} x ${selectedBoothConfig.depth} x ${selectedBoothConfig.height} m`],['Approval',approved?'Approved':'Awaiting']].map(([l,v])=>(
                   <div key={l}><span style={{fontFamily:MONO,fontSize:8.5,color:C.muted,textTransform:'uppercase',letterSpacing:'0.06em',display:'block'}}>{l}</span>
                     <span style={{fontSize:12,fontWeight:600,fontFamily:MONO,color:l==='Approval'?approved?C.green:C.orange:'inherit'}}>{v}</span></div>
                 ))}
@@ -422,7 +478,7 @@ export default function ClientWorkspace() {
           <span style={{fontFamily:MONO,fontSize:9.5,color:'#6a5a40',display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
             <span style={{width:5,height:5,borderRadius:'50%',background:'#6a5a40',display:'inline-block'}}/>View-Only
           </span>
-          {[`TechCorp Exhibit 2024`,`Maxima System`,`v${version}`,`${pins.length} pins`,`Floor 48.0 m²`].map((s,i)=>(
+          {[workspaceRecord?.project.name ?? 'Workspace',`${selectedBooth?.system === 'maxima' ? 'Maxima' : 'Octanorm'} System`,`v${version}`,`${pins.length} pins`,`Floor ${(selectedBoothConfig.width * selectedBoothConfig.depth).toFixed(1)} m²`].map((s,i)=>(
             <span key={i} style={{fontFamily:MONO,fontSize:9.5,color:'#5a5048',marginLeft:4}}>· {s}</span>
           ))}
         </div>

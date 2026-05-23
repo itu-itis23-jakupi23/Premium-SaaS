@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { mockProjects } from "@/lib/mock-data";
@@ -51,10 +51,13 @@ function ProgressBar({ value, color }: { value:number; color:string }) {
 }
 
 export default function ChiefProjects() {
+  const [location, navigate] = useLocation();
+  const initialManager = new URLSearchParams(location.split("?")[1] ?? "").get("pm") ?? "";
   const [projects,   setProjects] = useState<KanbanProject[]>(buildKanban);
   const [view,       setView]     = useState<'kanban'|'list'>('kanban');
-  const [search,     setSearch]   = useState('');
+  const [search,     setSearch]   = useState(initialManager);
   const [filterSt,   setFilter]   = useState<'All'|'Active'|'Pending'|'Delayed'>('All');
+  const [toast,      setToast]    = useState('');
 
   const move = (id: string, dir: 'prev'|'next') => {
     setProjects(prev => prev.map(p => {
@@ -74,6 +77,11 @@ export default function ChiefProjects() {
 
   const counts = Object.fromEntries(STAGES.map(s => [s.id, filtered.filter(p => p.stage === s.id).length]));
   const statusCounts = { Active: projects.filter(p=>p.status==='Active').length, Pending: projects.filter(p=>p.status==='Pending').length, Delayed: projects.filter(p=>p.status==='Delayed').length };
+
+  const openMonitor = (projectName: string) => {
+    setToast(`Opening monitor for ${projectName}`);
+    window.setTimeout(() => navigate('/chief/workspace-monitor'), 500);
+  };
 
   return (
     <DashboardLayout role="chief">
@@ -233,11 +241,9 @@ export default function ChiefProjects() {
                         <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${p.status==='Active'?'bg-green-50 text-green-700':p.status==='Delayed'?'bg-red-50 text-red-700':'bg-orange-50 text-orange-700'}`}>{p.status}</span>
                       </td>
                       <td className="px-4 py-2.5">
-                        <Link href="/pm/workspace">
-                          <button className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-semibold text-primary border border-primary/30 rounded px-2 py-1 hover:bg-primary hover:text-white transition-all">
-                            <Layers className="h-2.5 w-2.5"/> Open
-                          </button>
-                        </Link>
+                        <button onClick={() => openMonitor(p.name)} className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-semibold text-primary border border-primary/30 rounded px-2 py-1 hover:bg-primary hover:text-white transition-all">
+                          <Layers className="h-2.5 w-2.5"/> Open
+                        </button>
                       </td>
                     </tr>
                   );
@@ -258,6 +264,11 @@ export default function ChiefProjects() {
           ))}
           <span className="ml-auto">Total: {filtered.length} · Drag cards ◁ ▷ to advance stage</span>
         </div>
+        {toast && (
+          <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-primary/30 bg-card px-4 py-3 text-sm shadow-xl">
+            {toast}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

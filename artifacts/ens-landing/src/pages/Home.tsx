@@ -6,10 +6,9 @@ import { useLocation } from 'wouter';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Button } from '@/components/ui/button';
+import { PORTAL_MODE } from '@/lib/portal';
 import { 
   Box, 
-  Layers, 
-  Share2, 
   MonitorPlay, 
   MousePointer2, 
   Save,
@@ -58,59 +57,16 @@ const STAGGER = {
   }
 };
 
-const HERO_SLIDES = [
-  { src: '/mockup-2.png', label: '3D Booth Renderer' },
-  { src: '/mockup-3.png', label: 'Design Workspace' },
-  { src: '/mockup-1.png', label: 'Component Library' },
-];
-
-function HeroCarousel() {
-  const [active, setActive] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setActive(i => (i + 1) % HERO_SLIDES.length), 3500);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className="relative overflow-hidden bg-[#f4f5f7]" style={{ aspectRatio: '16/9' }}>
-      {HERO_SLIDES.map((s, i) => (
-        <motion.img
-          key={s.src}
-          src={s.src}
-          alt={s.label}
-          className="absolute inset-0 w-full h-full object-cover object-top"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: i === active ? 1 : 0 }}
-          transition={{ duration: 0.7, ease: 'easeInOut' }}
-          draggable={false}
-        />
-      ))}
-      {/* Dot indicators */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-        {HERO_SLIDES.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setActive(i)}
-            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === active ? 'bg-primary w-5' : 'bg-white/40 hover:bg-white/70'}`}
-          />
-        ))}
-      </div>
-      {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-    </div>
-  );
-}
-
 export default function Home() {
   const { scrollYProgress } = useScroll();
   const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('workspace');
   const [billingAnnual, setBillingAnnual] = useState(false);
   const [, navigate] = useLocation();
   const { t } = useTranslation();
+  const showStaffLinks = PORTAL_MODE !== 'client';
+  const showClientLinks = PORTAL_MODE !== 'staff';
   const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 
   useEffect(() => {
@@ -138,9 +94,11 @@ export default function Home() {
             <button onClick={() => scrollTo('showcase')} className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.showcase')}</button>
             <LanguageSwitcher />
             <ThemeToggle />
-            <Button variant="ghost" className="rounded-full px-5 font-semibold border border-border/40" onClick={() => navigate('/team')} data-testid="btn-nav-team">
-              {t('nav.staffPortal')}
-            </Button>
+            {showStaffLinks && (
+              <Button variant="ghost" className="rounded-full px-5 font-semibold border border-border/40" onClick={() => navigate('/team')} data-testid="btn-nav-team">
+                {t('nav.staffPortal')}
+              </Button>
+            )}
             <Button variant="ghost" className="rounded-full px-5 font-semibold" onClick={() => navigate('/login')} data-testid="btn-nav-login">
               {t('common.logIn')}
             </Button>
@@ -205,10 +163,12 @@ export default function Home() {
               </nav>
 
               <div className="p-4 border-t border-border/40 space-y-2">
-                <Button variant="outline" className="w-full rounded-full h-11 font-semibold"
-                  onClick={() => { navigate('/team'); setMobileMenuOpen(false); }}>
-                  {t('nav.staffPortal')}
-                </Button>
+                {showStaffLinks && (
+                  <Button variant="outline" className="w-full rounded-full h-11 font-semibold"
+                    onClick={() => { navigate('/team'); setMobileMenuOpen(false); }}>
+                    {t('nav.staffPortal')}
+                  </Button>
+                )}
                 <Button variant="ghost" className="w-full rounded-full h-11 font-semibold"
                   onClick={() => { navigate('/login'); setMobileMenuOpen(false); }}>
                   {t('common.logIn')}
@@ -259,40 +219,13 @@ export default function Home() {
                   {t('common.watchDemo')}
                 </Button>
               </motion.div>
-
-              {/* ── Product Preview ── */}
-              <motion.div
-                variants={FADE_UP}
-                className="relative"
-              >
-                <div className="absolute -inset-6 bg-primary/8 blur-3xl rounded-3xl -z-10 pointer-events-none" />
-                <div className="rounded-2xl border border-border/60 bg-card/20 backdrop-blur-sm shadow-[0_40px_80px_rgba(0,0,0,0.6)] overflow-hidden">
-                  {/* Browser chrome */}
-                  <div className="h-10 bg-muted/50 border-b border-border/50 flex items-center gap-3 px-4">
-                    <div className="flex gap-1.5 flex-shrink-0">
-                      <div className="w-3 h-3 rounded-full bg-red-500/70" />
-                      <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
-                      <div className="w-3 h-3 rounded-full bg-green-500/70" />
-                    </div>
-                    <div className="flex-1 flex justify-center">
-                      <div className="bg-background/60 border border-border/40 rounded-md h-6 flex items-center px-3 gap-2 w-60">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
-                        <span className="text-[10px] text-muted-foreground font-mono truncate">app.ens.io/pm/workspace</span>
-                      </div>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground font-mono hidden sm:block flex-shrink-0">TechCon 2024</span>
-                  </div>
-                  {/* Product screenshot carousel */}
-                  <HeroCarousel />
-                </div>
-              </motion.div>
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* Hero Stats (floating) */}
-      <div className="container mx-auto px-6 -mt-10 mb-20 relative z-20">
+      <div className="container mx-auto px-6 mb-20 relative z-20">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: t('home.stats.projectProgress'), value: "84%", icon: TrendingUp, color: "text-blue-500" },
@@ -350,135 +283,28 @@ export default function Home() {
               <p className="text-sm text-muted-foreground">Jump directly into any dashboard — no account required for the demo.</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <Button size="sm" onClick={() => navigate('/chief')} className="gap-2 rounded-full px-5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30" variant="ghost" data-testid="btn-demo-chief">
-                <LayoutDashboard className="w-4 h-4" /> Chief Manager
-              </Button>
-              <Button size="sm" onClick={() => navigate('/pm')} className="gap-2 rounded-full px-5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30" variant="ghost" data-testid="btn-demo-pm">
-                <Settings className="w-4 h-4" /> Project Manager
-              </Button>
-              <Button size="sm" onClick={() => navigate('/client')} className="gap-2 rounded-full px-5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" variant="ghost" data-testid="btn-demo-client">
-                <Eye className="w-4 h-4" /> Client View
-              </Button>
-              <Button size="sm" onClick={() => navigate('/pm/workspace')} className="gap-2 rounded-full px-5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30" variant="ghost" data-testid="btn-demo-workspace">
-                <Box className="w-4 h-4" /> 3D Workspace
-              </Button>
+              {showStaffLinks && (
+                <>
+                  <Button size="sm" onClick={() => navigate('/chief')} className="gap-2 rounded-full px-5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30" variant="ghost" data-testid="btn-demo-chief">
+                    <LayoutDashboard className="w-4 h-4" /> Chief Manager
+                  </Button>
+                  <Button size="sm" onClick={() => navigate('/pm')} className="gap-2 rounded-full px-5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30" variant="ghost" data-testid="btn-demo-pm">
+                    <Settings className="w-4 h-4" /> Project Manager
+                  </Button>
+                  <Button size="sm" onClick={() => navigate('/pm/workspace')} className="gap-2 rounded-full px-5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30" variant="ghost" data-testid="btn-demo-workspace">
+                    <Box className="w-4 h-4" /> 3D Workspace
+                  </Button>
+                </>
+              )}
+              {showClientLinks && (
+                <Button size="sm" onClick={() => navigate('/client')} className="gap-2 rounded-full px-5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" variant="ghost" data-testid="btn-demo-client">
+                  <Eye className="w-4 h-4" /> Client View
+                </Button>
+              )}
             </div>
           </div>
         </motion.div>
       </div>
-
-      {/* Interactive 3D Preview Mockup */}
-      <section className="py-20 relative z-10">
-        <div className="container mx-auto px-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="rounded-2xl border border-border/50 bg-card shadow-2xl overflow-hidden backdrop-blur-sm flex flex-col h-[600px] glow-box relative"
-          >
-            {/* Editor Topbar */}
-            <div className="h-14 border-b border-border/50 flex items-center justify-between px-4 bg-muted/30">
-              <div className="flex items-center gap-4">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-destructive/80" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                </div>
-                <div className="text-sm font-mono text-muted-foreground bg-background/50 px-3 py-1 rounded-md border border-border/50 flex items-center gap-2">
-                  <Layers className="w-3 h-3" /> booth-layout-v2.ens
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" className="h-8 w-8"><Share2 className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8"><Save className="w-4 h-4" /></Button>
-                <Button size="sm" className="h-8 rounded-full bg-primary/20 text-primary hover:bg-primary/30">Export</Button>
-              </div>
-            </div>
-
-            <div className="flex flex-1 overflow-hidden">
-              {/* Editor Sidebar */}
-              <div className="w-64 border-r border-border/50 bg-muted/10 p-4 hidden md:block overflow-y-auto">
-                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Components</div>
-                <div className="space-y-2">
-                  {['Octanorm Wall', 'Maxima Post', 'Fascia Panel', 'Display Counter', 'Spotlight', 'Literature Rack'].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 cursor-pointer border border-transparent hover:border-border/50 transition-colors">
-                      <Box className="w-4 h-4 text-primary" />
-                      <span className="text-sm">{item}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-8 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Materials</div>
-                <div className="grid grid-cols-4 gap-2">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="w-full aspect-square rounded bg-muted border border-border hover:border-primary/50 cursor-pointer" />
-                  ))}
-                </div>
-              </div>
-
-              {/* 3D Canvas Area */}
-              <div className="flex-1 relative bg-black/5 dark:bg-black/20 overflow-hidden flex items-center justify-center grid-pattern perspective-[1000px]">
-                
-                {/* Simulated 3D Booth */}
-                <motion.div 
-                  className="wireframe-box w-64 h-64 relative"
-                  animate={{ 
-                    rotateY: [0, 360],
-                    rotateX: [10, 20, 10]
-                  }}
-                  transition={{ 
-                    rotateY: { duration: 20, repeat: Infinity, ease: "linear" },
-                    rotateX: { duration: 10, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                >
-                  {/* Floor */}
-                  <div className="wireframe-face w-64 h-64 absolute -bottom-32 left-0 rotate-x-90 bg-primary/10 border-primary/30" />
-                  
-                  {/* Back Wall */}
-                  <div className="wireframe-face w-64 h-48 absolute bottom-0 left-0 -translate-z-32 bg-primary/5" />
-                  
-                  {/* Left Wall */}
-                  <div className="wireframe-face w-32 h-48 absolute bottom-0 left-0 -rotate-y-90 origin-left bg-primary/5" />
-                  
-                  {/* Structure Pillars */}
-                  <div className="absolute bottom-0 left-0 w-2 h-48 bg-primary/40 -translate-z-32 shadow-[0_0_10px_rgba(109,40,217,0.5)]" />
-                  <div className="absolute bottom-0 right-0 w-2 h-48 bg-primary/40 -translate-z-32 shadow-[0_0_10px_rgba(109,40,217,0.5)]" />
-                  <div className="absolute bottom-0 left-0 w-2 h-48 bg-primary/40 translate-z-32 shadow-[0_0_10px_rgba(109,40,217,0.5)]" />
-                  
-                  {/* Header/Fascia */}
-                  <div className="wireframe-face w-64 h-8 absolute top-0 left-0 -translate-z-32 bg-primary/20 backdrop-blur-md border-primary/50 flex items-center justify-center">
-                    <span className="text-[8px] font-mono text-primary-foreground opacity-50">YOUR LOGO</span>
-                  </div>
-                  
-                  {/* Counter */}
-                  <div className="wireframe-face w-24 h-16 absolute bottom-0 left-10 translate-z-16 bg-blue-500/10 border-blue-500/30" />
-                </motion.div>
-
-                {/* Floating UI Overlays */}
-                <motion.div 
-                  className="absolute top-6 right-6 bg-background/80 backdrop-blur-md border border-border/50 rounded-lg p-4 shadow-xl w-48"
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <div className="text-xs font-semibold mb-3">Properties: Wall Panel</div>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between text-[10px] mb-1 text-muted-foreground"><span>Width</span><span>2950mm</span></div>
-                      <div className="h-1 bg-muted rounded-full overflow-hidden"><div className="h-full w-3/4 bg-primary rounded-full" /></div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-[10px] mb-1 text-muted-foreground"><span>Height</span><span>2400mm</span></div>
-                      <div className="h-1 bg-muted rounded-full overflow-hidden"><div className="h-full w-full bg-primary rounded-full" /></div>
-                    </div>
-                  </div>
-                </motion.div>
-                
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
 
       {/* Features */}
       <section id="features" className="py-24 bg-muted/10">
@@ -513,9 +339,32 @@ export default function Home() {
               </ul>
               <div className="aspect-video rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 grid-pattern opacity-20" />
-                <div className="w-24 h-24 border-2 border-blue-400/50 rotate-45 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <div className="w-16 h-16 border border-blue-400/30" />
-                </div>
+                <svg
+                  viewBox="0 0 220 220"
+                  className="w-40 h-40 text-blue-400/70 group-hover:scale-110 transition-transform"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <circle cx="110" cy="110" r="27" stroke="currentColor" strokeWidth="10" />
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <g key={i} transform={`rotate(${i * 45} 110 110)`}>
+                      <path
+                        d="M110 78 L110 54 L96 40 L96 24 M124 40 L124 24 M96 24 H124"
+                        stroke="currentColor"
+                        strokeWidth="10"
+                        strokeLinecap="square"
+                        strokeLinejoin="miter"
+                      />
+                      <path
+                        d="M102 77 L90 90 M118 77 L130 90"
+                        stroke="currentColor"
+                        strokeWidth="10"
+                        strokeLinecap="square"
+                        strokeLinejoin="miter"
+                      />
+                    </g>
+                  ))}
+                </svg>
               </div>
             </motion.div>
 
@@ -543,8 +392,8 @@ export default function Home() {
               </ul>
               <div className="aspect-video rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 grid-pattern opacity-20" />
-                <div className="w-32 h-16 bg-purple-400/20 border border-purple-400/50 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
-                   <div className="w-full h-[2px] bg-purple-400/30" />
+                <div className="w-24 h-24 border-2 border-purple-400/50 rotate-45 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="w-16 h-16 border border-purple-400/30" />
                 </div>
               </div>
             </motion.div>
@@ -634,147 +483,6 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Workspace Preview Section */}
-      <section className="py-24 bg-black/40 relative overflow-hidden border-y border-border/50">
-        <div className="absolute inset-0 grid-pattern opacity-10" />
-        <div className="container mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Professional Design Environment</h2>
-            <p className="text-muted-foreground">A clean, technical interface designed for high-performance booth planning.</p>
-          </div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="rounded-xl border border-border/50 bg-background shadow-2xl overflow-hidden flex flex-col aspect-[16/10] max-w-6xl mx-auto"
-          >
-            {/* Toolbar */}
-            <div className="h-12 border-b border-border/50 bg-muted/30 flex items-center justify-between px-4">
-              <div className="flex items-center gap-6">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500/50" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
-                  <div className="w-3 h-3 rounded-full bg-green-500/50" />
-                </div>
-                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                  <Button variant="ghost" size="sm" className="h-7 px-2">Save</Button>
-                  <Button variant="ghost" size="sm" className="h-7 px-2">Undo</Button>
-                  <Button variant="ghost" size="sm" className="h-7 px-2">Redo</Button>
-                  <div className="w-px h-4 bg-border mx-1" />
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-primary">Snapshot</Button>
-                  <Button size="sm" className="h-7 px-3 bg-primary/20 text-primary hover:bg-primary/30 border border-primary/30">Send to Client</Button>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 text-[10px] text-muted-foreground font-mono">
-                <span>PROJECT: TECH_CON_2024</span>
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              </div>
-            </div>
-
-            <div className="flex flex-1 overflow-hidden">
-              {/* Left Panel: Furniture */}
-              <div className="w-56 border-r border-border/50 bg-muted/10 p-4 flex flex-col">
-                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center justify-between">
-                  <span>Furniture Library</span>
-                  <ChevronRight className="w-3 h-3" />
-                </div>
-                <div className="space-y-4">
-                  {['Counters', 'Seating', 'Display', 'Lighting'].map((cat, i) => (
-                    <div key={i}>
-                      <div className="text-[9px] font-bold uppercase text-primary mb-2 tracking-widest">{cat}</div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[1, 2].map(j => (
-                          <div key={j} className="aspect-square rounded border border-border bg-background/50 flex flex-col items-center justify-center gap-1 hover:border-primary/50 cursor-pointer transition-colors">
-                            <Box className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-[8px] text-muted-foreground">Item {i}{j}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Center Canvas */}
-              <div className="flex-1 relative bg-black/50 overflow-hidden flex items-center justify-center perspective-[1200px]">
-                <div className="absolute inset-0 grid-pattern opacity-20" />
-                
-                {/* 3D Booth Wireframe Simulation */}
-                <div className="relative w-[500px] h-[350px] transform-gpu rotate-x-12 rotate-y-[-20deg] preserve-3d">
-                  {/* Floor Grid */}
-                  <div className="absolute inset-0 border border-primary/20 bg-primary/5 grid-pattern rotate-x-90 translate-y-[175px]" />
-                  
-                  {/* Walls */}
-                  <div className="absolute bottom-[175px] left-0 w-full h-[200px] border border-primary/30 bg-primary/5 transform-gpu -translate-z-[250px]" />
-                  <div className="absolute bottom-[175px] left-0 w-[500px] h-[200px] border border-primary/30 bg-primary/5 transform-gpu rotate-y-90 origin-left" />
-                  
-                  {/* Fascia */}
-                  <div className="absolute top-0 left-0 w-full h-10 border border-primary/40 bg-primary/20 backdrop-blur-md flex items-center justify-center transform-gpu -translate-z-[100px]">
-                    <span className="text-xs font-mono text-primary-foreground opacity-30">ENS PLATFORM</span>
-                  </div>
-
-                  {/* Placed Items */}
-                  <div className="absolute bottom-[175px] left-20 w-32 h-20 border border-blue-500/50 bg-blue-500/10 transform-gpu translate-z-20" />
-                  <div className="absolute bottom-[175px] right-20 w-20 h-40 border border-purple-500/50 bg-purple-500/10 transform-gpu -translate-z-40" />
-                </div>
-
-                {/* Compass UI */}
-                <div className="absolute bottom-6 left-6 flex flex-col gap-2">
-                  <div className="flex gap-2">
-                    {['Front', 'Top', 'Side'].map(view => (
-                      <button key={view} className="px-3 py-1 bg-background/50 border border-border text-[9px] rounded hover:bg-primary/20 transition-colors uppercase font-bold">{view}</button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Panel: Properties */}
-              <div className="w-64 border-l border-border/50 bg-muted/10 p-4">
-                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-6">Properties Panel</div>
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <div className="text-[9px] font-bold uppercase text-primary">Dimensions</div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {['Width', 'Depth', 'Height'].map(dim => (
-                        <div key={dim}>
-                          <label className="text-[8px] text-muted-foreground block mb-1">{dim}</label>
-                          <div className="h-7 bg-background border border-border rounded flex items-center px-2 text-[10px] font-mono">6000mm</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="text-[9px] font-bold uppercase text-primary">System Type</div>
-                    <div className="flex gap-2">
-                      <button className="flex-1 h-8 rounded border-2 border-primary bg-primary/10 text-[9px] font-bold">MAXIMA</button>
-                      <button className="flex-1 h-8 rounded border border-border bg-background text-[9px] font-bold text-muted-foreground">OCTANORM</button>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="text-[9px] font-bold uppercase text-primary">Selected Object</div>
-                    <div className="p-3 bg-background border border-border rounded space-y-2">
-                      <div className="flex justify-between text-[9px]">
-                        <span className="text-muted-foreground">Type</span>
-                        <span>Aluminum Post</span>
-                      </div>
-                      <div className="flex justify-between text-[9px]">
-                        <span className="text-muted-foreground">Material</span>
-                        <span>Brushed Silver</span>
-                      </div>
-                      <div className="flex justify-between text-[9px]">
-                        <span className="text-muted-foreground">Position</span>
-                        <span className="font-mono">X: 1200, Y: 0</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </section>
 

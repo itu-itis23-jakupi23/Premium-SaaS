@@ -130,8 +130,6 @@ export default function TeamLanding() {
             <a href="#workflow" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.workflow')}</a>
             <LanguageSwitcher />
             <ThemeToggle />
-            <Button variant="outline" size="sm" className="rounded-full px-5 font-semibold border-border/60"
-              onClick={() => navigate('/')}>{t('nav.clientSite')}</Button>
             <Button size="sm" className="rounded-full px-6 font-semibold shadow-[0_0_20px_rgba(109,40,217,0.3)]"
               onClick={() => navigate('/login')}>{t('common.signIn')}</Button>
           </nav>
@@ -709,7 +707,6 @@ export default function TeamLanding() {
               <span className="text-xs text-muted-foreground/40">{t('common.internalOnly')}</span>
             </div>
             <div className="flex gap-6 text-xs text-muted-foreground">
-              <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors">{t('team.footer.clientPortal')}</button>
               <a href="#" className="hover:text-foreground transition-colors">{t('team.footer.privacy')}</a>
               <a href="#" className="hover:text-foreground transition-colors">{t('team.footer.security')}</a>
               <button onClick={() => navigate('/login')} className="hover:text-foreground transition-colors">{t('common.signIn')}</button>

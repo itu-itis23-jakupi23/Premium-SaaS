@@ -75,10 +75,36 @@ const KPI = [
 
 export default function ChiefReports() {
   const [range, setRange] = useState<Range>('6M');
+  const [toast, setToast] = useState('');
 
   const revenueData = REVENUE_DATA[range];
   const totalRevenue = revenueData.reduce((s,d) => s+d.revenue, 0);
   const totalProjects = revenueData.reduce((s,d) => s+d.projects, 0);
+
+  function showToast(message: string) {
+    setToast(message);
+    window.setTimeout(() => setToast(''), 2400);
+  }
+
+  function exportReport() {
+    const lines = [
+      'ENS Chief Reports',
+      `Range: ${range}`,
+      `Total Revenue: $${totalRevenue.toLocaleString()}`,
+      `Total Projects: ${totalProjects}`,
+      '',
+      'Revenue by month',
+      ...revenueData.map((row) => `${row.month}: revenue $${row.revenue.toLocaleString()}, target $${row.target.toLocaleString()}, projects ${row.projects}`),
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `chief-report-${range}.txt`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    showToast('Report exported');
+  }
 
   return (
     <DashboardLayout role="chief">
@@ -93,7 +119,7 @@ export default function ChiefReports() {
                 </button>
               ))}
             </div>
-            <button className="flex items-center gap-1.5 border rounded-md px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-colors"
+            <button onClick={exportReport} className="flex items-center gap-1.5 border rounded-md px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-colors"
               data-testid="button-export-pdf">
               <Download className="h-3.5 w-3.5"/> Export PDF
             </button>
@@ -153,7 +179,7 @@ export default function ChiefReports() {
                   <RTooltip contentStyle={TT_STYLE}/>
                   <Legend iconType="circle" wrapperStyle={{fontSize:10}}/>
                   <Bar dataKey="onTime"       name="On-Time %"    fill="#1d4ed8" radius={[0,3,3,0]} barSize={8}/>
-                  <Bar dataKey="satisfaction" name="Satisfaction" fill="#2f7d3a" radius={[0,3,3,0]} barSize={8} tickFormatter={(v:number)=>v.toFixed(1)}/>
+                  <Bar dataKey="satisfaction" name="Satisfaction" fill="#2f7d3a" radius={[0,3,3,0]} barSize={8}/>
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -282,6 +308,11 @@ export default function ChiefReports() {
             </table>
           </CardContent>
         </Card>
+        {toast && (
+          <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-primary/30 bg-card px-4 py-3 text-sm shadow-xl">
+            {toast}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

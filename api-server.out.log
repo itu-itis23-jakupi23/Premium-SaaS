@@ -1,0 +1,122 @@
+[17:31:47.951] [32mINFO[39m (24536): [36mServer listening[39m
+    [35mport[39m: 5000
+[17:32:15.358] [32mINFO[39m (24536): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 1,
+      "method": "GET",
+      "url": "/api/healthz"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18
+[17:32:15.377] [32mINFO[39m (24536): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 2,
+      "method": "GET",
+      "url": "/api/platform/messages/contacts"
+    }
+    [35mres[39m: {
+      "statusCode": 401
+    }
+    [35mresponseTime[39m: 2
+[17:32:35.677] [32mINFO[39m (24536): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 3,
+      "method": "OPTIONS",
+      "url": "/api/auth/me"
+    }
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 3
+[17:32:35.802] [32mINFO[39m (24536): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 4,
+      "method": "GET",
+      "url": "/api/auth/me"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 123
+[17:32:35.844] [32mINFO[39m (24536): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 5,
+      "method": "OPTIONS",
+      "url": "/api/platform/messages/contacts"
+    }
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 1
+[17:32:36.051] [32mINFO[39m (24536): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 6,
+      "method": "GET",
+      "url": "/api/platform/messages/contacts"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 204
+[17:32:36.085] [32mINFO[39m (24536): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 7,
+      "method": "OPTIONS",
+      "url": "/api/platform/messages/8f9f509a-1ec2-451b-b306-5d41262dd56a"
+    }
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 1
+[17:32:36.104] [32mINFO[39m (24536): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 8,
+      "method": "GET",
+      "url": "/api/platform/messages/8f9f509a-1ec2-451b-b306-5d41262dd56a"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 17
+[17:32:41.093] [32mINFO[39m (24536): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 9,
+      "method": "OPTIONS",
+      "url": "/api/platform/messages/8f9f509a-1ec2-451b-b306-5d41262dd56a"
+    }
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 1
+[17:32:41.110] [32mINFO[39m (24536): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 10,
+      "method": "GET",
+      "url": "/api/platform/messages/8f9f509a-1ec2-451b-b306-5d41262dd56a"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 13
+[17:32:46.099] [32mINFO[39m (24536): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 11,
+      "method": "OPTIONS",
+      "url": "/api/platform/messages/8f9f509a-1ec2-451b-b306-5d41262dd56a"
+    }
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 1
+[17:32:46.115] [32mINFO[39m (24536): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 12,
+      "method": "GET",
+      "url": "/api/platform/messages/8f9f509a-1ec2-451b-b306-5d41262dd56a"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 12

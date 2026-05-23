@@ -3,6 +3,12 @@ import { Link } from "wouter";
 import { Booth3D } from "@/components/workspace/Booth3D";
 import type { BoothSystem } from "@/components/workspace/BoothCanvas";
 import {
+  createProjectWorkspaceVersion,
+  getCurrentWorkspace,
+  saveProjectWorkspace,
+  type ProjectWorkspace,
+} from "@/lib/platform-api";
+import {
   ChevronLeft, Undo2, Redo2, Save, Camera, History, Send,
   ZoomIn, ZoomOut, Maximize2, Search, Plus, ChevronDown, Trash2,
   Square, LayoutTemplate, Lightbulb, Monitor, Layers, Map, Box, PanelLeft, X,
@@ -11,8 +17,8 @@ import {
 
 // ── Palette ────────────────────────────────────────────────────────
 const C = { bg:'#f3f1ec', panel:'#ffffff', ink:'#181613', hair:'#d8d3c9', blue:'#1d4ed8', orange:'#c2410c', green:'#2f7d3a', muted:'#6b6560', bgHover:'#ece9e3' } as const;
-const MONO = '"JetBrains Mono","Courier New",monospace';
-const UI   = 'Inter,system-ui,sans-serif';
+const MONO = '"SamsungOne","SamsungOne UI","SamsungOneKorean","Samsung Sharp Sans",system-ui,sans-serif';
+const UI   = '"SamsungOne","SamsungOne UI","SamsungOneKorean","Samsung Sharp Sans",system-ui,sans-serif';
 
 // ── Types ──────────────────────────────────────────────────────────
 interface BoothState { width:number; depth:number; height:number; system:BoothSystem; companyName:string; openFront:boolean; openBack:boolean; openLeft:boolean; openRight:boolean; }
@@ -128,6 +134,15 @@ function Toast({msg,onClose}:{msg:string;onClose:()=>void}) {
 const INITIAL_BOOTH: BoothState = {width:6,depth:3,height:2.5,system:'octanorm',companyName:'TECHCORP INDUSTRIES',openFront:true,openBack:false,openLeft:false,openRight:false};
 const INITIAL_WS: WSData = {booth:INITIAL_BOOTH,themeIdx:0,carpetIdx:0,placedItems:[],notes:[]};
 
+function workspaceSnapshots(record: ProjectWorkspace): Snapshot[] {
+  return record.versions.map(version => ({
+    id: version.id,
+    name: `v${version.versionNumber} - ${version.title}`,
+    data: version.workspace as WSData,
+    createdAt: new Date(version.createdAt).toLocaleDateString(),
+  }));
+}
+
 // ── Main ──────────────────────────────────────────────────────────
 export default function PMWorkspace() {
   const [ws,    setWS]    = useState<WSData>(INITIAL_WS);
@@ -152,8 +167,19 @@ export default function PMWorkspace() {
   const [lastSaved,     setLastSaved]     = useState('Not saved');
   const [newNote,       setNewNote]       = useState('');
   const [noteColor,     setNoteColor]     = useState(NOTE_COLORS[0]);
+  const [workspaceRecord, setWorkspaceRecord] = useState<ProjectWorkspace | null>(null);
+  const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(true);
+  const [workspaceError, setWorkspaceError] = useState('');
 
   // ── History helpers ───────────────────────────────────────────
+  const resetWorkspace = useCallback((data:WSData)=>{
+    setWS(data);
+    histStackRef.current = [data];
+    histIdxRef.current = 0;
+    setHistIdx(0);
+    setHistLen(1);
+  },[]);
+
   const commit = useCallback((updater:(prev:WSData)=>WSData)=>{
     setWS(prev=>{
       const next = updater(prev);
@@ -186,41 +212,92 @@ export default function PMWorkspace() {
   const set = (k:keyof BoothState, v:BoothState[keyof BoothState]) =>
     commit(prev=>({...prev,booth:{...prev.booth,[k]:v}}));
 
-  const save = () => {
-    localStorage.setItem('ens-ws-techcon2024', JSON.stringify(ws));
-    setLastSaved('Just now');
-    setToast('Design saved');
+  const save = async () => {
+    if(!workspaceRecord) {
+      setToast('Workspace is still loading');
+      return;
+    }
+
+    setLastSaved('Saving...');
+    try {
+      const saved = await saveProjectWorkspace(workspaceRecord.project.id, ws, 'Manual save');
+      setWorkspaceRecord(saved);
+      setSnapshots(workspaceSnapshots(saved));
+      setLastSaved('Just now');
+      setWorkspaceError('');
+      setToast('Design saved to PostgreSQL');
+    } catch (err) {
+      setLastSaved('Save failed');
+      setWorkspaceError(err instanceof Error ? err.message : 'Could not save workspace');
+      setToast('Save failed');
+    }
   };
 
-  // Load from localStorage on mount
+  // Load from PostgreSQL on mount
   useEffect(()=>{
-    const saved = localStorage.getItem('ens-ws-techcon2024');
-    if(saved) {
-      try { const data=JSON.parse(saved) as WSData; commit(()=>data); setLastSaved('Previously saved'); } catch {}
-    }
-  },[]);
+    let isMounted = true;
+
+    getCurrentWorkspace()
+      .then(record => {
+        if(!isMounted) return;
+        setWorkspaceRecord(record);
+        resetWorkspace(record.workspace as WSData);
+        setSnapshots(workspaceSnapshots(record));
+        setLastSaved(record.currentVersion ? `v${record.currentVersion.versionNumber}` : 'Loaded');
+        setWorkspaceError('');
+      })
+      .catch(err => {
+        if(!isMounted) return;
+        setWorkspaceError(err instanceof Error ? err.message : 'Could not load workspace');
+        setLastSaved('Load failed');
+      })
+      .finally(() => {
+        if(isMounted) setIsWorkspaceLoading(false);
+      });
+
+    return () => { isMounted = false; };
+  },[resetWorkspace]);
 
   // Auto-save every 30s
   useEffect(()=>{
+    if(!workspaceRecord || isWorkspaceLoading) return;
     const t=setInterval(()=>{
-      localStorage.setItem('ens-ws-techcon2024',JSON.stringify(ws));
-      setLastSaved(new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+      saveProjectWorkspace(workspaceRecord.project.id, ws, 'Autosave')
+        .then(saved => {
+          setWorkspaceRecord(saved);
+          setSnapshots(workspaceSnapshots(saved));
+          setLastSaved(new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+          setWorkspaceError('');
+        })
+        .catch(err => {
+          setLastSaved('Autosave failed');
+          setWorkspaceError(err instanceof Error ? err.message : 'Autosave failed');
+        });
     },30000);
     return()=>clearInterval(t);
-  },[ws]);
+  },[isWorkspaceLoading, workspaceRecord?.project.id, ws]);
 
-  const createSnapshot = () => {
-    if(!snapName.trim()) return;
-    const snap:Snapshot = {id:Date.now().toString(),name:snapName.trim(),data:{...ws},createdAt:new Date().toLocaleDateString()};
-    setSnapshots(s=>[...s,snap]);
-    setSnapName('');
-    setShowSnapDlg(false);
-    setToast(`Snapshot "${snap.name}" saved`);
+  const createSnapshot = async () => {
+    if(!snapName.trim() || !workspaceRecord) return;
+    const name = snapName.trim();
+    try {
+      const saved = await createProjectWorkspaceVersion(workspaceRecord.project.id, ws, name);
+      setWorkspaceRecord(saved);
+      setSnapshots(workspaceSnapshots(saved));
+      setSnapName('');
+      setShowSnapDlg(false);
+      setLastSaved(`v${saved.currentVersion?.versionNumber ?? saved.design.currentVersionNumber}`);
+      setWorkspaceError('');
+      setToast(`Snapshot "${name}" saved`);
+    } catch (err) {
+      setWorkspaceError(err instanceof Error ? err.message : 'Could not save snapshot');
+      setToast('Snapshot failed');
+    }
   };
   const restoreSnapshot = (snap:Snapshot) => {
-    commit(()=>snap.data);
+    resetWorkspace(snap.data);
     setShowHistPanel(false);
-    setToast(`Restored: ${snap.name}`);
+    setToast(`Restored locally: ${snap.name}`);
   };
 
   // ── Item placement ────────────────────────────────────────────
@@ -300,14 +377,14 @@ export default function PMWorkspace() {
           <div style={{width:1,height:18,background:C.hair,flexShrink:0}}/>
           <div style={{display:'flex',flexDirection:'column',lineHeight:1.2,minWidth:0}}>
             <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted,letterSpacing:'0.1em',textTransform:'uppercase'}}>Project</span>
-            <span style={{fontSize:12.5,fontWeight:700,letterSpacing:'-0.01em',whiteSpace:'nowrap'}}>TechCon 2024 — Global Exhibit</span>
+            <span style={{fontSize:12.5,fontWeight:700,letterSpacing:'-0.01em',whiteSpace:'nowrap'}}>{workspaceRecord?.project.name ?? 'Loading workspace'}</span>
           </div>
           <span style={{fontFamily:MONO,fontSize:9.5,background:`${C.blue}12`,color:C.blue,border:`1px solid ${C.blue}28`,borderRadius:4,padding:'2px 7px',flexShrink:0}}>
-            v{Math.floor(histIdx/5+2)}.{histIdx%5}
+            v{workspaceRecord?.currentVersion?.versionNumber ?? workspaceRecord?.design.currentVersionNumber ?? 1}
           </span>
           <div style={{width:1,height:18,background:C.hair,flexShrink:0}}/>
           <span style={{fontFamily:MONO,fontSize:9.5,display:'flex',alignItems:'center',gap:5,color:C.green,flexShrink:0}}>
-            <span style={{width:6,height:6,borderRadius:'50%',background:C.green,display:'inline-block',flexShrink:0}}/>LIVE WORKSPACE
+            <span style={{width:6,height:6,borderRadius:'50%',background:workspaceError?C.orange:C.green,display:'inline-block',flexShrink:0}}/>{workspaceError?'WORKSPACE ISSUE':isWorkspaceLoading?'LOADING WORKSPACE':'LIVE WORKSPACE'}
           </span>
         </div>
 

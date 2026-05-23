@@ -2,15 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { mockProjects } from "@/lib/mock-data";
-import { Link } from "wouter";
 import {
   Activity, Maximize2, Users, Clock, ExternalLink, ChevronDown,
   CheckCircle2, AlertCircle, Circle, RefreshCw, UserCheck, X,
 } from "lucide-react";
 
 const C = { bg:'#f3f1ec',panel:'#ffffff',ink:'#181613',hair:'#d8d3c9',blue:'#1d4ed8',orange:'#c2410c',green:'#2f7d3a',muted:'#6b6560',red:'#dc2626' } as const;
-const MONO = '"JetBrains Mono","Courier New",monospace';
-const UI   = 'Inter,system-ui,sans-serif';
+const MONO = '"SamsungOne","SamsungOne UI","SamsungOneKorean","Samsung Sharp Sans",system-ui,sans-serif';
+const UI   = '"SamsungOne","SamsungOne UI","SamsungOneKorean","Samsung Sharp Sans",system-ui,sans-serif';
 
 type WStatus = 'live' | 'pending' | 'review' | 'blocked';
 const STATUS_CFG: Record<WStatus,{label:string;color:string;dot:string}> = {
@@ -190,11 +189,9 @@ export default function ChiefWorkspaceMonitor() {
                 <div style={{ height:100,position:'relative',overflow:'hidden' }}>
                   <MiniBooth status={project.status}/>
                   <span style={{ position:'absolute',top:6,left:6,fontFamily:MONO,fontSize:8.5,background:C.panel,border:`1px solid ${C.hair}`,borderRadius:3,padding:'2px 6px',color:C.muted }}>{project.version}</span>
-                  <Link href="/pm/workspace">
-                    <button style={{ position:'absolute',top:4,right:4,background:`${C.panel}e0`,border:`1px solid ${C.hair}`,borderRadius:3,width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:C.muted }}>
-                      <Maximize2 size={10}/>
-                    </button>
-                  </Link>
+                  <button onClick={() => showToast(`Opened ${project.name} preview`)} style={{ position:'absolute',top:4,right:4,background:`${C.panel}e0`,border:`1px solid ${C.hair}`,borderRadius:3,width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:C.muted }}>
+                    <Maximize2 size={10}/>
+                  </button>
                   {/* Live pulse */}
                   {isLive && (
                     <div style={{ position:'absolute',bottom:6,right:6,display:'flex',alignItems:'center',gap:4,background:`${C.green}14`,borderRadius:3,padding:'2px 6px',border:`1px solid ${C.green}30` }}>
@@ -256,11 +253,9 @@ export default function ChiefWorkspaceMonitor() {
                         style={{ background:`${C.blue}10`,border:`1px solid ${C.blue}25`,borderRadius:3,padding:'4px 8px',cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontFamily:MONO,fontSize:8.5,color:C.blue }}>
                         <UserCheck size={9}/> Reassign
                       </button>
-                      <Link href="/pm/workspace">
-                        <button style={{ background:C.blue,border:'none',color:'#fff',borderRadius:3,padding:'4px 8px',cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontSize:11,fontWeight:600,fontFamily:UI }}>
-                          <ExternalLink size={9}/> Join
-                        </button>
-                      </Link>
+                      <button onClick={() => showToast(`Joined monitor session for ${project.name}`)} style={{ background:C.blue,border:'none',color:'#fff',borderRadius:3,padding:'4px 8px',cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontSize:11,fontWeight:600,fontFamily:UI }}>
+                        <ExternalLink size={9}/> Join
+                      </button>
                     </div>
                   </div>
 

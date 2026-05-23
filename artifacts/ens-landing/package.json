@@ -5,8 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config vite.config.ts --host 0.0.0.0",
+    "dev:staff": "vite --config vite.config.ts --host 0.0.0.0 --mode staff --port 5174",
+    "dev:client": "vite --config vite.config.ts --host 0.0.0.0 --mode client --port 5175",
     "build": "vite build --config vite.config.ts",
+    "build:staff": "vite build --config vite.config.ts --mode staff",
+    "build:client": "vite build --config vite.config.ts --mode client",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
+    "serve:staff": "vite preview --config vite.config.ts --host 0.0.0.0 --mode staff --port 5174",
+    "serve:client": "vite preview --config vite.config.ts --host 0.0.0.0 --mode client --port 5175",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {

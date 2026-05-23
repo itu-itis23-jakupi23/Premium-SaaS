@@ -1,9 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..800;1,14..32,300..800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
+
+@font-face {
+  font-family: "SamsungOne";
+  src:
+    local("SamsungOne"),
+    local("SamsungOne UI"),
+    local("SamsungOneKorean"),
+    local("Samsung Sharp Sans");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --app-font-samsung: "SamsungOne", "SamsungOne UI", "SamsungOneKorean", "Samsung Sharp Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
 
 @theme inline {
   --color-background: hsl(var(--background));
@@ -57,8 +72,8 @@
   --color-sidebar-accent-border: var(--sidebar-accent-border);
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: var(--app-font-samsung);
+  --font-mono: var(--app-font-samsung);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -202,8 +217,28 @@
     @apply border-border;
   }
 
+  html,
   body {
     @apply font-sans antialiased bg-background text-foreground selection:bg-primary/30 selection:text-primary-foreground;
+  }
+
+  html,
+  body,
+  #root,
+  button,
+  input,
+  textarea,
+  select,
+  option,
+  [role="button"],
+  [style] {
+    font-family: var(--app-font-samsung) !important;
+  }
+
+  svg,
+  svg text,
+  svg tspan {
+    font-family: var(--app-font-samsung) !important;
   }
 }
 
@@ -264,4 +299,60 @@
     box-shadow: inset 0 0 15px hsl(var(--primary) / 0.1);
     backdrop-filter: blur(2px);
   }
+
+  .ens-loader-square {
+    animation: ens-loader-pulse 900ms ease-in-out infinite;
+  }
+
+  .smooth-card {
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  }
+
+  .smooth-card:hover {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes ens-loader-pulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(0.78);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ens-loader-square {
+    animation: none;
+  }
+
+  .smooth-card,
+  .smooth-card:hover {
+    transform: none;
+    transition: none;
+  }
+}
+
+html[data-compact="true"] main {
+  padding: 1rem !important;
+}
+
+html[data-compact="true"] .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem !important;
+}
+
+html[data-compact="true"] .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.75rem !important;
+}
+
+html[data-compact="true"] .p-6 {
+  padding: 1rem !important;
+}
+
+html[data-compact="true"] .py-6 {
+  padding-bottom: 1rem !important;
+  padding-top: 1rem !important;
 }

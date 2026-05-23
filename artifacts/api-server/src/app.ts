@@ -1,4 +1,5 @@
 import express, { type Express } from "express";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
@@ -25,10 +26,20 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(cors({
+  origin: corsOrigin(),
+  credentials: true,
+}));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
 export default app;
+
+function corsOrigin() {
+  const configured = process.env.CORS_ORIGIN;
+  if (configured) return configured;
+  return process.env.NODE_ENV === "production" ? false : true;
+}

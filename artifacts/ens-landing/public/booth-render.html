@@ -13,9 +13,20 @@
     --card-bg:   rgba(255,255,255,0.78);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  @font-face {
+    font-family: "SamsungOne";
+    src:
+      local("SamsungOne"),
+      local("SamsungOne UI"),
+      local("SamsungOneKorean"),
+      local("Samsung Sharp Sans");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
   html, body { height: 100%; overflow: hidden;
     background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bot) 100%);
-    font: 12px/1.4 "Inter", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+    font: 12px/1.4 "SamsungOne", "SamsungOne UI", "SamsungOneKorean", "Samsung Sharp Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
     color: var(--ink);
     -webkit-font-smoothing: antialiased;
   }
@@ -746,7 +757,7 @@ function renderBooth() {
         t.setAttribute('x', pM.x); t.setAttribute('y', pM.y + 5);
         t.setAttribute('text-anchor', 'middle');
         t.setAttribute('fill', '#23262c');
-        t.setAttribute('font-family', 'Inter, system-ui, sans-serif');
+        t.setAttribute('font-family', 'SamsungOne, SamsungOne UI, SamsungOneKorean, Samsung Sharp Sans, system-ui, sans-serif');
         t.setAttribute('font-size', fontSize.toFixed(1));
         t.setAttribute('font-weight', '600');
         t.setAttribute('letter-spacing', '0.04em');
