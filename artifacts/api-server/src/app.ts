@@ -40,6 +40,9 @@ export default app;
 
 function corsOrigin() {
   const configured = process.env.CORS_ORIGIN;
-  if (configured) return configured;
+  if (configured) {
+    const origins = configured.split(",").map((origin) => origin.trim()).filter(Boolean);
+    return origins.length > 1 ? origins : origins[0];
+  }
   return process.env.NODE_ENV === "production" ? false : true;
 }

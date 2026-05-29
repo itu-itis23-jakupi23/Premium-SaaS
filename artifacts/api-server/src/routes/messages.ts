@@ -1,9 +1,12 @@
 import { sql, type SQL } from "drizzle-orm";
-import { Router } from "express";
+import express, { Router } from "express";
+import { randomUUID } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { db } from "@workspace/db";
 import { requireAuth, requireRoles, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
-import { decryptMessageBody, encryptMessageBody } from "../lib/messageCrypto";
+import { decryptMessageBody, decryptMessageBytes, encryptMessageBody, encryptMessageBytes } from "../lib/messageCrypto";
 
 const router = Router();
 
@@ -14,6 +17,56 @@ router.get("/platform/messages/contacts", requireRoles(["admin", "owner", "chief
   const auth = req.auth!;
   const contacts = await getContacts(auth);
   res.json({ contacts });
+});
+
+router.post(
+  "/platform/messages/attachments",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  express.raw({ type: "*/*", limit: "10mb" }),
+  async (req, res) => {
+    const auth = req.auth!;
+    const upload = await saveMessageAttachment(auth, {
+      bytes: Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0),
+      fileName: headerValue(req.headers["x-file-name"]),
+      contentType: headerValue(req.headers["content-type"]),
+    });
+
+    if (!upload.ok) {
+      res.status(400).json({ error: { code: "attachment_upload_invalid", message: upload.error } });
+      return;
+    }
+
+    res.status(201).json({ attachment: publicAttachment(upload.attachment) });
+  },
+);
+
+router.get("/platform/messages/attachments/:attachmentId", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
+  await ensureMessageTables();
+  const auth = req.auth!;
+  const attachmentId = paramValue(req.params.attachmentId);
+  const metadata = await readAttachmentMetadata(attachmentId, auth.organization.id);
+
+  if (!metadata || metadata.organizationId !== auth.organization.id) {
+    res.status(404).json({ error: { code: "attachment_not_found", message: "Attachment was not found." } });
+    return;
+  }
+
+  const hasAccess = metadata.uploaderUserId === auth.user.id || await canAccessAttachment(auth, metadata.id);
+  if (!hasAccess) {
+    res.status(404).json({ error: { code: "attachment_not_found", message: "Attachment was not found." } });
+    return;
+  }
+
+  try {
+    const encrypted = await readFile(attachmentStoragePath(metadata.organizationId, metadata.id));
+    const bytes = decryptMessageBytes(encrypted);
+    res.setHeader("Content-Type", metadata.type);
+    res.setHeader("Content-Length", String(bytes.byteLength));
+    res.setHeader("Content-Disposition", `attachment; filename="${contentDispositionName(metadata.name)}"`);
+    res.send(bytes);
+  } catch {
+    res.status(404).json({ error: { code: "attachment_not_found", message: "Attachment was not found." } });
+  }
 });
 
 router.get("/platform/messages/:contactId", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
@@ -43,9 +96,15 @@ router.post("/platform/messages/:contactId", requireRoles(["admin", "owner", "ch
   const auth = req.auth!;
   const contactId = paramValue(req.params.contactId);
   const body = typeof req.body?.body === "string" ? req.body.body.trim() : "";
+  const attachmentInput = parseMessageAttachments(req.body?.attachments);
   const scope = await resolveConversationScope(auth, contactId, parseMessageContext(req.body?.context));
 
-  if (!body) {
+  if (!attachmentInput.ok) {
+    res.status(400).json({ error: { code: "invalid_attachments", message: attachmentInput.error } });
+    return;
+  }
+
+  if (!body && !attachmentInput.attachments.length) {
     res.status(400).json({ error: { code: "message_required", message: "Message cannot be empty." } });
     return;
   }
@@ -65,12 +124,24 @@ router.post("/platform/messages/:contactId", requireRoles(["admin", "owner", "ch
     return;
   }
 
+  const validatedAttachments = await validateMessageAttachments(auth, attachmentInput.attachments);
+  if (!validatedAttachments.ok) {
+    res.status(400).json({ error: { code: "invalid_attachments", message: validatedAttachments.error } });
+    return;
+  }
+
   const conversationId = await getOrCreateConversation(auth, contactId, scope.value);
-  const encryptedBody = encryptMessageBody(body);
+  const encryptedBody = encryptMessageBody(body || "[Attachment]");
   const [message] = await queryRows<MessageRow>(sql`
-    insert into direct_messages (conversation_id, organization_id, sender_user_id, body)
-    values (${conversationId}::uuid, ${auth.organization.id}::uuid, ${auth.user.id}::uuid, ${encryptedBody})
-    returning id::text, sender_user_id::text as "senderUserId", body, read_at::text as "readAt", created_at::text as "createdAt"
+    insert into direct_messages (conversation_id, organization_id, sender_user_id, body, attachments)
+    values (
+      ${conversationId}::uuid,
+      ${auth.organization.id}::uuid,
+      ${auth.user.id}::uuid,
+      ${encryptedBody},
+      ${JSON.stringify(validatedAttachments.attachments)}::jsonb
+    )
+    returning id::text, sender_user_id::text as "senderUserId", body, attachments, read_at::text as "readAt", created_at::text as "createdAt"
   `);
 
   await db.execute(sql`
@@ -107,7 +178,22 @@ interface MessageRow {
   id: string;
   senderUserId: string;
   body: string;
+  attachments: unknown;
   readAt: string | null;
+  createdAt: string;
+}
+
+interface MessageAttachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url?: string;
+}
+
+interface StoredMessageAttachment extends MessageAttachment {
+  organizationId: string;
+  uploaderUserId: string;
   createdAt: string;
 }
 
@@ -127,6 +213,108 @@ interface ConversationScope {
 async function queryRows<T>(statement: SQL) {
   const result = await db.execute(statement);
   return (result as unknown as { rows: T[] }).rows;
+}
+
+async function saveMessageAttachment(
+  auth: AuthContext,
+  input: { bytes: Buffer; fileName: string | null; contentType: string | null },
+): Promise<{ ok: true; attachment: StoredMessageAttachment } | { ok: false; error: string }> {
+  if (!input.bytes.length) return { ok: false, error: "Attachment file is empty." };
+  if (input.bytes.byteLength > 10_000_000) return { ok: false, error: "Attachment size must be 10 MB or less." };
+
+  const name = sanitizeFileName(input.fileName ? decodeHeaderValue(input.fileName) : "attachment");
+  if (!name) return { ok: false, error: "Attachment name is required." };
+
+  const type = sanitizeContentType(input.contentType);
+  if (!isAllowedAttachmentType(type)) {
+    return { ok: false, error: "Attachment file type is not allowed." };
+  }
+
+  const attachment: StoredMessageAttachment = {
+    id: randomUUID(),
+    name,
+    size: input.bytes.byteLength,
+    type,
+    organizationId: auth.organization.id,
+    uploaderUserId: auth.user.id,
+    createdAt: new Date().toISOString(),
+  };
+
+  const directory = attachmentOrganizationDirectory(auth.organization.id);
+  await mkdir(directory, { recursive: true });
+  await writeFile(attachmentStoragePath(auth.organization.id, attachment.id), encryptMessageBytes(input.bytes));
+  await writeFile(attachmentMetadataPath(auth.organization.id, attachment.id), JSON.stringify(attachment, null, 2), "utf8");
+
+  return { ok: true, attachment };
+}
+
+async function validateMessageAttachments(
+  auth: AuthContext,
+  attachments: MessageAttachment[],
+): Promise<{ ok: true; attachments: MessageAttachment[] } | { ok: false; error: string }> {
+  const validated: MessageAttachment[] = [];
+
+  for (const attachment of attachments) {
+    const metadata = await readAttachmentMetadata(attachment.id, auth.organization.id);
+    if (!metadata || metadata.organizationId !== auth.organization.id || metadata.uploaderUserId !== auth.user.id) {
+      return { ok: false, error: "Attachment was not uploaded by the current user." };
+    }
+    validated.push(publicAttachment(metadata));
+  }
+
+  return { ok: true, attachments: validated };
+}
+
+async function canAccessAttachment(auth: AuthContext, attachmentId: string) {
+  const rows = await queryRows<{ id: string }>(sql`
+    select dm.id::text
+    from direct_messages dm
+    join direct_conversations dc on dc.id = dm.conversation_id
+    where dm.organization_id = ${auth.organization.id}::uuid
+      and dm.attachments @> ${JSON.stringify([{ id: attachmentId }])}::jsonb
+      and (
+        dc.participant_one_user_id = ${auth.user.id}::uuid
+        or dc.participant_two_user_id = ${auth.user.id}::uuid
+      )
+    limit 1
+  `);
+  return !!rows[0];
+}
+
+async function readAttachmentMetadata(attachmentId: string, organizationId: string) {
+  if (!isAttachmentId(attachmentId)) return null;
+  try {
+    const parsed = JSON.parse(await readFile(attachmentMetadataPath(organizationId, attachmentId), "utf8")) as unknown;
+    const metadata = normalizeStoredAttachment(parsed);
+    return metadata?.id === attachmentId ? metadata : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeStoredAttachment(value: unknown): StoredMessageAttachment | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const data = value as Record<string, unknown>;
+  const id = stringValue(data.id);
+  const organizationId = stringValue(data.organizationId);
+  const uploaderUserId = stringValue(data.uploaderUserId);
+  const name = stringValue(data.name);
+  const type = stringValue(data.type) ?? "application/octet-stream";
+  const createdAt = stringValue(data.createdAt) ?? new Date().toISOString();
+  const size = typeof data.size === "number" ? data.size : typeof data.size === "string" ? Number(data.size) : NaN;
+
+  if (!id || !organizationId || !uploaderUserId || !name || !Number.isFinite(size)) return null;
+  return { id, organizationId, uploaderUserId, name, type, size: Math.max(0, Math.round(size)), createdAt };
+}
+
+function publicAttachment(attachment: StoredMessageAttachment): MessageAttachment {
+  return {
+    id: attachment.id,
+    name: attachment.name,
+    size: attachment.size,
+    type: attachment.type,
+    url: `/platform/messages/attachments/${attachment.id}`,
+  };
 }
 
 async function getContacts(auth: AuthContext) {
@@ -269,9 +457,17 @@ async function findScopedProjectById(organizationId: string, pmUserId: string, p
     select id::text, name, exhibition_name as "exhibitionName"
     from projects
     where organization_id = ${organizationId}::uuid
-      and assigned_pm_user_id = ${pmUserId}::uuid
       and id = ${projectId}::uuid
       and deleted_at is null
+      and (
+        assigned_pm_user_id = ${pmUserId}::uuid
+        or exists (
+          select 1
+          from project_members pm
+          where pm.project_id = projects.id
+            and pm.user_id = ${pmUserId}::uuid
+        )
+      )
     limit 1
   `);
   return rows[0] ?? null;
@@ -284,8 +480,16 @@ async function findScopedProjectByExhibition(organizationId: string, pmUserId: s
     select id::text, name, exhibition_name as "exhibitionName"
     from projects
     where organization_id = ${organizationId}::uuid
-      and assigned_pm_user_id = ${pmUserId}::uuid
       and deleted_at is null
+      and (
+        assigned_pm_user_id = ${pmUserId}::uuid
+        or exists (
+          select 1
+          from project_members pm
+          where pm.project_id = projects.id
+            and pm.user_id = ${pmUserId}::uuid
+        )
+      )
     order by deadline_at nulls last, updated_at desc
   `);
   return rows.find((row) => scopeKey(row.exhibitionName ?? row.name) === requestedKey) ?? null;
@@ -330,7 +534,7 @@ async function getOrCreateConversation(auth: AuthContext, contactId: string, sco
 
 async function getMessages(auth: AuthContext, conversationId: string) {
   const rows = await queryRows<MessageRow>(sql`
-    select id::text, sender_user_id::text as "senderUserId", body, read_at::text as "readAt", created_at::text as "createdAt"
+    select id::text, sender_user_id::text as "senderUserId", body, attachments, read_at::text as "readAt", created_at::text as "createdAt"
     from direct_messages
     where organization_id = ${auth.organization.id}::uuid
       and conversation_id = ${conversationId}::uuid
@@ -352,10 +556,12 @@ async function markConversationRead(auth: AuthContext, conversationId: string) {
 
 function toMessage(row: MessageRow, currentUserId: string) {
   const body = decryptMessageBody(row.body);
+  const attachments = messageAttachments(row.attachments);
   return {
     id: row.id,
     body,
     text: body,
+    attachments,
     senderUserId: row.senderUserId,
     isMe: row.senderUserId === currentUserId,
     read: !!row.readAt,
@@ -394,6 +600,126 @@ function parseMessageContext(value: unknown): MessageContextInput {
     exhibitionName: stringValue(data.exhibitionName),
     projectId: stringValue(data.projectId),
   };
+}
+
+function parseMessageAttachments(value: unknown):
+  | { ok: true; attachments: MessageAttachment[] }
+  | { ok: false; error: string } {
+  if (value === undefined || value === null) return { ok: true, attachments: [] };
+  if (!Array.isArray(value)) return { ok: false, error: "Attachments must be an array." };
+  if (value.length > 5) return { ok: false, error: "A message can include up to 5 attachments." };
+
+  const attachments: MessageAttachment[] = [];
+  for (const [index, item] of value.entries()) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      return { ok: false, error: "Attachment metadata is invalid." };
+    }
+    const data = item as Record<string, unknown>;
+    const id = stringValue(data.id);
+    const name = stringValue(data.name);
+    const type = stringValue(data.type) ?? "application/octet-stream";
+    const size = typeof data.size === "number" ? data.size : typeof data.size === "string" ? Number(data.size) : NaN;
+
+    if (!id || !isAttachmentId(id)) return { ok: false, error: "Attachment id is invalid." };
+    if (!name || name.length > 180) return { ok: false, error: "Attachment name is required and must be under 180 characters." };
+    if (!Number.isFinite(size) || size < 0 || size > 10_000_000) return { ok: false, error: "Attachment size must be 10 MB or less." };
+    if (type.length > 120) return { ok: false, error: "Attachment type is too long." };
+
+    attachments.push({
+      id,
+      name,
+      size: Math.round(size),
+      type,
+    });
+  }
+
+  return { ok: true, attachments };
+}
+
+function messageAttachments(value: unknown): MessageAttachment[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item): MessageAttachment | null => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+      const data = item as Record<string, unknown>;
+      const id = stringValue(data.id);
+      const name = stringValue(data.name);
+      const size = typeof data.size === "number" ? data.size : typeof data.size === "string" ? Number(data.size) : NaN;
+      if (!id || !name || !Number.isFinite(size)) return null;
+      return {
+        id,
+        name,
+        size: Math.max(0, Math.round(size)),
+        type: stringValue(data.type) ?? "application/octet-stream",
+        url: stringValue(data.url) ?? `/platform/messages/attachments/${id}`,
+      };
+    })
+    .filter((item): item is MessageAttachment => item !== null);
+}
+
+function attachmentRootDirectory() {
+  return path.resolve(process.env.MESSAGE_ATTACHMENT_DIR ?? path.join(process.cwd(), "data", "message-attachments"));
+}
+
+function attachmentOrganizationDirectory(organizationId: string) {
+  return path.join(attachmentRootDirectory(), organizationId);
+}
+
+function attachmentStoragePath(organizationId: string, attachmentId: string) {
+  return path.join(attachmentOrganizationDirectory(organizationId), `${attachmentId}.bin`);
+}
+
+function attachmentMetadataPath(organizationId: string, attachmentId: string) {
+  return path.join(attachmentOrganizationDirectory(organizationId), `${attachmentId}.json`);
+}
+
+function headerValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+}
+
+function decodeHeaderValue(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function sanitizeFileName(value: string) {
+  return value
+    .replace(/[/\\?%*:|"<>]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 180);
+}
+
+function sanitizeContentType(value: string | null) {
+  return (value ?? "application/octet-stream").split(";")[0]?.trim().toLowerCase() || "application/octet-stream";
+}
+
+function isAllowedAttachmentType(value: string) {
+  if (value.startsWith("image/")) return ["image/png", "image/jpeg", "image/webp", "image/gif"].includes(value);
+  return [
+    "application/pdf",
+    "text/plain",
+    "text/csv",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/zip",
+    "application/octet-stream",
+  ].includes(value);
+}
+
+function isAttachmentId(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function contentDispositionName(value: string) {
+  return sanitizeFileName(value).replace(/"/g, "'");
 }
 
 function stringValue(value: unknown) {
@@ -460,9 +786,14 @@ function ensureMessageTables() {
         organization_id uuid not null references organizations(id) on delete cascade,
         sender_user_id uuid not null references users(id) on delete cascade,
         body text not null,
+        attachments jsonb not null default '[]'::jsonb,
         read_at timestamp with time zone,
         created_at timestamp with time zone not null default now()
       )
+    `);
+    await db.execute(sql`
+      alter table direct_messages
+      add column if not exists attachments jsonb not null default '[]'::jsonb
     `);
     await db.execute(sql`
       create index if not exists direct_messages_conversation_created_idx

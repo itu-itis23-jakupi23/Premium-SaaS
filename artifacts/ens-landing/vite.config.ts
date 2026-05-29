@@ -52,6 +52,14 @@ export default defineConfig(async ({ mode }) => {
     fs: {
       strict: true,
     },
+    // Proxy all /api calls to the Express backend in development.
+    // Start the backend with: npm run server
+    proxy: {
+      "/api": {
+        target: `http://localhost:${process.env.API_PORT ?? 5000}`,
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     port,

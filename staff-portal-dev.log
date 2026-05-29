@@ -1,0 +1,245 @@
+
+  [32m[1mVITE[22m v7.3.2[39m  [42m [1mstaff[22m [49m  [2mready in [0m[1m904[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5174[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.56.1:[1m5174[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.20.0.13:[1m5174[22m/[39m
+[2m1:34:49 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/contexts/AuthContext.tsx, /src/index.css[22m
+[2m1:34:50 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/contexts/AuthContext.tsx[22m Could not Fast Refresh ("getRoleDashboard" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m1:34:50 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/pages/auth/Signup.tsx, /src/pages/auth/Login.tsx, /src/components/ProtectedRoute.tsx, /src/pages/chief/ChiefSettings.tsx, /src/components/layouts/DashboardLayout.tsx, /src/pages/client/ClientProfile.tsx[22m
+[2m1:34:59 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/ProtectedRoute.tsx, /src/index.css[22m
+[2m1:35:15 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/auth/Login.tsx, /src/index.css[22m
+[2m1:35:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/Home.tsx, /src/index.css[22m
+[2m1:36:10 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/TeamLanding.tsx, /src/index.css[22m
+[2m1:36:27 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/TeamLanding.tsx, /src/index.css[22m
+[2m1:36:36 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/TeamLanding.tsx, /src/index.css[22m
+[2m1:36:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/TeamLanding.tsx, /src/index.css[22m
+[2m1:39:40 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/booth-render.html[22m
+[2m1:39:40 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m1:39:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m1:39:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdist/staff/index.html[22m
+[2m1:47:19 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m1:47:26 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m1:47:35 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m1:47:53 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m1:48:09 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m1:48:24 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m1:50:38 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m1:51:12 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/index.css[22m
+[2m1:51:18 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/index.css[22m
+[2m1:51:25 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/index.css[22m
+[2m1:51:39 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/index.css[22m
+[2m1:52:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefDashboard.tsx, /src/index.css[22m
+[2m1:52:28 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefDashboard.tsx, /src/index.css[22m
+[2m1:52:34 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefDashboard.tsx, /src/index.css[22m
+[2m1:52:44 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefDashboard.tsx, /src/index.css[22m
+[2m1:52:50 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefDashboard.tsx, /src/index.css[22m
+[2m1:53:00 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefDashboard.tsx, /src/index.css[22m
+[2m1:53:25 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefDashboard.tsx, /src/index.css[22m
+[2m1:53:36 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefDashboard.tsx, /src/index.css[22m
+[2m1:53:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefDashboard.tsx, /src/index.css[22m
+[2m1:54:10 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefDashboard.tsx, /src/index.css[22m
+[2m1:54:32 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/client/ClientDashboard.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMClients.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefManagers.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/components/layouts/DashboardLayout.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/client/ClientProfile.tsx[22m
+[2m1:55:49 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefManagers.tsx, /src/index.css[22m
+[2m1:56:01 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefManagers.tsx, /src/index.css[22m
+[2m1:56:18 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefManagers.tsx, /src/index.css[22m
+[2m1:56:27 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefManagers.tsx, /src/index.css[22m
+[2m1:56:34 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefManagers.tsx, /src/index.css[22m
+[2m1:56:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefManagers.tsx, /src/index.css[22m
+[2m1:57:38 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefManagers.tsx, /src/index.css[22m
+[2m1:58:15 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefDashboard.tsx, /src/index.css[22m
+[2m2:01:02 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMDashboard.tsx, /src/index.css[22m
+[2m2:01:51 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m2:02:00 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m2:02:07 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m2:02:19 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m2:02:35 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m2:02:51 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m2:03:28 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m2:06:23 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m2:06:31 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m2:06:54 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/layouts/DashboardLayout.tsx[22m
+[2m2:07:23 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/en.json[22m
+[2m2:07:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/it.json[22m
+[2m2:07:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/es.json[22m
+[2m2:07:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/fr.json[22m
+[2m2:07:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/pt.json[22m
+[2m2:07:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/tr.json[22m
+[2m2:07:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/de.json[22m
+[2m2:07:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/nl.json[22m
+[2m2:07:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/ja.json[22m
+[2m2:07:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/zh.json[22m
+[2m2:07:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/ar.json[22m
+[2m2:15:08 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mindex.html[22m
+[2m2:15:14 PM[22m [36m[1m[vite][22m[39m [32m.env.staff changed, restarting server...[39m
+[2m2:15:14 PM[22m [36m[1m[vite][22m[39m server restarted.
+[2m2:15:23 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMRequests.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/pm/PMClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m2:36:44 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMRequests.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/pm/PMClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m2:38:15 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m2:38:20 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m2:38:30 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m5:29:09 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMTasks.tsx, /src/index.css[22m
+[2m5:29:19 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMTasks.tsx, /src/index.css[22m
+[2m5:29:25 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMRequests.tsx, /src/index.css[22m
+[2m5:29:35 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMRequests.tsx, /src/index.css[22m
+[2m5:29:42 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMRequests.tsx, /src/index.css[22m
+[2m5:29:48 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m5:30:01 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m5:30:11 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m5:30:17 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefReports.tsx, /src/index.css[22m
+[2m5:30:30 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefReports.tsx, /src/index.css[22m
+[2m5:31:06 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefReports.tsx, /src/index.css[22m
+[2m5:31:24 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefReports.tsx, /src/index.css[22m
+[2m5:31:39 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefReports.tsx, /src/index.css[22m
+[2m5:37:38 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefClients.tsx, /src/index.css[22m
+[2m5:37:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefClients.tsx, /src/index.css[22m
+[2m5:37:51 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/index.css[22m
+[2m5:38:08 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/index.css[22m
+[2m5:38:30 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/index.css[22m
+[2m5:41:15 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m5:41:24 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m5:41:33 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m5:41:53 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m5:42:03 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m5:42:15 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m5:42:24 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m5:42:38 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMReports.tsx, /src/index.css[22m
+[2m5:42:52 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMReports.tsx, /src/index.css[22m
+[2m5:43:07 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMReports.tsx, /src/index.css[22m
+[2m5:43:16 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMReports.tsx, /src/index.css[22m
+[2m5:43:23 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMReports.tsx, /src/index.css[22m
+[2m5:43:31 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefCalendar.tsx, /src/index.css[22m
+[2m5:43:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefCalendar.tsx, /src/index.css[22m
+[2m5:43:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefMessages.tsx, /src/index.css[22m
+[2m5:44:07 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefMessages.tsx, /src/index.css[22m
+[2m5:44:16 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m5:53:02 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m5:53:28 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMCalendar.tsx, /src/index.css[22m
+[2m5:53:36 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMCalendar.tsx, /src/index.css[22m
+[2m5:54:44 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m5:55:07 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m5:56:02 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefCalendar.tsx, /src/index.css[22m
+[2m6:29:34 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefCalendar.tsx, /src/index.css[22m
+[2m6:36:39 PM[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m6:36:40 PM[22m [36m[1m[vite][22m[39m server restarted.
+[2m6:42:38 PM[22m [36m[1m[vite][22m[39m [32m.env.staff changed, restarting server...[39m
+[2m6:42:38 PM[22m [36m[1m[vite][22m[39m server restarted.
+[2m6:47:16 PM[22m [36m[1m[vite][22m[39m [32m.env.staff changed, restarting server...[39m
+[2m6:47:16 PM[22m [36m[1m[vite][22m[39m server restarted.
+[2m6:56:42 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/layouts/DashboardLayout.tsx[22m
+[2m6:56:47 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/layouts/DashboardLayout.tsx[22m
+[2m6:56:54 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/layouts/DashboardLayout.tsx[22m
+[2m6:57:10 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/layouts/DashboardLayout.tsx[22m
+[2m6:57:15 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMDashboard.tsx, /src/index.css[22m
+[2m6:57:20 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMDashboard.tsx, /src/index.css[22m
+[2m6:57:54 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m6:57:58 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m6:58:03 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m6:59:56 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m7:00:08 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m7:00:15 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/layouts/DashboardLayout.tsx[22m
+[2m7:00:24 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/layouts/DashboardLayout.tsx[22m
+[2m7:04:17 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m7:04:27 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/contexts/AuthContext.tsx, /src/index.css[22m
+[2m7:04:28 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/contexts/AuthContext.tsx[22m Could not Fast Refresh ("getRoleDashboard" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m7:04:28 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/pages/auth/Signup.tsx, /src/pages/chief/ChiefSettings.tsx, /src/components/ProtectedRoute.tsx, /src/pages/auth/Login.tsx, /src/pages/client/ClientProfile.tsx, /src/components/layouts/DashboardLayout.tsx, /src/pages/Home.tsx, /src/pages/TeamLanding.tsx[22m
+[2m7:04:50 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefManagers.tsx, /src/index.css[22m
+[2m7:16:58 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m7:17:08 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m7:17:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m7:17:31 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m7:17:44 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m7:17:52 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m7:17:59 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m7:18:09 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m7:18:25 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m7:18:49 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m7:18:58 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m7:19:09 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m7:19:45 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m7:23:32 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m7:23:37 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m7:23:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m7:23:50 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m7:24:00 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m7:24:10 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m7:24:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m7:24:54 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m7:27:25 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m7:27:32 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m7:27:37 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m7:27:45 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m7:27:50 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m7:27:56 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m7:28:03 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m7:28:08 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m7:28:15 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m7:28:27 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m11:16:59 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m11:17:10 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m11:18:54 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m11:19:03 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m11:19:13 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m11:19:19 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m11:19:28 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m11:19:33 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m11:19:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m11:19:58 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m11:20:07 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m11:20:47 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m11:22:01 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m11:22:20 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMJoin.tsx, /src/pages/chief/ChiefCalendar.tsx, /src/pages/pm/PMReports.tsx, /src/pages/chief/ChiefDashboard.tsx, /src/pages/pm/PMMessages.tsx, /src/pages/chief/ChiefSettings.tsx, /src/pages/chief/ChiefClients.tsx, /src/pages/chief/ChiefMessages.tsx, /src/pages/chief/ChiefReports.tsx, /src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/pages/client/ClientWorkspace.tsx, /src/pages/pm/PMDashboard.tsx, /src/pages/client/ClientDashboard.tsx, /src/pages/client/ClientProfile.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMCalendar.tsx, /src/pages/pm/PMTasks.tsx, /src/pages/chief/ChiefProjects.tsx, /src/pages/pm/PMWorkspace.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/chief/ChiefManagers.tsx, /src/components/layouts/DashboardLayout.tsx[22m
+[2m11:22:25 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMReports.tsx, /src/index.css[22m
+[2m11:22:45 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/en.json[22m
+[2m11:26:48 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMWorkspace.tsx, /src/index.css[22m
+[2m11:26:55 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMWorkspace.tsx, /src/index.css[22m
+[2m11:27:09 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMWorkspace.tsx, /src/index.css[22m
+[2m11:27:42 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMWorkspace.tsx, /src/index.css[22m
+[2m11:29:01 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMWorkspace.tsx, /src/index.css[22m
+[2m11:31:23 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m11:31:34 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m11:32:10 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMRequests.tsx, /src/index.css[22m
+[2m11:32:18 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMRequests.tsx, /src/index.css[22m
+[2m11:32:24 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMRequests.tsx, /src/index.css[22m
+[2m11:32:31 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMRequests.tsx, /src/index.css[22m
+[2m11:32:49 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:32:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:33:32 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:33:44 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:33:55 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:34:03 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:34:13 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:34:31 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMTasks.tsx, /src/index.css[22m
+[2m11:34:36 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMTasks.tsx, /src/index.css[22m
+[2m11:34:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMTasks.tsx, /src/index.css[22m
+[2m11:34:52 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMTasks.tsx, /src/index.css[22m
+[2m11:35:00 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMTasks.tsx, /src/index.css[22m
+[2m11:35:09 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMTasks.tsx, /src/index.css[22m
+[2m11:36:23 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/pm/PMClients.tsx, /src/pages/pm/PMRequests.tsx, /src/pages/pm/PMProjects.tsx, /src/pages/pm/PMTasks.tsx[22m
+[2m11:36:39 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:36:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:36:52 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:36:58 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:37:05 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMRequests.tsx, /src/index.css[22m
+[2m11:37:10 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMRequests.tsx, /src/index.css[22m
+[2m11:37:17 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMTasks.tsx, /src/index.css[22m
+[2m11:37:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMTasks.tsx, /src/index.css[22m
+[2m11:37:30 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m11:37:34 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m11:50:21 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/en.json[22m
+[2m11:50:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMCalendar.tsx, /src/index.css[22m
+[2m11:50:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMDashboard.tsx, /src/index.css[22m
+[2m11:50:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:50:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMTasks.tsx, /src/index.css[22m
+[2m11:50:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMRequests.tsx, /src/index.css[22m
+[2m11:50:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMMessages.tsx, /src/index.css[22m
+[2m11:50:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefManagers.tsx, /src/index.css[22m
+[2m11:50:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMClients.tsx, /src/index.css[22m
+[2m11:50:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefProjects.tsx, /src/index.css[22m
+[2m11:50:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/chief/ChiefWorkspaceMonitor.tsx, /src/index.css[22m
+[2m11:51:07 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/i18n/locales/en.json[22m
+[2m11:51:13 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:51:20 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:51:27 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/pm/PMProjects.tsx, /src/index.css[22m
+[2m11:51:54 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m11:51:54 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m

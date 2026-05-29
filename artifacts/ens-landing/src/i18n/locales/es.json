@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "startDesigning": "Empezar a diseñar",
     "watchDemo": "Ver demo",
@@ -9,7 +9,9 @@
     "logIn": "Entrar",
     "learnMore": "Saber más",
     "copyright": "© {{year}} ENS Expo Solutions Ltd. Todos los derechos reservados.",
-    "internalOnly": "Solo uso interno"
+    "internalOnly": "Solo uso interno",
+    "vsLastMonth": "vs mes anterior",
+    "clickToView": "Haga clic para ver →"
   },
   "nav": {
     "features": "Funciones",
@@ -45,20 +47,54 @@
       "heading": "Todo lo que necesitas para",
       "headingAccent": "diseñar y entregar",
       "subheading": "Una suite completa de diseño y gestión de proyectos construida específicamente para la industria de exposiciones.",
-      "realtime": { "title": "Canvas 3D en tiempo real", "desc": "Arrastra y suelta componentes del sistema en un escenario 3D en vivo. Lo que ves es lo que se construye." },
-      "octanorm": { "title": "Sistema Octanorm", "desc": "Sistema modular Octanorm completo con perfiles de 40 mm y 50 mm precisos, conectores y paneles." },
-      "maxima": { "title": "Marco Maxima", "desc": "Sistema de extrusión de aluminio Maxima resistente con vanos configurables y opciones de relleno." },
-      "client": { "title": "Vista previa del cliente", "desc": "Comparte un enlace 3D en vivo con los clientes. Anotan directamente en el modelo — sin necesidad de cuenta." },
-      "analytics": { "title": "Analítica de proyectos", "desc": "Sigue la velocidad del proyecto, los ciclos de aprobación, las previsiones de costes y la utilización del equipo en tiempo real." },
-      "automation": { "title": "Automatización inteligente", "desc": "Genera automáticamente planos, alzados, listas de piezas y estimaciones de costes con un solo clic." }
+      "realtime": {
+        "title": "Canvas 3D en tiempo real",
+        "desc": "Arrastra y suelta componentes del sistema en un escenario 3D en vivo. Lo que ves es lo que se construye."
+      },
+      "octanorm": {
+        "title": "Sistema Octanorm",
+        "desc": "Sistema modular Octanorm completo con perfiles de 40 mm y 50 mm precisos, conectores y paneles."
+      },
+      "maxima": {
+        "title": "Marco Maxima",
+        "desc": "Sistema de extrusión de aluminio Maxima resistente con vanos configurables y opciones de relleno."
+      },
+      "client": {
+        "title": "Vista previa del cliente",
+        "desc": "Comparte un enlace 3D en vivo con los clientes. Anotan directamente en el modelo — sin necesidad de cuenta."
+      },
+      "analytics": {
+        "title": "Analítica de proyectos",
+        "desc": "Sigue la velocidad del proyecto, los ciclos de aprobación, las previsiones de costes y la utilización del equipo en tiempo real."
+      },
+      "automation": {
+        "title": "Automatización inteligente",
+        "desc": "Genera automáticamente planos, alzados, listas de piezas y estimaciones de costes con un solo clic."
+      }
     },
     "howItWorks": {
       "heading": "Del briefing a la construcción en",
       "headingAccent": "cuatro pasos",
-      "brief": { "step": "01", "title": "Subir briefing", "desc": "Importa el briefing del evento, el plano o la ficha de especificaciones del stand de tu cliente." },
-      "design": { "step": "02", "title": "Diseñar en 3D", "desc": "Construye el stand usando componentes del sistema Octanorm o Maxima y la biblioteca de mobiliario." },
-      "review": { "step": "03", "title": "Revisión del cliente", "desc": "Envía un enlace compartible. El cliente revisa y aprueba directamente en el modelo 3D." },
-      "deliver": { "step": "04", "title": "Exportar y entregar", "desc": "Exportación con un clic a documentos de producción, planos y calendarios de piezas." }
+      "brief": {
+        "step": "01",
+        "title": "Subir briefing",
+        "desc": "Importa el briefing del evento, el plano o la ficha de especificaciones del stand de tu cliente."
+      },
+      "design": {
+        "step": "02",
+        "title": "Diseñar en 3D",
+        "desc": "Construye el stand usando componentes del sistema Octanorm o Maxima y la biblioteca de mobiliario."
+      },
+      "review": {
+        "step": "03",
+        "title": "Revisión del cliente",
+        "desc": "Envía un enlace compartible. El cliente revisa y aprueba directamente en el modelo 3D."
+      },
+      "deliver": {
+        "step": "04",
+        "title": "Exportar y entregar",
+        "desc": "Exportación con un clic a documentos de producción, planos y calendarios de piezas."
+      }
     },
     "testimonials": {
       "heading": "Con la confianza de los",
@@ -104,7 +140,8 @@
       "security": "Seguridad",
       "cookies": "Política de cookies",
       "gdpr": "RGPD"
-    }
+    },
+    "pageTitle": "ENS — Plataforma de diseño de stands y exposiciones"
   },
   "team": {
     "hero": {
@@ -169,6 +206,1949 @@
       "itSupport": "Soporte TI",
       "privacy": "Política de privacidad",
       "security": "Seguridad"
+    },
+    "pageTitle": "ENS Portal de Equipo — Hub de Personal y Clientes",
+    "chiefFeatures": {
+      "workspaceMonitor": {
+        "title": "Monitor de espacio de trabajo",
+        "desc": "Supervisión en vivo de cada sesión de diseño activa en todos los proyectos."
+      },
+      "teamManagement": {
+        "title": "Gestión del equipo",
+        "desc": "Asignar gerentes, rastrear cargas de trabajo y administrar accesos."
+      },
+      "clientPortfolio": {
+        "title": "Cartera de clientes",
+        "desc": "Vista completa de todas las cuentas, contactos y contratos activos."
+      },
+      "analytics": {
+        "title": "Análisis e Informes",
+        "desc": "KPIs de proyectos, tasas de aprobación y cuadros de mando de ingresos."
+      },
+      "approvalGateway": {
+        "title": "Portal de aprobación",
+        "desc": "Aprobación estructural y de diseño final antes de la producción."
+      },
+      "commsHub": {
+        "title": "Hub de comunicaciones",
+        "desc": "Mensajería centralizada entre clientes, PMs y subcontratistas."
+      }
+    },
+    "pmFeatures": {
+      "boothWorkspace": {
+        "title": "Espacio de trabajo 3D",
+        "desc": "Editor Octanorm/Maxima completo con diseño colaborativo en tiempo real."
+      },
+      "clientMgmt": {
+        "title": "Gestión de clientes",
+        "desc": "Gestionar briefs, contactos y sesiones de feedback en vivo por proyecto."
+      },
+      "taskTracker": {
+        "title": "Seguimiento de tareas",
+        "desc": "Tablero Kanban para fases de producción, diseño y entrega."
+      },
+      "pipeline": {
+        "title": "Pipeline de proyectos",
+        "desc": "Rastrear todos los proyectos activos y próximos con hitos."
+      },
+      "requestMgmt": {
+        "title": "Gestión de solicitudes",
+        "desc": "Gestionar cambios, registros de revisión y cadenas de aprobación."
+      },
+      "messaging": {
+        "title": "Mensajería",
+        "desc": "Mensajería directa y grupal con clientes y la oficina principal."
+      }
+    },
+    "workflowSteps": {
+      "brief": {
+        "title": "Brief del cliente",
+        "desc": "El Chief recibe y asigna el brief a un Gerente de Proyecto."
+      },
+      "workspace": {
+        "title": "Configuración",
+        "desc": "El PM crea el proyecto y configura las dimensiones y el sistema del stand."
+      },
+      "design": {
+        "title": "Diseño 3D",
+        "desc": "El PM construye el stand en el espacio de trabajo con las bibliotecas estructurales."
+      },
+      "review": {
+        "title": "Revisión del Chief",
+        "desc": "El Chief monitorea el progreso y proporciona orientación estructural."
+      },
+      "signoff": {
+        "title": "Aprobación del cliente",
+        "desc": "El cliente revisa el diseño y envía solicitudes de cambio."
+      },
+      "approval": {
+        "title": "Aprobación final",
+        "desc": "El Chief aprueba el diseño final y lo lanza a producción."
+      },
+      "export": {
+        "title": "Exportación",
+        "desc": "El PM exporta documentación, listas de corte y cronogramas."
+      }
+    }
+  },
+  "chief": {
+    "nav": {
+      "chief": "Jefe",
+      "dashboard": "Panel",
+      "clients": "Clientes",
+      "managers": "Managers",
+      "projects": "Proyectos",
+      "monitor": "Monitor de espacios",
+      "reports": "Informes",
+      "messages": "Mensajes",
+      "calendar": "Calendario",
+      "settings": "Ajustes"
+    },
+    "common": {
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "assign": "Asignar",
+      "message": "Mensaje",
+      "rebalance": "Reequilibrar",
+      "openDetails": "Abrir detalles",
+      "viewCalendar": "Ver calendario",
+      "sendReminder": "Enviar recordatorio",
+      "assignments": "Asignaciones",
+      "inviteManager": "Invitar manager",
+      "keepEditing": "Seguir editando",
+      "discardChanges": "Descartar cambios",
+      "selectAll": "Seleccionar todo",
+      "clear": "Limpiar",
+      "project": "Proyecto",
+      "noDeadline": "Sin fecha límite",
+      "status": {
+        "active": "Activo",
+        "pending": "Pendiente",
+        "onLeave": "De baja",
+        "completed": "Completado",
+        "delayed": "Retrasado",
+        "unassigned": "Sin asignar",
+        "highLoad": "Alta carga",
+        "accepted": "Aceptado",
+        "expired": "Expirado"
+      }
+    },
+    "dashboard": {
+      "title": "Panel del director",
+      "exportReports": "Exportar informes",
+      "excelExported": "Informe Excel exportado",
+      "noActivity": "Aún no se ha registrado actividad.",
+      "viewAllActivity": "Ver toda la actividad",
+      "showRecentActivity": "Mostrar actividad reciente",
+      "commandCenter": "Centro de mando",
+      "recentActivity": "Actividad reciente",
+      "noManagerAssignments": "No se encontraron asignaciones de managers.",
+      "loadError": "No se pudieron cargar los datos del panel",
+      "charts": {
+        "projectActivity": "Actividad de proyectos",
+        "projectActivityDesc": "Actividad en todos los proyectos durante los últimos 7 días",
+        "projectStatus": "Estado de proyectos",
+        "projectStatusDesc": "Distribución de estado en {{count}} proyectos activos",
+        "managerPerformance": "Rendimiento de managers",
+        "managerPerformanceDesc": "Proyectos asignados por manager"
+      },
+      "stats": {
+        "totalClients": "Clientes totales",
+        "activeProjects": "Proyectos activos",
+        "managers": "Managers",
+        "delayedProjects": "Proyectos retrasados",
+        "needsAction": "Requiere acción",
+        "pendingApprovals": "Aprobaciones pendientes",
+        "activeWorkspaces": "Espacios de trabajo activos",
+        "saved": "Guardado",
+        "db": "BD",
+        "live": "En vivo",
+        "assigned": "Asignado",
+        "open": "Abierto",
+        "clear": "Resuelto"
+      },
+      "insights": {
+        "delayedTitle": "Proyectos retrasados",
+        "dueSoonTitle": "Con plazo en 14 días",
+        "unassignedTitle": "Trabajo sin asignar",
+        "approvalsTitle": "Aprobaciones pendientes",
+        "noDelayed": "No hay proyectos retrasados registrados actualmente.",
+        "firstInQueue": "{{name}} está primero en la cola de recuperación.",
+        "noDueSoon": "Ningún plazo de proyecto dentro de los próximos 14 días.",
+        "nearestDeadline": "{{name}} tiene el plazo más cercano.",
+        "noUnassigned": "Cada proyecto activo tiene un manager asignado.",
+        "unassignedNeeds": "{{name}} aún necesita un jefe de proyecto.",
+        "noApprovals": "No hay cuellos de botella de aprobación registrados.",
+        "approvalsWaiting": "Las aprobaciones de clientes esperan acción.",
+        "reviewProjects": "Revisar proyectos",
+        "openCalendar": "Abrir calendario",
+        "assignManagers": "Asignar managers",
+        "openQueue": "Abrir cola"
+      },
+      "pageTitle": "Panel de control | ENS"
+    },
+    "managers": {
+      "title": "Gestión de managers",
+      "refresh": "Actualizar datos",
+      "noMatch": "Ningún manager coincide con los filtros actuales.",
+      "tiles": {
+        "teamLoad": "Carga del equipo",
+        "activeManagers": "Managers activos",
+        "delayedProjects": "Proyectos retrasados",
+        "unassignedItems": "Elementos sin asignar",
+        "pendingInvites": "Invitaciones pendientes"
+      },
+      "filters": {
+        "searchPlaceholder": "Buscar managers, clientes, proyectos",
+        "allStatuses": "Todos los estados",
+        "allManagers": "Todos los managers",
+        "highLoad": "Alta carga",
+        "sortHighest": "Mayor carga",
+        "sortLowest": "Menor carga",
+        "sortProjects": "Más proyectos activos",
+        "sortRating": "Mejor puntuación",
+        "cardView": "Vista de tarjetas",
+        "tableView": "Vista de tabla"
+      },
+      "views": {
+        "title": "Vistas guardadas",
+        "desc": "Reutilizar filtros, ordenación y diseño.",
+        "namePlaceholder": "Nombrar vista",
+        "deleteView": "Eliminar vista {{name}}"
+      },
+      "invitations": {
+        "title": "Invitaciones pendientes",
+        "desc": "Los managers invitados aparecen aquí hasta que acepten. Aún no pueden recibir asignaciones.",
+        "expires": "expira el {{date}}",
+        "moreInvites": "+{{count}} más",
+        "copyLink": "Copiar enlace de invitación para {{email}}",
+        "resend": "Reenviar invitación a {{email}}",
+        "revoke": "Revocar invitación para {{email}}"
+      },
+      "invite": {
+        "title": "Invitar manager",
+        "desc": "Añadir un jefe de proyecto al espacio de trabajo del director.",
+        "namePlaceholder": "Sarah Mitchell",
+        "emailPlaceholder": "manager@empresa.com",
+        "sendInvite": "Enviar invitación",
+        "nameLabel": "Nombre",
+        "emailLabel": "Correo electrónico",
+        "emailInvalid": "Por favor introduce un correo electrónico válido.",
+        "defaultName": "Nuevo Manager"
+      },
+      "statusChange": {
+        "title": "Confirmar cambio de estado",
+        "markOnLeave": "Marcar de baja",
+        "markActive": "Marcar activo",
+        "confirmPrefix": "¿Está seguro de que desea marcar",
+        "confirmSuffix": "como",
+        "onLeaveNote": "Sus proyectos activos seguirán asignados pero la carga se limitará.",
+        "updated": "Estado del manager actualizado"
+      },
+      "rebalance": {
+        "title": "Reequilibrar carga",
+        "desc": "Revisar el cambio propuesto antes de confirmar.",
+        "projectToMove": "Proyecto a mover",
+        "from": "De",
+        "to": "A",
+        "confirm": "Confirmar reequilibrio",
+        "done": "Carga reequilibrada"
+      },
+      "assignments": {
+        "titleTeam": "Asignaciones del equipo",
+        "titleFocused": "Asignaciones – {{name}}",
+        "descTeam": "Reasignar clientes y proyectos en el equipo.",
+        "descFocused": "Gestionar clientes y proyectos asignados a {{name}}.",
+        "bulkTitle": "Asignación masiva",
+        "bulkDesc": "Seleccionar filas, elegir manager y aplicar antes de guardar.",
+        "selected": "seleccionado(s)",
+        "applySelected": "Aplicar selección",
+        "cascadeLabel": "Mover también los proyectos de este cliente",
+        "cascadeDesc": "Al reasignar un cliente, todos sus proyectos van al mismo manager.",
+        "saveAssignments": "Guardar asignaciones",
+        "noClients": "No hay clientes disponibles.",
+        "noProjects": "No hay proyectos disponibles.",
+        "clients": "Clientes",
+        "projects": "Proyectos",
+        "saved": "Asignaciones actualizadas",
+        "selectRow": "Seleccionar {{name}}"
+      },
+      "discard": {
+        "title": "¿Descartar cambios de asignación?",
+        "desc": "Tiene ediciones no guardadas. Al cerrar se descartarán."
+      },
+      "card": {
+        "computedWorkload": "Carga calculada",
+        "delayed": "retrasado",
+        "urgent": "urgente",
+        "ratingNew": "Nuevo",
+        "ratingNA": "N/D"
+      },
+      "table": {
+        "manager": "Manager",
+        "status": "Estado",
+        "workload": "Carga",
+        "projects": "Proyectos",
+        "clients": "Clientes",
+        "nextDeadline": "Próximo plazo",
+        "actions": "Acciones"
+      },
+      "detail": {
+        "workload": "Carga",
+        "projects": "Proyectos",
+        "clients": "Clientes",
+        "tabs": {
+          "overview": "Resumen",
+          "projects": "Proyectos",
+          "clients": "Clientes",
+          "activity": "Actividad"
+        },
+        "overview": {
+          "title": "Salud de la carga",
+          "desc": "Proyectos activos actuales y carga de clientes",
+          "delayed": "Retrasado",
+          "dueSoon": "Próximo plazo",
+          "nextDeadline": "Próximo plazo",
+          "rating": "Puntuación",
+          "none": "Ninguno"
+        },
+        "noProjects": "No hay proyectos asignados.",
+        "noClients": "No hay clientes asignados."
+      },
+      "audit": {
+        "title": "Registro de actividad",
+        "desc": "Historial de asignaciones, accesos, reequilibrios y recordatorios",
+        "searchPlaceholder": "Buscar en el historial",
+        "allActivity": "Toda la actividad",
+        "success": "Éxito",
+        "warnings": "Advertencias",
+        "info": "Info",
+        "noActivity": "Aún no se ha registrado actividad.",
+        "showAll": "Mostrar las {{count}} entradas",
+        "showLess": "Mostrar menos ({{count}} más recientes)",
+        "team": "Equipo",
+        "exportCsv": "Exportar como CSV",
+        "action": {
+          "invitation": "Invitación",
+          "access": "Acceso",
+          "assignment": "Asignación",
+          "rebalance": "Reequilibrio",
+          "reminder": "Recordatorio"
+        },
+        "detail": {
+          "invited": "Invitación en cola para {{name}}.",
+          "statusChanged": "{{name}} marcado como {{status}}.",
+          "assignmentsSaved": "Cambios de asignación guardados.",
+          "rebalanced": "{{project}} movido de {{from}} a {{to}}.",
+          "reminded": "Recordatorio en la app en cola para {{name}} — {{count}} elemento(s) prioritario(s)."
+        },
+        "justNow": "Justo ahora"
+      },
+      "actions": {
+        "openDetails": "Abrir detalles",
+        "assignments": "Asignaciones",
+        "viewCalendar": "Ver calendario",
+        "rebalanceWorkload": "Reequilibrar carga",
+        "markOnLeave": "Marcar de baja",
+        "markActive": "Marcar activo",
+        "sendReminder": "Enviar recordatorio",
+        "assign": "Asignar",
+        "rebalance": "Reequilibrar",
+        "message": "Mensaje"
+      },
+      "toast": {
+        "loadError": "El espacio de trabajo de managers no pudo cargarse",
+        "viewLoaded": "Vista cargada: {{name}}",
+        "viewSaved": "Vista de managers guardada: {{name}}",
+        "viewRemoved": "Vista guardada eliminada",
+        "inviteCreated": "Invitación en cola para {{name}}",
+        "inviteError": "No se pudo crear la invitación del manager",
+        "inviteResent": "Invitación reenviada a {{email}}",
+        "inviteResendError": "No se pudo reenviar la invitación",
+        "inviteRevoked": "Invitación revocada",
+        "inviteRevokeError": "No se pudo revocar la invitación",
+        "inviteCopyFirst": "Reenvía esta invitación primero para generar un enlace copiable",
+        "inviteCopied": "Enlace de invitación copiado",
+        "inviteCopyError": "No se pudo copiar el enlace de invitación",
+        "statusUpdated": "Estado del manager actualizado",
+        "statusError": "No se pudo actualizar el estado del manager",
+        "assignNoChange": "Sin cambios de asignación para {{name}}",
+        "assignError": "Las asignaciones no pudieron guardarse",
+        "assignUpdated": "Asignaciones actualizadas",
+        "rebalanceNoTarget": "No hay managers activos disponibles para reequilibrar",
+        "rebalanceNormal": "La carga de {{name}} ({{pct}}%) está en rango normal — no se necesita reequilibrio",
+        "rebalanceNoProject": "No se encontró proyecto o manager destino adecuado para reequilibrar",
+        "rebalanceError": "La carga de trabajo no pudo reequilibrarse",
+        "rebalanceDone": "Carga de trabajo reequilibrada",
+        "reminderSent": "Recordatorio en cola para {{name}} — notificación creada",
+        "reminderError": "No se pudo enviar el recordatorio"
+      }
+    },
+    "reports": {
+      "title": "Informes y Analítica",
+      "loadError": "No se pudieron cargar los datos del informe.",
+      "exportExcel": "Exportar Excel",
+      "bottlenecks": "Cuellos de botella",
+      "leaderboardTitle": "Clasificación de GPs",
+      "leaderboardDesc": "Clasificado por satisfacción del cliente / {{range}}",
+      "toast": {
+        "exported": "Informe Excel exportado"
+      },
+      "kpi": {
+        "revenue": "Ingresos totales",
+        "revenueDetail": "+12,5 % vs período anterior",
+        "projects": "Proyectos",
+        "projectsDetail": "Rango seleccionado: {{range}}",
+        "pms": "GPs",
+        "pmsDetail": "Clasificado por entrega",
+        "satisfaction": "Satisf. media",
+        "satisfactionDetail": "Puntuación cliente"
+      },
+      "cards": {
+        "revenueTitle": "Ingresos vs Objetivo",
+        "revenueDesc": "{{range}} / Total ${{total}}K / {{projects}} proyectos",
+        "pmPerfTitle": "Rendimiento de GPs",
+        "pmPerfDesc": "Proyectos completados vs tasa de entrega puntual",
+        "trendTitle": "Tendencia de ingresos 12 meses",
+        "trendDesc": "Trayectoria de ingresos del último año",
+        "systemTitle": "División del sistema y cuellos de botella",
+        "systemDesc": "Uso del sistema y tiempos de espera"
+      },
+      "chart": {
+        "revenue": "Ingresos",
+        "target": "Objetivo",
+        "onTimePct": "A tiempo %",
+        "satisfaction": "Satisfacción"
+      },
+      "table": {
+        "rank": "Rango",
+        "pm": "GP",
+        "projects": "Proyectos",
+        "onTime": "A tiempo",
+        "satisfaction": "Satisfacción",
+        "revenue": "Ingresos",
+        "month": "Mes"
+      },
+      "export": {
+        "colReport": "Informe",
+        "colRange": "Rango",
+        "colExportedAt": "Exportado el",
+        "colRevenue": "Ingresos totales",
+        "colTarget": "Objetivo total",
+        "colProjects": "Proyectos totales",
+        "colRevenueDollar": "Ingresos ($)",
+        "colTargetDollar": "Objetivo ($)",
+        "colOnTimePct": "A tiempo (%)",
+        "colSystem": "Sistema",
+        "colShare": "Cuota (%)",
+        "colProject": "Proyecto",
+        "colWaitDays": "Días de espera",
+        "colStage": "Etapa",
+        "rowTotals": "Totales"
+      }
+    },
+    "messages": {
+      "title": "Mensajes",
+      "justNow": "ahora mismo",
+      "loadError": "No se pudieron cargar los mensajes de la exposición.",
+      "conversationError": "No se pudo cargar la conversación.",
+      "sendError": "No se pudo enviar el mensaje.",
+      "noMessagesDefault": "Sin mensajes aún",
+      "noClient": "Sin cliente vinculado",
+      "loading": "Cargando exposiciones…",
+      "noExhibitions": "No se encontraron exposiciones.",
+      "noMessages": "Aún no hay mensajes para {{name}}.",
+      "selectManager": "Selecciona un gestor de proyectos.",
+      "scopedTo": "Vinculado a",
+      "send": "Enviar",
+      "sending": "Enviando",
+      "projectCount": "{{count}} proyectos",
+      "inputPlaceholder": "Mensaje a {{manager}} sobre {{exhibition}}…",
+      "badges": {
+        "exhibitions": "{{count}} exposiciones",
+        "unread": "{{count}} sin leer"
+      },
+      "section": {
+        "title": "Hilos de exposición",
+        "desc": "Un espacio de conversación por exposición."
+      },
+      "searchPlaceholder": "Buscar exposiciones, clientes, managers",
+      "sidebar": {
+        "title": "Gestores de proyectos",
+        "assigned": "{{count}} asignado(s)",
+        "noManager": "Aún no hay gestor de proyectos asignado a esta exposición."
+      },
+      "status": {
+        "delayed": "Retrasado",
+        "active": "Activo",
+        "completed": "Completado",
+        "pending": "Pendiente"
+      },
+      "actions": {
+        "call": "Iniciar llamada",
+        "video": "Iniciar videollamada",
+        "options": "Opciones de conversación",
+        "attach": "Adjuntar archivo",
+        "send": "Enviar mensaje",
+        "emoji": "Insertar emoji"
+      },
+      "toast": {
+        "call": "Llamada iniciada con {{name}} para {{exhibition}}",
+        "video": "Sala de video preparada para {{exhibition}}",
+        "options": "Opciones de conversación abiertas",
+        "attachment": "Selector de archivos abierto para {{exhibition}}"
+      }
+    },
+    "clients": {
+      "title": "Gestión de clientes",
+      "addClient": "Añadir cliente",
+      "loadError": "No se pudieron cargar los clientes.",
+      "loadingClients": "Cargando clientes…",
+      "noClients": "No se encontraron clientes para esta búsqueda/filtro.",
+      "searchPlaceholder": "Buscar clientes o exposiciones…",
+      "showing": "{{start}}-{{end}} de {{total}} clientes",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "cancel": "Cancelar",
+      "saving": "Guardando…",
+      "emailError": "Por favor, introduzca una dirección de correo válida.",
+      "filter": {
+        "all": "Todos",
+        "lead": "Prospecto",
+        "pendingApproval": "Aprobación pendiente",
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "archived": "Archivado"
+      },
+      "status": {
+        "active": "Activo",
+        "pendingApproval": "Aprobación pendiente",
+        "lead": "Prospecto",
+        "inactive": "Inactivo",
+        "archived": "Archivado"
+      },
+      "table": {
+        "clientName": "Nombre del cliente",
+        "company": "Empresa",
+        "assignedPm": "GP asignado",
+        "exhibition": "Exposición",
+        "status": "Estado",
+        "lastActivity": "Última actividad",
+        "actions": "Acciones"
+      },
+      "menu": {
+        "assignManager": "Asignar manager",
+        "openWorkspace": "Abrir espacio de trabajo",
+        "editClient": "Editar cliente",
+        "viewDetails": "Ver detalles",
+        "archive": "Archivar cliente"
+      },
+      "toast": {
+        "added": "{{name}} añadido a clientes.",
+        "addError": "El cliente no pudo ser añadido.",
+        "updated": "{{name}} actualizado.",
+        "updateError": "El cliente no pudo ser actualizado.",
+        "noManagers": "No hay gestores de proyecto activos disponibles.",
+        "assigned": "{{client}} asignado a {{manager}}.",
+        "assignError": "La asignación no pudo guardarse.",
+        "archived": "{{name}} archivado.",
+        "archiveError": "El cliente no pudo ser eliminado.",
+        "openingWorkspace": "Abriendo {{name}} en monitor jefe.",
+        "defaultClient": "Cliente",
+        "unassigned": "Sin asignar"
+      },
+      "addDialog": {
+        "title": "Añadir cliente",
+        "desc": "Crear un registro de cliente en esta vista.",
+        "name": "Nombre del cliente",
+        "company": "Empresa",
+        "exhibition": "Exposición",
+        "email": "Correo de contacto",
+        "submit": "Añadir cliente"
+      },
+      "assignDialog": {
+        "title": "Asignar gestor de proyectos",
+        "desc": "Seleccionar un gestor para {{name}}.",
+        "placeholder": "Seleccionar gestor",
+        "submit": "Asignar"
+      },
+      "editDialog": {
+        "title": "Editar cliente",
+        "desc": "Actualizar datos del cliente para flujos de trabajo.",
+        "contactName": "Nombre de contacto",
+        "submit": "Guardar cambios"
+      },
+      "archiveDialog": {
+        "title": "Archivar cliente",
+        "desc": "¿Archivar {{name}}? Los clientes con proyectos activos están protegidos.",
+        "blockers": "Proyectos activos que bloquean el archivado",
+        "archiving": "Archivando…",
+        "submit": "Archivar"
+      },
+      "detailDialog": {
+        "contact": "Contacto",
+        "email": "Correo",
+        "pm": "GP",
+        "exhibition": "Exposición",
+        "status": "Estado"
+      }
+    },
+    "projects": {
+      "title": "Pipeline de Proyectos",
+      "breadcrumb": "Proyectos",
+      "viewKanban": "Kanban",
+      "viewList": "Lista",
+      "searchPlaceholder": "Buscar...",
+      "metric": {
+        "highRisk": "Alto riesgo",
+        "waiting": "En espera",
+        "delayed": "Retrasado",
+        "matching": "Proyectos encontrados"
+      },
+      "stage": {
+        "intake": "Recepción",
+        "design": "Diseño",
+        "review": "Revisión",
+        "production": "Producción",
+        "closed": "Cerrado"
+      },
+      "filter": {
+        "all": "Todos",
+        "active": "Activo",
+        "pending": "Pendiente",
+        "delayed": "Retrasado",
+        "completed": "Completado"
+      },
+      "priority": {
+        "all": "Todos",
+        "high": "Alta",
+        "medium": "Media",
+        "low": "Baja"
+      },
+      "kanban": {
+        "loading": "Cargando",
+        "empty": "Vacío"
+      },
+      "list": {
+        "loading": "Cargando proyectos...",
+        "noMatch": "No hay proyectos que coincidan.",
+        "col": {
+          "project": "Proyecto",
+          "client": "Cliente",
+          "pm": "JP",
+          "system": "Sistema",
+          "stage": "Fase",
+          "progress": "Progreso",
+          "health": "Estado"
+        }
+      },
+      "paging": {
+        "showing": "Mostrando {{start}}–{{end}} de {{total}} proyectos",
+        "filtered": "/ {{count}} visibles tras filtro de prioridad",
+        "previous": "Anterior",
+        "next": "Siguiente"
+      },
+      "footer": {
+        "note": "Página: {{count}} visibles / Flechas para cambiar fase"
+      },
+      "card": {
+        "waiting": "{{days}}d en espera",
+        "noDate": "Sin fecha",
+        "movePrev": "Fase anterior",
+        "moveNext": "Fase siguiente",
+        "openMonitor": "Abrir monitor",
+        "editProject": "Editar proyecto"
+      },
+      "row": {
+        "edit": "Editar",
+        "open": "Abrir"
+      },
+      "edit": {
+        "title": "Editar proyecto",
+        "sheetDescription": "Actualiza los detalles, asignación, plazo y dimensiones del stand.",
+        "name": "Nombre del proyecto",
+        "namePlaceholder": "Stand AutoShow",
+        "client": "Cliente",
+        "clientPlaceholder": "FastCars SA",
+        "exhibition": "Exposición",
+        "exhibitionPlaceholder": "AutoShow",
+        "manager": "Jefe de proyecto",
+        "managerPlaceholder": "Seleccionar jefe de proyecto",
+        "keepManager": "Mantener asignación actual",
+        "unassigned": "Sin asignar",
+        "deadline": "Plazo",
+        "system": "Sistema",
+        "systemPlaceholder": "Sistema de stand",
+        "octanorm": "Octanorm",
+        "maxima": "Maxima",
+        "custom": "Personalizado",
+        "width": "Anchura (m)",
+        "depth": "Profundidad (m)",
+        "descriptionLabel": "Descripción",
+        "descriptionPlaceholder": "Notas sobre este proyecto",
+        "cancel": "Cancelar",
+        "saving": "Guardando...",
+        "save": "Guardar proyecto"
+      },
+      "close": {
+        "title": "Cerrar proyecto",
+        "description": "¿Mover {{name}} a Cerrado? Esto marca el proyecto como completado.",
+        "cancel": "Cancelar",
+        "closing": "Cerrando...",
+        "confirm": "Cerrar proyecto"
+      },
+      "error": {
+        "load": "No se pudieron cargar los proyectos",
+        "save": "No se pudo guardar el proyecto",
+        "stage": "No se pudo guardar la fase"
+      },
+      "toast": {
+        "updated": "{{name}} actualizado",
+        "openMonitor": "Abriendo monitor para {{name}}",
+        "moved": "{{name}} movido a {{stage}}"
+      },
+      "validate": {
+        "required": "El nombre del proyecto y el cliente son obligatorios.",
+        "dimensions": "La anchura y profundidad deben estar entre 1 y 100 metros."
+      }
+    },
+    "calendar": {
+      "title": "Calendario de Exposiciones",
+      "breadcrumb": "Calendario",
+      "addEvent": "Añadir evento",
+      "allMonths": "Todos los meses",
+      "prevMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente",
+      "today": "Hoy",
+      "addEventTitle": "Añadir evento este día",
+      "moreEvents": "+{{count}} más",
+      "exhibitionsThisMonth_one": "{{count}} Exposición este mes",
+      "exhibitionsThisMonth_other": "{{count}} Exposiciones este mes",
+      "yearExhibitions_one": "{{count}} exposición",
+      "yearExhibitions_other": "{{count}} exposiciones",
+      "noExhibitions": "Sin exposiciones",
+      "loading": "Cargando calendario de exposiciones...",
+      "status": {
+        "active": "Activo",
+        "completed": "Completado",
+        "delayed": "Retrasado",
+        "pending": "Pendiente"
+      },
+      "filter": {
+        "searchPlaceholder": "Buscar exposición, cliente, ciudad",
+        "pmPlaceholder": "Jefe de proyecto",
+        "allManagers": "Todos los jefes",
+        "clientPlaceholder": "Cliente",
+        "allClients": "Todos los clientes",
+        "statusPlaceholder": "Estado",
+        "allStatuses": "Todos los estados",
+        "shown": "{{count}} mostrados",
+        "resetFilters": "Restablecer filtros"
+      },
+      "form": {
+        "nameLabel": "Nombre de la exposición *",
+        "namePlaceholder": "ej. TechCon 2027",
+        "clientLabel": "Cliente",
+        "clientPlaceholder": "Empresa cliente",
+        "pmLabel": "Jefe de proyecto",
+        "pmPlaceholder": "Nombre del JP",
+        "startLabel": "Fecha de inicio *",
+        "endLabel": "Fecha de fin *",
+        "locationLabel": "Ubicación",
+        "locationPlaceholder": "Ciudad / Recinto",
+        "standLabel": "Tipo de stand",
+        "standPlaceholder": "ej. Maxima",
+        "statusLabel": "Estado"
+      },
+      "add": {
+        "title": "Añadir exposición",
+        "description": "Programar una nueva exposición en el calendario.",
+        "cancel": "Cancelar",
+        "saving": "Guardando...",
+        "save": "Guardar evento"
+      },
+      "edit": {
+        "title": "Editar exposición",
+        "description": "Actualizar los detalles de esta exposición.",
+        "cancel": "Cancelar",
+        "saving": "Guardando...",
+        "save": "Guardar cambios"
+      },
+      "detail": {
+        "description": "Detalles de la exposición",
+        "client": "Cliente",
+        "pm": "Jefe de proyecto",
+        "location": "Ubicación",
+        "standType": "Tipo de stand",
+        "startDate": "Fecha de inicio",
+        "endDate": "Fecha de fin",
+        "confirmDelete": "¿Eliminar permanentemente?",
+        "deleting": "Eliminando...",
+        "confirm": "Confirmar",
+        "cancel": "Cancelar",
+        "delete": "Eliminar",
+        "edit": "Editar",
+        "close": "Cerrar"
+      },
+      "error": {
+        "load": "No se pudieron cargar los eventos del calendario",
+        "save": "No se pudo guardar el evento",
+        "update": "No se pudo actualizar el evento",
+        "delete": "No se pudo eliminar el evento"
+      }
+    },
+    "monitor": {
+      "title": "Monitor de Espacios",
+      "breadcrumb": "Monitor",
+      "activeNow": "{{count}} activo(s)",
+      "refresh": "Actualizar",
+      "loading": "Cargando datos en vivo...",
+      "errorSuffix": ". No hay datos de demostración en modo de datos reales.",
+      "searchPlaceholder": "Buscar espacios...",
+      "pmPlaceholder": "Jefe de proyecto",
+      "allManagers": "Todos los jefes de proyecto",
+      "legend": "En vivo — se actualiza cada 8 s",
+      "status": {
+        "all": "Todos",
+        "live": "En vivo",
+        "review": "Revisión",
+        "pending": "Pendiente",
+        "blocked": "Bloqueado"
+      },
+      "stat": {
+        "total": "Total",
+        "totalDesc": "Todos los espacios",
+        "liveDesc": "En el espacio",
+        "reviewDesc": "Aprobación del cliente",
+        "pendingDesc": "Atención necesaria",
+        "blockedDesc": "Acción requerida"
+      },
+      "bottleneck": {
+        "title_one": "Alerta de cuello de botella — {{count}} proyecto esperando respuesta",
+        "title_other": "Alertas de cuello de botella — {{count}} proyectos esperando respuesta",
+        "waiting": "{{days}}d esperando"
+      },
+      "card": {
+        "editingNow": "Editando ahora",
+        "minutesAgo": "hace {{mins}} min",
+        "hoursAgo": "hace {{hours}} h",
+        "waitingDays": "{{days}}d esperando",
+        "openPreview": "Ampliar vista previa de {{name}}",
+        "reassign": "Reasignar",
+        "join": "Unirse"
+      },
+      "reassign": {
+        "title": "Reasignar jefe de proyecto",
+        "description": "Elegir un nuevo JP para {{name}}.",
+        "client": "Cliente",
+        "current": "Actual",
+        "unassigned": "Sin asignar",
+        "cancel": "Cancelar",
+        "confirm": "Reasignar"
+      },
+      "error": {
+        "load": "No se pudieron cargar los datos del monitor",
+        "noManagers": "No hay jefes de proyecto activos disponibles",
+        "reassign": "No se pudo reasignar el proyecto"
+      },
+      "toast": {
+        "refreshed": "Todos los espacios actualizados",
+        "openedPreview": "Vista previa de {{name}} abierta",
+        "joinedSession": "Sesión de monitor iniciada para {{name}}",
+        "reassigned": "{{name}} reasignado a {{pm}}"
+      }
+    },
+    "settings": {
+      "pageTitle": "Configuración | ENS",
+      "title": "Configuración",
+      "breadcrumb": "Configuración",
+      "export": "Exportar",
+      "reset": "Restablecer",
+      "tabs": {
+        "profile": "Perfil",
+        "notifications": "Notificaciones",
+        "security": "Seguridad",
+        "appearance": "Apariencia"
+      },
+      "profile": {
+        "title": "Información del perfil",
+        "description": "Actualizar los datos personales y profesionales",
+        "unsaved": "Sin guardar",
+        "changeAvatar": "Cambiar avatar",
+        "uploadPicture": "Subir imagen",
+        "fullName": "Nombre completo",
+        "emailLabel": "Correo electrónico",
+        "roleLabel": "Rol",
+        "phone": "Número de teléfono",
+        "phonePlaceholder": "+34 (555) 000-0000",
+        "revert": "Revertir",
+        "saveChanges": "Guardar cambios",
+        "avatarDialog": {
+          "title": "Cambiar avatar",
+          "description": "Elegir un estilo de avatar para este perfil.",
+          "cancel": "Cancelar",
+          "apply": "Aplicar avatar"
+        },
+        "avatarTones": {
+          "primary": "Principal",
+          "blue": "Azul",
+          "green": "Verde",
+          "amber": "Ámbar"
+        },
+        "validation": {
+          "nameRequired": "El nombre es obligatorio",
+          "emailInvalid": "Introduce un correo válido",
+          "phoneInvalid": "Introduce un teléfono válido"
+        },
+        "toast": {
+          "saved": "Cambios de perfil guardados",
+          "reverted": "Cambios de perfil revertidos",
+          "avatarUpdated": "Avatar actualizado",
+          "pictureSelected": "Foto de perfil seleccionada",
+          "loadError": "No se pudieron cargar los ajustes",
+          "saveError": "No se pudo guardar el perfil",
+          "avatarError": "No se pudo guardar el avatar",
+          "imageTypeError": "Selecciona un archivo de imagen",
+          "imageSizeError": "Selecciona una imagen de menos de 1,5 MB"
+        }
+      },
+      "notifications": {
+        "title": "Notificaciones por correo",
+        "description": "Configurar qué actualizaciones recibir por correo",
+        "enabledCount": "{{count}}/4 activadas",
+        "items": {
+          "assignments": {
+            "title": "Nuevas asignaciones de proyectos",
+            "desc": "Notificación al crear y asignar un nuevo proyecto."
+          },
+          "milestones": {
+            "title": "Hitos del proyecto",
+            "desc": "Alertas para etapas completadas o solicitudes de aprobación."
+          },
+          "reports": {
+            "title": "Informes de actividad de managers",
+            "desc": "Resumen semanal del rendimiento de los managers."
+          },
+          "system": {
+            "title": "Alertas del sistema",
+            "desc": "Actualizaciones críticas y notificaciones de seguridad."
+          }
+        },
+        "enableAll": "Activar todo",
+        "criticalOnly": "Solo críticas",
+        "savePreferences": "Guardar preferencias",
+        "toast": {
+          "saved": "Preferencias de notificación guardadas",
+          "allEnabled": "Todas las notificaciones activadas",
+          "criticalOnly": "Solo alertas del sistema activas",
+          "saveError": "No se pudieron guardar las notificaciones"
+        }
+      },
+      "security": {
+        "title": "Configuración de seguridad",
+        "description": "Gestionar la contraseña y la seguridad de la cuenta",
+        "currentPassword": "Contraseña actual",
+        "newPassword": "Nueva contraseña",
+        "confirmNewPassword": "Confirmar nueva contraseña",
+        "updatePassword": "Actualizar contraseña",
+        "strengthPrefix": "Fortaleza:",
+        "passwordStrength": {
+          "empty": "Vacía",
+          "weak": "Débil",
+          "fair": "Regular",
+          "good": "Buena",
+          "strong": "Fuerte"
+        },
+        "twoFactor": {
+          "title": "Autenticación de dos factores",
+          "description": "Usar código de verificación para acciones sensibles.",
+          "enabled": "Activada",
+          "disabled": "Desactivada",
+          "newCodes": "Nuevos códigos de recuperación",
+          "disable": "Desactivar 2FA",
+          "enable": "Activar 2FA"
+        },
+        "twoFactorDialog": {
+          "title": "Activar autenticación de dos factores",
+          "description": "Abre tu aplicación de autenticación, escanea el código QR e introduce el código de 6 dígitos.",
+          "qrPlaceholder": "El código QR aparecerá aquí en producción",
+          "showCode": "Mostrar código de demostración",
+          "hideCode": "Ocultar código",
+          "demoLabel": "Código demo",
+          "codeLabel": "Código de verificación",
+          "codePlaceholder": "Introduce el código de 6 dígitos",
+          "cancel": "Cancelar",
+          "verify": "Verificar y activar"
+        },
+        "recoveryCodes": {
+          "title": "Códigos de recuperación",
+          "copyAll": "Copiar todo",
+          "description": "Guarda estos códigos en un lugar seguro. Cada código solo puede usarse una vez."
+        },
+        "sessions": {
+          "title": "Sesiones activas",
+          "description": "Revisar los dispositivos conectados a esta cuenta.",
+          "signOutOthers": "Cerrar otras sesiones",
+          "signOut": "Cerrar sesión",
+          "current": "actual"
+        },
+        "toast": {
+          "passwordSaved": "Contraseña actualizada",
+          "twoFactorEnabled": "Autenticación de dos factores activada",
+          "twoFactorDisabled": "Autenticación de dos factores desactivada",
+          "codesRegenerated": "Códigos de recuperación regenerados",
+          "codesCopied": "Códigos de recuperación copiados",
+          "sessionSignedOut": "{{device}} desconectado",
+          "sessionsSignedOut_one": "{{count}} sesión cerrada",
+          "sessionsSignedOut_other": "{{count}} sesiones cerradas",
+          "passwordAllFields": "Rellena todos los campos",
+          "passwordMismatch": "Las contraseñas no coinciden",
+          "passwordWeak": "Usa una contraseña más segura",
+          "passwordSame": "La nueva contraseña debe ser diferente",
+          "passwordError": "No se pudo actualizar la contraseña",
+          "twoFactorWrongCode": "Código incorrecto — comprueba tu aplicación",
+          "twoFactorSetupError": "No se pudo guardar la configuración 2FA",
+          "twoFactorDisableError": "No se pudo guardar el estado 2FA",
+          "twoFactorRequired": "Activa primero la 2FA",
+          "codesError": "No se pudieron guardar los códigos de recuperación",
+          "clipboardError": "No se pudo copiar — copia los códigos manualmente",
+          "sessionError": "No se pudo cerrar la sesión",
+          "sessionsError": "No se pudieron cerrar las sesiones",
+          "noOtherSessions": "No hay otras sesiones"
+        }
+      },
+      "appearance": {
+        "title": "Configuración de pantalla",
+        "description": "Personalizar el aspecto del panel de control",
+        "themeMode": "Modo de tema",
+        "themeModeDesc": "Cambiar entre temas claro, oscuro y del sistema.",
+        "light": "Claro",
+        "dark": "Oscuro",
+        "system": "Sistema",
+        "compactView": "Vista compacta",
+        "compactViewDesc": "Reducir el espaciado en tablas y listas.",
+        "language": "Idioma",
+        "languageDesc": "Seleccionar el idioma de visualización.",
+        "resetDisplay": "Restablecer pantalla",
+        "saveDisplay": "Guardar configuración de pantalla",
+        "toast": {
+          "saved": "Configuración de pantalla guardada",
+          "reset": "Configuración de pantalla restablecida",
+          "saveError": "No se pudo guardar la configuración de pantalla"
+        }
+      },
+      "resetDialog": {
+        "title": "Restablecer configuración",
+        "description": "Restaura los ajustes locales a los valores predeterminados.",
+        "cancel": "Cancelar",
+        "confirm": "Restablecer"
+      },
+      "toast": {
+        "exported": "Configuración exportada",
+        "restored": "Configuración restaurada a valores predeterminados",
+        "restoredLocal": "Configuración local restaurada"
+      }
+    }
+  },
+  "layout": {
+    "logout": "Cerrar sesión",
+    "notifications": "Notificaciones",
+    "unread": "{{count}} no leídas",
+    "markAllRead": "Marcar todo como leído",
+    "notificationNew": "Nuevo",
+    "noNotifications": "No hay notificaciones aún.",
+    "skipToContent": "Ir al contenido principal",
+    "navigation": "Navegación principal",
+    "expandSidebar": "Expandir barra lateral",
+    "collapseSidebar": "Contraer barra lateral",
+    "switchToLight": "Cambiar a tema claro",
+    "switchToDark": "Cambiar a tema oscuro",
+    "selectLanguage": "Seleccionar idioma"
+  },
+  "pm": {
+    "nav": {
+      "dashboard": "Panel",
+      "myClients": "Mis clientes",
+      "projects": "Proyectos",
+      "calendar": "Calendario",
+      "workspace": "Espacio de trabajo",
+      "requests": "Solicitudes",
+      "messages": "Mensajes",
+      "tasks": "Tareas",
+      "reports": "Informes",
+      "settings": "Configuración"
+    },
+    "common": {
+      "noDeadline": "Sin fecha límite",
+      "today": "Hoy",
+      "tomorrow": "Mañana",
+      "overdue": "{{count}}d de retraso",
+      "inDays": "En {{count}}d",
+      "loading": "Cargando...",
+      "noResults": "No se encontraron resultados.",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "create": "Crear",
+      "saving": "Guardando...",
+      "search": "Buscar",
+      "filter": "Filtrar",
+      "priority": {
+        "high": "Alto",
+        "medium": "Medio",
+        "low": "Bajo"
+      },
+      "status": {
+        "active": "Activo",
+        "pending": "Pendiente",
+        "lead": "Prospecto",
+        "inactive": "Inactivo",
+        "planning": "Planificación",
+        "inDesign": "En diseño",
+        "clientReview": "Revisión del cliente",
+        "revision": "Revisión",
+        "delayed": "Retrasado",
+        "approved": "Aprobado",
+        "completed": "Completado",
+        "inProgress": "En progreso",
+        "resolved": "Resuelto",
+        "declined": "Rechazado"
+      }
+    },
+    "dashboard": {
+      "title": "Panel del Gestor de Proyectos",
+      "overview": "Resumen",
+      "loadError": "No se pudieron cargar los datos del panel.",
+      "stats": {
+        "assignedClients": "Clientes asignados",
+        "activeProjects": "Proyectos activos",
+        "pendingReviews": "Revisiones pendientes",
+        "completed": "Completado",
+        "workspaceFiles": "Archivos de espacio de trabajo"
+      },
+      "activeWork": {
+        "title": "Trabajo de proyecto activo",
+        "viewAll": "Ver todo",
+        "loading": "Cargando trabajo de proyecto asignado...",
+        "empty": "No hay proyectos activos asignados actualmente.",
+        "openProject": "Abrir {{name}}"
+      },
+      "actionItems": {
+        "title": "Elementos de acción",
+        "loading": "Cargando elementos de acción...",
+        "empty": "No hay acciones urgentes para esta organización."
+      },
+      "actions": {
+        "pendingApprovals": "{{count}} aprobaciones pendientes",
+        "pendingApprovalsDesc": "Las revisiones de clientes esperan una decisión.",
+        "openApprovals": "Abrir aprobaciones",
+        "delayedProjects": "{{count}} proyectos retrasados",
+        "delayedProjectsDesc": "Los proyectos necesitan atención del PM.",
+        "reviewRisk": "Revisar riesgo",
+        "activeWorkspaces": "{{count}} espacios de trabajo activos",
+        "activeWorkspacesDesc": "Los diseños de stands están disponibles para edición.",
+        "openWorkspace": "Abrir espacio de trabajo"
+      },
+      "recentActivity": {
+        "title": "Actividad reciente",
+        "loading": "Cargando actividad...",
+        "empty": "No se han registrado eventos de actividad aún."
+      }
+    },
+    "projects": {
+      "title": "Mis Proyectos",
+      "loadError": "No se pudieron cargar los proyectos.",
+      "loading": "Cargando proyectos...",
+      "noMatch": "Ningún proyecto coincide con el filtro.",
+      "newProject": "Nuevo Proyecto",
+      "searchPlaceholder": "Buscar proyectos...",
+      "filter": {
+        "all": "Todos"
+      },
+      "stats": {
+        "total": "Total",
+        "inDesign": "En Diseño",
+        "review": "Revisión",
+        "delayed": "Retrasado"
+      },
+      "view": {
+        "list": "Vista lista",
+        "grid": "Vista cuadrícula"
+      },
+      "table": {
+        "project": "Proyecto",
+        "client": "Cliente",
+        "size": "Tamaño",
+        "progress": "Progreso",
+        "deadline": "Fecha límite",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "grid": {
+        "system": "Sistema",
+        "size": "Tamaño",
+        "deadline": "Fecha límite",
+        "pm": "GP",
+        "progress": "Progreso"
+      },
+      "actions": {
+        "open": "Abrir",
+        "details": "Detalles",
+        "openWorkspace": "Abrir espacio de trabajo"
+      },
+      "modal": {
+        "title": "Crear nuevo proyecto",
+        "projectName": "Nombre del proyecto",
+        "client": "Cliente",
+        "deadline": "Fecha límite",
+        "system": "Sistema",
+        "systemCustom": "Personalizado",
+        "width": "Ancho (m)",
+        "depth": "Profundidad (m)",
+        "submit": "Crear proyecto"
+      },
+      "toast": {
+        "created": "Proyecto \"{{name}}\" guardado.",
+        "createError": "No se pudo crear el proyecto."
+      }
+    },
+    "clients": {
+      "title": "Mis Clientes",
+      "loadError": "No se pudieron cargar los clientes.",
+      "loading": "Cargando clientes...",
+      "noMatch": "Ningún cliente coincide con la búsqueda.",
+      "searchPlaceholder": "Buscar clientes...",
+      "stats": {
+        "total": "Total de clientes",
+        "active": "Activo",
+        "needsSetup": "Requiere configuración"
+      },
+      "actions": {
+        "email": "Enviar correo",
+        "emailClient": "Correo a {{name}}",
+        "openWorkspace": "Abrir espacio de trabajo",
+        "openWorkspaceFor": "Abrir espacio de trabajo para {{name}}",
+        "toggleExpand": "Alternar detalles de {{name}}"
+      },
+      "detail": {
+        "clientDetails": "Detalles del cliente",
+        "operationalStatus": "Estado operacional",
+        "assignedPm": "GP asignado: {{name}}",
+        "lastActivity": "Última actividad: {{time}}",
+        "dataSource": "Cargado desde registros PostgreSQL"
+      }
+    },
+    "tasks": {
+      "title": "Kanban de Tareas",
+      "newTask": "Nueva Tarea",
+      "addTask": "Añadir tarea",
+      "noTasks": "Sin tareas",
+      "filter": {
+        "all": "Todas"
+      },
+      "cols": {
+        "todo": "Por hacer",
+        "inprogress": "En progreso",
+        "review": "En revisión",
+        "done": "Hecho"
+      },
+      "actions": {
+        "moveLeft": "Mover a la izquierda",
+        "moveRight": "Mover a la derecha",
+        "delete": "Eliminar",
+        "deleteTask": "Eliminar \"{{title}}\""
+      },
+      "addToCol": "Añadir tarea a {{col}}",
+      "stats": {
+        "total": "Total: {{count}} tareas",
+        "overdue": "Vencido: {{count}}"
+      },
+      "toast": {
+        "moved": "\"{{title}}\" → {{col}}",
+        "created": "Tarea creada: \"{{title}}\""
+      },
+      "modal": {
+        "title": "Crear tarea",
+        "taskTitle": "Título",
+        "taskTitlePlaceholder": "Descripción de la tarea…",
+        "client": "Cliente",
+        "project": "Proyecto",
+        "priority": "Prioridad",
+        "deadline": "Fecha límite",
+        "initialCol": "Columna inicial",
+        "submit": "Crear tarea",
+        "select": "Seleccionar…"
+      }
+    },
+    "messages": {
+      "title": "Mensajes",
+      "unread": "{{count}} sin leer",
+      "justNow": "ahora mismo",
+      "loadContactsError": "No se pudieron cargar los contactos.",
+      "loadMessagesError": "No se pudieron cargar los mensajes.",
+      "sendError": "No se pudo enviar el mensaje.",
+      "searchPlaceholder": "Buscar contactos…",
+      "loadingContacts": "Cargando contactos…",
+      "noContacts": "No se encontraron contactos.",
+      "chiefPortal": "Portal del jefe",
+      "noMessages": "Aún no hay mensajes. ¡Envía el primero!",
+      "selectContact": "Selecciona un contacto para empezar.",
+      "inputPlaceholder": "Escribe un mensaje…",
+      "enterToSend": "Pulsa Enter para enviar",
+      "toast": {
+        "callStarted": "Iniciando llamada con {{name}}…",
+        "videoReady": "Abriendo vídeo con {{name}}…",
+        "optionsOpened": "Menú de opciones abierto.",
+        "attachmentOpened": "Selector de archivos abierto."
+      },
+      "actions": {
+        "call": "Iniciar llamada de voz",
+        "video": "Iniciar videollamada",
+        "more": "Más opciones",
+        "attach": "Adjuntar archivo",
+        "send": "Enviar mensaje"
+      }
+    },
+    "requests": {
+      "title": "Solicitudes de revisión",
+      "pendingBadge": "{{count}} pendiente(s)",
+      "justNow": "ahora mismo",
+      "pmInitials": "PM",
+      "replyCount": "{{count}} respuestas",
+      "replyPlaceholder": "Añadir una respuesta…",
+      "noMatch": "Ninguna solicitud coincide con este filtro.",
+      "filter": {
+        "all": "Todas"
+      },
+      "status": {
+        "pending": "Pendiente",
+        "inProgress": "En progreso",
+        "resolved": "Resuelto",
+        "declined": "Rechazado"
+      },
+      "priority": {
+        "high": "Alta",
+        "medium": "Media",
+        "low": "Baja"
+      },
+      "actions": {
+        "start": "Iniciar",
+        "decline": "Rechazar",
+        "resolve": "Resolver",
+        "reply": "Responder",
+        "sendReply": "Enviar respuesta",
+        "expand": "Mostrar respuestas",
+        "collapse": "Ocultar respuestas"
+      },
+      "toast": {
+        "started": "Solicitud iniciada",
+        "declined": "Solicitud rechazada",
+        "resolved": "Solicitud resuelta",
+        "pending": "Solicitud pendiente",
+        "replySent": "Respuesta enviada"
+      }
+    },
+    "reports": {
+      "title": "Informes de rendimiento",
+      "export": "Exportar",
+      "vsLastPeriod": "vs período anterior",
+      "total": "Total: {{count}} proyectos",
+      "period": {
+        "this_week": "Esta semana",
+        "last_week": "Semana pasada"
+      },
+      "stats": {
+        "completionRate": "Tasa de finalización",
+        "satisfaction": "Satisfacción del cliente",
+        "activeClients": "Clientes activos",
+        "avgResponse": "Resp. media"
+      },
+      "chart": {
+        "tasks": "Tareas",
+        "revisions": "Revisiones",
+        "approvals": "Aprobaciones",
+        "efficiency": "Eficiencia",
+        "onTime": "A tiempo",
+        "changes": "Cambios"
+      },
+      "cards": {
+        "weeklyTitle": "Productividad semanal",
+        "weeklyDesc": "Tareas, revisiones y aprobaciones · {{period}}",
+        "efficiencyTitle": "Eficiencia de proyectos",
+        "efficiencyDesc": "Eficiencia de diseño vs entrega a tiempo",
+        "revisionTitle": "Tendencia de revisiones y cambios",
+        "revisionDesc": "Solicitudes de revisión mensuales vs órdenes de cambio",
+        "statusTitle": "Desglose del estado de proyectos",
+        "statusDesc": "Distribución actual de todos los proyectos"
+      },
+      "pieStatus": {
+        "active": "Activo",
+        "pending": "Pendiente",
+        "review": "En revisión",
+        "delayed": "Retrasado"
+      },
+      "toast": {
+        "exporting": "Exportación iniciada…"
+      }
+    }
+  },
+  "client": {
+    "nav": {
+      "dashboard": "Panel",
+      "projects": "Proyectos",
+      "calendar": "Calendario",
+      "workspace": "Espacio de trabajo",
+      "messages": "Mensajes",
+      "approvals": "Aprobaciones",
+      "documents": "Documentos",
+      "profile": "Perfil"
+    },
+    "dashboard": {
+      "pageTitle": "Panel | ENS",
+      "welcome": "Bienvenido de nuevo, {{name}}",
+      "breadcrumb": "Panel",
+      "errorLoad": "No se pudieron cargar los datos del panel del cliente.",
+      "defaultClientName": "Cliente",
+      "loadingProject": "Cargando proyecto...",
+      "noActiveProject": "Sin proyecto activo",
+      "projectSubtitle": "Los datos del proyecto se cargan desde PostgreSQL",
+      "loadingActiveProject": "Cargando proyecto activo...",
+      "noProjectAssigned": "Aún no se ha asignado ningún proyecto activo.",
+      "pmLabel": "Director de proyecto",
+      "messagesBtn": "Mensajes",
+      "overallProgress": "Progreso general",
+      "viewWorkspace": "VER ESPACIO DE TRABAJO",
+      "workspacePreview": "Vista previa del espacio",
+      "recentActivity": "Actividad reciente",
+      "loadingActivity": "Cargando actividades...",
+      "noActivity": "Aún no se ha registrado ninguna actividad.",
+      "viewTimeline": "Ver cronograma del proyecto",
+      "approvalProgress": "Progreso de aprobaciones",
+      "stat": {
+        "progress": "Progreso del proyecto",
+        "pendingApprovals": "Aprobaciones pendientes",
+        "workspaceVersions": "Versiones del espacio",
+        "documents": "Documentos"
+      },
+      "step": {
+        "created": "Creado",
+        "designing": "Diseñando",
+        "review": "Revisión",
+        "approved": "Aprobado",
+        "production": "Producción"
+      },
+      "approval": {
+        "created": "Proyecto creado",
+        "designing": "Diseño en progreso",
+        "review": "Revisión del cliente",
+        "reviewRequired": "Revisión requerida",
+        "noReview": "Sin revisión pendiente"
+      }
+    },
+    "approvals": {
+      "pageTitle": "Aprobaciones | ENS",
+      "title": "Aprobaciones",
+      "breadcrumbDashboard": "Panel",
+      "awaitingReview": "{{count}} esperando su revisión",
+      "filterGroup": "Filtrar aprobaciones",
+      "filterByStatus": "Filtrar por {{status}}",
+      "justNow": "Ahora mismo",
+      "emptyState": "No hay aprobaciones aquí.",
+      "toggleDetails": "Alternar detalles de {{title}}",
+      "commentPlaceholder": "Deja un comentario a tu director de proyecto…",
+      "sendComment": "Enviar comentario",
+      "status": {
+        "Pending": "Pendiente",
+        "Approved": "Aprobado",
+        "Rejected": "Rechazado"
+      },
+      "filter": {
+        "all": "Todos"
+      },
+      "actions": {
+        "approve": "Aprobar",
+        "requestChanges": "Solicitar cambios",
+        "viewDetails": "Ver detalles"
+      },
+      "toast": {
+        "approved": "✓ Diseño aprobado — director notificado",
+        "rejected": "Cambios solicitados — director notificado",
+        "commentSent": "Comentario enviado al director"
+      },
+      "badge": {
+        "me": "YO",
+        "pm": "DP"
+      },
+      "comments_one": "{{count}} comentario",
+      "comments_other": "{{count}} comentarios",
+      "confirm": {
+        "approveTitle": "¿Aprobar este diseño?",
+        "rejectTitle": "¿Solicitar cambios?",
+        "approveBody": "Se notificará a su director y esta versión quedará marcada como aprobada.",
+        "rejectBody": "Se notificará a su director, quien atenderá sus comentarios.",
+        "cancel": "Cancelar",
+        "confirmApprove": "Sí, aprobar",
+        "confirmReject": "Sí, solicitar cambios"
+      }
+    },
+    "documents": {
+      "pageTitle": "Documentos | ENS",
+      "title": "Documentos",
+      "breadcrumbDashboard": "Panel",
+      "uploadBtn": "Subir archivos",
+      "filterGroup": "Filtrar por categoría",
+      "searchPlaceholder": "Buscar archivos, etiquetas…",
+      "emptyState": "No se encontraron documentos.",
+      "filter": {
+        "all": "Todos"
+      },
+      "stat": {
+        "total": "Total archivos",
+        "final": "Finales",
+        "inReview": "En revisión",
+        "drafts": "Borradores"
+      },
+      "status": {
+        "final": "Final",
+        "draft": "Borrador",
+        "review": "En revisión"
+      },
+      "dropZone": {
+        "ariaLabel": "Zona de carga de archivos",
+        "textBefore": "Arrastre y suelte archivos aquí o",
+        "browse": "explorar",
+        "hint": "PDF, PNG, XLSX, DOC — hasta 50 MB por archivo"
+      },
+      "table": {
+        "file": "Archivo",
+        "category": "Categoría",
+        "uploadedBy": "Subido por",
+        "date": "Fecha",
+        "status": "Estado"
+      },
+      "actions": {
+        "preview": "Vista previa de {{name}}",
+        "download": "Descargar {{name}}",
+        "remove": "Eliminar {{name}}"
+      },
+      "toast": {
+        "uploaded_one": "{{count}} archivo subido",
+        "uploaded_other": "{{count}} archivos subidos",
+        "fileRemoved": "Archivo eliminado",
+        "downloading": "Descargando {{name}}…"
+      },
+      "preview": {
+        "close": "Cerrar vista previa",
+        "imageUnavailable": "Vista previa de imagen no disponible en demo",
+        "typeUnavailable": "Vista previa no disponible para archivos {{type}}",
+        "category": "Categoría",
+        "status": "Estado",
+        "uploadedBy": "Subido por",
+        "tags": "Etiquetas",
+        "downloadBtn": "Descargar archivo"
+      }
+    },
+    "messages": {
+      "pageTitle": "Mensajes | ENS",
+      "title": "Mensajes",
+      "breadcrumbDashboard": "Panel",
+      "searchPlaceholder": "Buscar mensajes...",
+      "contactListLabel": "Conversaciones",
+      "supportManager": "Gestor de soporte",
+      "activeNow": "Activo ahora",
+      "justNow": "Ahora mismo",
+      "threadLabel": "Hilo de mensajes",
+      "avatarYou": "YO",
+      "avatarPm": "DP",
+      "inputPlaceholder": "Escribe tu mensaje...",
+      "actions": {
+        "phone": "Iniciar llamada",
+        "video": "Iniciar videollamada",
+        "more": "Más opciones",
+        "attach": "Adjuntar archivo",
+        "send": "Enviar mensaje"
+      }
+    },
+    "projects": {
+      "pageTitle": "Mis proyectos | ENS",
+      "title": "Mis proyectos",
+      "breadcrumbDashboard": "Panel",
+      "breadcrumbProjects": "Proyectos",
+      "actionRequired": "Acción requerida",
+      "exhibitionTbd": "Exposición por confirmar",
+      "productionProgress": "Progreso de producción",
+      "quickActions": "Acciones rápidas",
+      "stat": {
+        "total": "Total proyectos",
+        "active": "Activos",
+        "pendingReview": "Revisión pendiente",
+        "avgProgress": "Progreso promedio"
+      },
+      "status": {
+        "Active": "Activo",
+        "Pending": "Pendiente",
+        "Delayed": "Retrasado",
+        "Completed": "Completado"
+      },
+      "meta": {
+        "system": "Sistema",
+        "size": "Tamaño",
+        "pm": "Director",
+        "deadline": "Fecha límite"
+      },
+      "timeline": {
+        "heading": "Cronograma del proyecto",
+        "defaultLabel": "Proyecto creado — diseño en curso",
+        "defaultDate": "Recientemente"
+      },
+      "action": {
+        "viewDesign": "Ver diseño",
+        "reviewPending": "Revisión pendiente",
+        "approvals": "Aprobaciones",
+        "documents": "Documentos",
+        "messagePm": "Contactar director"
+      }
+    },
+    "profile": {
+      "pageTitle": "Configuración de perfil | ENS",
+      "title": "Configuración de perfil",
+      "breadcrumbDashboard": "Panel",
+      "breadcrumbProfile": "Perfil",
+      "tab": {
+        "profile": "Información personal",
+        "company": "Empresa",
+        "notifications": "Notificaciones",
+        "security": "Seguridad"
+      },
+      "personalInfo": {
+        "heading": "Información personal",
+        "description": "Actualice sus datos personales y cómo podemos contactarle."
+      },
+      "company": {
+        "heading": "Información de la empresa",
+        "description": "Gestione los datos de su empresa y perfil de exposición."
+      },
+      "avatar": {
+        "heading": "Foto de perfil",
+        "hint": "JPG, GIF o PNG. Tamaño máximo 1,5 MB.",
+        "uploadNew": "Subir nueva foto",
+        "remove": "Eliminar",
+        "changeBtn": "Cambiar foto de perfil"
+      },
+      "field": {
+        "name": "Nombre completo",
+        "email": "Dirección de correo",
+        "phone": "Número de teléfono",
+        "companyName": "Nombre de la empresa",
+        "industry": "Sector",
+        "website": "Sitio web",
+        "currentPassword": "Contraseña actual",
+        "newPassword": "Nueva contraseña",
+        "confirmPassword": "Confirmar nueva contraseña"
+      },
+      "btn": {
+        "saveChanges": "Guardar cambios",
+        "updateCompany": "Actualizar datos empresa",
+        "updatePassword": "Actualizar contraseña"
+      },
+      "notifications": {
+        "heading": "Preferencias de notificación",
+        "description": "Elija cómo desea recibir notificaciones sobre las actualizaciones del proyecto.",
+        "enabled": "Activado",
+        "disabled": "Desactivado",
+        "milestones": {
+          "title": "Hitos del proyecto",
+          "desc": "Reciba una notificación cuando se complete una etapa."
+        },
+        "assignments": {
+          "title": "Nuevos mensajes",
+          "desc": "Reciba una notificación cuando su director envíe un mensaje."
+        },
+        "reports": {
+          "title": "Solicitudes de revisión",
+          "desc": "Reciba una notificación cuando haya una nueva versión del diseño."
+        },
+        "system": {
+          "title": "Alertas de seguridad",
+          "desc": "Reciba una notificación sobre los inicios de sesión en su cuenta."
+        }
+      },
+      "security": {
+        "heading": "Seguridad",
+        "description": "Gestione su contraseña y la configuración de seguridad de su cuenta."
+      },
+      "dangerZone": {
+        "heading": "Zona de peligro",
+        "description": "Una vez que elimine su cuenta, no hay vuelta atrás. Por favor, esté seguro.",
+        "deleteBtn": "Eliminar cuenta"
+      },
+      "validation": {
+        "nameMin": "El nombre debe tener al menos 2 caracteres",
+        "emailInvalid": "Dirección de correo inválida",
+        "companyNameRequired": "El nombre de la empresa es obligatorio",
+        "websiteInvalid": "URL inválida"
+      },
+      "toast": {
+        "profileSaved": "Cambios de perfil guardados",
+        "profileError": "No se pudo guardar el perfil",
+        "profileLoadError": "No se pudieron cargar los ajustes del perfil",
+        "companySaved": "Información de empresa guardada",
+        "avatarUpdated": "Foto de perfil actualizada",
+        "avatarRemoved": "Foto de perfil eliminada",
+        "avatarError": "No se pudo guardar la foto de perfil",
+        "avatarRemoveError": "No se pudo eliminar la foto de perfil",
+        "avatarNotImage": "Elija un archivo de imagen",
+        "avatarTooLarge": "Elija una imagen de menos de 1,5 MB",
+        "imageReadError": "No se pudo leer la imagen",
+        "notificationError": "No se pudo guardar la configuración de notificación",
+        "passwordUpdated": "Contraseña actualizada",
+        "passwordError": "No se pudo actualizar la contraseña",
+        "passwordFillAll": "Complete todos los campos de contraseña",
+        "passwordMismatch": "Las nuevas contraseñas no coinciden",
+        "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
+        "deleteQueued": "Solicitud de eliminación de cuenta registrada"
+      }
+    },
+    "workspace": {
+      "pageTitle": "Espacio de trabajo | ENS",
+      "viewOnly": "SOLO LECTURA",
+      "loadingWorkspace": "Cargando espacio de trabajo…",
+      "compareBtn": "Comparar",
+      "addPinBtn": "Añadir marcador",
+      "pinningLabel": "Colocando…",
+      "downloadBtn": "Descargar",
+      "requestChangesBtn": "Solicitar cambios",
+      "approvedLabel": "Aprobado",
+      "approveDesignBtn": "Aprobar diseño",
+      "assetLibraryLabel": "Biblioteca de recursos",
+      "lockedLabel": "BLOQUEADO",
+      "reviewModeNote": "Los recursos están bloqueados en modo revisión. Contacte a su director de proyecto para solicitar modificaciones.",
+      "canvasLabel": "Vista previa 3D del stand",
+      "compareCurrentLabel": "v{{v}} — Actual",
+      "comparePreviousLabel": "v{{v}} — Anterior",
+      "clickToPin": "Haga clic en el canvas para colocar un marcador",
+      "versionSelect": "Seleccionar versión",
+      "tab": {
+        "thread": "Hilo",
+        "approvals": "Aprobaciones",
+        "pins": "Marcadores"
+      },
+      "pendingDot": "Aprobaciones pendientes",
+      "reviewThread": "Hilo de revisión",
+      "notesCount_one": "{{count}} nota",
+      "notesCount_other": "{{count}} notas",
+      "commentPlaceholder": "Añadir un comentario…",
+      "sendComment": "Enviar comentario",
+      "projectInfoLabel": "Info del proyecto",
+      "info": {
+        "system": "Sistema",
+        "floorArea": "Superficie",
+        "dimensions": "Dimensiones",
+        "approval": "Aprobación",
+        "awaiting": "Pendiente de aprobación"
+      },
+      "elementApprovalHeading": "Revise y apruebe cada elemento del diseño",
+      "element": {
+        "structure": "Estructura",
+        "furniture": "Mobiliario",
+        "branding": "Marca",
+        "lighting": "Iluminación"
+      },
+      "elementStatus": {
+        "approved": "Aprobado",
+        "pending": "Pendiente",
+        "rejected": "Comentarios enviados"
+      },
+      "approveBtn": "Aprobar",
+      "requestFixBtn": "Solicitar corrección",
+      "resetBtn": "Volver a pendiente",
+      "allApprovedMsg": "Todos los elementos aprobados",
+      "pendingApprovalMsg": "Aprobaciones pendientes",
+      "approvedCount": "{{approved}} de {{total}} aprobados",
+      "canvasAnnotations": "Anotaciones en canvas",
+      "placingLabel": "Colocando…",
+      "noPins": "No hay marcadores. Haga clic en «Añadir marcador» y luego en el canvas.",
+      "removePin": "Eliminar marcador #{{num}}",
+      "statusBar": {
+        "viewOnly": "SOLO LECTURA",
+        "restricted": "REVISIÓN CLIENTE — ACCESO RESTRINGIDO"
+      },
+      "statusReadOnly": "SOLO LECTURA",
+      "statusCompare": "MODO COMPARACIÓN",
+      "dialog": {
+        "title": "Solicitar cambios de diseño",
+        "subtitle": "Describa los cambios deseados. Se notificará a su director de proyecto.",
+        "placeholder": "Describa los cambios que desea…",
+        "cancel": "Cancelar",
+        "submit": "Enviar solicitud"
+      },
+      "toast": {
+        "allApproved": "Todos los elementos aprobados — ¡gracias!",
+        "changeRequestSent": "Solicitud de cambio enviada a su director de proyecto",
+        "pinAdded": "Marcador #{{num}} añadido",
+        "elementApproved": "{{label}} aprobado",
+        "feedbackSent": "Comentarios enviados al director de proyecto",
+        "downloadStarted": "Descarga iniciada",
+        "designApproved": "Diseño aprobado — ¡gracias!"
+      },
+      "justNow": "Ahora mismo",
+      "changeRequestPrefix": "Solicitud de cambio",
+      "pinPrefix": "Marcador",
+      "pinAnnotationPrompt": "Añadir nota para este marcador",
+      "pinPlaceholder": "Describir esta ubicación…",
+      "confirmPin": "Confirmar marcador",
+      "cancelPin": "Cancelar marcador",
+      "errorLoad": "Error al cargar el espacio de trabajo",
+      "ctrl": {
+        "reset": "Restablecer vista",
+        "zoomIn": "Acercar",
+        "zoomOut": "Alejar",
+        "fullscreen": "Pantalla completa"
+      }
+    }
+  },
+  "notFound": {
+    "title": "404 – Página no encontrada",
+    "badge": "Página no encontrada",
+    "heading": "Este stand no existe",
+    "body": "La página que buscas ha sido movida, eliminada o nunca existió. Volvamos a la plataforma.",
+    "backHome": "Volver al inicio",
+    "goBack": "Regresar",
+    "links": {
+      "home": "Inicio",
+      "staffPortal": "Portal de equipo",
+      "login": "Iniciar sesión",
+      "signUp": "Registrarse"
+    }
+  },
+  "auth": {
+    "login": {
+      "pageTitle": "Iniciar sesión | ENS",
+      "title": "Bienvenido de nuevo",
+      "description": "Inicia sesión para acceder a tu espacio de trabajo",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "nombre@empresa.com",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Introduce tu contraseña",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "rememberMe": "Mantenerme conectado 30 días",
+      "submit": "Iniciar sesión",
+      "submitting": "Iniciando sesión...",
+      "lockedBtn": "Bloqueado",
+      "lockMessage": "Cuenta bloqueada temporalmente. Vuelve a intentarlo en {{time}}.",
+      "signInError": "No se pudo iniciar sesión.",
+      "attemptsRemaining_one": "{{count}} intento de inicio de sesión restante antes del bloqueo temporal",
+      "attemptsRemaining_other": "{{count}} intentos de inicio de sesión restantes antes del bloqueo temporal",
+      "noAccount": "¿No tienes cuenta?",
+      "signUpFree": "Regístrate gratis",
+      "devSection": "Cuentas de prueba locales",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "validation": {
+        "email": "Dirección de correo electrónico inválida",
+        "passwordMin": "La contraseña debe tener al menos 8 caracteres"
+      }
+    },
+    "signup": {
+      "pageTitle": "Crear cuenta | ENS",
+      "title": "Crear cuenta de cliente",
+      "description": "El registro público crea una cuenta de revisión pendiente de aprobación",
+      "fullNameLabel": "Nombre completo",
+      "fullNamePlaceholder": "Juan García",
+      "companyLabel": "Empresa",
+      "companyPlaceholder": "Acme Exposiciones",
+      "workEmailLabel": "Correo profesional",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Crear una contraseña",
+      "confirmPasswordLabel": "Confirmar contraseña",
+      "confirmPasswordPlaceholder": "Confirmar tu contraseña",
+      "termsLabel": "Acepto los",
+      "termsOfService": "Términos de servicio",
+      "and": "y la",
+      "privacyPolicy": "Política de privacidad",
+      "submit": "Crear cuenta de cliente",
+      "submitting": "Creando cuenta...",
+      "createError": "No se pudo crear la cuenta.",
+      "haveAccount": "¿Ya tienes cuenta?",
+      "signIn": "Iniciar sesión",
+      "clientOnlyNote": "El registro público está limitado a clientes. Los directores de proyecto y responsables deben ser invitados por un propietario de organización.",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "showConfirmPassword": "Mostrar confirmación de contraseña",
+      "hideConfirmPassword": "Ocultar confirmación de contraseña",
+      "strength": {
+        "weak": "Débil",
+        "fair": "Regular",
+        "good": "Buena",
+        "strong": "Fuerte",
+        "suffix": "contraseña"
+      },
+      "validation": {
+        "nameMin": "El nombre debe tener al menos 2 caracteres",
+        "companyMin": "La empresa debe tener al menos 2 caracteres",
+        "email": "Dirección de correo electrónico inválida",
+        "passwordMin": "La contraseña debe tener al menos 8 caracteres",
+        "passwordUpper": "Debe contener una letra mayúscula",
+        "passwordNumber": "Debe contener un número",
+        "confirmRequired": "Por favor confirma tu contraseña",
+        "termsRequired": "Debes aceptar los términos",
+        "passwordsMismatch": "Las contraseñas no coinciden"
+      }
+    },
+    "forgotPassword": {
+      "pageTitle": "Restablecer contraseña | ENS",
+      "title": "Restablecer contraseña",
+      "description": "Introduce tu correo y te enviaremos un enlace de restablecimiento",
+      "emailLabel": "Correo electrónico",
+      "submit": "Enviar enlace",
+      "submitting": "Enviando enlace...",
+      "sentTitle": "Revisa tu bandeja de entrada",
+      "sentTo": "Enviamos un enlace de restablecimiento a",
+      "checkSpam": "Revisa la carpeta de spam si no lo ves en unos minutos.",
+      "resending": "Enviando...",
+      "resendIn": "Reenviar en {{seconds}}s",
+      "resendEmail": "Reenviar correo",
+      "differentEmail": "Usar otro correo",
+      "backToLogin": "Volver a inicio de sesión",
+      "validation": {
+        "email": "Por favor introduce una dirección de correo válida"
+      }
+    },
+    "resetPassword": {
+      "pageTitle": "Nueva contraseña | ENS",
+      "title": "Establecer nueva contraseña",
+      "description": "Elige una contraseña segura para tu cuenta",
+      "newPasswordLabel": "Nueva contraseña",
+      "confirmPasswordLabel": "Confirmar contraseña",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Actualizar contraseña",
+      "submitting": "Actualizando contraseña...",
+      "successTitle": "Contraseña actualizada",
+      "successMessage": "Tu contraseña ha sido actualizada correctamente. Ahora puedes iniciar sesión con tus nuevas credenciales.",
+      "continueToSignIn": "Continuar al inicio de sesión",
+      "backToLogin": "Volver a inicio de sesión",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "showConfirmPassword": "Mostrar confirmación",
+      "hideConfirmPassword": "Ocultar confirmación",
+      "requirements": {
+        "length": "Al menos 8 caracteres",
+        "uppercase": "Una letra mayúscula",
+        "number": "Un número"
+      },
+      "strength": {
+        "weak": "Débil",
+        "fair": "Regular",
+        "good": "Buena",
+        "strong": "Fuerte",
+        "suffix": "contraseña"
+      },
+      "validation": {
+        "passwordMin": "La contraseña debe tener al menos 8 caracteres",
+        "passwordUpper": "Debe contener al menos una letra mayúscula",
+        "passwordNumber": "Debe contener al menos un número",
+        "confirmRequired": "Por favor confirma tu contraseña",
+        "passwordsMismatch": "Las contraseñas no coinciden"
+      }
     }
   }
 }

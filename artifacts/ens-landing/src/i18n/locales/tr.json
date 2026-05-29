@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "startDesigning": "Tasarlamaya Başla",
     "watchDemo": "Demo İzle",
@@ -9,7 +9,9 @@
     "logIn": "Giriş Yap",
     "learnMore": "Daha Fazla Bilgi",
     "copyright": "© {{year}} ENS Expo Solutions Ltd. Tüm hakları saklıdır.",
-    "internalOnly": "Yalnızca dahili kullanım"
+    "internalOnly": "Yalnızca dahili kullanım",
+    "vsLastMonth": "geçen aya kıyasla",
+    "clickToView": "Görüntülemek için tıklayın →"
   },
   "nav": {
     "features": "Özellikler",
@@ -45,20 +47,54 @@
       "heading": "Tasarlamak ve teslim etmek için",
       "headingAccent": "ihtiyacınız olan her şey",
       "subheading": "Fuar sektörü için özel olarak geliştirilmiş eksiksiz bir tasarım ve proje yönetim paketi.",
-      "realtime": { "title": "Gerçek Zamanlı 3D Tuval", "desc": "Sistem bileşenlerini canlı 3D sahneye sürükleyip bırakın. Gördüğünüz inşa edilendir." },
-      "octanorm": { "title": "Octanorm Sistemi", "desc": "Hassas 40mm ve 50mm profiller, konektörler ve panellerle eksiksiz Octanorm modüler sistem." },
-      "maxima": { "title": "Maxima Çerçevesi", "desc": "Yapılandırılabilir açıklıklar ve dolgu seçenekleriyle ağır hizmet Maxima alüminyum ekstrüzyon sistemi." },
-      "client": { "title": "Müşteri Önizlemesi", "desc": "Müşterilerle canlı 3D bağlantısı paylaşın. Hesap gerekmeksizin doğrudan model üzerinde not alabilirler." },
-      "analytics": { "title": "Proje Analitiği", "desc": "Proje hızını, onay döngülerini, maliyet tahminlerini ve ekip kullanımını gerçek zamanlı takip edin." },
-      "automation": { "title": "Akıllı Otomasyon", "desc": "Tek tıklamayla otomatik olarak kat planları, yükseklik çizimleri, parça listeleri ve maliyet tahminleri oluşturun." }
+      "realtime": {
+        "title": "Gerçek Zamanlı 3D Tuval",
+        "desc": "Sistem bileşenlerini canlı 3D sahneye sürükleyip bırakın. Gördüğünüz inşa edilendir."
+      },
+      "octanorm": {
+        "title": "Octanorm Sistemi",
+        "desc": "Hassas 40mm ve 50mm profiller, konektörler ve panellerle eksiksiz Octanorm modüler sistem."
+      },
+      "maxima": {
+        "title": "Maxima Çerçevesi",
+        "desc": "Yapılandırılabilir açıklıklar ve dolgu seçenekleriyle ağır hizmet Maxima alüminyum ekstrüzyon sistemi."
+      },
+      "client": {
+        "title": "Müşteri Önizlemesi",
+        "desc": "Müşterilerle canlı 3D bağlantısı paylaşın. Hesap gerekmeksizin doğrudan model üzerinde not alabilirler."
+      },
+      "analytics": {
+        "title": "Proje Analitiği",
+        "desc": "Proje hızını, onay döngülerini, maliyet tahminlerini ve ekip kullanımını gerçek zamanlı takip edin."
+      },
+      "automation": {
+        "title": "Akıllı Otomasyon",
+        "desc": "Tek tıklamayla otomatik olarak kat planları, yükseklik çizimleri, parça listeleri ve maliyet tahminleri oluşturun."
+      }
     },
     "howItWorks": {
       "heading": "Briften inşaata",
       "headingAccent": "dört adımda",
-      "brief": { "step": "01", "title": "Brifing Yükle", "desc": "Müşterinizin etkinlik brifingini, kat planını veya stand teknik şartnamesini içe aktarın." },
-      "design": { "step": "02", "title": "3D'de Tasarla", "desc": "Octanorm veya Maxima sistem bileşenleri ve mobilya kütüphanesi kullanarak standı oluşturun." },
-      "review": { "step": "03", "title": "Müşteri İncelemesi", "desc": "Paylaşılabilir bir bağlantı gönderin. Müşteri doğrudan 3D model üzerinde inceler ve onaylar." },
-      "deliver": { "step": "04", "title": "Dışa Aktar ve Teslim Et", "desc": "Üretim belgelerine, çizimlere ve parça çizelgelerine tek tıklamayla dışa aktarın." }
+      "brief": {
+        "step": "01",
+        "title": "Brifing Yükle",
+        "desc": "Müşterinizin etkinlik brifingini, kat planını veya stand teknik şartnamesini içe aktarın."
+      },
+      "design": {
+        "step": "02",
+        "title": "3D'de Tasarla",
+        "desc": "Octanorm veya Maxima sistem bileşenleri ve mobilya kütüphanesi kullanarak standı oluşturun."
+      },
+      "review": {
+        "step": "03",
+        "title": "Müşteri İncelemesi",
+        "desc": "Paylaşılabilir bir bağlantı gönderin. Müşteri doğrudan 3D model üzerinde inceler ve onaylar."
+      },
+      "deliver": {
+        "step": "04",
+        "title": "Dışa Aktar ve Teslim Et",
+        "desc": "Üretim belgelerine, çizimlere ve parça çizelgelerine tek tıklamayla dışa aktarın."
+      }
     },
     "testimonials": {
       "heading": "Sektörün",
@@ -104,7 +140,8 @@
       "security": "Güvenlik",
       "cookies": "Çerez Politikası",
       "gdpr": "KVKK / GDPR"
-    }
+    },
+    "pageTitle": "ENS — Fuar ve Stand Tasarım Platformu"
   },
   "team": {
     "hero": {
@@ -169,6 +206,1949 @@
       "itSupport": "BT Desteği",
       "privacy": "Gizlilik Politikası",
       "security": "Güvenlik"
+    },
+    "pageTitle": "ENS Ekip Portalı — Personel ve Müşteri Merkezi",
+    "chiefFeatures": {
+      "workspaceMonitor": {
+        "title": "Çalışma Alanı Monitörü",
+        "desc": "Tüm projelerdeki her aktif tasarım oturumunu canlı olarak izleme."
+      },
+      "teamManagement": {
+        "title": "Ekip Yönetimi",
+        "desc": "Proje yöneticileri atama, iş yüklerini takip etme ve erişimleri yönetme."
+      },
+      "clientPortfolio": {
+        "title": "Müşteri Portföyü",
+        "desc": "Tüm müşteri hesapları, kişiler ve aktif sözleşmelerin tam görünümü."
+      },
+      "analytics": {
+        "title": "Analizler ve Raporlar",
+        "desc": "Proje KPI'ları, onay süreleri ve gelir gösterge panelleri."
+      },
+      "approvalGateway": {
+        "title": "Onay Portalı",
+        "desc": "Üretime geçmeden önce nihai yapısal ve tasarım onayı."
+      },
+      "commsHub": {
+        "title": "İletişim Merkezi",
+        "desc": "Müşteriler, PM'ler ve taşeronlar arasında merkezi mesajlaşma."
+      }
+    },
+    "pmFeatures": {
+      "boothWorkspace": {
+        "title": "3D Stand Çalışma Alanı",
+        "desc": "Gerçek zamanlı işbirlikçi tasarım ile tam Octanorm/Maxima editörü."
+      },
+      "clientMgmt": {
+        "title": "Müşteri Yönetimi",
+        "desc": "Proje başına brief, kişi ve canlı geri bildirim oturumlarını yönetme."
+      },
+      "taskTracker": {
+        "title": "Görev Takibi",
+        "desc": "Üretim, tasarım ve teslimat aşamalarını kapsayan Kanban panosu."
+      },
+      "pipeline": {
+        "title": "Proje Boru Hattı",
+        "desc": "Tüm aktif ve yaklaşan projeleri kilometre taşı zaman çizelgeleriyle takip etme."
+      },
+      "requestMgmt": {
+        "title": "Talep Yönetimi",
+        "desc": "Değişiklik talepleri, revizyon günlükleri ve onay zincirlerini yönetme."
+      },
+      "messaging": {
+        "title": "Mesajlaşma",
+        "desc": "Müşteriler ve ana ofisle doğrudan ve grup mesajlaşması."
+      }
+    },
+    "workflowSteps": {
+      "brief": {
+        "title": "Müşteri Brifing",
+        "desc": "Chief fuar briefini alır ve bir Proje Yöneticisine atar."
+      },
+      "workspace": {
+        "title": "Çalışma Alanı Kurulum",
+        "desc": "PM projeyi oluşturur ve stand boyutlarını ve sistemini yapılandırır."
+      },
+      "design": {
+        "title": "3D Tasarım",
+        "desc": "PM yapısal kütüphaneleri kullanarak canlı çalışma alanında standı inşa eder."
+      },
+      "review": {
+        "title": "Chief İncelemesi",
+        "desc": "Chief ilerlemeyi izler ve yapısal rehberlik sağlar."
+      },
+      "signoff": {
+        "title": "Müşteri Onayı",
+        "desc": "Müşteri tasarımı inceler ve değişiklik talepleri sunar."
+      },
+      "approval": {
+        "title": "Nihai Onay",
+        "desc": "Chief nihai tasarımı onaylar ve üretime serbest bırakır."
+      },
+      "export": {
+        "title": "Üretim Dışa Aktarımı",
+        "desc": "PM belgeleri, kesim listelerini ve bileşen programlarını dışa aktarır."
+      }
+    }
+  },
+  "chief": {
+    "nav": {
+      "chief": "Şef",
+      "dashboard": "Gösterge Paneli",
+      "clients": "Müşteriler",
+      "managers": "Yöneticiler",
+      "projects": "Projeler",
+      "monitor": "Çalışma Alanı İzleme",
+      "reports": "Raporlar",
+      "messages": "Mesajlar",
+      "calendar": "Takvim",
+      "settings": "Ayarlar"
+    },
+    "common": {
+      "cancel": "İptal",
+      "save": "Kaydet",
+      "assign": "Ata",
+      "message": "Mesaj",
+      "rebalance": "Yeniden Dengele",
+      "openDetails": "Detayları Aç",
+      "viewCalendar": "Takvimi Görüntüle",
+      "sendReminder": "Hatırlatma Gönder",
+      "assignments": "Atamalar",
+      "inviteManager": "Yönetici Davet Et",
+      "keepEditing": "Düzenlemeye Devam Et",
+      "discardChanges": "Değişiklikleri At",
+      "selectAll": "Tümünü Seç",
+      "clear": "Temizle",
+      "project": "Proje",
+      "noDeadline": "Son tarih yok",
+      "status": {
+        "active": "Aktif",
+        "pending": "Beklemede",
+        "onLeave": "İzinde",
+        "completed": "Tamamlandı",
+        "delayed": "Gecikti",
+        "unassigned": "Atanmamış",
+        "highLoad": "Yüksek Yük",
+        "accepted": "Kabul edildi",
+        "expired": "Süresi doldu"
+      }
+    },
+    "dashboard": {
+      "title": "Şef Gösterge Paneli",
+      "exportReports": "Raporları Dışa Aktar",
+      "excelExported": "Excel raporu dışa aktarıldı",
+      "noActivity": "Henüz aktivite kaydı yok.",
+      "viewAllActivity": "Tüm Aktiviteleri Görüntüle",
+      "showRecentActivity": "Son Aktiviteleri Göster",
+      "commandCenter": "Komuta Merkezi",
+      "recentActivity": "Son Aktivite",
+      "noManagerAssignments": "Yönetici ataması bulunamadı.",
+      "loadError": "Gösterge paneli verileri yüklenemedi",
+      "charts": {
+        "projectActivity": "Proje Aktivitesi",
+        "projectActivityDesc": "Son 7 günde tüm projelerdeki aktivite",
+        "projectStatus": "Proje Durumu",
+        "projectStatusDesc": "{{count}} aktif projenin durum dağılımı",
+        "managerPerformance": "Yönetici Performansı",
+        "managerPerformanceDesc": "Yönetici başına atanan projeler"
+      },
+      "stats": {
+        "totalClients": "Toplam Müşteri",
+        "activeProjects": "Aktif Projeler",
+        "managers": "Yöneticiler",
+        "delayedProjects": "Geciken Projeler",
+        "needsAction": "İşlem Gerekiyor",
+        "pendingApprovals": "Bekleyen Onaylar",
+        "activeWorkspaces": "Aktif Çalışma Alanları",
+        "saved": "Kaydedildi",
+        "db": "VT",
+        "live": "Canlı",
+        "assigned": "Atandı",
+        "open": "Açık",
+        "clear": "Temiz"
+      },
+      "insights": {
+        "delayedTitle": "Geciken projeler",
+        "dueSoonTitle": "14 günde teslim",
+        "unassignedTitle": "Atanmamış çalışma",
+        "approvalsTitle": "Bekleyen onaylar",
+        "noDelayed": "Şu an kayıtlı geciken proje bulunmuyor.",
+        "firstInQueue": "{{name}} kurtarma kuyruğunda ilk sırada.",
+        "noDueSoon": "14 günlük pencerede proje son tarihi bulunmuyor.",
+        "nearestDeadline": "{{name}} en yakın son tarihe sahip.",
+        "noUnassigned": "Her aktif projenin bir yönetici ataması var.",
+        "unassignedNeeds": "{{name}} hâlâ bir proje yöneticisine ihtiyaç duyuyor.",
+        "noApprovals": "Şu an onay dar boğazı kaydedilmemiş.",
+        "approvalsWaiting": "Müşteri onayları işlem bekliyor.",
+        "reviewProjects": "Projeleri İncele",
+        "openCalendar": "Takvimi Aç",
+        "assignManagers": "Yönetici Ata",
+        "openQueue": "Kuyruğu Aç"
+      },
+      "pageTitle": "Gösterge Paneli | ENS"
+    },
+    "managers": {
+      "title": "Yönetici Yönetimi",
+      "refresh": "Verileri yenile",
+      "noMatch": "Mevcut filtrelerle eşleşen yönetici yok.",
+      "tiles": {
+        "teamLoad": "Ekip Yükü",
+        "activeManagers": "Aktif Yöneticiler",
+        "delayedProjects": "Geciken Projeler",
+        "unassignedItems": "Atanmamış Öğeler",
+        "pendingInvites": "Bekleyen Davetler"
+      },
+      "filters": {
+        "searchPlaceholder": "Yönetici, müşteri, proje ara",
+        "allStatuses": "Tüm durumlar",
+        "allManagers": "Tüm Yöneticiler",
+        "highLoad": "Yüksek Yük",
+        "sortHighest": "En yüksek iş yükü",
+        "sortLowest": "En düşük iş yükü",
+        "sortProjects": "En çok aktif proje",
+        "sortRating": "En iyi puan",
+        "cardView": "Kart görünümü",
+        "tableView": "Tablo görünümü"
+      },
+      "views": {
+        "title": "Kayıtlı Görünümler",
+        "desc": "Filtreleri, sıralamayı ve düzeni yeniden kullanın.",
+        "namePlaceholder": "Görünüm adı",
+        "deleteView": "{{name}} görünümünü sil"
+      },
+      "invitations": {
+        "title": "Bekleyen Davetler",
+        "desc": "Davet edilen yöneticiler kabul edene kadar burada görünür. Henüz atama alamazlar.",
+        "expires": "son kullanma {{date}}",
+        "moreInvites": "+{{count}} daha",
+        "copyLink": "{{email}} için davet linkini kopyala",
+        "resend": "{{email}} adresine daveti yeniden gönder",
+        "revoke": "{{email}} için daveti iptal et"
+      },
+      "invite": {
+        "title": "Yönetici Davet Et",
+        "desc": "Şef çalışma alanına proje yöneticisi ekleyin.",
+        "namePlaceholder": "Sarah Mitchell",
+        "emailPlaceholder": "yonetici@sirket.com.tr",
+        "sendInvite": "Davet Gönder",
+        "nameLabel": "Ad",
+        "emailLabel": "E-posta",
+        "emailInvalid": "Lütfen geçerli bir e-posta adresi girin.",
+        "defaultName": "Yeni Yönetici"
+      },
+      "statusChange": {
+        "title": "Durum Değişikliğini Onayla",
+        "markOnLeave": "İzinde İşaretle",
+        "markActive": "Aktif İşaretle",
+        "confirmPrefix": "Emin misiniz, işaretlemek istiyorsunuz",
+        "confirmSuffix": "olarak",
+        "onLeaveNote": "Aktif projeleri atanmış kalır ancak iş yükü sınırlandırılır.",
+        "updated": "Yönetici durumu güncellendi"
+      },
+      "rebalance": {
+        "title": "İş Yükünü Dengele",
+        "desc": "Onaylamadan önce önerilen değişikliği inceleyin.",
+        "projectToMove": "Taşınacak proje",
+        "from": "Kimden",
+        "to": "Kime",
+        "confirm": "Dengelemeyi Onayla",
+        "done": "İş yükü yeniden dengelendi"
+      },
+      "assignments": {
+        "titleTeam": "Ekip Atamaları",
+        "titleFocused": "Atamalar – {{name}}",
+        "descTeam": "Müşterileri ve projeleri ekip içinde yeniden atayın.",
+        "descFocused": "{{name}} adına atanan müşteri ve projeleri yönetin.",
+        "bulkTitle": "Toplu Atama",
+        "bulkDesc": "Satırları seçin, yönetici seçin, kaydetmeden önce uygulayın.",
+        "selected": "seçildi",
+        "applySelected": "Seçilenlere Uygula",
+        "cascadeLabel": "Bu müşterinin projelerini de taşı",
+        "cascadeDesc": "Bir müşteri yeniden atandığında, altındaki tüm projeler aynı yöneticiye taşınır.",
+        "saveAssignments": "Atamaları Kaydet",
+        "noClients": "Müşteri yok.",
+        "noProjects": "Proje yok.",
+        "clients": "Müşteriler",
+        "projects": "Projeler",
+        "saved": "Atamalar güncellendi",
+        "selectRow": "{{name}} seç"
+      },
+      "discard": {
+        "title": "Atama değişiklikleri silinsin mi?",
+        "desc": "Kaydedilmemiş atama düzenlemeleriniz var. Çekmeceyi kapatmak bunları siler."
+      },
+      "card": {
+        "computedWorkload": "Hesaplanan iş yükü",
+        "delayed": "gecikmiş",
+        "urgent": "acil",
+        "ratingNew": "Yeni",
+        "ratingNA": "Yok"
+      },
+      "table": {
+        "manager": "Yönetici",
+        "status": "Durum",
+        "workload": "İş Yükü",
+        "projects": "Projeler",
+        "clients": "Müşteriler",
+        "nextDeadline": "Sonraki Son Tarih",
+        "actions": "İşlemler"
+      },
+      "detail": {
+        "workload": "İş Yükü",
+        "projects": "Projeler",
+        "clients": "Müşteriler",
+        "tabs": {
+          "overview": "Genel Bakış",
+          "projects": "Projeler",
+          "clients": "Müşteriler",
+          "activity": "Aktivite"
+        },
+        "overview": {
+          "title": "İş Yükü Sağlığı",
+          "desc": "Mevcut aktif projeler ve müşteri yükü",
+          "delayed": "Gecikmiş",
+          "dueSoon": "Yakında Teslim",
+          "nextDeadline": "Sonraki Son Tarih",
+          "rating": "Puan",
+          "none": "Yok"
+        },
+        "noProjects": "Atanmış proje yok.",
+        "noClients": "Atanmış müşteri yok."
+      },
+      "audit": {
+        "title": "Aktivite Denetimi",
+        "desc": "Atama, erişim, dengeleme ve hatırlatma geçmişi",
+        "searchPlaceholder": "Denetim geçmişini ara",
+        "allActivity": "Tüm aktiviteler",
+        "success": "Başarılı",
+        "warnings": "Uyarılar",
+        "info": "Bilgi",
+        "noActivity": "Henüz aktivite kaydı yok.",
+        "showAll": "Tüm {{count}} girişi göster",
+        "showLess": "Daha az göster (en son {{count}} kayıt)",
+        "team": "Ekip",
+        "exportCsv": "CSV olarak dışa aktar",
+        "action": {
+          "invitation": "Davet",
+          "access": "Erişim",
+          "assignment": "Atama",
+          "rebalance": "Yeniden Dengeleme",
+          "reminder": "Hatırlatıcı"
+        },
+        "detail": {
+          "invited": "{{name}} için davet kuyruğa alındı.",
+          "statusChanged": "{{name}} {{status}} olarak işaretlendi.",
+          "assignmentsSaved": "Atama değişiklikleri kaydedildi.",
+          "rebalanced": "{{project}}, {{from}}'dan {{to}}'ya taşındı.",
+          "reminded": "{{name}} için uygulama içi hatırlatıcı kuyruğa alındı — {{count}} öncelikli öğe."
+        },
+        "justNow": "Az önce"
+      },
+      "actions": {
+        "openDetails": "Detayları Aç",
+        "assignments": "Atamalar",
+        "viewCalendar": "Takvimi Görüntüle",
+        "rebalanceWorkload": "İş Yükünü Dengele",
+        "markOnLeave": "İzinde İşaretle",
+        "markActive": "Aktif İşaretle",
+        "sendReminder": "Hatırlatma Gönder",
+        "assign": "Ata",
+        "rebalance": "Dengele",
+        "message": "Mesaj"
+      },
+      "toast": {
+        "loadError": "Yönetici çalışma alanı yüklenemedi",
+        "viewLoaded": "Görünüm yüklendi: {{name}}",
+        "viewSaved": "Yönetici görünümü kaydedildi: {{name}}",
+        "viewRemoved": "Kaydedilen görünüm kaldırıldı",
+        "inviteCreated": "{{name}} için davet kuyruğa alındı",
+        "inviteError": "Yönetici daveti oluşturulamadı",
+        "inviteResent": "Davet {{email}} adresine yeniden gönderildi",
+        "inviteResendError": "Davet yeniden gönderilemedi",
+        "inviteRevoked": "Davet iptal edildi",
+        "inviteRevokeError": "Davet iptal edilemedi",
+        "inviteCopyFirst": "Kopyalanabilir bir bağlantı oluşturmak için önce bu daveti yeniden gönderin",
+        "inviteCopied": "Davet bağlantısı kopyalandı",
+        "inviteCopyError": "Davet bağlantısı kopyalanamadı",
+        "statusUpdated": "Yönetici durumu güncellendi",
+        "statusError": "Yönetici durumu güncellenemedi",
+        "assignNoChange": "{{name}} için atama değişikliği yok",
+        "assignError": "Atamalar kaydedilemedi",
+        "assignUpdated": "Atamalar güncellendi",
+        "rebalanceNoTarget": "Yeniden dengeleme için aktif yönetici yok",
+        "rebalanceNormal": "{{name}} iş yükü ({{pct}}%) normal aralıkta — yeniden dengeleme gerekmez",
+        "rebalanceNoProject": "Yeniden dengeleme için uygun proje veya hedef yönetici bulunamadı",
+        "rebalanceError": "İş yükü yeniden dengelenemedi",
+        "rebalanceDone": "İş yükü yeniden dengelendi",
+        "reminderSent": "{{name}} için hatırlatıcı kuyruğa alındı — bildirim oluşturuldu",
+        "reminderError": "Hatırlatıcı gönderilemedi"
+      }
+    },
+    "reports": {
+      "title": "Raporlar ve Analitik",
+      "loadError": "Rapor verileri yüklenemedi.",
+      "exportExcel": "Excel Dışa Aktar",
+      "bottlenecks": "Darboğazlar",
+      "leaderboardTitle": "PM Liderlik Tablosu",
+      "leaderboardDesc": "Müşteri memnuniyetine göre sıralı / {{range}}",
+      "toast": {
+        "exported": "Excel raporu dışa aktarıldı"
+      },
+      "kpi": {
+        "revenue": "Toplam Gelir",
+        "revenueDetail": "+%12,5 önceki döneme göre",
+        "projects": "Projeler",
+        "projectsDetail": "Seçili aralık: {{range}}",
+        "pms": "PM'ler",
+        "pmsDetail": "Teslimat bazlı sıralı",
+        "satisfaction": "Ort. Memnuniyet",
+        "satisfactionDetail": "Müşteri skoru"
+      },
+      "cards": {
+        "revenueTitle": "Gelir - Hedef",
+        "revenueDesc": "{{range}} / Toplam ${{total}}K / {{projects}} proje",
+        "pmPerfTitle": "PM Performansı",
+        "pmPerfDesc": "Tamamlanan projeler vs zamanında teslimat oranı",
+        "trendTitle": "12 Aylık Gelir Trendi",
+        "trendDesc": "Son yıldaki gelir eğilimi",
+        "systemTitle": "Sistem Dağılımı ve Darboğazlar",
+        "systemDesc": "Sistem kullanımı ve müşteri bekleme süreleri"
+      },
+      "chart": {
+        "revenue": "Gelir",
+        "target": "Hedef",
+        "onTimePct": "Zamanında %",
+        "satisfaction": "Memnuniyet"
+      },
+      "table": {
+        "rank": "Sıra",
+        "pm": "PM",
+        "projects": "Projeler",
+        "onTime": "Zamanında",
+        "satisfaction": "Memnuniyet",
+        "revenue": "Gelir",
+        "month": "Ay"
+      },
+      "export": {
+        "colReport": "Rapor",
+        "colRange": "Aralık",
+        "colExportedAt": "Dışa Aktarma Tarihi",
+        "colRevenue": "Toplam Gelir",
+        "colTarget": "Toplam Hedef",
+        "colProjects": "Toplam Projeler",
+        "colRevenueDollar": "Gelir ($)",
+        "colTargetDollar": "Hedef ($)",
+        "colOnTimePct": "Zamanında (%)",
+        "colSystem": "Sistem",
+        "colShare": "Pay (%)",
+        "colProject": "Proje",
+        "colWaitDays": "Bekleme Günleri",
+        "colStage": "Aşama",
+        "rowTotals": "Toplamlar"
+      }
+    },
+    "messages": {
+      "title": "Mesajlar",
+      "justNow": "az önce",
+      "loadError": "Sergi mesajları yüklenemedi.",
+      "conversationError": "Konuşma yüklenemedi.",
+      "sendError": "Mesaj gönderilemedi.",
+      "noMessagesDefault": "Henüz mesaj yok",
+      "noClient": "Bağlı müşteri yok",
+      "loading": "Sergiler yükleniyor…",
+      "noExhibitions": "Sergi bulunamadı.",
+      "noMessages": "{{name}} için henüz mesaj yok.",
+      "selectManager": "Bir proje yöneticisi seçin.",
+      "scopedTo": "Kapsam:",
+      "send": "Gönder",
+      "sending": "Gönderiliyor",
+      "projectCount": "{{count}} proje",
+      "inputPlaceholder": "{{manager}} kişisine {{exhibition}} hakkında mesaj…",
+      "badges": {
+        "exhibitions": "{{count}} sergi",
+        "unread": "{{count}} okunmamış"
+      },
+      "section": {
+        "title": "Sergi Konuşmaları",
+        "desc": "Her sergi için bir kapsamlı konuşma alanı."
+      },
+      "searchPlaceholder": "Sergi, müşteri, yönetici ara",
+      "sidebar": {
+        "title": "Proje Yöneticileri",
+        "assigned": "{{count}} atanmış",
+        "noManager": "Bu sergiye henüz proje yöneticisi atanmamış."
+      },
+      "status": {
+        "delayed": "Gecikmiş",
+        "active": "Aktif",
+        "completed": "Tamamlandı",
+        "pending": "Bekliyor"
+      },
+      "actions": {
+        "call": "Sesli arama başlat",
+        "video": "Görüntülü arama başlat",
+        "options": "Konuşma seçenekleri",
+        "attach": "Dosya ekle",
+        "send": "Mesaj gönder",
+        "emoji": "Emoji ekle"
+      },
+      "toast": {
+        "call": "{{name}} ile {{exhibition}} için arama başlatıldı",
+        "video": "{{exhibition}} için video odası hazırlandı",
+        "options": "Konuşma seçenekleri açıldı",
+        "attachment": "{{exhibition}} için dosya seçici açıldı"
+      }
+    },
+    "clients": {
+      "title": "Müşteri Yönetimi",
+      "addClient": "Müşteri Ekle",
+      "loadError": "Müşteriler yüklenemedi.",
+      "loadingClients": "Müşteriler yükleniyor…",
+      "noClients": "Bu arama/filtre için müşteri bulunamadı.",
+      "searchPlaceholder": "Müşteri veya sergi ara…",
+      "showing": "{{start}}-{{end}} / {{total}} müşteri gösteriliyor",
+      "previous": "Önceki",
+      "next": "Sonraki",
+      "cancel": "İptal",
+      "saving": "Kaydediliyor…",
+      "emailError": "Lütfen geçerli bir e-posta adresi girin.",
+      "filter": {
+        "all": "Tümü",
+        "lead": "Potansiyel",
+        "pendingApproval": "Onay Bekliyor",
+        "active": "Aktif",
+        "inactive": "Pasif",
+        "archived": "Arşivlendi"
+      },
+      "status": {
+        "active": "Aktif",
+        "pendingApproval": "Onay Bekliyor",
+        "lead": "Potansiyel",
+        "inactive": "Pasif",
+        "archived": "Arşivlendi"
+      },
+      "table": {
+        "clientName": "Müşteri Adı",
+        "company": "Şirket",
+        "assignedPm": "Atanmış PM",
+        "exhibition": "Sergi",
+        "status": "Durum",
+        "lastActivity": "Son Aktivite",
+        "actions": "İşlemler"
+      },
+      "menu": {
+        "assignManager": "Yönetici Ata",
+        "openWorkspace": "Çalışma Alanını Aç",
+        "editClient": "Müşteriyi Düzenle",
+        "viewDetails": "Müşteri Detaylarını Gör",
+        "archive": "Müşteriyi Arşivle"
+      },
+      "toast": {
+        "added": "{{name}} müşterilere eklendi.",
+        "addError": "Müşteri eklenemedi.",
+        "updated": "{{name}} güncellendi.",
+        "updateError": "Müşteri güncellenemedi.",
+        "noManagers": "Aktif proje yöneticisi mevcut değil.",
+        "assigned": "{{client}}, {{manager}} kişisine atandı.",
+        "assignError": "Müşteri ataması kaydedilemedi.",
+        "archived": "{{name}} arşivlendi.",
+        "archiveError": "Müşteri kaldırılamadı.",
+        "openingWorkspace": "{{name}} Chief monitöründe açılıyor.",
+        "defaultClient": "Müşteri",
+        "unassigned": "Atanmamış"
+      },
+      "addDialog": {
+        "title": "Müşteri Ekle",
+        "desc": "Bu görünümde müşteri kaydı oluşturun.",
+        "name": "Müşteri Adı",
+        "company": "Şirket",
+        "exhibition": "Sergi",
+        "email": "İletişim E-postası",
+        "submit": "Müşteri Ekle"
+      },
+      "assignDialog": {
+        "title": "Proje Yöneticisi Ata",
+        "desc": "{{name}} için bir yönetici seçin.",
+        "placeholder": "Yönetici seç",
+        "submit": "Ata"
+      },
+      "editDialog": {
+        "title": "Müşteriyi Düzenle",
+        "desc": "İş akışları için müşteri bilgilerini güncelleyin.",
+        "contactName": "İletişim Adı",
+        "submit": "Değişiklikleri Kaydet"
+      },
+      "archiveDialog": {
+        "title": "Müşteriyi Arşivle",
+        "desc": "{{name}} arşivlensin mi? Aktif projelere sahip müşteriler korunmaktadır.",
+        "blockers": "Arşivlemeyi engelleyen aktif projeler",
+        "archiving": "Arşivleniyor…",
+        "submit": "Arşivle"
+      },
+      "detailDialog": {
+        "contact": "İletişim",
+        "email": "E-posta",
+        "pm": "PM",
+        "exhibition": "Sergi",
+        "status": "Durum"
+      }
+    },
+    "projects": {
+      "title": "Proje Hattı",
+      "breadcrumb": "Projeler",
+      "viewKanban": "Kanban",
+      "viewList": "Liste",
+      "searchPlaceholder": "Ara...",
+      "metric": {
+        "highRisk": "Yüksek Risk",
+        "waiting": "Bekliyor",
+        "delayed": "Gecikmiş",
+        "matching": "Eşleşen Projeler"
+      },
+      "stage": {
+        "intake": "Alım",
+        "design": "Tasarım",
+        "review": "İnceleme",
+        "production": "Üretim",
+        "closed": "Kapalı"
+      },
+      "filter": {
+        "all": "Tümü",
+        "active": "Aktif",
+        "pending": "Beklemede",
+        "delayed": "Gecikmiş",
+        "completed": "Tamamlandı"
+      },
+      "priority": {
+        "all": "Tümü",
+        "high": "Yüksek",
+        "medium": "Orta",
+        "low": "Düşük"
+      },
+      "kanban": {
+        "loading": "Yükleniyor",
+        "empty": "Boş"
+      },
+      "list": {
+        "loading": "Projeler yükleniyor...",
+        "noMatch": "Eşleşen proje bulunamadı.",
+        "col": {
+          "project": "Proje",
+          "client": "Müşteri",
+          "pm": "PM",
+          "system": "Sistem",
+          "stage": "Aşama",
+          "progress": "İlerleme",
+          "health": "Durum"
+        }
+      },
+      "paging": {
+        "showing": "{{start}}–{{end}} / {{total}} proje gösteriliyor",
+        "filtered": "/ öncelik filtresi sonrası {{count}} görünür",
+        "previous": "Önceki",
+        "next": "Sonraki"
+      },
+      "footer": {
+        "note": "Sayfa: {{count}} görünür / Aşama değiştirmek için okları kullanın"
+      },
+      "card": {
+        "waiting": "{{days}}g bekliyor",
+        "noDate": "Tarih yok",
+        "movePrev": "Önceki aşamaya taşı",
+        "moveNext": "Sonraki aşamaya taşı",
+        "openMonitor": "Monitörü aç",
+        "editProject": "Projeyi düzenle"
+      },
+      "row": {
+        "edit": "Düzenle",
+        "open": "Aç"
+      },
+      "edit": {
+        "title": "Projeyi Düzenle",
+        "sheetDescription": "Proje ayrıntılarını, atamayı, son tarihi ve stand boyutlarını güncelleyin.",
+        "name": "Proje Adı",
+        "namePlaceholder": "AutoShow standı",
+        "client": "Müşteri",
+        "clientPlaceholder": "FastCars AŞ",
+        "exhibition": "Fuar",
+        "exhibitionPlaceholder": "AutoShow",
+        "manager": "Proje Yöneticisi",
+        "managerPlaceholder": "Proje yöneticisi seçin",
+        "keepManager": "Mevcut atamayı koru",
+        "unassigned": "Atanmamış",
+        "deadline": "Son Tarih",
+        "system": "Sistem",
+        "systemPlaceholder": "Stand sistemi",
+        "octanorm": "Octanorm",
+        "maxima": "Maxima",
+        "custom": "Özel",
+        "width": "Genişlik (m)",
+        "depth": "Derinlik (m)",
+        "descriptionLabel": "Açıklama",
+        "descriptionPlaceholder": "Proje notları",
+        "cancel": "İptal",
+        "saving": "Kaydediliyor...",
+        "save": "Projeyi Kaydet"
+      },
+      "close": {
+        "title": "Projeyi Kapat",
+        "description": "{{name}} öğesini Kapalı'ya taşınsın mı? Proje tamamlandı olarak işaretlenir.",
+        "cancel": "İptal",
+        "closing": "Kapatılıyor...",
+        "confirm": "Projeyi Kapat"
+      },
+      "error": {
+        "load": "Projeler yüklenemedi",
+        "save": "Proje kaydedilemedi",
+        "stage": "Aşama kaydedilemedi"
+      },
+      "toast": {
+        "updated": "{{name}} güncellendi",
+        "openMonitor": "{{name}} için monitör açılıyor",
+        "moved": "{{name}}, {{stage}} aşamasına taşındı"
+      },
+      "validate": {
+        "required": "Proje adı ve müşteri zorunludur.",
+        "dimensions": "Genişlik ve derinlik 1 ile 100 metre arasında olmalıdır."
+      }
+    },
+    "calendar": {
+      "title": "Fuar Takvimi",
+      "breadcrumb": "Takvim",
+      "addEvent": "Etkinlik ekle",
+      "allMonths": "Tüm aylar",
+      "prevMonth": "Önceki ay",
+      "nextMonth": "Sonraki ay",
+      "today": "Bugün",
+      "addEventTitle": "Bu güne etkinlik ekle",
+      "moreEvents": "+{{count}} daha",
+      "exhibitionsThisMonth_one": "Bu ay {{count}} fuar",
+      "exhibitionsThisMonth_other": "Bu ay {{count}} fuar",
+      "yearExhibitions_one": "{{count}} fuar",
+      "yearExhibitions_other": "{{count}} fuar",
+      "noExhibitions": "Fuar yok",
+      "loading": "Fuar takvimi yükleniyor...",
+      "status": {
+        "active": "Aktif",
+        "completed": "Tamamlandı",
+        "delayed": "Gecikmiş",
+        "pending": "Beklemede"
+      },
+      "filter": {
+        "searchPlaceholder": "Fuar, müşteri veya şehir ara",
+        "pmPlaceholder": "Proje yöneticisi",
+        "allManagers": "Tüm yöneticiler",
+        "clientPlaceholder": "Müşteri",
+        "allClients": "Tüm müşteriler",
+        "statusPlaceholder": "Durum",
+        "allStatuses": "Tüm durumlar",
+        "shown": "{{count}} gösteriliyor",
+        "resetFilters": "Filtreleri sıfırla"
+      },
+      "form": {
+        "nameLabel": "Fuar Adı *",
+        "namePlaceholder": "örn. TechCon 2027",
+        "clientLabel": "Müşteri",
+        "clientPlaceholder": "Müşteri şirketi",
+        "pmLabel": "Proje Yöneticisi",
+        "pmPlaceholder": "PM adı",
+        "startLabel": "Başlangıç Tarihi *",
+        "endLabel": "Bitiş Tarihi *",
+        "locationLabel": "Konum",
+        "locationPlaceholder": "Şehir / Mekan",
+        "standLabel": "Stand Türü",
+        "standPlaceholder": "örn. Maxima",
+        "statusLabel": "Durum"
+      },
+      "add": {
+        "title": "Fuar Etkinliği Ekle",
+        "description": "Takvime yeni bir fuar ekleyin.",
+        "cancel": "İptal",
+        "saving": "Kaydediliyor...",
+        "save": "Etkinliği Kaydet"
+      },
+      "edit": {
+        "title": "Fuar Etkinliğini Düzenle",
+        "description": "Bu fuarın ayrıntılarını güncelleyin.",
+        "cancel": "İptal",
+        "saving": "Kaydediliyor...",
+        "save": "Değişiklikleri Kaydet"
+      },
+      "detail": {
+        "description": "Fuar ayrıntıları",
+        "client": "Müşteri",
+        "pm": "Proje Yöneticisi",
+        "location": "Konum",
+        "standType": "Stand Türü",
+        "startDate": "Başlangıç Tarihi",
+        "endDate": "Bitiş Tarihi",
+        "confirmDelete": "Kalıcı olarak silinsin mi?",
+        "deleting": "Siliniyor...",
+        "confirm": "Onayla",
+        "cancel": "İptal",
+        "delete": "Sil",
+        "edit": "Düzenle",
+        "close": "Kapat"
+      },
+      "error": {
+        "load": "Takvim etkinlikleri yüklenemedi",
+        "save": "Etkinlik kaydedilemedi",
+        "update": "Etkinlik güncellenemedi",
+        "delete": "Etkinlik silinemedi"
+      }
+    },
+    "monitor": {
+      "title": "Çalışma Alanı Monitörü",
+      "breadcrumb": "Monitör",
+      "activeNow": "{{count}} Aktif",
+      "refresh": "Yenile",
+      "loading": "Canlı veriler yükleniyor...",
+      "errorSuffix": ". Gerçek veri modunda demo verisi gösterilmez.",
+      "searchPlaceholder": "Çalışma alanı ara...",
+      "pmPlaceholder": "Proje yöneticisi",
+      "allManagers": "Tüm proje yöneticileri",
+      "legend": "Canlı — her 8 sn'de yenilenir",
+      "status": {
+        "all": "Tümü",
+        "live": "Canlı",
+        "review": "İnceleme",
+        "pending": "Beklemede",
+        "blocked": "Engellendi"
+      },
+      "stat": {
+        "total": "Toplam",
+        "totalDesc": "Tüm çalışma alanları",
+        "liveDesc": "Çalışma alanında",
+        "reviewDesc": "Müşteri onayı",
+        "pendingDesc": "İlgi gerekiyor",
+        "blockedDesc": "Eylem gerekiyor"
+      },
+      "bottleneck": {
+        "title_one": "Darboğaz uyarısı — {{count}} proje müşteri yanıtı bekliyor",
+        "title_other": "Darboğaz uyarıları — {{count}} proje müşteri yanıtı bekliyor",
+        "waiting": "{{days}}g bekliyor"
+      },
+      "card": {
+        "editingNow": "Şu an düzenleniyor",
+        "minutesAgo": "{{mins}} dk önce",
+        "hoursAgo": "{{hours}} sa önce",
+        "waitingDays": "{{days}}g bekliyor",
+        "openPreview": "{{name}} önizlemesini genişlet",
+        "reassign": "Yeniden ata",
+        "join": "Katıl"
+      },
+      "reassign": {
+        "title": "Proje Yöneticisini Yeniden Ata",
+        "description": "{{name}} için yeni bir PM seçin.",
+        "client": "Müşteri",
+        "current": "Mevcut",
+        "unassigned": "Atanmamış",
+        "cancel": "İptal",
+        "confirm": "Yeniden Ata"
+      },
+      "error": {
+        "load": "İzleme verileri yüklenemedi",
+        "noManagers": "Kullanılabilir aktif PM yok",
+        "reassign": "Proje yeniden atanamadı"
+      },
+      "toast": {
+        "refreshed": "Tüm çalışma alanları yenilendi",
+        "openedPreview": "{{name}} önizlemesi açıldı",
+        "joinedSession": "{{name}} izleme oturumuna katıldı",
+        "reassigned": "{{name}}, {{pm}} kişisine yeniden atandı"
+      }
+    },
+    "settings": {
+      "pageTitle": "Ayarlar | ENS",
+      "title": "Ayarlar",
+      "breadcrumb": "Ayarlar",
+      "export": "Dışa aktar",
+      "reset": "Sıfırla",
+      "tabs": {
+        "profile": "Profil",
+        "notifications": "Bildirimler",
+        "security": "Güvenlik",
+        "appearance": "Görünüm"
+      },
+      "profile": {
+        "title": "Profil Bilgileri",
+        "description": "Kişisel ve mesleki bilgilerinizi güncelleyin",
+        "unsaved": "Kaydedilmedi",
+        "changeAvatar": "Avatar değiştir",
+        "uploadPicture": "Resim yükle",
+        "fullName": "Tam Ad",
+        "emailLabel": "E-posta Adresi",
+        "roleLabel": "Rol",
+        "phone": "Telefon Numarası",
+        "phonePlaceholder": "+90 (555) 000-0000",
+        "revert": "Geri al",
+        "saveChanges": "Değişiklikleri kaydet",
+        "avatarDialog": {
+          "title": "Avatar değiştir",
+          "description": "Bu profil için bir avatar stili seçin.",
+          "cancel": "İptal",
+          "apply": "Avatarı uygula"
+        },
+        "avatarTones": {
+          "primary": "Birincil",
+          "blue": "Mavi",
+          "green": "Yeşil",
+          "amber": "Kehribar"
+        },
+        "validation": {
+          "nameRequired": "Ad gereklidir",
+          "emailInvalid": "Geçerli bir e-posta girin",
+          "phoneInvalid": "Geçerli bir telefon numarası girin"
+        },
+        "toast": {
+          "saved": "Profil değişiklikleri kaydedildi",
+          "reverted": "Profil değişiklikleri geri alındı",
+          "avatarUpdated": "Avatar güncellendi",
+          "pictureSelected": "Profil fotoğrafı seçildi",
+          "loadError": "Ayarlar yüklenemedi",
+          "saveError": "Profil kaydedilemedi",
+          "avatarError": "Avatar kaydedilemedi",
+          "imageTypeError": "Bir resim dosyası seçin",
+          "imageSizeError": "1,5 MB altında bir resim seçin"
+        }
+      },
+      "notifications": {
+        "title": "E-posta Bildirimleri",
+        "description": "E-posta ile almak istediğiniz güncellemeleri yapılandırın",
+        "enabledCount": "{{count}}/4 etkin",
+        "items": {
+          "assignments": {
+            "title": "Yeni Proje Atamaları",
+            "desc": "Yeni bir proje oluşturulup atandığında bildirim alın."
+          },
+          "milestones": {
+            "title": "Proje Kilometre Taşları",
+            "desc": "Tamamlanan aşamalar veya onay talepleri için uyarılar."
+          },
+          "reports": {
+            "title": "Yönetici Faaliyet Raporları",
+            "desc": "Yönetici performansının haftalık özeti."
+          },
+          "system": {
+            "title": "Sistem Uyarıları",
+            "desc": "Kritik güncellemeler ve güvenlik bildirimleri."
+          }
+        },
+        "enableAll": "Tümünü etkinleştir",
+        "criticalOnly": "Yalnızca kritik",
+        "savePreferences": "Tercihleri kaydet",
+        "toast": {
+          "saved": "Bildirim tercihleri kaydedildi",
+          "allEnabled": "Tüm bildirimler etkinleştirildi",
+          "criticalOnly": "Yalnızca sistem uyarıları etkin",
+          "saveError": "Bildirimler kaydedilemedi"
+        }
+      },
+      "security": {
+        "title": "Güvenlik Ayarları",
+        "description": "Şifrenizi ve hesap güvenliğinizi yönetin",
+        "currentPassword": "Mevcut Şifre",
+        "newPassword": "Yeni Şifre",
+        "confirmNewPassword": "Yeni Şifreyi Onayla",
+        "updatePassword": "Şifreyi güncelle",
+        "strengthPrefix": "Güç:",
+        "passwordStrength": {
+          "empty": "Boş",
+          "weak": "Zayıf",
+          "fair": "Orta",
+          "good": "İyi",
+          "strong": "Güçlü"
+        },
+        "twoFactor": {
+          "title": "İki Faktörlü Doğrulama",
+          "description": "Hassas hesap işlemleri için doğrulama kodu kullanın.",
+          "enabled": "Etkin",
+          "disabled": "Devre Dışı",
+          "newCodes": "Yeni Kurtarma Kodları",
+          "disable": "2FA'yı Devre Dışı Bırak",
+          "enable": "2FA'yı Etkinleştir"
+        },
+        "twoFactorDialog": {
+          "title": "İki Faktörlü Doğrulamayı Etkinleştir",
+          "description": "Kimlik doğrulama uygulamanızı açın, QR kodunu tarayın ve 6 haneli kodu girin.",
+          "qrPlaceholder": "QR kodu üretimde burada görünecek",
+          "showCode": "Demo kodunu göster",
+          "hideCode": "Kodu gizle",
+          "demoLabel": "Demo kodu",
+          "codeLabel": "Doğrulama Kodu",
+          "codePlaceholder": "6 haneli kodu girin",
+          "cancel": "İptal",
+          "verify": "Doğrula ve Etkinleştir"
+        },
+        "recoveryCodes": {
+          "title": "Kurtarma Kodları",
+          "copyAll": "Tümünü kopyala",
+          "description": "Bu kodları güvenli bir yerde saklayın. Her kod yalnızca bir kez kullanılabilir."
+        },
+        "sessions": {
+          "title": "Aktif Oturumlar",
+          "description": "Bu hesapta oturum açık olan cihazları inceleyin.",
+          "signOutOthers": "Diğerlerini çıkış yap",
+          "signOut": "Çıkış yap",
+          "current": "mevcut"
+        },
+        "toast": {
+          "passwordSaved": "Şifre güncellendi",
+          "twoFactorEnabled": "İki faktörlü doğrulama etkinleştirildi",
+          "twoFactorDisabled": "İki faktörlü doğrulama devre dışı bırakıldı",
+          "codesRegenerated": "Kurtarma kodları yeniden oluşturuldu",
+          "codesCopied": "Kurtarma kodları kopyalandı",
+          "sessionSignedOut": "{{device}} oturumu kapatıldı",
+          "sessionsSignedOut_one": "{{count}} oturum kapatıldı",
+          "sessionsSignedOut_other": "{{count}} oturum kapatıldı",
+          "passwordAllFields": "Tüm şifre alanlarını doldurun",
+          "passwordMismatch": "Yeni şifreler eşleşmiyor",
+          "passwordWeak": "Daha güçlü bir şifre kullanın",
+          "passwordSame": "Yeni şifre farklı olmalıdır",
+          "passwordError": "Şifre güncellenemedi",
+          "twoFactorWrongCode": "Hatalı doğrulama kodu — uygulamanızı kontrol edin",
+          "twoFactorSetupError": "2FA kurulumu kaydedilemedi",
+          "twoFactorDisableError": "2FA durumu kaydedilemedi",
+          "twoFactorRequired": "Önce 2FA'yı etkinleştirin",
+          "codesError": "Kurtarma kodları kaydedilemedi",
+          "clipboardError": "Kopyalanamadı — kodları manuel olarak kopyalayın",
+          "sessionError": "Oturum kapatılamadı",
+          "sessionsError": "Oturumlar kapatılamadı",
+          "noOtherSessions": "Başka oturum yok"
+        }
+      },
+      "appearance": {
+        "title": "Görüntü Ayarları",
+        "description": "Pano görünümünü özelleştirin",
+        "themeMode": "Tema Modu",
+        "themeModeDesc": "Açık, koyu ve sistem temaları arasında geçiş yapın.",
+        "light": "Açık",
+        "dark": "Koyu",
+        "system": "Sistem",
+        "compactView": "Kompakt Görünüm",
+        "compactViewDesc": "Tablo ve listelerdeki boşlukları azaltın.",
+        "language": "Dil",
+        "languageDesc": "Tercih edilen görüntüleme dilini seçin.",
+        "resetDisplay": "Görüntüyü sıfırla",
+        "saveDisplay": "Görüntü ayarlarını kaydet",
+        "toast": {
+          "saved": "Görüntü ayarları kaydedildi",
+          "reset": "Görüntü ayarları sıfırlandı",
+          "saveError": "Görüntü ayarları kaydedilemedi"
+        }
+      },
+      "resetDialog": {
+        "title": "Ayarları Sıfırla",
+        "description": "Yerel hesap ayarlarını varsayılan değerlere geri yükler.",
+        "cancel": "İptal",
+        "confirm": "Ayarları Sıfırla"
+      },
+      "toast": {
+        "exported": "Ayarlar dışa aktarıldı",
+        "restored": "Ayarlar varsayılanlara geri yüklendi",
+        "restoredLocal": "Yerel ayarlar geri yüklendi"
+      }
+    }
+  },
+  "layout": {
+    "logout": "Çıkış Yap",
+    "notifications": "Bildirimler",
+    "unread": "{{count}} okunmamış",
+    "markAllRead": "Tümünü okundu işaretle",
+    "notificationNew": "Yeni",
+    "noNotifications": "Henüz bildirim yok.",
+    "skipToContent": "Ana içeriğe geç",
+    "navigation": "Ana gezinti",
+    "expandSidebar": "Kenar çubuğunu genişlet",
+    "collapseSidebar": "Kenar çubuğunu daralt",
+    "switchToLight": "Açık temaya geç",
+    "switchToDark": "Koyu temaya geç",
+    "selectLanguage": "Dil seç"
+  },
+  "pm": {
+    "nav": {
+      "dashboard": "Gösterge Paneli",
+      "myClients": "Müşterilerim",
+      "projects": "Projeler",
+      "calendar": "Takvim",
+      "workspace": "Çalışma Alanı",
+      "requests": "Talepler",
+      "messages": "Mesajlar",
+      "tasks": "Görevler",
+      "reports": "Raporlar",
+      "settings": "Ayarlar"
+    },
+    "common": {
+      "noDeadline": "Son tarih yok",
+      "today": "Bugün",
+      "tomorrow": "Yarın",
+      "overdue": "{{count}} gün gecikmiş",
+      "inDays": "{{count}} gün içinde",
+      "loading": "Yükleniyor...",
+      "noResults": "Sonuç bulunamadı.",
+      "cancel": "İptal",
+      "save": "Kaydet",
+      "create": "Oluştur",
+      "saving": "Kaydediliyor...",
+      "search": "Ara",
+      "filter": "Filtrele",
+      "priority": {
+        "high": "Yüksek",
+        "medium": "Orta",
+        "low": "Düşük"
+      },
+      "status": {
+        "active": "Aktif",
+        "pending": "Beklemede",
+        "lead": "Potansiyel Müşteri",
+        "inactive": "Pasif",
+        "planning": "Planlama",
+        "inDesign": "Tasarımda",
+        "clientReview": "Müşteri İncelemesi",
+        "revision": "Revizyon",
+        "delayed": "Gecikmiş",
+        "approved": "Onaylandı",
+        "completed": "Tamamlandı",
+        "inProgress": "Devam Ediyor",
+        "resolved": "Çözüldü",
+        "declined": "Reddedildi"
+      }
+    },
+    "dashboard": {
+      "title": "Proje Yöneticisi Panosu",
+      "overview": "Genel Bakış",
+      "loadError": "Pano verileri yüklenemedi.",
+      "stats": {
+        "assignedClients": "Atanmış Müşteriler",
+        "activeProjects": "Aktif Projeler",
+        "pendingReviews": "Bekleyen İncelemeler",
+        "completed": "Tamamlandı",
+        "workspaceFiles": "Çalışma Alanı Dosyaları"
+      },
+      "activeWork": {
+        "title": "Aktif Proje Çalışması",
+        "viewAll": "Tümünü Gör",
+        "loading": "Atanmış proje çalışması yükleniyor...",
+        "empty": "Şu anda atanmış aktif proje yok.",
+        "openProject": "{{name}} aç"
+      },
+      "actionItems": {
+        "title": "Eylem Öğeleri",
+        "loading": "Eylem öğeleri yükleniyor...",
+        "empty": "Bu organizasyon için acil eylem yok."
+      },
+      "actions": {
+        "pendingApprovals": "{{count}} bekleyen onay",
+        "pendingApprovalsDesc": "Müşteri incelemeleri bir karar bekliyor.",
+        "openApprovals": "Onayları aç",
+        "delayedProjects": "{{count}} gecikmiş proje",
+        "delayedProjectsDesc": "Projeler PM dikkatine ihtiyaç duyuyor.",
+        "reviewRisk": "Riski incele",
+        "activeWorkspaces": "{{count}} aktif çalışma alanı",
+        "activeWorkspacesDesc": "Fuar tasarımları düzenleme için hazır.",
+        "openWorkspace": "Çalışma alanını aç"
+      },
+      "recentActivity": {
+        "title": "Son Aktivite",
+        "loading": "Aktivite yükleniyor...",
+        "empty": "Henüz hiçbir aktivite olayı kaydedilmedi."
+      }
+    },
+    "projects": {
+      "title": "Projelerim",
+      "loadError": "Projeler yüklenemedi.",
+      "loading": "Projeler yükleniyor...",
+      "noMatch": "Hiçbir proje filtreyle eşleşmiyor.",
+      "newProject": "Yeni Proje",
+      "searchPlaceholder": "Proje ara...",
+      "filter": {
+        "all": "Tümü"
+      },
+      "stats": {
+        "total": "Toplam",
+        "inDesign": "Tasarımda",
+        "review": "İnceleme",
+        "delayed": "Gecikmiş"
+      },
+      "view": {
+        "list": "Liste görünümü",
+        "grid": "Izgara görünümü"
+      },
+      "table": {
+        "project": "Proje",
+        "client": "Müşteri",
+        "size": "Boyut",
+        "progress": "İlerleme",
+        "deadline": "Son Tarih",
+        "status": "Durum",
+        "actions": "Eylemler"
+      },
+      "grid": {
+        "system": "Sistem",
+        "size": "Boyut",
+        "deadline": "Son Tarih",
+        "pm": "PM",
+        "progress": "İlerleme"
+      },
+      "actions": {
+        "open": "Aç",
+        "details": "Detaylar",
+        "openWorkspace": "Çalışma alanını aç"
+      },
+      "modal": {
+        "title": "Yeni proje oluştur",
+        "projectName": "Proje adı",
+        "client": "Müşteri",
+        "deadline": "Son tarih",
+        "system": "Sistem",
+        "systemCustom": "Özel",
+        "width": "Genişlik (m)",
+        "depth": "Derinlik (m)",
+        "submit": "Proje oluştur"
+      },
+      "toast": {
+        "created": "\"{{name}}\" projesi kaydedildi.",
+        "createError": "Proje oluşturulamadı."
+      }
+    },
+    "clients": {
+      "title": "Müşterilerim",
+      "loadError": "Müşteriler yüklenemedi.",
+      "loading": "Müşteriler yükleniyor...",
+      "noMatch": "Mevcut aramaya uyan müşteri yok.",
+      "searchPlaceholder": "Müşteri ara...",
+      "stats": {
+        "total": "Toplam Müşteri",
+        "active": "Aktif",
+        "needsSetup": "Kurulum Gerekiyor"
+      },
+      "actions": {
+        "email": "E-posta gönder",
+        "emailClient": "{{name}} kişisine e-posta",
+        "openWorkspace": "Çalışma alanını aç",
+        "openWorkspaceFor": "{{name}} için çalışma alanını aç",
+        "toggleExpand": "{{name}} ayrıntılarını aç/kapat"
+      },
+      "detail": {
+        "clientDetails": "Müşteri Detayları",
+        "operationalStatus": "Operasyonel Durum",
+        "assignedPm": "Atanmış PM: {{name}}",
+        "lastActivity": "Son aktivite: {{time}}",
+        "dataSource": "PostgreSQL kayıtlarından yüklendi"
+      }
+    },
+    "tasks": {
+      "title": "Görev Panosu",
+      "newTask": "Yeni Görev",
+      "addTask": "Görev ekle",
+      "noTasks": "Görev yok",
+      "filter": {
+        "all": "Tümü"
+      },
+      "cols": {
+        "todo": "Yapılacak",
+        "inprogress": "Devam Ediyor",
+        "review": "İncelemede",
+        "done": "Tamamlandı"
+      },
+      "actions": {
+        "moveLeft": "Sola taşı",
+        "moveRight": "Sağa taşı",
+        "delete": "Sil",
+        "deleteTask": "\"{{title}}\" sil"
+      },
+      "addToCol": "{{col}} listesine görev ekle",
+      "stats": {
+        "total": "Toplam: {{count}} görev",
+        "overdue": "Gecikmiş: {{count}}"
+      },
+      "toast": {
+        "moved": "\"{{title}}\" → {{col}}",
+        "created": "Görev oluşturuldu: \"{{title}}\""
+      },
+      "modal": {
+        "title": "Görev oluştur",
+        "taskTitle": "Başlık",
+        "taskTitlePlaceholder": "Görev açıklaması…",
+        "client": "Müşteri",
+        "project": "Proje",
+        "priority": "Öncelik",
+        "deadline": "Son tarih",
+        "initialCol": "Başlangıç sütunu",
+        "submit": "Görev oluştur",
+        "select": "Seç…"
+      }
+    },
+    "messages": {
+      "title": "Mesajlar",
+      "unread": "{{count}} okunmamış",
+      "justNow": "az önce",
+      "loadContactsError": "Kişiler yüklenemedi.",
+      "loadMessagesError": "Mesajlar yüklenemedi.",
+      "sendError": "Mesaj gönderilemedi.",
+      "searchPlaceholder": "Kişi ara…",
+      "loadingContacts": "Kişiler yükleniyor…",
+      "noContacts": "Kişi bulunamadı.",
+      "chiefPortal": "Şef portalı",
+      "noMessages": "Henüz mesaj yok. İlkini siz gönderin!",
+      "selectContact": "Mesajlaşmaya başlamak için bir kişi seçin.",
+      "inputPlaceholder": "Mesaj yazın…",
+      "enterToSend": "Göndermek için Enter'a basın",
+      "toast": {
+        "callStarted": "{{name}} ile arama başlatılıyor…",
+        "videoReady": "{{name}} ile video açılıyor…",
+        "optionsOpened": "Seçenekler menüsü açıldı.",
+        "attachmentOpened": "Dosya seçici açıldı."
+      },
+      "actions": {
+        "call": "Sesli arama başlat",
+        "video": "Görüntülü arama başlat",
+        "more": "Daha fazla seçenek",
+        "attach": "Dosya ekle",
+        "send": "Mesaj gönder"
+      }
+    },
+    "requests": {
+      "title": "Revizyon Talepleri",
+      "pendingBadge": "{{count}} bekleyen",
+      "justNow": "az önce",
+      "pmInitials": "PM",
+      "replyCount": "{{count}} yanıt",
+      "replyPlaceholder": "Yanıt ekle…",
+      "noMatch": "Bu filtreyle eşleşen talep yok.",
+      "filter": {
+        "all": "Tümü"
+      },
+      "status": {
+        "pending": "Bekliyor",
+        "inProgress": "Devam Ediyor",
+        "resolved": "Çözüldü",
+        "declined": "Reddedildi"
+      },
+      "priority": {
+        "high": "Yüksek",
+        "medium": "Orta",
+        "low": "Düşük"
+      },
+      "actions": {
+        "start": "Başlat",
+        "decline": "Reddet",
+        "resolve": "Çöz",
+        "reply": "Yanıtla",
+        "sendReply": "Yanıt gönder",
+        "expand": "Yanıtları göster",
+        "collapse": "Yanıtları gizle"
+      },
+      "toast": {
+        "started": "Talep başlatıldı",
+        "declined": "Talep reddedildi",
+        "resolved": "Talep çözüldü",
+        "pending": "Talep beklemede ayarlandı",
+        "replySent": "Yanıt gönderildi"
+      }
+    },
+    "reports": {
+      "title": "Performans Raporları",
+      "export": "Dışa Aktar",
+      "vsLastPeriod": "önceki dönemle karşılaştırma",
+      "total": "Toplam: {{count}} proje",
+      "period": {
+        "this_week": "Bu Hafta",
+        "last_week": "Geçen Hafta"
+      },
+      "stats": {
+        "completionRate": "Tamamlanma Oranı",
+        "satisfaction": "Müşteri Memnuniyeti",
+        "activeClients": "Aktif Müşteriler",
+        "avgResponse": "Ort. Yanıt Süresi"
+      },
+      "chart": {
+        "tasks": "Görevler",
+        "revisions": "Revizyonlar",
+        "approvals": "Onaylar",
+        "efficiency": "Verimlilik",
+        "onTime": "Zamanında",
+        "changes": "Değişiklikler"
+      },
+      "cards": {
+        "weeklyTitle": "Haftalık Üretkenlik",
+        "weeklyDesc": "Görevler, revizyonlar ve onaylar · {{period}}",
+        "efficiencyTitle": "Proje Verimliliği",
+        "efficiencyDesc": "Tasarım verimliliği vs zamanında teslimat",
+        "revisionTitle": "Revizyon ve Değişiklik Trendi",
+        "revisionDesc": "Aylık revizyon talepleri vs değişiklik emirleri",
+        "statusTitle": "Proje Durumu Dağılımı",
+        "statusDesc": "Tüm projelerin mevcut dağılımı"
+      },
+      "pieStatus": {
+        "active": "Aktif",
+        "pending": "Bekliyor",
+        "review": "İncelemede",
+        "delayed": "Gecikmiş"
+      },
+      "toast": {
+        "exporting": "Dışa aktarma başlatıldı…"
+      }
+    }
+  },
+  "client": {
+    "nav": {
+      "dashboard": "Gösterge Paneli",
+      "projects": "Projeler",
+      "calendar": "Takvim",
+      "workspace": "Çalışma Alanı",
+      "messages": "Mesajlar",
+      "approvals": "Onaylar",
+      "documents": "Belgeler",
+      "profile": "Profil"
+    },
+    "dashboard": {
+      "pageTitle": "Gösterge Paneli | ENS",
+      "welcome": "Tekrar hoş geldiniz, {{name}}",
+      "breadcrumb": "Gösterge Paneli",
+      "errorLoad": "Müşteri gösterge paneli verileri yüklenemedi.",
+      "defaultClientName": "Müşteri",
+      "loadingProject": "Proje yükleniyor...",
+      "noActiveProject": "Aktif proje yok",
+      "projectSubtitle": "Proje verileri PostgreSQL'den yükleniyor",
+      "loadingActiveProject": "Aktif proje yükleniyor...",
+      "noProjectAssigned": "Henüz aktif bir proje atanmamış.",
+      "pmLabel": "Proje Yöneticisi",
+      "messagesBtn": "Mesajlar",
+      "overallProgress": "Genel ilerleme",
+      "viewWorkspace": "ÇALIŞMA ALANINI GÖRÜNTÜLE",
+      "workspacePreview": "Çalışma Alanı Önizlemesi",
+      "recentActivity": "Son Etkinlik",
+      "loadingActivity": "Etkinlikler yükleniyor...",
+      "noActivity": "Henüz hiç etkinlik kaydedilmedi.",
+      "viewTimeline": "Proje Zaman Çizelgesini Görüntüle",
+      "approvalProgress": "Onay İlerlemesi",
+      "stat": {
+        "progress": "Proje İlerlemesi",
+        "pendingApprovals": "Bekleyen Onaylar",
+        "workspaceVersions": "Çalışma Alanı Sürümleri",
+        "documents": "Belgeler"
+      },
+      "step": {
+        "created": "Oluşturuldu",
+        "designing": "Tasarlanıyor",
+        "review": "İnceleme",
+        "approved": "Onaylandı",
+        "production": "Üretim"
+      },
+      "approval": {
+        "created": "Proje Oluşturuldu",
+        "designing": "Tasarım Devam Ediyor",
+        "review": "Müşteri İncelemesi",
+        "reviewRequired": "İnceleme gerekli",
+        "noReview": "Bekleyen inceleme yok"
+      }
+    },
+    "approvals": {
+      "pageTitle": "Onaylar | ENS",
+      "title": "Onaylar",
+      "breadcrumbDashboard": "Gösterge Paneli",
+      "awaitingReview": "{{count}} incelemenizi bekliyor",
+      "filterGroup": "Onayları filtrele",
+      "filterByStatus": "{{status}} ile filtrele",
+      "justNow": "Az önce",
+      "emptyState": "Burada onay yok.",
+      "toggleDetails": "{{title}} için ayrıntıları değiştir",
+      "commentPlaceholder": "Proje yöneticinize yorum bırakın…",
+      "sendComment": "Yorum gönder",
+      "status": {
+        "Pending": "Bekliyor",
+        "Approved": "Onaylandı",
+        "Rejected": "Reddedildi"
+      },
+      "filter": {
+        "all": "Tümü"
+      },
+      "actions": {
+        "approve": "Onayla",
+        "requestChanges": "Değişiklik İste",
+        "viewDetails": "Ayrıntıları Gör"
+      },
+      "toast": {
+        "approved": "✓ Tasarım onaylandı — PM bildirildi",
+        "rejected": "Değişiklikler istendi — PM bildirildi",
+        "commentSent": "Yorum PM'e gönderildi"
+      },
+      "badge": {
+        "me": "BEN",
+        "pm": "PM"
+      },
+      "comments_one": "{{count}} yorum",
+      "comments_other": "{{count}} yorum",
+      "confirm": {
+        "approveTitle": "Bu Tasarımı Onayla?",
+        "rejectTitle": "Değişiklik İste?",
+        "approveBody": "PM'iniz bilgilendirilecek ve bu sürüm onaylı olarak işaretlenecek.",
+        "rejectBody": "PM'iniz bilgilendirilecek ve geri bildiriminizi ele alacak.",
+        "cancel": "İptal",
+        "confirmApprove": "Evet, Onayla",
+        "confirmReject": "Evet, Değişiklik İste"
+      }
+    },
+    "documents": {
+      "pageTitle": "Belgeler | ENS",
+      "title": "Belgeler",
+      "breadcrumbDashboard": "Gösterge Paneli",
+      "uploadBtn": "Dosya Yükle",
+      "filterGroup": "Kategoriye göre filtrele",
+      "searchPlaceholder": "Dosya, etiket ara…",
+      "emptyState": "Belge bulunamadı.",
+      "filter": {
+        "all": "Tümü"
+      },
+      "stat": {
+        "total": "Toplam Dosya",
+        "final": "Son Hali",
+        "inReview": "İncelemede",
+        "drafts": "Taslaklar"
+      },
+      "status": {
+        "final": "Son Hali",
+        "draft": "Taslak",
+        "review": "İncelemede"
+      },
+      "dropZone": {
+        "ariaLabel": "Dosya yükleme alanı",
+        "textBefore": "Dosyaları buraya sürükleyin veya",
+        "browse": "gözat",
+        "hint": "PDF, PNG, XLSX, DOC — dosya başına 50 MB'a kadar"
+      },
+      "table": {
+        "file": "Dosya",
+        "category": "Kategori",
+        "uploadedBy": "Yükleyen",
+        "date": "Tarih",
+        "status": "Durum"
+      },
+      "actions": {
+        "preview": "{{name}} önizleme",
+        "download": "{{name}} indir",
+        "remove": "{{name}} kaldır"
+      },
+      "toast": {
+        "uploaded_one": "{{count}} dosya yüklendi",
+        "uploaded_other": "{{count}} dosya yüklendi",
+        "fileRemoved": "Dosya kaldırıldı",
+        "downloading": "{{name}} indiriliyor…"
+      },
+      "preview": {
+        "close": "Önizlemeyi kapat",
+        "imageUnavailable": "Görüntü önizlemesi demoda mevcut değil",
+        "typeUnavailable": "{{type}} dosyaları için önizleme mevcut değil",
+        "category": "Kategori",
+        "status": "Durum",
+        "uploadedBy": "Yükleyen",
+        "tags": "Etiketler",
+        "downloadBtn": "Dosyayı İndir"
+      }
+    },
+    "messages": {
+      "pageTitle": "Mesajlar | ENS",
+      "title": "Mesajlar",
+      "breadcrumbDashboard": "Gösterge Paneli",
+      "searchPlaceholder": "Mesaj ara...",
+      "contactListLabel": "Konuşmalar",
+      "supportManager": "Destek Müdürü",
+      "activeNow": "Şu an aktif",
+      "justNow": "Az önce",
+      "threadLabel": "Mesaj dizisi",
+      "avatarYou": "BEN",
+      "avatarPm": "PM",
+      "inputPlaceholder": "Mesajınızı yazın...",
+      "actions": {
+        "phone": "Aramayı başlat",
+        "video": "Görüntülü aramayı başlat",
+        "more": "Daha fazla seçenek",
+        "attach": "Dosya ekle",
+        "send": "Mesaj gönder"
+      }
+    },
+    "projects": {
+      "pageTitle": "Projelerim | ENS",
+      "title": "Projelerim",
+      "breadcrumbDashboard": "Gösterge Paneli",
+      "breadcrumbProjects": "Projeler",
+      "actionRequired": "İşlem Gerekli",
+      "exhibitionTbd": "Fuar Belirlenmedi",
+      "productionProgress": "Üretim İlerlemesi",
+      "quickActions": "Hızlı İşlemler",
+      "stat": {
+        "total": "Toplam Proje",
+        "active": "Aktif",
+        "pendingReview": "İnceleme Bekliyor",
+        "avgProgress": "Ort. İlerleme"
+      },
+      "status": {
+        "Active": "Aktif",
+        "Pending": "Bekliyor",
+        "Delayed": "Gecikmiş",
+        "Completed": "Tamamlandı"
+      },
+      "meta": {
+        "system": "Sistem",
+        "size": "Boyut",
+        "pm": "PM",
+        "deadline": "Son Tarih"
+      },
+      "timeline": {
+        "heading": "Proje Zaman Çizelgesi",
+        "defaultLabel": "Proje oluşturuldu — tasarım devam ediyor",
+        "defaultDate": "Son zamanlarda"
+      },
+      "action": {
+        "viewDesign": "Tasarımı Gör",
+        "reviewPending": "İnceleme Bekliyor",
+        "approvals": "Onaylar",
+        "documents": "Belgeler",
+        "messagePm": "PM'e Mesaj Gönder"
+      }
+    },
+    "profile": {
+      "pageTitle": "Profil Ayarları | ENS",
+      "title": "Profil Ayarları",
+      "breadcrumbDashboard": "Gösterge Paneli",
+      "breadcrumbProfile": "Profil",
+      "tab": {
+        "profile": "Kişisel Bilgiler",
+        "company": "Şirket",
+        "notifications": "Bildirimler",
+        "security": "Güvenlik"
+      },
+      "personalInfo": {
+        "heading": "Kişisel Bilgiler",
+        "description": "Kişisel bilgilerinizi ve iletişim bilgilerinizi güncelleyin."
+      },
+      "company": {
+        "heading": "Şirket Bilgileri",
+        "description": "Şirket bilgilerinizi ve fuar profilinizi yönetin."
+      },
+      "avatar": {
+        "heading": "Profil Fotoğrafı",
+        "hint": "JPG, GIF veya PNG. Maksimum boyut 1,5 MB.",
+        "uploadNew": "Yeni Fotoğraf Yükle",
+        "remove": "Kaldır",
+        "changeBtn": "Profil fotoğrafını değiştir"
+      },
+      "field": {
+        "name": "Tam Ad",
+        "email": "E-posta Adresi",
+        "phone": "Telefon Numarası",
+        "companyName": "Şirket Adı",
+        "industry": "Sektör",
+        "website": "Web Sitesi",
+        "currentPassword": "Mevcut Şifre",
+        "newPassword": "Yeni Şifre",
+        "confirmPassword": "Yeni Şifreyi Onayla"
+      },
+      "btn": {
+        "saveChanges": "Değişiklikleri Kaydet",
+        "updateCompany": "Şirket Bilgilerini Güncelle",
+        "updatePassword": "Şifreyi Güncelle"
+      },
+      "notifications": {
+        "heading": "Bildirim Tercihleri",
+        "description": "Proje güncellemeleri hakkında nasıl bildirim almak istediğinizi seçin.",
+        "enabled": "Etkin",
+        "disabled": "Devre dışı",
+        "milestones": {
+          "title": "Proje Kilometre Taşları",
+          "desc": "Bir aşama tamamlandığında bildirim alın."
+        },
+        "assignments": {
+          "title": "Yeni Mesajlar",
+          "desc": "PM'iniz mesaj gönderdiğinde bildirim alın."
+        },
+        "reports": {
+          "title": "Revizyon İstekleri",
+          "desc": "Yeni bir tasarım versiyonu hazır olduğunda bildirim alın."
+        },
+        "system": {
+          "title": "Güvenlik Uyarıları",
+          "desc": "Hesap girişleri hakkında bildirim alın."
+        }
+      },
+      "security": {
+        "heading": "Güvenlik",
+        "description": "Şifrenizi ve hesap güvenliği ayarlarınızı yönetin."
+      },
+      "dangerZone": {
+        "heading": "Tehlikeli Bölge",
+        "description": "Hesabınızı sildikten sonra geri dönüş yoktur. Lütfen emin olun.",
+        "deleteBtn": "Hesabı Sil"
+      },
+      "validation": {
+        "nameMin": "Ad en az 2 karakter olmalıdır",
+        "emailInvalid": "Geçersiz e-posta adresi",
+        "companyNameRequired": "Şirket adı gereklidir",
+        "websiteInvalid": "Geçersiz URL"
+      },
+      "toast": {
+        "profileSaved": "Profil değişiklikleri kaydedildi",
+        "profileError": "Profil kaydedilemedi",
+        "profileLoadError": "Profil ayarları yüklenemedi",
+        "companySaved": "Şirket bilgileri kaydedildi",
+        "avatarUpdated": "Profil fotoğrafı güncellendi",
+        "avatarRemoved": "Profil fotoğrafı kaldırıldı",
+        "avatarError": "Profil fotoğrafı kaydedilemedi",
+        "avatarRemoveError": "Profil fotoğrafı kaldırılamadı",
+        "avatarNotImage": "Bir resim dosyası seçin",
+        "avatarTooLarge": "1,5 MB'tan küçük bir resim seçin",
+        "imageReadError": "Resim okunamadı",
+        "notificationError": "Bildirim ayarı kaydedilemedi",
+        "passwordUpdated": "Şifre güncellendi",
+        "passwordError": "Şifre güncellenemedi",
+        "passwordFillAll": "Tüm şifre alanlarını doldurun",
+        "passwordMismatch": "Yeni şifreler eşleşmiyor",
+        "passwordTooShort": "Şifre en az 8 karakter olmalıdır",
+        "deleteQueued": "Hesap silme isteği alındı"
+      }
+    },
+    "workspace": {
+      "pageTitle": "Tasarım Çalışma Alanı | ENS",
+      "viewOnly": "YALNIZCA GÖRÜNTÜLE",
+      "loadingWorkspace": "Çalışma alanı yükleniyor…",
+      "compareBtn": "Karşılaştır",
+      "addPinBtn": "İğne Ekle",
+      "pinningLabel": "Yerleştiriliyor…",
+      "downloadBtn": "İndir",
+      "requestChangesBtn": "Değişiklik İste",
+      "approvedLabel": "Onaylandı",
+      "approveDesignBtn": "Tasarımı Onayla",
+      "assetLibraryLabel": "Varlık Kütüphanesi",
+      "lockedLabel": "KİLİTLİ",
+      "reviewModeNote": "Varlıklar inceleme modunda kilitlidir. Değişiklik talepleri için PM'inize başvurun.",
+      "canvasLabel": "3D Stand Önizleme Tuvali",
+      "compareCurrentLabel": "v{{v}} — Mevcut",
+      "comparePreviousLabel": "v{{v}} — Önceki",
+      "clickToPin": "İğne yerleştirmek için tuvale tıklayın",
+      "versionSelect": "Sürüm seç",
+      "tab": {
+        "thread": "İş Parçacığı",
+        "approvals": "Onaylar",
+        "pins": "İğneler"
+      },
+      "pendingDot": "Bekleyen onaylar",
+      "reviewThread": "İnceleme İş Parçacığı",
+      "notesCount_one": "{{count}} not",
+      "notesCount_other": "{{count}} not",
+      "commentPlaceholder": "Yorum ekle…",
+      "sendComment": "Yorum gönder",
+      "projectInfoLabel": "Proje Bilgisi",
+      "info": {
+        "system": "Sistem",
+        "floorArea": "Zemin Alanı",
+        "dimensions": "Boyutlar",
+        "approval": "Onay",
+        "awaiting": "Onay bekleniyor"
+      },
+      "elementApprovalHeading": "Her tasarım öğesini inceleyin ve onaylayın",
+      "element": {
+        "structure": "Yapı",
+        "furniture": "Mobilya",
+        "branding": "Marka",
+        "lighting": "Aydınlatma"
+      },
+      "elementStatus": {
+        "approved": "Onaylandı",
+        "pending": "Bekliyor",
+        "rejected": "Geri Bildirim Gönderildi"
+      },
+      "approveBtn": "Onayla",
+      "requestFixBtn": "Düzeltme İste",
+      "resetBtn": "Beklemeye Al",
+      "allApprovedMsg": "Tüm öğeler onaylandı",
+      "pendingApprovalMsg": "Bekleyen onaylar var",
+      "approvedCount": "{{total}} öğeden {{approved}} tanesi onaylandı",
+      "canvasAnnotations": "Tuval Açıklamaları",
+      "placingLabel": "Yerleştiriliyor…",
+      "noPins": "Henüz iğne yok. «İğne Ekle» ye tıklayın ve ardından tuvale tıklayın.",
+      "removePin": "#{{num}} iğnesini kaldır",
+      "statusBar": {
+        "viewOnly": "YALNIZCA GÖRÜNTÜLE",
+        "restricted": "MÜŞTERİ İNCELEMESİ — KISITLI ERİŞİM"
+      },
+      "statusReadOnly": "YALNIZCA OKUMA",
+      "statusCompare": "KARŞILAŞTIRMA MODU",
+      "dialog": {
+        "title": "Tasarım Değişikliği İste",
+        "subtitle": "İstediğiniz değişiklikleri açıklayın. PM'iniz bildirim alacak.",
+        "placeholder": "İstediğiniz değişiklikleri açıklayın…",
+        "cancel": "İptal",
+        "submit": "İstek Gönder"
+      },
+      "toast": {
+        "allApproved": "Tüm öğeler onaylandı — teşekkürler!",
+        "changeRequestSent": "Değişiklik isteği PM'inize gönderildi",
+        "pinAdded": "#{{num}} iğnesi eklendi",
+        "elementApproved": "{{label}} onaylandı",
+        "feedbackSent": "Geri bildirim PM'e gönderildi",
+        "downloadStarted": "İndirme başladı",
+        "designApproved": "Tasarım onaylandı — teşekkürler!"
+      },
+      "justNow": "Az önce",
+      "changeRequestPrefix": "Değişiklik İsteği",
+      "pinPrefix": "İğne",
+      "pinAnnotationPrompt": "Bu iğne için not ekle",
+      "pinPlaceholder": "Bu konumu açıklayın…",
+      "confirmPin": "İğneyi onayla",
+      "cancelPin": "İğneyi iptal et",
+      "errorLoad": "Çalışma alanı yüklenemedi",
+      "ctrl": {
+        "reset": "Görünümü sıfırla",
+        "zoomIn": "Yaklaştır",
+        "zoomOut": "Uzaklaştır",
+        "fullscreen": "Tam ekran"
+      }
+    }
+  },
+  "notFound": {
+    "title": "404 – Sayfa Bulunamadı",
+    "badge": "Sayfa bulunamadı",
+    "heading": "Bu stand mevcut değil",
+    "body": "Aradığınız sayfa taşınmış, kaldırılmış ya da hiç var olmamış olabilir. Sizi platforma geri götürelim.",
+    "backHome": "Ana Sayfaya Dön",
+    "goBack": "Geri Git",
+    "links": {
+      "home": "Ana Sayfa",
+      "staffPortal": "Personel Portalı",
+      "login": "Giriş Yap",
+      "signUp": "Kaydol"
+    }
+  },
+  "auth": {
+    "login": {
+      "pageTitle": "Giriş Yap | ENS",
+      "title": "Tekrar hoş geldiniz",
+      "description": "Çalışma alanınıza erişmek için giriş yapın",
+      "emailLabel": "E-posta",
+      "emailPlaceholder": "ad@sirket.com",
+      "passwordLabel": "Şifre",
+      "passwordPlaceholder": "Şifrenizi girin",
+      "forgotPassword": "Şifrenizi mi unuttunuz?",
+      "rememberMe": "30 gün boyunca giriş bilgilerimi hatırla",
+      "submit": "Giriş Yap",
+      "submitting": "Giriş yapılıyor...",
+      "lockedBtn": "Kilitli",
+      "lockMessage": "Hesap geçici olarak kilitlendi. {{time}} sonra tekrar deneyin.",
+      "signInError": "Giriş yapılamadı.",
+      "attemptsRemaining_one": "Geçici kilit öncesi {{count}} giriş denemesi kaldı",
+      "attemptsRemaining_other": "Geçici kilit öncesi {{count}} giriş denemesi kaldı",
+      "noAccount": "Hesabınız yok mu?",
+      "signUpFree": "Ücretsiz kayıt ol",
+      "devSection": "Yerel Test Hesapları",
+      "showPassword": "Şifreyi göster",
+      "hidePassword": "Şifreyi gizle",
+      "validation": {
+        "email": "Geçersiz e-posta adresi",
+        "passwordMin": "Şifre en az 8 karakter olmalıdır"
+      }
+    },
+    "signup": {
+      "pageTitle": "Hesap Oluştur | ENS",
+      "title": "Müşteri hesabı oluştur",
+      "description": "Genel kayıt, ajans onayı bekleyen bir inceleme hesabı oluşturur",
+      "fullNameLabel": "Tam Ad",
+      "fullNamePlaceholder": "Ahmet Yılmaz",
+      "companyLabel": "Şirket",
+      "companyPlaceholder": "Acme Fuar",
+      "workEmailLabel": "İş E-postası",
+      "passwordLabel": "Şifre",
+      "passwordPlaceholder": "Şifre oluştur",
+      "confirmPasswordLabel": "Şifreyi Onayla",
+      "confirmPasswordPlaceholder": "Şifrenizi onaylayın",
+      "termsLabel": "Kabul ediyorum",
+      "termsOfService": "Kullanım Koşulları",
+      "and": "ve",
+      "privacyPolicy": "Gizlilik Politikası",
+      "submit": "Müşteri Hesabı Oluştur",
+      "submitting": "Hesap oluşturuluyor...",
+      "createError": "Hesap oluşturulamadı.",
+      "haveAccount": "Zaten hesabınız var mı?",
+      "signIn": "Giriş yap",
+      "clientOnlyNote": "Genel kayıt yalnızca müşterilerle sınırlıdır. Proje yöneticileri ve sorumlular bir kuruluş sahibi tarafından davet edilmelidir.",
+      "showPassword": "Şifreyi göster",
+      "hidePassword": "Şifreyi gizle",
+      "showConfirmPassword": "Onay şifresini göster",
+      "hideConfirmPassword": "Onay şifresini gizle",
+      "strength": {
+        "weak": "Zayıf",
+        "fair": "Orta",
+        "good": "İyi",
+        "strong": "Güçlü",
+        "suffix": "şifre"
+      },
+      "validation": {
+        "nameMin": "Ad en az 2 karakter olmalıdır",
+        "companyMin": "Şirket adı en az 2 karakter olmalıdır",
+        "email": "Geçersiz e-posta adresi",
+        "passwordMin": "Şifre en az 8 karakter olmalıdır",
+        "passwordUpper": "Büyük harf içermelidir",
+        "passwordNumber": "Rakam içermelidir",
+        "confirmRequired": "Lütfen şifrenizi onaylayın",
+        "termsRequired": "Koşulları kabul etmelisiniz",
+        "passwordsMismatch": "Şifreler eşleşmiyor"
+      }
+    },
+    "forgotPassword": {
+      "pageTitle": "Şifre Sıfırla | ENS",
+      "title": "Şifre sıfırla",
+      "description": "E-postanızı girin ve size bir sıfırlama bağlantısı gönderelim",
+      "emailLabel": "E-posta adresi",
+      "submit": "Bağlantı Gönder",
+      "submitting": "Bağlantı gönderiliyor...",
+      "sentTitle": "Gelen kutunuzu kontrol edin",
+      "sentTo": "Şifre sıfırlama bağlantısı gönderildi:",
+      "checkSpam": "Birkaç dakika içinde göremiyorsanız spam klasörünüzü kontrol edin.",
+      "resending": "Gönderiliyor...",
+      "resendIn": "{{seconds}}s sonra yeniden gönder",
+      "resendEmail": "E-postayı yeniden gönder",
+      "differentEmail": "Farklı e-posta kullan",
+      "backToLogin": "Girişe geri dön",
+      "validation": {
+        "email": "Lütfen geçerli bir e-posta adresi girin"
+      }
+    },
+    "resetPassword": {
+      "pageTitle": "Yeni Şifre Belirle | ENS",
+      "title": "Yeni şifre belirle",
+      "description": "Hesabınız için güçlü bir şifre seçin",
+      "newPasswordLabel": "Yeni Şifre",
+      "confirmPasswordLabel": "Şifreyi Onayla",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Şifreyi Güncelle",
+      "submitting": "Şifre güncelleniyor...",
+      "successTitle": "Şifre güncellendi",
+      "successMessage": "Şifreniz başarıyla güncellendi. Artık yeni kimlik bilgilerinizle giriş yapabilirsiniz.",
+      "continueToSignIn": "Girişe devam et",
+      "backToLogin": "Girişe geri dön",
+      "showPassword": "Şifreyi göster",
+      "hidePassword": "Şifreyi gizle",
+      "showConfirmPassword": "Onayı göster",
+      "hideConfirmPassword": "Onayı gizle",
+      "requirements": {
+        "length": "En az 8 karakter",
+        "uppercase": "Bir büyük harf",
+        "number": "Bir rakam"
+      },
+      "strength": {
+        "weak": "Zayıf",
+        "fair": "Orta",
+        "good": "İyi",
+        "strong": "Güçlü",
+        "suffix": "şifre"
+      },
+      "validation": {
+        "passwordMin": "Şifre en az 8 karakter olmalıdır",
+        "passwordUpper": "En az bir büyük harf içermelidir",
+        "passwordNumber": "En az bir rakam içermelidir",
+        "confirmRequired": "Lütfen şifrenizi onaylayın",
+        "passwordsMismatch": "Şifreler eşleşmiyor"
+      }
     }
   }
 }

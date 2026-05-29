@@ -289,6 +289,9 @@ export const clients = pgTable(
     orgCompanyIdx: index("clients_org_company_idx").on(table.organizationId, table.companyName),
     orgEmailIdx: index("clients_org_email_idx").on(table.organizationId, table.contactEmail),
     assignedPmIdx: index("clients_assigned_pm_idx").on(table.assignedPmUserId),
+    orgAssignedPmUpdatedIdx: index("clients_org_assigned_pm_updated_idx").on(table.organizationId, table.assignedPmUserId, table.updatedAt),
+    orgStatusUpdatedIdx: index("clients_org_status_updated_idx").on(table.organizationId, table.status, table.updatedAt),
+    orgUpdatedIdx: index("clients_org_updated_idx").on(table.organizationId, table.updatedAt),
   }),
 );
 
@@ -328,8 +331,13 @@ export const projects = pgTable(
   },
   (table) => ({
     orgStatusIdx: index("projects_org_status_idx").on(table.organizationId, table.status),
+    orgStatusUpdatedIdx: index("projects_org_status_updated_idx").on(table.organizationId, table.status, table.updatedAt),
+    orgUpdatedIdx: index("projects_org_updated_idx").on(table.organizationId, table.updatedAt),
+    orgHealthUpdatedIdx: index("projects_org_health_updated_idx").on(table.organizationId, table.health, table.updatedAt),
     clientIdx: index("projects_client_idx").on(table.clientId),
     pmIdx: index("projects_pm_idx").on(table.assignedPmUserId),
+    orgPmUpdatedIdx: index("projects_org_pm_updated_idx").on(table.organizationId, table.assignedPmUserId, table.updatedAt),
+    orgPmDeadlineIdx: index("projects_org_pm_deadline_idx").on(table.organizationId, table.assignedPmUserId, table.deadlineAt),
     deadlineIdx: index("projects_deadline_idx").on(table.deadlineAt),
   }),
 );
@@ -349,6 +357,8 @@ export const projectMembers = pgTable(
   (table) => ({
     pk: primaryKey({ columns: [table.projectId, table.userId] }),
     userIdx: index("project_members_user_idx").on(table.userId),
+    userProjectIdx: index("project_members_user_project_idx").on(table.userId, table.projectId),
+    projectRoleIdx: index("project_members_project_role_idx").on(table.projectId, table.role),
   }),
 );
 
@@ -401,6 +411,8 @@ export const tasks = pgTable(
     orgStatusIdx: index("tasks_org_status_idx").on(table.organizationId, table.status),
     projectIdx: index("tasks_project_idx").on(table.projectId),
     assigneeIdx: index("tasks_assignee_idx").on(table.assignedToUserId),
+    orgAssigneeStatusDueIdx: index("tasks_org_assignee_status_due_idx").on(table.organizationId, table.assignedToUserId, table.status, table.dueAt),
+    orgProjectStatusUpdatedIdx: index("tasks_org_project_status_updated_idx").on(table.organizationId, table.projectId, table.status, table.updatedAt),
   }),
 );
 
@@ -432,6 +444,7 @@ export const boothDesigns = pgTable(
   },
   (table) => ({
     projectIdx: index("booth_designs_project_idx").on(table.projectId),
+    projectUpdatedIdx: index("booth_designs_project_updated_idx").on(table.projectId, table.updatedAt),
     orgIdx: index("booth_designs_org_idx").on(table.organizationId),
   }),
 );
@@ -501,6 +514,8 @@ export const approvals = pgTable(
   },
   (table) => ({
     orgStatusIdx: index("approvals_org_status_idx").on(table.organizationId, table.status),
+    orgStatusRequestedIdx: index("approvals_org_status_requested_idx").on(table.organizationId, table.status, table.requestedAt),
+    orgProjectStatusRequestedIdx: index("approvals_org_project_status_requested_idx").on(table.organizationId, table.projectId, table.status, table.requestedAt),
     projectIdx: index("approvals_project_idx").on(table.projectId),
     versionIdx: index("approvals_version_idx").on(table.boothVersionId),
   }),
@@ -668,6 +683,7 @@ export const notifications = pgTable(
   },
   (table) => ({
     userUnreadIdx: index("notifications_user_unread_idx").on(table.userId, table.readAt),
+    userCreatedIdx: index("notifications_user_created_idx").on(table.userId, table.createdAt),
     orgCreatedIdx: index("notifications_org_created_idx").on(table.organizationId, table.createdAt),
   }),
 );

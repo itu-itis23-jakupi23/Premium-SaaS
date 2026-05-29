@@ -1,10 +1,17 @@
-import { motion } from 'framer-motion';
-import { useLocation } from 'wouter';
-import { Button } from '@/components/ui/button';
-import { Home, ArrowLeft, Search } from 'lucide-react';
+import { useEffect } from "react";
+import { motion } from "framer-motion";
+import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import { Home, ArrowLeft, Search } from "lucide-react";
 
 export default function NotFound() {
   const [, navigate] = useLocation();
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    document.title = t("notFound.title");
+  }, [t]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center relative overflow-hidden">
@@ -41,39 +48,40 @@ export default function NotFound() {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-5 border border-primary/20">
             <Search className="w-3 h-3" />
-            Page not found
+            {t("notFound.badge")}
           </div>
           <h1 className="text-2xl md:text-3xl font-bold mb-3 tracking-tight">
-            This booth doesn't exist
+            {t("notFound.heading")}
           </h1>
           <p className="text-muted-foreground mb-10 leading-relaxed">
-            The page you're looking for has either moved, been removed, or never existed.
-            Let's get you back to the platform.
+            {t("notFound.body")}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               className="w-full sm:w-auto rounded-full px-7 h-11 font-semibold gap-2 shadow-[0_0_20px_rgba(109,40,217,0.3)]"
             >
-              <Home className="w-4 h-4" /> Back to Home
+              <Home className="w-4 h-4" />
+              {t("notFound.backHome")}
             </Button>
             <Button
               variant="outline"
               onClick={() => window.history.back()}
               className="w-full sm:w-auto rounded-full px-7 h-11 font-semibold gap-2 border-border/60"
             >
-              <ArrowLeft className="w-4 h-4" /> Go Back
+              <ArrowLeft className="w-4 h-4" />
+              {t("notFound.goBack")}
             </Button>
           </div>
 
           <div className="mt-12 pt-8 border-t border-border/40 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">
-            {[
-              { label: 'Home', path: '/' },
-              { label: 'Staff Portal', path: '/team' },
-              { label: 'Log In', path: '/login' },
-              { label: 'Sign Up', path: '/signup' },
-            ].map(({ label, path }) => (
+            {([
+              { label: t("notFound.links.home"),        path: "/" },
+              { label: t("notFound.links.staffPortal"), path: "/team" },
+              { label: t("notFound.links.login"),       path: "/login" },
+              { label: t("notFound.links.signUp"),      path: "/signup" },
+            ] as const).map(({ label, path }) => (
               <button key={path} onClick={() => navigate(path)} className="hover:text-primary transition-colors">
                 {label}
               </button>

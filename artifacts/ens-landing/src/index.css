@@ -311,6 +311,7 @@
   .smooth-card:hover {
     transform: translateY(-2px);
   }
+
 }
 
 @keyframes ens-loader-pulse {
@@ -334,6 +335,7 @@
     transform: none;
     transition: none;
   }
+
 }
 
 html[data-compact="true"] main {

@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "startDesigning": "デザインを始める",
     "watchDemo": "デモを見る",
@@ -9,7 +9,9 @@
     "logIn": "ログイン",
     "learnMore": "詳細を見る",
     "copyright": "© {{year}} ENS Expo Solutions Ltd. All rights reserved.",
-    "internalOnly": "社内利用のみ"
+    "internalOnly": "社内利用のみ",
+    "vsLastMonth": "先月比",
+    "clickToView": "クリックして表示 →"
   },
   "nav": {
     "features": "機能",
@@ -45,20 +47,54 @@
       "heading": "デザインと納品に必要な",
       "headingAccent": "すべての機能",
       "subheading": "展示業界向けに特化した、完全なデザイン・プロジェクト管理スイート。",
-      "realtime": { "title": "リアルタイム3Dキャンバス", "desc": "システムコンポーネントをライブ3Dステージにドラッグ＆ドロップ。見たままが実際に構築されます。" },
-      "octanorm": { "title": "Octanormシステム", "desc": "精密な40mm・50mmプロファイル、コネクター、パネルを備えた完全なOctanormモジュールシステム。" },
-      "maxima": { "title": "Maximaフレーム", "desc": "設定可能なスパンと充填オプションを備えた頑丈なMaximaアルミ押出システム。" },
-      "client": { "title": "クライアントプレビュー", "desc": "ライブ3Dリンクをクライアントと共有。アカウント不要でモデルに直接注釈できます。" },
-      "analytics": { "title": "プロジェクト分析", "desc": "プロジェクト速度、承認サイクル、コスト予測、チーム稼働率をリアルタイムで追跡。" },
-      "automation": { "title": "スマート自動化", "desc": "フロアプラン、立面図、部品リスト、費用見積もりをワンクリックで自動生成。" }
+      "realtime": {
+        "title": "リアルタイム3Dキャンバス",
+        "desc": "システムコンポーネントをライブ3Dステージにドラッグ＆ドロップ。見たままが実際に構築されます。"
+      },
+      "octanorm": {
+        "title": "Octanormシステム",
+        "desc": "精密な40mm・50mmプロファイル、コネクター、パネルを備えた完全なOctanormモジュールシステム。"
+      },
+      "maxima": {
+        "title": "Maximaフレーム",
+        "desc": "設定可能なスパンと充填オプションを備えた頑丈なMaximaアルミ押出システム。"
+      },
+      "client": {
+        "title": "クライアントプレビュー",
+        "desc": "ライブ3Dリンクをクライアントと共有。アカウント不要でモデルに直接注釈できます。"
+      },
+      "analytics": {
+        "title": "プロジェクト分析",
+        "desc": "プロジェクト速度、承認サイクル、コスト予測、チーム稼働率をリアルタイムで追跡。"
+      },
+      "automation": {
+        "title": "スマート自動化",
+        "desc": "フロアプラン、立面図、部品リスト、費用見積もりをワンクリックで自動生成。"
+      }
     },
     "howItWorks": {
       "heading": "ブリーフから施工まで",
       "headingAccent": "4つのステップ",
-      "brief": { "step": "01", "title": "ブリーフのアップロード", "desc": "クライアントのイベントブリーフ、フロアプラン、またはブース仕様書をインポート。" },
-      "design": { "step": "02", "title": "3Dでデザイン", "desc": "OctanormまたはMaximaシステムコンポーネントと家具ライブラリを使ってスタンドを構築。" },
-      "review": { "step": "03", "title": "クライアントレビュー", "desc": "共有リンクを送信。クライアントは3Dモデルで直接確認・承認できます。" },
-      "deliver": { "step": "04", "title": "エクスポートと納品", "desc": "製作書類、図面、部品スケジュールにワンクリックでエクスポート。" }
+      "brief": {
+        "step": "01",
+        "title": "ブリーフのアップロード",
+        "desc": "クライアントのイベントブリーフ、フロアプラン、またはブース仕様書をインポート。"
+      },
+      "design": {
+        "step": "02",
+        "title": "3Dでデザイン",
+        "desc": "OctanormまたはMaximaシステムコンポーネントと家具ライブラリを使ってスタンドを構築。"
+      },
+      "review": {
+        "step": "03",
+        "title": "クライアントレビュー",
+        "desc": "共有リンクを送信。クライアントは3Dモデルで直接確認・承認できます。"
+      },
+      "deliver": {
+        "step": "04",
+        "title": "エクスポートと納品",
+        "desc": "製作書類、図面、部品スケジュールにワンクリックでエクスポート。"
+      }
     },
     "testimonials": {
       "heading": "業界トップ企業が",
@@ -104,7 +140,8 @@
       "security": "セキュリティ",
       "cookies": "Cookieポリシー",
       "gdpr": "GDPR"
-    }
+    },
+    "pageTitle": "ENS — 展示会・ブースデザインプラットフォーム"
   },
   "team": {
     "hero": {
@@ -169,6 +206,1949 @@
       "itSupport": "ITサポート",
       "privacy": "プライバシーポリシー",
       "security": "セキュリティ"
+    },
+    "pageTitle": "ENS チームポータル — スタッフ＆クライアントハブ",
+    "chiefFeatures": {
+      "workspaceMonitor": {
+        "title": "ワークスペースモニター",
+        "desc": "すべてのプロジェクトのアクティブなデザインセッションをリアルタイム監視。"
+      },
+      "teamManagement": {
+        "title": "チーム管理",
+        "desc": "プロジェクトマネージャーを割り当て、作業負荷を追跡し、アクセスを管理。"
+      },
+      "clientPortfolio": {
+        "title": "クライアントポートフォリオ",
+        "desc": "すべてのクライアントアカウント、連絡先、アクティブな契約の完全な表示。"
+      },
+      "analytics": {
+        "title": "分析・レポート",
+        "desc": "プロジェクトKPI、承認時間、収益ダッシュボード。"
+      },
+      "approvalGateway": {
+        "title": "承認ゲートウェイ",
+        "desc": "本番リリース前の最終的な構造・デザイン承認。"
+      },
+      "commsHub": {
+        "title": "コミュニケーションハブ",
+        "desc": "クライアント、PM、外注業者間の一元化されたメッセージング。"
+      }
+    },
+    "pmFeatures": {
+      "boothWorkspace": {
+        "title": "3Dブースワークスペース",
+        "desc": "リアルタイム協働デザインを備えた完全なOctanorm/Maximaエディタ。"
+      },
+      "clientMgmt": {
+        "title": "クライアント管理",
+        "desc": "プロジェクトごとのブリーフ、連絡先、ライブフィードバックを管理。"
+      },
+      "taskTracker": {
+        "title": "タスクトラッカー",
+        "desc": "製造、デザイン、納品フェーズをカバーするカンバンボード。"
+      },
+      "pipeline": {
+        "title": "プロジェクトパイプライン",
+        "desc": "マイルストーンタイムラインで全プロジェクトを追跡。"
+      },
+      "requestMgmt": {
+        "title": "リクエスト管理",
+        "desc": "変更依頼、修正ログ、承認チェーンを処理。"
+      },
+      "messaging": {
+        "title": "メッセージング",
+        "desc": "クライアントと本部へのダイレクト・グループメッセージ。"
+      }
+    },
+    "workflowSteps": {
+      "brief": {
+        "title": "クライアントブリーフ",
+        "desc": "Chiefが展示ブリーフを受け取り、プロジェクトマネージャーに割り当て。"
+      },
+      "workspace": {
+        "title": "ワークスペース設定",
+        "desc": "PMがプロジェクトを作成し、ブースの寸法とシステムを設定。"
+      },
+      "design": {
+        "title": "3Dデザイン",
+        "desc": "PMが構造ライブラリを使ってライブワークスペースでブースを構築。"
+      },
+      "review": {
+        "title": "Chiefレビュー",
+        "desc": "Chiefが進捗を監視し、構造的なガイダンスを提供。"
+      },
+      "signoff": {
+        "title": "クライアント承認",
+        "desc": "クライアントがデザインを確認し、変更依頼を提出。"
+      },
+      "approval": {
+        "title": "最終承認",
+        "desc": "Chiefが最終デザインを承認し、製造に向けてリリース。"
+      },
+      "export": {
+        "title": "製造エクスポート",
+        "desc": "PMが文書、カットリスト、部品スケジュールをエクスポート。"
+      }
+    }
+  },
+  "chief": {
+    "nav": {
+      "chief": "チーフ",
+      "dashboard": "ダッシュボード",
+      "clients": "クライアント",
+      "managers": "マネージャー",
+      "projects": "プロジェクト",
+      "monitor": "ワークスペース監視",
+      "reports": "レポート",
+      "messages": "メッセージ",
+      "calendar": "カレンダー",
+      "settings": "設定"
+    },
+    "common": {
+      "cancel": "キャンセル",
+      "save": "保存",
+      "assign": "割り当て",
+      "message": "メッセージ",
+      "rebalance": "再分配",
+      "openDetails": "詳細を開く",
+      "viewCalendar": "カレンダーを表示",
+      "sendReminder": "リマインダーを送る",
+      "assignments": "割り当て",
+      "inviteManager": "マネージャーを招待",
+      "keepEditing": "編集を続ける",
+      "discardChanges": "変更を破棄",
+      "selectAll": "すべて選択",
+      "clear": "クリア",
+      "project": "プロジェクト",
+      "noDeadline": "期限なし",
+      "status": {
+        "active": "アクティブ",
+        "pending": "保留中",
+        "onLeave": "休暇中",
+        "completed": "完了",
+        "delayed": "遅延",
+        "unassigned": "未割り当て",
+        "highLoad": "高負荷",
+        "accepted": "承認済み",
+        "expired": "期限切れ"
+      }
+    },
+    "dashboard": {
+      "title": "チーフダッシュボード",
+      "exportReports": "レポートをエクスポート",
+      "excelExported": "Excelレポートをエクスポートしました",
+      "noActivity": "まだアクティビティが記録されていません。",
+      "viewAllActivity": "すべてのアクティビティを表示",
+      "showRecentActivity": "最近のアクティビティを表示",
+      "commandCenter": "コマンドセンター",
+      "recentActivity": "最近のアクティビティ",
+      "noManagerAssignments": "マネージャーの割り当てが見つかりません。",
+      "loadError": "ダッシュボードデータを読み込めません",
+      "charts": {
+        "projectActivity": "プロジェクトアクティビティ",
+        "projectActivityDesc": "過去7日間のすべてのプロジェクトのアクティビティ",
+        "projectStatus": "プロジェクトステータス",
+        "projectStatusDesc": "{{count}} 件のアクティブプロジェクトのステータス分布",
+        "managerPerformance": "マネージャーパフォーマンス",
+        "managerPerformanceDesc": "マネージャーごとの割り当てプロジェクト数"
+      },
+      "stats": {
+        "totalClients": "総クライアント数",
+        "activeProjects": "アクティブプロジェクト",
+        "managers": "マネージャー",
+        "delayedProjects": "遅延プロジェクト",
+        "needsAction": "対応が必要",
+        "pendingApprovals": "承認待ち",
+        "activeWorkspaces": "アクティブワークスペース",
+        "saved": "保存済み",
+        "db": "DB",
+        "live": "ライブ",
+        "assigned": "割り当て済み",
+        "open": "未処理",
+        "clear": "解消"
+      },
+      "insights": {
+        "delayedTitle": "遅延プロジェクト",
+        "dueSoonTitle": "14日以内に期限",
+        "unassignedTitle": "未割り当て作業",
+        "approvalsTitle": "承認待ち",
+        "noDelayed": "現在、遅延プロジェクトは記録されていません。",
+        "firstInQueue": "{{name}}が回復キューの先頭にいます。",
+        "noDueSoon": "14日以内のプロジェクト期限はありません。",
+        "nearestDeadline": "{{name}}が最も近い期限を持っています。",
+        "noUnassigned": "すべてのアクティブプロジェクトにマネージャーが割り当てられています。",
+        "unassignedNeeds": "{{name}}にはまだプロジェクトマネージャーが必要です。",
+        "noApprovals": "承認のボトルネックは記録されていません。",
+        "approvalsWaiting": "クライアント承認がアクションを待っています。",
+        "reviewProjects": "プロジェクトを確認",
+        "openCalendar": "カレンダーを開く",
+        "assignManagers": "マネージャーを割り当て",
+        "openQueue": "キューを開く"
+      },
+      "pageTitle": "ダッシュボード | ENS"
+    },
+    "managers": {
+      "title": "マネージャー管理",
+      "refresh": "データを更新",
+      "noMatch": "現在のフィルターに一致するマネージャーはいません。",
+      "tiles": {
+        "teamLoad": "チーム負荷",
+        "activeManagers": "アクティブマネージャー",
+        "delayedProjects": "遅延プロジェクト",
+        "unassignedItems": "未割り当て項目",
+        "pendingInvites": "招待保留中"
+      },
+      "filters": {
+        "searchPlaceholder": "マネージャー・クライアント・プロジェクトを検索",
+        "allStatuses": "すべてのステータス",
+        "allManagers": "すべてのマネージャー",
+        "highLoad": "高負荷",
+        "sortHighest": "最高負荷",
+        "sortLowest": "最低負荷",
+        "sortProjects": "最多アクティブプロジェクト",
+        "sortRating": "最高評価",
+        "cardView": "カード表示",
+        "tableView": "テーブル表示"
+      },
+      "views": {
+        "title": "保存済みビュー",
+        "desc": "フィルター、並び替え、レイアウトを再利用する。",
+        "namePlaceholder": "ビュー名を入力",
+        "deleteView": "{{name}} ビューを削除"
+      },
+      "invitations": {
+        "title": "招待保留中",
+        "desc": "招待されたマネージャーは承認するまでここに表示されます。まだ割り当てを受け取れません。",
+        "expires": "{{date}}に期限切れ",
+        "moreInvites": "あと{{count}}件",
+        "copyLink": "{{email}} への招待リンクをコピー",
+        "resend": "{{email}} に招待を再送信",
+        "revoke": "{{email}} の招待を取り消す"
+      },
+      "invite": {
+        "title": "マネージャーを招待",
+        "desc": "チーフワークスペースにプロジェクトマネージャーを追加します。",
+        "namePlaceholder": "Sarah Mitchell",
+        "emailPlaceholder": "manager@company.com",
+        "sendInvite": "招待を送る",
+        "nameLabel": "名前",
+        "emailLabel": "メールアドレス",
+        "emailInvalid": "有効なメールアドレスを入力してください。",
+        "defaultName": "新しいマネージャー"
+      },
+      "statusChange": {
+        "title": "ステータス変更を確認",
+        "markOnLeave": "休暇中としてマーク",
+        "markActive": "アクティブとしてマーク",
+        "confirmPrefix": "本当にマークしますか",
+        "confirmSuffix": "として",
+        "onLeaveNote": "アクティブなプロジェクトは引き続き割り当てられますが、負荷は制限されます。",
+        "updated": "マネージャーステータスが更新されました"
+      },
+      "rebalance": {
+        "title": "作業負荷を再分配",
+        "desc": "確認前に提案された変更を確認してください。",
+        "projectToMove": "移動するプロジェクト",
+        "from": "移動元",
+        "to": "移動先",
+        "confirm": "再分配を確認",
+        "done": "作業負荷が再分配されました"
+      },
+      "assignments": {
+        "titleTeam": "チーム割り当て",
+        "titleFocused": "割り当て – {{name}}",
+        "descTeam": "チーム内のクライアントとプロジェクトを再割り当てします。",
+        "descFocused": "{{name}}に割り当てられたクライアントとプロジェクトを管理します。",
+        "bulkTitle": "一括割り当て",
+        "bulkDesc": "行を選択し、マネージャーを選択して、保存前に適用します。",
+        "selected": "選択済み",
+        "applySelected": "選択を適用",
+        "cascadeLabel": "このクライアントのプロジェクトも移動する",
+        "cascadeDesc": "クライアントが再割り当てされると、そのクライアント配下のすべてのプロジェクトが同じマネージャーに移動します。",
+        "saveAssignments": "割り当てを保存",
+        "noClients": "利用可能なクライアントがありません。",
+        "noProjects": "利用可能なプロジェクトがありません。",
+        "clients": "クライアント",
+        "projects": "プロジェクト",
+        "saved": "割り当てが更新されました",
+        "selectRow": "{{name}} を選択"
+      },
+      "discard": {
+        "title": "割り当て変更を破棄しますか？",
+        "desc": "保存されていない割り当て編集があります。閉じると破棄されます。"
+      },
+      "card": {
+        "computedWorkload": "計算された作業負荷",
+        "delayed": "遅延",
+        "urgent": "緊急",
+        "ratingNew": "新規",
+        "ratingNA": "なし"
+      },
+      "table": {
+        "manager": "マネージャー",
+        "status": "ステータス",
+        "workload": "作業負荷",
+        "projects": "プロジェクト",
+        "clients": "クライアント",
+        "nextDeadline": "次の期限",
+        "actions": "アクション"
+      },
+      "detail": {
+        "workload": "作業負荷",
+        "projects": "プロジェクト",
+        "clients": "クライアント",
+        "tabs": {
+          "overview": "概要",
+          "projects": "プロジェクト",
+          "clients": "クライアント",
+          "activity": "アクティビティ"
+        },
+        "overview": {
+          "title": "作業負荷の健全性",
+          "desc": "現在のアクティブプロジェクトとクライアント負荷",
+          "delayed": "遅延",
+          "dueSoon": "もうすぐ期限",
+          "nextDeadline": "次の期限",
+          "rating": "評価",
+          "none": "なし"
+        },
+        "noProjects": "割り当てられたプロジェクトがありません。",
+        "noClients": "割り当てられたクライアントがありません。"
+      },
+      "audit": {
+        "title": "アクティビティ監査",
+        "desc": "割り当て・アクセス・再分配・リマインダーの履歴",
+        "searchPlaceholder": "監査履歴を検索",
+        "allActivity": "すべてのアクティビティ",
+        "success": "成功",
+        "warnings": "警告",
+        "info": "情報",
+        "noActivity": "まだアクティビティが記録されていません。",
+        "showAll": "すべての{{count}}件を表示",
+        "showLess": "少なく表示（最新{{count}}件）",
+        "team": "チーム",
+        "exportCsv": "CSVとしてエクスポート",
+        "action": {
+          "invitation": "招待",
+          "access": "アクセス",
+          "assignment": "アサイン",
+          "rebalance": "再調整",
+          "reminder": "リマインダー"
+        },
+        "detail": {
+          "invited": "{{name}} への招待をキューに追加しました。",
+          "statusChanged": "{{name}} を {{status}} にマークしました。",
+          "assignmentsSaved": "アサインの変更を保存しました。",
+          "rebalanced": "{{project}} を {{from}} から {{to}} に移動しました。",
+          "reminded": "{{name}} へのアプリ内リマインダーをキューに追加しました — 優先項目 {{count}} 件。"
+        },
+        "justNow": "たった今"
+      },
+      "actions": {
+        "openDetails": "詳細を開く",
+        "assignments": "割り当て",
+        "viewCalendar": "カレンダーを表示",
+        "rebalanceWorkload": "作業負荷を再分配",
+        "markOnLeave": "休暇中としてマーク",
+        "markActive": "アクティブとしてマーク",
+        "sendReminder": "リマインダーを送る",
+        "assign": "割り当て",
+        "rebalance": "再分配",
+        "message": "メッセージ"
+      },
+      "toast": {
+        "loadError": "マネージャーのワークスペースを読み込めませんでした",
+        "viewLoaded": "ビューを読み込みました：{{name}}",
+        "viewSaved": "マネージャービューを保存しました：{{name}}",
+        "viewRemoved": "保存済みビューを削除しました",
+        "inviteCreated": "{{name}} への招待がキューに追加されました",
+        "inviteError": "マネージャーへの招待を作成できませんでした",
+        "inviteResent": "{{email}} に招待を再送信しました",
+        "inviteResendError": "招待を再送信できませんでした",
+        "inviteRevoked": "招待を取り消しました",
+        "inviteRevokeError": "招待を取り消せませんでした",
+        "inviteCopyFirst": "コピー可能なリンクを生成するには、まずこの招待を再送信してください",
+        "inviteCopied": "招待リンクをコピーしました",
+        "inviteCopyError": "招待リンクをコピーできませんでした",
+        "statusUpdated": "マネージャーのステータスを更新しました",
+        "statusError": "マネージャーのステータスを更新できませんでした",
+        "assignNoChange": "{{name}} に割り当て変更はありません",
+        "assignError": "割り当てを保存できませんでした",
+        "assignUpdated": "割り当てを更新しました",
+        "rebalanceNoTarget": "再分配に使用できるアクティブなマネージャーがいません",
+        "rebalanceNormal": "{{name}} の作業負荷（{{pct}}%）は正常範囲内です — 再分配は不要です",
+        "rebalanceNoProject": "再分配に適したプロジェクトまたはターゲットマネージャーが見つかりませんでした",
+        "rebalanceError": "ワークロードを再分配できませんでした",
+        "rebalanceDone": "ワークロードを再分配しました",
+        "reminderSent": "{{name}} へのリマインダーがキューに追加されました — 通知が作成されました",
+        "reminderError": "リマインダーを送信できませんでした"
+      }
+    },
+    "reports": {
+      "title": "レポート＆分析",
+      "loadError": "レポートデータを読み込めませんでした。",
+      "exportExcel": "Excel エクスポート",
+      "bottlenecks": "ボトルネック",
+      "leaderboardTitle": "PMリーダーボード",
+      "leaderboardDesc": "顧客満足度でランク付け / {{range}}",
+      "toast": {
+        "exported": "Excelレポートをエクスポートしました"
+      },
+      "kpi": {
+        "revenue": "総収益",
+        "revenueDetail": "+12.5% 前期比",
+        "projects": "プロジェクト",
+        "projectsDetail": "選択範囲：{{range}}",
+        "pms": "PM",
+        "pmsDetail": "納品でランク付け",
+        "satisfaction": "平均満足度",
+        "satisfactionDetail": "顧客スコア"
+      },
+      "cards": {
+        "revenueTitle": "収益 vs 目標",
+        "revenueDesc": "{{range}} / 合計 ${{total}}K / {{projects}} 件",
+        "pmPerfTitle": "PM パフォーマンス",
+        "pmPerfDesc": "完了プロジェクト vs 定時納品率",
+        "trendTitle": "12ヶ月収益トレンド",
+        "trendDesc": "過去1年間の収益推移",
+        "systemTitle": "システム分布とボトルネック",
+        "systemDesc": "システム使用状況と顧客待ち時間"
+      },
+      "chart": {
+        "revenue": "収益",
+        "target": "目標",
+        "onTimePct": "定時 %",
+        "satisfaction": "満足度"
+      },
+      "table": {
+        "rank": "順位",
+        "pm": "PM",
+        "projects": "プロジェクト",
+        "onTime": "定時",
+        "satisfaction": "満足度",
+        "revenue": "収益",
+        "month": "月"
+      },
+      "export": {
+        "colReport": "レポート",
+        "colRange": "範囲",
+        "colExportedAt": "エクスポート日時",
+        "colRevenue": "総収益",
+        "colTarget": "総目標",
+        "colProjects": "総プロジェクト",
+        "colRevenueDollar": "収益 ($)",
+        "colTargetDollar": "目標 ($)",
+        "colOnTimePct": "定時 (%)",
+        "colSystem": "システム",
+        "colShare": "シェア (%)",
+        "colProject": "プロジェクト",
+        "colWaitDays": "待ち日数",
+        "colStage": "ステージ",
+        "rowTotals": "合計"
+      }
+    },
+    "messages": {
+      "title": "メッセージ",
+      "justNow": "たった今",
+      "loadError": "展示会メッセージを読み込めませんでした。",
+      "conversationError": "会話を読み込めませんでした。",
+      "sendError": "メッセージを送信できませんでした。",
+      "noMessagesDefault": "まだメッセージはありません",
+      "noClient": "クライアント未リンク",
+      "loading": "展示会を読み込み中…",
+      "noExhibitions": "展示会が見つかりません。",
+      "noMessages": "{{name}} のメッセージはまだありません。",
+      "selectManager": "プロジェクトマネージャーを選択してください。",
+      "scopedTo": "対象：",
+      "send": "送信",
+      "sending": "送信中",
+      "projectCount": "{{count}} 件のプロジェクト",
+      "inputPlaceholder": "{{manager}} に {{exhibition}} についてメッセージ…",
+      "badges": {
+        "exhibitions": "{{count}} 件の展示会",
+        "unread": "{{count}} 件未読"
+      },
+      "section": {
+        "title": "展示会スレッド",
+        "desc": "展示会ごとに1つの会話スペース。"
+      },
+      "searchPlaceholder": "展示会・クライアント・マネージャーを検索",
+      "sidebar": {
+        "title": "プロジェクトマネージャー",
+        "assigned": "{{count}} 人割り当て済み",
+        "noManager": "この展示会にはまだプロジェクトマネージャーが割り当てられていません。"
+      },
+      "status": {
+        "delayed": "遅延",
+        "active": "アクティブ",
+        "completed": "完了",
+        "pending": "保留中"
+      },
+      "actions": {
+        "call": "通話を開始",
+        "video": "ビデオ通話を開始",
+        "options": "会話オプション",
+        "attach": "ファイルを添付",
+        "send": "メッセージを送信",
+        "emoji": "絵文字を挿入"
+      },
+      "toast": {
+        "call": "{{name}} との {{exhibition}} の通話を開始しました",
+        "video": "{{exhibition}} のビデオルームを準備しました",
+        "options": "会話オプションを開きました",
+        "attachment": "{{exhibition}} の添付ファイル選択を開きました"
+      }
+    },
+    "clients": {
+      "title": "クライアント管理",
+      "addClient": "クライアントを追加",
+      "loadError": "クライアントを読み込めませんでした。",
+      "loadingClients": "クライアントを読み込み中…",
+      "noClients": "検索/フィルター条件に合うクライアントが見つかりません。",
+      "searchPlaceholder": "クライアントまたは展示会を検索…",
+      "showing": "{{start}}-{{end}} / {{total}} 件を表示",
+      "previous": "前へ",
+      "next": "次へ",
+      "cancel": "キャンセル",
+      "saving": "保存中…",
+      "emailError": "有効なメールアドレスを入力してください。",
+      "filter": {
+        "all": "すべて",
+        "lead": "見込み客",
+        "pendingApproval": "承認待ち",
+        "active": "アクティブ",
+        "inactive": "非アクティブ",
+        "archived": "アーカイブ済み"
+      },
+      "status": {
+        "active": "アクティブ",
+        "pendingApproval": "承認待ち",
+        "lead": "見込み客",
+        "inactive": "非アクティブ",
+        "archived": "アーカイブ済み"
+      },
+      "table": {
+        "clientName": "クライアント名",
+        "company": "会社",
+        "assignedPm": "担当PM",
+        "exhibition": "展示会",
+        "status": "ステータス",
+        "lastActivity": "最終活動",
+        "actions": "操作"
+      },
+      "menu": {
+        "assignManager": "マネージャーを割り当て",
+        "openWorkspace": "ワークスペースを開く",
+        "editClient": "クライアントを編集",
+        "viewDetails": "詳細を表示",
+        "archive": "クライアントをアーカイブ"
+      },
+      "toast": {
+        "added": "{{name}} をクライアントに追加しました。",
+        "addError": "クライアントを追加できませんでした。",
+        "updated": "{{name}} を更新しました。",
+        "updateError": "クライアントを更新できませんでした。",
+        "noManagers": "利用可能なアクティブなプロジェクトマネージャーがいません。",
+        "assigned": "{{client}} を {{manager}} に割り当てました。",
+        "assignError": "割り当てを保存できませんでした。",
+        "archived": "{{name}} をアーカイブしました。",
+        "archiveError": "クライアントを削除できませんでした。",
+        "openingWorkspace": "チーフモニターで {{name}} を開いています。",
+        "defaultClient": "クライアント",
+        "unassigned": "未割り当て"
+      },
+      "addDialog": {
+        "title": "クライアントを追加",
+        "desc": "このビューでクライアントレコードを作成します。",
+        "name": "クライアント名",
+        "company": "会社",
+        "exhibition": "展示会",
+        "email": "連絡先メール",
+        "submit": "クライアントを追加"
+      },
+      "assignDialog": {
+        "title": "プロジェクトマネージャーを割り当て",
+        "desc": "{{name}} のマネージャーを選択します。",
+        "placeholder": "マネージャーを選択",
+        "submit": "割り当て"
+      },
+      "editDialog": {
+        "title": "クライアントを編集",
+        "desc": "ワークフロー用のクライアント詳細を更新します。",
+        "contactName": "担当者名",
+        "submit": "変更を保存"
+      },
+      "archiveDialog": {
+        "title": "クライアントをアーカイブ",
+        "desc": "{{name}} をアーカイブしますか？アクティブなプロジェクトがあるクライアントは保護されます。",
+        "blockers": "アーカイブをブロックしているアクティブなプロジェクト",
+        "archiving": "アーカイブ中…",
+        "submit": "アーカイブ"
+      },
+      "detailDialog": {
+        "contact": "連絡先",
+        "email": "メール",
+        "pm": "PM",
+        "exhibition": "展示会",
+        "status": "ステータス"
+      }
+    },
+    "projects": {
+      "title": "プロジェクトパイプライン",
+      "breadcrumb": "プロジェクト",
+      "viewKanban": "カンバン",
+      "viewList": "リスト",
+      "searchPlaceholder": "検索...",
+      "metric": {
+        "highRisk": "高リスク",
+        "waiting": "待機中",
+        "delayed": "遅延",
+        "matching": "一致プロジェクト"
+      },
+      "stage": {
+        "intake": "受付",
+        "design": "デザイン",
+        "review": "レビュー",
+        "production": "製作",
+        "closed": "完了"
+      },
+      "filter": {
+        "all": "すべて",
+        "active": "進行中",
+        "pending": "保留中",
+        "delayed": "遅延",
+        "completed": "完了"
+      },
+      "priority": {
+        "all": "すべて",
+        "high": "高",
+        "medium": "中",
+        "low": "低"
+      },
+      "kanban": {
+        "loading": "読込中",
+        "empty": "空"
+      },
+      "list": {
+        "loading": "プロジェクト読込中...",
+        "noMatch": "一致するプロジェクトがありません。",
+        "col": {
+          "project": "プロジェクト",
+          "client": "クライアント",
+          "pm": "PM",
+          "system": "システム",
+          "stage": "ステージ",
+          "progress": "進捗",
+          "health": "健全性"
+        }
+      },
+      "paging": {
+        "showing": "{{start}}–{{end}} / {{total}} プロジェクトを表示",
+        "filtered": "/ 優先度フィルター後 {{count}} 件",
+        "previous": "前へ",
+        "next": "次へ"
+      },
+      "footer": {
+        "note": "ページ: {{count}} 件表示 / 矢印でステージを変更"
+      },
+      "card": {
+        "waiting": "{{days}}日待機中",
+        "noDate": "日付なし",
+        "movePrev": "前のステージへ",
+        "moveNext": "次のステージへ",
+        "openMonitor": "モニターを開く",
+        "editProject": "プロジェクト編集"
+      },
+      "row": {
+        "edit": "編集",
+        "open": "開く"
+      },
+      "edit": {
+        "title": "プロジェクト編集",
+        "sheetDescription": "プロジェクト詳細、担当者、期限、ブース寸法を更新します。",
+        "name": "プロジェクト名",
+        "namePlaceholder": "オートショーブース",
+        "client": "クライアント",
+        "clientPlaceholder": "ファストカーズ社",
+        "exhibition": "展示会",
+        "exhibitionPlaceholder": "オートショー",
+        "manager": "プロジェクトマネージャー",
+        "managerPlaceholder": "PMを選択",
+        "keepManager": "現在の担当者を維持",
+        "unassigned": "未割当",
+        "deadline": "締切日",
+        "system": "システム",
+        "systemPlaceholder": "ブースシステム",
+        "octanorm": "Octanorm",
+        "maxima": "Maxima",
+        "custom": "カスタム",
+        "width": "幅 (m)",
+        "depth": "奥行き (m)",
+        "descriptionLabel": "説明",
+        "descriptionPlaceholder": "プロジェクトのメモ",
+        "cancel": "キャンセル",
+        "saving": "保存中...",
+        "save": "プロジェクトを保存"
+      },
+      "close": {
+        "title": "プロジェクトを完了",
+        "description": "{{name}} を完了に移動しますか？パイプラインで完了済みとなります。",
+        "cancel": "キャンセル",
+        "closing": "完了処理中...",
+        "confirm": "完了にする"
+      },
+      "error": {
+        "load": "プロジェクトを読み込めませんでした",
+        "save": "プロジェクトを保存できませんでした",
+        "stage": "ステージを保存できませんでした"
+      },
+      "toast": {
+        "updated": "{{name}} を更新しました",
+        "openMonitor": "{{name}} のモニターを開いています",
+        "moved": "{{name}} を {{stage}} に移動しました"
+      },
+      "validate": {
+        "required": "プロジェクト名とクライアントは必須です。",
+        "dimensions": "幅と奥行きは 1〜100 メートルの間で入力してください。"
+      }
+    },
+    "calendar": {
+      "title": "展示会カレンダー",
+      "breadcrumb": "カレンダー",
+      "addEvent": "イベントを追加",
+      "allMonths": "すべての月",
+      "prevMonth": "前月",
+      "nextMonth": "翌月",
+      "today": "今日",
+      "addEventTitle": "この日にイベントを追加",
+      "moreEvents": "+{{count}} 件",
+      "exhibitionsThisMonth_one": "今月 {{count}} 件の展示会",
+      "exhibitionsThisMonth_other": "今月 {{count}} 件の展示会",
+      "yearExhibitions_one": "{{count}} 件の展示会",
+      "yearExhibitions_other": "{{count}} 件の展示会",
+      "noExhibitions": "展示会なし",
+      "loading": "展示会カレンダーを読み込み中...",
+      "status": {
+        "active": "進行中",
+        "completed": "完了",
+        "delayed": "遅延",
+        "pending": "保留中"
+      },
+      "filter": {
+        "searchPlaceholder": "展示会・クライアント・都市を検索",
+        "pmPlaceholder": "プロジェクトマネージャー",
+        "allManagers": "すべてのPM",
+        "clientPlaceholder": "クライアント",
+        "allClients": "すべてのクライアント",
+        "statusPlaceholder": "ステータス",
+        "allStatuses": "すべてのステータス",
+        "shown": "{{count}} 件表示",
+        "resetFilters": "フィルターをリセット"
+      },
+      "form": {
+        "nameLabel": "展示会名 *",
+        "namePlaceholder": "例：TechCon 2027",
+        "clientLabel": "クライアント",
+        "clientPlaceholder": "クライアント企業",
+        "pmLabel": "プロジェクトマネージャー",
+        "pmPlaceholder": "PM名",
+        "startLabel": "開始日 *",
+        "endLabel": "終了日 *",
+        "locationLabel": "場所",
+        "locationPlaceholder": "都市 / 会場",
+        "standLabel": "ブースタイプ",
+        "standPlaceholder": "例：Maxima",
+        "statusLabel": "ステータス"
+      },
+      "add": {
+        "title": "展示会イベントを追加",
+        "description": "カレンダーに新しい展示会を予定します。",
+        "cancel": "キャンセル",
+        "saving": "保存中...",
+        "save": "イベントを保存"
+      },
+      "edit": {
+        "title": "展示会イベントを編集",
+        "description": "この展示会の詳細を更新します。",
+        "cancel": "キャンセル",
+        "saving": "保存中...",
+        "save": "変更を保存"
+      },
+      "detail": {
+        "description": "展示会詳細",
+        "client": "クライアント",
+        "pm": "PM",
+        "location": "場所",
+        "standType": "ブースタイプ",
+        "startDate": "開始日",
+        "endDate": "終了日",
+        "confirmDelete": "完全に削除しますか？",
+        "deleting": "削除中...",
+        "confirm": "確認",
+        "cancel": "キャンセル",
+        "delete": "削除",
+        "edit": "編集",
+        "close": "閉じる"
+      },
+      "error": {
+        "load": "カレンダーイベントを読み込めませんでした",
+        "save": "イベントを保存できませんでした",
+        "update": "イベントを更新できませんでした",
+        "delete": "イベントを削除できませんでした"
+      }
+    },
+    "monitor": {
+      "title": "ワークスペースモニター",
+      "breadcrumb": "モニター",
+      "activeNow": "{{count}} 件進行中",
+      "refresh": "更新",
+      "loading": "ライブデータを読み込み中...",
+      "errorSuffix": "。実データモードではデモデータは表示されません。",
+      "searchPlaceholder": "ワークスペースを検索...",
+      "pmPlaceholder": "プロジェクトマネージャー",
+      "allManagers": "すべてのPM",
+      "legend": "ライブ — 8 秒ごとに更新",
+      "status": {
+        "all": "すべて",
+        "live": "ライブ",
+        "review": "レビュー中",
+        "pending": "保留中",
+        "blocked": "ブロック中"
+      },
+      "stat": {
+        "total": "合計",
+        "totalDesc": "すべてのワークスペース",
+        "liveDesc": "ワークスペース内",
+        "reviewDesc": "顧客承認待ち",
+        "pendingDesc": "要対応",
+        "blockedDesc": "アクション必要"
+      },
+      "bottleneck": {
+        "title_one": "ボトルネックアラート — {{count}} 件が顧客応答待ち",
+        "title_other": "ボトルネックアラート — {{count}} 件が顧客応答待ち",
+        "waiting": "{{days}} 日待機中"
+      },
+      "card": {
+        "editingNow": "編集中",
+        "minutesAgo": "{{mins}} 分前",
+        "hoursAgo": "{{hours}} 時間前",
+        "waitingDays": "{{days}} 日待機中",
+        "openPreview": "{{name}} のプレビューを拡大",
+        "reassign": "再割当",
+        "join": "参加"
+      },
+      "reassign": {
+        "title": "PMを再割当",
+        "description": "{{name}} の新しい PM を選択してください。",
+        "client": "クライアント",
+        "current": "現在",
+        "unassigned": "未割当",
+        "cancel": "キャンセル",
+        "confirm": "再割当"
+      },
+      "error": {
+        "load": "ワークスペースデータを読み込めませんでした",
+        "noManagers": "利用可能なアクティブPMがいません",
+        "reassign": "プロジェクトを再割当できませんでした"
+      },
+      "toast": {
+        "refreshed": "すべてのワークスペースを更新しました",
+        "openedPreview": "{{name}} のプレビューを開きました",
+        "joinedSession": "{{name}} のモニターセッションに参加しました",
+        "reassigned": "{{name}} を {{pm}} に再割当しました"
+      }
+    },
+    "settings": {
+      "pageTitle": "設定 | ENS",
+      "title": "設定",
+      "breadcrumb": "設定",
+      "export": "エクスポート",
+      "reset": "リセット",
+      "tabs": {
+        "profile": "プロフィール",
+        "notifications": "通知",
+        "security": "セキュリティ",
+        "appearance": "外観"
+      },
+      "profile": {
+        "title": "プロフィール情報",
+        "description": "個人・職業情報を更新する",
+        "unsaved": "未保存",
+        "changeAvatar": "アバターを変更",
+        "uploadPicture": "画像をアップロード",
+        "fullName": "フルネーム",
+        "emailLabel": "メールアドレス",
+        "roleLabel": "役割",
+        "phone": "電話番号",
+        "phonePlaceholder": "+81 (555) 000-0000",
+        "revert": "元に戻す",
+        "saveChanges": "変更を保存",
+        "avatarDialog": {
+          "title": "アバターを変更",
+          "description": "このプロフィールのアバタースタイルを選択してください。",
+          "cancel": "キャンセル",
+          "apply": "アバターを適用"
+        },
+        "avatarTones": {
+          "primary": "プライマリ",
+          "blue": "ブルー",
+          "green": "グリーン",
+          "amber": "アンバー"
+        },
+        "validation": {
+          "nameRequired": "名前は必須です",
+          "emailInvalid": "有効なメールを入力してください",
+          "phoneInvalid": "有効な電話番号を入力してください"
+        },
+        "toast": {
+          "saved": "プロフィールの変更を保存しました",
+          "reverted": "プロフィールの変更を元に戻しました",
+          "avatarUpdated": "アバターを更新しました",
+          "pictureSelected": "プロフィール画像を選択しました",
+          "loadError": "設定を読み込めませんでした",
+          "saveError": "プロフィールを保存できませんでした",
+          "avatarError": "アバターを保存できませんでした",
+          "imageTypeError": "画像ファイルを選択してください",
+          "imageSizeError": "1.5 MB以下の画像を選択してください"
+        }
+      },
+      "notifications": {
+        "title": "メール通知",
+        "description": "メールで受け取る更新を設定する",
+        "enabledCount": "{{count}}/4 有効",
+        "items": {
+          "assignments": {
+            "title": "新しいプロジェクト割り当て",
+            "desc": "新しいプロジェクトが作成・割り当てられたときに通知を受け取る。"
+          },
+          "milestones": {
+            "title": "プロジェクトマイルストーン",
+            "desc": "完了したステージまたは承認リクエストのアラート。"
+          },
+          "reports": {
+            "title": "マネージャー活動レポート",
+            "desc": "マネージャーのパフォーマンスと作業負荷の週次サマリー。"
+          },
+          "system": {
+            "title": "システムアラート",
+            "desc": "重要な更新とセキュリティ通知。"
+          }
+        },
+        "enableAll": "すべて有効化",
+        "criticalOnly": "重要のみ",
+        "savePreferences": "設定を保存",
+        "toast": {
+          "saved": "通知設定を保存しました",
+          "allEnabled": "すべての通知を有効化しました",
+          "criticalOnly": "システムアラートのみ有効",
+          "saveError": "通知を保存できませんでした"
+        }
+      },
+      "security": {
+        "title": "セキュリティ設定",
+        "description": "パスワードとアカウントセキュリティを管理する",
+        "currentPassword": "現在のパスワード",
+        "newPassword": "新しいパスワード",
+        "confirmNewPassword": "新しいパスワードを確認",
+        "updatePassword": "パスワードを更新",
+        "strengthPrefix": "強度：",
+        "passwordStrength": {
+          "empty": "空",
+          "weak": "弱い",
+          "fair": "普通",
+          "good": "良い",
+          "strong": "強い"
+        },
+        "twoFactor": {
+          "title": "二要素認証",
+          "description": "機密性の高い操作に確認コードを使用する。",
+          "enabled": "有効",
+          "disabled": "無効",
+          "newCodes": "新しいリカバリーコード",
+          "disable": "2FAを無効化",
+          "enable": "2FAを有効化"
+        },
+        "twoFactorDialog": {
+          "title": "二要素認証を有効化",
+          "description": "認証アプリを開き、QRコードをスキャンして6桁のコードを入力してください。",
+          "qrPlaceholder": "本番環境ではここにQRコードが表示されます",
+          "showCode": "デモコードを表示",
+          "hideCode": "コードを非表示",
+          "demoLabel": "デモコード",
+          "codeLabel": "確認コード",
+          "codePlaceholder": "6桁のコードを入力",
+          "cancel": "キャンセル",
+          "verify": "確認して有効化"
+        },
+        "recoveryCodes": {
+          "title": "リカバリーコード",
+          "copyAll": "すべてコピー",
+          "description": "これらのコードを安全な場所に保存してください。各コードは一度のみ使用可能です。"
+        },
+        "sessions": {
+          "title": "アクティブセッション",
+          "description": "このアカウントにサインインしているデバイスを確認する。",
+          "signOutOthers": "他のセッションをサインアウト",
+          "signOut": "サインアウト",
+          "current": "現在"
+        },
+        "toast": {
+          "passwordSaved": "パスワードを更新しました",
+          "twoFactorEnabled": "二要素認証を有効化しました",
+          "twoFactorDisabled": "二要素認証を無効化しました",
+          "codesRegenerated": "リカバリーコードを再生成しました",
+          "codesCopied": "リカバリーコードをコピーしました",
+          "sessionSignedOut": "{{device}} をサインアウトしました",
+          "sessionsSignedOut_one": "{{count}} 件のセッションをサインアウトしました",
+          "sessionsSignedOut_other": "{{count}} 件のセッションをサインアウトしました",
+          "passwordAllFields": "すべてのパスワードフィールドを入力してください",
+          "passwordMismatch": "新しいパスワードが一致しません",
+          "passwordWeak": "より強いパスワードを使用してください",
+          "passwordSame": "新しいパスワードは現在のものと異なる必要があります",
+          "passwordError": "パスワードを更新できませんでした",
+          "twoFactorWrongCode": "確認コードが正しくありません — 認証アプリを確認してください",
+          "twoFactorSetupError": "2FA設定を保存できませんでした",
+          "twoFactorDisableError": "2FAステータスを保存できませんでした",
+          "twoFactorRequired": "先に2FAを有効化してください",
+          "codesError": "リカバリーコードを保存できませんでした",
+          "clipboardError": "コピーできませんでした — コードを手動でコピーしてください",
+          "sessionError": "セッションをサインアウトできませんでした",
+          "sessionsError": "セッションをサインアウトできませんでした",
+          "noOtherSessions": "他のセッションはありません"
+        }
+      },
+      "appearance": {
+        "title": "表示設定",
+        "description": "ダッシュボードの外観をカスタマイズする",
+        "themeMode": "テーマモード",
+        "themeModeDesc": "ライト、ダーク、システムテーマを切り替える。",
+        "light": "ライト",
+        "dark": "ダーク",
+        "system": "システム",
+        "compactView": "コンパクトビュー",
+        "compactViewDesc": "テーブルとリストの間隔を縮小する。",
+        "language": "言語",
+        "languageDesc": "表示言語を選択する。",
+        "resetDisplay": "表示をリセット",
+        "saveDisplay": "表示設定を保存",
+        "toast": {
+          "saved": "表示設定を保存しました",
+          "reset": "表示設定をリセットしました",
+          "saveError": "表示設定を保存できませんでした"
+        }
+      },
+      "resetDialog": {
+        "title": "設定をリセット",
+        "description": "ローカルアカウント設定をデフォルト値に戻します。",
+        "cancel": "キャンセル",
+        "confirm": "設定をリセット"
+      },
+      "toast": {
+        "exported": "設定をエクスポートしました",
+        "restored": "設定をデフォルトに戻しました",
+        "restoredLocal": "ローカル設定を復元しました"
+      }
+    }
+  },
+  "layout": {
+    "logout": "ログアウト",
+    "notifications": "通知",
+    "unread": "{{count}} 件未読",
+    "markAllRead": "すべて既読にする",
+    "notificationNew": "新着",
+    "noNotifications": "通知はまだありません。",
+    "skipToContent": "メインコンテンツへスキップ",
+    "navigation": "メインナビゲーション",
+    "expandSidebar": "サイドバーを展開",
+    "collapseSidebar": "サイドバーを折りたたむ",
+    "switchToLight": "ライトテーマに切り替え",
+    "switchToDark": "ダークテーマに切り替え",
+    "selectLanguage": "言語を選択"
+  },
+  "pm": {
+    "nav": {
+      "dashboard": "ダッシュボード",
+      "myClients": "マイクライアント",
+      "projects": "プロジェクト",
+      "calendar": "カレンダー",
+      "workspace": "ワークスペース",
+      "requests": "リクエスト",
+      "messages": "メッセージ",
+      "tasks": "タスク",
+      "reports": "レポート",
+      "settings": "設定"
+    },
+    "common": {
+      "noDeadline": "期限なし",
+      "today": "今日",
+      "tomorrow": "明日",
+      "overdue": "{{count}}日超過",
+      "inDays": "{{count}}日後",
+      "loading": "読み込み中...",
+      "noResults": "結果が見つかりません。",
+      "cancel": "キャンセル",
+      "save": "保存",
+      "create": "作成",
+      "saving": "保存中...",
+      "search": "検索",
+      "filter": "フィルター",
+      "priority": {
+        "high": "高",
+        "medium": "中",
+        "low": "低"
+      },
+      "status": {
+        "active": "アクティブ",
+        "pending": "保留中",
+        "lead": "リード",
+        "inactive": "非アクティブ",
+        "planning": "計画中",
+        "inDesign": "設計中",
+        "clientReview": "クライアントレビュー",
+        "revision": "改訂",
+        "delayed": "遅延",
+        "approved": "承認済み",
+        "completed": "完了",
+        "inProgress": "進行中",
+        "resolved": "解決済み",
+        "declined": "却下"
+      }
+    },
+    "dashboard": {
+      "title": "プロジェクトマネージャーダッシュボード",
+      "overview": "概要",
+      "loadError": "ダッシュボードデータを読み込めませんでした。",
+      "stats": {
+        "assignedClients": "担当クライアント",
+        "activeProjects": "アクティブプロジェクト",
+        "pendingReviews": "審査待ち",
+        "completed": "完了",
+        "workspaceFiles": "ワークスペースファイル"
+      },
+      "activeWork": {
+        "title": "アクティブプロジェクト作業",
+        "viewAll": "すべて表示",
+        "loading": "担当プロジェクト作業を読み込み中...",
+        "empty": "現在アクティブなプロジェクトはありません。",
+        "openProject": "{{name}} を開く"
+      },
+      "actionItems": {
+        "title": "アクション項目",
+        "loading": "アクション項目を読み込み中...",
+        "empty": "この組織に緊急アクションはありません。"
+      },
+      "actions": {
+        "pendingApprovals": "{{count}} 件の承認待ち",
+        "pendingApprovalsDesc": "クライアントレビューが決定を待っています。",
+        "openApprovals": "承認を開く",
+        "delayedProjects": "{{count}} 件の遅延プロジェクト",
+        "delayedProjectsDesc": "プロジェクトにはPMの注意が必要です。",
+        "reviewRisk": "リスクを確認",
+        "activeWorkspaces": "{{count}} 件のアクティブワークスペース",
+        "activeWorkspacesDesc": "ブースデザインが編集可能です。",
+        "openWorkspace": "ワークスペースを開く"
+      },
+      "recentActivity": {
+        "title": "最近のアクティビティ",
+        "loading": "アクティビティを読み込み中...",
+        "empty": "まだアクティビティイベントは記録されていません。"
+      }
+    },
+    "projects": {
+      "title": "マイプロジェクト",
+      "loadError": "プロジェクトを読み込めませんでした。",
+      "loading": "プロジェクトを読み込み中...",
+      "noMatch": "フィルターに一致するプロジェクトはありません。",
+      "newProject": "新規プロジェクト",
+      "searchPlaceholder": "プロジェクトを検索...",
+      "filter": {
+        "all": "すべて"
+      },
+      "stats": {
+        "total": "合計",
+        "inDesign": "設計中",
+        "review": "レビュー",
+        "delayed": "遅延"
+      },
+      "view": {
+        "list": "リスト表示",
+        "grid": "グリッド表示"
+      },
+      "table": {
+        "project": "プロジェクト",
+        "client": "クライアント",
+        "size": "サイズ",
+        "progress": "進捗",
+        "deadline": "期限",
+        "status": "ステータス",
+        "actions": "操作"
+      },
+      "grid": {
+        "system": "システム",
+        "size": "サイズ",
+        "deadline": "期限",
+        "pm": "PM",
+        "progress": "進捗"
+      },
+      "actions": {
+        "open": "開く",
+        "details": "詳細",
+        "openWorkspace": "ワークスペースを開く"
+      },
+      "modal": {
+        "title": "新規プロジェクト作成",
+        "projectName": "プロジェクト名",
+        "client": "クライアント",
+        "deadline": "期限",
+        "system": "システム",
+        "systemCustom": "カスタム",
+        "width": "幅 (m)",
+        "depth": "奥行 (m)",
+        "submit": "プロジェクトを作成"
+      },
+      "toast": {
+        "created": "プロジェクト「{{name}}」を保存しました。",
+        "createError": "プロジェクトを作成できませんでした。"
+      }
+    },
+    "clients": {
+      "title": "マイクライアント",
+      "loadError": "クライアントを読み込めませんでした。",
+      "loading": "クライアントを読み込み中...",
+      "noMatch": "現在の検索に一致するクライアントはありません。",
+      "searchPlaceholder": "クライアントを検索...",
+      "stats": {
+        "total": "クライアント総数",
+        "active": "アクティブ",
+        "needsSetup": "設定が必要"
+      },
+      "actions": {
+        "email": "メールを送信",
+        "emailClient": "{{name}} にメール",
+        "openWorkspace": "ワークスペースを開く",
+        "openWorkspaceFor": "{{name}} のワークスペースを開く",
+        "toggleExpand": "{{name}} の詳細を展開/折りたたむ"
+      },
+      "detail": {
+        "clientDetails": "クライアント詳細",
+        "operationalStatus": "運用ステータス",
+        "assignedPm": "担当PM：{{name}}",
+        "lastActivity": "最終活動：{{time}}",
+        "dataSource": "PostgreSQLレコードから読み込み"
+      }
+    },
+    "tasks": {
+      "title": "タスクかんばん",
+      "newTask": "新規タスク",
+      "addTask": "タスクを追加",
+      "noTasks": "タスクなし",
+      "filter": {
+        "all": "すべて"
+      },
+      "cols": {
+        "todo": "未着手",
+        "inprogress": "進行中",
+        "review": "レビュー中",
+        "done": "完了"
+      },
+      "actions": {
+        "moveLeft": "左に移動",
+        "moveRight": "右に移動",
+        "delete": "削除",
+        "deleteTask": "「{{title}}」を削除"
+      },
+      "addToCol": "{{col}} にタスクを追加",
+      "stats": {
+        "total": "合計：{{count}} 件",
+        "overdue": "期限超過：{{count}} 件"
+      },
+      "toast": {
+        "moved": "「{{title}}」→ {{col}}",
+        "created": "タスクを作成：「{{title}}」"
+      },
+      "modal": {
+        "title": "タスクを作成",
+        "taskTitle": "タイトル",
+        "taskTitlePlaceholder": "タスクの説明…",
+        "client": "クライアント",
+        "project": "プロジェクト",
+        "priority": "優先度",
+        "deadline": "期限",
+        "initialCol": "初期列",
+        "submit": "タスクを作成",
+        "select": "選択…"
+      }
+    },
+    "messages": {
+      "title": "メッセージ",
+      "unread": "{{count}} 件未読",
+      "justNow": "たった今",
+      "loadContactsError": "連絡先を読み込めませんでした。",
+      "loadMessagesError": "メッセージを読み込めませんでした。",
+      "sendError": "メッセージを送信できませんでした。",
+      "searchPlaceholder": "連絡先を検索…",
+      "loadingContacts": "連絡先を読み込み中…",
+      "noContacts": "連絡先が見つかりません。",
+      "chiefPortal": "チーフポータル",
+      "noMessages": "メッセージがありません。最初のメッセージを送りましょう！",
+      "selectContact": "連絡先を選択してメッセージを開始。",
+      "inputPlaceholder": "メッセージを入力…",
+      "enterToSend": "Enterで送信",
+      "toast": {
+        "callStarted": "{{name}} との通話を開始中…",
+        "videoReady": "{{name}} とのビデオを開始中…",
+        "optionsOpened": "オプションメニューを開きました。",
+        "attachmentOpened": "添付ファイル選択を開きました。"
+      },
+      "actions": {
+        "call": "音声通話を開始",
+        "video": "ビデオ通話を開始",
+        "more": "その他のオプション",
+        "attach": "ファイルを添付",
+        "send": "メッセージを送信"
+      }
+    },
+    "requests": {
+      "title": "修正依頼",
+      "pendingBadge": "{{count}} 件保留中",
+      "justNow": "たった今",
+      "pmInitials": "PM",
+      "replyCount": "{{count}} 件の返信",
+      "replyPlaceholder": "返信を追加…",
+      "noMatch": "このフィルターに一致する依頼はありません。",
+      "filter": {
+        "all": "すべて"
+      },
+      "status": {
+        "pending": "保留中",
+        "inProgress": "進行中",
+        "resolved": "解決済み",
+        "declined": "却下"
+      },
+      "priority": {
+        "high": "高",
+        "medium": "中",
+        "low": "低"
+      },
+      "actions": {
+        "start": "開始",
+        "decline": "却下",
+        "resolve": "解決",
+        "reply": "返信",
+        "sendReply": "返信を送信",
+        "expand": "返信を表示",
+        "collapse": "返信を非表示"
+      },
+      "toast": {
+        "started": "依頼を開始しました",
+        "declined": "依頼を却下しました",
+        "resolved": "依頼を解決しました",
+        "pending": "依頼を保留に設定しました",
+        "replySent": "返信を送信しました"
+      }
+    },
+    "reports": {
+      "title": "パフォーマンスレポート",
+      "export": "エクスポート",
+      "vsLastPeriod": "前期比",
+      "total": "合計：{{count}} 件のプロジェクト",
+      "period": {
+        "this_week": "今週",
+        "last_week": "先週"
+      },
+      "stats": {
+        "completionRate": "完了率",
+        "satisfaction": "顧客満足度",
+        "activeClients": "アクティブクライアント",
+        "avgResponse": "平均応答時間"
+      },
+      "chart": {
+        "tasks": "タスク",
+        "revisions": "修正",
+        "approvals": "承認",
+        "efficiency": "効率",
+        "onTime": "定時",
+        "changes": "変更"
+      },
+      "cards": {
+        "weeklyTitle": "週次生産性",
+        "weeklyDesc": "タスク・修正・承認 · {{period}}",
+        "efficiencyTitle": "プロジェクト効率",
+        "efficiencyDesc": "デザイン効率 vs 定時納品",
+        "revisionTitle": "修正・変更トレンド",
+        "revisionDesc": "月次修正依頼 vs 変更オーダー",
+        "statusTitle": "プロジェクト状況内訳",
+        "statusDesc": "全プロジェクトの現在の分布"
+      },
+      "pieStatus": {
+        "active": "アクティブ",
+        "pending": "保留中",
+        "review": "レビュー中",
+        "delayed": "遅延"
+      },
+      "toast": {
+        "exporting": "エクスポートを開始しました…"
+      }
+    }
+  },
+  "client": {
+    "nav": {
+      "dashboard": "ダッシュボード",
+      "projects": "プロジェクト",
+      "calendar": "カレンダー",
+      "workspace": "ワークスペース",
+      "messages": "メッセージ",
+      "approvals": "承認",
+      "documents": "ドキュメント",
+      "profile": "プロフィール"
+    },
+    "dashboard": {
+      "pageTitle": "ダッシュボード | ENS",
+      "welcome": "おかえりなさい、{{name}}",
+      "breadcrumb": "ダッシュボード",
+      "errorLoad": "クライアントダッシュボードのデータを読み込めませんでした。",
+      "defaultClientName": "クライアント",
+      "loadingProject": "プロジェクトを読み込み中...",
+      "noActiveProject": "アクティブなプロジェクトなし",
+      "projectSubtitle": "プロジェクトデータはPostgreSQLから読み込まれます",
+      "loadingActiveProject": "アクティブなプロジェクトを読み込み中...",
+      "noProjectAssigned": "まだアクティブなプロジェクトが割り当てられていません。",
+      "pmLabel": "プロジェクトマネージャー",
+      "messagesBtn": "メッセージ",
+      "overallProgress": "全体の進捗",
+      "viewWorkspace": "ワークスペースを表示",
+      "workspacePreview": "ワークスペースプレビュー",
+      "recentActivity": "最近のアクティビティ",
+      "loadingActivity": "アクティビティを読み込み中...",
+      "noActivity": "まだアクティビティが記録されていません。",
+      "viewTimeline": "プロジェクトタイムラインを表示",
+      "approvalProgress": "承認の進捗",
+      "stat": {
+        "progress": "プロジェクト進捗",
+        "pendingApprovals": "保留中の承認",
+        "workspaceVersions": "ワークスペースバージョン",
+        "documents": "ドキュメント"
+      },
+      "step": {
+        "created": "作成済み",
+        "designing": "設計中",
+        "review": "レビュー",
+        "approved": "承認済み",
+        "production": "本番"
+      },
+      "approval": {
+        "created": "プロジェクト作成済み",
+        "designing": "デザイン進行中",
+        "review": "クライアントレビュー",
+        "reviewRequired": "レビュー必要",
+        "noReview": "保留中のレビューなし"
+      }
+    },
+    "approvals": {
+      "pageTitle": "承認 | ENS",
+      "title": "承認",
+      "breadcrumbDashboard": "ダッシュボード",
+      "awaitingReview": "{{count}}件がレビュー待ち",
+      "filterGroup": "承認のフィルター",
+      "filterByStatus": "{{status}}でフィルター",
+      "justNow": "たった今",
+      "emptyState": "承認はありません。",
+      "toggleDetails": "{{title}}の詳細を切り替え",
+      "commentPlaceholder": "プロジェクトマネージャーにコメントを残す…",
+      "sendComment": "コメントを送信",
+      "status": {
+        "Pending": "保留中",
+        "Approved": "承認済み",
+        "Rejected": "却下"
+      },
+      "filter": {
+        "all": "すべて"
+      },
+      "actions": {
+        "approve": "承認",
+        "requestChanges": "変更をリクエスト",
+        "viewDetails": "詳細を見る"
+      },
+      "toast": {
+        "approved": "✓ デザインが承認されました — PMに通知済み",
+        "rejected": "変更がリクエストされました — PMに通知済み",
+        "commentSent": "PMにコメントを送信しました"
+      },
+      "badge": {
+        "me": "私",
+        "pm": "PM"
+      },
+      "comments_one": "{{count}}件のコメント",
+      "comments_other": "{{count}}件のコメント",
+      "confirm": {
+        "approveTitle": "このデザインを承認しますか？",
+        "rejectTitle": "変更をリクエストしますか？",
+        "approveBody": "PMに通知が届き、このバージョンが承認済みとしてマークされます。",
+        "rejectBody": "PMに通知が届き、フィードバックが対応されます。",
+        "cancel": "キャンセル",
+        "confirmApprove": "はい、承認する",
+        "confirmReject": "はい、変更をリクエストする"
+      }
+    },
+    "documents": {
+      "pageTitle": "ドキュメント | ENS",
+      "title": "ドキュメント",
+      "breadcrumbDashboard": "ダッシュボード",
+      "uploadBtn": "ファイルをアップロード",
+      "filterGroup": "カテゴリでフィルター",
+      "searchPlaceholder": "ファイル、タグを検索…",
+      "emptyState": "ドキュメントが見つかりません。",
+      "filter": {
+        "all": "すべて"
+      },
+      "stat": {
+        "total": "ファイル総数",
+        "final": "確定版",
+        "inReview": "レビュー中",
+        "drafts": "下書き"
+      },
+      "status": {
+        "final": "確定版",
+        "draft": "下書き",
+        "review": "レビュー中"
+      },
+      "dropZone": {
+        "ariaLabel": "ファイルアップロードエリア",
+        "textBefore": "ファイルをここにドラッグ＆ドロップ、または",
+        "browse": "参照",
+        "hint": "PDF、PNG、XLSX、DOC — ファイルあたり最大50MB"
+      },
+      "table": {
+        "file": "ファイル",
+        "category": "カテゴリ",
+        "uploadedBy": "アップロード者",
+        "date": "日付",
+        "status": "ステータス"
+      },
+      "actions": {
+        "preview": "{{name}}をプレビュー",
+        "download": "{{name}}をダウンロード",
+        "remove": "{{name}}を削除"
+      },
+      "toast": {
+        "uploaded_one": "{{count}}件のファイルをアップロードしました",
+        "uploaded_other": "{{count}}件のファイルをアップロードしました",
+        "fileRemoved": "ファイルを削除しました",
+        "downloading": "{{name}}をダウンロード中…"
+      },
+      "preview": {
+        "close": "プレビューを閉じる",
+        "imageUnavailable": "デモでは画像プレビューは利用できません",
+        "typeUnavailable": "{{type}}ファイルのプレビューは利用できません",
+        "category": "カテゴリ",
+        "status": "ステータス",
+        "uploadedBy": "アップロード者",
+        "tags": "タグ",
+        "downloadBtn": "ファイルをダウンロード"
+      }
+    },
+    "messages": {
+      "pageTitle": "メッセージ | ENS",
+      "title": "メッセージ",
+      "breadcrumbDashboard": "ダッシュボード",
+      "searchPlaceholder": "メッセージを検索...",
+      "contactListLabel": "会話",
+      "supportManager": "サポートマネージャー",
+      "activeNow": "オンライン",
+      "justNow": "たった今",
+      "threadLabel": "メッセージスレッド",
+      "avatarYou": "私",
+      "avatarPm": "PM",
+      "inputPlaceholder": "メッセージを入力...",
+      "actions": {
+        "phone": "通話を開始",
+        "video": "ビデオ通話を開始",
+        "more": "その他のオプション",
+        "attach": "ファイルを添付",
+        "send": "メッセージを送信"
+      }
+    },
+    "projects": {
+      "pageTitle": "マイプロジェクト | ENS",
+      "title": "マイプロジェクト",
+      "breadcrumbDashboard": "ダッシュボード",
+      "breadcrumbProjects": "プロジェクト",
+      "actionRequired": "対応が必要",
+      "exhibitionTbd": "展示会未定",
+      "productionProgress": "製作の進捗",
+      "quickActions": "クイックアクション",
+      "stat": {
+        "total": "プロジェクト総数",
+        "active": "進行中",
+        "pendingReview": "レビュー待ち",
+        "avgProgress": "平均進捗"
+      },
+      "status": {
+        "Active": "進行中",
+        "Pending": "保留中",
+        "Delayed": "遅延",
+        "Completed": "完了"
+      },
+      "meta": {
+        "system": "システム",
+        "size": "サイズ",
+        "pm": "PM",
+        "deadline": "締切"
+      },
+      "timeline": {
+        "heading": "プロジェクトタイムライン",
+        "defaultLabel": "プロジェクト作成済み — デザイン進行中",
+        "defaultDate": "最近"
+      },
+      "action": {
+        "viewDesign": "デザインを見る",
+        "reviewPending": "レビュー待ち",
+        "approvals": "承認",
+        "documents": "ドキュメント",
+        "messagePm": "PMに連絡"
+      }
+    },
+    "profile": {
+      "pageTitle": "プロフィール設定 | ENS",
+      "title": "プロフィール設定",
+      "breadcrumbDashboard": "ダッシュボード",
+      "breadcrumbProfile": "プロフィール",
+      "tab": {
+        "profile": "個人情報",
+        "company": "会社",
+        "notifications": "通知",
+        "security": "セキュリティ"
+      },
+      "personalInfo": {
+        "heading": "個人情報",
+        "description": "個人情報と連絡先を更新してください。"
+      },
+      "company": {
+        "heading": "会社情報",
+        "description": "会社の詳細と展示会プロフィールを管理してください。"
+      },
+      "avatar": {
+        "heading": "プロフィール写真",
+        "hint": "JPG、GIFまたはPNG。最大サイズ1.5MB。",
+        "uploadNew": "新しい写真をアップロード",
+        "remove": "削除",
+        "changeBtn": "プロフィール写真を変更"
+      },
+      "field": {
+        "name": "氏名",
+        "email": "メールアドレス",
+        "phone": "電話番号",
+        "companyName": "会社名",
+        "industry": "業種",
+        "website": "ウェブサイト",
+        "currentPassword": "現在のパスワード",
+        "newPassword": "新しいパスワード",
+        "confirmPassword": "新しいパスワードを確認"
+      },
+      "btn": {
+        "saveChanges": "変更を保存",
+        "updateCompany": "会社情報を更新",
+        "updatePassword": "パスワードを更新"
+      },
+      "notifications": {
+        "heading": "通知設定",
+        "description": "プロジェクトの更新をどのように通知するか選択してください。",
+        "enabled": "有効",
+        "disabled": "無効",
+        "milestones": {
+          "title": "プロジェクトマイルストーン",
+          "desc": "フェーズが完了したときに通知を受け取ります。"
+        },
+        "assignments": {
+          "title": "新しいメッセージ",
+          "desc": "PMがメッセージを送ったときに通知を受け取ります。"
+        },
+        "reports": {
+          "title": "修正リクエスト",
+          "desc": "新しいデザインバージョンが準備できたときに通知を受け取ります。"
+        },
+        "system": {
+          "title": "セキュリティアラート",
+          "desc": "アカウントへのログインについて通知を受け取ります。"
+        }
+      },
+      "security": {
+        "heading": "セキュリティ",
+        "description": "パスワードとアカウントのセキュリティ設定を管理してください。"
+      },
+      "dangerZone": {
+        "heading": "危険ゾーン",
+        "description": "アカウントを削除すると、元に戻せません。よくご確認ください。",
+        "deleteBtn": "アカウントを削除"
+      },
+      "validation": {
+        "nameMin": "名前は2文字以上である必要があります",
+        "emailInvalid": "無効なメールアドレス",
+        "companyNameRequired": "会社名は必須です",
+        "websiteInvalid": "無効なURL"
+      },
+      "toast": {
+        "profileSaved": "プロフィールの変更を保存しました",
+        "profileError": "プロフィールを保存できませんでした",
+        "profileLoadError": "プロフィール設定を読み込めませんでした",
+        "companySaved": "会社情報を保存しました",
+        "avatarUpdated": "プロフィール写真を更新しました",
+        "avatarRemoved": "プロフィール写真を削除しました",
+        "avatarError": "プロフィール写真を保存できませんでした",
+        "avatarRemoveError": "プロフィール写真を削除できませんでした",
+        "avatarNotImage": "画像ファイルを選択してください",
+        "avatarTooLarge": "1.5MB未満の画像を選択してください",
+        "imageReadError": "画像を読み込めませんでした",
+        "notificationError": "通知設定を保存できませんでした",
+        "passwordUpdated": "パスワードを更新しました",
+        "passwordError": "パスワードを更新できませんでした",
+        "passwordFillAll": "すべてのパスワードフィールドを入力してください",
+        "passwordMismatch": "新しいパスワードが一致しません",
+        "passwordTooShort": "パスワードは8文字以上である必要があります",
+        "deleteQueued": "アカウント削除リクエストを受け付けました"
+      }
+    },
+    "workspace": {
+      "pageTitle": "デザインワークスペース | ENS",
+      "viewOnly": "閲覧のみ",
+      "loadingWorkspace": "ワークスペースを読み込み中…",
+      "compareBtn": "比較",
+      "addPinBtn": "ピンを追加",
+      "pinningLabel": "配置中…",
+      "downloadBtn": "ダウンロード",
+      "requestChangesBtn": "変更をリクエスト",
+      "approvedLabel": "承認済み",
+      "approveDesignBtn": "デザインを承認",
+      "assetLibraryLabel": "アセットライブラリ",
+      "lockedLabel": "ロック済み",
+      "reviewModeNote": "レビューモードではアセットがロックされています。変更をリクエストするにはPMにお問い合わせください。",
+      "canvasLabel": "ブース3Dプレビューキャンバス",
+      "compareCurrentLabel": "v{{v}} — 現在",
+      "comparePreviousLabel": "v{{v}} — 以前",
+      "clickToPin": "キャンバスをクリックしてピンを配置",
+      "versionSelect": "バージョンを選択",
+      "tab": {
+        "thread": "スレッド",
+        "approvals": "承認",
+        "pins": "ピン"
+      },
+      "pendingDot": "承認待ち",
+      "reviewThread": "レビュースレッド",
+      "notesCount_one": "{{count}} 件のメモ",
+      "notesCount_other": "{{count}} 件のメモ",
+      "commentPlaceholder": "コメントを追加…",
+      "sendComment": "コメントを送信",
+      "projectInfoLabel": "プロジェクト情報",
+      "info": {
+        "system": "システム",
+        "floorArea": "床面積",
+        "dimensions": "寸法",
+        "approval": "承認",
+        "awaiting": "承認待ち"
+      },
+      "elementApprovalHeading": "各デザイン要素をレビューして承認してください",
+      "element": {
+        "structure": "構造",
+        "furniture": "家具",
+        "branding": "ブランディング",
+        "lighting": "照明"
+      },
+      "elementStatus": {
+        "approved": "承認済み",
+        "pending": "保留中",
+        "rejected": "フィードバック送信済み"
+      },
+      "approveBtn": "承認",
+      "requestFixBtn": "修正をリクエスト",
+      "resetBtn": "保留中に戻す",
+      "allApprovedMsg": "すべての要素が承認されました",
+      "pendingApprovalMsg": "承認待ちあり",
+      "approvedCount": "{{total}} 件中 {{approved}} 件承認済み",
+      "canvasAnnotations": "キャンバスアノテーション",
+      "placingLabel": "配置中…",
+      "noPins": "ピンはまだありません。「ピンを追加」をクリックしてキャンバス上をクリックしてください。",
+      "removePin": "ピン #{{num}} を削除",
+      "statusBar": {
+        "viewOnly": "閲覧のみ",
+        "restricted": "クライアントレビュー — アクセス制限"
+      },
+      "statusReadOnly": "読み取り専用",
+      "statusCompare": "比較モード",
+      "dialog": {
+        "title": "デザイン変更をリクエスト",
+        "subtitle": "変更内容を記述してください。PMに通知されます。",
+        "placeholder": "変更内容を記述してください…",
+        "cancel": "キャンセル",
+        "submit": "リクエストを送信"
+      },
+      "toast": {
+        "allApproved": "すべての要素が承認されました — ありがとうございます！",
+        "changeRequestSent": "変更リクエストがPMに送信されました",
+        "pinAdded": "ピン #{{num}} を追加しました",
+        "elementApproved": "{{label}} が承認されました",
+        "feedbackSent": "フィードバックをPMに送信しました",
+        "downloadStarted": "ダウンロードを開始しました",
+        "designApproved": "デザインが承認されました — ありがとうございます！"
+      },
+      "justNow": "今",
+      "changeRequestPrefix": "変更リクエスト",
+      "pinPrefix": "ピン",
+      "pinAnnotationPrompt": "このピンのメモを追加",
+      "pinPlaceholder": "この場所を説明してください…",
+      "confirmPin": "ピンを確定",
+      "cancelPin": "ピンをキャンセル",
+      "errorLoad": "ワークスペースの読み込みに失敗しました",
+      "ctrl": {
+        "reset": "ビューをリセット",
+        "zoomIn": "ズームイン",
+        "zoomOut": "ズームアウト",
+        "fullscreen": "全画面"
+      }
+    }
+  },
+  "notFound": {
+    "title": "404 – ページが見つかりません",
+    "badge": "ページが見つかりません",
+    "heading": "このブースは存在しません",
+    "body": "お探しのページは移動、削除されたか、存在しなかった可能性があります。プラットフォームに戻りましょう。",
+    "backHome": "ホームに戻る",
+    "goBack": "戻る",
+    "links": {
+      "home": "ホーム",
+      "staffPortal": "スタッフポータル",
+      "login": "ログイン",
+      "signUp": "サインアップ"
+    }
+  },
+  "auth": {
+    "login": {
+      "pageTitle": "ログイン | ENS",
+      "title": "おかえりなさい",
+      "description": "ワークスペースにアクセスするためにログインしてください",
+      "emailLabel": "メールアドレス",
+      "emailPlaceholder": "名前@会社.com",
+      "passwordLabel": "パスワード",
+      "passwordPlaceholder": "パスワードを入力",
+      "forgotPassword": "パスワードをお忘れですか？",
+      "rememberMe": "30日間ログイン状態を保持",
+      "submit": "ログイン",
+      "submitting": "ログイン中...",
+      "lockedBtn": "ロック済み",
+      "lockMessage": "アカウントが一時的にロックされています。{{time}}後にもう一度お試しください。",
+      "signInError": "ログインできませんでした。",
+      "attemptsRemaining_one": "一時的なロックまであと {{count}} 回のログイン試行が残っています",
+      "attemptsRemaining_other": "一時的なロックまであと {{count}} 回のログイン試行が残っています",
+      "noAccount": "アカウントをお持ちでない方は？",
+      "signUpFree": "無料登録",
+      "devSection": "ローカルテストアカウント",
+      "showPassword": "パスワードを表示",
+      "hidePassword": "パスワードを非表示",
+      "validation": {
+        "email": "無効なメールアドレスです",
+        "passwordMin": "パスワードは8文字以上必要です"
+      }
+    },
+    "signup": {
+      "pageTitle": "アカウント作成 | ENS",
+      "title": "クライアントアカウントを作成",
+      "description": "公開登録では、代理店承認待ちのレビューアカウントが作成されます",
+      "fullNameLabel": "氏名",
+      "fullNamePlaceholder": "山田 太郎",
+      "companyLabel": "会社名",
+      "companyPlaceholder": "株式会社 展示",
+      "workEmailLabel": "業務用メールアドレス",
+      "passwordLabel": "パスワード",
+      "passwordPlaceholder": "パスワードを作成",
+      "confirmPasswordLabel": "パスワードを確認",
+      "confirmPasswordPlaceholder": "パスワードを確認",
+      "termsLabel": "に同意します",
+      "termsOfService": "利用規約",
+      "and": "および",
+      "privacyPolicy": "プライバシーポリシー",
+      "submit": "クライアントアカウントを作成",
+      "submitting": "アカウント作成中...",
+      "createError": "アカウントを作成できませんでした。",
+      "haveAccount": "すでにアカウントをお持ちですか？",
+      "signIn": "ログイン",
+      "clientOnlyNote": "公開登録はクライアントのみに制限されています。プロジェクトマネージャーと責任者は組織オーナーから招待される必要があります。",
+      "showPassword": "パスワードを表示",
+      "hidePassword": "パスワードを非表示",
+      "showConfirmPassword": "確認パスワードを表示",
+      "hideConfirmPassword": "確認パスワードを非表示",
+      "strength": {
+        "weak": "弱い",
+        "fair": "普通",
+        "good": "良い",
+        "strong": "強い",
+        "suffix": "パスワード"
+      },
+      "validation": {
+        "nameMin": "名前は2文字以上必要です",
+        "companyMin": "会社名は2文字以上必要です",
+        "email": "無効なメールアドレスです",
+        "passwordMin": "パスワードは8文字以上必要です",
+        "passwordUpper": "大文字を含める必要があります",
+        "passwordNumber": "数字を含める必要があります",
+        "confirmRequired": "パスワードを確認してください",
+        "termsRequired": "利用規約に同意する必要があります",
+        "passwordsMismatch": "パスワードが一致しません"
+      }
+    },
+    "forgotPassword": {
+      "pageTitle": "パスワードのリセット | ENS",
+      "title": "パスワードをリセット",
+      "description": "メールアドレスを入力するとリセットリンクをお送りします",
+      "emailLabel": "メールアドレス",
+      "submit": "リセットリンクを送信",
+      "submitting": "送信中...",
+      "sentTitle": "受信トレイを確認してください",
+      "sentTo": "パスワードリセットリンクを送信しました：",
+      "checkSpam": "数分以内に届かない場合は、迷惑メールフォルダを確認してください。",
+      "resending": "送信中...",
+      "resendIn": "{{seconds}}秒後に再送信",
+      "resendEmail": "メールを再送信",
+      "differentEmail": "別のメールアドレスを使用",
+      "backToLogin": "ログインに戻る",
+      "validation": {
+        "email": "有効なメールアドレスを入力してください"
+      }
+    },
+    "resetPassword": {
+      "pageTitle": "新しいパスワードを設定 | ENS",
+      "title": "新しいパスワードを設定",
+      "description": "アカウントの強力なパスワードを選択してください",
+      "newPasswordLabel": "新しいパスワード",
+      "confirmPasswordLabel": "パスワードを確認",
+      "passwordPlaceholder": "••••••••",
+      "submit": "パスワードを更新",
+      "submitting": "パスワード更新中...",
+      "successTitle": "パスワードが更新されました",
+      "successMessage": "パスワードが正常に更新されました。新しい認証情報でログインできます。",
+      "continueToSignIn": "ログインへ進む",
+      "backToLogin": "ログインに戻る",
+      "showPassword": "パスワードを表示",
+      "hidePassword": "パスワードを非表示",
+      "showConfirmPassword": "確認を表示",
+      "hideConfirmPassword": "確認を非表示",
+      "requirements": {
+        "length": "8文字以上",
+        "uppercase": "大文字1文字以上",
+        "number": "数字1文字以上"
+      },
+      "strength": {
+        "weak": "弱い",
+        "fair": "普通",
+        "good": "良い",
+        "strong": "強い",
+        "suffix": "パスワード"
+      },
+      "validation": {
+        "passwordMin": "パスワードは8文字以上必要です",
+        "passwordUpper": "大文字を1文字以上含める必要があります",
+        "passwordNumber": "数字を1文字以上含める必要があります",
+        "confirmRequired": "パスワードを確認してください",
+        "passwordsMismatch": "パスワードが一致しません"
+      }
     }
   }
 }

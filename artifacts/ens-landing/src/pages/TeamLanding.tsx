@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ENSLogo } from '@/components/ENSLogo';
 import { motion, useScroll, useTransform, useInView, Variants } from 'framer-motion';
@@ -7,6 +7,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useDemoAccess } from '@/hooks/useDemoAccess';
 import {
   LayoutDashboard, Settings, Users, Eye, Activity, BarChart3,
   ChevronRight, Menu, X, Zap, Box, Layers, MessageSquare,
@@ -27,23 +28,11 @@ const STAGGER: Variants = {
 };
 
 // ─── Data ─────────────────────────────────────────────────────────
-const CHIEF_FEATURES = [
-  { icon: Monitor,       title: 'Workspace Monitor',   desc: 'Live oversight of every active design session across all projects.' },
-  { icon: Users,         title: 'Team Management',     desc: 'Assign project managers, track workloads, and manage access levels.' },
-  { icon: Building2,     title: 'Client Portfolio',    desc: 'Full view of all client accounts, contacts, and active contracts.' },
-  { icon: BarChart3,     title: 'Analytics & Reports', desc: 'Project KPIs, time-to-approval rates, and revenue dashboards.' },
-  { icon: CheckCircle2,  title: 'Approval Gateway',    desc: 'Final structural and design sign-off before production release.' },
-  { icon: MessageSquare, title: 'Communications Hub',  desc: 'Centralised messaging across clients, PMs, and sub-contractors.' },
-];
-
-const PM_FEATURES = [
-  { icon: Box,           title: '3D Booth Workspace',  desc: 'Full Octanorm/Maxima editor with real-time collaborative design.' },
-  { icon: Users,         title: 'Client Management',   desc: 'Manage briefs, contacts, and live feedback sessions per project.' },
-  { icon: ClipboardList, title: 'Task Tracker',         desc: 'Kanban task board covering production, design, and delivery phases.' },
-  { icon: Package,       title: 'Project Pipeline',    desc: 'Track all active and upcoming projects with milestone timelines.' },
-  { icon: FileText,      title: 'Request Management',  desc: 'Handle change requests, revision logs, and approval chains.' },
-  { icon: MessageSquare, title: 'Messaging',            desc: 'Direct and group messaging with clients and the chief office.' },
-];
+// Icons only — titles/descs are translated inside the component
+const CHIEF_FEATURE_ICONS = [Monitor, Users, Building2, BarChart3, CheckCircle2, MessageSquare];
+const CHIEF_FEATURE_KEYS  = ['workspaceMonitor', 'teamManagement', 'clientPortfolio', 'analytics', 'approvalGateway', 'commsHub'] as const;
+const PM_FEATURE_ICONS    = [Box, Users, ClipboardList, Package, FileText, MessageSquare];
+const PM_FEATURE_KEYS     = ['boothWorkspace', 'clientMgmt', 'taskTracker', 'pipeline', 'requestMgmt', 'messaging'] as const;
 
 const PLATFORM_STATS = [
   { numericValue: 2400, valueSuffix: '+', tKey: 'team.stats.boothsDesigned',   color: 'text-primary',    bg: 'bg-primary/10',    icon: Box         },
@@ -78,15 +67,9 @@ function CountUp({ target, suffix = '', className = '' }: { target: number; suff
   );
 }
 
-const WORKFLOW_STEPS = [
-  { icon: FileText,     title: 'Client Brief',      desc: 'Chief receives and assigns the show brief to a Project Manager.',       role: 'chief' },
-  { icon: Settings,     title: 'Workspace Setup',   desc: 'PM creates the project and configures booth dimensions and system.',    role: 'pm'    },
-  { icon: Box,          title: '3D Design',         desc: 'PM builds the stand in the live workspace using structural libraries.', role: 'pm'    },
-  { icon: Eye,          title: 'Chief Review',      desc: 'Chief monitors progress and provides structural guidance.',             role: 'chief' },
-  { icon: Users,        title: 'Client Sign-Off',   desc: 'Client reviews the design and submits change requests.',               role: 'client'},
-  { icon: CheckCircle2, title: 'Final Approval',    desc: 'Chief approves the final design and releases for production.',         role: 'chief' },
-  { icon: Package,      title: 'Production Export', desc: 'PM exports documentation, cut lists, and component schedules.',       role: 'pm'    },
-];
+const WORKFLOW_STEP_ICONS  = [FileText, Settings, Box, Eye, Users, CheckCircle2, Package];
+const WORKFLOW_STEP_ROLES  = ['chief', 'pm', 'pm', 'chief', 'client', 'chief', 'pm'] as const;
+const WORKFLOW_STEP_KEYS   = ['brief', 'workspace', 'design', 'review', 'signoff', 'approval', 'export'] as const;
 
 const ROLE_BADGE: Record<string, string> = {
   chief:  'bg-primary/10 text-primary border-primary/20',
@@ -101,7 +84,35 @@ export default function TeamLanding() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [, navigate] = useLocation();
+  const { enterAs, pendingRole } = useDemoAccess();
   const { t } = useTranslation();
+  const isOpeningPortal = pendingRole !== null;
+
+  useEffect(() => {
+    document.title = t('team.pageTitle');
+  }, [t]);
+
+  const chiefFeatures = useMemo(() =>
+    CHIEF_FEATURE_KEYS.map((key, i) => ({
+      icon: CHIEF_FEATURE_ICONS[i],
+      title: t(`team.chiefFeatures.${key}.title`),
+      desc:  t(`team.chiefFeatures.${key}.desc`),
+    })), [t]);
+
+  const pmFeatures = useMemo(() =>
+    PM_FEATURE_KEYS.map((key, i) => ({
+      icon: PM_FEATURE_ICONS[i],
+      title: t(`team.pmFeatures.${key}.title`),
+      desc:  t(`team.pmFeatures.${key}.desc`),
+    })), [t]);
+
+  const workflowSteps = useMemo(() =>
+    WORKFLOW_STEP_KEYS.map((key, i) => ({
+      icon: WORKFLOW_STEP_ICONS[i],
+      role: WORKFLOW_STEP_ROLES[i],
+      title: t(`team.workflowSteps.${key}.title`),
+      desc:  t(`team.workflowSteps.${key}.desc`),
+    })), [t]);
 
   useEffect(() => {
     const fn = () => setIsScrolled(window.scrollY > 20);
@@ -190,11 +201,11 @@ export default function TeamLanding() {
             </motion.p>
 
             <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" onClick={() => navigate('/chief')}
+              <Button size="lg" onClick={() => void enterAs('chief', '/chief')} disabled={isOpeningPortal}
                 className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold gap-2 shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)]">
                 <LayoutDashboard className="w-5 h-5" /> {t('team.hero.cta1')} <ChevronRight className="w-4 h-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/pm')}
+              <Button size="lg" variant="outline" onClick={() => void enterAs('pm', '/pm')} disabled={isOpeningPortal}
                 className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold gap-2 border-blue-500/40 text-blue-400 hover:bg-blue-500/5">
                 <Settings className="w-5 h-5" /> {t('team.hero.cta2')} <ChevronRight className="w-4 h-4" />
               </Button>
@@ -244,7 +255,7 @@ export default function TeamLanding() {
               viewport={{ once: true }}
               whileHover={{ y: -6 }}
               className="relative group rounded-3xl border border-primary/25 bg-primary/5 backdrop-blur-xl overflow-hidden p-8 cursor-pointer"
-              onClick={() => navigate('/chief')}
+              onClick={() => void enterAs('chief', '/chief')}
             >
               <div className="absolute top-0 right-0 w-48 h-48 bg-primary/15 blur-3xl -z-10" />
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/10 blur-3xl -z-10" />
@@ -298,7 +309,8 @@ export default function TeamLanding() {
               </div>
 
               <Button className="w-full mt-6 rounded-full gap-2 shadow-[0_0_15px_rgba(109,40,217,0.2)]"
-                onClick={e => { e.stopPropagation(); navigate('/chief'); }}>
+                disabled={isOpeningPortal}
+                onClick={e => { e.stopPropagation(); void enterAs('chief', '/chief'); }}>
                 <LayoutDashboard className="w-4 h-4" /> {t('team.roles.chiefEnter')}
               </Button>
             </motion.div>
@@ -310,7 +322,7 @@ export default function TeamLanding() {
               viewport={{ once: true }}
               whileHover={{ y: -6 }}
               className="relative group rounded-3xl border border-blue-500/25 bg-blue-500/5 backdrop-blur-xl overflow-hidden p-8 cursor-pointer"
-              onClick={() => navigate('/pm')}
+              onClick={() => void enterAs('pm', '/pm')}
             >
               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/15 blur-3xl -z-10" />
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-cyan-500/10 blur-3xl -z-10" />
@@ -365,7 +377,8 @@ export default function TeamLanding() {
 
               <Button variant="outline"
                 className="w-full mt-6 rounded-full gap-2 border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
-                onClick={e => { e.stopPropagation(); navigate('/pm'); }}>
+                disabled={isOpeningPortal}
+                onClick={e => { e.stopPropagation(); void enterAs('pm', '/pm'); }}>
                 <Settings className="w-4 h-4" /> {t('team.roles.pmEnter')}
               </Button>
             </motion.div>
@@ -388,7 +401,8 @@ export default function TeamLanding() {
                 { label: 'PM Tasks',             path: '/pm/tasks',           clx: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/15' },
               ].map(({ label, path, clx }) => (
                 <button key={path}
-                  onClick={() => navigate(path)}
+                  disabled={isOpeningPortal}
+                  onClick={() => void enterAs(path.startsWith('/chief') ? 'chief' : 'pm', path)}
                   className={`text-xs font-semibold px-4 py-1.5 rounded-full border transition-colors ${clx}`}>
                   {label}
                 </button>
@@ -414,7 +428,7 @@ export default function TeamLanding() {
               </div>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {CHIEF_FEATURES.map((f, i) => (
+              {chiefFeatures.map((f, i) => (
                 <motion.div key={i}
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -443,7 +457,7 @@ export default function TeamLanding() {
               </div>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {PM_FEATURES.map((f, i) => (
+              {pmFeatures.map((f, i) => (
                 <motion.div key={i}
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -475,7 +489,7 @@ export default function TeamLanding() {
             <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary/60 via-blue-500/40 to-transparent -translate-x-1/2" />
 
             <div className="space-y-10">
-              {WORKFLOW_STEPS.map((step, i) => (
+              {workflowSteps.map((step, i) => (
                 <motion.div key={i}
                   initial={{ opacity: 0, x: i % 2 === 0 ? -40 : 40 }}
                   whileInView={{ opacity: 1, x: 0 }}
@@ -625,11 +639,11 @@ export default function TeamLanding() {
               Sign in with your ENS account or jump directly into the demo environment.
             </motion.p>
             <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" onClick={() => navigate('/chief')}
+              <Button size="lg" onClick={() => void enterAs('chief', '/chief')} disabled={isOpeningPortal}
                 className="w-full sm:w-auto rounded-full px-8 h-12 font-semibold gap-2">
                 <UserCog className="w-4 h-4" /> {t('team.roles.chiefTitle')}
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/pm')}
+              <Button size="lg" variant="outline" onClick={() => void enterAs('pm', '/pm')} disabled={isOpeningPortal}
                 className="w-full sm:w-auto rounded-full px-8 h-12 font-semibold gap-2 border-blue-500/40 text-blue-400">
                 <Settings className="w-4 h-4" /> {t('team.roles.pmTitle')}
               </Button>
@@ -658,7 +672,8 @@ export default function TeamLanding() {
               <div className="flex gap-3">
                 {[t('team.footer.chiefPortal'), t('team.footer.pmPortal')].map((label, i) => (
                   <button key={label}
-                    onClick={() => navigate(i === 0 ? '/chief' : '/pm')}
+                    disabled={isOpeningPortal}
+                    onClick={() => void enterAs(i === 0 ? 'chief' : 'pm', i === 0 ? '/chief' : '/pm')}
                     className="text-xs font-semibold px-3 py-1.5 rounded-full border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors">
                     {label}
                   </button>
@@ -671,7 +686,7 @@ export default function TeamLanding() {
               <div className="text-[10px] font-bold uppercase tracking-widest text-primary/60 mb-4">{t('team.footer.chiefManager')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 {[t('team.footer.dashboard'), t('team.footer.wsMonitor'), t('team.footer.teamMgmt'), t('team.footer.clientPortfolio'), t('team.footer.reports'), t('team.footer.settings')].map(l => (
-                  <li key={l}><button onClick={() => navigate('/chief')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
+                  <li key={l}><button onClick={() => void enterAs('chief', '/chief')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
                 ))}
               </ul>
             </div>
@@ -681,7 +696,7 @@ export default function TeamLanding() {
               <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400/60 mb-4">{t('team.footer.projectManager')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 {[t('team.footer.dashboard'), t('team.footer.workspace'), t('team.footer.projects'), t('team.footer.clients'), t('team.footer.tasks'), t('team.footer.messages')].map(l => (
-                  <li key={l}><button onClick={() => navigate('/pm')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
+                  <li key={l}><button onClick={() => void enterAs('pm', '/pm')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
                 ))}
               </ul>
             </div>

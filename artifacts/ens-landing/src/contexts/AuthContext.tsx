@@ -9,6 +9,8 @@ export interface AuthUser {
   company: string;
   role: UserRole;
   systemRole?: string;
+  avatarUrl?: string;
+  avatarTone?: string;
 }
 
 interface AuthContextValue {
@@ -41,11 +43,13 @@ interface AuthResponse {
     email: string;
     role: UserRole;
     systemRole?: string;
-  };
+    avatarUrl?: string;
+    avatarTone?: string;
+  } | null;
   organization: {
     name: string;
     slug: string;
-  };
+  } | null;
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api').replace(/\/+$/, '');
@@ -62,6 +66,8 @@ const MOCK_USERS: Record<string, AuthUser> = {
     company: 'ENS Demo Agency',
     role: 'chief',
     systemRole: 'owner',
+    avatarUrl: '',
+    avatarTone: 'primary',
   },
   'pm@ens.test': {
     id: 'mock-pm',
@@ -70,6 +76,8 @@ const MOCK_USERS: Record<string, AuthUser> = {
     company: 'ENS Demo Agency',
     role: 'pm',
     systemRole: 'pm',
+    avatarUrl: '',
+    avatarTone: 'blue',
   },
   'client@ens.test': {
     id: 'mock-client',
@@ -78,6 +86,8 @@ const MOCK_USERS: Record<string, AuthUser> = {
     company: 'ENS Demo Agency',
     role: 'client',
     systemRole: 'client',
+    avatarUrl: '',
+    avatarTone: 'green',
   },
 };
 
@@ -137,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         organizationSlug: credentials.organizationSlug ?? ORGANIZATION_SLUG,
       }),
     });
-    const nextUser = toAuthUser(response);
+    const nextUser = requireAuthUser(response);
     setUser(nextUser);
     return nextUser;
   }, []);
@@ -151,6 +161,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         company: input.company.trim() || 'ENS Demo Agency',
         role: 'client',
         systemRole: 'client',
+        avatarUrl: '',
+        avatarTone: 'green',
       };
       localStorage.setItem(MOCK_AUTH_STORAGE_KEY, JSON.stringify(nextUser));
       setUser(nextUser);
@@ -164,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         organizationSlug: input.organizationSlug ?? ORGANIZATION_SLUG,
       }),
     });
-    const nextUser = toAuthUser(response);
+    const nextUser = requireAuthUser(response);
     setUser(nextUser);
     return nextUser;
   }, []);
@@ -219,20 +231,29 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+// Shared refresh promise — prevents concurrent 401s from spawning multiple refresh requests
+let _authRefreshPromise: Promise<boolean> | null = null;
+
 async function requestFetch(path: string, init: RequestInit, retried = false): Promise<Response> {
   const response = await fetch(`${API_BASE_URL}${path}`, init);
   if (response.status !== 401 || retried || path === '/auth/refresh') return response;
 
-  const refreshed = await fetch(`${API_BASE_URL}/auth/refresh`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json',
-    },
-  });
+  if (!_authRefreshPromise) {
+    _authRefreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+      },
+    })
+      .then((r) => r.ok)
+      .catch(() => false)
+      .finally(() => { _authRefreshPromise = null; });
+  }
 
-  if (!refreshed.ok) return response;
+  const refreshed = await _authRefreshPromise;
+  if (!refreshed) return response;
   return requestFetch(path, init, true);
 }
 
@@ -245,7 +266,9 @@ async function readError(response: Response) {
   }
 }
 
-function toAuthUser(response: AuthResponse): AuthUser {
+function toAuthUser(response: AuthResponse): AuthUser | null {
+  if (!response.user || !response.organization) return null;
+
   return {
     id: response.user.id,
     name: response.user.name,
@@ -253,7 +276,15 @@ function toAuthUser(response: AuthResponse): AuthUser {
     company: response.organization.name,
     role: response.user.role,
     systemRole: response.user.systemRole,
+    avatarUrl: response.user.avatarUrl,
+    avatarTone: response.user.avatarTone,
   };
+}
+
+function requireAuthUser(response: AuthResponse): AuthUser {
+  const user = toAuthUser(response);
+  if (!user) throw new Error('Authentication did not return a user.');
+  return user;
 }
 
 function readMockUser(): AuthUser | null {

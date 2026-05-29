@@ -17,7 +17,7 @@ export function ProtectedRoute({ component: Component, allowedRoles, params = {}
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) {
-      navigate(getPortalLoginPath());
+      navigate(loginPathWithReturnTo());
       return;
     }
     if (user && !isRoleAllowedInPortal(user.role)) {
@@ -35,4 +35,9 @@ export function ProtectedRoute({ component: Component, allowedRoles, params = {}
   if (allowedRoles && user && !allowedRoles.includes(user.role)) return null;
 
   return <Component {...params} />;
+}
+
+function loginPathWithReturnTo() {
+  const target = `${window.location.pathname}${window.location.search}`;
+  return `${getPortalLoginPath()}?returnTo=${encodeURIComponent(target)}`;
 }

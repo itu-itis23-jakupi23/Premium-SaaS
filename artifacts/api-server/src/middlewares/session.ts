@@ -14,6 +14,8 @@ export interface AuthContext {
     email: string;
     role: AuthRole;
     uiRole: UiRole;
+    avatarUrl: string;
+    avatarTone: string;
   };
   organization: {
     id: string;
@@ -108,13 +110,14 @@ export function toUiRole(role: AuthRole): UiRole {
   return "chief";
 }
 
-async function getAuthContext(sessionId: string, userId: string, organizationId: string) {
+export async function getAuthContext(sessionId: string, userId: string, organizationId: string) {
   const rows = await queryRows<{
     sessionId: string;
     userId: string;
     name: string;
     email: string;
     role: AuthRole;
+    metadata: Record<string, unknown>;
     organizationId: string;
     organizationName: string;
     organizationSlug: string;
@@ -126,6 +129,7 @@ async function getAuthContext(sessionId: string, userId: string, organizationId:
       u.name,
       u.email,
       m.role::text as role,
+      u.metadata,
       o.id::text as "organizationId",
       o.name as "organizationName",
       o.slug as "organizationSlug",
@@ -148,6 +152,7 @@ async function getAuthContext(sessionId: string, userId: string, organizationId:
 
   const row = rows[0];
   if (!row) return null;
+  const profile = objectValue(row.metadata.profile);
 
   return {
     sessionId: row.sessionId,
@@ -157,6 +162,8 @@ async function getAuthContext(sessionId: string, userId: string, organizationId:
       email: row.email,
       role: row.role,
       uiRole: toUiRole(row.role),
+      avatarUrl: stringValue(profile.avatarUrl) ?? "",
+      avatarTone: stringValue(profile.avatarTone) ?? "primary",
     },
     organization: {
       id: row.organizationId,
@@ -165,4 +172,12 @@ async function getAuthContext(sessionId: string, userId: string, organizationId:
       plan: row.organizationPlan,
     },
   } satisfies AuthContext;
+}
+
+function objectValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }

@@ -15,6 +15,20 @@
       "when": 1779364800000,
       "tag": "0001_direct_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779633689895,
+      "tag": "0002_chief_scale_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1779840000000,
+      "tag": "0003_pm_scale_indexes",
+      "breakpoints": true
     }
   ]
 }

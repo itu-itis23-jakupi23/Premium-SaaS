@@ -1,54 +1,87 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { getAccountSettings, saveAccountAvatar, saveAccountSettings, updateAccountPassword } from "@/lib/platform-api";
-import { User, Building, Shield, Bell, Camera } from "lucide-react";
+import {
+  getAccountSettings,
+  saveAccountAvatar,
+  saveAccountSettings,
+  updateAccountPassword,
+} from "@/lib/platform-api";
+import { User, Building, Shield, Bell, Camera, CheckCircle2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 
-const profileSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().optional(),
-});
-
-const companySchema = z.object({
-  companyName: z.string().min(2, "Company name is required"),
-  industry: z.string().optional(),
-  website: z.string().url("Invalid URL").optional().or(z.literal("")),
-});
-
 export default function ClientProfile() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarTone, setAvatarTone] = useState("green");
-  const [toast, setToast] = useState("");
+  const [toastMsg, setToastMsg] = useState("");
+  const [toastVisible, setToastVisible] = useState(false);
   const [notifications, setNotifications] = useState({
     assignments: true,
     milestones: true,
     reports: true,
     system: true,
   });
-  const [password, setPassword] = useState({ current: "", next: "", confirm: "" });
+  const [password, setPassword] = useState({
+    current: "",
+    next: "",
+    confirm: "",
+  });
+
+  useEffect(() => {
+    document.title = t("client.profile.pageTitle");
+  }, [t]);
+
+  // Zod schemas use t() so messages are in the active locale on mount
+  const profileSchema = z.object({
+    name: z.string().min(2, t("client.profile.validation.nameMin")),
+    email: z.string().email(t("client.profile.validation.emailInvalid")),
+    phone: z.string().optional(),
+  });
+
+  const companySchema = z.object({
+    companyName: z
+      .string()
+      .min(2, t("client.profile.validation.companyNameRequired")),
+    industry: z.string().optional(),
+    website: z
+      .string()
+      .url(t("client.profile.validation.websiteInvalid"))
+      .optional()
+      .or(z.literal("")),
+  });
 
   const profileForm = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -68,7 +101,8 @@ export default function ClientProfile() {
     },
   });
 
-  const displayName = profileForm.watch("name") || user?.name || "Client Reviewer";
+  const displayName =
+    profileForm.watch("name") || user?.name || "Client Reviewer";
 
   useEffect(() => {
     let mounted = true;
@@ -78,7 +112,8 @@ export default function ClientProfile() {
         if (!mounted) return;
         profileForm.reset({
           name: settings.profile.name || user?.name || "Client Reviewer",
-          email: settings.profile.email || user?.email || "client@ens.test",
+          email:
+            settings.profile.email || user?.email || "client@ens.test",
           phone: settings.profile.phone,
         });
         setAvatarUrl(settings.profile.avatarUrl);
@@ -86,17 +121,24 @@ export default function ClientProfile() {
         setNotifications(settings.notifications);
       })
       .catch((error: unknown) => {
-        showToast(error instanceof Error ? error.message : "Profile settings could not be loaded");
+        if (!mounted) return;
+        showToast(
+          error instanceof Error
+            ? error.message
+            : t("client.profile.toast.profileLoadError"),
+        );
       });
 
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function showToast(message: string) {
-    setToast(message);
-    window.setTimeout(() => setToast(""), 2400);
+    setToastMsg(message);
+    setToastVisible(true);
+    window.setTimeout(() => setToastVisible(false), 2400);
   }
 
   async function saveProfile(values: z.infer<typeof profileSchema>) {
@@ -112,36 +154,49 @@ export default function ClientProfile() {
         },
       });
       profileForm.reset(values);
-      showToast("Profile changes saved");
+      showToast(t("client.profile.toast.profileSaved"));
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Profile could not be saved");
+      showToast(
+        error instanceof Error
+          ? error.message
+          : t("client.profile.toast.profileError"),
+      );
     }
   }
 
   function saveCompany(values: z.infer<typeof companySchema>) {
     companyForm.reset(values);
-    showToast("Company information saved");
+    showToast(t("client.profile.toast.companySaved"));
   }
 
   async function setAvatarImageFromFile(file: File | null) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      showToast("Choose an image file");
+      showToast(t("client.profile.toast.avatarNotImage"));
       return;
     }
     if (file.size > 1_500_000) {
-      showToast("Choose an image under 1.5 MB");
+      showToast(t("client.profile.toast.avatarTooLarge"));
       return;
     }
-
     try {
-      const nextAvatarUrl = await readFileAsDataUrl(file);
-      const settings = await saveAccountAvatar({ avatarUrl: nextAvatarUrl, avatarTone });
+      const nextAvatarUrl = await readFileAsDataUrl(
+        file,
+        t("client.profile.toast.imageReadError"),
+      );
+      const settings = await saveAccountAvatar({
+        avatarUrl: nextAvatarUrl,
+        avatarTone,
+      });
       setAvatarUrl(settings.profile.avatarUrl);
       setAvatarTone(settings.profile.avatarTone);
-      showToast("Profile picture updated");
+      showToast(t("client.profile.toast.avatarUpdated"));
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Profile picture could not be saved");
+      showToast(
+        error instanceof Error
+          ? error.message
+          : t("client.profile.toast.avatarError"),
+      );
     }
   }
 
@@ -150,117 +205,227 @@ export default function ClientProfile() {
       const settings = await saveAccountAvatar({ avatarUrl: "", avatarTone });
       setAvatarUrl(settings.profile.avatarUrl);
       setAvatarTone(settings.profile.avatarTone);
-      showToast("Profile picture removed");
+      showToast(t("client.profile.toast.avatarRemoved"));
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Profile picture could not be removed");
+      showToast(
+        error instanceof Error
+          ? error.message
+          : t("client.profile.toast.avatarRemoveError"),
+      );
     }
   }
 
-  async function toggleNotification(key: keyof typeof notifications) {
+  async function toggleNotification(
+    key: keyof typeof notifications,
+  ) {
     const next = { ...notifications, [key]: !notifications[key] };
     setNotifications(next);
     try {
       await saveAccountSettings({ notifications: next });
-      showToast(`${notificationLabel(key)} ${next[key] ? "enabled" : "disabled"}`);
+      const label = t(`client.profile.notifications.${key}.title`);
+      const state = next[key]
+        ? t("client.profile.notifications.enabled")
+        : t("client.profile.notifications.disabled");
+      showToast(`${label} ${state}`);
     } catch (error) {
       setNotifications(notifications);
-      showToast(error instanceof Error ? error.message : "Notification setting could not be saved");
+      showToast(
+        error instanceof Error
+          ? error.message
+          : t("client.profile.toast.notificationError"),
+      );
     }
   }
 
-  async function updatePassword() {
+  async function updatePasswordHandler() {
     if (!password.current || !password.next || !password.confirm) {
-      showToast("Fill all password fields");
+      showToast(t("client.profile.toast.passwordFillAll"));
       return;
     }
     if (password.next !== password.confirm) {
-      showToast("New passwords do not match");
+      showToast(t("client.profile.toast.passwordMismatch"));
       return;
     }
     if (password.next.length < 8) {
-      showToast("Password must be at least 8 characters");
+      showToast(t("client.profile.toast.passwordTooShort"));
       return;
     }
-
     try {
-      await updateAccountPassword({ currentPassword: password.current, newPassword: password.next });
+      await updateAccountPassword({
+        currentPassword: password.current,
+        newPassword: password.next,
+      });
       setPassword({ current: "", next: "", confirm: "" });
-      showToast("Password update saved");
+      showToast(t("client.profile.toast.passwordUpdated"));
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Password could not be updated");
+      showToast(
+        error instanceof Error
+          ? error.message
+          : t("client.profile.toast.passwordError"),
+      );
     }
   }
 
+  const notificationItems = [
+    {
+      key: "milestones" as const,
+      title: t("client.profile.notifications.milestones.title"),
+      desc: t("client.profile.notifications.milestones.desc"),
+    },
+    {
+      key: "assignments" as const,
+      title: t("client.profile.notifications.assignments.title"),
+      desc: t("client.profile.notifications.assignments.desc"),
+    },
+    {
+      key: "reports" as const,
+      title: t("client.profile.notifications.reports.title"),
+      desc: t("client.profile.notifications.reports.desc"),
+    },
+    {
+      key: "system" as const,
+      title: t("client.profile.notifications.system.title"),
+      desc: t("client.profile.notifications.system.desc"),
+    },
+  ];
+
   return (
     <DashboardLayout role="client">
-      <PageHeader 
-        title="Profile Settings" 
-        breadcrumbs={[{ label: "Dashboard", href: "/client" }, { label: "Profile" }]} 
+      {/* ARIA live region for toast notifications */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className={`fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-lg border border-primary/30 bg-card px-4 py-3 text-sm shadow-xl transition-all duration-300 ${
+          toastVisible
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-2 pointer-events-none"
+        }`}
+      >
+        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" aria-hidden="true" />
+        {toastMsg}
+      </div>
+
+      <PageHeader
+        title={t("client.profile.title")}
+        breadcrumbs={[
+          {
+            label: t("client.profile.breadcrumbDashboard"),
+            href: "/client",
+          },
+          { label: t("client.profile.breadcrumbProfile") },
+        ]}
       />
 
       <div className="mt-6 max-w-4xl">
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="bg-muted/50 p-1">
             <TabsTrigger value="profile" className="gap-2">
-              <User className="h-4 w-4" /> Personal Info
+              <User className="h-4 w-4" aria-hidden="true" />
+              {t("client.profile.tab.profile")}
             </TabsTrigger>
             <TabsTrigger value="company" className="gap-2">
-              <Building className="h-4 w-4" /> Company
+              <Building className="h-4 w-4" aria-hidden="true" />
+              {t("client.profile.tab.company")}
             </TabsTrigger>
             <TabsTrigger value="notifications" className="gap-2">
-              <Bell className="h-4 w-4" /> Notifications
+              <Bell className="h-4 w-4" aria-hidden="true" />
+              {t("client.profile.tab.notifications")}
             </TabsTrigger>
             <TabsTrigger value="security" className="gap-2">
-              <Shield className="h-4 w-4" /> Security
+              <Shield className="h-4 w-4" aria-hidden="true" />
+              {t("client.profile.tab.security")}
             </TabsTrigger>
           </TabsList>
 
+          {/* ── Personal Info ───────────────────────────────── */}
           <TabsContent value="profile">
             <Card>
               <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-                <CardDescription>Update your personal details and how we can reach you.</CardDescription>
+                <CardTitle>
+                  {t("client.profile.personalInfo.heading")}
+                </CardTitle>
+                <CardDescription>
+                  {t("client.profile.personalInfo.description")}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Avatar section */}
                 <div className="flex items-center gap-6 pb-6 border-b">
                   <div className="relative group">
                     <Avatar className="h-24 w-24">
                       <AvatarImage src={avatarUrl} alt={displayName} />
-                      <AvatarFallback className="text-2xl bg-primary/10 text-primary">{initials(displayName)}</AvatarFallback>
+                      <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                        {initials(displayName)}
+                      </AvatarFallback>
                     </Avatar>
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
+                      aria-label={t("client.profile.avatar.changeBtn")}
                       className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <Camera className="h-6 w-6 text-white" />
+                      <Camera
+                        className="h-6 w-6 text-white"
+                        aria-hidden="true"
+                      />
                     </button>
                     <Input
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
                       className="sr-only"
-                      onChange={(event) => setAvatarImageFromFile(event.target.files?.[0] ?? null)}
+                      aria-hidden="true"
+                      onChange={(event) =>
+                        setAvatarImageFromFile(
+                          event.target.files?.[0] ?? null,
+                        )
+                      }
                     />
                   </div>
                   <div>
-                    <h3 className="font-bold">Profile Picture</h3>
-                    <p className="text-xs text-muted-foreground mt-1 mb-3">JPG, GIF or PNG. Max size 1.5MB.</p>
+                    <h3 className="font-bold">
+                      {t("client.profile.avatar.heading")}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1 mb-3">
+                      {t("client.profile.avatar.hint")}
+                    </p>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" type="button" onClick={() => fileInputRef.current?.click()}>Upload New</Button>
-                      <Button size="sm" variant="ghost" type="button" className="text-red-500" onClick={removeAvatar} disabled={!avatarUrl}>Remove</Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {t("client.profile.avatar.uploadNew")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        type="button"
+                        className="text-red-500"
+                        onClick={removeAvatar}
+                        disabled={!avatarUrl}
+                      >
+                        {t("client.profile.avatar.remove")}
+                      </Button>
                     </div>
                   </div>
                 </div>
 
                 <Form {...profileForm}>
-                  <form className="grid gap-4 md:grid-cols-2" onSubmit={profileForm.handleSubmit(saveProfile)}>
+                  <form
+                    className="grid gap-4 md:grid-cols-2"
+                    onSubmit={profileForm.handleSubmit(saveProfile)}
+                  >
                     <FormField
                       control={profileForm.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Name</FormLabel>
+                          <FormLabel>
+                            {t("client.profile.field.name")}
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -273,7 +438,9 @@ export default function ClientProfile() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email Address</FormLabel>
+                          <FormLabel>
+                            {t("client.profile.field.email")}
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -286,7 +453,9 @@ export default function ClientProfile() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
+                          <FormLabel>
+                            {t("client.profile.field.phone")}
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -295,7 +464,9 @@ export default function ClientProfile() {
                       )}
                     />
                     <div className="md:col-span-2 pt-4">
-                      <Button type="submit">Save Changes</Button>
+                      <Button type="submit">
+                        {t("client.profile.btn.saveChanges")}
+                      </Button>
                     </div>
                   </form>
                 </Form>
@@ -303,21 +474,31 @@ export default function ClientProfile() {
             </Card>
           </TabsContent>
 
+          {/* ── Company ─────────────────────────────────────── */}
           <TabsContent value="company">
             <Card>
               <CardHeader>
-                <CardTitle>Company Information</CardTitle>
-                <CardDescription>Manage your company details and exhibition profile.</CardDescription>
+                <CardTitle>
+                  {t("client.profile.company.heading")}
+                </CardTitle>
+                <CardDescription>
+                  {t("client.profile.company.description")}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...companyForm}>
-                  <form className="space-y-4" onSubmit={companyForm.handleSubmit(saveCompany)}>
+                  <form
+                    className="space-y-4"
+                    onSubmit={companyForm.handleSubmit(saveCompany)}
+                  >
                     <FormField
                       control={companyForm.control}
                       name="companyName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Company Name</FormLabel>
+                          <FormLabel>
+                            {t("client.profile.field.companyName")}
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -331,7 +512,9 @@ export default function ClientProfile() {
                         name="industry"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Industry</FormLabel>
+                            <FormLabel>
+                              {t("client.profile.field.industry")}
+                            </FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -344,7 +527,9 @@ export default function ClientProfile() {
                         name="website"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Website</FormLabel>
+                            <FormLabel>
+                              {t("client.profile.field.website")}
+                            </FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -354,7 +539,9 @@ export default function ClientProfile() {
                       />
                     </div>
                     <div className="pt-4">
-                      <Button type="submit">Update Company Info</Button>
+                      <Button type="submit">
+                        {t("client.profile.btn.updateCompany")}
+                      </Button>
                     </div>
                   </form>
                 </Form>
@@ -362,26 +549,41 @@ export default function ClientProfile() {
             </Card>
           </TabsContent>
 
+          {/* ── Notifications ───────────────────────────────── */}
           <TabsContent value="notifications">
             <Card>
               <CardHeader>
-                <CardTitle>Notification Preferences</CardTitle>
-                <CardDescription>Choose how you want to be notified about project updates.</CardDescription>
+                <CardTitle>
+                  {t("client.profile.notifications.heading")}
+                </CardTitle>
+                <CardDescription>
+                  {t("client.profile.notifications.description")}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {[
-                  { key: "milestones" as const, title: "Project Milestones", desc: "Get notified when a stage is completed." },
-                  { key: "assignments" as const, title: "New Messages", desc: "Get notified when your PM sends a message." },
-                  { key: "reports" as const, title: "Revision Requests", desc: "Get notified when a new design version is ready." },
-                  { key: "system" as const, title: "Security Alerts", desc: "Get notified about account logins." }
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
+                {notificationItems.map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card/50"
+                  >
                     <div>
                       <p className="text-sm font-bold">{item.title}</p>
-                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.desc}
+                      </p>
                     </div>
-                    <Button type="button" variant={notifications[item.key] ? "outline" : "ghost"} size="sm" onClick={() => toggleNotification(item.key)}>
-                      {notifications[item.key] ? "Enabled" : "Disabled"}
+                    <Button
+                      type="button"
+                      variant={
+                        notifications[item.key] ? "outline" : "ghost"
+                      }
+                      size="sm"
+                      aria-pressed={notifications[item.key]}
+                      onClick={() => toggleNotification(item.key)}
+                    >
+                      {notifications[item.key]
+                        ? t("client.profile.notifications.enabled")
+                        : t("client.profile.notifications.disabled")}
                     </Button>
                   </div>
                 ))}
@@ -389,57 +591,110 @@ export default function ClientProfile() {
             </Card>
           </TabsContent>
 
+          {/* ── Security ────────────────────────────────────── */}
           <TabsContent value="security">
-             <Card>
+            <Card>
               <CardHeader>
-                <CardTitle>Security</CardTitle>
-                <CardDescription>Manage your password and account security settings.</CardDescription>
+                <CardTitle>
+                  {t("client.profile.security.heading")}
+                </CardTitle>
+                <CardDescription>
+                  {t("client.profile.security.description")}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                   <div className="grid gap-2">
-                     <Label>Current Password</Label>
-                     <Input type="password" value={password.current} onChange={(event) => setPassword((current) => ({ ...current, current: event.target.value }))} />
-                   </div>
-                   <div className="grid md:grid-cols-2 gap-4">
-                     <div className="grid gap-2">
-                       <Label>New Password</Label>
-                       <Input type="password" value={password.next} onChange={(event) => setPassword((current) => ({ ...current, next: event.target.value }))} />
-                     </div>
-                     <div className="grid gap-2">
-                       <Label>Confirm New Password</Label>
-                       <Input type="password" value={password.confirm} onChange={(event) => setPassword((current) => ({ ...current, confirm: event.target.value }))} />
-                     </div>
-                   </div>
-                   <Button type="button" onClick={updatePassword}>Update Password</Button>
+                  <div className="grid gap-2">
+                    <Label htmlFor="current-password">
+                      {t("client.profile.field.currentPassword")}
+                    </Label>
+                    <Input
+                      id="current-password"
+                      type="password"
+                      value={password.current}
+                      autoComplete="current-password"
+                      onChange={(event) =>
+                        setPassword((curr) => ({
+                          ...curr,
+                          current: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="new-password">
+                        {t("client.profile.field.newPassword")}
+                      </Label>
+                      <Input
+                        id="new-password"
+                        type="password"
+                        value={password.next}
+                        autoComplete="new-password"
+                        onChange={(event) =>
+                          setPassword((curr) => ({
+                            ...curr,
+                            next: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="confirm-password">
+                        {t("client.profile.field.confirmPassword")}
+                      </Label>
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        value={password.confirm}
+                        autoComplete="new-password"
+                        onChange={(event) =>
+                          setPassword((curr) => ({
+                            ...curr,
+                            confirm: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <Button type="button" onClick={updatePasswordHandler}>
+                    {t("client.profile.btn.updatePassword")}
+                  </Button>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="pt-2">
-                   <h4 className="text-sm font-bold text-red-500 mb-2">Danger Zone</h4>
-                   <p className="text-xs text-muted-foreground mb-4">Once you delete your account, there is no going back. Please be certain.</p>
-                   <Button type="button" variant="destructive" onClick={() => showToast("Account deletion request queued")}>Delete Account</Button>
+                  <h4 className="text-sm font-bold text-red-500 mb-2">
+                    {t("client.profile.dangerZone.heading")}
+                  </h4>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    {t("client.profile.dangerZone.description")}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() =>
+                      showToast(t("client.profile.toast.deleteQueued"))
+                    }
+                  >
+                    {t("client.profile.dangerZone.deleteBtn")}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
-      {toast && (
-        <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-primary/30 bg-card px-4 py-3 text-sm shadow-xl">
-          {toast}
-        </div>
-      )}
     </DashboardLayout>
   );
 }
 
-function readFileAsDataUrl(file: File) {
+function readFileAsDataUrl(file: File, errorMsg: string) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(new Error("Image could not be read"));
+    reader.onerror = () => reject(new Error(errorMsg));
     reader.readAsDataURL(file);
   });
 }
@@ -447,24 +702,9 @@ function readFileAsDataUrl(file: File) {
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return "CR";
-  return parts.map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-}
-
-function notificationLabel(key: keyof ReturnType<typeof notificationDefaults>) {
-  const labels: Record<keyof ReturnType<typeof notificationDefaults>, string> = {
-    assignments: "Message notifications",
-    milestones: "Milestone notifications",
-    reports: "Revision notifications",
-    system: "Security alerts",
-  };
-  return labels[key];
-}
-
-function notificationDefaults() {
-  return {
-    assignments: true,
-    milestones: true,
-    reports: true,
-    system: true,
-  };
+  return parts
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }

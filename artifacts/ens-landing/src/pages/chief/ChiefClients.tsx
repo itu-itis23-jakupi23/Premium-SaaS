@@ -1,283 +1,593 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { getPlatformClients, type PlatformClient } from "@/lib/platform-api";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import { useDebounce } from "@/hooks/useDebounce";
+import {
+  ClientArchiveBlockedError,
+  createPlatformClient,
+  deletePlatformClient,
+  getManagerWorkspace,
+  getPlatformClients,
+  updateManagerAssignments,
+  updatePlatformClient,
+  type PlatformClient,
+  type PlatformManager,
+  type ClientArchiveBlocker,
+  type PlatformPagination,
+} from "@/lib/platform-api";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription,
+  DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Search, 
-  MoreVertical, 
-  UserPlus, 
-  ExternalLink, 
-  UserCheck, 
-  Filter 
-} from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Archive, Pencil, Search, MoreVertical, UserPlus, ExternalLink, UserCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
+const PAGE_SIZE = 25;
+
+type ClientForm = {
+  name:       string;
+  company:    string;
+  email:      string;
+  exhibition: string;
+};
+const EMPTY_CLIENT_FORM: ClientForm = { name: "", company: "", email: "", exhibition: "" };
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function clientStatusBadge(status: string) {
+  if (status === "Active")           return "bg-green-500/10 text-green-600";
+  if (status === "Pending Approval") return "bg-yellow-500/10 text-yellow-600";
+  if (status === "Lead")             return "bg-blue-500/10 text-blue-600";
+  if (status === "Inactive")         return "bg-gray-500/10 text-gray-500";
+  if (status === "Archived")         return "bg-red-500/10 text-red-600";
+  return "bg-muted text-muted-foreground";
+}
+
 export default function ChiefClients() {
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [clients, setClients] = useState<PlatformClient[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
-  const [detailClient, setDetailClient] = useState<PlatformClient | null>(null);
-  const [toast, setToast] = useState("");
-  const [newClient, setNewClient] = useState({ name: "", company: "", email: "", exhibition: "" });
+
+  const [searchTerm,     setSearchTerm]     = useState("");
+  const [clients,        setClients]        = useState<PlatformClient[]>([]);
+  const [managers,       setManagers]       = useState<PlatformManager[]>([]);
+  const [pagination,     setPagination]     = useState<PlatformPagination>({ total: 0, limit: PAGE_SIZE, offset: 0, hasMore: false });
+  const [page,           setPage]           = useState(0);
+  const [isLoading,      setIsLoading]      = useState(true);
+  const [error,          setError]          = useState<string | null>(null);
+  const [statusFilter,   setStatusFilter]   = useState("");
+  const [addOpen,        setAddOpen]        = useState(false);
+  const [detailClient,   setDetailClient]   = useState<PlatformClient | null>(null);
+  const [editClientId,   setEditClientId]   = useState<string | null>(null);
+  const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
+  const [archiveBlockers,setArchiveBlockers]= useState<ClientArchiveBlocker[]>([]);
+  const [assignClientId, setAssignClientId] = useState<string | null>(null);
+  const [assignPm,       setAssignPm]       = useState("");
+  const [isAssigning,    setIsAssigning]    = useState(false);
+  const [isMutatingClient,setIsMutatingClient]=useState(false);
+  const [toastMsg,       setToastMsg]       = useState("");
+  const [toastVisible,   setToastVisible]   = useState(false);
+  const [newClient,      setNewClient]      = useState<ClientForm>(EMPTY_CLIENT_FORM);
+  const [editForm,       setEditForm]       = useState<ClientForm>(EMPTY_CLIENT_FORM);
+  const [emailError,     setEmailError]     = useState("");
+  const [editEmailError, setEditEmailError] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 250);
+
+  useEffect(() => {
+    document.title = t("chief.clients.title");
+  }, [t]);
+
+  /* Translated status filter pills (reactive to language) */
+  const statusFilters = useMemo(() => [
+    { label: t("chief.clients.filter.all"),            value: "" },
+    { label: t("chief.clients.filter.lead"),           value: "lead" },
+    { label: t("chief.clients.filter.pendingApproval"),value: "pending_approval" },
+    { label: t("chief.clients.filter.active"),         value: "active" },
+    { label: t("chief.clients.filter.inactive"),       value: "inactive" },
+    { label: t("chief.clients.filter.archived"),       value: "archived" },
+  ], [t]);
 
   useEffect(() => {
     let mounted = true;
+    getManagerWorkspace()
+      .then((workspace) => { if (mounted) setManagers(workspace.managers); })
+      .catch(() => { if (mounted) setManagers([]); });
+    return () => { mounted = false; };
+  }, []);
 
-    getPlatformClients()
+  useEffect(() => {
+    let mounted = true;
+    setIsLoading(true);
+    getPlatformClients({ q: debouncedSearch, status: statusFilter, limit: PAGE_SIZE, offset: page * PAGE_SIZE })
       .then((data) => {
         if (!mounted) return;
         setClients(data.clients);
+        setPagination(data.pagination);
         setError(null);
       })
       .catch((reason: unknown) => {
         if (!mounted) return;
-        setError(reason instanceof Error ? reason.message : "Unable to load clients");
+        setClients([]);
+        setPagination({ total: 0, limit: PAGE_SIZE, offset: page * PAGE_SIZE, hasMore: false });
+        setError(reason instanceof Error ? reason.message : t("chief.clients.loadError"));
       })
-      .finally(() => {
-        if (mounted) setIsLoading(false);
-      });
+      .finally(() => { if (mounted) setIsLoading(false); });
+    return () => { mounted = false; };
+  }, [debouncedSearch, page, statusFilter, t]);
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  useEffect(() => { setPage(0); }, [debouncedSearch, statusFilter]);
 
-  const filteredClients = clients.filter(client =>
-    (statusFilter === "All" || client.status === statusFilter) &&
-    (client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.exhibition.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const managerOptions = managers
+    .filter((m) => m.status === "Active")
+    .map((m) => ({ id: m.id, name: m.name }));
+
+  const pageStart = pagination.total ? pagination.offset + 1 : 0;
+  const pageEnd   = Math.min(pagination.offset + clients.length, pagination.total);
+
+  async function reloadClients() {
+    const data = await getPlatformClients({ q: debouncedSearch, status: statusFilter, limit: PAGE_SIZE, offset: page * PAGE_SIZE });
+    setClients(data.clients);
+    setPagination(data.pagination);
+    return data;
+  }
 
   function showToast(message: string) {
-    setToast(message);
-    window.setTimeout(() => setToast(""), 2400);
+    setToastMsg(message);
+    setToastVisible(true);
+    window.setTimeout(() => setToastVisible(false), 2400);
   }
 
-  function addClient() {
-    const name = newClient.name.trim();
+  function clientStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      Active:            t("chief.clients.status.active"),
+      "Pending Approval":t("chief.clients.status.pendingApproval"),
+      Lead:              t("chief.clients.status.lead"),
+      Inactive:          t("chief.clients.status.inactive"),
+      Archived:          t("chief.clients.status.archived"),
+    };
+    return map[status] ?? status;
+  }
+
+  async function addClient() {
+    const name  = newClient.name.trim();
+    const email = newClient.email.trim();
     if (!name) return;
-    setClients((current) => [{
-      id: `client-${Date.now()}`,
-      name,
-      company: newClient.company.trim() || name,
-      contactName: name,
-      contactEmail: newClient.email.trim() || "pending@email.local",
-      pm: "Unassigned",
-      exhibition: newClient.exhibition.trim() || "New Exhibition",
-      status: "Pending",
-      lastActivity: "Just now",
-    }, ...current]);
-    setNewClient({ name: "", company: "", email: "", exhibition: "" });
-    setAddOpen(false);
-    showToast(`${name} added to clients`);
+    if (email && !isValidEmail(email)) {
+      setEmailError(t("chief.clients.emailError"));
+      return;
+    }
+    setEmailError("");
+    try {
+      setIsMutatingClient(true);
+      await createPlatformClient({
+        name,
+        company:    newClient.company.trim() || name,
+        email,
+        exhibition: newClient.exhibition.trim() || "New Exhibition",
+      });
+      await reloadClients();
+      setNewClient(EMPTY_CLIENT_FORM);
+      setEmailError("");
+      setAddOpen(false);
+      showToast(t("chief.clients.toast.added", { name }));
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : t("chief.clients.toast.addError"));
+    } finally {
+      setIsMutatingClient(false);
+    }
   }
 
-  function assignManager(clientId: string) {
-    setClients((current) => current.map((client) => (
-      client.id === clientId ? { ...client, pm: client.pm === "Unassigned" ? "John Doe" : "Jane Smith", lastActivity: "Just now" } : client
-    )));
-    showToast("Manager assignment updated");
+  function openEditClient(client: PlatformClient) {
+    setEditClientId(client.id);
+    setEditForm({
+      name:       client.contactName || client.name,
+      company:    client.company || client.name,
+      email:      client.contactEmail,
+      exhibition: client.exhibition === "No active exhibition" ? "" : client.exhibition,
+    });
+    setEditEmailError("");
+  }
+
+  async function saveEditClient() {
+    if (!editClientId) return;
+    const name    = editForm.name.trim();
+    const company = editForm.company.trim();
+    const email   = editForm.email.trim();
+    if (!name || !company) return;
+    if (email && !isValidEmail(email)) {
+      setEditEmailError(t("chief.clients.emailError"));
+      return;
+    }
+    setEditEmailError("");
+    try {
+      setIsMutatingClient(true);
+      await updatePlatformClient(editClientId, { name, company, email, exhibition: editForm.exhibition.trim() });
+      const response = await reloadClients();
+      const updatedClient = response.clients.find((c) => c.id === editClientId) ?? null;
+      if (detailClient?.id === editClientId) setDetailClient(updatedClient);
+      setEditClientId(null);
+      setEditForm(EMPTY_CLIENT_FORM);
+      showToast(t("chief.clients.toast.updated", { name: company }));
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : t("chief.clients.toast.updateError"));
+    } finally {
+      setIsMutatingClient(false);
+    }
+  }
+
+  async function confirmAssign() {
+    if (!assignClientId || !assignPm) return;
+    const target  = clients.find((c) => c.id === assignClientId);
+    const manager = managerOptions.find((item) => item.id === assignPm);
+    if (!managers.length) {
+      showToast(t("chief.clients.toast.noManagers"));
+      return;
+    }
+    try {
+      setIsAssigning(true);
+      await updateManagerAssignments({
+        clientAssignments:  [{ clientId: assignClientId, managerId: manager?.id ?? null }],
+        projectAssignments: [],
+        cascadeClientProjects: true,
+      });
+      const [, workspace] = await Promise.all([reloadClients(), getManagerWorkspace()]);
+      setManagers(workspace.managers);
+      setAssignClientId(null);
+      setAssignPm("");
+      showToast(t("chief.clients.toast.assigned", { client: target?.name ?? t("chief.clients.toast.defaultClient"), manager: manager?.name ?? t("chief.clients.toast.unassigned") }));
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : t("chief.clients.toast.assignError"));
+    } finally {
+      setIsAssigning(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteClientId) return;
+    const target = clients.find((c) => c.id === deleteClientId);
+    try {
+      setIsMutatingClient(true);
+      await deletePlatformClient(deleteClientId);
+      await reloadClients();
+      setDeleteClientId(null);
+      setArchiveBlockers([]);
+      if (detailClient?.id === deleteClientId) setDetailClient(null);
+      showToast(t("chief.clients.toast.archived", { name: target?.name ?? t("chief.clients.toast.defaultClient") }));
+    } catch (reason) {
+      if (reason instanceof ClientArchiveBlockedError) {
+        setArchiveBlockers(reason.projects);
+        showToast(reason.message);
+        return;
+      }
+      showToast(reason instanceof Error ? reason.message : t("chief.clients.toast.archiveError"));
+    } finally {
+      setIsMutatingClient(false);
+    }
   }
 
   return (
     <DashboardLayout role="chief">
       <div className="space-y-6">
-        <PageHeader 
-          title="Clients Management" 
-          breadcrumbs={[{ label: "Chief", href: "/chief" }, { label: "Clients" }]}
+        <PageHeader
+          title={t("chief.clients.title")}
+          breadcrumbs={[{ label: t("chief.nav.dashboard"), href: "/chief" }, { label: t("chief.nav.clients") }]}
         >
           <Button onClick={() => setAddOpen(true)} data-testid="button-add-client">
-            <UserPlus className="mr-2 h-4 w-4" /> Add Client
+            <UserPlus aria-hidden="true" className="mr-2 h-4 w-4" />
+            {t("chief.clients.addClient")}
           </Button>
         </PageHeader>
 
         {error && (
-          <Card className="border-red-500/30 bg-red-500/5">
+          <Card role="alert" className="border-red-500/30 bg-red-500/5">
             <CardContent className="p-4 text-sm text-red-500">{error}</CardContent>
           </Card>
         )}
 
         <Card className="bg-card/50 backdrop-blur-sm border-border">
           <CardContent className="p-0">
-            <div className="flex items-center justify-between p-4 gap-4">
+            {/* Toolbar */}
+            <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input 
-                  placeholder="Search clients or exhibitions..." 
+                <Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder={t("chief.clients.searchPlaceholder")}
+                  aria-label={t("chief.clients.searchPlaceholder")}
                   className="pl-9 bg-muted/50 border-transparent focus:border-primary"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   data-testid="input-search-clients"
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setFilterOpen(true)} data-testid="button-filter-clients">
-                  <Filter className="mr-2 h-4 w-4" /> {statusFilter === "All" ? "Filters" : statusFilter}
-                </Button>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {statusFilters.map((sf) => (
+                  <button
+                    key={sf.value || "all"}
+                    onClick={() => setStatusFilter(sf.value)}
+                    aria-pressed={statusFilter === sf.value}
+                    className={cn(
+                      "px-3 py-1 rounded-full text-xs font-medium border transition-all",
+                      statusFilter === sf.value
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground",
+                    )}
+                  >
+                    {sf.label}
+                  </button>
+                ))}
               </div>
             </div>
 
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-muted">
-                  <TableHead>Client Name</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Assigned PM</TableHead>
-                  <TableHead>Exhibition</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Activity</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("chief.clients.table.clientName")}</TableHead>
+                  <TableHead>{t("chief.clients.table.company")}</TableHead>
+                  <TableHead>{t("chief.clients.table.assignedPm")}</TableHead>
+                  <TableHead>{t("chief.clients.table.exhibition")}</TableHead>
+                  <TableHead>{t("chief.clients.table.status")}</TableHead>
+                  <TableHead>{t("chief.clients.table.lastActivity")}</TableHead>
+                  <TableHead className="text-right">{t("chief.clients.table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredClients.map((client) => (
+                {clients.map((client) => (
                   <TableRow key={client.id} className="border-muted hover:bg-muted/30">
                     <TableCell className="font-medium">{client.name}</TableCell>
                     <TableCell>{client.company}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] text-primary font-bold">
-                          {client.pm.split(' ').map(n => n[0]).join('')}
+                          {client.pm.split(" ").map((n) => n[0]).join("")}
                         </div>
                         {client.pm}
                       </div>
                     </TableCell>
                     <TableCell>{client.exhibition}</TableCell>
                     <TableCell>
-                      <Badge 
-                        variant="secondary"
-                        className={cn(
-                          "bg-opacity-10",
-                          client.status === 'Active' ? 'bg-green-500 text-green-500' :
-                          client.status === 'Pending' ? 'bg-yellow-500 text-yellow-500' :
-                          client.status === 'Delayed' ? 'bg-red-500 text-red-500' : 'bg-blue-500 text-blue-500'
-                        )}
-                      >
-                        {client.status}
+                      <Badge variant="secondary" className={clientStatusBadge(client.status)}>
+                        {clientStatusLabel(client.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-xs">{client.lastActivity}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" data-testid={`button-actions-client-${client.id}`}>
-                            <MoreVertical className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" data-testid={`button-actions-client-${client.id}`} aria-label={t("chief.clients.table.actions")}>
+                            <MoreVertical aria-hidden="true" className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem className="cursor-pointer" onClick={() => assignManager(client.id)}>
-                            <UserCheck className="mr-2 h-4 w-4" /> Assign Manager
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => {
+                            setAssignClientId(client.id);
+                            const mgr = managerOptions.find((item) => item.name === client.pm);
+                            setAssignPm(client.pm === "Unassigned" ? "" : mgr?.id ?? client.pm);
+                          }}>
+                            <UserCheck aria-hidden="true" className="mr-2 h-4 w-4" />
+                            {t("chief.clients.menu.assignManager")}
                           </DropdownMenuItem>
                           <DropdownMenuItem className="cursor-pointer" onClick={() => {
-                            showToast(`Opening ${client.name} in Chief monitor`);
+                            showToast(t("chief.clients.toast.openingWorkspace", { name: client.name }));
                             navigate("/chief/workspace-monitor");
                           }}>
-                            <ExternalLink className="mr-2 h-4 w-4" /> Open Workspace
+                            <ExternalLink aria-hidden="true" className="mr-2 h-4 w-4" />
+                            {t("chief.clients.menu.openWorkspace")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => openEditClient(client)}>
+                            <Pencil aria-hidden="true" className="mr-2 h-4 w-4" />
+                            {t("chief.clients.menu.editClient")}
                           </DropdownMenuItem>
                           <DropdownMenuItem className="cursor-pointer" onClick={() => setDetailClient(client)}>
-                            View Client Details
+                            {t("chief.clients.menu.viewDetails")}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="cursor-pointer text-red-500 focus:text-red-500" onClick={() => {
+                            setDeleteClientId(client.id);
+                            setArchiveBlockers([]);
+                          }}>
+                            <Archive aria-hidden="true" className="mr-2 h-4 w-4" />
+                            {t("chief.clients.menu.archive")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
-                {!filteredClients.length && (
+                {isLoading && !clients.length && Array.from({ length: 6 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-4 w-4 rounded" /></TableCell>
+                    <TableCell>
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-7 w-7 rounded" /></TableCell>
+                  </TableRow>
+                ))}
+                {!clients.length && !isLoading && (
                   <TableRow>
                     <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
-                      {isLoading ? "Loading clients from PostgreSQL..." : "No clients found."}
+                      {t("chief.clients.noClients")}
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
+
+            <div className="flex flex-col gap-3 border-t p-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+              <span>{t("chief.clients.showing", { start: pageStart, end: pageEnd, total: pagination.total })}</span>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPage((c) => Math.max(0, c - 1))} disabled={isLoading || pagination.offset === 0}>
+                  {t("chief.clients.previous")}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setPage((c) => c + 1)} disabled={isLoading || !pagination.hasMore}>
+                  {t("chief.clients.next")}
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        {/* ── Add Client Dialog ── */}
+        <Dialog open={addOpen} onOpenChange={(open) => { if (isMutatingClient) return; setAddOpen(open); if (!open) setEmailError(""); }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add Client</DialogTitle>
-              <DialogDescription>Create a client record in this chief view.</DialogDescription>
+              <DialogTitle>{t("chief.clients.addDialog.title")}</DialogTitle>
+              <DialogDescription>{t("chief.clients.addDialog.desc")}</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4">
-              {[
-                ["name", "Client Name", "TechCorp Industries"],
-                ["company", "Company", "TechCorp"],
-                ["email", "Contact Email", "contact@company.com"],
-                ["exhibition", "Exhibition", "TechCon 2026"],
-              ].map(([key, label, placeholder]) => (
+              {([
+                ["name",       t("chief.clients.addDialog.name"),       "TechCorp Industries"],
+                ["company",    t("chief.clients.addDialog.company"),    "TechCorp"],
+                ["exhibition", t("chief.clients.addDialog.exhibition"), "TechCon 2026"],
+              ] as Array<[keyof typeof newClient, string, string]>).map(([key, label, placeholder]) => (
                 <div key={key} className="space-y-2">
                   <Label htmlFor={`client-${key}`}>{label}</Label>
-                  <Input
-                    id={`client-${key}`}
-                    value={newClient[key as keyof typeof newClient]}
-                    placeholder={placeholder}
-                    onChange={(event) => setNewClient((current) => ({ ...current, [key]: event.target.value }))}
-                  />
+                  <Input id={`client-${key}`} value={newClient[key]} placeholder={placeholder}
+                    onChange={(e) => setNewClient((c) => ({ ...c, [key]: e.target.value }))} />
                 </div>
               ))}
+              <div className="space-y-2">
+                <Label htmlFor="client-email">{t("chief.clients.addDialog.email")}</Label>
+                <Input id="client-email" type="email" value={newClient.email} placeholder="contact@company.com"
+                  onChange={(e) => { setNewClient((c) => ({ ...c, email: e.target.value })); setEmailError(""); }} />
+                {emailError && <p className="text-xs text-red-500">{emailError}</p>}
+              </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-              <Button onClick={addClient} disabled={!newClient.name.trim()}>Add Client</Button>
+              <Button variant="outline" onClick={() => { setAddOpen(false); setEmailError(""); }} disabled={isMutatingClient}>
+                {t("chief.clients.cancel")}
+              </Button>
+              <Button onClick={addClient} disabled={!newClient.name.trim() || isMutatingClient}>
+                {isMutatingClient ? t("chief.clients.saving") : t("chief.clients.addDialog.submit")}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
-          <DialogContent>
+        {/* ── Assign Manager Dialog ── */}
+        <Dialog open={!!assignClientId} onOpenChange={(open) => { if (!open && !isAssigning) { setAssignClientId(null); setAssignPm(""); } }}>
+          <DialogContent className="max-w-sm">
             <DialogHeader>
-              <DialogTitle>Filter Clients</DialogTitle>
-              <DialogDescription>Show clients by status.</DialogDescription>
+              <DialogTitle>{t("chief.clients.assignDialog.title")}</DialogTitle>
+              <DialogDescription>
+                {t("chief.clients.assignDialog.desc", { name: clients.find((c) => c.id === assignClientId)?.name ?? "…" })}
+              </DialogDescription>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-2">
-              {["All", "Active", "Pending", "Delayed", "Completed"].map((status) => (
-                <Button
-                  key={status}
-                  variant={statusFilter === status ? "default" : "outline"}
-                  onClick={() => { setStatusFilter(status); setFilterOpen(false); }}
-                >
-                  {status}
-                </Button>
-              ))}
-            </div>
+            <Select value={assignPm} onValueChange={setAssignPm}>
+              <SelectTrigger><SelectValue placeholder={t("chief.clients.assignDialog.placeholder")} /></SelectTrigger>
+              <SelectContent>
+                {managerOptions.map((pm) => (
+                  <SelectItem key={pm.id} value={pm.id}>{pm.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAssignClientId(null)} disabled={isAssigning}>
+                {t("chief.clients.cancel")}
+              </Button>
+              <Button onClick={confirmAssign} disabled={!assignPm || isAssigning}>
+                {isAssigning ? t("chief.clients.saving") : t("chief.clients.assignDialog.submit")}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
+        {/* ── Edit Client Dialog ── */}
+        <Dialog open={!!editClientId} onOpenChange={(open) => { if (isMutatingClient) return; if (!open) { setEditClientId(null); setEditForm(EMPTY_CLIENT_FORM); setEditEmailError(""); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("chief.clients.editDialog.title")}</DialogTitle>
+              <DialogDescription>{t("chief.clients.editDialog.desc")}</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4">
+              {([
+                ["name",       t("chief.clients.editDialog.contactName"), "Dana Client"],
+                ["company",    t("chief.clients.addDialog.company"),      "TechCorp Industries"],
+                ["exhibition", t("chief.clients.addDialog.exhibition"),   "TechCon 2026"],
+              ] as Array<[keyof ClientForm, string, string]>).map(([key, label, placeholder]) => (
+                <div key={key} className="space-y-2">
+                  <Label htmlFor={`edit-client-${key}`}>{label}</Label>
+                  <Input id={`edit-client-${key}`} value={editForm[key]} placeholder={placeholder}
+                    onChange={(e) => setEditForm((c) => ({ ...c, [key]: e.target.value }))} />
+                </div>
+              ))}
+              <div className="space-y-2">
+                <Label htmlFor="edit-client-email">{t("chief.clients.addDialog.email")}</Label>
+                <Input id="edit-client-email" type="email" value={editForm.email} placeholder="contact@company.com"
+                  onChange={(e) => { setEditForm((c) => ({ ...c, email: e.target.value })); setEditEmailError(""); }} />
+                {editEmailError && <p className="text-xs text-red-500">{editEmailError}</p>}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setEditClientId(null); setEditForm(EMPTY_CLIENT_FORM); setEditEmailError(""); }} disabled={isMutatingClient}>
+                {t("chief.clients.cancel")}
+              </Button>
+              <Button onClick={saveEditClient} disabled={!editForm.name.trim() || !editForm.company.trim() || isMutatingClient}>
+                {isMutatingClient ? t("chief.clients.saving") : t("chief.clients.editDialog.submit")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* ── Archive Dialog ── */}
+        <Dialog open={!!deleteClientId} onOpenChange={(open) => { if (!open && !isMutatingClient) { setDeleteClientId(null); setArchiveBlockers([]); } }}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{t("chief.clients.archiveDialog.title")}</DialogTitle>
+              <DialogDescription>
+                {t("chief.clients.archiveDialog.desc", { name: clients.find((c) => c.id === deleteClientId)?.name ?? "…" })}
+              </DialogDescription>
+            </DialogHeader>
+            {archiveBlockers.length > 0 && (
+              <div className="space-y-2 rounded-md border border-yellow-500/30 bg-yellow-500/5 p-3">
+                <p className="text-xs font-semibold text-yellow-600">{t("chief.clients.archiveDialog.blockers")}</p>
+                <div className="space-y-2">
+                  {archiveBlockers.map((project) => (
+                    <div key={project.id} className="flex items-center justify-between gap-3 rounded border bg-background px-2 py-1.5 text-xs">
+                      <span className="font-medium">{project.name}</span>
+                      <span className="text-muted-foreground">{project.status}{project.deadline ? ` / ${project.deadline}` : ""}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setDeleteClientId(null); setArchiveBlockers([]); }} disabled={isMutatingClient}>
+                {t("chief.clients.cancel")}
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete} disabled={isMutatingClient}>
+                {isMutatingClient ? t("chief.clients.archiveDialog.archiving") : t("chief.clients.archiveDialog.submit")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* ── View Details Dialog ── */}
         <Dialog open={!!detailClient} onOpenChange={(open) => !open && setDetailClient(null)}>
           <DialogContent>
             <DialogHeader>
@@ -285,22 +595,50 @@ export default function ChiefClients() {
               <DialogDescription>{detailClient?.company}</DialogDescription>
             </DialogHeader>
             {detailClient && (
-              <div className="grid gap-3 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Contact</span><span>{detailClient.contactName}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span>{detailClient.contactEmail}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">PM</span><span>{detailClient.pm}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Exhibition</span><span>{detailClient.exhibition}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span>{detailClient.status}</span></div>
-              </div>
+              <>
+                <div className="grid gap-3 text-sm">
+                  {([
+                    [t("chief.clients.detailDialog.contact"),    detailClient.contactName],
+                    [t("chief.clients.detailDialog.email"),      detailClient.contactEmail],
+                    [t("chief.clients.detailDialog.pm"),         detailClient.pm],
+                    [t("chief.clients.detailDialog.exhibition"), detailClient.exhibition],
+                    [t("chief.clients.detailDialog.status"),     clientStatusLabel(detailClient.status)],
+                  ] as [string, string][]).map(([label, value]) => (
+                    <div key={label} className="flex justify-between">
+                      <span className="text-muted-foreground">{label}</span>
+                      <span>{value}</span>
+                    </div>
+                  ))}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => { openEditClient(detailClient); setDetailClient(null); }}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    {t("chief.clients.menu.editClient")}
+                  </Button>
+                  <Button variant="outline" onClick={() => {
+                    setAssignClientId(detailClient.id);
+                    const mgr = managerOptions.find((item) => item.name === detailClient.pm);
+                    setAssignPm(detailClient.pm === "Unassigned" ? "" : mgr?.id ?? detailClient.pm);
+                    setDetailClient(null);
+                  }}>
+                    <UserCheck className="mr-2 h-4 w-4" />
+                    {t("chief.clients.menu.assignManager")}
+                  </Button>
+                </DialogFooter>
+              </>
             )}
           </DialogContent>
         </Dialog>
+      </div>
 
-        {toast && (
-          <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-primary/30 bg-card px-4 py-3 text-sm shadow-xl">
-            {toast}
-          </div>
-        )}
+      {/* Always-rendered ARIA live toast */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className={`fixed bottom-5 right-5 z-50 rounded-lg border border-primary/30 bg-card px-4 py-3 text-sm shadow-xl transition-all duration-300 ${toastVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"}`}
+      >
+        {toastMsg}
       </div>
     </DashboardLayout>
   );

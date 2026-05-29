@@ -3,8 +3,8 @@ import { Router, type IRouter } from "express";
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { hashPassword, verifyPassword } from "../lib/password";
-import { createRefreshToken, hashToken, signAccessToken } from "../lib/tokens";
-import { requireAuth, toUiRole, type AuthContext, type AuthRole } from "../middlewares/session";
+import { createRefreshToken, hashToken, signAccessToken, verifyAccessToken } from "../lib/tokens";
+import { getAuthContext, toUiRole, type AuthContext, type AuthRole } from "../middlewares/session";
 
 const ACCESS_COOKIE = "ens_access";
 const REFRESH_COOKIE = "ens_refresh";
@@ -18,8 +18,26 @@ async function queryRows<T>(statement: SQL) {
   return (result as unknown as { rows: T[] }).rows;
 }
 
-router.get("/auth/me", requireAuth, (req, res) => {
-  res.json(authResponse(req.auth!));
+router.get("/auth/me", async (req, res) => {
+  const auth = await authFromAccessCookie(req.cookies?.[ACCESS_COOKIE]);
+
+  if (auth) {
+    res.json(authResponse(auth));
+    return;
+  }
+
+  const refreshedAuth = await refreshAuthFromCookie(req.cookies?.[REFRESH_COOKIE], res);
+
+  if (refreshedAuth) {
+    res.json(authResponse(refreshedAuth));
+    return;
+  }
+
+  if (hasCookie(req.cookies?.[ACCESS_COOKIE]) || hasCookie(req.cookies?.[REFRESH_COOKIE])) {
+    clearAuthCookies(res);
+  }
+
+  res.json(emptyAuthResponse());
 });
 
 router.post("/auth/login", async (req, res) => {
@@ -52,6 +70,8 @@ router.post("/auth/login", async (req, res) => {
     userName: account.name,
     userEmail: account.email,
     role: account.role,
+    avatarUrl: avatarField(account.metadata, "avatarUrl"),
+    avatarTone: avatarField(account.metadata, "avatarTone") || "primary",
     organizationId: account.organizationId,
     organizationName: account.organizationName,
     organizationSlug: account.organizationSlug,
@@ -144,6 +164,8 @@ router.post("/auth/signup", async (req, res) => {
     userName: input.value.name,
     userEmail: input.value.email,
     role: "client",
+    avatarUrl: "",
+    avatarTone: "green",
     organizationId: organization.id,
     organizationName: organization.name,
     organizationSlug: organization.slug,
@@ -184,25 +206,8 @@ router.post("/auth/refresh", async (req, res) => {
     return;
   }
 
-  const nextRefreshToken = createRefreshToken();
-  const nextRefreshHash = hashToken(nextRefreshToken);
-
-  await db.execute(sql`
-    update sessions
-    set refresh_token_hash = ${nextRefreshHash}, rotated_at = now()
-    where id = ${session.sessionId}::uuid
-  `);
-
-  const accessToken = signAccessToken({
-    sub: session.userId,
-    sid: session.sessionId,
-    org: session.organizationId,
-    role: session.role,
-    exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_TTL_SECONDS,
-  });
-
-  setAuthCookies(res, accessToken, nextRefreshToken);
-  res.json(authResponse(toAuthContext(session)));
+  const auth = await rotateSession(session, res);
+  res.json(authResponse(auth));
 });
 
 router.post("/auth/logout", async (req, res) => {
@@ -226,6 +231,8 @@ async function createSession(input: {
   userName: string;
   userEmail: string;
   role: AuthRole;
+  avatarUrl: string;
+  avatarTone: string;
   organizationId: string;
   organizationName: string;
   organizationSlug: string;
@@ -279,6 +286,8 @@ async function createSession(input: {
         email: input.userEmail,
         role: input.role,
         uiRole: toUiRole(input.role),
+        avatarUrl: input.avatarUrl,
+        avatarTone: input.avatarTone,
       },
       organization: {
         id: input.organizationId,
@@ -298,6 +307,7 @@ async function findLoginAccount(email: string, organizationSlug: string | null) 
     name: string;
     passwordHash: string | null;
     role: AuthRole;
+    metadata: Record<string, unknown>;
     organizationId: string;
     organizationName: string;
     organizationSlug: string;
@@ -309,6 +319,7 @@ async function findLoginAccount(email: string, organizationSlug: string | null) 
       u.name,
       u.password_hash as "passwordHash",
       m.role::text as role,
+      u.metadata,
       o.id::text as "organizationId",
       o.name as "organizationName",
       o.slug as "organizationSlug",
@@ -335,6 +346,7 @@ async function findSessionByRefreshHash(refreshTokenHash: string) {
     name: string;
     email: string;
     role: AuthRole;
+    metadata: Record<string, unknown>;
     organizationId: string;
     organizationName: string;
     organizationSlug: string;
@@ -346,6 +358,7 @@ async function findSessionByRefreshHash(refreshTokenHash: string) {
       u.name,
       u.email,
       m.role::text as role,
+      u.metadata,
       o.id::text as "organizationId",
       o.name as "organizationName",
       o.slug as "organizationSlug",
@@ -392,9 +405,59 @@ function authResponse(auth: AuthContext) {
       email: auth.user.email,
       role: auth.user.uiRole,
       systemRole: auth.user.role,
+      avatarUrl: auth.user.avatarUrl,
+      avatarTone: auth.user.avatarTone,
     },
     organization: auth.organization,
   };
+}
+
+function emptyAuthResponse() {
+  return {
+    user: null,
+    organization: null,
+  };
+}
+
+async function authFromAccessCookie(token: unknown) {
+  const payload = typeof token === "string" ? verifyAccessToken(token) : null;
+  if (!payload) return null;
+  return getAuthContext(payload.sid, payload.sub, payload.org);
+}
+
+async function refreshAuthFromCookie(refreshToken: unknown, res: Response) {
+  if (typeof refreshToken !== "string") return null;
+  const session = await findSessionByRefreshHash(hashToken(refreshToken));
+  if (!session) return null;
+  return rotateSession(session, res);
+}
+
+type RefreshSession = NonNullable<Awaited<ReturnType<typeof findSessionByRefreshHash>>>;
+
+async function rotateSession(session: RefreshSession, res: Response) {
+  const nextRefreshToken = createRefreshToken();
+  const nextRefreshHash = hashToken(nextRefreshToken);
+
+  await db.execute(sql`
+    update sessions
+    set refresh_token_hash = ${nextRefreshHash}, rotated_at = now()
+    where id = ${session.sessionId}::uuid
+  `);
+
+  const accessToken = signAccessToken({
+    sub: session.userId,
+    sid: session.sessionId,
+    org: session.organizationId,
+    role: session.role,
+    exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_TTL_SECONDS,
+  });
+
+  setAuthCookies(res, accessToken, nextRefreshToken);
+  return toAuthContext(session);
+}
+
+function hasCookie(value: unknown) {
+  return typeof value === "string" && value.length > 0;
 }
 
 function toAuthContext(session: Awaited<ReturnType<typeof findSessionByRefreshHash>>): AuthContext {
@@ -408,6 +471,8 @@ function toAuthContext(session: Awaited<ReturnType<typeof findSessionByRefreshHa
       email: session.email,
       role: session.role,
       uiRole: toUiRole(session.role),
+      avatarUrl: avatarField(session.metadata, "avatarUrl"),
+      avatarTone: avatarField(session.metadata, "avatarTone") || "primary",
     },
     organization: {
       id: session.organizationId,
@@ -416,6 +481,13 @@ function toAuthContext(session: Awaited<ReturnType<typeof findSessionByRefreshHa
       plan: session.organizationPlan,
     },
   };
+}
+
+function avatarField(metadata: Record<string, unknown>, key: "avatarUrl" | "avatarTone") {
+  const profile = metadata.profile;
+  if (!profile || typeof profile !== "object" || Array.isArray(profile)) return "";
+  const value = (profile as Record<string, unknown>)[key];
+  return typeof value === "string" ? value : "";
 }
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {

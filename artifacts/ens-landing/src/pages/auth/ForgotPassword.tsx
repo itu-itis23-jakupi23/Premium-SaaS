@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Link } from 'wouter';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -17,19 +18,24 @@ import {
 import { Input } from '@/components/ui/input';
 import { CheckCircle2, ArrowLeft, MailOpen, RefreshCw } from 'lucide-react';
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-});
-
-type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
-
 const RESEND_COOLDOWN = 60;
 
 export default function ForgotPassword() {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [isResending, setIsResending] = useState(false);
+
+  useEffect(() => {
+    document.title = t('auth.forgotPassword.pageTitle');
+  }, [t]);
+
+  // Schema defined inside component so t() is available for validation messages
+  const forgotPasswordSchema = z.object({
+    email: z.string().email(t('auth.forgotPassword.validation.email')),
+  });
+  type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -60,20 +66,20 @@ export default function ForgotPassword() {
 
   if (isSubmitted) {
     return (
-      <AuthLayout title="Check your inbox">
+      <AuthLayout title={t('auth.forgotPassword.sentTitle')}>
         <div className="flex flex-col items-center text-center space-y-4 py-2">
           <div className="h-14 w-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-2">
-            <MailOpen className="h-7 w-7 text-primary" />
+            <MailOpen className="h-7 w-7 text-primary" aria-hidden="true" />
           </div>
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              We sent a password reset link to
+              {t('auth.forgotPassword.sentTo')}
             </p>
             <p className="text-sm font-semibold text-foreground bg-muted/50 rounded-lg px-4 py-2 border border-border/50">
               {form.getValues('email')}
             </p>
             <p className="text-xs text-muted-foreground">
-              Check your spam folder if you don't see it within a few minutes.
+              {t('auth.forgotPassword.checkSpam')}
             </p>
           </div>
 
@@ -86,18 +92,18 @@ export default function ForgotPassword() {
             >
               {isResending ? (
                 <span className="flex items-center gap-2">
-                  <Spinner />
-                  Sending…
+                  <Spinner aria-hidden="true" />
+                  {t('auth.forgotPassword.resending')}
                 </span>
               ) : resendCooldown > 0 ? (
                 <span className="flex items-center gap-2">
-                  <RefreshCw className="h-4 w-4" />
-                  Resend in {resendCooldown}s
+                  <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                  {t('auth.forgotPassword.resendIn', { seconds: resendCooldown })}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  <RefreshCw className="h-4 w-4" />
-                  Resend email
+                  <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                  {t('auth.forgotPassword.resendEmail')}
                 </span>
               )}
             </Button>
@@ -105,15 +111,22 @@ export default function ForgotPassword() {
             <Button
               variant="ghost"
               className="w-full rounded-full gap-2 text-muted-foreground"
-              onClick={() => { setIsSubmitted(false); form.reset(); }}
+              onClick={() => {
+                setIsSubmitted(false);
+                form.reset();
+              }}
             >
-              Use a different email
+              {t('auth.forgotPassword.differentEmail')}
             </Button>
           </div>
 
           <div className="w-full border-t border-border/50 pt-4">
-            <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2">
-              <ArrowLeft className="h-4 w-4" /> Back to login
+            <Link
+              href="/login"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              {t('auth.forgotPassword.backToLogin')}
             </Link>
           </div>
         </div>
@@ -123,8 +136,8 @@ export default function ForgotPassword() {
 
   return (
     <AuthLayout
-      title="Reset password"
-      description="Enter your email and we'll send you a reset link"
+      title={t('auth.forgotPassword.title')}
+      description={t('auth.forgotPassword.description')}
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -133,10 +146,10 @@ export default function ForgotPassword() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email address</FormLabel>
+                <FormLabel>{t('auth.forgotPassword.emailLabel')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="name@company.com"
+                    placeholder={t('auth.login.emailPlaceholder')}
                     autoComplete="email"
                     autoFocus
                     {...field}
@@ -156,13 +169,13 @@ export default function ForgotPassword() {
           >
             {isSubmitting ? (
               <span className="flex items-center gap-2">
-                <Spinner className="text-primary-foreground" />
-                Sending link…
+                <Spinner className="text-primary-foreground" aria-hidden="true" />
+                {t('auth.forgotPassword.submitting')}
               </span>
             ) : (
               <>
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Send Reset Link
+                <CheckCircle2 className="h-4 w-4 mr-2" aria-hidden="true" />
+                {t('auth.forgotPassword.submit')}
               </>
             )}
           </Button>
@@ -170,8 +183,12 @@ export default function ForgotPassword() {
       </Form>
 
       <div className="mt-6 text-center">
-        <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2">
-          <ArrowLeft className="h-4 w-4" /> Back to login
+        <Link
+          href="/login"
+          className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          {t('auth.forgotPassword.backToLogin')}
         </Link>
       </div>
     </AuthLayout>

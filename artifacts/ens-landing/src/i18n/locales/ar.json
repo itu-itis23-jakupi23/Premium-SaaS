@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "startDesigning": "ابدأ التصميم",
     "watchDemo": "شاهد العرض التوضيحي",
@@ -9,7 +9,9 @@
     "logIn": "دخول",
     "learnMore": "اعرف المزيد",
     "copyright": "© {{year}} ENS Expo Solutions Ltd. جميع الحقوق محفوظة.",
-    "internalOnly": "للاستخدام الداخلي فقط"
+    "internalOnly": "للاستخدام الداخلي فقط",
+    "vsLastMonth": "مقارنةً بالشهر الماضي",
+    "clickToView": "انقر للعرض →"
   },
   "nav": {
     "features": "الميزات",
@@ -45,20 +47,54 @@
       "heading": "كل ما تحتاجه",
       "headingAccent": "للتصميم والتسليم",
       "subheading": "مجموعة كاملة للتصميم وإدارة المشاريع مبنية خصيصاً لصناعة المعارض.",
-      "realtime": { "title": "لوحة رسم ثلاثية الأبعاد فورية", "desc": "اسحب وأفلت مكونات النظام على مرحلة ثلاثية الأبعاد مباشرة. ما تراه هو ما يُبنى." },
-      "octanorm": { "title": "نظام Octanorm", "desc": "نظام Octanorm المعياري الكامل مع ملفات تعريف دقيقة 40 مم و50 مم وموصلات وألواح." },
-      "maxima": { "title": "إطار Maxima", "desc": "نظام بثق ألومنيوم Maxima الثقيل مع امتدادات قابلة للتهيئة وخيارات تعبئة." },
-      "client": { "title": "معاينة العميل", "desc": "شارك رابطاً ثلاثي الأبعاد مباشراً مع العملاء. يضيفون تعليقات مباشرة على النموذج — لا حاجة لحساب." },
-      "analytics": { "title": "تحليلات المشروع", "desc": "تتبع سرعة المشروع ودورات الموافقة وتوقعات التكلفة واستخدام الفريق في الوقت الفعلي." },
-      "automation": { "title": "أتمتة ذكية", "desc": "إنشاء تلقائي للمخططات الأرضية ورسومات الارتفاع وقوائم الأجزاء وتقديرات التكلفة بنقرة واحدة." }
+      "realtime": {
+        "title": "لوحة رسم ثلاثية الأبعاد فورية",
+        "desc": "اسحب وأفلت مكونات النظام على مرحلة ثلاثية الأبعاد مباشرة. ما تراه هو ما يُبنى."
+      },
+      "octanorm": {
+        "title": "نظام Octanorm",
+        "desc": "نظام Octanorm المعياري الكامل مع ملفات تعريف دقيقة 40 مم و50 مم وموصلات وألواح."
+      },
+      "maxima": {
+        "title": "إطار Maxima",
+        "desc": "نظام بثق ألومنيوم Maxima الثقيل مع امتدادات قابلة للتهيئة وخيارات تعبئة."
+      },
+      "client": {
+        "title": "معاينة العميل",
+        "desc": "شارك رابطاً ثلاثي الأبعاد مباشراً مع العملاء. يضيفون تعليقات مباشرة على النموذج — لا حاجة لحساب."
+      },
+      "analytics": {
+        "title": "تحليلات المشروع",
+        "desc": "تتبع سرعة المشروع ودورات الموافقة وتوقعات التكلفة واستخدام الفريق في الوقت الفعلي."
+      },
+      "automation": {
+        "title": "أتمتة ذكية",
+        "desc": "إنشاء تلقائي للمخططات الأرضية ورسومات الارتفاع وقوائم الأجزاء وتقديرات التكلفة بنقرة واحدة."
+      }
     },
     "howItWorks": {
       "heading": "من الإحاطة إلى البناء في",
       "headingAccent": "أربع خطوات",
-      "brief": { "step": "٠١", "title": "رفع الإحاطة", "desc": "استيراد إحاطة الفعالية أو المخطط الأرضي أو ورقة مواصفات الجناح الخاصة بعميلك." },
-      "design": { "step": "٠٢", "title": "التصميم ثلاثي الأبعاد", "desc": "بناء الجناح باستخدام مكونات نظام Octanorm أو Maxima ومكتبة الأثاث." },
-      "review": { "step": "٠٣", "title": "مراجعة العميل", "desc": "أرسل رابطاً قابلاً للمشاركة. يراجع العميل ويوافق مباشرة في النموذج ثلاثي الأبعاد." },
-      "deliver": { "step": "٠٤", "title": "التصدير والتسليم", "desc": "تصدير بنقرة واحدة إلى وثائق الإنتاج والرسومات وجداول الأجزاء." }
+      "brief": {
+        "step": "٠١",
+        "title": "رفع الإحاطة",
+        "desc": "استيراد إحاطة الفعالية أو المخطط الأرضي أو ورقة مواصفات الجناح الخاصة بعميلك."
+      },
+      "design": {
+        "step": "٠٢",
+        "title": "التصميم ثلاثي الأبعاد",
+        "desc": "بناء الجناح باستخدام مكونات نظام Octanorm أو Maxima ومكتبة الأثاث."
+      },
+      "review": {
+        "step": "٠٣",
+        "title": "مراجعة العميل",
+        "desc": "أرسل رابطاً قابلاً للمشاركة. يراجع العميل ويوافق مباشرة في النموذج ثلاثي الأبعاد."
+      },
+      "deliver": {
+        "step": "٠٤",
+        "title": "التصدير والتسليم",
+        "desc": "تصدير بنقرة واحدة إلى وثائق الإنتاج والرسومات وجداول الأجزاء."
+      }
     },
     "testimonials": {
       "heading": "موثوق به من قِبَل",
@@ -104,7 +140,8 @@
       "security": "الأمان",
       "cookies": "سياسة ملفات تعريف الارتباط",
       "gdpr": "اللائحة الأوروبية لحماية البيانات"
-    }
+    },
+    "pageTitle": "ENS — منصة تصميم المعارض والأجنحة"
   },
   "team": {
     "hero": {
@@ -169,6 +206,1949 @@
       "itSupport": "دعم تقنية المعلومات",
       "privacy": "سياسة الخصوصية",
       "security": "الأمان"
+    },
+    "pageTitle": "ENS بوابة الفريق — مركز الموظفين والعملاء",
+    "chiefFeatures": {
+      "workspaceMonitor": {
+        "title": "مراقب مساحة العمل",
+        "desc": "إشراف مباشر على كل جلسة تصميم نشطة عبر جميع المشاريع."
+      },
+      "teamManagement": {
+        "title": "إدارة الفريق",
+        "desc": "تعيين مديري المشاريع وتتبع أعباء العمل وإدارة الصلاحيات."
+      },
+      "clientPortfolio": {
+        "title": "محفظة العملاء",
+        "desc": "عرض كامل لجميع حسابات العملاء وجهات الاتصال والعقود النشطة."
+      },
+      "analytics": {
+        "title": "التحليلات والتقارير",
+        "desc": "مؤشرات أداء المشاريع ومعدلات الموافقة ولوحات الإيرادات."
+      },
+      "approvalGateway": {
+        "title": "بوابة الموافقة",
+        "desc": "الموافقة الهيكلية والتصميمية النهائية قبل الإنتاج."
+      },
+      "commsHub": {
+        "title": "مركز الاتصالات",
+        "desc": "رسائل مركزية بين العملاء ومديري المشاريع والمقاولين."
+      }
+    },
+    "pmFeatures": {
+      "boothWorkspace": {
+        "title": "مساحة عمل ثلاثية الأبعاد",
+        "desc": "محرر Octanorm/Maxima الكامل مع تصميم تعاوني في الوقت الفعلي."
+      },
+      "clientMgmt": {
+        "title": "إدارة العملاء",
+        "desc": "إدارة الموجزات والجهات والجلسات التفاعلية لكل مشروع."
+      },
+      "taskTracker": {
+        "title": "متتبع المهام",
+        "desc": "لوح كانبان يغطي مراحل الإنتاج والتصميم والتسليم."
+      },
+      "pipeline": {
+        "title": "خط أنابيب المشاريع",
+        "desc": "تتبع جميع المشاريع النشطة والقادمة مع الجداول الزمنية."
+      },
+      "requestMgmt": {
+        "title": "إدارة الطلبات",
+        "desc": "معالجة طلبات التغيير وسجلات المراجعة وسلاسل الموافقة."
+      },
+      "messaging": {
+        "title": "المراسلة",
+        "desc": "رسائل مباشرة وجماعية مع العملاء والمكتب الرئيسي."
+      }
+    },
+    "workflowSteps": {
+      "brief": {
+        "title": "موجز العميل",
+        "desc": "يستلم الرئيس موجز المعرض ويسنده إلى مدير مشروع."
+      },
+      "workspace": {
+        "title": "إعداد مساحة العمل",
+        "desc": "يُنشئ مدير المشروع المشروع ويضبط أبعاد وأنظمة الجناح."
+      },
+      "design": {
+        "title": "التصميم ثلاثي الأبعاد",
+        "desc": "يبني مدير المشروع الجناح في مساحة العمل باستخدام مكتبات هيكلية."
+      },
+      "review": {
+        "title": "مراجعة الرئيس",
+        "desc": "يراقب الرئيس التقدم ويقدم توجيهات هيكلية."
+      },
+      "signoff": {
+        "title": "موافقة العميل",
+        "desc": "يراجع العميل التصميم ويقدم طلبات التغيير."
+      },
+      "approval": {
+        "title": "الموافقة النهائية",
+        "desc": "يوافق الرئيس على التصميم النهائي ويُطلقه للإنتاج."
+      },
+      "export": {
+        "title": "تصدير الإنتاج",
+        "desc": "يصدر مدير المشروع الوثائق وقوائم القطع والجداول."
+      }
+    }
+  },
+  "chief": {
+    "nav": {
+      "chief": "المدير العام",
+      "dashboard": "لوحة التحكم",
+      "clients": "العملاء",
+      "managers": "المديرون",
+      "projects": "المشاريع",
+      "monitor": "مراقبة مساحات العمل",
+      "reports": "التقارير",
+      "messages": "الرسائل",
+      "calendar": "التقويم",
+      "settings": "الإعدادات"
+    },
+    "common": {
+      "cancel": "إلغاء",
+      "save": "حفظ",
+      "assign": "تعيين",
+      "message": "رسالة",
+      "rebalance": "إعادة التوازن",
+      "openDetails": "فتح التفاصيل",
+      "viewCalendar": "عرض التقويم",
+      "sendReminder": "إرسال تذكير",
+      "assignments": "التعيينات",
+      "inviteManager": "دعوة مدير",
+      "keepEditing": "الاستمرار في التحرير",
+      "discardChanges": "تجاهل التغييرات",
+      "selectAll": "تحديد الكل",
+      "clear": "مسح",
+      "project": "مشروع",
+      "noDeadline": "لا يوجد موعد نهائي",
+      "status": {
+        "active": "نشط",
+        "pending": "قيد الانتظار",
+        "onLeave": "في إجازة",
+        "completed": "مكتمل",
+        "delayed": "متأخر",
+        "unassigned": "غير معين",
+        "highLoad": "حمل عالٍ",
+        "accepted": "مقبول",
+        "expired": "منتهي الصلاحية"
+      }
+    },
+    "dashboard": {
+      "title": "لوحة تحكم المدير العام",
+      "exportReports": "تصدير التقارير",
+      "excelExported": "تم تصدير تقرير Excel",
+      "noActivity": "لم يتم تسجيل أي نشاط بعد.",
+      "viewAllActivity": "عرض جميع الأنشطة",
+      "showRecentActivity": "عرض الأنشطة الأخيرة",
+      "commandCenter": "مركز القيادة",
+      "recentActivity": "النشاط الأخير",
+      "noManagerAssignments": "لم يتم العثور على تعيينات للمديرين.",
+      "loadError": "تعذر تحميل بيانات لوحة التحكم",
+      "charts": {
+        "projectActivity": "نشاط المشاريع",
+        "projectActivityDesc": "النشاط في جميع المشاريع خلال الأيام السبعة الماضية",
+        "projectStatus": "حالة المشاريع",
+        "projectStatusDesc": "توزيع الحالة عبر {{count}} مشاريع نشطة",
+        "managerPerformance": "أداء المديرين",
+        "managerPerformanceDesc": "المشاريع المعينة لكل مدير"
+      },
+      "stats": {
+        "totalClients": "إجمالي العملاء",
+        "activeProjects": "المشاريع النشطة",
+        "managers": "المديرون",
+        "delayedProjects": "المشاريع المتأخرة",
+        "needsAction": "يحتاج إجراء",
+        "pendingApprovals": "الموافقات المعلقة",
+        "activeWorkspaces": "مساحات العمل النشطة",
+        "saved": "محفوظ",
+        "db": "قاعدة البيانات",
+        "live": "مباشر",
+        "assigned": "معين",
+        "open": "مفتوح",
+        "clear": "محلول"
+      },
+      "insights": {
+        "delayedTitle": "المشاريع المتأخرة",
+        "dueSoonTitle": "موعد النهاية خلال 14 يوماً",
+        "unassignedTitle": "العمل غير المعين",
+        "approvalsTitle": "الموافقات المعلقة",
+        "noDelayed": "لا توجد مشاريع متأخرة مسجلة حالياً.",
+        "firstInQueue": "{{name}} في مقدمة قائمة الاسترداد.",
+        "noDueSoon": "لا توجد مواعيد نهائية للمشاريع خلال 14 يوماً.",
+        "nearestDeadline": "{{name}} لديه أقرب موعد نهائي.",
+        "noUnassigned": "كل مشروع نشط لديه مدير معين.",
+        "unassignedNeeds": "{{name}} لا يزال بحاجة إلى مدير مشروع.",
+        "noApprovals": "لا توجد اختناقات في الموافقات.",
+        "approvalsWaiting": "موافقات العملاء تنتظر الإجراء.",
+        "reviewProjects": "مراجعة المشاريع",
+        "openCalendar": "فتح التقويم",
+        "assignManagers": "تعيين المديرين",
+        "openQueue": "فتح قائمة الانتظار"
+      },
+      "pageTitle": "لوحة التحكم | ENS"
+    },
+    "managers": {
+      "title": "إدارة المديرين",
+      "refresh": "تحديث البيانات",
+      "noMatch": "لا يوجد مدير يطابق المرشحات الحالية.",
+      "tiles": {
+        "teamLoad": "حمل الفريق",
+        "activeManagers": "المديرون النشطون",
+        "delayedProjects": "المشاريع المتأخرة",
+        "unassignedItems": "العناصر غير المعينة",
+        "pendingInvites": "الدعوات المعلقة"
+      },
+      "filters": {
+        "searchPlaceholder": "البحث عن مديرين وعملاء ومشاريع",
+        "allStatuses": "جميع الحالات",
+        "allManagers": "جميع المديرين",
+        "highLoad": "حمل عالٍ",
+        "sortHighest": "أعلى حمل",
+        "sortLowest": "أدنى حمل",
+        "sortProjects": "أكثر المشاريع نشاطاً",
+        "sortRating": "أفضل تقييم",
+        "cardView": "عرض البطاقات",
+        "tableView": "عرض الجدول"
+      },
+      "views": {
+        "title": "العروض المحفوظة",
+        "desc": "إعادة استخدام المرشحات والترتيب والتخطيط.",
+        "namePlaceholder": "تسمية العرض",
+        "deleteView": "حذف العرض {{name}}"
+      },
+      "invitations": {
+        "title": "الدعوات المعلقة",
+        "desc": "يظهر المديرون المدعوون هنا حتى يقبلوا. لا يمكنهم استقبال التعيينات بعد.",
+        "expires": "تنتهي صلاحيتها {{date}}",
+        "moreInvites": "+{{count}} آخرين",
+        "copyLink": "نسخ رابط الدعوة لـ {{email}}",
+        "resend": "إعادة إرسال الدعوة إلى {{email}}",
+        "revoke": "سحب الدعوة لـ {{email}}"
+      },
+      "invite": {
+        "title": "دعوة مدير",
+        "desc": "إضافة مدير مشروع إلى مساحة عمل المدير العام.",
+        "namePlaceholder": "Sarah Mitchell",
+        "emailPlaceholder": "manager@company.com",
+        "sendInvite": "إرسال الدعوة",
+        "nameLabel": "الاسم",
+        "emailLabel": "البريد الإلكتروني",
+        "emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صالح.",
+        "defaultName": "مدير جديد"
+      },
+      "statusChange": {
+        "title": "تأكيد تغيير الحالة",
+        "markOnLeave": "تمييز كإجازة",
+        "markActive": "تمييز كنشط",
+        "confirmPrefix": "هل أنت متأكد من تمييز",
+        "confirmSuffix": "كـ",
+        "onLeaveNote": "ستبقى مشاريعه النشطة معينة لكن سيتم تحديد حمل العمل.",
+        "updated": "تم تحديث حالة المدير"
+      },
+      "rebalance": {
+        "title": "إعادة توازن عبء العمل",
+        "desc": "مراجعة التغيير المقترح قبل التأكيد.",
+        "projectToMove": "المشروع المراد نقله",
+        "from": "من",
+        "to": "إلى",
+        "confirm": "تأكيد إعادة التوازن",
+        "done": "تم إعادة توازن عبء العمل"
+      },
+      "assignments": {
+        "titleTeam": "تعيينات الفريق",
+        "titleFocused": "التعيينات – {{name}}",
+        "descTeam": "إعادة تعيين العملاء والمشاريع داخل الفريق.",
+        "descFocused": "إدارة العملاء والمشاريع المعينة لـ {{name}}.",
+        "bulkTitle": "تعيين جماعي",
+        "bulkDesc": "حدد صفوفاً، اختر مديراً، ثم طبّق قبل الحفظ.",
+        "selected": "محدد",
+        "applySelected": "تطبيق المحدد",
+        "cascadeLabel": "نقل مشاريع هذا العميل أيضاً",
+        "cascadeDesc": "عند إعادة تعيين عميل، تنتقل جميع مشاريعه إلى نفس المدير.",
+        "saveAssignments": "حفظ التعيينات",
+        "noClients": "لا يوجد عملاء متاحون.",
+        "noProjects": "لا توجد مشاريع متاحة.",
+        "clients": "العملاء",
+        "projects": "المشاريع",
+        "saved": "تم تحديث التعيينات",
+        "selectRow": "تحديد {{name}}"
+      },
+      "discard": {
+        "title": "تجاهل تغييرات التعيين؟",
+        "desc": "لديك تعديلات غير محفوظة. سيؤدي الإغلاق إلى تجاهلها."
+      },
+      "card": {
+        "computedWorkload": "عبء العمل المحسوب",
+        "delayed": "متأخر",
+        "urgent": "عاجل",
+        "ratingNew": "جديد",
+        "ratingNA": "لا يوجد"
+      },
+      "table": {
+        "manager": "المدير",
+        "status": "الحالة",
+        "workload": "عبء العمل",
+        "projects": "المشاريع",
+        "clients": "العملاء",
+        "nextDeadline": "الموعد النهائي التالي",
+        "actions": "الإجراءات"
+      },
+      "detail": {
+        "workload": "عبء العمل",
+        "projects": "المشاريع",
+        "clients": "العملاء",
+        "tabs": {
+          "overview": "نظرة عامة",
+          "projects": "المشاريع",
+          "clients": "العملاء",
+          "activity": "النشاط"
+        },
+        "overview": {
+          "title": "صحة عبء العمل",
+          "desc": "المشاريع النشطة الحالية وحمل العملاء",
+          "delayed": "متأخر",
+          "dueSoon": "ينتهي قريباً",
+          "nextDeadline": "الموعد النهائي التالي",
+          "rating": "التقييم",
+          "none": "لا شيء"
+        },
+        "noProjects": "لا توجد مشاريع معينة.",
+        "noClients": "لا يوجد عملاء معينون."
+      },
+      "audit": {
+        "title": "تدقيق النشاط",
+        "desc": "سجل التعيينات والوصول وإعادة التوازن والتذكيرات",
+        "searchPlaceholder": "البحث في سجل التدقيق",
+        "allActivity": "جميع الأنشطة",
+        "success": "نجاح",
+        "warnings": "تحذيرات",
+        "info": "معلومات",
+        "noActivity": "لم يتم تسجيل أي نشاط بعد.",
+        "showAll": "عرض جميع {{count}} إدخالات",
+        "showLess": "عرض أقل ({{count}} الأحدث)",
+        "team": "الفريق",
+        "exportCsv": "تصدير كـ CSV",
+        "action": {
+          "invitation": "دعوة",
+          "access": "الوصول",
+          "assignment": "تعيين",
+          "rebalance": "إعادة التوازن",
+          "reminder": "تذكير"
+        },
+        "detail": {
+          "invited": "تمت إضافة دعوة {{name}} إلى قائمة الانتظار.",
+          "statusChanged": "تم وضع علامة {{status}} على {{name}}.",
+          "assignmentsSaved": "تم حفظ تغييرات التعيين.",
+          "rebalanced": "تم نقل {{project}} من {{from}} إلى {{to}}.",
+          "reminded": "تمت إضافة تذكير داخل التطبيق لـ {{name}} إلى قائمة الانتظار — {{count}} عنصر ذو أولوية."
+        },
+        "justNow": "الآن"
+      },
+      "actions": {
+        "openDetails": "فتح التفاصيل",
+        "assignments": "التعيينات",
+        "viewCalendar": "عرض التقويم",
+        "rebalanceWorkload": "إعادة توازن عبء العمل",
+        "markOnLeave": "تمييز كإجازة",
+        "markActive": "تمييز كنشط",
+        "sendReminder": "إرسال تذكير",
+        "assign": "تعيين",
+        "rebalance": "إعادة التوازن",
+        "message": "رسالة"
+      },
+      "toast": {
+        "loadError": "تعذّر تحميل مساحة عمل المديرين",
+        "viewLoaded": "تم تحميل العرض: {{name}}",
+        "viewSaved": "تم حفظ عرض المديرين: {{name}}",
+        "viewRemoved": "تم حذف العرض المحفوظ",
+        "inviteCreated": "الدعوة في قائمة الانتظار لـ {{name}}",
+        "inviteError": "تعذّر إنشاء دعوة المدير",
+        "inviteResent": "تمت إعادة إرسال الدعوة إلى {{email}}",
+        "inviteResendError": "تعذّر إعادة إرسال الدعوة",
+        "inviteRevoked": "تم سحب الدعوة",
+        "inviteRevokeError": "تعذّر سحب الدعوة",
+        "inviteCopyFirst": "أعد إرسال هذه الدعوة أولاً لإنشاء رابط قابل للنسخ",
+        "inviteCopied": "تم نسخ رابط الدعوة",
+        "inviteCopyError": "تعذّر نسخ رابط الدعوة",
+        "statusUpdated": "تم تحديث حالة المدير",
+        "statusError": "تعذّر تحديث حالة المدير",
+        "assignNoChange": "لا توجد تغييرات في المهام لـ {{name}}",
+        "assignError": "تعذّر حفظ المهام",
+        "assignUpdated": "تم تحديث المهام",
+        "rebalanceNoTarget": "لا يوجد مديرون نشطون متاحون لإعادة التوازن",
+        "rebalanceNormal": "عبء العمل لـ {{name}} ({{pct}}%) ضمن النطاق الطبيعي — لا حاجة لإعادة التوازن",
+        "rebalanceNoProject": "لم يُعثر على مشروع أو مدير هدف مناسب لإعادة التوازن",
+        "rebalanceError": "تعذّر إعادة توازن عبء العمل",
+        "rebalanceDone": "تمت إعادة توازن عبء العمل",
+        "reminderSent": "التذكير في قائمة الانتظار لـ {{name}} — تم إنشاء الإشعار",
+        "reminderError": "تعذّر إرسال التذكير"
+      }
+    },
+    "reports": {
+      "title": "التقارير والتحليلات",
+      "loadError": "تعذر تحميل بيانات التقرير.",
+      "exportExcel": "تصدير Excel",
+      "bottlenecks": "نقاط الاختناق",
+      "leaderboardTitle": "لوحة الشرف لمديري المشاريع",
+      "leaderboardDesc": "مرتب حسب رضا العميل / {{range}}",
+      "toast": {
+        "exported": "تم تصدير تقرير Excel"
+      },
+      "kpi": {
+        "revenue": "إجمالي الإيرادات",
+        "revenueDetail": "+12.5% مقارنة بالفترة السابقة",
+        "projects": "المشاريع",
+        "projectsDetail": "النطاق المحدد: {{range}}",
+        "pms": "مديرو المشاريع",
+        "pmsDetail": "مرتب حسب التسليم",
+        "satisfaction": "متوسط الرضا",
+        "satisfactionDetail": "تقييم العميل"
+      },
+      "cards": {
+        "revenueTitle": "الإيرادات مقابل الهدف",
+        "revenueDesc": "{{range}} / الإجمالي ${{total}}K / {{projects}} مشروع",
+        "pmPerfTitle": "أداء مديري المشاريع",
+        "pmPerfDesc": "المشاريع المكتملة مقابل معدل التسليم في الموعد",
+        "trendTitle": "اتجاه الإيرادات على 12 شهرًا",
+        "trendDesc": "مسار الإيرادات خلال العام الماضي",
+        "systemTitle": "توزيع النظام ونقاط الاختناق",
+        "systemDesc": "استخدام النظام وأوقات انتظار العملاء"
+      },
+      "chart": {
+        "revenue": "الإيرادات",
+        "target": "الهدف",
+        "onTimePct": "في الموعد %",
+        "satisfaction": "الرضا"
+      },
+      "table": {
+        "rank": "الترتيب",
+        "pm": "مدير المشروع",
+        "projects": "المشاريع",
+        "onTime": "في الموعد",
+        "satisfaction": "الرضا",
+        "revenue": "الإيرادات",
+        "month": "الشهر"
+      },
+      "export": {
+        "colReport": "التقرير",
+        "colRange": "النطاق",
+        "colExportedAt": "تاريخ التصدير",
+        "colRevenue": "إجمالي الإيرادات",
+        "colTarget": "إجمالي الهدف",
+        "colProjects": "إجمالي المشاريع",
+        "colRevenueDollar": "الإيرادات ($)",
+        "colTargetDollar": "الهدف ($)",
+        "colOnTimePct": "في الموعد (%)",
+        "colSystem": "النظام",
+        "colShare": "الحصة (%)",
+        "colProject": "المشروع",
+        "colWaitDays": "أيام الانتظار",
+        "colStage": "المرحلة",
+        "rowTotals": "الإجماليات"
+      }
+    },
+    "messages": {
+      "title": "الرسائل",
+      "justNow": "الآن",
+      "loadError": "تعذر تحميل رسائل المعرض.",
+      "conversationError": "تعذر تحميل المحادثة.",
+      "sendError": "تعذر إرسال الرسالة.",
+      "noMessagesDefault": "لا توجد رسائل بعد",
+      "noClient": "لا يوجد عميل مرتبط",
+      "loading": "جار تحميل المعارض…",
+      "noExhibitions": "لم يتم العثور على معارض.",
+      "noMessages": "لا توجد رسائل بعد لـ {{name}}.",
+      "selectManager": "اختر مدير مشروع.",
+      "scopedTo": "مرتبط بـ",
+      "send": "إرسال",
+      "sending": "جار الإرسال",
+      "projectCount": "{{count}} مشاريع",
+      "inputPlaceholder": "رسالة إلى {{manager}} حول {{exhibition}}…",
+      "badges": {
+        "exhibitions": "{{count}} معارض",
+        "unread": "{{count}} غير مقروءة"
+      },
+      "section": {
+        "title": "خيوط المعرض",
+        "desc": "مساحة محادثة مخصصة لكل معرض."
+      },
+      "searchPlaceholder": "البحث في المعارض والعملاء والمديرين",
+      "sidebar": {
+        "title": "مديرو المشاريع",
+        "assigned": "{{count}} معيّن",
+        "noManager": "لم يُعيّن بعد أي مدير مشروع لهذا المعرض."
+      },
+      "status": {
+        "delayed": "متأخر",
+        "active": "نشط",
+        "completed": "مكتمل",
+        "pending": "معلق"
+      },
+      "actions": {
+        "call": "بدء مكالمة",
+        "video": "بدء مكالمة مرئية",
+        "options": "خيارات المحادثة",
+        "attach": "إرفاق ملف",
+        "send": "إرسال الرسالة",
+        "emoji": "إدراج رمز تعبيري"
+      },
+      "toast": {
+        "call": "تم بدء المكالمة مع {{name}} لـ {{exhibition}}",
+        "video": "تمت تهيئة غرفة الفيديو لـ {{exhibition}}",
+        "options": "تم فتح خيارات المحادثة",
+        "attachment": "تم فتح منتقي المرفقات لـ {{exhibition}}"
+      }
+    },
+    "clients": {
+      "title": "إدارة العملاء",
+      "addClient": "إضافة عميل",
+      "loadError": "تعذر تحميل العملاء.",
+      "loadingClients": "جار تحميل العملاء…",
+      "noClients": "لم يتم العثور على عملاء لهذا البحث/التصفية.",
+      "searchPlaceholder": "البحث في العملاء أو المعارض…",
+      "showing": "عرض {{start}}-{{end}} من {{total}} عميل",
+      "previous": "السابق",
+      "next": "التالي",
+      "cancel": "إلغاء",
+      "saving": "حفظ…",
+      "emailError": "يرجى إدخال عنوان بريد إلكتروني صالح.",
+      "filter": {
+        "all": "الكل",
+        "lead": "عميل محتمل",
+        "pendingApproval": "في انتظار الموافقة",
+        "active": "نشط",
+        "inactive": "غير نشط",
+        "archived": "مؤرشف"
+      },
+      "status": {
+        "active": "نشط",
+        "pendingApproval": "في انتظار الموافقة",
+        "lead": "عميل محتمل",
+        "inactive": "غير نشط",
+        "archived": "مؤرشف"
+      },
+      "table": {
+        "clientName": "اسم العميل",
+        "company": "الشركة",
+        "assignedPm": "مدير المشروع المعيّن",
+        "exhibition": "المعرض",
+        "status": "الحالة",
+        "lastActivity": "آخر نشاط",
+        "actions": "الإجراءات"
+      },
+      "menu": {
+        "assignManager": "تعيين مدير",
+        "openWorkspace": "فتح مساحة العمل",
+        "editClient": "تعديل العميل",
+        "viewDetails": "عرض التفاصيل",
+        "archive": "أرشفة العميل"
+      },
+      "toast": {
+        "added": "تمت إضافة {{name}} إلى العملاء.",
+        "addError": "تعذر إضافة العميل.",
+        "updated": "تم تحديث {{name}}.",
+        "updateError": "تعذر تحديث العميل.",
+        "noManagers": "لا يوجد مديرو مشاريع نشطون متاحون.",
+        "assigned": "تم تعيين {{client}} إلى {{manager}}.",
+        "assignError": "تعذر حفظ تعيين العميل.",
+        "archived": "تمت أرشفة {{name}}.",
+        "archiveError": "تعذر إزالة العميل.",
+        "openingWorkspace": "فتح {{name}} في شاشة المراقبة.",
+        "defaultClient": "عميل",
+        "unassigned": "غير معيّن"
+      },
+      "addDialog": {
+        "title": "إضافة عميل",
+        "desc": "إنشاء سجل عميل في هذا العرض.",
+        "name": "اسم العميل",
+        "company": "الشركة",
+        "exhibition": "المعرض",
+        "email": "البريد الإلكتروني للتواصل",
+        "submit": "إضافة عميل"
+      },
+      "assignDialog": {
+        "title": "تعيين مدير مشروع",
+        "desc": "اختر مديراً لـ {{name}}.",
+        "placeholder": "اختر مديراً",
+        "submit": "تعيين"
+      },
+      "editDialog": {
+        "title": "تعديل العميل",
+        "desc": "تحديث تفاصيل العميل لسير العمل.",
+        "contactName": "اسم جهة الاتصال",
+        "submit": "حفظ التغييرات"
+      },
+      "archiveDialog": {
+        "title": "أرشفة العميل",
+        "desc": "أرشفة {{name}}؟ العملاء ذوو المشاريع النشطة محميون.",
+        "blockers": "المشاريع النشطة التي تمنع الأرشفة",
+        "archiving": "جار الأرشفة…",
+        "submit": "أرشفة"
+      },
+      "detailDialog": {
+        "contact": "جهة الاتصال",
+        "email": "البريد الإلكتروني",
+        "pm": "مدير المشروع",
+        "exhibition": "المعرض",
+        "status": "الحالة"
+      }
+    },
+    "projects": {
+      "title": "خط مشاريع",
+      "breadcrumb": "المشاريع",
+      "viewKanban": "كانبان",
+      "viewList": "قائمة",
+      "searchPlaceholder": "بحث...",
+      "metric": {
+        "highRisk": "خطر عالٍ",
+        "waiting": "قيد الانتظار",
+        "delayed": "متأخر",
+        "matching": "المشاريع المطابقة"
+      },
+      "stage": {
+        "intake": "الاستقبال",
+        "design": "التصميم",
+        "review": "المراجعة",
+        "production": "الإنتاج",
+        "closed": "مغلق"
+      },
+      "filter": {
+        "all": "الكل",
+        "active": "نشط",
+        "pending": "قيد الانتظار",
+        "delayed": "متأخر",
+        "completed": "مكتمل"
+      },
+      "priority": {
+        "all": "الكل",
+        "high": "عالية",
+        "medium": "متوسطة",
+        "low": "منخفضة"
+      },
+      "kanban": {
+        "loading": "جارٍ التحميل",
+        "empty": "فارغ"
+      },
+      "list": {
+        "loading": "جارٍ تحميل المشاريع...",
+        "noMatch": "لا توجد مشاريع مطابقة.",
+        "col": {
+          "project": "المشروع",
+          "client": "العميل",
+          "pm": "م.م",
+          "system": "النظام",
+          "stage": "المرحلة",
+          "progress": "التقدم",
+          "health": "الحالة"
+        }
+      },
+      "paging": {
+        "showing": "عرض {{start}}–{{end}} من {{total}} مشروع",
+        "filtered": "/ {{count}} مرئي بعد تصفية الأولوية",
+        "previous": "السابق",
+        "next": "التالي"
+      },
+      "footer": {
+        "note": "الصفحة: {{count}} مرئي / استخدم الأسهم لتغيير المرحلة"
+      },
+      "card": {
+        "waiting": "{{days}} يوم انتظار",
+        "noDate": "بدون تاريخ",
+        "movePrev": "المرحلة السابقة",
+        "moveNext": "المرحلة التالية",
+        "openMonitor": "فتح الشاشة",
+        "editProject": "تعديل المشروع"
+      },
+      "row": {
+        "edit": "تعديل",
+        "open": "فتح"
+      },
+      "edit": {
+        "title": "تعديل المشروع",
+        "sheetDescription": "تحديث تفاصيل المشروع والتعيين والموعد النهائي وأبعاد الجناح.",
+        "name": "اسم المشروع",
+        "namePlaceholder": "جناح AutoShow",
+        "client": "العميل",
+        "clientPlaceholder": "شركة FastCars",
+        "exhibition": "المعرض",
+        "exhibitionPlaceholder": "AutoShow",
+        "manager": "مدير المشروع",
+        "managerPlaceholder": "اختر مدير المشروع",
+        "keepManager": "الاحتفاظ بالتعيين الحالي",
+        "unassigned": "غير معين",
+        "deadline": "الموعد النهائي",
+        "system": "النظام",
+        "systemPlaceholder": "نظام الجناح",
+        "octanorm": "Octanorm",
+        "maxima": "Maxima",
+        "custom": "مخصص",
+        "width": "العرض (م)",
+        "depth": "العمق (م)",
+        "descriptionLabel": "الوصف",
+        "descriptionPlaceholder": "ملاحظات حول المشروع",
+        "cancel": "إلغاء",
+        "saving": "جارٍ الحفظ...",
+        "save": "حفظ المشروع"
+      },
+      "close": {
+        "title": "إغلاق المشروع",
+        "description": "نقل {{name}} إلى مغلق؟ سيُعلَّم المشروع مكتملاً في خط التدفق.",
+        "cancel": "إلغاء",
+        "closing": "جارٍ الإغلاق...",
+        "confirm": "إغلاق المشروع"
+      },
+      "error": {
+        "load": "تعذّر تحميل المشاريع",
+        "save": "تعذّر حفظ المشروع",
+        "stage": "تعذّر حفظ المرحلة"
+      },
+      "toast": {
+        "updated": "تم تحديث {{name}}",
+        "openMonitor": "جارٍ فتح الشاشة لـ {{name}}",
+        "moved": "تم نقل {{name}} إلى {{stage}}"
+      },
+      "validate": {
+        "required": "اسم المشروع والعميل مطلوبان.",
+        "dimensions": "يجب أن يكون العرض والعمق بين 1 و 100 متر."
+      }
+    },
+    "calendar": {
+      "title": "تقويم المعارض",
+      "breadcrumb": "التقويم",
+      "addEvent": "إضافة حدث",
+      "allMonths": "كل الأشهر",
+      "prevMonth": "الشهر السابق",
+      "nextMonth": "الشهر التالي",
+      "today": "اليوم",
+      "addEventTitle": "إضافة حدث في هذا اليوم",
+      "moreEvents": "+{{count}} أكثر",
+      "exhibitionsThisMonth_one": "{{count}} معرض هذا الشهر",
+      "exhibitionsThisMonth_other": "{{count}} معارض هذا الشهر",
+      "yearExhibitions_one": "{{count}} معرض",
+      "yearExhibitions_other": "{{count}} معارض",
+      "noExhibitions": "لا توجد معارض",
+      "loading": "جارٍ تحميل تقويم المعارض...",
+      "status": {
+        "active": "نشط",
+        "completed": "مكتمل",
+        "delayed": "متأخر",
+        "pending": "قيد الانتظار"
+      },
+      "filter": {
+        "searchPlaceholder": "بحث في المعرض أو العميل أو المدينة",
+        "pmPlaceholder": "مدير المشروع",
+        "allManagers": "جميع المديرين",
+        "clientPlaceholder": "العميل",
+        "allClients": "جميع العملاء",
+        "statusPlaceholder": "الحالة",
+        "allStatuses": "جميع الحالات",
+        "shown": "{{count}} معروض",
+        "resetFilters": "إعادة ضبط الفلاتر"
+      },
+      "form": {
+        "nameLabel": "اسم المعرض *",
+        "namePlaceholder": "مثال: TechCon 2027",
+        "clientLabel": "العميل",
+        "clientPlaceholder": "شركة العميل",
+        "pmLabel": "مدير المشروع",
+        "pmPlaceholder": "اسم م.م",
+        "startLabel": "تاريخ البدء *",
+        "endLabel": "تاريخ الانتهاء *",
+        "locationLabel": "الموقع",
+        "locationPlaceholder": "المدينة / القاعة",
+        "standLabel": "نوع الجناح",
+        "standPlaceholder": "مثال: Maxima",
+        "statusLabel": "الحالة"
+      },
+      "add": {
+        "title": "إضافة فعالية معرض",
+        "description": "جدولة معرض جديد في التقويم.",
+        "cancel": "إلغاء",
+        "saving": "جارٍ الحفظ...",
+        "save": "حفظ الفعالية"
+      },
+      "edit": {
+        "title": "تعديل فعالية المعرض",
+        "description": "تحديث تفاصيل هذا المعرض.",
+        "cancel": "إلغاء",
+        "saving": "جارٍ الحفظ...",
+        "save": "حفظ التغييرات"
+      },
+      "detail": {
+        "description": "تفاصيل المعرض",
+        "client": "العميل",
+        "pm": "مدير المشروع",
+        "location": "الموقع",
+        "standType": "نوع الجناح",
+        "startDate": "تاريخ البدء",
+        "endDate": "تاريخ الانتهاء",
+        "confirmDelete": "هل تريد الحذف نهائياً؟",
+        "deleting": "جارٍ الحذف...",
+        "confirm": "تأكيد",
+        "cancel": "إلغاء",
+        "delete": "حذف",
+        "edit": "تعديل",
+        "close": "إغلاق"
+      },
+      "error": {
+        "load": "تعذّر تحميل أحداث التقويم",
+        "save": "تعذّر حفظ الحدث",
+        "update": "تعذّر تحديث الحدث",
+        "delete": "تعذّر حذف الحدث"
+      }
+    },
+    "monitor": {
+      "title": "مراقب مساحات العمل",
+      "breadcrumb": "المراقب",
+      "activeNow": "{{count}} نشط",
+      "refresh": "تحديث",
+      "loading": "جارٍ تحميل البيانات المباشرة...",
+      "errorSuffix": ". لا تتوفر بيانات تجريبية في وضع البيانات الحقيقية.",
+      "searchPlaceholder": "البحث في مساحات العمل...",
+      "pmPlaceholder": "مدير المشروع",
+      "allManagers": "جميع مديري المشاريع",
+      "legend": "مباشر — يتحدث كل 8 ث",
+      "status": {
+        "all": "الكل",
+        "live": "مباشر",
+        "review": "قيد المراجعة",
+        "pending": "قيد الانتظار",
+        "blocked": "محظور"
+      },
+      "stat": {
+        "total": "الإجمالي",
+        "totalDesc": "جميع المساحات",
+        "liveDesc": "في مساحة العمل",
+        "reviewDesc": "موافقة العميل",
+        "pendingDesc": "يحتاج اهتماماً",
+        "blockedDesc": "يحتاج إجراءً"
+      },
+      "bottleneck": {
+        "title_one": "تنبيه اختناق — {{count}} مشروع ينتظر رد العميل",
+        "title_other": "تنبيهات اختناق — {{count}} مشروع ينتظر رد العميل",
+        "waiting": "{{days}} يوم انتظار"
+      },
+      "card": {
+        "editingNow": "جارٍ التحرير",
+        "minutesAgo": "منذ {{mins}} دقيقة",
+        "hoursAgo": "منذ {{hours}} ساعة",
+        "waitingDays": "{{days}} يوم انتظار",
+        "openPreview": "توسيع معاينة {{name}}",
+        "reassign": "إعادة التعيين",
+        "join": "انضمام"
+      },
+      "reassign": {
+        "title": "إعادة تعيين مدير المشروع",
+        "description": "اختر مديراً جديداً لـ {{name}}.",
+        "client": "العميل",
+        "current": "الحالي",
+        "unassigned": "غير معين",
+        "cancel": "إلغاء",
+        "confirm": "إعادة التعيين"
+      },
+      "error": {
+        "load": "تعذّر تحميل بيانات المراقب",
+        "noManagers": "لا يوجد مديرو مشاريع نشطون",
+        "reassign": "تعذّر إعادة تعيين المشروع"
+      },
+      "toast": {
+        "refreshed": "تم تحديث جميع مساحات العمل",
+        "openedPreview": "تم فتح معاينة {{name}}",
+        "joinedSession": "تم الانضمام إلى جلسة مراقبة {{name}}",
+        "reassigned": "تم إعادة تعيين {{name}} إلى {{pm}}"
+      }
+    },
+    "settings": {
+      "pageTitle": "الإعدادات | ENS",
+      "title": "الإعدادات",
+      "breadcrumb": "الإعدادات",
+      "export": "تصدير",
+      "reset": "إعادة تعيين",
+      "tabs": {
+        "profile": "الملف الشخصي",
+        "notifications": "الإشعارات",
+        "security": "الأمان",
+        "appearance": "المظهر"
+      },
+      "profile": {
+        "title": "معلومات الملف الشخصي",
+        "description": "تحديث البيانات الشخصية والمهنية",
+        "unsaved": "غير محفوظ",
+        "changeAvatar": "تغيير الصورة الرمزية",
+        "uploadPicture": "رفع صورة",
+        "fullName": "الاسم الكامل",
+        "emailLabel": "عنوان البريد الإلكتروني",
+        "roleLabel": "الدور",
+        "phone": "رقم الهاتف",
+        "phonePlaceholder": "+966 (555) 000-0000",
+        "revert": "التراجع",
+        "saveChanges": "حفظ التغييرات",
+        "avatarDialog": {
+          "title": "تغيير الصورة الرمزية",
+          "description": "اختر نمط صورة رمزية لهذا الملف الشخصي.",
+          "cancel": "إلغاء",
+          "apply": "تطبيق الصورة الرمزية"
+        },
+        "avatarTones": {
+          "primary": "أساسي",
+          "blue": "أزرق",
+          "green": "أخضر",
+          "amber": "عنبري"
+        },
+        "validation": {
+          "nameRequired": "الاسم مطلوب",
+          "emailInvalid": "أدخل بريدًا إلكترونيًا صالحًا",
+          "phoneInvalid": "أدخل رقم هاتف صالحًا"
+        },
+        "toast": {
+          "saved": "تم حفظ تغييرات الملف الشخصي",
+          "reverted": "تم التراجع عن تغييرات الملف الشخصي",
+          "avatarUpdated": "تم تحديث الصورة الرمزية",
+          "pictureSelected": "تم اختيار صورة الملف الشخصي",
+          "loadError": "تعذر تحميل الإعدادات",
+          "saveError": "تعذر حفظ الملف الشخصي",
+          "avatarError": "تعذر حفظ الصورة الرمزية",
+          "imageTypeError": "اختر ملف صورة",
+          "imageSizeError": "اختر صورة أقل من 1.5 ميغابايت"
+        }
+      },
+      "notifications": {
+        "title": "إشعارات البريد الإلكتروني",
+        "description": "تكوين التحديثات المراد استلامها عبر البريد الإلكتروني",
+        "enabledCount": "{{count}}/4 مفعّل",
+        "items": {
+          "assignments": {
+            "title": "تعيينات المشاريع الجديدة",
+            "desc": "الإشعار عند إنشاء مشروع جديد وتعيينه."
+          },
+          "milestones": {
+            "title": "معالم المشروع",
+            "desc": "تنبيهات للمراحل المكتملة أو طلبات الموافقة."
+          },
+          "reports": {
+            "title": "تقارير نشاط المديرين",
+            "desc": "ملخص أسبوعي لأداء المديرين وعبء العمل."
+          },
+          "system": {
+            "title": "تنبيهات النظام",
+            "desc": "التحديثات الهامة وإشعارات الأمان."
+          }
+        },
+        "enableAll": "تفعيل الكل",
+        "criticalOnly": "الهامة فقط",
+        "savePreferences": "حفظ التفضيلات",
+        "toast": {
+          "saved": "تم حفظ تفضيلات الإشعارات",
+          "allEnabled": "تم تفعيل جميع الإشعارات",
+          "criticalOnly": "تنبيهات النظام فقط نشطة",
+          "saveError": "تعذر حفظ الإشعارات"
+        }
+      },
+      "security": {
+        "title": "إعدادات الأمان",
+        "description": "إدارة كلمة المرور وأمان الحساب",
+        "currentPassword": "كلمة المرور الحالية",
+        "newPassword": "كلمة المرور الجديدة",
+        "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
+        "updatePassword": "تحديث كلمة المرور",
+        "strengthPrefix": "القوة:",
+        "passwordStrength": {
+          "empty": "فارغ",
+          "weak": "ضعيف",
+          "fair": "مقبول",
+          "good": "جيد",
+          "strong": "قوي"
+        },
+        "twoFactor": {
+          "title": "المصادقة الثنائية",
+          "description": "استخدام رمز التحقق للإجراءات الحساسة.",
+          "enabled": "مفعّلة",
+          "disabled": "معطّلة",
+          "newCodes": "رموز استرداد جديدة",
+          "disable": "تعطيل 2FA",
+          "enable": "تفعيل 2FA"
+        },
+        "twoFactorDialog": {
+          "title": "تفعيل المصادقة الثنائية",
+          "description": "افتح تطبيق المصادقة، امسح رمز QR، ثم أدخل رمز التحقق المكون من 6 أرقام.",
+          "qrPlaceholder": "سيظهر رمز QR هنا في الإنتاج",
+          "showCode": "إظهار رمز التجريبي",
+          "hideCode": "إخفاء الرمز",
+          "demoLabel": "رمز تجريبي",
+          "codeLabel": "رمز التحقق",
+          "codePlaceholder": "أدخل الرمز المكون من 6 أرقام",
+          "cancel": "إلغاء",
+          "verify": "تحقق وتفعيل"
+        },
+        "recoveryCodes": {
+          "title": "رموز الاسترداد",
+          "copyAll": "نسخ الكل",
+          "description": "احفظ هذه الرموز في مكان آمن. يمكن استخدام كل رمز مرة واحدة فقط."
+        },
+        "sessions": {
+          "title": "الجلسات النشطة",
+          "description": "مراجعة الأجهزة المسجلة دخولها في هذا الحساب.",
+          "signOutOthers": "تسجيل خروج الآخرين",
+          "signOut": "تسجيل الخروج",
+          "current": "الحالية"
+        },
+        "toast": {
+          "passwordSaved": "تم تحديث كلمة المرور",
+          "twoFactorEnabled": "تم تفعيل المصادقة الثنائية",
+          "twoFactorDisabled": "تم تعطيل المصادقة الثنائية",
+          "codesRegenerated": "تم إعادة توليد رموز الاسترداد",
+          "codesCopied": "تم نسخ رموز الاسترداد",
+          "sessionSignedOut": "تم تسجيل خروج {{device}}",
+          "sessionsSignedOut_one": "تم تسجيل خروج {{count}} جلسة",
+          "sessionsSignedOut_other": "تم تسجيل خروج {{count}} جلسات",
+          "passwordAllFields": "ملء جميع حقول كلمة المرور",
+          "passwordMismatch": "كلمات المرور الجديدة غير متطابقة",
+          "passwordWeak": "استخدم كلمة مرور أقوى",
+          "passwordSame": "يجب أن تكون كلمة المرور الجديدة مختلفة",
+          "passwordError": "تعذر تحديث كلمة المرور",
+          "twoFactorWrongCode": "رمز التحقق غير صحيح — تحقق من تطبيق المصادقة",
+          "twoFactorSetupError": "تعذر حفظ إعداد 2FA",
+          "twoFactorDisableError": "تعذر حفظ حالة 2FA",
+          "twoFactorRequired": "فعّل 2FA أولاً",
+          "codesError": "تعذر حفظ رموز الاسترداد",
+          "clipboardError": "تعذر النسخ — انسخ الرموز يدوياً",
+          "sessionError": "تعذر تسجيل خروج الجلسة",
+          "sessionsError": "تعذر تسجيل خروج الجلسات",
+          "noOtherSessions": "لا توجد جلسات أخرى"
+        }
+      },
+      "appearance": {
+        "title": "إعدادات العرض",
+        "description": "تخصيص مظهر لوحة التحكم",
+        "themeMode": "وضع السمة",
+        "themeModeDesc": "التبديل بين السمات الفاتحة والداكنة وسمة النظام.",
+        "light": "فاتح",
+        "dark": "داكن",
+        "system": "النظام",
+        "compactView": "عرض مضغوط",
+        "compactViewDesc": "تقليل التباعد في الجداول والقوائم.",
+        "language": "اللغة",
+        "languageDesc": "اختيار لغة العرض المفضلة.",
+        "resetDisplay": "إعادة تعيين العرض",
+        "saveDisplay": "حفظ إعدادات العرض",
+        "toast": {
+          "saved": "تم حفظ إعدادات العرض",
+          "reset": "تمت إعادة تعيين إعدادات العرض",
+          "saveError": "تعذر حفظ إعدادات العرض"
+        }
+      },
+      "resetDialog": {
+        "title": "إعادة تعيين الإعدادات",
+        "description": "يستعيد إعدادات الحساب المحلية إلى القيم الافتراضية.",
+        "cancel": "إلغاء",
+        "confirm": "إعادة تعيين"
+      },
+      "toast": {
+        "exported": "تم تصدير الإعدادات",
+        "restored": "تمت استعادة الإعدادات إلى الافتراضية",
+        "restoredLocal": "تمت استعادة الإعدادات المحلية"
+      }
+    }
+  },
+  "layout": {
+    "logout": "تسجيل الخروج",
+    "notifications": "الإشعارات",
+    "unread": "{{count}} غير مقروءة",
+    "markAllRead": "وضع علامة مقروء على الكل",
+    "notificationNew": "جديد",
+    "noNotifications": "لا توجد إشعارات بعد.",
+    "skipToContent": "انتقل إلى المحتوى الرئيسي",
+    "navigation": "التنقل الرئيسي",
+    "expandSidebar": "توسيع الشريط الجانبي",
+    "collapseSidebar": "طي الشريط الجانبي",
+    "switchToLight": "التبديل إلى المظهر الفاتح",
+    "switchToDark": "التبديل إلى المظهر الداكن",
+    "selectLanguage": "اختر اللغة"
+  },
+  "pm": {
+    "nav": {
+      "dashboard": "لوحة التحكم",
+      "myClients": "عملائي",
+      "projects": "المشاريع",
+      "calendar": "تقويم",
+      "workspace": "مساحة العمل",
+      "requests": "الطلبات",
+      "messages": "الرسائل",
+      "tasks": "المهام",
+      "reports": "التقارير",
+      "settings": "الإعدادات"
+    },
+    "common": {
+      "noDeadline": "لا يوجد موعد نهائي",
+      "today": "اليوم",
+      "tomorrow": "غداً",
+      "overdue": "متأخر {{count}} يوم",
+      "inDays": "خلال {{count}} يوم",
+      "loading": "جار التحميل...",
+      "noResults": "لم يتم العثور على نتائج.",
+      "cancel": "إلغاء",
+      "save": "حفظ",
+      "create": "إنشاء",
+      "saving": "جار الحفظ...",
+      "search": "بحث",
+      "filter": "تصفية",
+      "priority": {
+        "high": "عالٍ",
+        "medium": "متوسط",
+        "low": "منخفض"
+      },
+      "status": {
+        "active": "نشط",
+        "pending": "معلق",
+        "lead": "عميل محتمل",
+        "inactive": "غير نشط",
+        "planning": "التخطيط",
+        "inDesign": "قيد التصميم",
+        "clientReview": "مراجعة العميل",
+        "revision": "مراجعة",
+        "delayed": "متأخر",
+        "approved": "موافق عليه",
+        "completed": "مكتمل",
+        "inProgress": "قيد التنفيذ",
+        "resolved": "تم الحل",
+        "declined": "مرفوض"
+      }
+    },
+    "dashboard": {
+      "title": "لوحة تحكم مدير المشروع",
+      "overview": "نظرة عامة",
+      "loadError": "تعذر تحميل بيانات لوحة التحكم.",
+      "stats": {
+        "assignedClients": "العملاء المعيّنون",
+        "activeProjects": "المشاريع النشطة",
+        "pendingReviews": "المراجعات المعلقة",
+        "completed": "مكتمل",
+        "workspaceFiles": "ملفات مساحة العمل"
+      },
+      "activeWork": {
+        "title": "عمل المشروع النشط",
+        "viewAll": "عرض الكل",
+        "loading": "جار تحميل عمل المشروع المعيّن...",
+        "empty": "لا توجد مشاريع نشطة معيّنة حالياً.",
+        "openProject": "فتح {{name}}"
+      },
+      "actionItems": {
+        "title": "عناصر الإجراءات",
+        "loading": "جار تحميل عناصر الإجراءات...",
+        "empty": "لا توجد إجراءات عاجلة لهذه المنظمة."
+      },
+      "actions": {
+        "pendingApprovals": "{{count}} موافقة معلقة",
+        "pendingApprovalsDesc": "مراجعات العملاء تنتظر قراراً.",
+        "openApprovals": "فتح الموافقات",
+        "delayedProjects": "{{count}} مشروع متأخر",
+        "delayedProjectsDesc": "المشاريع تحتاج إلى اهتمام مدير المشروع.",
+        "reviewRisk": "مراجعة المخاطر",
+        "activeWorkspaces": "{{count}} مساحة عمل نشطة",
+        "activeWorkspacesDesc": "تصاميم الجناح متاحة للتعديل.",
+        "openWorkspace": "فتح مساحة العمل"
+      },
+      "recentActivity": {
+        "title": "النشاط الأخير",
+        "loading": "جار تحميل النشاط...",
+        "empty": "لم يتم تسجيل أي أحداث نشاط بعد."
+      }
+    },
+    "projects": {
+      "title": "مشاريعي",
+      "loadError": "تعذر تحميل المشاريع.",
+      "loading": "جار تحميل المشاريع...",
+      "noMatch": "لا توجد مشاريع تطابق الفلتر.",
+      "newProject": "مشروع جديد",
+      "searchPlaceholder": "البحث في المشاريع...",
+      "filter": {
+        "all": "الكل"
+      },
+      "stats": {
+        "total": "الإجمالي",
+        "inDesign": "قيد التصميم",
+        "review": "مراجعة",
+        "delayed": "متأخر"
+      },
+      "view": {
+        "list": "عرض القائمة",
+        "grid": "عرض الشبكة"
+      },
+      "table": {
+        "project": "المشروع",
+        "client": "العميل",
+        "size": "الحجم",
+        "progress": "التقدم",
+        "deadline": "الموعد النهائي",
+        "status": "الحالة",
+        "actions": "الإجراءات"
+      },
+      "grid": {
+        "system": "النظام",
+        "size": "الحجم",
+        "deadline": "الموعد النهائي",
+        "pm": "م.م",
+        "progress": "التقدم"
+      },
+      "actions": {
+        "open": "فتح",
+        "details": "التفاصيل",
+        "openWorkspace": "فتح مساحة العمل"
+      },
+      "modal": {
+        "title": "إنشاء مشروع جديد",
+        "projectName": "اسم المشروع",
+        "client": "العميل",
+        "deadline": "الموعد النهائي",
+        "system": "النظام",
+        "systemCustom": "مخصص",
+        "width": "العرض (م)",
+        "depth": "العمق (م)",
+        "submit": "إنشاء مشروع"
+      },
+      "toast": {
+        "created": "تم حفظ المشروع «{{name}}».",
+        "createError": "تعذر إنشاء المشروع."
+      }
+    },
+    "clients": {
+      "title": "عملائي",
+      "loadError": "تعذر تحميل العملاء.",
+      "loading": "جار تحميل العملاء...",
+      "noMatch": "لا يوجد عملاء يطابقون البحث الحالي.",
+      "searchPlaceholder": "البحث في العملاء...",
+      "stats": {
+        "total": "إجمالي العملاء",
+        "active": "نشط",
+        "needsSetup": "يحتاج إعداداً"
+      },
+      "actions": {
+        "email": "إرسال بريد إلكتروني",
+        "emailClient": "مراسلة {{name}}",
+        "openWorkspace": "فتح مساحة العمل",
+        "openWorkspaceFor": "فتح مساحة العمل لـ {{name}}",
+        "toggleExpand": "توسيع/طي تفاصيل {{name}}"
+      },
+      "detail": {
+        "clientDetails": "تفاصيل العميل",
+        "operationalStatus": "الحالة التشغيلية",
+        "assignedPm": "مدير المشروع المعيّن: {{name}}",
+        "lastActivity": "آخر نشاط: {{time}}",
+        "dataSource": "تم التحميل من سجلات PostgreSQL"
+      }
+    },
+    "tasks": {
+      "title": "كانبان المهام",
+      "newTask": "مهمة جديدة",
+      "addTask": "إضافة مهمة",
+      "noTasks": "لا توجد مهام",
+      "filter": {
+        "all": "الكل"
+      },
+      "cols": {
+        "todo": "للتنفيذ",
+        "inprogress": "قيد التنفيذ",
+        "review": "قيد المراجعة",
+        "done": "مكتمل"
+      },
+      "actions": {
+        "moveLeft": "نقل لليسار",
+        "moveRight": "نقل لليمين",
+        "delete": "حذف",
+        "deleteTask": "حذف «{{title}}»"
+      },
+      "addToCol": "إضافة مهمة إلى {{col}}",
+      "stats": {
+        "total": "الإجمالي: {{count}} مهام",
+        "overdue": "متأخر: {{count}}"
+      },
+      "toast": {
+        "moved": "«{{title}}» → {{col}}",
+        "created": "تم إنشاء المهمة: «{{title}}»"
+      },
+      "modal": {
+        "title": "إنشاء مهمة",
+        "taskTitle": "العنوان",
+        "taskTitlePlaceholder": "وصف المهمة…",
+        "client": "العميل",
+        "project": "المشروع",
+        "priority": "الأولوية",
+        "deadline": "الموعد النهائي",
+        "initialCol": "العمود الأولي",
+        "submit": "إنشاء مهمة",
+        "select": "اختر…"
+      }
+    },
+    "messages": {
+      "title": "الرسائل",
+      "unread": "{{count}} غير مقروءة",
+      "justNow": "الآن",
+      "loadContactsError": "تعذر تحميل جهات الاتصال.",
+      "loadMessagesError": "تعذر تحميل الرسائل.",
+      "sendError": "تعذر إرسال الرسالة.",
+      "searchPlaceholder": "البحث في جهات الاتصال…",
+      "loadingContacts": "جار تحميل جهات الاتصال…",
+      "noContacts": "لم يتم العثور على جهات اتصال.",
+      "chiefPortal": "بوابة الرئيس",
+      "noMessages": "لا توجد رسائل بعد. أرسل الأولى!",
+      "selectContact": "اختر جهة اتصال للبدء.",
+      "inputPlaceholder": "اكتب رسالة…",
+      "enterToSend": "اضغط Enter للإرسال",
+      "toast": {
+        "callStarted": "جار بدء مكالمة مع {{name}}…",
+        "videoReady": "جار فتح الفيديو مع {{name}}…",
+        "optionsOpened": "تم فتح قائمة الخيارات.",
+        "attachmentOpened": "تم فتح منتقي المرفقات."
+      },
+      "actions": {
+        "call": "بدء مكالمة صوتية",
+        "video": "بدء مكالمة مرئية",
+        "more": "خيارات إضافية",
+        "attach": "إرفاق ملف",
+        "send": "إرسال الرسالة"
+      }
+    },
+    "requests": {
+      "title": "طلبات المراجعة",
+      "pendingBadge": "{{count}} معلق",
+      "justNow": "الآن",
+      "pmInitials": "PM",
+      "replyCount": "{{count}} ردود",
+      "replyPlaceholder": "أضف رداً…",
+      "noMatch": "لا توجد طلبات تطابق هذا التصفية.",
+      "filter": {
+        "all": "الكل"
+      },
+      "status": {
+        "pending": "معلق",
+        "inProgress": "قيد التنفيذ",
+        "resolved": "تم الحل",
+        "declined": "مرفوض"
+      },
+      "priority": {
+        "high": "عالية",
+        "medium": "متوسطة",
+        "low": "منخفضة"
+      },
+      "actions": {
+        "start": "بدء",
+        "decline": "رفض",
+        "resolve": "حل",
+        "reply": "رد",
+        "sendReply": "إرسال الرد",
+        "expand": "عرض الردود",
+        "collapse": "إخفاء الردود"
+      },
+      "toast": {
+        "started": "تم بدء الطلب",
+        "declined": "تم رفض الطلب",
+        "resolved": "تم حل الطلب",
+        "pending": "تم تعيين الطلب معلقاً",
+        "replySent": "تم إرسال الرد"
+      }
+    },
+    "reports": {
+      "title": "تقارير الأداء",
+      "export": "تصدير",
+      "vsLastPeriod": "مقارنة بالفترة السابقة",
+      "total": "الإجمالي: {{count}} مشاريع",
+      "period": {
+        "this_week": "هذا الأسبوع",
+        "last_week": "الأسبوع الماضي"
+      },
+      "stats": {
+        "completionRate": "معدل الإتمام",
+        "satisfaction": "رضا العملاء",
+        "activeClients": "العملاء النشطون",
+        "avgResponse": "متوسط الاستجابة"
+      },
+      "chart": {
+        "tasks": "المهام",
+        "revisions": "المراجعات",
+        "approvals": "الموافقات",
+        "efficiency": "الكفاءة",
+        "onTime": "في الموعد",
+        "changes": "التغييرات"
+      },
+      "cards": {
+        "weeklyTitle": "الإنتاجية الأسبوعية",
+        "weeklyDesc": "المهام والمراجعات والموافقات · {{period}}",
+        "efficiencyTitle": "كفاءة المشروع",
+        "efficiencyDesc": "كفاءة التصميم مقابل التسليم في الموعد",
+        "revisionTitle": "اتجاه المراجعات والتغييرات",
+        "revisionDesc": "طلبات المراجعة الشهرية مقابل أوامر التغيير",
+        "statusTitle": "توزيع حالة المشروع",
+        "statusDesc": "التوزيع الحالي لجميع المشاريع"
+      },
+      "pieStatus": {
+        "active": "نشط",
+        "pending": "معلق",
+        "review": "قيد المراجعة",
+        "delayed": "متأخر"
+      },
+      "toast": {
+        "exporting": "جارٍ بدء التصدير…"
+      }
+    }
+  },
+  "client": {
+    "nav": {
+      "dashboard": "لوحة التحكم",
+      "projects": "المشاريع",
+      "calendar": "تقويم",
+      "workspace": "مساحة العمل",
+      "messages": "الرسائل",
+      "approvals": "الموافقات",
+      "documents": "المستندات",
+      "profile": "الملف الشخصي"
+    },
+    "dashboard": {
+      "pageTitle": "لوحة التحكم | ENS",
+      "welcome": "مرحباً بعودتك، {{name}}",
+      "breadcrumb": "لوحة التحكم",
+      "errorLoad": "تعذر تحميل بيانات لوحة تحكم العميل.",
+      "defaultClientName": "العميل",
+      "loadingProject": "جارٍ تحميل المشروع...",
+      "noActiveProject": "لا يوجد مشروع نشط",
+      "projectSubtitle": "يتم تحميل بيانات المشروع من PostgreSQL",
+      "loadingActiveProject": "جارٍ تحميل المشروع النشط...",
+      "noProjectAssigned": "لم يتم تعيين أي مشروع نشط بعد.",
+      "pmLabel": "مدير المشروع",
+      "messagesBtn": "الرسائل",
+      "overallProgress": "التقدم الكلي",
+      "viewWorkspace": "عرض مساحة العمل",
+      "workspacePreview": "معاينة مساحة العمل",
+      "recentActivity": "النشاط الأخير",
+      "loadingActivity": "جارٍ تحميل النشاطات...",
+      "noActivity": "لم يتم تسجيل أي نشاط بعد.",
+      "viewTimeline": "عرض جدول المشروع الزمني",
+      "approvalProgress": "تقدم الموافقات",
+      "stat": {
+        "progress": "تقدم المشروع",
+        "pendingApprovals": "الموافقات المعلقة",
+        "workspaceVersions": "إصدارات مساحة العمل",
+        "documents": "المستندات"
+      },
+      "step": {
+        "created": "تم الإنشاء",
+        "designing": "قيد التصميم",
+        "review": "مراجعة",
+        "approved": "تمت الموافقة",
+        "production": "الإنتاج"
+      },
+      "approval": {
+        "created": "تم إنشاء المشروع",
+        "designing": "التصميم جارٍ",
+        "review": "مراجعة العميل",
+        "reviewRequired": "مراجعة مطلوبة",
+        "noReview": "لا توجد مراجعة معلقة"
+      }
+    },
+    "approvals": {
+      "pageTitle": "الموافقات | ENS",
+      "title": "الموافقات",
+      "breadcrumbDashboard": "لوحة التحكم",
+      "awaitingReview": "{{count}} بانتظار مراجعتك",
+      "filterGroup": "تصفية الموافقات",
+      "filterByStatus": "تصفية حسب {{status}}",
+      "justNow": "الآن",
+      "emptyState": "لا توجد موافقات هنا.",
+      "toggleDetails": "تبديل تفاصيل {{title}}",
+      "commentPlaceholder": "اترك تعليقاً لمدير مشروعك…",
+      "sendComment": "إرسال التعليق",
+      "status": {
+        "Pending": "قيد الانتظار",
+        "Approved": "تمت الموافقة",
+        "Rejected": "مرفوض"
+      },
+      "filter": {
+        "all": "الكل"
+      },
+      "actions": {
+        "approve": "موافقة",
+        "requestChanges": "طلب تغييرات",
+        "viewDetails": "عرض التفاصيل"
+      },
+      "toast": {
+        "approved": "✓ تمت الموافقة على التصميم — تم إخطار مدير المشروع",
+        "rejected": "تم طلب تغييرات — تم إخطار مدير المشروع",
+        "commentSent": "تم إرسال التعليق إلى مدير المشروع"
+      },
+      "badge": {
+        "me": "أنا",
+        "pm": "م.م"
+      },
+      "comments_one": "{{count}} تعليق",
+      "comments_other": "{{count}} تعليقات",
+      "confirm": {
+        "approveTitle": "الموافقة على هذا التصميم؟",
+        "rejectTitle": "طلب تغييرات؟",
+        "approveBody": "سيتم إخطار مدير مشروعك وتمييز هذا الإصدار على أنه معتمد.",
+        "rejectBody": "سيتم إخطار مدير مشروعك وسيتعامل مع ملاحظاتك.",
+        "cancel": "إلغاء",
+        "confirmApprove": "نعم، موافقة",
+        "confirmReject": "نعم، طلب تغييرات"
+      }
+    },
+    "documents": {
+      "pageTitle": "المستندات | ENS",
+      "title": "المستندات",
+      "breadcrumbDashboard": "لوحة التحكم",
+      "uploadBtn": "رفع الملفات",
+      "filterGroup": "تصفية حسب الفئة",
+      "searchPlaceholder": "البحث في الملفات والعلامات…",
+      "emptyState": "لم يتم العثور على مستندات.",
+      "filter": {
+        "all": "الكل"
+      },
+      "stat": {
+        "total": "إجمالي الملفات",
+        "final": "نهائي",
+        "inReview": "قيد المراجعة",
+        "drafts": "مسودات"
+      },
+      "status": {
+        "final": "نهائي",
+        "draft": "مسودة",
+        "review": "قيد المراجعة"
+      },
+      "dropZone": {
+        "ariaLabel": "منطقة رفع الملفات",
+        "textBefore": "اسحب وأفلت الملفات هنا أو",
+        "browse": "تصفح",
+        "hint": "PDF، PNG، XLSX، DOC — حتى 50 ميجابايت لكل ملف"
+      },
+      "table": {
+        "file": "الملف",
+        "category": "الفئة",
+        "uploadedBy": "رُفع بواسطة",
+        "date": "التاريخ",
+        "status": "الحالة"
+      },
+      "actions": {
+        "preview": "معاينة {{name}}",
+        "download": "تنزيل {{name}}",
+        "remove": "إزالة {{name}}"
+      },
+      "toast": {
+        "uploaded_one": "تم رفع {{count}} ملف",
+        "uploaded_other": "تم رفع {{count}} ملفات",
+        "fileRemoved": "تمت إزالة الملف",
+        "downloading": "جارٍ تنزيل {{name}}…"
+      },
+      "preview": {
+        "close": "إغلاق المعاينة",
+        "imageUnavailable": "معاينة الصورة غير متاحة في العرض التوضيحي",
+        "typeUnavailable": "المعاينة غير متاحة لملفات {{type}}",
+        "category": "الفئة",
+        "status": "الحالة",
+        "uploadedBy": "رُفع بواسطة",
+        "tags": "العلامات",
+        "downloadBtn": "تنزيل الملف"
+      }
+    },
+    "messages": {
+      "pageTitle": "الرسائل | ENS",
+      "title": "الرسائل",
+      "breadcrumbDashboard": "لوحة التحكم",
+      "searchPlaceholder": "البحث في الرسائل...",
+      "contactListLabel": "المحادثات",
+      "supportManager": "مدير الدعم",
+      "activeNow": "متصل الآن",
+      "justNow": "الآن",
+      "threadLabel": "سلسلة الرسائل",
+      "avatarYou": "أنا",
+      "avatarPm": "م.م",
+      "inputPlaceholder": "اكتب رسالتك...",
+      "actions": {
+        "phone": "بدء مكالمة",
+        "video": "بدء مكالمة فيديو",
+        "more": "المزيد من الخيارات",
+        "attach": "إرفاق ملف",
+        "send": "إرسال الرسالة"
+      }
+    },
+    "projects": {
+      "pageTitle": "مشاريعي | ENS",
+      "title": "مشاريعي",
+      "breadcrumbDashboard": "لوحة التحكم",
+      "breadcrumbProjects": "المشاريع",
+      "actionRequired": "إجراء مطلوب",
+      "exhibitionTbd": "المعرض لم يتحدد بعد",
+      "productionProgress": "تقدم الإنتاج",
+      "quickActions": "إجراءات سريعة",
+      "stat": {
+        "total": "إجمالي المشاريع",
+        "active": "نشط",
+        "pendingReview": "في انتظار المراجعة",
+        "avgProgress": "متوسط التقدم"
+      },
+      "status": {
+        "Active": "نشط",
+        "Pending": "قيد الانتظار",
+        "Delayed": "متأخر",
+        "Completed": "مكتمل"
+      },
+      "meta": {
+        "system": "النظام",
+        "size": "الحجم",
+        "pm": "مدير المشروع",
+        "deadline": "الموعد النهائي"
+      },
+      "timeline": {
+        "heading": "الجدول الزمني للمشروع",
+        "defaultLabel": "تم إنشاء المشروع — التصميم جارٍ",
+        "defaultDate": "مؤخراً"
+      },
+      "action": {
+        "viewDesign": "عرض التصميم",
+        "reviewPending": "مراجعة معلقة",
+        "approvals": "الموافقات",
+        "documents": "المستندات",
+        "messagePm": "مراسلة مدير المشروع"
+      }
+    },
+    "profile": {
+      "pageTitle": "إعدادات الملف الشخصي | ENS",
+      "title": "إعدادات الملف الشخصي",
+      "breadcrumbDashboard": "لوحة التحكم",
+      "breadcrumbProfile": "الملف الشخصي",
+      "tab": {
+        "profile": "المعلومات الشخصية",
+        "company": "الشركة",
+        "notifications": "الإشعارات",
+        "security": "الأمان"
+      },
+      "personalInfo": {
+        "heading": "المعلومات الشخصية",
+        "description": "قم بتحديث بياناتك الشخصية وطرق التواصل معك."
+      },
+      "company": {
+        "heading": "معلومات الشركة",
+        "description": "إدارة بيانات شركتك وملف المعرض."
+      },
+      "avatar": {
+        "heading": "صورة الملف الشخصي",
+        "hint": "JPG أو GIF أو PNG. الحد الأقصى للحجم 1.5 ميجابايت.",
+        "uploadNew": "رفع صورة جديدة",
+        "remove": "إزالة",
+        "changeBtn": "تغيير صورة الملف الشخصي"
+      },
+      "field": {
+        "name": "الاسم الكامل",
+        "email": "عنوان البريد الإلكتروني",
+        "phone": "رقم الهاتف",
+        "companyName": "اسم الشركة",
+        "industry": "القطاع",
+        "website": "الموقع الإلكتروني",
+        "currentPassword": "كلمة المرور الحالية",
+        "newPassword": "كلمة المرور الجديدة",
+        "confirmPassword": "تأكيد كلمة المرور الجديدة"
+      },
+      "btn": {
+        "saveChanges": "حفظ التغييرات",
+        "updateCompany": "تحديث معلومات الشركة",
+        "updatePassword": "تحديث كلمة المرور"
+      },
+      "notifications": {
+        "heading": "تفضيلات الإشعارات",
+        "description": "اختر كيفية تلقي إشعارات تحديثات المشروع.",
+        "enabled": "مفعّل",
+        "disabled": "معطّل",
+        "milestones": {
+          "title": "معالم المشروع",
+          "desc": "تلقّ إشعاراً عند اكتمال مرحلة."
+        },
+        "assignments": {
+          "title": "رسائل جديدة",
+          "desc": "تلقّ إشعاراً عند إرسال مدير المشروع رسالة."
+        },
+        "reports": {
+          "title": "طلبات المراجعة",
+          "desc": "تلقّ إشعاراً عند توفر إصدار تصميم جديد."
+        },
+        "system": {
+          "title": "تنبيهات الأمان",
+          "desc": "تلقّ إشعاراً عند تسجيل الدخول إلى الحساب."
+        }
+      },
+      "security": {
+        "heading": "الأمان",
+        "description": "إدارة كلمة المرور وإعدادات أمان الحساب."
+      },
+      "dangerZone": {
+        "heading": "منطقة الخطر",
+        "description": "بمجرد حذف حسابك، لا يمكن التراجع. يرجى التأكد.",
+        "deleteBtn": "حذف الحساب"
+      },
+      "validation": {
+        "nameMin": "يجب أن يحتوي الاسم على حرفين على الأقل",
+        "emailInvalid": "عنوان بريد إلكتروني غير صالح",
+        "companyNameRequired": "اسم الشركة مطلوب",
+        "websiteInvalid": "عنوان URL غير صالح"
+      },
+      "toast": {
+        "profileSaved": "تم حفظ تغييرات الملف الشخصي",
+        "profileError": "تعذر حفظ الملف الشخصي",
+        "profileLoadError": "تعذر تحميل إعدادات الملف الشخصي",
+        "companySaved": "تم حفظ معلومات الشركة",
+        "avatarUpdated": "تم تحديث صورة الملف الشخصي",
+        "avatarRemoved": "تمت إزالة صورة الملف الشخصي",
+        "avatarError": "تعذر حفظ صورة الملف الشخصي",
+        "avatarRemoveError": "تعذر إزالة صورة الملف الشخصي",
+        "avatarNotImage": "اختر ملف صورة",
+        "avatarTooLarge": "اختر صورة أقل من 1.5 ميجابايت",
+        "imageReadError": "تعذر قراءة الصورة",
+        "notificationError": "تعذر حفظ إعداد الإشعار",
+        "passwordUpdated": "تم تحديث كلمة المرور",
+        "passwordError": "تعذر تحديث كلمة المرور",
+        "passwordFillAll": "أكمل جميع حقول كلمة المرور",
+        "passwordMismatch": "كلمتا المرور الجديدتان غير متطابقتين",
+        "passwordTooShort": "يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل",
+        "deleteQueued": "تم تسجيل طلب حذف الحساب"
+      }
+    },
+    "workspace": {
+      "pageTitle": "مساحة العمل | ENS",
+      "viewOnly": "عرض فقط",
+      "loadingWorkspace": "جارٍ تحميل مساحة العمل…",
+      "compareBtn": "مقارنة",
+      "addPinBtn": "إضافة دبوس",
+      "pinningLabel": "جارٍ التثبيت…",
+      "downloadBtn": "تنزيل",
+      "requestChangesBtn": "طلب تغييرات",
+      "approvedLabel": "تمت الموافقة",
+      "approveDesignBtn": "الموافقة على التصميم",
+      "assetLibraryLabel": "مكتبة الأصول",
+      "lockedLabel": "مقفل",
+      "reviewModeNote": "الأصول مقفلة في وضع المراجعة. تواصل مع مدير مشروعك لطلب التعديلات.",
+      "canvasLabel": "معاينة الجناح ثلاثي الأبعاد",
+      "compareCurrentLabel": "v{{v}} — الحالي",
+      "comparePreviousLabel": "v{{v}} — السابق",
+      "clickToPin": "انقر على اللوحة لوضع دبوس",
+      "versionSelect": "اختيار الإصدار",
+      "tab": {
+        "thread": "النقاشات",
+        "approvals": "الموافقات",
+        "pins": "الدبابيس"
+      },
+      "pendingDot": "موافقات معلقة",
+      "reviewThread": "خيط المراجعة",
+      "notesCount_one": "{{count}} ملاحظة",
+      "notesCount_other": "{{count}} ملاحظات",
+      "commentPlaceholder": "أضف تعليقاً…",
+      "sendComment": "إرسال التعليق",
+      "projectInfoLabel": "معلومات المشروع",
+      "info": {
+        "system": "النظام",
+        "floorArea": "مساحة الأرضية",
+        "dimensions": "الأبعاد",
+        "approval": "الموافقة",
+        "awaiting": "في انتظار الموافقة"
+      },
+      "elementApprovalHeading": "راجع كل عنصر تصميم وافق عليه",
+      "element": {
+        "structure": "الهيكل",
+        "furniture": "الأثاث",
+        "branding": "الهوية البصرية",
+        "lighting": "الإضاءة"
+      },
+      "elementStatus": {
+        "approved": "تمت الموافقة",
+        "pending": "قيد الانتظار",
+        "rejected": "تم إرسال الملاحظات"
+      },
+      "approveBtn": "موافقة",
+      "requestFixBtn": "طلب تصحيح",
+      "resetBtn": "إعادة إلى قيد الانتظار",
+      "allApprovedMsg": "تمت الموافقة على جميع العناصر",
+      "pendingApprovalMsg": "موافقات معلقة",
+      "approvedCount": "{{approved}} من {{total}} تمت الموافقة عليها",
+      "canvasAnnotations": "تعليقات اللوحة",
+      "placingLabel": "جارٍ التثبيت…",
+      "noPins": "لم يتم وضع أي دبوس بعد. انقر على «إضافة دبوس» ثم انقر على اللوحة.",
+      "removePin": "إزالة الدبوس #{{num}}",
+      "statusBar": {
+        "viewOnly": "عرض فقط",
+        "restricted": "مراجعة العميل — وصول مقيد"
+      },
+      "statusReadOnly": "للقراءة فقط",
+      "statusCompare": "وضع المقارنة",
+      "dialog": {
+        "title": "طلب تغييرات التصميم",
+        "subtitle": "صف التغييرات التي تريدها. سيتم إخطار مدير مشروعك.",
+        "placeholder": "صف التغييرات التي تريدها…",
+        "cancel": "إلغاء",
+        "submit": "إرسال الطلب"
+      },
+      "toast": {
+        "allApproved": "تمت الموافقة على جميع العناصر — شكراً!",
+        "changeRequestSent": "تم إرسال طلب التغيير إلى مدير مشروعك",
+        "pinAdded": "تم إضافة الدبوس #{{num}}",
+        "elementApproved": "تمت الموافقة على {{label}}",
+        "feedbackSent": "تم إرسال الملاحظات إلى مدير المشروع",
+        "downloadStarted": "بدأ التنزيل",
+        "designApproved": "تمت الموافقة على التصميم — شكراً!"
+      },
+      "justNow": "الآن",
+      "changeRequestPrefix": "طلب تغيير",
+      "pinPrefix": "دبوس",
+      "pinAnnotationPrompt": "أضف ملاحظة لهذا الدبوس",
+      "pinPlaceholder": "صف هذا الموقع…",
+      "confirmPin": "تأكيد الدبوس",
+      "cancelPin": "إلغاء الدبوس",
+      "errorLoad": "فشل تحميل مساحة العمل",
+      "ctrl": {
+        "reset": "إعادة تعيين العرض",
+        "zoomIn": "تكبير",
+        "zoomOut": "تصغير",
+        "fullscreen": "ملء الشاشة"
+      }
+    }
+  },
+  "notFound": {
+    "title": "404 – الصفحة غير موجودة",
+    "badge": "الصفحة غير موجودة",
+    "heading": "هذا الجناح غير موجود",
+    "body": "الصفحة التي تبحث عنها ربما انتقلت أو أُزيلت أو لم تكن موجودة أصلاً. دعنا نعود إلى المنصة.",
+    "backHome": "العودة إلى الرئيسية",
+    "goBack": "رجوع",
+    "links": {
+      "home": "الرئيسية",
+      "staffPortal": "بوابة الموظفين",
+      "login": "تسجيل الدخول",
+      "signUp": "إنشاء حساب"
+    }
+  },
+  "auth": {
+    "login": {
+      "pageTitle": "تسجيل الدخول | ENS",
+      "title": "مرحباً بعودتك",
+      "description": "سجّل الدخول للوصول إلى مساحة عملك",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "الاسم@الشركة.com",
+      "passwordLabel": "كلمة المرور",
+      "passwordPlaceholder": "أدخل كلمة المرور",
+      "forgotPassword": "هل نسيت كلمة المرور؟",
+      "rememberMe": "البقاء متصلاً لمدة 30 يوماً",
+      "submit": "تسجيل الدخول",
+      "submitting": "جارٍ تسجيل الدخول...",
+      "lockedBtn": "مقفل",
+      "lockMessage": "تم قفل الحساب مؤقتاً. حاول مرة أخرى بعد {{time}}.",
+      "signInError": "تعذّر تسجيل الدخول.",
+      "attemptsRemaining_one": "متبقٍ {{count}} محاولة تسجيل دخول قبل القفل المؤقت",
+      "attemptsRemaining_other": "متبقٍ {{count}} محاولات تسجيل دخول قبل القفل المؤقت",
+      "noAccount": "ليس لديك حساب؟",
+      "signUpFree": "التسجيل مجاناً",
+      "devSection": "حسابات الاختبار المحلية",
+      "showPassword": "إظهار كلمة المرور",
+      "hidePassword": "إخفاء كلمة المرور",
+      "validation": {
+        "email": "عنوان البريد الإلكتروني غير صالح",
+        "passwordMin": "يجب أن تكون كلمة المرور 8 أحرف على الأقل"
+      }
+    },
+    "signup": {
+      "pageTitle": "إنشاء حساب | ENS",
+      "title": "إنشاء حساب عميل",
+      "description": "التسجيل العام يُنشئ حساب مراجعة في انتظار موافقة الوكالة",
+      "fullNameLabel": "الاسم الكامل",
+      "fullNamePlaceholder": "محمد عبدالله",
+      "companyLabel": "الشركة",
+      "companyPlaceholder": "شركة المعارض",
+      "workEmailLabel": "البريد الإلكتروني للعمل",
+      "passwordLabel": "كلمة المرور",
+      "passwordPlaceholder": "إنشاء كلمة مرور",
+      "confirmPasswordLabel": "تأكيد كلمة المرور",
+      "confirmPasswordPlaceholder": "تأكيد كلمة المرور",
+      "termsLabel": "أوافق على",
+      "termsOfService": "شروط الخدمة",
+      "and": "و",
+      "privacyPolicy": "سياسة الخصوصية",
+      "submit": "إنشاء حساب عميل",
+      "submitting": "جارٍ إنشاء الحساب...",
+      "createError": "تعذّر إنشاء الحساب.",
+      "haveAccount": "لديك حساب بالفعل؟",
+      "signIn": "تسجيل الدخول",
+      "clientOnlyNote": "التسجيل العام مقتصر على العملاء. يجب على مديري المشاريع والمسؤولين أن يُدعَوا من قِبل مالك المؤسسة.",
+      "showPassword": "إظهار كلمة المرور",
+      "hidePassword": "إخفاء كلمة المرور",
+      "showConfirmPassword": "إظهار تأكيد كلمة المرور",
+      "hideConfirmPassword": "إخفاء تأكيد كلمة المرور",
+      "strength": {
+        "weak": "ضعيفة",
+        "fair": "مقبولة",
+        "good": "جيدة",
+        "strong": "قوية",
+        "suffix": "كلمة المرور"
+      },
+      "validation": {
+        "nameMin": "يجب أن يكون الاسم حرفين على الأقل",
+        "companyMin": "يجب أن يكون اسم الشركة حرفين على الأقل",
+        "email": "عنوان البريد الإلكتروني غير صالح",
+        "passwordMin": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+        "passwordUpper": "يجب أن تحتوي على حرف كبير",
+        "passwordNumber": "يجب أن تحتوي على رقم",
+        "confirmRequired": "يرجى تأكيد كلمة المرور",
+        "termsRequired": "يجب قبول الشروط",
+        "passwordsMismatch": "كلمتا المرور غير متطابقتين"
+      }
+    },
+    "forgotPassword": {
+      "pageTitle": "إعادة تعيين كلمة المرور | ENS",
+      "title": "إعادة تعيين كلمة المرور",
+      "description": "أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين",
+      "emailLabel": "عنوان البريد الإلكتروني",
+      "submit": "إرسال الرابط",
+      "submitting": "جارٍ إرسال الرابط...",
+      "sentTitle": "تحقق من صندوق الوارد",
+      "sentTo": "أرسلنا رابط إعادة تعيين كلمة المرور إلى",
+      "checkSpam": "تحقق من مجلد البريد غير المرغوب فيه إن لم تجده خلال بضع دقائق.",
+      "resending": "جارٍ الإرسال...",
+      "resendIn": "إعادة الإرسال بعد {{seconds}}ث",
+      "resendEmail": "إعادة إرسال البريد الإلكتروني",
+      "differentEmail": "استخدام بريد إلكتروني مختلف",
+      "backToLogin": "العودة إلى تسجيل الدخول",
+      "validation": {
+        "email": "يرجى إدخال عنوان بريد إلكتروني صالح"
+      }
+    },
+    "resetPassword": {
+      "pageTitle": "تعيين كلمة مرور جديدة | ENS",
+      "title": "تعيين كلمة مرور جديدة",
+      "description": "اختر كلمة مرور قوية لحسابك",
+      "newPasswordLabel": "كلمة المرور الجديدة",
+      "confirmPasswordLabel": "تأكيد كلمة المرور",
+      "passwordPlaceholder": "••••••••",
+      "submit": "تحديث كلمة المرور",
+      "submitting": "جارٍ تحديث كلمة المرور...",
+      "successTitle": "تم تحديث كلمة المرور",
+      "successMessage": "تم تحديث كلمة مرورك بنجاح. يمكنك الآن تسجيل الدخول بالبيانات الجديدة.",
+      "continueToSignIn": "المتابعة لتسجيل الدخول",
+      "backToLogin": "العودة إلى تسجيل الدخول",
+      "showPassword": "إظهار كلمة المرور",
+      "hidePassword": "إخفاء كلمة المرور",
+      "showConfirmPassword": "إظهار التأكيد",
+      "hideConfirmPassword": "إخفاء التأكيد",
+      "requirements": {
+        "length": "8 أحرف على الأقل",
+        "uppercase": "حرف كبير واحد",
+        "number": "رقم واحد"
+      },
+      "strength": {
+        "weak": "ضعيفة",
+        "fair": "مقبولة",
+        "good": "جيدة",
+        "strong": "قوية",
+        "suffix": "كلمة المرور"
+      },
+      "validation": {
+        "passwordMin": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+        "passwordUpper": "يجب أن تحتوي على حرف كبير واحد على الأقل",
+        "passwordNumber": "يجب أن تحتوي على رقم واحد على الأقل",
+        "confirmRequired": "يرجى تأكيد كلمة المرور",
+        "passwordsMismatch": "كلمتا المرور غير متطابقتين"
+      }
     }
   }
 }

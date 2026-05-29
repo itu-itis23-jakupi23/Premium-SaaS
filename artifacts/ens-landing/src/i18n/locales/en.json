@@ -9,7 +9,9 @@
     "logIn": "Log In",
     "learnMore": "Learn More",
     "copyright": "© {{year}} ENS Expo Solutions Ltd. All rights reserved.",
-    "internalOnly": "Internal use only"
+    "internalOnly": "Internal use only",
+    "vsLastMonth": "vs last month",
+    "clickToView": "Click to view →"
   },
   "nav": {
     "features": "Features",
@@ -45,20 +47,54 @@
       "heading": "Everything you need to",
       "headingAccent": "design and deliver",
       "subheading": "A complete design and project management suite built specifically for the exhibition industry.",
-      "realtime": { "title": "Real-Time 3D Canvas", "desc": "Drag-and-drop system components onto a live 3D stage. What you see is what gets built." },
-      "octanorm": { "title": "Octanorm System", "desc": "Full Octanorm modular system with accurate 40mm and 50mm profiles, connectors, and panels." },
-      "maxima": { "title": "Maxima Framework", "desc": "Heavy-duty Maxima aluminium extrusion system with configurable spans and infill options." },
-      "client": { "title": "Client Preview", "desc": "Share a live 3D link with clients. They annotate directly on the model — no account needed." },
-      "analytics": { "title": "Project Analytics", "desc": "Track project velocity, approval cycles, cost forecasts, and team utilisation in real time." },
-      "automation": { "title": "Smart Automation", "desc": "Auto-generate floor plans, elevation drawings, parts lists and cost estimates at the click of a button." }
+      "realtime": {
+        "title": "Real-Time 3D Canvas",
+        "desc": "Drag-and-drop system components onto a live 3D stage. What you see is what gets built."
+      },
+      "octanorm": {
+        "title": "Octanorm System",
+        "desc": "Full Octanorm modular system with accurate 40mm and 50mm profiles, connectors, and panels."
+      },
+      "maxima": {
+        "title": "Maxima Framework",
+        "desc": "Heavy-duty Maxima aluminium extrusion system with configurable spans and infill options."
+      },
+      "client": {
+        "title": "Client Preview",
+        "desc": "Share a live 3D link with clients. They annotate directly on the model — no account needed."
+      },
+      "analytics": {
+        "title": "Project Analytics",
+        "desc": "Track project velocity, approval cycles, cost forecasts, and team utilisation in real time."
+      },
+      "automation": {
+        "title": "Smart Automation",
+        "desc": "Auto-generate floor plans, elevation drawings, parts lists and cost estimates at the click of a button."
+      }
     },
     "howItWorks": {
       "heading": "From brief to build in",
       "headingAccent": "four steps",
-      "brief": { "step": "01", "title": "Upload Brief", "desc": "Import your client's event brief, floor plan, or booth specification sheet." },
-      "design": { "step": "02", "title": "Design in 3D", "desc": "Build the stand using Octanorm or Maxima system components and the furniture library." },
-      "review": { "step": "03", "title": "Client Review", "desc": "Send a shareable link. Client reviews and approves directly in the 3D model." },
-      "deliver": { "step": "04", "title": "Export & Deliver", "desc": "One-click export to production documents, drawings, and part schedules." }
+      "brief": {
+        "step": "01",
+        "title": "Upload Brief",
+        "desc": "Import your client's event brief, floor plan, or booth specification sheet."
+      },
+      "design": {
+        "step": "02",
+        "title": "Design in 3D",
+        "desc": "Build the stand using Octanorm or Maxima system components and the furniture library."
+      },
+      "review": {
+        "step": "03",
+        "title": "Client Review",
+        "desc": "Send a shareable link. Client reviews and approves directly in the 3D model."
+      },
+      "deliver": {
+        "step": "04",
+        "title": "Export & Deliver",
+        "desc": "One-click export to production documents, drawings, and part schedules."
+      }
     },
     "testimonials": {
       "heading": "Trusted by the",
@@ -104,6 +140,33 @@
       "security": "Security",
       "cookies": "Cookie Policy",
       "gdpr": "GDPR"
+    },
+    "pageTitle": "ENS — Exhibition & Stand Design Platform",
+    "chiefFeatures": {
+      "workspaceMonitor": {
+        "title": "Workspace Monitor",
+        "desc": "Live oversight of every active design session across all projects."
+      },
+      "teamManagement": {
+        "title": "Team Management",
+        "desc": "Assign project managers, track workloads, and manage access levels."
+      },
+      "clientPortfolio": {
+        "title": "Client Portfolio",
+        "desc": "Full view of all client accounts, contacts, and active contracts."
+      },
+      "analytics": {
+        "title": "Analytics & Reports",
+        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
+      },
+      "approvalGateway": {
+        "title": "Approval Gateway",
+        "desc": "Final structural and design sign-off before production release."
+      },
+      "commsHub": {
+        "title": "Communications Hub",
+        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
+      }
     }
   },
   "team": {
@@ -169,6 +232,2210 @@
       "itSupport": "IT Support",
       "privacy": "Privacy Policy",
       "security": "Security"
+    },
+    "pageTitle": "ENS Team Portal — Staff & Client Hub",
+    "chiefFeatures": {
+      "workspaceMonitor": {
+        "title": "Workspace Monitor",
+        "desc": "Live oversight of every active design session across all projects."
+      },
+      "teamManagement": {
+        "title": "Team Management",
+        "desc": "Assign project managers, track workloads, and manage access levels."
+      },
+      "clientPortfolio": {
+        "title": "Client Portfolio",
+        "desc": "Full view of all client accounts, contacts, and active contracts."
+      },
+      "analytics": {
+        "title": "Analytics & Reports",
+        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
+      },
+      "approvalGateway": {
+        "title": "Approval Gateway",
+        "desc": "Final structural and design sign-off before production release."
+      },
+      "commsHub": {
+        "title": "Communications Hub",
+        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
+      }
+    },
+    "pmFeatures": {
+      "boothWorkspace": {
+        "title": "3D Booth Workspace",
+        "desc": "Full Octanorm/Maxima editor with real-time collaborative design."
+      },
+      "clientMgmt": {
+        "title": "Client Management",
+        "desc": "Manage briefs, contacts, and live feedback sessions per project."
+      },
+      "taskTracker": {
+        "title": "Task Tracker",
+        "desc": "Kanban task board covering production, design, and delivery phases."
+      },
+      "pipeline": {
+        "title": "Project Pipeline",
+        "desc": "Track all active and upcoming projects with milestone timelines."
+      },
+      "requestMgmt": {
+        "title": "Request Management",
+        "desc": "Handle change requests, revision logs, and approval chains."
+      },
+      "messaging": {
+        "title": "Messaging",
+        "desc": "Direct and group messaging with clients and the chief office."
+      }
+    },
+    "workflowSteps": {
+      "brief": {
+        "title": "Client Brief",
+        "desc": "Chief receives and assigns the show brief to a Project Manager."
+      },
+      "workspace": {
+        "title": "Workspace Setup",
+        "desc": "PM creates the project and configures booth dimensions and system."
+      },
+      "design": {
+        "title": "3D Design",
+        "desc": "PM builds the stand in the live workspace using structural libraries."
+      },
+      "review": {
+        "title": "Chief Review",
+        "desc": "Chief monitors progress and provides structural guidance."
+      },
+      "signoff": {
+        "title": "Client Sign-Off",
+        "desc": "Client reviews the design and submits change requests."
+      },
+      "approval": {
+        "title": "Final Approval",
+        "desc": "Chief approves the final design and releases for production."
+      },
+      "export": {
+        "title": "Production Export",
+        "desc": "PM exports documentation, cut lists, and component schedules."
+      }
+    }
+  },
+  "chief": {
+    "nav": {
+      "chief": "Chief",
+      "dashboard": "Dashboard",
+      "clients": "Clients",
+      "managers": "Managers",
+      "projects": "Projects",
+      "monitor": "Workspace Monitor",
+      "reports": "Reports",
+      "messages": "Messages",
+      "calendar": "Calendar",
+      "settings": "Settings"
+    },
+    "common": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "assign": "Assign",
+      "message": "Message",
+      "rebalance": "Rebalance",
+      "openDetails": "Open Details",
+      "viewCalendar": "View Calendar",
+      "sendReminder": "Send Reminder",
+      "assignments": "Assignments",
+      "inviteManager": "Invite Manager",
+      "keepEditing": "Keep Editing",
+      "discardChanges": "Discard Changes",
+      "selectAll": "Select all",
+      "clear": "Clear",
+      "project": "Project",
+      "noDeadline": "No deadline",
+      "status": {
+        "active": "Active",
+        "pending": "Pending",
+        "onLeave": "On Leave",
+        "completed": "Completed",
+        "delayed": "Delayed",
+        "unassigned": "Unassigned",
+        "highLoad": "High Load",
+        "accepted": "Accepted",
+        "expired": "Expired"
+      }
+    },
+    "dashboard": {
+      "title": "Chief Dashboard",
+      "exportReports": "Export Reports",
+      "excelExported": "Excel report exported",
+      "noActivity": "No activity has been recorded yet.",
+      "viewAllActivity": "View All Activity",
+      "showRecentActivity": "Show Recent Activity",
+      "commandCenter": "Command Center",
+      "recentActivity": "Recent Activity",
+      "noManagerAssignments": "No manager assignments found.",
+      "loadError": "Unable to load dashboard data",
+      "charts": {
+        "projectActivity": "Project Activity",
+        "projectActivityDesc": "Activity across all projects over the last 7 days",
+        "projectStatus": "Project Status",
+        "projectStatusDesc": "Health distribution across {{count}} active projects",
+        "managerPerformance": "Manager Performance",
+        "managerPerformanceDesc": "Projects assigned per manager"
+      },
+      "stats": {
+        "totalClients": "Total Clients",
+        "activeProjects": "Active Projects",
+        "managers": "Managers",
+        "delayedProjects": "Delayed Projects",
+        "needsAction": "Needs action",
+        "pendingApprovals": "Pending Approvals",
+        "activeWorkspaces": "Active Workspaces",
+        "saved": "Saved",
+        "db": "DB",
+        "live": "Live",
+        "assigned": "Assigned",
+        "open": "Open",
+        "clear": "Clear"
+      },
+      "insights": {
+        "delayedTitle": "Delayed projects",
+        "dueSoonTitle": "Due in 14 days",
+        "unassignedTitle": "Unassigned work",
+        "approvalsTitle": "Pending approvals",
+        "noDelayed": "No delayed projects are currently recorded.",
+        "firstInQueue": "{{name}} is first in the recovery queue.",
+        "noDueSoon": "No project deadlines are inside the 14-day window.",
+        "nearestDeadline": "{{name}} has the nearest deadline.",
+        "noUnassigned": "Every active project has a manager assignment.",
+        "unassignedNeeds": "{{name}} still needs a project manager.",
+        "noApprovals": "No approval bottleneck is currently recorded.",
+        "approvalsWaiting": "Client approvals are waiting for action.",
+        "reviewProjects": "Review Projects",
+        "openCalendar": "Open Calendar",
+        "assignManagers": "Assign Managers",
+        "openQueue": "Open Queue"
+      },
+      "pageTitle": "Dashboard | ENS"
+    },
+    "managers": {
+      "title": "Managers Management",
+      "refresh": "Refresh data",
+      "noMatch": "No managers match the current filters.",
+      "tiles": {
+        "teamLoad": "Team Load",
+        "activeManagers": "Active Managers",
+        "delayedProjects": "Delayed Projects",
+        "unassignedItems": "Unassigned Items",
+        "pendingInvites": "Pending Invites"
+      },
+      "filters": {
+        "searchPlaceholder": "Search managers, clients, projects",
+        "allStatuses": "All statuses",
+        "allManagers": "All Managers",
+        "highLoad": "High Load",
+        "sortHighest": "Highest workload",
+        "sortLowest": "Lowest workload",
+        "sortProjects": "Most active projects",
+        "sortRating": "Best rating",
+        "cardView": "Card view",
+        "tableView": "Table view"
+      },
+      "views": {
+        "title": "Saved Views",
+        "desc": "Reuse filters, sorting, and layout.",
+        "namePlaceholder": "Name view",
+        "deleteView": "Delete view {{name}}"
+      },
+      "invitations": {
+        "title": "Pending Invitations",
+        "desc": "Invited managers appear here until they accept. They cannot receive assignments yet.",
+        "expires": "expires {{date}}",
+        "moreInvites": "+{{count}} more",
+        "copyLink": "Copy invite link for {{email}}",
+        "resend": "Resend invite to {{email}}",
+        "revoke": "Revoke invite for {{email}}"
+      },
+      "invite": {
+        "title": "Invite Manager",
+        "desc": "Add a project manager to the chief workspace.",
+        "namePlaceholder": "Sarah Mitchell",
+        "emailPlaceholder": "manager@company.com",
+        "sendInvite": "Send Invite",
+        "nameLabel": "Name",
+        "emailLabel": "Email",
+        "emailInvalid": "Please enter a valid email address.",
+        "defaultName": "New Manager"
+      },
+      "statusChange": {
+        "title": "Confirm Status Change",
+        "markOnLeave": "Mark On Leave",
+        "markActive": "Mark Active",
+        "confirmPrefix": "Are you sure you want to mark",
+        "confirmSuffix": "as",
+        "onLeaveNote": "Their active projects will remain assigned but workload will be capped.",
+        "updated": "Manager status updated"
+      },
+      "rebalance": {
+        "title": "Rebalance Workload",
+        "desc": "Review the proposed change before confirming.",
+        "projectToMove": "Project to move",
+        "from": "From",
+        "to": "To",
+        "confirm": "Confirm Rebalance",
+        "done": "Workload rebalanced"
+      },
+      "assignments": {
+        "titleTeam": "Team Assignments",
+        "titleFocused": "Assignments - {{name}}",
+        "descTeam": "Reassign clients and projects across the team.",
+        "descFocused": "Manage clients and projects assigned to {{name}}.",
+        "bulkTitle": "Bulk assignment",
+        "bulkDesc": "Select rows below, choose a manager, then apply before saving.",
+        "selected": "selected",
+        "applySelected": "Apply Selected",
+        "cascadeLabel": "Also move this client's projects",
+        "cascadeDesc": "When a client is reassigned, every project under that client moves to the same manager.",
+        "saveAssignments": "Save Assignments",
+        "noClients": "No clients available.",
+        "noProjects": "No projects available.",
+        "searchClients": "Search clients...",
+        "searchProjects": "Search projects...",
+        "loading": "Loading assignments...",
+        "showing": "{{total}} total / showing {{start}}-{{end}}",
+        "previous": "Previous",
+        "next": "Next",
+        "page": "Page {{page}}",
+        "clients": "Clients",
+        "projects": "Projects",
+        "saved": "Assignments updated",
+        "selectRow": "Select {{name}}"
+      },
+      "discard": {
+        "title": "Discard assignment changes?",
+        "desc": "You have assignment edits that have not been saved. Closing the drawer will discard them."
+      },
+      "card": {
+        "computedWorkload": "Computed workload",
+        "delayed": "delayed",
+        "urgent": "urgent",
+        "ratingNew": "New",
+        "ratingNA": "N/A"
+      },
+      "table": {
+        "manager": "Manager",
+        "status": "Status",
+        "workload": "Workload",
+        "projects": "Projects",
+        "clients": "Clients",
+        "nextDeadline": "Next Deadline",
+        "actions": "Actions"
+      },
+      "detail": {
+        "workload": "Workload",
+        "projects": "Projects",
+        "clients": "Clients",
+        "tabs": {
+          "overview": "Overview",
+          "projects": "Projects",
+          "clients": "Clients",
+          "activity": "Activity"
+        },
+        "overview": {
+          "title": "Workload Health",
+          "desc": "Current active projects and client load",
+          "delayed": "Delayed",
+          "dueSoon": "Due Soon",
+          "nextDeadline": "Next Deadline",
+          "rating": "Rating",
+          "none": "None"
+        },
+        "noProjects": "No assigned projects.",
+        "noClients": "No assigned clients."
+      },
+      "audit": {
+        "title": "Activity Audit",
+        "desc": "Assignment, access, rebalance, and reminder history",
+        "searchPlaceholder": "Search audit history",
+        "allActivity": "All activity",
+        "success": "Success",
+        "warnings": "Warnings",
+        "info": "Info",
+        "noActivity": "No activity recorded yet.",
+        "showAll": "Show all {{count}} entries",
+        "showLess": "Show less ({{count}} most recent)",
+        "team": "Team",
+        "exportCsv": "Export as CSV",
+        "exportExcel": "Export as Excel",
+        "action": {
+          "invitation": "Invitation",
+          "access": "Access",
+          "assignment": "Assignment",
+          "rebalance": "Rebalance",
+          "reminder": "Reminder",
+          "ratingUpdated": "Rating updated"
+        },
+        "detail": {
+          "invited": "Invitation queued for {{name}}.",
+          "statusChanged": "{{name}} marked {{status}}.",
+          "assignmentsSaved": "Assignment changes saved.",
+          "rebalanced": "{{project}} moved from {{from}} to {{to}}.",
+          "reminded": "In-app reminder queued for {{name}} — {{count}} priority item(s).",
+          "ratingUpdated": "Rating set to {{rating}}"
+        },
+        "justNow": "Just now",
+        "collapse": "Collapse",
+        "expand": "Expand"
+      },
+      "actions": {
+        "openDetails": "Open Details",
+        "assignments": "Assignments",
+        "viewCalendar": "View Calendar",
+        "rebalanceWorkload": "Rebalance Workload",
+        "markOnLeave": "Mark On Leave",
+        "markActive": "Mark Active",
+        "sendReminder": "Send Reminder",
+        "assign": "Assign",
+        "rebalance": "Rebalance",
+        "message": "Message"
+      },
+      "toast": {
+        "loadError": "Manager workspace could not be loaded",
+        "viewLoaded": "View loaded: {{name}}",
+        "viewSaved": "Saved manager view: {{name}}",
+        "viewRemoved": "Saved view removed",
+        "inviteCreated": "Invitation queued for {{name}}",
+        "inviteError": "Manager invitation could not be created",
+        "inviteResent": "Invite resent to {{email}}",
+        "inviteResendError": "Invite could not be resent",
+        "inviteRevoked": "Invite revoked",
+        "inviteRevokeError": "Invite could not be revoked",
+        "inviteCopyFirst": "Resend this invite first to generate a fresh copyable link",
+        "inviteCopied": "Invite link copied",
+        "inviteCopyError": "Could not copy invite link",
+        "statusUpdated": "Manager status updated",
+        "statusError": "Manager status could not be updated",
+        "assignNoChange": "No assignment changes for {{name}}",
+        "assignError": "Assignments could not be saved",
+        "assignUpdated": "Assignments updated",
+        "rebalanceNoTarget": "No active managers available to rebalance to",
+        "rebalanceNormal": "{{name}}'s workload ({{pct}}%) is within normal range — no rebalance needed",
+        "rebalanceNoProject": "No suitable project or target manager found for rebalance",
+        "rebalanceError": "Workload could not be rebalanced",
+        "rebalanceDone": "Workload rebalanced",
+        "reminderSent": "Reminder queued for {{name}} — notification created",
+        "reminderError": "Reminder could not be sent",
+        "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
+        "ratingUpdated": "Rating updated to {{rating}}"
+      },
+      "error": {
+        "rating": "Failed to update rating"
+      }
+    },
+    "reports": {
+      "title": "Reports & Analytics",
+      "loadError": "Report data could not be loaded.",
+      "exportExcel": "Export Excel",
+      "bottlenecks": "Bottlenecks",
+      "leaderboardTitle": "PM Leaderboard",
+      "leaderboardDesc": "Ranked by client satisfaction / {{range}}",
+      "toast": {
+        "exported": "Excel report exported"
+      },
+      "kpi": {
+        "revenue": "Total Revenue",
+        "revenueDetail": "+12.5% vs previous period",
+        "projects": "Projects",
+        "projectsDetail": "{{range}} selected range",
+        "pms": "PMs",
+        "pmsDetail": "Ranked by delivery",
+        "satisfaction": "Avg Satisfaction",
+        "satisfactionDetail": "Client score"
+      },
+      "cards": {
+        "revenueTitle": "Revenue vs Target",
+        "revenueDesc": "{{range}} / Total ${{total}}K / {{projects}} projects",
+        "pmPerfTitle": "PM Performance",
+        "pmPerfDesc": "Projects completed vs on-time delivery rate",
+        "trendTitle": "12-Month Revenue Trend",
+        "trendDesc": "Revenue trajectory over the past year",
+        "systemTitle": "System Split & Bottlenecks",
+        "systemDesc": "System usage and client wait times"
+      },
+      "chart": {
+        "revenue": "Revenue",
+        "target": "Target",
+        "onTimePct": "On-Time %",
+        "satisfaction": "Satisfaction"
+      },
+      "table": {
+        "rank": "Rank",
+        "pm": "PM",
+        "projects": "Projects",
+        "onTime": "On-Time",
+        "satisfaction": "Satisfaction",
+        "revenue": "Revenue",
+        "month": "Month"
+      },
+      "export": {
+        "colReport": "Report",
+        "colRange": "Range",
+        "colExportedAt": "Exported At",
+        "colRevenue": "Total Revenue",
+        "colTarget": "Total Target",
+        "colProjects": "Total Projects",
+        "colRevenueDollar": "Revenue ($)",
+        "colTargetDollar": "Target ($)",
+        "colOnTimePct": "On-Time (%)",
+        "colSystem": "System",
+        "colShare": "Share (%)",
+        "colProject": "Project",
+        "colWaitDays": "Wait Days",
+        "colStage": "Stage",
+        "rowTotals": "Totals"
+      }
+    },
+    "messages": {
+      "title": "Messages",
+      "justNow": "Just now",
+      "loadError": "Could not load exhibition messages.",
+      "conversationError": "Could not load conversation.",
+      "sendError": "Message could not be sent.",
+      "noMessagesDefault": "No messages yet",
+      "noClient": "No client linked",
+      "loading": "Loading exhibitions…",
+      "noExhibitions": "No exhibitions found.",
+      "noMessages": "No messages yet for {{name}}.",
+      "selectManager": "Select a project manager.",
+      "scopedTo": "Scoped to",
+      "send": "Send",
+      "sending": "Sending",
+      "projectCount": "{{count}} projects",
+      "inputPlaceholder": "Message {{manager}} about {{exhibition}}…",
+      "badges": {
+        "exhibitions": "{{count}} exhibitions",
+        "unread": "{{count}} unread"
+      },
+      "section": {
+        "title": "Exhibition Threads",
+        "desc": "One scoped conversation space per exhibition."
+      },
+      "searchPlaceholder": "Search exhibitions, clients, managers",
+      "sidebar": {
+        "title": "Project Managers",
+        "assigned": "{{count}} assigned",
+        "noManager": "No project manager is assigned to this exhibition yet."
+      },
+      "status": {
+        "delayed": "Delayed",
+        "active": "Active",
+        "completed": "Completed",
+        "pending": "Pending"
+      },
+      "actions": {
+        "call": "Start voice call",
+        "video": "Start video call",
+        "options": "Conversation options",
+        "attach": "Attach file",
+        "send": "Send message",
+        "emoji": "Insert emoji"
+      },
+      "toast": {
+        "call": "Call started with {{name}} for {{exhibition}}",
+        "video": "Video room prepared for {{exhibition}}",
+        "options": "Conversation options opened",
+        "attachment": "Attachment picker opened for {{exhibition}}"
+      }
+    },
+    "clients": {
+      "title": "Clients Management",
+      "addClient": "Add Client",
+      "loadError": "Unable to load clients.",
+      "loadingClients": "Loading clients…",
+      "noClients": "No clients found for this search/filter.",
+      "searchPlaceholder": "Search clients or exhibitions…",
+      "showing": "Showing {{start}}-{{end}} of {{total}} clients",
+      "previous": "Previous",
+      "next": "Next",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "emailError": "Please enter a valid email address.",
+      "filter": {
+        "all": "All",
+        "lead": "Lead",
+        "pendingApproval": "Pending Approval",
+        "active": "Active",
+        "inactive": "Inactive",
+        "archived": "Archived"
+      },
+      "status": {
+        "active": "Active",
+        "pendingApproval": "Pending Approval",
+        "lead": "Lead",
+        "inactive": "Inactive",
+        "archived": "Archived"
+      },
+      "table": {
+        "clientName": "Client Name",
+        "company": "Company",
+        "assignedPm": "Assigned PM",
+        "exhibition": "Exhibition",
+        "status": "Status",
+        "lastActivity": "Last Activity",
+        "actions": "Actions"
+      },
+      "menu": {
+        "assignManager": "Assign Manager",
+        "openWorkspace": "Open Workspace",
+        "editClient": "Edit Client",
+        "viewDetails": "View Client Details",
+        "archive": "Archive Client"
+      },
+      "toast": {
+        "added": "{{name}} added to clients",
+        "addError": "Client could not be added.",
+        "updated": "{{name}} updated.",
+        "updateError": "Client could not be updated.",
+        "noManagers": "No active project managers are available.",
+        "assigned": "{{client}} assigned to {{manager}}.",
+        "assignError": "Client assignment could not be saved.",
+        "archived": "{{name}} archived.",
+        "archiveError": "Client could not be removed.",
+        "openingWorkspace": "Opening {{name}} in Chief monitor.",
+        "defaultClient": "Client",
+        "unassigned": "Unassigned"
+      },
+      "addDialog": {
+        "title": "Add Client",
+        "desc": "Create a client record in this chief view.",
+        "name": "Client Name",
+        "company": "Company",
+        "exhibition": "Exhibition",
+        "email": "Contact Email",
+        "submit": "Add Client"
+      },
+      "assignDialog": {
+        "title": "Assign Project Manager",
+        "desc": "Select a manager for {{name}}.",
+        "placeholder": "Select a manager",
+        "submit": "Assign"
+      },
+      "editDialog": {
+        "title": "Edit Client",
+        "desc": "Update client details used across chief workflows.",
+        "contactName": "Contact Name",
+        "submit": "Save Changes"
+      },
+      "archiveDialog": {
+        "title": "Archive Client",
+        "desc": "Archive {{name}}? Clients with active projects are protected and will not be archived.",
+        "blockers": "Active projects blocking archive",
+        "archiving": "Archiving…",
+        "submit": "Archive"
+      },
+      "detailDialog": {
+        "contact": "Contact",
+        "email": "Email",
+        "pm": "PM",
+        "exhibition": "Exhibition",
+        "status": "Status"
+      }
+    },
+    "projects": {
+      "title": "Projects Pipeline",
+      "breadcrumb": "Projects",
+      "viewKanban": "Kanban",
+      "viewList": "List",
+      "searchPlaceholder": "Search...",
+      "metric": {
+        "highRisk": "High Risk",
+        "waiting": "Waiting",
+        "delayed": "Delayed",
+        "matching": "Matching Projects"
+      },
+      "stage": {
+        "intake": "Intake",
+        "design": "Design",
+        "review": "Review",
+        "production": "Production",
+        "closed": "Closed"
+      },
+      "filter": {
+        "all": "All",
+        "active": "Active",
+        "pending": "Pending",
+        "delayed": "Delayed",
+        "completed": "Completed"
+      },
+      "priority": {
+        "all": "All",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "kanban": {
+        "loading": "Loading",
+        "empty": "Empty"
+      },
+      "list": {
+        "loading": "Loading projects...",
+        "noMatch": "No projects match.",
+        "col": {
+          "project": "Project",
+          "client": "Client",
+          "pm": "PM",
+          "system": "System",
+          "stage": "Stage",
+          "progress": "Progress",
+          "health": "Health"
+        }
+      },
+      "paging": {
+        "showing": "Showing {{start}}–{{end}} of {{total}} matching projects",
+        "filtered": "/ {{count}} visible after priority filter",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "footer": {
+        "note": "Page: {{count}} visible / Use arrow buttons to save stage changes"
+      },
+      "card": {
+        "waiting": "{{days}}d waiting",
+        "noDate": "No date",
+        "movePrev": "Move to previous stage",
+        "moveNext": "Move to next stage",
+        "openMonitor": "Open monitor",
+        "editProject": "Edit project"
+      },
+      "row": {
+        "edit": "Edit",
+        "open": "Open"
+      },
+      "edit": {
+        "title": "Edit Project",
+        "sheetDescription": "Update project details, assignment, deadline, and booth dimensions.",
+        "name": "Project Name",
+        "namePlaceholder": "AutoShow stand",
+        "client": "Client",
+        "clientPlaceholder": "FastCars Co",
+        "exhibition": "Exhibition",
+        "exhibitionPlaceholder": "AutoShow",
+        "manager": "Project Manager",
+        "managerPlaceholder": "Select project manager",
+        "keepManager": "Keep current assignment",
+        "unassigned": "Unassigned",
+        "deadline": "Deadline",
+        "system": "System",
+        "systemPlaceholder": "Booth system",
+        "octanorm": "Octanorm",
+        "maxima": "Maxima",
+        "custom": "Custom",
+        "width": "Width (m)",
+        "depth": "Depth (m)",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Notes for this project",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "save": "Save Project"
+      },
+      "close": {
+        "title": "Close Project",
+        "description": "Move {{name}} to Closed? This marks the project as completed in the chief pipeline.",
+        "cancel": "Cancel",
+        "closing": "Closing...",
+        "confirm": "Close Project"
+      },
+      "error": {
+        "load": "Projects could not be loaded",
+        "save": "Project could not be saved",
+        "stage": "Pipeline stage could not be saved"
+      },
+      "toast": {
+        "updated": "{{name}} updated",
+        "openMonitor": "Opening monitor for {{name}}",
+        "moved": "{{name}} moved to {{stage}}",
+        "created": "Project \"{{name}}\" created.",
+        "exported": "Projects exported to Excel."
+      },
+      "validate": {
+        "required": "Project name and client are required.",
+        "dimensions": "Width and depth must be between 1 and 100 meters."
+      },
+      "exportTooltip": "Export project list to Excel",
+      "export": "Export",
+      "newProject": "New Project",
+      "create": {
+        "title": "New Project",
+        "description": "Fill in the details below to create a new exhibition project.",
+        "creating": "Creating…",
+        "confirm": "Create Project"
+      }
+    },
+    "calendar": {
+      "title": "Exhibition Calendar",
+      "breadcrumb": "Calendar",
+      "addEvent": "Add Event",
+      "allMonths": "All months",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "today": "Today",
+      "addEventTitle": "Add event on this day",
+      "moreEvents": "+{{count}} more",
+      "exhibitionsThisMonth_one": "{{count}} Exhibition this month",
+      "exhibitionsThisMonth_other": "{{count}} Exhibitions this month",
+      "yearExhibitions_one": "{{count}} exhibition",
+      "yearExhibitions_other": "{{count}} exhibitions",
+      "noExhibitions": "No exhibitions",
+      "loading": "Loading exhibition calendar...",
+      "status": {
+        "active": "Active",
+        "completed": "Completed",
+        "delayed": "Delayed",
+        "pending": "Pending"
+      },
+      "filter": {
+        "searchPlaceholder": "Search exhibition, client, city",
+        "pmPlaceholder": "Project manager",
+        "allManagers": "All managers",
+        "clientPlaceholder": "Client",
+        "allClients": "All clients",
+        "statusPlaceholder": "Status",
+        "allStatuses": "All statuses",
+        "shown": "{{count}} shown",
+        "resetFilters": "Reset filters"
+      },
+      "form": {
+        "nameLabel": "Exhibition Name *",
+        "namePlaceholder": "e.g. TechCon 2027",
+        "clientLabel": "Client",
+        "clientPlaceholder": "Client company",
+        "pmLabel": "Project Manager",
+        "pmPlaceholder": "PM name",
+        "startLabel": "Start Date *",
+        "endLabel": "End Date *",
+        "locationLabel": "Location",
+        "locationPlaceholder": "City / Venue",
+        "standLabel": "Stand Type",
+        "standPlaceholder": "e.g. Maxima",
+        "statusLabel": "Status"
+      },
+      "add": {
+        "title": "Add Exhibition Event",
+        "description": "Schedule a new exhibition on the calendar.",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "save": "Save Event"
+      },
+      "edit": {
+        "title": "Edit Exhibition Event",
+        "description": "Update the details for this exhibition.",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "save": "Save Changes"
+      },
+      "detail": {
+        "description": "Exhibition details",
+        "client": "Client",
+        "pm": "Project Manager",
+        "location": "Location",
+        "standType": "Stand Type",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "confirmDelete": "Delete permanently?",
+        "deleting": "Deleting...",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "close": "Close"
+      },
+      "error": {
+        "load": "Calendar events could not be loaded",
+        "save": "Calendar event could not be saved",
+        "update": "Calendar event could not be updated",
+        "delete": "Calendar event could not be deleted"
+      }
+    },
+    "monitor": {
+      "title": "Workspace Monitor",
+      "breadcrumb": "Monitor",
+      "activeNow": "{{count}} Active Now",
+      "refresh": "Refresh",
+      "loading": "Loading live workspace data...",
+      "errorSuffix": ". No local demo data is shown in real-data mode.",
+      "searchPlaceholder": "Search workspaces...",
+      "pmPlaceholder": "Project manager",
+      "allManagers": "All project managers",
+      "legend": "Live — refreshes every 8 s",
+      "status": {
+        "all": "All",
+        "live": "Live",
+        "review": "Review",
+        "pending": "Pending",
+        "blocked": "Blocked"
+      },
+      "stat": {
+        "total": "Total",
+        "totalDesc": "All workspaces",
+        "liveDesc": "In workspace",
+        "reviewDesc": "Client sign-off",
+        "pendingDesc": "Need attention",
+        "blockedDesc": "Action required"
+      },
+      "bottleneck": {
+        "title_one": "Bottleneck Alert — {{count}} project waiting for client response",
+        "title_other": "Bottleneck Alerts — {{count}} projects waiting for client response",
+        "waiting": "{{days}}d waiting"
+      },
+      "card": {
+        "editingNow": "Editing now",
+        "minutesAgo": "{{mins}}m ago",
+        "hoursAgo": "{{hours}}h ago",
+        "waitingDays": "{{days}}d waiting",
+        "openPreview": "Expand {{name}} preview",
+        "reassign": "Reassign",
+        "join": "Join"
+      },
+      "reassign": {
+        "title": "Reassign Project Manager",
+        "description": "Choose a new PM for {{name}}.",
+        "client": "Client",
+        "current": "Current",
+        "unassigned": "Unassigned",
+        "cancel": "Cancel",
+        "confirm": "Reassign"
+      },
+      "error": {
+        "load": "Workspace monitor data could not be loaded",
+        "noManagers": "No active project managers are available",
+        "reassign": "Project could not be reassigned"
+      },
+      "toast": {
+        "refreshed": "Refreshed all workspaces",
+        "openedPreview": "Opened {{name}} preview",
+        "joinedSession": "Joined monitor session for {{name}}",
+        "reassigned": "{{name}} reassigned to {{pm}}"
+      },
+      "refreshedJustNow": "Refreshed just now",
+      "refreshedSecondsAgo": "{{s}}s ago",
+      "refreshedMinutesAgo": "{{m}}m ago"
+    },
+    "settings": {
+      "pageTitle": "Settings | ENS",
+      "title": "Settings",
+      "breadcrumb": "Settings",
+      "export": "Export",
+      "reset": "Reset",
+      "tabs": {
+        "profile": "Profile",
+        "notifications": "Notifications",
+        "security": "Security",
+        "appearance": "Appearance"
+      },
+      "profile": {
+        "title": "Profile Information",
+        "description": "Update your personal and professional details",
+        "unsaved": "Unsaved",
+        "changeAvatar": "Change Avatar",
+        "uploadPicture": "Upload Picture",
+        "fullName": "Full Name",
+        "emailLabel": "Email Address",
+        "roleLabel": "Role",
+        "phone": "Phone Number",
+        "phonePlaceholder": "+1 (555) 000-0000",
+        "revert": "Revert",
+        "saveChanges": "Save Changes",
+        "avatarDialog": {
+          "title": "Change Avatar",
+          "description": "Choose a local avatar style for this account profile.",
+          "cancel": "Cancel",
+          "apply": "Apply Avatar"
+        },
+        "avatarTones": {
+          "primary": "Primary",
+          "blue": "Blue",
+          "green": "Green",
+          "amber": "Amber"
+        },
+        "validation": {
+          "nameRequired": "Name is required",
+          "emailInvalid": "Enter a valid email",
+          "phoneInvalid": "Enter a valid phone number"
+        },
+        "toast": {
+          "saved": "Profile changes saved",
+          "reverted": "Profile changes reverted",
+          "avatarUpdated": "Avatar updated",
+          "pictureSelected": "Profile picture selected",
+          "loadError": "Settings could not be loaded",
+          "saveError": "Profile could not be saved",
+          "avatarError": "Avatar could not be saved",
+          "imageTypeError": "Choose an image file",
+          "imageSizeError": "Choose an image under 1.5 MB"
+        }
+      },
+      "notifications": {
+        "title": "Email Notifications",
+        "description": "Configure which updates you want to receive via email",
+        "enabledCount": "{{count}}/4 enabled",
+        "items": {
+          "assignments": {
+            "title": "New Project Assignments",
+            "desc": "Get notified when a new project is created and assigned."
+          },
+          "milestones": {
+            "title": "Project Milestones",
+            "desc": "Alerts for completed stages or approval requests."
+          },
+          "reports": {
+            "title": "Manager Activity Reports",
+            "desc": "Weekly summary of manager performance and workload."
+          },
+          "system": {
+            "title": "System Alerts",
+            "desc": "Critical updates and security notifications."
+          }
+        },
+        "enableAll": "Enable All",
+        "criticalOnly": "Critical Only",
+        "savePreferences": "Save Preferences",
+        "toast": {
+          "saved": "Notification preferences saved",
+          "allEnabled": "All notifications enabled",
+          "criticalOnly": "Only system alerts remain enabled",
+          "saveError": "Notifications could not be saved"
+        }
+      },
+      "security": {
+        "title": "Security Settings",
+        "description": "Manage your password and account security",
+        "currentPassword": "Current Password",
+        "newPassword": "New Password",
+        "confirmNewPassword": "Confirm New Password",
+        "updatePassword": "Update Password",
+        "strengthPrefix": "Strength:",
+        "passwordStrength": {
+          "empty": "Empty",
+          "weak": "Weak",
+          "fair": "Fair",
+          "good": "Good",
+          "strong": "Strong"
+        },
+        "twoFactor": {
+          "title": "Two-Factor Authentication",
+          "description": "Use a verification code for sensitive account actions.",
+          "enabled": "Enabled",
+          "disabled": "Disabled",
+          "newCodes": "New Recovery Codes",
+          "disable": "Disable 2FA",
+          "enable": "Enable 2FA"
+        },
+        "twoFactorDialog": {
+          "title": "Enable Two-Factor Authentication",
+          "description": "Open your authenticator app, scan the QR code, then enter the 6-digit verification code below.",
+          "qrPlaceholder": "QR code would appear here in production",
+          "showCode": "Show demo verification code",
+          "hideCode": "Hide demo code",
+          "demoLabel": "Demo code",
+          "codeLabel": "Verification Code",
+          "codePlaceholder": "Enter 6-digit code",
+          "cancel": "Cancel",
+          "verify": "Verify & Enable"
+        },
+        "recoveryCodes": {
+          "title": "Recovery Codes",
+          "copyAll": "Copy All",
+          "description": "Save these codes somewhere safe. Each code can only be used once."
+        },
+        "sessions": {
+          "title": "Active Sessions",
+          "description": "Review devices currently signed into this account.",
+          "signOutOthers": "Sign Out Others",
+          "signOut": "Sign Out",
+          "current": "current"
+        },
+        "toast": {
+          "passwordSaved": "Password update saved",
+          "twoFactorEnabled": "Two-factor authentication enabled",
+          "twoFactorDisabled": "Two-factor authentication disabled",
+          "codesRegenerated": "Recovery codes regenerated",
+          "codesCopied": "Recovery codes copied to clipboard",
+          "sessionSignedOut": "{{device}} signed out",
+          "sessionsSignedOut_one": "{{count}} session signed out",
+          "sessionsSignedOut_other": "{{count}} sessions signed out",
+          "passwordAllFields": "Fill all password fields",
+          "passwordMismatch": "New passwords do not match",
+          "passwordWeak": "Use a stronger password",
+          "passwordSame": "New password must be different",
+          "passwordError": "Password could not be updated",
+          "twoFactorWrongCode": "Incorrect verification code — check your authenticator app",
+          "twoFactorSetupError": "Two-factor setup could not be saved",
+          "twoFactorDisableError": "Two-factor status could not be saved",
+          "twoFactorRequired": "Enable 2FA before generating recovery codes",
+          "codesError": "Recovery codes could not be saved",
+          "clipboardError": "Could not copy to clipboard — please copy the codes manually",
+          "sessionError": "Session could not be signed out",
+          "sessionsError": "Sessions could not be signed out",
+          "noOtherSessions": "No other sessions to sign out"
+        }
+      },
+      "appearance": {
+        "title": "Display Settings",
+        "description": "Customize the look and feel of your dashboard",
+        "themeMode": "Theme Mode",
+        "themeModeDesc": "Switch between light, dark, and system themes.",
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System",
+        "compactView": "Compact View",
+        "compactViewDesc": "Reduce spacing in tables and lists.",
+        "language": "Language",
+        "languageDesc": "Select your preferred display language.",
+        "resetDisplay": "Reset Display",
+        "saveDisplay": "Save Display Settings",
+        "toast": {
+          "saved": "Display settings saved",
+          "reset": "Display settings reset",
+          "saveError": "Display settings could not be saved"
+        }
+      },
+      "resetDialog": {
+        "title": "Reset Settings",
+        "description": "This restores account settings to their default values for your current role.",
+        "cancel": "Cancel",
+        "confirm": "Reset Settings"
+      },
+      "toast": {
+        "exported": "Settings exported",
+        "restored": "Settings restored to defaults",
+        "restoredLocal": "Local settings restored to defaults"
+      }
+    }
+  },
+  "layout": {
+    "logout": "Logout",
+    "notifications": "Notifications",
+    "unread": "{{count}} unread",
+    "markAllRead": "Mark all read",
+    "notificationNew": "New",
+    "noNotifications": "No notifications yet.",
+    "skipToContent": "Skip to main content",
+    "navigation": "Main navigation",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "switchToLight": "Switch to light theme",
+    "switchToDark": "Switch to dark theme",
+    "selectLanguage": "Select language"
+  },
+  "pm": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "myClients": "My Clients",
+      "projects": "Projects",
+      "calendar": "Calendar",
+      "workspace": "Workspace",
+      "requests": "Requests",
+      "messages": "Messages",
+      "tasks": "Tasks",
+      "reports": "Reports",
+      "settings": "Settings"
+    },
+    "common": {
+      "noDeadline": "No deadline",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "overdue": "{{count}}d overdue",
+      "inDays": "In {{count}}d",
+      "loading": "Loading...",
+      "noResults": "No results found.",
+      "cancel": "Cancel",
+      "save": "Save",
+      "create": "Create",
+      "close": "Close",
+      "saving": "Saving...",
+      "search": "Search",
+      "filter": "Filter",
+      "previous": "Previous",
+      "next": "Next",
+      "priority": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "status": {
+        "active": "Active",
+        "pending": "Pending",
+        "lead": "Lead",
+        "inactive": "Inactive",
+        "planning": "Planning",
+        "inDesign": "In Design",
+        "clientReview": "Client Review",
+        "revision": "Revision",
+        "delayed": "Delayed",
+        "approved": "Approved",
+        "completed": "Completed",
+        "inProgress": "In Progress",
+        "resolved": "Resolved",
+        "declined": "Declined"
+      }
+    },
+    "dashboard": {
+      "title": "Project Manager Dashboard",
+      "overview": "Overview",
+      "loadError": "Could not load dashboard data.",
+      "stats": {
+        "assignedClients": "Assigned Clients",
+        "activeProjects": "Active Projects",
+        "pendingReviews": "Pending Reviews",
+        "completed": "Completed",
+        "workspaceFiles": "Workspace Files",
+        "managedTrend": "Managed clients",
+        "liveTrend": "Live & In Progress",
+        "needsAttention": "Needs attention",
+        "allClear": "All clear",
+        "deliveredTrend": "Successfully delivered",
+        "workspacesOpenTrend": "Workspaces open"
+      },
+      "activeWork": {
+        "title": "Active Project Work",
+        "viewAll": "View All",
+        "loading": "Loading assigned project work...",
+        "empty": "No active projects are currently assigned.",
+        "openProject": "Open {{name}}"
+      },
+      "actionItems": {
+        "title": "Action Items",
+        "loading": "Loading action items...",
+        "empty": "No urgent actions for this organisation."
+      },
+      "actions": {
+        "pendingApprovals": "{{count}} pending approvals",
+        "pendingApprovalsDesc": "Client review work is waiting for a decision or revision request.",
+        "openApprovals": "Open approvals",
+        "delayedProjects": "{{count}} delayed projects",
+        "delayedProjectsDesc": "Projects need PM attention before deadlines are missed.",
+        "reviewRisk": "Review risk",
+        "activeWorkspaces": "{{count}} active workspaces",
+        "activeWorkspacesDesc": "Booth designs are available for editing, review, or submission.",
+        "openWorkspace": "Open workspace",
+        "noDelays": "No projects are currently delayed",
+        "noPending": "Approval queue is empty",
+        "completedProjects": "Completed Projects",
+        "completedProjectsDesc": "Projects successfully delivered to clients",
+        "viewCompleted": "View completed"
+      },
+      "recentActivity": {
+        "title": "Recent Activity",
+        "loading": "Loading activity...",
+        "empty": "No activity events have been recorded yet."
+      },
+      "exported": "Dashboard exported to Excel.",
+      "export": "Export",
+      "charts": {
+        "activity": "Project Activity",
+        "activityDesc": "Daily project updates over the last 7 days",
+        "status": "Project Status",
+        "statusDesc": "{{count}} projects tracked"
+      }
+    },
+    "projects": {
+      "title": "My Projects",
+      "loadError": "Unable to load projects.",
+      "loading": "Loading projects...",
+      "noMatch": "No projects match your filter.",
+      "newProject": "New Project",
+      "searchPlaceholder": "Search projects...",
+      "filter": {
+        "all": "All"
+      },
+      "stats": {
+        "total": "Total",
+        "inDesign": "In Design",
+        "review": "Review",
+        "delayed": "Delayed"
+      },
+      "view": {
+        "list": "List view",
+        "grid": "Grid view",
+        "kanban": "Kanban view"
+      },
+      "table": {
+        "project": "Project",
+        "client": "Client",
+        "size": "Size",
+        "progress": "Progress",
+        "deadline": "Deadline",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "grid": {
+        "system": "System",
+        "size": "Size",
+        "deadline": "Deadline",
+        "pm": "PM",
+        "progress": "Progress"
+      },
+      "actions": {
+        "open": "Open",
+        "details": "Details",
+        "advance": "Advance",
+        "openWorkspace": "Open Workspace",
+        "delete": "Delete",
+        "edit": "Edit"
+      },
+      "stage": {
+        "intake": "Intake",
+        "design": "Design",
+        "review": "Review",
+        "production": "Production",
+        "closed": "Closed"
+      },
+      "detail": {
+        "stage": "Stage: {{stage}}",
+        "description": "Description",
+        "noDescription": "No project description has been saved yet.",
+        "lifecycle": "Lifecycle",
+        "history": "Stage history",
+        "historyMeta": "{{from}} → {{to}}",
+        "historyActor": "{{actor}} / {{time}}",
+        "noHistory": "No stage changes have been recorded yet."
+      },
+      "modal": {
+        "title": "Create New Project",
+        "projectName": "Project Name",
+        "client": "Client",
+        "deadline": "Deadline",
+        "system": "System",
+        "systemCustom": "Custom",
+        "width": "Width (m)",
+        "depth": "Depth (m)",
+        "submit": "Create Project",
+        "dimensionsInvalid": "Width and depth must be between 1 and 100 meters.",
+        "deadlineInvalid": "Deadline must be today or later.",
+        "nameClientRequired": "Name and client are required."
+      },
+      "toast": {
+        "created": "Project \"{{name}}\" saved.",
+        "createError": "Unable to create project.",
+        "stageUpdated": "{{name}} moved to {{stage}}.",
+        "stageError": "Project stage could not be saved.",
+        "edited": "\"{{name}}\" updated.",
+        "editError": "Could not save changes.",
+        "deleted": "\"{{name}}\" deleted.",
+        "deleteError": "Could not delete project.",
+        "exported": "Projects exported to Excel."
+      },
+      "paging": {
+        "showing": "Showing {{start}}-{{end}} of {{total}} projects"
+      },
+      "exportTooltip": "Export to Excel",
+      "export": "Export",
+      "sortBy": "Sort by",
+      "delete": {
+        "title": "Delete project?",
+        "warning": "This project and all associated data will be permanently removed.",
+        "confirm": "Delete"
+      },
+      "kanban": {
+        "empty": "No projects",
+        "planning": "Planning",
+        "progress": "In Progress",
+        "delayed": "Delayed",
+        "completed": "Completed"
+      },
+      "edit": {
+        "title": "Edit Project",
+        "submit": "Save Changes"
+      },
+      "sort": {
+        "name": "Name",
+        "deadline": "Deadline",
+        "progress": "Progress",
+        "status": "Status"
+      }
+    },
+    "clients": {
+      "title": "My Clients",
+      "loadError": "Could not load clients.",
+      "loading": "Loading clients...",
+      "noMatch": "No clients match the current search.",
+      "searchPlaceholder": "Search clients...",
+      "stats": {
+        "total": "Total Clients",
+        "active": "Active",
+        "needsSetup": "Needs Setup"
+      },
+      "actions": {
+        "email": "Email client",
+        "emailClient": "Email {{name}}",
+        "openWorkspace": "Open workspace",
+        "openWorkspaceFor": "Open workspace for {{name}}",
+        "noWorkspace": "No project workspace is available",
+        "toggleExpand": "Toggle details for {{name}}",
+        "openDetails": "Open details for {{name}}",
+        "viewProject": "View project",
+        "message": "Message",
+        "messageClient": "Message {{name}}"
+      },
+      "paging": {
+        "showing": "Showing {{start}}-{{end}} of {{total}} clients"
+      },
+      "detail": {
+        "clientDetails": "Client Details",
+        "contact": "Contact",
+        "linkedProject": "Linked Project",
+        "noLinkedProject": "No linked project",
+        "operationalStatus": "Operational Status",
+        "assignedPm": "Assigned PM: {{name}}",
+        "lastActivity": "Last activity: {{time}}",
+        "dataSource": "Loaded from PostgreSQL client and project records",
+        "workspaceReady": "Project workspace link is available.",
+        "workspaceMissing": "No project workspace is linked to this client yet.",
+        "changeStatus": "Change client status"
+      }
+    },
+    "tasks": {
+      "title": "Tasks Kanban",
+      "newTask": "New Task",
+      "addTask": "Add task",
+      "noTasks": "No tasks",
+      "noProjects": "No assigned projects are available for task creation.",
+      "filter": {
+        "all": "All"
+      },
+      "cols": {
+        "todo": "To Do",
+        "inprogress": "In Progress",
+        "in_progress": "In Progress",
+        "review": "In Review",
+        "blocked": "Blocked",
+        "done": "Done"
+      },
+      "actions": {
+        "moveLeft": "Move left",
+        "moveRight": "Move right",
+        "delete": "Delete",
+        "deleteTask": "Delete \"{{title}}\"",
+        "retry": "Retry",
+        "edit": "Edit",
+        "editTask": "Edit {{title}}"
+      },
+      "addToCol": "Add task to {{col}}",
+      "stats": {
+        "total": "Total: {{count}} tasks",
+        "overdue": "Overdue: {{count}}"
+      },
+      "toast": {
+        "moved": "\"{{title}}\" → {{col}}",
+        "created": "Task created: \"{{title}}\"",
+        "movedClean": "\"{{title}}\" moved to {{col}}",
+        "loadError": "Could not load tasks.",
+        "deleted": "Task deleted: \"{{title}}\"",
+        "createError": "Could not create task.",
+        "updateError": "Could not update task.",
+        "deleteError": "Could not delete task.",
+        "deadlineInvalid": "Choose a valid deadline.",
+        "deadlinePast": "Deadline cannot be in the past.",
+        "notesTooLong": "Task notes must be under 4000 characters.",
+        "titleRequired": "Task title is required.",
+        "projectRequired": "A project is required.",
+        "updated": "Task updated."
+      },
+      "modal": {
+        "title": "Create Task",
+        "taskTitle": "Title",
+        "taskTitlePlaceholder": "Task description…",
+        "client": "Client",
+        "project": "Project",
+        "priority": "Priority",
+        "deadline": "Deadline",
+        "initialCol": "Initial Column",
+        "submit": "Create Task",
+        "select": "Select…",
+        "notes": "Notes",
+        "notesPlaceholder": "Add context, blockers, or reminder details..."
+      },
+      "reminder": {
+        "dueSoon": "Due in {{count}}d"
+      },
+      "edit": {
+        "title": "Edit task"
+      },
+      "confirmDelete": {
+        "title": "Delete task?",
+        "body": "This task will be permanently removed and cannot be recovered."
+      }
+    },
+    "messages": {
+      "title": "Messages",
+      "unread": "{{count}} unread",
+      "justNow": "just now",
+      "loadContactsError": "Could not load contacts.",
+      "loadMessagesError": "Could not load messages.",
+      "loadProjectsError": "Could not load project scopes.",
+      "sendError": "Could not send message.",
+      "searchPlaceholder": "Search contacts…",
+      "loadingContacts": "Loading contacts…",
+      "noContacts": "No contacts found.",
+      "chiefPortal": "Chief portal",
+      "projectScope": "Project scope",
+      "noProjectScopes": "No assigned projects. Messages will use a general thread.",
+      "generalThread": "General thread",
+      "scopedTo": "Scoped to {{project}}",
+      "noMessages": "No messages yet. Send the first one!",
+      "selectContact": "Select a contact to start messaging.",
+      "inputPlaceholder": "Type a message…",
+      "attachmentDraft": "Attachment reference: {{name}}",
+      "enterToSend": "Press Enter to send",
+      "toast": {
+        "callStarted": "Starting call with {{name}}…",
+        "videoReady": "Opening video with {{name}}…",
+        "optionsOpened": "Options menu opened.",
+        "attachmentOpened": "Attachment picker opened.",
+        "callRequestOpened": "Call request opened for {{name}}.",
+        "videoRequestOpened": "Video request opened for {{name}}.",
+        "attachmentSelected": "{{name}} attached as a message reference.",
+        "attachmentTooLarge": "Choose a file under 10 MB.",
+        "contextCopied": "Thread context copied.",
+        "contextCopyError": "Thread context could not be copied.",
+        "attachmentUploadError": "Attachment could not be uploaded."
+      },
+      "actions": {
+        "call": "Start voice call",
+        "video": "Start video call",
+        "more": "More options",
+        "attach": "Attach file",
+        "send": "Send message",
+        "email": "Email contact",
+        "copyContext": "Copy thread context",
+        "clearAttachment": "Remove attachment reference"
+      },
+      "attachmentFallback": "Attachment",
+      "newConversation": "New conversation",
+      "newChatSearchPlaceholder": "Find a contact…",
+      "newChatHint": "Select a contact to start a new thread",
+      "newChatNoMatch": "No contacts match your search.",
+      "newChatAllAdded": "All contacts are already in your conversations.",
+      "uploadingAttachment": "Uploading attachment..."
+    },
+    "requests": {
+      "title": "Revision Requests",
+      "pendingBadge": "{{count}} Pending",
+      "justNow": "just now",
+      "pmInitials": "PM",
+      "replyCount": "{{count}} replies",
+      "replyPlaceholder": "Add a reply…",
+      "loadError": "Revision requests could not be loaded.",
+      "statusError": "Request status could not be saved.",
+      "replyError": "Reply could not be saved.",
+      "noMatch": "No requests match this filter.",
+      "filter": {
+        "all": "All"
+      },
+      "status": {
+        "pending": "Pending",
+        "inProgress": "In Progress",
+        "resolved": "Resolved",
+        "declined": "Declined"
+      },
+      "priority": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "actions": {
+        "start": "Start",
+        "decline": "Decline",
+        "resolve": "Resolve",
+        "reply": "Reply",
+        "sendReply": "Send reply",
+        "expand": "Show replies",
+        "collapse": "Hide replies",
+        "details": "Details"
+      },
+      "toast": {
+        "started": "Request started",
+        "declined": "Request declined",
+        "resolved": "Request resolved",
+        "pending": "Request set to pending",
+        "replySent": "Reply sent"
+      },
+      "searchPlaceholder": "Search requests...",
+      "history": {
+        "title": "Request history",
+        "meta": "{{actor}} / {{time}}",
+        "empty": "No request history has been recorded yet."
+      },
+      "detail": {
+        "request": "Request",
+        "replies": "Replies",
+        "noReplies": "No replies yet."
+      },
+      "confirmDecline": {
+        "title": "Decline this request?",
+        "body": "The client will see this request marked as Declined. This action cannot be undone."
+      },
+      "paging": {
+        "showing": "Showing {{start}}-{{end}} of {{total}} requests"
+      }
+    },
+    "reports": {
+      "title": "Performance Reports",
+      "export": "Export",
+      "loadError": "Report data could not be loaded.",
+      "loading": "Loading report data...",
+      "empty": "No report data has been recorded for this period.",
+      "vsLastPeriod": "vs last period",
+      "total": "Total: {{count}} projects",
+      "period": {
+        "this_week": "This Week",
+        "last_week": "Last Week",
+        "this_month": "This Month",
+        "last_month": "Last Month",
+        "this_quarter": "This Quarter"
+      },
+      "stats": {
+        "completionRate": "Completion Rate",
+        "satisfaction": "Client Satisfaction",
+        "activeClients": "Active Clients",
+        "avgResponse": "Avg Response"
+      },
+      "chart": {
+        "tasks": "Tasks",
+        "revisions": "Revisions",
+        "approvals": "Approvals",
+        "efficiency": "Efficiency",
+        "onTime": "On-Time",
+        "changes": "Changes"
+      },
+      "cards": {
+        "weeklyTitle": "Weekly Productivity",
+        "weeklyDesc": "Tasks, revisions and approvals · {{period}}",
+        "efficiencyTitle": "Project Efficiency",
+        "efficiencyDesc": "Design efficiency vs on-time delivery",
+        "revisionTitle": "Revision & Change Trend",
+        "revisionDesc": "Monthly revision requests vs change orders",
+        "statusTitle": "Project Status Breakdown",
+        "statusDesc": "Current distribution across all projects"
+      },
+      "pieStatus": {
+        "active": "Active",
+        "pending": "Pending",
+        "review": "Review",
+        "delayed": "Delayed"
+      },
+      "toast": {
+        "exporting": "Export started…",
+        "exported": "Excel report exported"
+      }
+    },
+    "calendar": {
+      "title": "Calendar",
+      "breadcrumb": "Calendar",
+      "addEvent": "Add Event",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "searchPlaceholder": "Search events…",
+      "today": "Today",
+      "eventsThisMonth": "events this month",
+      "addToDay": "Add",
+      "noEventsDay": "No events scheduled for this day.",
+      "upcomingThisMonth": "Events This Month",
+      "noEvents": "No events match the current filters.",
+      "error": {
+        "load": "Failed to load calendar",
+        "nameRequired": "Name is required",
+        "startRequired": "Start date is required",
+        "endRequired": "End date is required",
+        "endBeforeStart": "End date must be on or after start date",
+        "save": "Failed to save",
+        "delete": "Failed to delete"
+      },
+      "filter": {
+        "all": "All",
+        "active": "Active",
+        "pending": "Pending",
+        "delayed": "Delayed",
+        "completed": "Completed"
+      },
+      "create": {
+        "title": "Add Event",
+        "description": "Add an exhibition or deadline to your calendar.",
+        "confirm": "Create Event"
+      },
+      "edit": {
+        "title": "Edit Event",
+        "description": "Update event details.",
+        "confirm": "Save Changes"
+      },
+      "delete": {
+        "title": "Delete Event",
+        "description": "Remove \"{{name}}\" from the calendar?",
+        "confirm": "Delete"
+      },
+      "form": {
+        "name": "Event Name",
+        "client": "Client",
+        "location": "Location",
+        "start": "Start Date",
+        "end": "End Date",
+        "standType": "Stand Type",
+        "status": "Status"
+      }
+    }
+  },
+  "client": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "projects": "Projects",
+      "workspace": "Workspace",
+      "messages": "Messages",
+      "approvals": "Approvals",
+      "documents": "Documents",
+      "profile": "Profile"
+    },
+    "dashboard": {
+      "pageTitle": "Dashboard | ENS",
+      "welcome": "Welcome back, {{name}}",
+      "breadcrumb": "Dashboard",
+      "errorLoad": "Could not load client dashboard data.",
+      "defaultClientName": "Client",
+      "loadingProject": "Loading project...",
+      "noActiveProject": "No active project",
+      "projectSubtitle": "Project data is loaded from PostgreSQL",
+      "loadingActiveProject": "Loading active project...",
+      "noProjectAssigned": "No active project has been assigned yet.",
+      "pmLabel": "Project Manager",
+      "messagesBtn": "Messages",
+      "overallProgress": "Overall Progress",
+      "viewWorkspace": "VIEW WORKSPACE",
+      "workspacePreview": "Workspace Preview",
+      "recentActivity": "Recent Activity",
+      "loadingActivity": "Loading activity...",
+      "noActivity": "No activity has been recorded yet.",
+      "viewTimeline": "View Project Timeline",
+      "approvalProgress": "Approval Progress",
+      "stat": {
+        "progress": "Project Progress",
+        "pendingApprovals": "Pending Approvals",
+        "workspaceVersions": "Workspace Versions",
+        "documents": "Documents"
+      },
+      "step": {
+        "created": "Created",
+        "designing": "Designing",
+        "review": "Review",
+        "approved": "Approved",
+        "production": "Production"
+      },
+      "approval": {
+        "created": "Project Created",
+        "designing": "Design In Progress",
+        "review": "Client Review",
+        "reviewRequired": "Review required",
+        "noReview": "No pending review"
+      }
+    },
+    "approvals": {
+      "pageTitle": "Approvals | ENS",
+      "title": "Approvals",
+      "breadcrumbDashboard": "Dashboard",
+      "awaitingReview": "{{count}} Awaiting Your Review",
+      "filterGroup": "Filter approvals",
+      "filterByStatus": "Filter by {{status}}",
+      "justNow": "Just now",
+      "emptyState": "No approvals here.",
+      "toggleDetails": "Toggle details for {{title}}",
+      "commentPlaceholder": "Leave a comment for your PM…",
+      "sendComment": "Send comment",
+      "status": {
+        "Pending": "Pending",
+        "Approved": "Approved",
+        "Rejected": "Rejected"
+      },
+      "filter": {
+        "all": "All"
+      },
+      "actions": {
+        "approve": "Approve",
+        "requestChanges": "Request Changes",
+        "viewDetails": "View Details"
+      },
+      "toast": {
+        "approved": "✓ Design approved — PM notified",
+        "rejected": "Changes requested — PM notified",
+        "commentSent": "Comment sent to PM"
+      },
+      "badge": {
+        "me": "ME",
+        "pm": "PM"
+      },
+      "comments_one": "{{count}} comment",
+      "comments_other": "{{count}} comments",
+      "confirm": {
+        "approveTitle": "Approve This Design?",
+        "rejectTitle": "Request Changes?",
+        "approveBody": "Your PM will be notified and this version will be marked as approved.",
+        "rejectBody": "Your PM will be notified and will address your feedback.",
+        "cancel": "Cancel",
+        "confirmApprove": "Yes, Approve",
+        "confirmReject": "Yes, Request Changes"
+      }
+    },
+    "documents": {
+      "pageTitle": "Documents | ENS",
+      "title": "Documents",
+      "breadcrumbDashboard": "Dashboard",
+      "uploadBtn": "Upload Files",
+      "filterGroup": "Filter by category",
+      "searchPlaceholder": "Search files, tags…",
+      "emptyState": "No documents found.",
+      "filter": {
+        "all": "All"
+      },
+      "stat": {
+        "total": "Total Files",
+        "final": "Final",
+        "inReview": "In Review",
+        "drafts": "Drafts"
+      },
+      "status": {
+        "final": "Final",
+        "draft": "Draft",
+        "review": "In Review"
+      },
+      "dropZone": {
+        "ariaLabel": "File upload drop zone",
+        "textBefore": "Drag and drop files here, or",
+        "browse": "browse",
+        "hint": "PDF, PNG, XLSX, DOC — up to 50 MB per file"
+      },
+      "table": {
+        "file": "File",
+        "category": "Category",
+        "uploadedBy": "Uploaded By",
+        "date": "Date",
+        "status": "Status"
+      },
+      "actions": {
+        "preview": "Preview {{name}}",
+        "download": "Download {{name}}",
+        "remove": "Remove {{name}}"
+      },
+      "toast": {
+        "uploaded_one": "{{count}} file uploaded",
+        "uploaded_other": "{{count}} files uploaded",
+        "fileRemoved": "File removed",
+        "downloading": "Downloading {{name}}…"
+      },
+      "preview": {
+        "close": "Close preview",
+        "imageUnavailable": "Image preview not available in demo",
+        "typeUnavailable": "Preview not available for {{type}} files",
+        "category": "Category",
+        "status": "Status",
+        "uploadedBy": "Uploaded by",
+        "tags": "Tags",
+        "downloadBtn": "Download File"
+      }
+    },
+    "messages": {
+      "pageTitle": "Messages | ENS",
+      "title": "Messages",
+      "breadcrumbDashboard": "Dashboard",
+      "searchPlaceholder": "Search messages...",
+      "contactListLabel": "Conversations",
+      "supportManager": "Support Manager",
+      "activeNow": "Active Now",
+      "justNow": "Just now",
+      "threadLabel": "Message thread",
+      "avatarYou": "YC",
+      "avatarPm": "PM",
+      "inputPlaceholder": "Type your message...",
+      "actions": {
+        "phone": "Start phone call",
+        "video": "Start video call",
+        "more": "More options",
+        "attach": "Attach file",
+        "send": "Send message"
+      }
+    },
+    "projects": {
+      "pageTitle": "My Projects | ENS",
+      "title": "My Projects",
+      "breadcrumbDashboard": "Dashboard",
+      "breadcrumbProjects": "Projects",
+      "actionRequired": "Action Required",
+      "exhibitionTbd": "Exhibition TBD",
+      "productionProgress": "Production Progress",
+      "quickActions": "Quick Actions",
+      "stat": {
+        "total": "Total Projects",
+        "active": "Active",
+        "pendingReview": "Pending Review",
+        "avgProgress": "Avg. Progress"
+      },
+      "status": {
+        "Active": "Active",
+        "Pending": "Pending",
+        "Delayed": "Delayed",
+        "Completed": "Completed"
+      },
+      "meta": {
+        "system": "System",
+        "size": "Size",
+        "pm": "PM",
+        "deadline": "Deadline"
+      },
+      "timeline": {
+        "heading": "Project Timeline",
+        "defaultLabel": "Project created — design in progress",
+        "defaultDate": "Recently"
+      },
+      "action": {
+        "viewDesign": "View Design",
+        "reviewPending": "Review Pending",
+        "approvals": "Approvals",
+        "documents": "Documents",
+        "messagePm": "Message PM"
+      }
+    },
+    "profile": {
+      "pageTitle": "Profile Settings | ENS",
+      "title": "Profile Settings",
+      "breadcrumbDashboard": "Dashboard",
+      "breadcrumbProfile": "Profile",
+      "tab": {
+        "profile": "Personal Info",
+        "company": "Company",
+        "notifications": "Notifications",
+        "security": "Security"
+      },
+      "personalInfo": {
+        "heading": "Personal Information",
+        "description": "Update your personal details and how we can reach you."
+      },
+      "company": {
+        "heading": "Company Information",
+        "description": "Manage your company details and exhibition profile."
+      },
+      "avatar": {
+        "heading": "Profile Picture",
+        "hint": "JPG, GIF or PNG. Max size 1.5MB.",
+        "uploadNew": "Upload New",
+        "remove": "Remove",
+        "changeBtn": "Change profile picture"
+      },
+      "field": {
+        "name": "Full Name",
+        "email": "Email Address",
+        "phone": "Phone Number",
+        "companyName": "Company Name",
+        "industry": "Industry",
+        "website": "Website",
+        "currentPassword": "Current Password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm New Password"
+      },
+      "btn": {
+        "saveChanges": "Save Changes",
+        "updateCompany": "Update Company Info",
+        "updatePassword": "Update Password"
+      },
+      "notifications": {
+        "heading": "Notification Preferences",
+        "description": "Choose how you want to be notified about project updates.",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "milestones": {
+          "title": "Project Milestones",
+          "desc": "Get notified when a stage is completed."
+        },
+        "assignments": {
+          "title": "New Messages",
+          "desc": "Get notified when your PM sends a message."
+        },
+        "reports": {
+          "title": "Revision Requests",
+          "desc": "Get notified when a new design version is ready."
+        },
+        "system": {
+          "title": "Security Alerts",
+          "desc": "Get notified about account logins."
+        }
+      },
+      "security": {
+        "heading": "Security",
+        "description": "Manage your password and account security settings."
+      },
+      "dangerZone": {
+        "heading": "Danger Zone",
+        "description": "Once you delete your account, there is no going back. Please be certain.",
+        "deleteBtn": "Delete Account"
+      },
+      "validation": {
+        "nameMin": "Name must be at least 2 characters",
+        "emailInvalid": "Invalid email address",
+        "companyNameRequired": "Company name is required",
+        "websiteInvalid": "Invalid URL"
+      },
+      "toast": {
+        "profileSaved": "Profile changes saved",
+        "profileError": "Profile could not be saved",
+        "profileLoadError": "Profile settings could not be loaded",
+        "companySaved": "Company information saved",
+        "avatarUpdated": "Profile picture updated",
+        "avatarRemoved": "Profile picture removed",
+        "avatarError": "Profile picture could not be saved",
+        "avatarRemoveError": "Profile picture could not be removed",
+        "avatarNotImage": "Choose an image file",
+        "avatarTooLarge": "Choose an image under 1.5 MB",
+        "imageReadError": "Image could not be read",
+        "notificationError": "Notification setting could not be saved",
+        "passwordUpdated": "Password update saved",
+        "passwordError": "Password could not be updated",
+        "passwordFillAll": "Fill all password fields",
+        "passwordMismatch": "New passwords do not match",
+        "passwordTooShort": "Password must be at least 8 characters",
+        "deleteQueued": "Account deletion request queued"
+      }
+    },
+    "workspace": {
+      "pageTitle": "Design Workspace | ENS",
+      "viewOnly": "VIEW ONLY",
+      "loadingWorkspace": "Loading workspace…",
+      "compareBtn": "Compare",
+      "addPinBtn": "Add Pin",
+      "pinningLabel": "Pinning…",
+      "downloadBtn": "Download",
+      "requestChangesBtn": "Request Changes",
+      "approvedLabel": "Approved",
+      "approveDesignBtn": "Approve Design",
+      "assetLibraryLabel": "Asset Library",
+      "lockedLabel": "LOCKED",
+      "reviewModeNote": "Assets are locked in review mode. Contact your PM to request modifications.",
+      "canvasLabel": "3D booth preview canvas",
+      "compareCurrentLabel": "v{{v}} — Current",
+      "comparePreviousLabel": "v{{v}} — Previous",
+      "clickToPin": "Click canvas to place pin",
+      "versionSelect": "Select version",
+      "tab": {
+        "thread": "Thread",
+        "approvals": "Approvals",
+        "pins": "Pins"
+      },
+      "pendingDot": "Pending approvals",
+      "reviewThread": "Review Thread",
+      "notesCount_one": "{{count}} note",
+      "notesCount_other": "{{count}} notes",
+      "commentPlaceholder": "Add a comment…",
+      "sendComment": "Send comment",
+      "projectInfoLabel": "Project Info",
+      "info": {
+        "system": "System",
+        "floorArea": "Floor Area",
+        "dimensions": "Dimensions",
+        "approval": "Approval",
+        "awaiting": "Awaiting approval"
+      },
+      "elementApprovalHeading": "Review and approve each design element",
+      "element": {
+        "structure": "Structure",
+        "furniture": "Furniture",
+        "branding": "Branding",
+        "lighting": "Lighting"
+      },
+      "elementStatus": {
+        "approved": "Approved",
+        "pending": "Pending",
+        "rejected": "Feedback Sent"
+      },
+      "approveBtn": "Approve",
+      "requestFixBtn": "Request Fix",
+      "resetBtn": "Reset to pending",
+      "allApprovedMsg": "All elements approved",
+      "pendingApprovalMsg": "Pending approvals",
+      "approvedCount": "{{approved}} of {{total}} approved",
+      "canvasAnnotations": "Canvas Annotations",
+      "placingLabel": "Placing…",
+      "noPins": "No pins placed yet — use the Add Pin button, then click the canvas.",
+      "removePin": "Remove pin #{{num}}",
+      "statusBar": {
+        "viewOnly": "VIEW ONLY",
+        "restricted": "CLIENT REVIEW — RESTRICTED ACCESS"
+      },
+      "statusReadOnly": "READ ONLY",
+      "statusCompare": "COMPARE MODE",
+      "dialog": {
+        "title": "Request Design Changes",
+        "subtitle": "Describe what you'd like to change. Your PM will be notified.",
+        "placeholder": "Describe the changes you'd like…",
+        "cancel": "Cancel",
+        "submit": "Send Request"
+      },
+      "toast": {
+        "allApproved": "All elements approved — thank you!",
+        "changeRequestSent": "Change request sent to your PM",
+        "pinAdded": "Pin #{{num}} added",
+        "elementApproved": "{{label}} approved",
+        "feedbackSent": "Feedback sent to PM",
+        "downloadStarted": "Download started",
+        "designApproved": "Design approved — thank you!"
+      },
+      "justNow": "Just now",
+      "changeRequestPrefix": "Change Request",
+      "pinPrefix": "Pin",
+      "pinAnnotationPrompt": "Add a note for this pin",
+      "pinPlaceholder": "Describe this location…",
+      "confirmPin": "Confirm pin",
+      "cancelPin": "Cancel pin",
+      "errorLoad": "Failed to load workspace",
+      "ctrl": {
+        "reset": "Reset view",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "fullscreen": "Fullscreen"
+      }
+    }
+  },
+  "notFound": {
+    "title": "404 – Page Not Found",
+    "badge": "Page not found",
+    "heading": "This booth doesn't exist",
+    "body": "The page you're looking for has either moved, been removed, or never existed. Let's get you back to the platform.",
+    "backHome": "Back to Home",
+    "goBack": "Go Back",
+    "links": {
+      "home": "Home",
+      "staffPortal": "Staff Portal",
+      "login": "Log In",
+      "signUp": "Sign Up"
+    }
+  },
+  "auth": {
+    "login": {
+      "pageTitle": "Sign In | ENS",
+      "title": "Welcome back",
+      "description": "Sign in to access your workspace",
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@company.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "forgotPassword": "Forgot password?",
+      "rememberMe": "Keep me signed in for 30 days",
+      "submit": "Sign In",
+      "submitting": "Signing in...",
+      "lockedBtn": "Locked",
+      "lockMessage": "Account temporarily locked. Try again in {{time}}.",
+      "signInError": "Could not sign in.",
+      "attemptsRemaining_one": "{{count}} sign-in attempt remaining before temporary lockout",
+      "attemptsRemaining_other": "{{count}} sign-in attempts remaining before temporary lockout",
+      "noAccount": "Don't have an account?",
+      "signUpFree": "Sign up free",
+      "devSection": "Local Test Accounts",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "validation": {
+        "email": "Invalid email address",
+        "passwordMin": "Password must be at least 8 characters"
+      }
+    },
+    "signup": {
+      "pageTitle": "Create Account | ENS",
+      "title": "Create client account",
+      "description": "Client signup creates a review account pending agency approval",
+      "fullNameLabel": "Full Name",
+      "fullNamePlaceholder": "John Doe",
+      "companyLabel": "Company",
+      "companyPlaceholder": "Acme Exhibits",
+      "workEmailLabel": "Work Email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Create a password",
+      "confirmPasswordLabel": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "termsLabel": "I agree to the",
+      "termsOfService": "Terms of Service",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy",
+      "submit": "Create Client Account",
+      "submitting": "Creating account...",
+      "createError": "Could not create account.",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "clientOnlyNote": "Public signup is limited to clients. Project managers and chiefs must be invited by an organization owner.",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "showConfirmPassword": "Show confirmation password",
+      "hideConfirmPassword": "Hide confirmation password",
+      "strength": {
+        "weak": "Weak",
+        "fair": "Fair",
+        "good": "Good",
+        "strong": "Strong",
+        "suffix": "password"
+      },
+      "validation": {
+        "nameMin": "Name must be at least 2 characters",
+        "companyMin": "Company must be at least 2 characters",
+        "email": "Invalid email address",
+        "passwordMin": "Password must be at least 8 characters",
+        "passwordUpper": "Must contain an uppercase letter",
+        "passwordNumber": "Must contain a number",
+        "confirmRequired": "Please confirm your password",
+        "termsRequired": "You must accept the terms",
+        "passwordsMismatch": "Passwords don't match"
+      }
+    },
+    "forgotPassword": {
+      "pageTitle": "Reset Password | ENS",
+      "title": "Reset password",
+      "description": "Enter your email and we'll send you a reset link",
+      "emailLabel": "Email address",
+      "submit": "Send Reset Link",
+      "submitting": "Sending link...",
+      "sentTitle": "Check your inbox",
+      "sentTo": "We sent a password reset link to",
+      "checkSpam": "Check your spam folder if you don't see it within a few minutes.",
+      "resending": "Sending...",
+      "resendIn": "Resend in {{seconds}}s",
+      "resendEmail": "Resend email",
+      "differentEmail": "Use a different email",
+      "backToLogin": "Back to login",
+      "validation": {
+        "email": "Please enter a valid email address"
+      }
+    },
+    "resetPassword": {
+      "pageTitle": "Set New Password | ENS",
+      "title": "Set new password",
+      "description": "Choose a strong password for your account",
+      "newPasswordLabel": "New Password",
+      "confirmPasswordLabel": "Confirm Password",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Update Password",
+      "submitting": "Updating password...",
+      "successTitle": "Password updated",
+      "successMessage": "Your password has been updated successfully. You can now sign in with your new credentials.",
+      "continueToSignIn": "Continue to Sign In",
+      "backToLogin": "Back to login",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "showConfirmPassword": "Show confirmation password",
+      "hideConfirmPassword": "Hide confirmation password",
+      "requirements": {
+        "length": "At least 8 characters",
+        "uppercase": "One uppercase letter",
+        "number": "One number"
+      },
+      "strength": {
+        "weak": "Weak",
+        "fair": "Fair",
+        "good": "Good",
+        "strong": "Strong",
+        "suffix": "password"
+      },
+      "validation": {
+        "passwordMin": "Password must be at least 8 characters",
+        "passwordUpper": "Must contain at least one uppercase letter",
+        "passwordNumber": "Must contain at least one number",
+        "confirmRequired": "Please confirm your password",
+        "passwordsMismatch": "Passwords don't match"
+      }
     }
   }
 }

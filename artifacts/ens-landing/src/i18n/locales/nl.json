@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "startDesigning": "Start ontwerpen",
     "watchDemo": "Bekijk demo",
@@ -9,7 +9,9 @@
     "logIn": "Inloggen",
     "learnMore": "Meer informatie",
     "copyright": "© {{year}} ENS Expo Solutions Ltd. Alle rechten voorbehouden.",
-    "internalOnly": "Alleen intern gebruik"
+    "internalOnly": "Alleen intern gebruik",
+    "vsLastMonth": "vs vorige maand",
+    "clickToView": "Klik om te bekijken →"
   },
   "nav": {
     "features": "Functies",
@@ -45,20 +47,54 @@
       "heading": "Alles wat u nodig heeft om",
       "headingAccent": "te ontwerpen en te leveren",
       "subheading": "Een complete ontwerp- en projectbeheersuite speciaal gebouwd voor de tentoonstellingsindustrie.",
-      "realtime": { "title": "Real-time 3D canvas", "desc": "Sleep systeemcomponenten naar een live 3D-podium. Wat u ziet, wordt gebouwd." },
-      "octanorm": { "title": "Octanorm-systeem", "desc": "Volledig Octanorm-modulair systeem met nauwkeurige 40 mm en 50 mm profielen, connectors en panelen." },
-      "maxima": { "title": "Maxima-raamwerk", "desc": "Zwaar Maxima-aluminium extrusiessysteem met configureerbare overspanningen en opvullopties." },
-      "client": { "title": "Klantbeoordeling", "desc": "Deel een live 3D-link met klanten. Ze annoteren direct op het model — geen account nodig." },
-      "analytics": { "title": "Projectanalyse", "desc": "Volg projectsnelheid, goedkeuringscycli, kostenprognoses en teamgebruik in realtime." },
-      "automation": { "title": "Slimme automatisering", "desc": "Genereer automatisch plattegronden, aanzichttekeningen, onderdelenlijsten en kostenramingen met één klik." }
+      "realtime": {
+        "title": "Real-time 3D canvas",
+        "desc": "Sleep systeemcomponenten naar een live 3D-podium. Wat u ziet, wordt gebouwd."
+      },
+      "octanorm": {
+        "title": "Octanorm-systeem",
+        "desc": "Volledig Octanorm-modulair systeem met nauwkeurige 40 mm en 50 mm profielen, connectors en panelen."
+      },
+      "maxima": {
+        "title": "Maxima-raamwerk",
+        "desc": "Zwaar Maxima-aluminium extrusiessysteem met configureerbare overspanningen en opvullopties."
+      },
+      "client": {
+        "title": "Klantbeoordeling",
+        "desc": "Deel een live 3D-link met klanten. Ze annoteren direct op het model — geen account nodig."
+      },
+      "analytics": {
+        "title": "Projectanalyse",
+        "desc": "Volg projectsnelheid, goedkeuringscycli, kostenprognoses en teamgebruik in realtime."
+      },
+      "automation": {
+        "title": "Slimme automatisering",
+        "desc": "Genereer automatisch plattegronden, aanzichttekeningen, onderdelenlijsten en kostenramingen met één klik."
+      }
     },
     "howItWorks": {
       "heading": "Van briefing tot bouw in",
       "headingAccent": "vier stappen",
-      "brief": { "step": "01", "title": "Briefing uploaden", "desc": "Importeer de evenementbriefing, plattegrond of standspecificatieblad van uw klant." },
-      "design": { "step": "02", "title": "Ontwerpen in 3D", "desc": "Bouw de stand met Octanorm- of Maxima-systeemcomponenten en de meubelbibliotheek." },
-      "review": { "step": "03", "title": "Klantbeoordeling", "desc": "Stuur een deelbare link. De klant beoordeelt en keurt goed direct in het 3D-model." },
-      "deliver": { "step": "04", "title": "Exporteren en leveren", "desc": "Met één klik exporteren naar productiedocumenten, tekeningen en onderdelenplanningen." }
+      "brief": {
+        "step": "01",
+        "title": "Briefing uploaden",
+        "desc": "Importeer de evenementbriefing, plattegrond of standspecificatieblad van uw klant."
+      },
+      "design": {
+        "step": "02",
+        "title": "Ontwerpen in 3D",
+        "desc": "Bouw de stand met Octanorm- of Maxima-systeemcomponenten en de meubelbibliotheek."
+      },
+      "review": {
+        "step": "03",
+        "title": "Klantbeoordeling",
+        "desc": "Stuur een deelbare link. De klant beoordeelt en keurt goed direct in het 3D-model."
+      },
+      "deliver": {
+        "step": "04",
+        "title": "Exporteren en leveren",
+        "desc": "Met één klik exporteren naar productiedocumenten, tekeningen en onderdelenplanningen."
+      }
     },
     "testimonials": {
       "heading": "Vertrouwd door de",
@@ -104,7 +140,8 @@
       "security": "Beveiliging",
       "cookies": "Cookiebeleid",
       "gdpr": "AVG"
-    }
+    },
+    "pageTitle": "ENS — Platform voor beurs- en standontwerp"
   },
   "team": {
     "hero": {
@@ -169,6 +206,1949 @@
       "itSupport": "IT-ondersteuning",
       "privacy": "Privacybeleid",
       "security": "Beveiliging"
+    },
+    "pageTitle": "ENS Teamportaal — Hub voor medewerkers en klanten",
+    "chiefFeatures": {
+      "workspaceMonitor": {
+        "title": "Werkruimtemonitor",
+        "desc": "Live toezicht op elke actieve ontwerpsessie in alle projecten."
+      },
+      "teamManagement": {
+        "title": "Teambeheer",
+        "desc": "Projectmanagers toewijzen, werklasten volgen en toegang beheren."
+      },
+      "clientPortfolio": {
+        "title": "Klantenportfolio",
+        "desc": "Volledig overzicht van alle klantaccounts, contacten en actieve contracten."
+      },
+      "analytics": {
+        "title": "Analyses & Rapporten",
+        "desc": "Project-KPI's, goedkeuringstijden en omzetdashboards."
+      },
+      "approvalGateway": {
+        "title": "Goedkeuringsportaal",
+        "desc": "Definitieve structurele en ontwerp-goedkeuring vóór productie."
+      },
+      "commsHub": {
+        "title": "Communicatiehub",
+        "desc": "Gecentraliseerd berichtenverkeer tussen klanten, PM's en onderaannemers."
+      }
+    },
+    "pmFeatures": {
+      "boothWorkspace": {
+        "title": "3D-standbouwwerkruimte",
+        "desc": "Volledige Octanorm/Maxima-editor met realtime samenwerking."
+      },
+      "clientMgmt": {
+        "title": "Klantbeheer",
+        "desc": "Briefings, contacten en live feedbacksessies per project beheren."
+      },
+      "taskTracker": {
+        "title": "Taaktracker",
+        "desc": "Kanban-bord voor productie-, ontwerp- en leveringsfasen."
+      },
+      "pipeline": {
+        "title": "Projectpijplijn",
+        "desc": "Alle actieve en aankomende projecten volgen met mijlpaalplanning."
+      },
+      "requestMgmt": {
+        "title": "Verzoekbeheer",
+        "desc": "Wijzigingsverzoeken, revisielogboeken en goedkeuringsketens beheren."
+      },
+      "messaging": {
+        "title": "Berichten",
+        "desc": "Directe en groepsberichten met klanten en het hoofdkantoor."
+      }
+    },
+    "workflowSteps": {
+      "brief": {
+        "title": "Klantbriefing",
+        "desc": "De Chief ontvangt en wijst de beursbriefing toe aan een Projectmanager."
+      },
+      "workspace": {
+        "title": "Werkruimte",
+        "desc": "PM maakt het project en configureert standafmetingen en systeem."
+      },
+      "design": {
+        "title": "3D-ontwerp",
+        "desc": "PM bouwt de stand in de live werkruimte met structuurbibliotheken."
+      },
+      "review": {
+        "title": "Chief-review",
+        "desc": "Chief bewaakt de voortgang en geeft structurele begeleiding."
+      },
+      "signoff": {
+        "title": "Klantgoedkeuring",
+        "desc": "De klant bekijkt het ontwerp en dient wijzigingsverzoeken in."
+      },
+      "approval": {
+        "title": "Eindgoedkeuring",
+        "desc": "Chief keurt het uiteindelijke ontwerp goed en geeft het vrij voor productie."
+      },
+      "export": {
+        "title": "Productie-export",
+        "desc": "PM exporteert documentatie, snijlijsten en componentenschema's."
+      }
+    }
+  },
+  "chief": {
+    "nav": {
+      "chief": "Directeur",
+      "dashboard": "Dashboard",
+      "clients": "Klanten",
+      "managers": "Managers",
+      "projects": "Projecten",
+      "monitor": "Werkruimte monitor",
+      "reports": "Rapporten",
+      "messages": "Berichten",
+      "calendar": "Kalender",
+      "settings": "Instellingen"
+    },
+    "common": {
+      "cancel": "Annuleren",
+      "save": "Opslaan",
+      "assign": "Toewijzen",
+      "message": "Bericht",
+      "rebalance": "Herverdelen",
+      "openDetails": "Details openen",
+      "viewCalendar": "Kalender bekijken",
+      "sendReminder": "Herinnering sturen",
+      "assignments": "Toewijzingen",
+      "inviteManager": "Manager uitnodigen",
+      "keepEditing": "Blijven bewerken",
+      "discardChanges": "Wijzigingen verwerpen",
+      "selectAll": "Alles selecteren",
+      "clear": "Wissen",
+      "project": "Project",
+      "noDeadline": "Geen deadline",
+      "status": {
+        "active": "Actief",
+        "pending": "In behandeling",
+        "onLeave": "Met verlof",
+        "completed": "Voltooid",
+        "delayed": "Vertraagd",
+        "unassigned": "Niet toegewezen",
+        "highLoad": "Hoge belasting",
+        "accepted": "Geaccepteerd",
+        "expired": "Verlopen"
+      }
+    },
+    "dashboard": {
+      "title": "Directeur dashboard",
+      "exportReports": "Rapporten exporteren",
+      "excelExported": "Excel-rapport geëxporteerd",
+      "noActivity": "Nog geen activiteit geregistreerd.",
+      "viewAllActivity": "Alle activiteit bekijken",
+      "showRecentActivity": "Recente activiteit tonen",
+      "commandCenter": "Commandocentrum",
+      "recentActivity": "Recente activiteit",
+      "noManagerAssignments": "Geen managertoewijzingen gevonden.",
+      "loadError": "Dashboard-gegevens konden niet worden geladen",
+      "charts": {
+        "projectActivity": "Projectactiviteit",
+        "projectActivityDesc": "Activiteit over alle projecten in de afgelopen 7 dagen",
+        "projectStatus": "Projectstatus",
+        "projectStatusDesc": "Statusverdeling over {{count}} actieve projecten",
+        "managerPerformance": "Manager prestaties",
+        "managerPerformanceDesc": "Projecten toegewezen per manager"
+      },
+      "stats": {
+        "totalClients": "Totaal klanten",
+        "activeProjects": "Actieve projecten",
+        "managers": "Managers",
+        "delayedProjects": "Vertraagde projecten",
+        "needsAction": "Actie vereist",
+        "pendingApprovals": "Openstaande goedkeuringen",
+        "activeWorkspaces": "Actieve werkruimtes",
+        "saved": "Opgeslagen",
+        "db": "DB",
+        "live": "Live",
+        "assigned": "Toegewezen",
+        "open": "Open",
+        "clear": "Opgelost"
+      },
+      "insights": {
+        "delayedTitle": "Vertraagde projecten",
+        "dueSoonTitle": "Deadline over 14 dagen",
+        "unassignedTitle": "Niet-toegewezen werk",
+        "approvalsTitle": "Openstaande goedkeuringen",
+        "noDelayed": "Geen vertraagde projecten geregistreerd.",
+        "firstInQueue": "{{name}} staat als eerste in de herstelwachtrij.",
+        "noDueSoon": "Geen projectdeadlines binnen 14 dagen.",
+        "nearestDeadline": "{{name}} heeft de dichtstbijzijnde deadline.",
+        "noUnassigned": "Elk actief project heeft een managertoewijzing.",
+        "unassignedNeeds": "{{name}} heeft nog een projectmanager nodig.",
+        "noApprovals": "Geen goedkeuringsknelpunten geregistreerd.",
+        "approvalsWaiting": "Klantgoedkeuringen wachten op actie.",
+        "reviewProjects": "Projecten bekijken",
+        "openCalendar": "Kalender openen",
+        "assignManagers": "Managers toewijzen",
+        "openQueue": "Wachtrij openen"
+      },
+      "pageTitle": "Dashboard | ENS"
+    },
+    "managers": {
+      "title": "Managerbeheer",
+      "refresh": "Gegevens vernieuwen",
+      "noMatch": "Geen managers komen overeen met de huidige filters.",
+      "tiles": {
+        "teamLoad": "Teambelasting",
+        "activeManagers": "Actieve managers",
+        "delayedProjects": "Vertraagde projecten",
+        "unassignedItems": "Niet-toegewezen items",
+        "pendingInvites": "Openstaande uitnodigingen"
+      },
+      "filters": {
+        "searchPlaceholder": "Zoek managers, klanten, projecten",
+        "allStatuses": "Alle statussen",
+        "allManagers": "Alle managers",
+        "highLoad": "Hoge belasting",
+        "sortHighest": "Hoogste belasting",
+        "sortLowest": "Laagste belasting",
+        "sortProjects": "Meeste actieve projecten",
+        "sortRating": "Beste beoordeling",
+        "cardView": "Kaartweergave",
+        "tableView": "Tabelweergave"
+      },
+      "views": {
+        "title": "Opgeslagen weergaven",
+        "desc": "Hergebruik filters, sortering en indeling.",
+        "namePlaceholder": "Weergave een naam geven",
+        "deleteView": "Weergave {{name}} verwijderen"
+      },
+      "invitations": {
+        "title": "Openstaande uitnodigingen",
+        "desc": "Uitgenodigde managers verschijnen hier totdat ze accepteren. Ze kunnen nog geen toewijzingen ontvangen.",
+        "expires": "verloopt op {{date}}",
+        "moreInvites": "+{{count}} meer",
+        "copyLink": "Uitnodigingslink kopiëren voor {{email}}",
+        "resend": "Uitnodiging opnieuw sturen naar {{email}}",
+        "revoke": "Uitnodiging intrekken voor {{email}}"
+      },
+      "invite": {
+        "title": "Manager uitnodigen",
+        "desc": "Voeg een projectmanager toe aan de directeurswerkruimte.",
+        "namePlaceholder": "Sarah Mitchell",
+        "emailPlaceholder": "manager@bedrijf.nl",
+        "sendInvite": "Uitnodiging sturen",
+        "nameLabel": "Naam",
+        "emailLabel": "E-mail",
+        "emailInvalid": "Voer een geldig e-mailadres in.",
+        "defaultName": "Nieuwe Manager"
+      },
+      "statusChange": {
+        "title": "Statuswijziging bevestigen",
+        "markOnLeave": "Markeer als verlof",
+        "markActive": "Markeer als actief",
+        "confirmPrefix": "Weet u zeker dat u wilt markeren",
+        "confirmSuffix": "als",
+        "onLeaveNote": "Hun actieve projecten blijven toegewezen maar de belasting wordt beperkt.",
+        "updated": "Managerstatus bijgewerkt"
+      },
+      "rebalance": {
+        "title": "Belasting herverdelen",
+        "desc": "Bekijk de voorgestelde wijziging voor bevestiging.",
+        "projectToMove": "Te verplaatsen project",
+        "from": "Van",
+        "to": "Naar",
+        "confirm": "Herverdeling bevestigen",
+        "done": "Belasting herverdeeld"
+      },
+      "assignments": {
+        "titleTeam": "Teamtoewijzingen",
+        "titleFocused": "Toewijzingen – {{name}}",
+        "descTeam": "Klanten en projecten opnieuw toewijzen in het team.",
+        "descFocused": "Klanten en projecten beheren die zijn toegewezen aan {{name}}.",
+        "bulkTitle": "Bulktoewijzing",
+        "bulkDesc": "Selecteer rijen, kies een manager en pas toe voor opslaan.",
+        "selected": "geselecteerd",
+        "applySelected": "Selectie toepassen",
+        "cascadeLabel": "Verplaats ook de projecten van deze klant",
+        "cascadeDesc": "Als een klant wordt herverdeeld, gaan alle projecten naar dezelfde manager.",
+        "saveAssignments": "Toewijzingen opslaan",
+        "noClients": "Geen klanten beschikbaar.",
+        "noProjects": "Geen projecten beschikbaar.",
+        "clients": "Klanten",
+        "projects": "Projecten",
+        "saved": "Toewijzingen bijgewerkt",
+        "selectRow": "{{name}} selecteren"
+      },
+      "discard": {
+        "title": "Toewijzingswijzigingen verwerpen?",
+        "desc": "U heeft niet-opgeslagen bewerkingen. Sluiten zal deze verwerpen."
+      },
+      "card": {
+        "computedWorkload": "Berekende belasting",
+        "delayed": "vertraagd",
+        "urgent": "urgent",
+        "ratingNew": "Nieuw",
+        "ratingNA": "N/B"
+      },
+      "table": {
+        "manager": "Manager",
+        "status": "Status",
+        "workload": "Belasting",
+        "projects": "Projecten",
+        "clients": "Klanten",
+        "nextDeadline": "Volgende deadline",
+        "actions": "Acties"
+      },
+      "detail": {
+        "workload": "Belasting",
+        "projects": "Projecten",
+        "clients": "Klanten",
+        "tabs": {
+          "overview": "Overzicht",
+          "projects": "Projecten",
+          "clients": "Klanten",
+          "activity": "Activiteit"
+        },
+        "overview": {
+          "title": "Belastingsgezondheid",
+          "desc": "Huidige actieve projecten en klantbelasting",
+          "delayed": "Vertraagd",
+          "dueSoon": "Binnenkort verschuldigd",
+          "nextDeadline": "Volgende deadline",
+          "rating": "Beoordeling",
+          "none": "Geen"
+        },
+        "noProjects": "Geen toegewezen projecten.",
+        "noClients": "Geen toegewezen klanten."
+      },
+      "audit": {
+        "title": "Activiteitslogboek",
+        "desc": "Toewijzing, toegang, herverdeling en herinneringsgeschiedenis",
+        "searchPlaceholder": "Zoek in logboek",
+        "allActivity": "Alle activiteit",
+        "success": "Succes",
+        "warnings": "Waarschuwingen",
+        "info": "Info",
+        "noActivity": "Nog geen activiteit geregistreerd.",
+        "showAll": "Toon alle {{count}} vermeldingen",
+        "showLess": "Toon minder ({{count}} meest recent)",
+        "team": "Team",
+        "exportCsv": "Exporteren als CSV",
+        "action": {
+          "invitation": "Uitnodiging",
+          "access": "Toegang",
+          "assignment": "Toewijzing",
+          "rebalance": "Herverdeling",
+          "reminder": "Herinnering"
+        },
+        "detail": {
+          "invited": "Uitnodiging in wachtrij voor {{name}}.",
+          "statusChanged": "{{name}} gemarkeerd als {{status}}.",
+          "assignmentsSaved": "Wijzigingen in toewijzingen opgeslagen.",
+          "rebalanced": "{{project}} verplaatst van {{from}} naar {{to}}.",
+          "reminded": "In-app herinnering in wachtrij voor {{name}} — {{count}} prioriteitsitem(s)."
+        },
+        "justNow": "Zojuist"
+      },
+      "actions": {
+        "openDetails": "Details openen",
+        "assignments": "Toewijzingen",
+        "viewCalendar": "Kalender bekijken",
+        "rebalanceWorkload": "Belasting herverdelen",
+        "markOnLeave": "Markeer als verlof",
+        "markActive": "Markeer als actief",
+        "sendReminder": "Herinnering sturen",
+        "assign": "Toewijzen",
+        "rebalance": "Herverdelen",
+        "message": "Bericht"
+      },
+      "toast": {
+        "loadError": "De werkruimte van managers kon niet worden geladen",
+        "viewLoaded": "Weergave geladen: {{name}}",
+        "viewSaved": "Managersweergave opgeslagen: {{name}}",
+        "viewRemoved": "Opgeslagen weergave verwijderd",
+        "inviteCreated": "Uitnodiging in wachtrij voor {{name}}",
+        "inviteError": "De uitnodiging voor de manager kon niet worden aangemaakt",
+        "inviteResent": "Uitnodiging opnieuw verzonden naar {{email}}",
+        "inviteResendError": "De uitnodiging kon niet opnieuw worden verzonden",
+        "inviteRevoked": "Uitnodiging ingetrokken",
+        "inviteRevokeError": "De uitnodiging kon niet worden ingetrokken",
+        "inviteCopyFirst": "Verstuur deze uitnodiging opnieuw om een kopieerbare link te genereren",
+        "inviteCopied": "Uitnodigingslink gekopieerd",
+        "inviteCopyError": "Kon uitnodigingslink niet kopiëren",
+        "statusUpdated": "Managerstatus bijgewerkt",
+        "statusError": "Managerstatus kon niet worden bijgewerkt",
+        "assignNoChange": "Geen toewijzingswijzigingen voor {{name}}",
+        "assignError": "Toewijzingen konden niet worden opgeslagen",
+        "assignUpdated": "Toewijzingen bijgewerkt",
+        "rebalanceNoTarget": "Geen actieve managers beschikbaar voor herverdeling",
+        "rebalanceNormal": "De werkdruk van {{name}} ({{pct}}%) is binnen het normale bereik — geen herverdeling nodig",
+        "rebalanceNoProject": "Geen geschikt project of doelmanager gevonden voor herverdeling",
+        "rebalanceError": "De werkdruk kon niet worden herverdeeld",
+        "rebalanceDone": "Werkdruk herverdeeld",
+        "reminderSent": "Herinnering in wachtrij voor {{name}} — melding aangemaakt",
+        "reminderError": "De herinnering kon niet worden verzonden"
+      }
+    },
+    "reports": {
+      "title": "Rapporten & Analyses",
+      "loadError": "Rapportgegevens konden niet worden geladen.",
+      "exportExcel": "Excel exporteren",
+      "bottlenecks": "Knelpunten",
+      "leaderboardTitle": "PM-ranglijst",
+      "leaderboardDesc": "Gerangschikt op klanttevredenheid / {{range}}",
+      "toast": {
+        "exported": "Excel-rapport geëxporteerd"
+      },
+      "kpi": {
+        "revenue": "Totale omzet",
+        "revenueDetail": "+12,5% t.o.v. vorige periode",
+        "projects": "Projecten",
+        "projectsDetail": "Geselecteerd bereik: {{range}}",
+        "pms": "PMs",
+        "pmsDetail": "Gerangschikt op levering",
+        "satisfaction": "Gem. tevredenheid",
+        "satisfactionDetail": "Klantenscore"
+      },
+      "cards": {
+        "revenueTitle": "Omzet vs Doel",
+        "revenueDesc": "{{range}} / Totaal ${{total}}K / {{projects}} projecten",
+        "pmPerfTitle": "PM-prestaties",
+        "pmPerfDesc": "Voltooide projecten vs tijdige levering",
+        "trendTitle": "12-maanden omzettrend",
+        "trendDesc": "Omzettraject over het afgelopen jaar",
+        "systemTitle": "Systeemverdeling & Knelpunten",
+        "systemDesc": "Systeemgebruik en wachttijden"
+      },
+      "chart": {
+        "revenue": "Omzet",
+        "target": "Doel",
+        "onTimePct": "Op tijd %",
+        "satisfaction": "Tevredenheid"
+      },
+      "table": {
+        "rank": "Rang",
+        "pm": "PM",
+        "projects": "Projecten",
+        "onTime": "Op tijd",
+        "satisfaction": "Tevredenheid",
+        "revenue": "Omzet",
+        "month": "Maand"
+      },
+      "export": {
+        "colReport": "Rapport",
+        "colRange": "Bereik",
+        "colExportedAt": "Geëxporteerd op",
+        "colRevenue": "Totale omzet",
+        "colTarget": "Totaal doel",
+        "colProjects": "Totale projecten",
+        "colRevenueDollar": "Omzet ($)",
+        "colTargetDollar": "Doel ($)",
+        "colOnTimePct": "Op tijd (%)",
+        "colSystem": "Systeem",
+        "colShare": "Aandeel (%)",
+        "colProject": "Project",
+        "colWaitDays": "Wachtdagen",
+        "colStage": "Fase",
+        "rowTotals": "Totalen"
+      }
+    },
+    "messages": {
+      "title": "Berichten",
+      "justNow": "zojuist",
+      "loadError": "Berichtentabel voor tentoonstelling kon niet worden geladen.",
+      "conversationError": "Gesprek kon niet worden geladen.",
+      "sendError": "Bericht kon niet worden verzonden.",
+      "noMessagesDefault": "Nog geen berichten",
+      "noClient": "Geen klant gekoppeld",
+      "loading": "Tentoonstellingen laden…",
+      "noExhibitions": "Geen tentoonstellingen gevonden.",
+      "noMessages": "Nog geen berichten voor {{name}}.",
+      "selectManager": "Selecteer een projectmanager.",
+      "scopedTo": "Gekoppeld aan",
+      "send": "Verzenden",
+      "sending": "Verzenden…",
+      "projectCount": "{{count}} projecten",
+      "inputPlaceholder": "Bericht aan {{manager}} over {{exhibition}}…",
+      "badges": {
+        "exhibitions": "{{count}} tentoonstellingen",
+        "unread": "{{count}} ongelezen"
+      },
+      "section": {
+        "title": "Tentoonstelling-threads",
+        "desc": "Één gespreksruimte per tentoonstelling."
+      },
+      "searchPlaceholder": "Zoek tentoonstellingen, klanten, managers",
+      "sidebar": {
+        "title": "Projectmanagers",
+        "assigned": "{{count}} toegewezen",
+        "noManager": "Er is nog geen projectmanager toegewezen aan deze tentoonstelling."
+      },
+      "status": {
+        "delayed": "Vertraagd",
+        "active": "Actief",
+        "completed": "Voltooid",
+        "pending": "In behandeling"
+      },
+      "actions": {
+        "call": "Gesprek starten",
+        "video": "Videogesprek starten",
+        "options": "Gespreksopties",
+        "attach": "Bestand bijvoegen",
+        "send": "Bericht verzenden",
+        "emoji": "Emoji invoegen"
+      },
+      "toast": {
+        "call": "Gesprek gestart met {{name}} voor {{exhibition}}",
+        "video": "Videoruimte klaar voor {{exhibition}}",
+        "options": "Gespreksopties geopend",
+        "attachment": "Bestandsselectie geopend voor {{exhibition}}"
+      }
+    },
+    "clients": {
+      "title": "Klantbeheer",
+      "addClient": "Klant toevoegen",
+      "loadError": "Klanten konden niet worden geladen.",
+      "loadingClients": "Klanten laden…",
+      "noClients": "Geen klanten gevonden voor deze zoekopdracht/filter.",
+      "searchPlaceholder": "Klanten of tentoonstellingen zoeken…",
+      "showing": "{{start}}-{{end}} van {{total}} klanten",
+      "previous": "Vorige",
+      "next": "Volgende",
+      "cancel": "Annuleren",
+      "saving": "Opslaan…",
+      "emailError": "Voer een geldig e-mailadres in.",
+      "filter": {
+        "all": "Alle",
+        "lead": "Lead",
+        "pendingApproval": "Goedkeuring in behandeling",
+        "active": "Actief",
+        "inactive": "Inactief",
+        "archived": "Gearchiveerd"
+      },
+      "status": {
+        "active": "Actief",
+        "pendingApproval": "Goedkeuring in behandeling",
+        "lead": "Lead",
+        "inactive": "Inactief",
+        "archived": "Gearchiveerd"
+      },
+      "table": {
+        "clientName": "Klantnaam",
+        "company": "Bedrijf",
+        "assignedPm": "Toegewezen PM",
+        "exhibition": "Tentoonstelling",
+        "status": "Status",
+        "lastActivity": "Laatste activiteit",
+        "actions": "Acties"
+      },
+      "menu": {
+        "assignManager": "Manager toewijzen",
+        "openWorkspace": "Werkruimte openen",
+        "editClient": "Klant bewerken",
+        "viewDetails": "Klantdetails bekijken",
+        "archive": "Klant archiveren"
+      },
+      "toast": {
+        "added": "{{name}} toegevoegd aan klanten.",
+        "addError": "Klant kon niet worden toegevoegd.",
+        "updated": "{{name}} bijgewerkt.",
+        "updateError": "Klant kon niet worden bijgewerkt.",
+        "noManagers": "Geen actieve projectmanagers beschikbaar.",
+        "assigned": "{{client}} toegewezen aan {{manager}}.",
+        "assignError": "Klanttoewijzing kon niet worden opgeslagen.",
+        "archived": "{{name}} gearchiveerd.",
+        "archiveError": "Klant kon niet worden verwijderd.",
+        "openingWorkspace": "{{name}} openen in Chief-monitor.",
+        "defaultClient": "Klant",
+        "unassigned": "Niet toegewezen"
+      },
+      "addDialog": {
+        "title": "Klant toevoegen",
+        "desc": "Maak een klantrecord aan in deze weergave.",
+        "name": "Klantnaam",
+        "company": "Bedrijf",
+        "exhibition": "Tentoonstelling",
+        "email": "Contact-e-mail",
+        "submit": "Klant toevoegen"
+      },
+      "assignDialog": {
+        "title": "Projectmanager toewijzen",
+        "desc": "Selecteer een manager voor {{name}}.",
+        "placeholder": "Selecteer een manager",
+        "submit": "Toewijzen"
+      },
+      "editDialog": {
+        "title": "Klant bewerken",
+        "desc": "Klantgegevens bijwerken voor workflows.",
+        "contactName": "Contactnaam",
+        "submit": "Wijzigingen opslaan"
+      },
+      "archiveDialog": {
+        "title": "Klant archiveren",
+        "desc": "{{name}} archiveren? Klanten met actieve projecten zijn beveiligd.",
+        "blockers": "Actieve projecten blokkeren archivering",
+        "archiving": "Archiveren…",
+        "submit": "Archiveren"
+      },
+      "detailDialog": {
+        "contact": "Contact",
+        "email": "E-mail",
+        "pm": "PM",
+        "exhibition": "Tentoonstelling",
+        "status": "Status"
+      }
+    },
+    "projects": {
+      "title": "Projectenpijplijn",
+      "breadcrumb": "Projecten",
+      "viewKanban": "Kanban",
+      "viewList": "Lijst",
+      "searchPlaceholder": "Zoeken...",
+      "metric": {
+        "highRisk": "Hoog risico",
+        "waiting": "Wachtend",
+        "delayed": "Vertraagd",
+        "matching": "Overeenkomende projecten"
+      },
+      "stage": {
+        "intake": "Intake",
+        "design": "Ontwerp",
+        "review": "Beoordeling",
+        "production": "Productie",
+        "closed": "Gesloten"
+      },
+      "filter": {
+        "all": "Alle",
+        "active": "Actief",
+        "pending": "In behandeling",
+        "delayed": "Vertraagd",
+        "completed": "Voltooid"
+      },
+      "priority": {
+        "all": "Alle",
+        "high": "Hoog",
+        "medium": "Gemiddeld",
+        "low": "Laag"
+      },
+      "kanban": {
+        "loading": "Laden",
+        "empty": "Leeg"
+      },
+      "list": {
+        "loading": "Projecten laden...",
+        "noMatch": "Geen projecten gevonden.",
+        "col": {
+          "project": "Project",
+          "client": "Klant",
+          "pm": "PM",
+          "system": "Systeem",
+          "stage": "Fase",
+          "progress": "Voortgang",
+          "health": "Status"
+        }
+      },
+      "paging": {
+        "showing": "{{start}}–{{end}} van {{total}} projecten",
+        "filtered": "/ {{count}} zichtbaar na prioriteitsfilter",
+        "previous": "Vorige",
+        "next": "Volgende"
+      },
+      "footer": {
+        "note": "Pagina: {{count}} zichtbaar / Pijlen voor faseverandering"
+      },
+      "card": {
+        "waiting": "{{days}}d wachtend",
+        "noDate": "Geen datum",
+        "movePrev": "Vorige fase",
+        "moveNext": "Volgende fase",
+        "openMonitor": "Monitor openen",
+        "editProject": "Project bewerken"
+      },
+      "row": {
+        "edit": "Bewerken",
+        "open": "Openen"
+      },
+      "edit": {
+        "title": "Project bewerken",
+        "sheetDescription": "Projectdetails, toewijzing, deadline en standafmetingen bijwerken.",
+        "name": "Projectnaam",
+        "namePlaceholder": "AutoShow stand",
+        "client": "Klant",
+        "clientPlaceholder": "FastCars BV",
+        "exhibition": "Beurs",
+        "exhibitionPlaceholder": "AutoShow",
+        "manager": "Projectmanager",
+        "managerPlaceholder": "Projectmanager selecteren",
+        "keepManager": "Huidige toewijzing behouden",
+        "unassigned": "Niet toegewezen",
+        "deadline": "Deadline",
+        "system": "Systeem",
+        "systemPlaceholder": "Standsysteem",
+        "octanorm": "Octanorm",
+        "maxima": "Maxima",
+        "custom": "Aangepast",
+        "width": "Breedte (m)",
+        "depth": "Diepte (m)",
+        "descriptionLabel": "Beschrijving",
+        "descriptionPlaceholder": "Notities over dit project",
+        "cancel": "Annuleren",
+        "saving": "Opslaan...",
+        "save": "Project opslaan"
+      },
+      "close": {
+        "title": "Project sluiten",
+        "description": "{{name}} naar Gesloten verplaatsen? Het project wordt als voltooid gemarkeerd.",
+        "cancel": "Annuleren",
+        "closing": "Sluiten...",
+        "confirm": "Project sluiten"
+      },
+      "error": {
+        "load": "Projecten konden niet worden geladen",
+        "save": "Project kon niet worden opgeslagen",
+        "stage": "Fase kon niet worden opgeslagen"
+      },
+      "toast": {
+        "updated": "{{name}} bijgewerkt",
+        "openMonitor": "Monitor openen voor {{name}}",
+        "moved": "{{name}} verplaatst naar {{stage}}"
+      },
+      "validate": {
+        "required": "Projectnaam en klant zijn verplicht.",
+        "dimensions": "Breedte en diepte moeten tussen 1 en 100 meter liggen."
+      }
+    },
+    "calendar": {
+      "title": "Beurskalender",
+      "breadcrumb": "Kalender",
+      "addEvent": "Evenement toevoegen",
+      "allMonths": "Alle maanden",
+      "prevMonth": "Vorige maand",
+      "nextMonth": "Volgende maand",
+      "today": "Vandaag",
+      "addEventTitle": "Evenement toevoegen op deze dag",
+      "moreEvents": "+{{count}} meer",
+      "exhibitionsThisMonth_one": "{{count}} Beurs deze maand",
+      "exhibitionsThisMonth_other": "{{count}} Beurzen deze maand",
+      "yearExhibitions_one": "{{count}} beurs",
+      "yearExhibitions_other": "{{count}} beurzen",
+      "noExhibitions": "Geen beurzen",
+      "loading": "Beurskalender laden...",
+      "status": {
+        "active": "Actief",
+        "completed": "Voltooid",
+        "delayed": "Vertraagd",
+        "pending": "In behandeling"
+      },
+      "filter": {
+        "searchPlaceholder": "Zoek beurs, klant, stad",
+        "pmPlaceholder": "Projectmanager",
+        "allManagers": "Alle managers",
+        "clientPlaceholder": "Klant",
+        "allClients": "Alle klanten",
+        "statusPlaceholder": "Status",
+        "allStatuses": "Alle statussen",
+        "shown": "{{count}} weergegeven",
+        "resetFilters": "Filters resetten"
+      },
+      "form": {
+        "nameLabel": "Beursnaam *",
+        "namePlaceholder": "bijv. TechCon 2027",
+        "clientLabel": "Klant",
+        "clientPlaceholder": "Klantenorganisatie",
+        "pmLabel": "Projectmanager",
+        "pmPlaceholder": "PM-naam",
+        "startLabel": "Startdatum *",
+        "endLabel": "Einddatum *",
+        "locationLabel": "Locatie",
+        "locationPlaceholder": "Stad / Locatie",
+        "standLabel": "Standtype",
+        "standPlaceholder": "bijv. Maxima",
+        "statusLabel": "Status"
+      },
+      "add": {
+        "title": "Beursgebeurtenis toevoegen",
+        "description": "Nieuwe beurs inplannen in de kalender.",
+        "cancel": "Annuleren",
+        "saving": "Opslaan...",
+        "save": "Evenement opslaan"
+      },
+      "edit": {
+        "title": "Beursgebeurtenis bewerken",
+        "description": "Details van deze beurs bijwerken.",
+        "cancel": "Annuleren",
+        "saving": "Opslaan...",
+        "save": "Wijzigingen opslaan"
+      },
+      "detail": {
+        "description": "Beursdetails",
+        "client": "Klant",
+        "pm": "Projectmanager",
+        "location": "Locatie",
+        "standType": "Standtype",
+        "startDate": "Startdatum",
+        "endDate": "Einddatum",
+        "confirmDelete": "Permanent verwijderen?",
+        "deleting": "Verwijderen...",
+        "confirm": "Bevestigen",
+        "cancel": "Annuleren",
+        "delete": "Verwijderen",
+        "edit": "Bewerken",
+        "close": "Sluiten"
+      },
+      "error": {
+        "load": "Kalendergebeurtenissen konden niet worden geladen",
+        "save": "Kalendergebeurtenis kon niet worden opgeslagen",
+        "update": "Kalendergebeurtenis kon niet worden bijgewerkt",
+        "delete": "Kalendergebeurtenis kon niet worden verwijderd"
+      }
+    },
+    "monitor": {
+      "title": "Werkruimtemonitor",
+      "breadcrumb": "Monitor",
+      "activeNow": "{{count}} actief",
+      "refresh": "Vernieuwen",
+      "loading": "Live werkruimtegegevens laden...",
+      "errorSuffix": ". In de echte gegevensmodus zijn geen demogegevens beschikbaar.",
+      "searchPlaceholder": "Werkruimten zoeken...",
+      "pmPlaceholder": "Projectmanager",
+      "allManagers": "Alle projectmanagers",
+      "legend": "Live — elke 8 s vernieuwd",
+      "status": {
+        "all": "Alle",
+        "live": "Live",
+        "review": "Beoordeling",
+        "pending": "In behandeling",
+        "blocked": "Geblokkeerd"
+      },
+      "stat": {
+        "total": "Totaal",
+        "totalDesc": "Alle werkruimten",
+        "liveDesc": "In werkruimte",
+        "reviewDesc": "Klantgoedkeuring",
+        "pendingDesc": "Aandacht vereist",
+        "blockedDesc": "Actie vereist"
+      },
+      "bottleneck": {
+        "title_one": "Knelpuntalarm — {{count}} project wacht op klantreactie",
+        "title_other": "Knelpuntalarms — {{count}} projecten wachten op klantreactie",
+        "waiting": "{{days}}d wachtend"
+      },
+      "card": {
+        "editingNow": "Bezig met bewerken",
+        "minutesAgo": "{{mins}} min geleden",
+        "hoursAgo": "{{hours}} uur geleden",
+        "waitingDays": "{{days}}d wachtend",
+        "openPreview": "Voorbeeld van {{name}} uitbreiden",
+        "reassign": "Hertoewijzen",
+        "join": "Deelnemen"
+      },
+      "reassign": {
+        "title": "Projectmanager hertoewijzen",
+        "description": "Kies een nieuwe PM voor {{name}}.",
+        "client": "Klant",
+        "current": "Huidig",
+        "unassigned": "Niet toegewezen",
+        "cancel": "Annuleren",
+        "confirm": "Hertoewijzen"
+      },
+      "error": {
+        "load": "Monitorgegevens konden niet worden geladen",
+        "noManagers": "Geen actieve projectmanagers beschikbaar",
+        "reassign": "Project kon niet worden hertoegewezen"
+      },
+      "toast": {
+        "refreshed": "Alle werkruimten vernieuwd",
+        "openedPreview": "Voorbeeld van {{name}} geopend",
+        "joinedSession": "Monitorsessie voor {{name}} gestart",
+        "reassigned": "{{name}} hertoegewezen aan {{pm}}"
+      }
+    },
+    "settings": {
+      "pageTitle": "Instellingen | ENS",
+      "title": "Instellingen",
+      "breadcrumb": "Instellingen",
+      "export": "Exporteren",
+      "reset": "Resetten",
+      "tabs": {
+        "profile": "Profiel",
+        "notifications": "Meldingen",
+        "security": "Beveiliging",
+        "appearance": "Weergave"
+      },
+      "profile": {
+        "title": "Profielinformatie",
+        "description": "Persoonlijke en professionele gegevens bijwerken",
+        "unsaved": "Niet opgeslagen",
+        "changeAvatar": "Avatar wijzigen",
+        "uploadPicture": "Afbeelding uploaden",
+        "fullName": "Volledige naam",
+        "emailLabel": "E-mailadres",
+        "roleLabel": "Rol",
+        "phone": "Telefoonnummer",
+        "phonePlaceholder": "+31 (555) 000-0000",
+        "revert": "Ongedaan maken",
+        "saveChanges": "Wijzigingen opslaan",
+        "avatarDialog": {
+          "title": "Avatar wijzigen",
+          "description": "Kies een avataarstijl voor dit profiel.",
+          "cancel": "Annuleren",
+          "apply": "Avatar toepassen"
+        },
+        "avatarTones": {
+          "primary": "Primair",
+          "blue": "Blauw",
+          "green": "Groen",
+          "amber": "Amber"
+        },
+        "validation": {
+          "nameRequired": "Naam is verplicht",
+          "emailInvalid": "Voer een geldig e-mailadres in",
+          "phoneInvalid": "Voer een geldig telefoonnummer in"
+        },
+        "toast": {
+          "saved": "Profielwijzigingen opgeslagen",
+          "reverted": "Profielwijzigingen ongedaan gemaakt",
+          "avatarUpdated": "Avatar bijgewerkt",
+          "pictureSelected": "Profielfoto geselecteerd",
+          "loadError": "Instellingen konden niet worden geladen",
+          "saveError": "Profiel kon niet worden opgeslagen",
+          "avatarError": "Avatar kon niet worden opgeslagen",
+          "imageTypeError": "Kies een afbeeldingsbestand",
+          "imageSizeError": "Kies een afbeelding kleiner dan 1,5 MB"
+        }
+      },
+      "notifications": {
+        "title": "E-mailmeldingen",
+        "description": "Configureer welke updates u per e-mail wilt ontvangen",
+        "enabledCount": "{{count}}/4 ingeschakeld",
+        "items": {
+          "assignments": {
+            "title": "Nieuwe projecttoewijzingen",
+            "desc": "Melding bij een nieuwe projecttoewijzing."
+          },
+          "milestones": {
+            "title": "Projectmijlpalen",
+            "desc": "Meldingen voor voltooide fasen of goedkeuringsverzoeken."
+          },
+          "reports": {
+            "title": "Activiteitsrapporten managers",
+            "desc": "Wekelijks overzicht van managerprestaties."
+          },
+          "system": {
+            "title": "Systeemmeldingen",
+            "desc": "Kritieke updates en beveiligingsmeldingen."
+          }
+        },
+        "enableAll": "Alles inschakelen",
+        "criticalOnly": "Alleen kritiek",
+        "savePreferences": "Voorkeuren opslaan",
+        "toast": {
+          "saved": "Meldingsvoorkeuren opgeslagen",
+          "allEnabled": "Alle meldingen ingeschakeld",
+          "criticalOnly": "Alleen systeemmeldingen actief",
+          "saveError": "Meldingen konden niet worden opgeslagen"
+        }
+      },
+      "security": {
+        "title": "Beveiligingsinstellingen",
+        "description": "Wachtwoord en accountbeveiliging beheren",
+        "currentPassword": "Huidig wachtwoord",
+        "newPassword": "Nieuw wachtwoord",
+        "confirmNewPassword": "Nieuw wachtwoord bevestigen",
+        "updatePassword": "Wachtwoord bijwerken",
+        "strengthPrefix": "Sterkte:",
+        "passwordStrength": {
+          "empty": "Leeg",
+          "weak": "Zwak",
+          "fair": "Redelijk",
+          "good": "Goed",
+          "strong": "Sterk"
+        },
+        "twoFactor": {
+          "title": "Tweefactorauthenticatie",
+          "description": "Gebruik een verificatiecode voor gevoelige acties.",
+          "enabled": "Ingeschakeld",
+          "disabled": "Uitgeschakeld",
+          "newCodes": "Nieuwe herstelcodes",
+          "disable": "2FA uitschakelen",
+          "enable": "2FA inschakelen"
+        },
+        "twoFactorDialog": {
+          "title": "Tweefactorauthenticatie inschakelen",
+          "description": "Open uw authenticatie-app, scan de QR-code en voer de 6-cijferige code in.",
+          "qrPlaceholder": "QR-code verschijnt hier in productie",
+          "showCode": "Democode weergeven",
+          "hideCode": "Code verbergen",
+          "demoLabel": "Democode",
+          "codeLabel": "Verificatiecode",
+          "codePlaceholder": "6-cijferige code invoeren",
+          "cancel": "Annuleren",
+          "verify": "Verifiëren en inschakelen"
+        },
+        "recoveryCodes": {
+          "title": "Herstelcodes",
+          "copyAll": "Alles kopiëren",
+          "description": "Bewaar deze codes op een veilige plek. Elke code kan slechts één keer worden gebruikt."
+        },
+        "sessions": {
+          "title": "Actieve sessies",
+          "description": "Apparaten controleren die op dit account zijn aangemeld.",
+          "signOutOthers": "Anderen afmelden",
+          "signOut": "Afmelden",
+          "current": "huidig"
+        },
+        "toast": {
+          "passwordSaved": "Wachtwoord bijgewerkt",
+          "twoFactorEnabled": "Tweefactorauthenticatie ingeschakeld",
+          "twoFactorDisabled": "Tweefactorauthenticatie uitgeschakeld",
+          "codesRegenerated": "Herstelcodes opnieuw gegenereerd",
+          "codesCopied": "Herstelcodes gekopieerd",
+          "sessionSignedOut": "{{device}} afgemeld",
+          "sessionsSignedOut_one": "{{count}} sessie afgemeld",
+          "sessionsSignedOut_other": "{{count}} sessies afgemeld",
+          "passwordAllFields": "Vul alle wachtwoordvelden in",
+          "passwordMismatch": "Nieuwe wachtwoorden komen niet overeen",
+          "passwordWeak": "Gebruik een sterker wachtwoord",
+          "passwordSame": "Nieuw wachtwoord moet anders zijn",
+          "passwordError": "Wachtwoord kon niet worden bijgewerkt",
+          "twoFactorWrongCode": "Onjuiste code — controleer uw app",
+          "twoFactorSetupError": "2FA-configuratie kon niet worden opgeslagen",
+          "twoFactorDisableError": "2FA-status kon niet worden opgeslagen",
+          "twoFactorRequired": "Schakel eerst 2FA in",
+          "codesError": "Herstelcodes konden niet worden opgeslagen",
+          "clipboardError": "Kopiëren mislukt — kopieer de codes handmatig",
+          "sessionError": "Sessie kon niet worden afgemeld",
+          "sessionsError": "Sessies konden niet worden afgemeld",
+          "noOtherSessions": "Geen andere sessies"
+        }
+      },
+      "appearance": {
+        "title": "Weergave-instellingen",
+        "description": "Pas het uiterlijk van uw dashboard aan",
+        "themeMode": "Thememodus",
+        "themeModeDesc": "Schakel tussen licht, donker en systeemthema.",
+        "light": "Licht",
+        "dark": "Donker",
+        "system": "Systeem",
+        "compactView": "Compacte weergave",
+        "compactViewDesc": "Verminder afstand in tabellen en lijsten.",
+        "language": "Taal",
+        "languageDesc": "Selecteer de weergavetaal.",
+        "resetDisplay": "Weergave resetten",
+        "saveDisplay": "Weergave-instellingen opslaan",
+        "toast": {
+          "saved": "Weergave-instellingen opgeslagen",
+          "reset": "Weergave-instellingen gereset",
+          "saveError": "Weergave-instellingen konden niet worden opgeslagen"
+        }
+      },
+      "resetDialog": {
+        "title": "Instellingen resetten",
+        "description": "Herstelt lokale accountinstellingen naar de standaardwaarden.",
+        "cancel": "Annuleren",
+        "confirm": "Resetten"
+      },
+      "toast": {
+        "exported": "Instellingen geëxporteerd",
+        "restored": "Instellingen hersteld naar standaard",
+        "restoredLocal": "Lokale instellingen hersteld"
+      }
+    }
+  },
+  "layout": {
+    "logout": "Uitloggen",
+    "notifications": "Meldingen",
+    "unread": "{{count}} ongelezen",
+    "markAllRead": "Alles als gelezen markeren",
+    "notificationNew": "Nieuw",
+    "noNotifications": "Nog geen meldingen.",
+    "skipToContent": "Ga naar hoofdinhoud",
+    "navigation": "Hoofdnavigatie",
+    "expandSidebar": "Zijbalk uitklappen",
+    "collapseSidebar": "Zijbalk inklappen",
+    "switchToLight": "Schakel naar licht thema",
+    "switchToDark": "Schakel naar donker thema",
+    "selectLanguage": "Taal selecteren"
+  },
+  "pm": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "myClients": "Mijn klanten",
+      "projects": "Projecten",
+      "calendar": "Kalender",
+      "workspace": "Werkruimte",
+      "requests": "Verzoeken",
+      "messages": "Berichten",
+      "tasks": "Taken",
+      "reports": "Rapporten",
+      "settings": "Instellingen"
+    },
+    "common": {
+      "noDeadline": "Geen deadline",
+      "today": "Vandaag",
+      "tomorrow": "Morgen",
+      "overdue": "{{count}}d te laat",
+      "inDays": "Over {{count}}d",
+      "loading": "Laden...",
+      "noResults": "Geen resultaten gevonden.",
+      "cancel": "Annuleren",
+      "save": "Opslaan",
+      "create": "Aanmaken",
+      "saving": "Opslaan...",
+      "search": "Zoeken",
+      "filter": "Filteren",
+      "priority": {
+        "high": "Hoog",
+        "medium": "Middel",
+        "low": "Laag"
+      },
+      "status": {
+        "active": "Actief",
+        "pending": "In afwachting",
+        "lead": "Lead",
+        "inactive": "Inactief",
+        "planning": "Planning",
+        "inDesign": "In ontwerp",
+        "clientReview": "Klantbeoordeling",
+        "revision": "Revisie",
+        "delayed": "Vertraagd",
+        "approved": "Goedgekeurd",
+        "completed": "Voltooid",
+        "inProgress": "In uitvoering",
+        "resolved": "Opgelost",
+        "declined": "Afgewezen"
+      }
+    },
+    "dashboard": {
+      "title": "PM-dashboard",
+      "overview": "Overzicht",
+      "loadError": "Dashboard-gegevens konden niet worden geladen.",
+      "stats": {
+        "assignedClients": "Toegewezen klanten",
+        "activeProjects": "Actieve projecten",
+        "pendingReviews": "Openstaande beoordelingen",
+        "completed": "Voltooid",
+        "workspaceFiles": "Werkruimtebestanden"
+      },
+      "activeWork": {
+        "title": "Actief projectwerk",
+        "viewAll": "Alles bekijken",
+        "loading": "Toegewezen projectwerk laden...",
+        "empty": "Momenteel zijn er geen actieve projecten toegewezen.",
+        "openProject": "{{name}} openen"
+      },
+      "actionItems": {
+        "title": "Actiepunten",
+        "loading": "Actiepunten laden...",
+        "empty": "Geen urgente acties voor deze organisatie."
+      },
+      "actions": {
+        "pendingApprovals": "{{count}} openstaande goedkeuringen",
+        "pendingApprovalsDesc": "Klantbeoordelingen wachten op een beslissing.",
+        "openApprovals": "Goedkeuringen openen",
+        "delayedProjects": "{{count}} vertraagde projecten",
+        "delayedProjectsDesc": "Projecten hebben PM-aandacht nodig.",
+        "reviewRisk": "Risico beoordelen",
+        "activeWorkspaces": "{{count}} actieve werkruimten",
+        "activeWorkspacesDesc": "Standontwerpen zijn beschikbaar voor bewerking.",
+        "openWorkspace": "Werkruimte openen"
+      },
+      "recentActivity": {
+        "title": "Recente activiteit",
+        "loading": "Activiteit laden...",
+        "empty": "Er zijn nog geen activiteitsgebeurtenissen geregistreerd."
+      }
+    },
+    "projects": {
+      "title": "Mijn Projecten",
+      "loadError": "Projecten konden niet worden geladen.",
+      "loading": "Projecten laden...",
+      "noMatch": "Geen projecten komen overeen met het filter.",
+      "newProject": "Nieuw Project",
+      "searchPlaceholder": "Projecten zoeken...",
+      "filter": {
+        "all": "Alle"
+      },
+      "stats": {
+        "total": "Totaal",
+        "inDesign": "In Ontwerp",
+        "review": "Beoordeling",
+        "delayed": "Vertraagd"
+      },
+      "view": {
+        "list": "Lijstweergave",
+        "grid": "Rasterweergave"
+      },
+      "table": {
+        "project": "Project",
+        "client": "Klant",
+        "size": "Maat",
+        "progress": "Voortgang",
+        "deadline": "Deadline",
+        "status": "Status",
+        "actions": "Acties"
+      },
+      "grid": {
+        "system": "Systeem",
+        "size": "Maat",
+        "deadline": "Deadline",
+        "pm": "PM",
+        "progress": "Voortgang"
+      },
+      "actions": {
+        "open": "Openen",
+        "details": "Details",
+        "openWorkspace": "Werkruimte openen"
+      },
+      "modal": {
+        "title": "Nieuw project aanmaken",
+        "projectName": "Projectnaam",
+        "client": "Klant",
+        "deadline": "Deadline",
+        "system": "Systeem",
+        "systemCustom": "Aangepast",
+        "width": "Breedte (m)",
+        "depth": "Diepte (m)",
+        "submit": "Project aanmaken"
+      },
+      "toast": {
+        "created": "Project \"{{name}}\" opgeslagen.",
+        "createError": "Project kon niet worden aangemaakt."
+      }
+    },
+    "clients": {
+      "title": "Mijn Klanten",
+      "loadError": "Klanten konden niet worden geladen.",
+      "loading": "Klanten laden...",
+      "noMatch": "Geen klanten komen overeen met de zoekopdracht.",
+      "searchPlaceholder": "Klanten zoeken...",
+      "stats": {
+        "total": "Totaal klanten",
+        "active": "Actief",
+        "needsSetup": "Installatie vereist"
+      },
+      "actions": {
+        "email": "E-mail sturen",
+        "emailClient": "E-mail aan {{name}}",
+        "openWorkspace": "Werkruimte openen",
+        "openWorkspaceFor": "Werkruimte openen voor {{name}}",
+        "toggleExpand": "Details van {{name}} in-/uitklappen"
+      },
+      "detail": {
+        "clientDetails": "Klantgegevens",
+        "operationalStatus": "Operationele status",
+        "assignedPm": "Toegewezen PM: {{name}}",
+        "lastActivity": "Laatste activiteit: {{time}}",
+        "dataSource": "Geladen uit PostgreSQL-records"
+      }
+    },
+    "tasks": {
+      "title": "Taken Kanban",
+      "newTask": "Nieuwe Taak",
+      "addTask": "Taak toevoegen",
+      "noTasks": "Geen taken",
+      "filter": {
+        "all": "Alle"
+      },
+      "cols": {
+        "todo": "Te doen",
+        "inprogress": "In uitvoering",
+        "review": "In beoordeling",
+        "done": "Klaar"
+      },
+      "actions": {
+        "moveLeft": "Naar links",
+        "moveRight": "Naar rechts",
+        "delete": "Verwijderen",
+        "deleteTask": "\"{{title}}\" verwijderen"
+      },
+      "addToCol": "Taak toevoegen aan {{col}}",
+      "stats": {
+        "total": "Totaal: {{count}} taken",
+        "overdue": "Te laat: {{count}}"
+      },
+      "toast": {
+        "moved": "\"{{title}}\" → {{col}}",
+        "created": "Taak aangemaakt: \"{{title}}\""
+      },
+      "modal": {
+        "title": "Taak aanmaken",
+        "taskTitle": "Titel",
+        "taskTitlePlaceholder": "Taakomschrijving…",
+        "client": "Klant",
+        "project": "Project",
+        "priority": "Prioriteit",
+        "deadline": "Deadline",
+        "initialCol": "Beginkolom",
+        "submit": "Taak aanmaken",
+        "select": "Selecteren…"
+      }
+    },
+    "messages": {
+      "title": "Berichten",
+      "unread": "{{count}} ongelezen",
+      "justNow": "zojuist",
+      "loadContactsError": "Contacten konden niet worden geladen.",
+      "loadMessagesError": "Berichten konden niet worden geladen.",
+      "sendError": "Bericht kon niet worden verzonden.",
+      "searchPlaceholder": "Contacten zoeken…",
+      "loadingContacts": "Contacten laden…",
+      "noContacts": "Geen contacten gevonden.",
+      "chiefPortal": "Chefportaal",
+      "noMessages": "Nog geen berichten. Stuur de eerste!",
+      "selectContact": "Selecteer een contact om te beginnen.",
+      "inputPlaceholder": "Typ een bericht…",
+      "enterToSend": "Druk op Enter om te verzenden",
+      "toast": {
+        "callStarted": "Gesprek starten met {{name}}…",
+        "videoReady": "Video openen met {{name}}…",
+        "optionsOpened": "Optiemenu geopend.",
+        "attachmentOpened": "Bestandsselectie geopend."
+      },
+      "actions": {
+        "call": "Spraakgesprek starten",
+        "video": "Videogesprek starten",
+        "more": "Meer opties",
+        "attach": "Bestand bijvoegen",
+        "send": "Bericht verzenden"
+      }
+    },
+    "requests": {
+      "title": "Revisieaanvragen",
+      "pendingBadge": "{{count}} in behandeling",
+      "justNow": "zojuist",
+      "pmInitials": "PM",
+      "replyCount": "{{count}} reacties",
+      "replyPlaceholder": "Voeg een reactie toe…",
+      "noMatch": "Geen aanvragen komen overeen met dit filter.",
+      "filter": {
+        "all": "Alle"
+      },
+      "status": {
+        "pending": "In behandeling",
+        "inProgress": "In uitvoering",
+        "resolved": "Opgelost",
+        "declined": "Afgewezen"
+      },
+      "priority": {
+        "high": "Hoog",
+        "medium": "Gemiddeld",
+        "low": "Laag"
+      },
+      "actions": {
+        "start": "Starten",
+        "decline": "Afwijzen",
+        "resolve": "Oplossen",
+        "reply": "Reageren",
+        "sendReply": "Reactie verzenden",
+        "expand": "Reacties tonen",
+        "collapse": "Reacties verbergen"
+      },
+      "toast": {
+        "started": "Aanvraag gestart",
+        "declined": "Aanvraag afgewezen",
+        "resolved": "Aanvraag opgelost",
+        "pending": "Aanvraag in behandeling",
+        "replySent": "Reactie verzonden"
+      }
+    },
+    "reports": {
+      "title": "Prestatierapporten",
+      "export": "Exporteren",
+      "vsLastPeriod": "t.o.v. vorige periode",
+      "total": "Totaal: {{count}} projecten",
+      "period": {
+        "this_week": "Deze week",
+        "last_week": "Vorige week"
+      },
+      "stats": {
+        "completionRate": "Voltooiingspercentage",
+        "satisfaction": "Klanttevredenheid",
+        "activeClients": "Actieve klanten",
+        "avgResponse": "Gem. reactietijd"
+      },
+      "chart": {
+        "tasks": "Taken",
+        "revisions": "Revisies",
+        "approvals": "Goedkeuringen",
+        "efficiency": "Efficiëntie",
+        "onTime": "Op tijd",
+        "changes": "Wijzigingen"
+      },
+      "cards": {
+        "weeklyTitle": "Wekelijkse productiviteit",
+        "weeklyDesc": "Taken, revisies en goedkeuringen · {{period}}",
+        "efficiencyTitle": "Projectefficiëntie",
+        "efficiencyDesc": "Ontwerp-efficiëntie vs tijdige levering",
+        "revisionTitle": "Revisie- en wijzigingentrend",
+        "revisionDesc": "Maandelijkse revisies vs wijzigingsopdrachten",
+        "statusTitle": "Projectstatus overzicht",
+        "statusDesc": "Huidige verdeling van alle projecten"
+      },
+      "pieStatus": {
+        "active": "Actief",
+        "pending": "In behandeling",
+        "review": "In beoordeling",
+        "delayed": "Vertraagd"
+      },
+      "toast": {
+        "exporting": "Export gestart…"
+      }
+    }
+  },
+  "client": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "projects": "Projecten",
+      "calendar": "Kalender",
+      "workspace": "Werkruimte",
+      "messages": "Berichten",
+      "approvals": "Goedkeuringen",
+      "documents": "Documenten",
+      "profile": "Profiel"
+    },
+    "dashboard": {
+      "pageTitle": "Dashboard | ENS",
+      "welcome": "Welkom terug, {{name}}",
+      "breadcrumb": "Dashboard",
+      "errorLoad": "Kan de dashboard-gegevens van de klant niet laden.",
+      "defaultClientName": "Klant",
+      "loadingProject": "Project laden...",
+      "noActiveProject": "Geen actief project",
+      "projectSubtitle": "Projectgegevens worden geladen uit PostgreSQL",
+      "loadingActiveProject": "Actief project laden...",
+      "noProjectAssigned": "Er is nog geen actief project toegewezen.",
+      "pmLabel": "Projectmanager",
+      "messagesBtn": "Berichten",
+      "overallProgress": "Algehele voortgang",
+      "viewWorkspace": "WERKRUIMTE BEKIJKEN",
+      "workspacePreview": "Werkruimte-voorbeeld",
+      "recentActivity": "Recente activiteit",
+      "loadingActivity": "Activiteiten laden...",
+      "noActivity": "Er is nog geen activiteit geregistreerd.",
+      "viewTimeline": "Projecttijdlijn bekijken",
+      "approvalProgress": "Voortgang goedkeuringen",
+      "stat": {
+        "progress": "Projectvoortgang",
+        "pendingApprovals": "Wachtende goedkeuringen",
+        "workspaceVersions": "Werkruimteversies",
+        "documents": "Documenten"
+      },
+      "step": {
+        "created": "Aangemaakt",
+        "designing": "Ontwerpen",
+        "review": "Review",
+        "approved": "Goedgekeurd",
+        "production": "Productie"
+      },
+      "approval": {
+        "created": "Project aangemaakt",
+        "designing": "Design in uitvoering",
+        "review": "Klantreview",
+        "reviewRequired": "Review vereist",
+        "noReview": "Geen review in behandeling"
+      }
+    },
+    "approvals": {
+      "pageTitle": "Goedkeuringen | ENS",
+      "title": "Goedkeuringen",
+      "breadcrumbDashboard": "Dashboard",
+      "awaitingReview": "{{count}} wacht op uw beoordeling",
+      "filterGroup": "Goedkeuringen filteren",
+      "filterByStatus": "Filteren op {{status}}",
+      "justNow": "Zojuist",
+      "emptyState": "Geen goedkeuringen hier.",
+      "toggleDetails": "Details voor {{title}} in-/uitklappen",
+      "commentPlaceholder": "Laat een reactie achter voor uw PM…",
+      "sendComment": "Opmerking versturen",
+      "status": {
+        "Pending": "In behandeling",
+        "Approved": "Goedgekeurd",
+        "Rejected": "Afgewezen"
+      },
+      "filter": {
+        "all": "Alle"
+      },
+      "actions": {
+        "approve": "Goedkeuren",
+        "requestChanges": "Wijzigingen aanvragen",
+        "viewDetails": "Details bekijken"
+      },
+      "toast": {
+        "approved": "✓ Ontwerp goedgekeurd — PM op de hoogte",
+        "rejected": "Wijzigingen aangevraagd — PM op de hoogte",
+        "commentSent": "Reactie verzonden naar PM"
+      },
+      "badge": {
+        "me": "IK",
+        "pm": "PM"
+      },
+      "comments_one": "{{count}} reactie",
+      "comments_other": "{{count}} reacties",
+      "confirm": {
+        "approveTitle": "Dit ontwerp goedkeuren?",
+        "rejectTitle": "Wijzigingen aanvragen?",
+        "approveBody": "Uw PM wordt op de hoogte gesteld en deze versie wordt als goedgekeurd gemarkeerd.",
+        "rejectBody": "Uw PM wordt op de hoogte gesteld en zal uw feedback verwerken.",
+        "cancel": "Annuleren",
+        "confirmApprove": "Ja, goedkeuren",
+        "confirmReject": "Ja, wijzigingen aanvragen"
+      }
+    },
+    "documents": {
+      "pageTitle": "Documenten | ENS",
+      "title": "Documenten",
+      "breadcrumbDashboard": "Dashboard",
+      "uploadBtn": "Bestanden uploaden",
+      "filterGroup": "Filteren op categorie",
+      "searchPlaceholder": "Zoek bestanden, tags…",
+      "emptyState": "Geen documenten gevonden.",
+      "filter": {
+        "all": "Alle"
+      },
+      "stat": {
+        "total": "Totaal bestanden",
+        "final": "Definitief",
+        "inReview": "In beoordeling",
+        "drafts": "Concepten"
+      },
+      "status": {
+        "final": "Definitief",
+        "draft": "Concept",
+        "review": "In beoordeling"
+      },
+      "dropZone": {
+        "ariaLabel": "Bestand upload dropzone",
+        "textBefore": "Sleep bestanden hierheen of",
+        "browse": "bladeren",
+        "hint": "PDF, PNG, XLSX, DOC — tot 50 MB per bestand"
+      },
+      "table": {
+        "file": "Bestand",
+        "category": "Categorie",
+        "uploadedBy": "Geüpload door",
+        "date": "Datum",
+        "status": "Status"
+      },
+      "actions": {
+        "preview": "Voorbeeld van {{name}}",
+        "download": "Download {{name}}",
+        "remove": "Verwijder {{name}}"
+      },
+      "toast": {
+        "uploaded_one": "{{count}} bestand geüpload",
+        "uploaded_other": "{{count}} bestanden geüpload",
+        "fileRemoved": "Bestand verwijderd",
+        "downloading": "{{name}} wordt gedownload…"
+      },
+      "preview": {
+        "close": "Voorbeeld sluiten",
+        "imageUnavailable": "Afbeeldingsvoorbeeld niet beschikbaar in demo",
+        "typeUnavailable": "Voorbeeld niet beschikbaar voor {{type}}-bestanden",
+        "category": "Categorie",
+        "status": "Status",
+        "uploadedBy": "Geüpload door",
+        "tags": "Tags",
+        "downloadBtn": "Bestand downloaden"
+      }
+    },
+    "messages": {
+      "pageTitle": "Berichten | ENS",
+      "title": "Berichten",
+      "breadcrumbDashboard": "Dashboard",
+      "searchPlaceholder": "Berichten zoeken...",
+      "contactListLabel": "Gesprekken",
+      "supportManager": "Supportmanager",
+      "activeNow": "Nu actief",
+      "justNow": "Zojuist",
+      "threadLabel": "Berichtthread",
+      "avatarYou": "IK",
+      "avatarPm": "PM",
+      "inputPlaceholder": "Typ uw bericht...",
+      "actions": {
+        "phone": "Bellen starten",
+        "video": "Videogesprek starten",
+        "more": "Meer opties",
+        "attach": "Bestand bijvoegen",
+        "send": "Bericht verzenden"
+      }
+    },
+    "projects": {
+      "pageTitle": "Mijn projecten | ENS",
+      "title": "Mijn projecten",
+      "breadcrumbDashboard": "Dashboard",
+      "breadcrumbProjects": "Projecten",
+      "actionRequired": "Actie vereist",
+      "exhibitionTbd": "Beurs nog te bevestigen",
+      "productionProgress": "Productie voortgang",
+      "quickActions": "Snelle acties",
+      "stat": {
+        "total": "Totaal projecten",
+        "active": "Actief",
+        "pendingReview": "In beoordeling",
+        "avgProgress": "Gem. voortgang"
+      },
+      "status": {
+        "Active": "Actief",
+        "Pending": "In behandeling",
+        "Delayed": "Vertraagd",
+        "Completed": "Voltooid"
+      },
+      "meta": {
+        "system": "Systeem",
+        "size": "Grootte",
+        "pm": "PM",
+        "deadline": "Deadline"
+      },
+      "timeline": {
+        "heading": "Projecttijdlijn",
+        "defaultLabel": "Project aangemaakt — ontwerp in uitvoering",
+        "defaultDate": "Recent"
+      },
+      "action": {
+        "viewDesign": "Ontwerp bekijken",
+        "reviewPending": "Beoordeling in behandeling",
+        "approvals": "Goedkeuringen",
+        "documents": "Documenten",
+        "messagePm": "PM berichten"
+      }
+    },
+    "profile": {
+      "pageTitle": "Profielinstellingen | ENS",
+      "title": "Profielinstellingen",
+      "breadcrumbDashboard": "Dashboard",
+      "breadcrumbProfile": "Profiel",
+      "tab": {
+        "profile": "Persoonlijke info",
+        "company": "Bedrijf",
+        "notifications": "Meldingen",
+        "security": "Beveiliging"
+      },
+      "personalInfo": {
+        "heading": "Persoonlijke informatie",
+        "description": "Werk uw persoonlijke gegevens en contactinformatie bij."
+      },
+      "company": {
+        "heading": "Bedrijfsinformatie",
+        "description": "Beheer uw bedrijfsgegevens en beursprofiel."
+      },
+      "avatar": {
+        "heading": "Profielfoto",
+        "hint": "JPG, GIF of PNG. Maximale grootte 1,5 MB.",
+        "uploadNew": "Nieuwe foto uploaden",
+        "remove": "Verwijderen",
+        "changeBtn": "Profielfoto wijzigen"
+      },
+      "field": {
+        "name": "Volledige naam",
+        "email": "E-mailadres",
+        "phone": "Telefoonnummer",
+        "companyName": "Bedrijfsnaam",
+        "industry": "Sector",
+        "website": "Website",
+        "currentPassword": "Huidig wachtwoord",
+        "newPassword": "Nieuw wachtwoord",
+        "confirmPassword": "Nieuw wachtwoord bevestigen"
+      },
+      "btn": {
+        "saveChanges": "Wijzigingen opslaan",
+        "updateCompany": "Bedrijfsinfo bijwerken",
+        "updatePassword": "Wachtwoord bijwerken"
+      },
+      "notifications": {
+        "heading": "Meldingsvoorkeuren",
+        "description": "Kies hoe u op de hoogte wilt worden gesteld van projectupdates.",
+        "enabled": "Ingeschakeld",
+        "disabled": "Uitgeschakeld",
+        "milestones": {
+          "title": "Projectmijlpalen",
+          "desc": "Ontvang een melding wanneer een fase is voltooid."
+        },
+        "assignments": {
+          "title": "Nieuwe berichten",
+          "desc": "Ontvang een melding wanneer uw PM een bericht stuurt."
+        },
+        "reports": {
+          "title": "Revisieaanvragen",
+          "desc": "Ontvang een melding wanneer een nieuwe designversie klaar is."
+        },
+        "system": {
+          "title": "Beveiligingswaarschuwingen",
+          "desc": "Ontvang een melding over accountaanmeldingen."
+        }
+      },
+      "security": {
+        "heading": "Beveiliging",
+        "description": "Beheer uw wachtwoord en accountbeveiligingsinstellingen."
+      },
+      "dangerZone": {
+        "heading": "Gevaarlijke zone",
+        "description": "Zodra u uw account verwijdert, is er geen weg terug. Wees zeker.",
+        "deleteBtn": "Account verwijderen"
+      },
+      "validation": {
+        "nameMin": "Naam moet minimaal 2 tekens bevatten",
+        "emailInvalid": "Ongeldig e-mailadres",
+        "companyNameRequired": "Bedrijfsnaam is vereist",
+        "websiteInvalid": "Ongeldige URL"
+      },
+      "toast": {
+        "profileSaved": "Profielwijzigingen opgeslagen",
+        "profileError": "Profiel kon niet worden opgeslagen",
+        "profileLoadError": "Profielinstellingen konden niet worden geladen",
+        "companySaved": "Bedrijfsinformatie opgeslagen",
+        "avatarUpdated": "Profielfoto bijgewerkt",
+        "avatarRemoved": "Profielfoto verwijderd",
+        "avatarError": "Profielfoto kon niet worden opgeslagen",
+        "avatarRemoveError": "Profielfoto kon niet worden verwijderd",
+        "avatarNotImage": "Kies een afbeeldingsbestand",
+        "avatarTooLarge": "Kies een afbeelding kleiner dan 1,5 MB",
+        "imageReadError": "Afbeelding kon niet worden gelezen",
+        "notificationError": "Meldingsinstelling kon niet worden opgeslagen",
+        "passwordUpdated": "Wachtwoord bijgewerkt",
+        "passwordError": "Wachtwoord kon niet worden bijgewerkt",
+        "passwordFillAll": "Vul alle wachtwoordvelden in",
+        "passwordMismatch": "Nieuwe wachtwoorden komen niet overeen",
+        "passwordTooShort": "Wachtwoord moet minimaal 8 tekens bevatten",
+        "deleteQueued": "Accountverwijderingsverzoek ingediend"
+      }
+    },
+    "workspace": {
+      "pageTitle": "Ontwerpwerkruimte | ENS",
+      "viewOnly": "ALLEEN LEZEN",
+      "loadingWorkspace": "Werkruimte laden…",
+      "compareBtn": "Vergelijken",
+      "addPinBtn": "Pin toevoegen",
+      "pinningLabel": "Plaatsen…",
+      "downloadBtn": "Downloaden",
+      "requestChangesBtn": "Wijzigingen aanvragen",
+      "approvedLabel": "Goedgekeurd",
+      "approveDesignBtn": "Ontwerp goedkeuren",
+      "assetLibraryLabel": "Assetbibliotheek",
+      "lockedLabel": "VERGRENDELD",
+      "reviewModeNote": "Assets zijn vergrendeld in beoordelingsmodus. Neem contact op met uw PM voor wijzigingsverzoeken.",
+      "canvasLabel": "3D-standbeoordeling canvas",
+      "compareCurrentLabel": "v{{v}} — Huidig",
+      "comparePreviousLabel": "v{{v}} — Vorige",
+      "clickToPin": "Klik op canvas om pin te plaatsen",
+      "versionSelect": "Versie selecteren",
+      "tab": {
+        "thread": "Thread",
+        "approvals": "Goedkeuringen",
+        "pins": "Pins"
+      },
+      "pendingDot": "Goedkeuringen in behandeling",
+      "reviewThread": "Beoordelingsthread",
+      "notesCount_one": "{{count}} notitie",
+      "notesCount_other": "{{count}} notities",
+      "commentPlaceholder": "Commentaar toevoegen…",
+      "sendComment": "Commentaar versturen",
+      "projectInfoLabel": "Projectinfo",
+      "info": {
+        "system": "Systeem",
+        "floorArea": "Vloeroppervlak",
+        "dimensions": "Afmetingen",
+        "approval": "Goedkeuring",
+        "awaiting": "Wachten op goedkeuring"
+      },
+      "elementApprovalHeading": "Bekijk en keur elk ontwerpelement goed",
+      "element": {
+        "structure": "Structuur",
+        "furniture": "Meubilair",
+        "branding": "Huisstijl",
+        "lighting": "Verlichting"
+      },
+      "elementStatus": {
+        "approved": "Goedgekeurd",
+        "pending": "In behandeling",
+        "rejected": "Feedback verstuurd"
+      },
+      "approveBtn": "Goedkeuren",
+      "requestFixBtn": "Correctie aanvragen",
+      "resetBtn": "Terugzetten naar in behandeling",
+      "allApprovedMsg": "Alle elementen goedgekeurd",
+      "pendingApprovalMsg": "Goedkeuringen in behandeling",
+      "approvedCount": "{{approved}} van {{total}} goedgekeurd",
+      "canvasAnnotations": "Canvas-annotaties",
+      "placingLabel": "Plaatsen…",
+      "noPins": "Nog geen pins geplaatst. Klik op «Pin toevoegen» en dan op het canvas.",
+      "removePin": "Pin #{{num}} verwijderen",
+      "statusBar": {
+        "viewOnly": "ALLEEN LEZEN",
+        "restricted": "KLANTREVIEW — BEPERKTE TOEGANG"
+      },
+      "statusReadOnly": "ALLEEN LEZEN",
+      "statusCompare": "VERGELIJKINGSMODUS",
+      "dialog": {
+        "title": "Ontwerpwijzigingen aanvragen",
+        "subtitle": "Beschrijf de gewenste wijzigingen. Uw PM wordt op de hoogte gesteld.",
+        "placeholder": "Beschrijf de gewenste wijzigingen…",
+        "cancel": "Annuleren",
+        "submit": "Verzoek versturen"
+      },
+      "toast": {
+        "allApproved": "Alle elementen goedgekeurd — dank u!",
+        "changeRequestSent": "Wijzigingsverzoek verstuurd naar uw PM",
+        "pinAdded": "Pin #{{num}} toegevoegd",
+        "elementApproved": "{{label}} goedgekeurd",
+        "feedbackSent": "Feedback verstuurd naar PM",
+        "downloadStarted": "Download gestart",
+        "designApproved": "Ontwerp goedgekeurd — dank u!"
+      },
+      "justNow": "Zojuist",
+      "changeRequestPrefix": "Wijzigingsverzoek",
+      "pinPrefix": "Pin",
+      "pinAnnotationPrompt": "Voeg een notitie toe voor deze pin",
+      "pinPlaceholder": "Beschrijf deze locatie…",
+      "confirmPin": "Pin bevestigen",
+      "cancelPin": "Pin annuleren",
+      "errorLoad": "Werkruimte kon niet worden geladen",
+      "ctrl": {
+        "reset": "Weergave resetten",
+        "zoomIn": "Inzoomen",
+        "zoomOut": "Uitzoomen",
+        "fullscreen": "Volledig scherm"
+      }
+    }
+  },
+  "notFound": {
+    "title": "404 – Pagina niet gevonden",
+    "badge": "Pagina niet gevonden",
+    "heading": "Deze stand bestaat niet",
+    "body": "De pagina die u zoekt is mogelijk verplaatst, verwijderd of heeft nooit bestaan. Laten we u terugbrengen naar het platform.",
+    "backHome": "Terug naar home",
+    "goBack": "Ga terug",
+    "links": {
+      "home": "Home",
+      "staffPortal": "Medewerkersportaal",
+      "login": "Inloggen",
+      "signUp": "Registreren"
+    }
+  },
+  "auth": {
+    "login": {
+      "pageTitle": "Inloggen | ENS",
+      "title": "Welkom terug",
+      "description": "Log in om toegang te krijgen tot uw werkruimte",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "naam@bedrijf.com",
+      "passwordLabel": "Wachtwoord",
+      "passwordPlaceholder": "Voer uw wachtwoord in",
+      "forgotPassword": "Wachtwoord vergeten?",
+      "rememberMe": "30 dagen ingelogd blijven",
+      "submit": "Inloggen",
+      "submitting": "Inloggen...",
+      "lockedBtn": "Vergrendeld",
+      "lockMessage": "Account tijdelijk vergrendeld. Probeer opnieuw over {{time}}.",
+      "signInError": "Inloggen mislukt.",
+      "attemptsRemaining_one": "{{count}} inlogpoging over voor tijdelijke blokkade",
+      "attemptsRemaining_other": "{{count}} inlogpogingen over voor tijdelijke blokkade",
+      "noAccount": "Nog geen account?",
+      "signUpFree": "Gratis registreren",
+      "devSection": "Lokale testaccounts",
+      "showPassword": "Wachtwoord tonen",
+      "hidePassword": "Wachtwoord verbergen",
+      "validation": {
+        "email": "Ongeldig e-mailadres",
+        "passwordMin": "Wachtwoord moet minimaal 8 tekens bevatten"
+      }
+    },
+    "signup": {
+      "pageTitle": "Account aanmaken | ENS",
+      "title": "Klantaccount aanmaken",
+      "description": "Publieke registratie maakt een beoordelingsaccount aan dat goedkeuring vereist",
+      "fullNameLabel": "Volledige naam",
+      "fullNamePlaceholder": "Jan de Vries",
+      "companyLabel": "Bedrijf",
+      "companyPlaceholder": "Acme Beurzen",
+      "workEmailLabel": "Zakelijk e-mailadres",
+      "passwordLabel": "Wachtwoord",
+      "passwordPlaceholder": "Wachtwoord aanmaken",
+      "confirmPasswordLabel": "Wachtwoord bevestigen",
+      "confirmPasswordPlaceholder": "Wachtwoord bevestigen",
+      "termsLabel": "Ik ga akkoord met de",
+      "termsOfService": "Servicevoorwaarden",
+      "and": "en het",
+      "privacyPolicy": "Privacybeleid",
+      "submit": "Klantaccount aanmaken",
+      "submitting": "Account aanmaken...",
+      "createError": "Account aanmaken mislukt.",
+      "haveAccount": "Al een account?",
+      "signIn": "Inloggen",
+      "clientOnlyNote": "Publieke registratie is beperkt tot klanten. Projectmanagers en leidinggevenden moeten worden uitgenodigd door een organisatie-eigenaar.",
+      "showPassword": "Wachtwoord tonen",
+      "hidePassword": "Wachtwoord verbergen",
+      "showConfirmPassword": "Bevestigingswachtwoord tonen",
+      "hideConfirmPassword": "Bevestigingswachtwoord verbergen",
+      "strength": {
+        "weak": "Zwak",
+        "fair": "Matig",
+        "good": "Goed",
+        "strong": "Sterk",
+        "suffix": "wachtwoord"
+      },
+      "validation": {
+        "nameMin": "Naam moet minimaal 2 tekens bevatten",
+        "companyMin": "Bedrijf moet minimaal 2 tekens bevatten",
+        "email": "Ongeldig e-mailadres",
+        "passwordMin": "Wachtwoord moet minimaal 8 tekens bevatten",
+        "passwordUpper": "Moet een hoofdletter bevatten",
+        "passwordNumber": "Moet een cijfer bevatten",
+        "confirmRequired": "Bevestig uw wachtwoord",
+        "termsRequired": "U moet de voorwaarden accepteren",
+        "passwordsMismatch": "Wachtwoorden komen niet overeen"
+      }
+    },
+    "forgotPassword": {
+      "pageTitle": "Wachtwoord opnieuw instellen | ENS",
+      "title": "Wachtwoord opnieuw instellen",
+      "description": "Voer uw e-mail in en we sturen u een resetlink",
+      "emailLabel": "E-mailadres",
+      "submit": "Link versturen",
+      "submitting": "Link versturen...",
+      "sentTitle": "Controleer uw inbox",
+      "sentTo": "We hebben een wachtwoord-resetlink verstuurd naar",
+      "checkSpam": "Controleer uw spam-map als u de e-mail niet binnen enkele minuten ziet.",
+      "resending": "Versturen...",
+      "resendIn": "Opnieuw versturen over {{seconds}}s",
+      "resendEmail": "E-mail opnieuw versturen",
+      "differentEmail": "Ander e-mailadres gebruiken",
+      "backToLogin": "Terug naar inloggen",
+      "validation": {
+        "email": "Voer een geldig e-mailadres in"
+      }
+    },
+    "resetPassword": {
+      "pageTitle": "Nieuw wachtwoord | ENS",
+      "title": "Nieuw wachtwoord instellen",
+      "description": "Kies een sterk wachtwoord voor uw account",
+      "newPasswordLabel": "Nieuw wachtwoord",
+      "confirmPasswordLabel": "Wachtwoord bevestigen",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Wachtwoord bijwerken",
+      "submitting": "Wachtwoord bijwerken...",
+      "successTitle": "Wachtwoord bijgewerkt",
+      "successMessage": "Uw wachtwoord is succesvol bijgewerkt. U kunt nu inloggen met uw nieuwe gegevens.",
+      "continueToSignIn": "Doorgaan naar inloggen",
+      "backToLogin": "Terug naar inloggen",
+      "showPassword": "Wachtwoord tonen",
+      "hidePassword": "Wachtwoord verbergen",
+      "showConfirmPassword": "Bevestiging tonen",
+      "hideConfirmPassword": "Bevestiging verbergen",
+      "requirements": {
+        "length": "Minimaal 8 tekens",
+        "uppercase": "Een hoofdletter",
+        "number": "Een cijfer"
+      },
+      "strength": {
+        "weak": "Zwak",
+        "fair": "Matig",
+        "good": "Goed",
+        "strong": "Sterk",
+        "suffix": "wachtwoord"
+      },
+      "validation": {
+        "passwordMin": "Wachtwoord moet minimaal 8 tekens bevatten",
+        "passwordUpper": "Moet minimaal één hoofdletter bevatten",
+        "passwordNumber": "Moet minimaal één cijfer bevatten",
+        "confirmRequired": "Bevestig uw wachtwoord",
+        "passwordsMismatch": "Wachtwoorden komen niet overeen"
+      }
     }
   }
 }

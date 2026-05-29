@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "startDesigning": "开始设计",
     "watchDemo": "观看演示",
@@ -9,7 +9,9 @@
     "logIn": "登录",
     "learnMore": "了解更多",
     "copyright": "© {{year}} ENS Expo Solutions Ltd. 保留所有权利。",
-    "internalOnly": "仅供内部使用"
+    "internalOnly": "仅供内部使用",
+    "vsLastMonth": "与上月相比",
+    "clickToView": "点击查看 →"
   },
   "nav": {
     "features": "功能",
@@ -45,20 +47,54 @@
       "heading": "您设计和交付所需的",
       "headingAccent": "一切工具",
       "subheading": "专为展览行业构建的完整设计和项目管理套件。",
-      "realtime": { "title": "实时3D画布", "desc": "将系统组件拖放到实时3D舞台上。所见即所建。" },
-      "octanorm": { "title": "Octanorm系统", "desc": "完整的Octanorm模块系统，具有精确的40mm和50mm型材、连接件和面板。" },
-      "maxima": { "title": "Maxima框架", "desc": "重型Maxima铝型材挤压系统，具有可配置的跨度和填充选项。" },
-      "client": { "title": "客户预览", "desc": "与客户分享实时3D链接。他们直接在模型上注释——无需账户。" },
-      "analytics": { "title": "项目分析", "desc": "实时跟踪项目进度、审批周期、成本预测和团队利用率。" },
-      "automation": { "title": "智能自动化", "desc": "一键自动生成平面图、立面图、零件清单和成本估算。" }
+      "realtime": {
+        "title": "实时3D画布",
+        "desc": "将系统组件拖放到实时3D舞台上。所见即所建。"
+      },
+      "octanorm": {
+        "title": "Octanorm系统",
+        "desc": "完整的Octanorm模块系统，具有精确的40mm和50mm型材、连接件和面板。"
+      },
+      "maxima": {
+        "title": "Maxima框架",
+        "desc": "重型Maxima铝型材挤压系统，具有可配置的跨度和填充选项。"
+      },
+      "client": {
+        "title": "客户预览",
+        "desc": "与客户分享实时3D链接。他们直接在模型上注释——无需账户。"
+      },
+      "analytics": {
+        "title": "项目分析",
+        "desc": "实时跟踪项目进度、审批周期、成本预测和团队利用率。"
+      },
+      "automation": {
+        "title": "智能自动化",
+        "desc": "一键自动生成平面图、立面图、零件清单和成本估算。"
+      }
     },
     "howItWorks": {
       "heading": "从简报到竣工",
       "headingAccent": "四个步骤",
-      "brief": { "step": "01", "title": "上传简报", "desc": "导入客户的活动简报、平面图或展位规格表。" },
-      "design": { "step": "02", "title": "3D设计", "desc": "使用Octanorm或Maxima系统组件和家具库构建展位。" },
-      "review": { "step": "03", "title": "客户审核", "desc": "发送可共享链接。客户直接在3D模型中审核和批准。" },
-      "deliver": { "step": "04", "title": "导出并交付", "desc": "一键导出到生产文件、图纸和零件清单。" }
+      "brief": {
+        "step": "01",
+        "title": "上传简报",
+        "desc": "导入客户的活动简报、平面图或展位规格表。"
+      },
+      "design": {
+        "step": "02",
+        "title": "3D设计",
+        "desc": "使用Octanorm或Maxima系统组件和家具库构建展位。"
+      },
+      "review": {
+        "step": "03",
+        "title": "客户审核",
+        "desc": "发送可共享链接。客户直接在3D模型中审核和批准。"
+      },
+      "deliver": {
+        "step": "04",
+        "title": "导出并交付",
+        "desc": "一键导出到生产文件、图纸和零件清单。"
+      }
     },
     "testimonials": {
       "heading": "业内",
@@ -104,7 +140,8 @@
       "security": "安全",
       "cookies": "Cookie政策",
       "gdpr": "GDPR"
-    }
+    },
+    "pageTitle": "ENS — 展览与展台设计平台"
   },
   "team": {
     "hero": {
@@ -169,6 +206,1949 @@
       "itSupport": "IT支持",
       "privacy": "隐私政策",
       "security": "安全"
+    },
+    "pageTitle": "ENS 团队门户 — 员工与客户中心",
+    "chiefFeatures": {
+      "workspaceMonitor": {
+        "title": "工作区监控",
+        "desc": "实时监督所有项目中每个活跃的设计会话。"
+      },
+      "teamManagement": {
+        "title": "团队管理",
+        "desc": "分配项目经理、跟踪工作量并管理访问权限。"
+      },
+      "clientPortfolio": {
+        "title": "客户组合",
+        "desc": "全面查看所有客户账户、联系人和活跃合同。"
+      },
+      "analytics": {
+        "title": "分析与报告",
+        "desc": "项目KPI、审批时间和收入仪表盘。"
+      },
+      "approvalGateway": {
+        "title": "审批网关",
+        "desc": "生产发布前的最终结构和设计审批。"
+      },
+      "commsHub": {
+        "title": "通讯中心",
+        "desc": "客户、项目经理和分包商之间的集中消息传递。"
+      }
+    },
+    "pmFeatures": {
+      "boothWorkspace": {
+        "title": "3D展台工作区",
+        "desc": "配备实时协作设计的完整Octanorm/Maxima编辑器。"
+      },
+      "clientMgmt": {
+        "title": "客户管理",
+        "desc": "管理每个项目的简报、联系人和实时反馈会话。"
+      },
+      "taskTracker": {
+        "title": "任务跟踪",
+        "desc": "涵盖生产、设计和交付阶段的看板任务板。"
+      },
+      "pipeline": {
+        "title": "项目管道",
+        "desc": "使用里程碑时间线跟踪所有活跃和即将进行的项目。"
+      },
+      "requestMgmt": {
+        "title": "请求管理",
+        "desc": "处理变更请求、修订日志和审批链。"
+      },
+      "messaging": {
+        "title": "消息传递",
+        "desc": "与客户和首席办公室进行直接和群组消息传递。"
+      }
+    },
+    "workflowSteps": {
+      "brief": {
+        "title": "客户简报",
+        "desc": "首席接收并将展览简报分配给项目经理。"
+      },
+      "workspace": {
+        "title": "工作区设置",
+        "desc": "PM创建项目并配置展台尺寸和系统。"
+      },
+      "design": {
+        "title": "3D设计",
+        "desc": "PM使用结构库在实时工作区中构建展台。"
+      },
+      "review": {
+        "title": "首席审查",
+        "desc": "首席监控进度并提供结构指导。"
+      },
+      "signoff": {
+        "title": "客户签字",
+        "desc": "客户审查设计并提交变更请求。"
+      },
+      "approval": {
+        "title": "最终批准",
+        "desc": "首席批准最终设计并发布生产。"
+      },
+      "export": {
+        "title": "生产导出",
+        "desc": "PM导出文档、切割清单和组件计划表。"
+      }
+    }
+  },
+  "chief": {
+    "nav": {
+      "chief": "总监",
+      "dashboard": "仪表板",
+      "clients": "客户",
+      "managers": "经理",
+      "projects": "项目",
+      "monitor": "工作区监控",
+      "reports": "报告",
+      "messages": "消息",
+      "calendar": "日历",
+      "settings": "设置"
+    },
+    "common": {
+      "cancel": "取消",
+      "save": "保存",
+      "assign": "分配",
+      "message": "消息",
+      "rebalance": "重新分配",
+      "openDetails": "打开详情",
+      "viewCalendar": "查看日历",
+      "sendReminder": "发送提醒",
+      "assignments": "分配",
+      "inviteManager": "邀请经理",
+      "keepEditing": "继续编辑",
+      "discardChanges": "放弃更改",
+      "selectAll": "全选",
+      "clear": "清除",
+      "project": "项目",
+      "noDeadline": "无截止日期",
+      "status": {
+        "active": "活跃",
+        "pending": "待处理",
+        "onLeave": "请假中",
+        "completed": "已完成",
+        "delayed": "已延迟",
+        "unassigned": "未分配",
+        "highLoad": "高负载",
+        "accepted": "已接受",
+        "expired": "已过期"
+      }
+    },
+    "dashboard": {
+      "title": "总监仪表板",
+      "exportReports": "导出报告",
+      "excelExported": "Excel报告已导出",
+      "noActivity": "暂无活动记录。",
+      "viewAllActivity": "查看所有活动",
+      "showRecentActivity": "显示近期活动",
+      "commandCenter": "指挥中心",
+      "recentActivity": "近期活动",
+      "noManagerAssignments": "未找到经理分配记录。",
+      "loadError": "无法加载仪表板数据",
+      "charts": {
+        "projectActivity": "项目活动",
+        "projectActivityDesc": "过去7天所有项目的活动情况",
+        "projectStatus": "项目状态",
+        "projectStatusDesc": "{{count}} 个活跃项目的状态分布",
+        "managerPerformance": "经理绩效",
+        "managerPerformanceDesc": "每位经理分配的项目数"
+      },
+      "stats": {
+        "totalClients": "客户总数",
+        "activeProjects": "活跃项目",
+        "managers": "经理",
+        "delayedProjects": "延迟项目",
+        "needsAction": "需要处理",
+        "pendingApprovals": "待审批",
+        "activeWorkspaces": "活跃工作区",
+        "saved": "已保存",
+        "db": "数据库",
+        "live": "实时",
+        "assigned": "已分配",
+        "open": "待处理",
+        "clear": "已清除"
+      },
+      "insights": {
+        "delayedTitle": "延迟项目",
+        "dueSoonTitle": "14天内到期",
+        "unassignedTitle": "未分配工作",
+        "approvalsTitle": "待审批",
+        "noDelayed": "当前无延迟项目记录。",
+        "firstInQueue": "{{name}}在恢复队列中排名第一。",
+        "noDueSoon": "14天内无项目截止日期。",
+        "nearestDeadline": "{{name}}的截止日期最近。",
+        "noUnassigned": "每个活跃项目均已分配经理。",
+        "unassignedNeeds": "{{name}}仍需要一位项目经理。",
+        "noApprovals": "当前无审批瓶颈记录。",
+        "approvalsWaiting": "客户审批等待处理。",
+        "reviewProjects": "查看项目",
+        "openCalendar": "打开日历",
+        "assignManagers": "分配经理",
+        "openQueue": "打开队列"
+      },
+      "pageTitle": "仪表板 | ENS"
+    },
+    "managers": {
+      "title": "经理管理",
+      "refresh": "刷新数据",
+      "noMatch": "没有经理符合当前筛选条件。",
+      "tiles": {
+        "teamLoad": "团队负载",
+        "activeManagers": "活跃经理",
+        "delayedProjects": "延迟项目",
+        "unassignedItems": "未分配项",
+        "pendingInvites": "待处理邀请"
+      },
+      "filters": {
+        "searchPlaceholder": "搜索经理、客户、项目",
+        "allStatuses": "所有状态",
+        "allManagers": "所有经理",
+        "highLoad": "高负载",
+        "sortHighest": "最高负载",
+        "sortLowest": "最低负载",
+        "sortProjects": "最多活跃项目",
+        "sortRating": "最高评分",
+        "cardView": "卡片视图",
+        "tableView": "表格视图"
+      },
+      "views": {
+        "title": "已保存视图",
+        "desc": "重复使用筛选条件、排序和布局。",
+        "namePlaceholder": "命名视图",
+        "deleteView": "删除视图 {{name}}"
+      },
+      "invitations": {
+        "title": "待处理邀请",
+        "desc": "受邀经理在接受之前显示在此处。他们暂时无法接收任务分配。",
+        "expires": "到期 {{date}}",
+        "moreInvites": "还有 {{count}} 个",
+        "copyLink": "复制 {{email}} 的邀请链接",
+        "resend": "重新发送邀请至 {{email}}",
+        "revoke": "撤销 {{email}} 的邀请"
+      },
+      "invite": {
+        "title": "邀请经理",
+        "desc": "向总监工作区添加一名项目经理。",
+        "namePlaceholder": "Sarah Mitchell",
+        "emailPlaceholder": "manager@company.com",
+        "sendInvite": "发送邀请",
+        "nameLabel": "姓名",
+        "emailLabel": "电子邮件",
+        "emailInvalid": "请输入有效的电子邮件地址。",
+        "defaultName": "新经理"
+      },
+      "statusChange": {
+        "title": "确认状态更改",
+        "markOnLeave": "标记为请假",
+        "markActive": "标记为活跃",
+        "confirmPrefix": "确定要将",
+        "confirmSuffix": "标记为",
+        "onLeaveNote": "其活跃项目仍保持分配，但工作负载将受到限制。",
+        "updated": "经理状态已更新"
+      },
+      "rebalance": {
+        "title": "重新平衡工作负载",
+        "desc": "确认前请检查建议的更改。",
+        "projectToMove": "要移动的项目",
+        "from": "来自",
+        "to": "至",
+        "confirm": "确认重新平衡",
+        "done": "工作负载已重新平衡"
+      },
+      "assignments": {
+        "titleTeam": "团队分配",
+        "titleFocused": "分配 – {{name}}",
+        "descTeam": "在团队内重新分配客户和项目。",
+        "descFocused": "管理分配给{{name}}的客户和项目。",
+        "bulkTitle": "批量分配",
+        "bulkDesc": "选择行，选择经理，保存前应用。",
+        "selected": "已选择",
+        "applySelected": "应用所选",
+        "cascadeLabel": "同时移动该客户的项目",
+        "cascadeDesc": "重新分配客户时，该客户下的所有项目将转移给同一经理。",
+        "saveAssignments": "保存分配",
+        "noClients": "无可用客户。",
+        "noProjects": "无可用项目。",
+        "clients": "客户",
+        "projects": "项目",
+        "saved": "分配已更新",
+        "selectRow": "选择 {{name}}"
+      },
+      "discard": {
+        "title": "放弃分配更改？",
+        "desc": "您有未保存的分配编辑。关闭将放弃这些更改。"
+      },
+      "card": {
+        "computedWorkload": "计算工作负载",
+        "delayed": "延迟",
+        "urgent": "紧急",
+        "ratingNew": "新",
+        "ratingNA": "暂无"
+      },
+      "table": {
+        "manager": "经理",
+        "status": "状态",
+        "workload": "工作负载",
+        "projects": "项目",
+        "clients": "客户",
+        "nextDeadline": "下一截止日期",
+        "actions": "操作"
+      },
+      "detail": {
+        "workload": "工作负载",
+        "projects": "项目",
+        "clients": "客户",
+        "tabs": {
+          "overview": "概览",
+          "projects": "项目",
+          "clients": "客户",
+          "activity": "活动"
+        },
+        "overview": {
+          "title": "工作负载健康状况",
+          "desc": "当前活跃项目和客户负载",
+          "delayed": "延迟",
+          "dueSoon": "即将到期",
+          "nextDeadline": "下一截止日期",
+          "rating": "评分",
+          "none": "无"
+        },
+        "noProjects": "没有已分配项目。",
+        "noClients": "没有已分配客户。"
+      },
+      "audit": {
+        "title": "活动审计",
+        "desc": "分配、访问、重新平衡和提醒历史记录",
+        "searchPlaceholder": "搜索审计历史",
+        "allActivity": "所有活动",
+        "success": "成功",
+        "warnings": "警告",
+        "info": "信息",
+        "noActivity": "暂无活动记录。",
+        "showAll": "显示全部{{count}}条记录",
+        "showLess": "显示较少（{{count}}条最近记录）",
+        "team": "团队",
+        "exportCsv": "导出为CSV",
+        "action": {
+          "invitation": "邀请",
+          "access": "访问",
+          "assignment": "分配",
+          "rebalance": "重新平衡",
+          "reminder": "提醒"
+        },
+        "detail": {
+          "invited": "已为 {{name}} 排队发送邀请。",
+          "statusChanged": "{{name}} 已标记为 {{status}}。",
+          "assignmentsSaved": "分配更改已保存。",
+          "rebalanced": "{{project}} 已从 {{from}} 转移至 {{to}}。",
+          "reminded": "已为 {{name}} 排队发送应用内提醒 — {{count}} 个优先事项。"
+        },
+        "justNow": "刚刚"
+      },
+      "actions": {
+        "openDetails": "打开详情",
+        "assignments": "分配",
+        "viewCalendar": "查看日历",
+        "rebalanceWorkload": "重新平衡工作负载",
+        "markOnLeave": "标记为请假",
+        "markActive": "标记为活跃",
+        "sendReminder": "发送提醒",
+        "assign": "分配",
+        "rebalance": "重新平衡",
+        "message": "消息"
+      },
+      "toast": {
+        "loadError": "无法加载管理员工作区",
+        "viewLoaded": "已加载视图：{{name}}",
+        "viewSaved": "已保存管理员视图：{{name}}",
+        "viewRemoved": "已删除保存的视图",
+        "inviteCreated": "{{name}} 的邀请已加入队列",
+        "inviteError": "无法创建管理员邀请",
+        "inviteResent": "邀请已重新发送至 {{email}}",
+        "inviteResendError": "无法重新发送邀请",
+        "inviteRevoked": "邀请已撤销",
+        "inviteRevokeError": "无法撤销邀请",
+        "inviteCopyFirst": "请先重新发送此邀请以生成可复制的链接",
+        "inviteCopied": "邀请链接已复制",
+        "inviteCopyError": "无法复制邀请链接",
+        "statusUpdated": "管理员状态已更新",
+        "statusError": "无法更新管理员状态",
+        "assignNoChange": "{{name}} 没有分配变更",
+        "assignError": "无法保存分配",
+        "assignUpdated": "分配已更新",
+        "rebalanceNoTarget": "没有可用的活跃管理员进行重新分配",
+        "rebalanceNormal": "{{name}} 的工作负载（{{pct}}%）在正常范围内 — 无需重新平衡",
+        "rebalanceNoProject": "未找到适合重新分配的项目或目标管理员",
+        "rebalanceError": "工作负载无法重新平衡",
+        "rebalanceDone": "工作负载已重新平衡",
+        "reminderSent": "{{name}} 的提醒已加入队列 — 通知已创建",
+        "reminderError": "无法发送提醒"
+      }
+    },
+    "reports": {
+      "title": "报告与分析",
+      "loadError": "无法加载报告数据。",
+      "exportExcel": "导出 Excel",
+      "bottlenecks": "瓶颈",
+      "leaderboardTitle": "PM 排行榜",
+      "leaderboardDesc": "按客户满意度排名 / {{range}}",
+      "toast": {
+        "exported": "Excel 报告已导出"
+      },
+      "kpi": {
+        "revenue": "总收入",
+        "revenueDetail": "+12.5% 较上一周期",
+        "projects": "项目",
+        "projectsDetail": "已选范围：{{range}}",
+        "pms": "PM",
+        "pmsDetail": "按交付排名",
+        "satisfaction": "平均满意度",
+        "satisfactionDetail": "客户评分"
+      },
+      "cards": {
+        "revenueTitle": "收入与目标",
+        "revenueDesc": "{{range}} / 总计 ${{total}}K / {{projects}} 个项目",
+        "pmPerfTitle": "PM 绩效",
+        "pmPerfDesc": "已完成项目与准时交付率",
+        "trendTitle": "12个月收入趋势",
+        "trendDesc": "过去一年收入轨迹",
+        "systemTitle": "系统分布与瓶颈",
+        "systemDesc": "系统使用情况及客户等待时间"
+      },
+      "chart": {
+        "revenue": "收入",
+        "target": "目标",
+        "onTimePct": "准时 %",
+        "satisfaction": "满意度"
+      },
+      "table": {
+        "rank": "排名",
+        "pm": "PM",
+        "projects": "项目",
+        "onTime": "准时",
+        "satisfaction": "满意度",
+        "revenue": "收入",
+        "month": "月份"
+      },
+      "export": {
+        "colReport": "报告",
+        "colRange": "范围",
+        "colExportedAt": "导出时间",
+        "colRevenue": "总收入",
+        "colTarget": "总目标",
+        "colProjects": "总项目数",
+        "colRevenueDollar": "收入 ($)",
+        "colTargetDollar": "目标 ($)",
+        "colOnTimePct": "准时 (%)",
+        "colSystem": "系统",
+        "colShare": "占比 (%)",
+        "colProject": "项目",
+        "colWaitDays": "等待天数",
+        "colStage": "阶段",
+        "rowTotals": "合计"
+      }
+    },
+    "messages": {
+      "title": "消息",
+      "justNow": "刚刚",
+      "loadError": "无法加载展览消息。",
+      "conversationError": "无法加载对话。",
+      "sendError": "消息发送失败。",
+      "noMessagesDefault": "暂无消息",
+      "noClient": "未关联客户",
+      "loading": "正在加载展览…",
+      "noExhibitions": "未找到展览。",
+      "noMessages": "{{name}} 暂无消息。",
+      "selectManager": "请选择项目经理。",
+      "scopedTo": "关联至",
+      "send": "发送",
+      "sending": "发送中",
+      "projectCount": "{{count}} 个项目",
+      "inputPlaceholder": "给 {{manager}} 发送关于 {{exhibition}} 的消息…",
+      "badges": {
+        "exhibitions": "{{count}} 个展览",
+        "unread": "{{count}} 条未读"
+      },
+      "section": {
+        "title": "展览消息线程",
+        "desc": "每个展览一个专属对话空间。"
+      },
+      "searchPlaceholder": "搜索展览、客户、经理",
+      "sidebar": {
+        "title": "项目经理",
+        "assigned": "已分配 {{count}} 人",
+        "noManager": "此展览尚未分配项目经理。"
+      },
+      "status": {
+        "delayed": "已延迟",
+        "active": "进行中",
+        "completed": "已完成",
+        "pending": "待处理"
+      },
+      "actions": {
+        "call": "开始通话",
+        "video": "开始视频通话",
+        "options": "对话选项",
+        "attach": "附加文件",
+        "send": "发送消息",
+        "emoji": "插入表情"
+      },
+      "toast": {
+        "call": "已与 {{name}} 为 {{exhibition}} 发起通话",
+        "video": "已为 {{exhibition}} 准备视频室",
+        "options": "对话选项已打开",
+        "attachment": "已为 {{exhibition}} 打开附件选择器"
+      }
+    },
+    "clients": {
+      "title": "客户管理",
+      "addClient": "添加客户",
+      "loadError": "无法加载客户。",
+      "loadingClients": "正在加载客户…",
+      "noClients": "未找到符合搜索/筛选条件的客户。",
+      "searchPlaceholder": "搜索客户或展览…",
+      "showing": "显示第 {{start}}-{{end}} 条，共 {{total}} 条",
+      "previous": "上一页",
+      "next": "下一页",
+      "cancel": "取消",
+      "saving": "保存中…",
+      "emailError": "请输入有效的电子邮件地址。",
+      "filter": {
+        "all": "全部",
+        "lead": "潜在客户",
+        "pendingApproval": "待审批",
+        "active": "活跃",
+        "inactive": "不活跃",
+        "archived": "已归档"
+      },
+      "status": {
+        "active": "活跃",
+        "pendingApproval": "待审批",
+        "lead": "潜在客户",
+        "inactive": "不活跃",
+        "archived": "已归档"
+      },
+      "table": {
+        "clientName": "客户名称",
+        "company": "公司",
+        "assignedPm": "负责PM",
+        "exhibition": "展览",
+        "status": "状态",
+        "lastActivity": "最近活动",
+        "actions": "操作"
+      },
+      "menu": {
+        "assignManager": "分配经理",
+        "openWorkspace": "打开工作区",
+        "editClient": "编辑客户",
+        "viewDetails": "查看客户详情",
+        "archive": "归档客户"
+      },
+      "toast": {
+        "added": "{{name}} 已添加到客户列表。",
+        "addError": "无法添加客户。",
+        "updated": "{{name}} 已更新。",
+        "updateError": "无法更新客户。",
+        "noManagers": "没有可用的活跃项目经理。",
+        "assigned": "{{client}} 已分配给 {{manager}}。",
+        "assignError": "无法保存客户分配。",
+        "archived": "{{name}} 已归档。",
+        "archiveError": "无法删除客户。",
+        "openingWorkspace": "正在打开 {{name}} 的工作区监控。",
+        "defaultClient": "客户",
+        "unassigned": "未分配"
+      },
+      "addDialog": {
+        "title": "添加客户",
+        "desc": "在此视图中创建客户记录。",
+        "name": "客户名称",
+        "company": "公司",
+        "exhibition": "展览",
+        "email": "联系邮箱",
+        "submit": "添加客户"
+      },
+      "assignDialog": {
+        "title": "分配项目经理",
+        "desc": "为 {{name}} 选择经理。",
+        "placeholder": "选择经理",
+        "submit": "分配"
+      },
+      "editDialog": {
+        "title": "编辑客户",
+        "desc": "更新客户详情以用于工作流程。",
+        "contactName": "联系人姓名",
+        "submit": "保存更改"
+      },
+      "archiveDialog": {
+        "title": "归档客户",
+        "desc": "归档 {{name}}？有活跃项目的客户受到保护。",
+        "blockers": "阻止归档的活跃项目",
+        "archiving": "归档中…",
+        "submit": "归档"
+      },
+      "detailDialog": {
+        "contact": "联系人",
+        "email": "邮箱",
+        "pm": "PM",
+        "exhibition": "展览",
+        "status": "状态"
+      }
+    },
+    "projects": {
+      "title": "项目流水线",
+      "breadcrumb": "项目",
+      "viewKanban": "看板",
+      "viewList": "列表",
+      "searchPlaceholder": "搜索...",
+      "metric": {
+        "highRisk": "高风险",
+        "waiting": "等待中",
+        "delayed": "已延误",
+        "matching": "匹配项目"
+      },
+      "stage": {
+        "intake": "接收",
+        "design": "设计",
+        "review": "审核",
+        "production": "生产",
+        "closed": "已关闭"
+      },
+      "filter": {
+        "all": "全部",
+        "active": "进行中",
+        "pending": "待处理",
+        "delayed": "已延误",
+        "completed": "已完成"
+      },
+      "priority": {
+        "all": "全部",
+        "high": "高",
+        "medium": "中",
+        "low": "低"
+      },
+      "kanban": {
+        "loading": "加载中",
+        "empty": "空"
+      },
+      "list": {
+        "loading": "加载项目中...",
+        "noMatch": "未找到匹配项目。",
+        "col": {
+          "project": "项目",
+          "client": "客户",
+          "pm": "项目经理",
+          "system": "系统",
+          "stage": "阶段",
+          "progress": "进度",
+          "health": "状态"
+        }
+      },
+      "paging": {
+        "showing": "显示 {{start}}–{{end}} / 共 {{total}} 个项目",
+        "filtered": "/ 优先级筛选后显示 {{count}} 个",
+        "previous": "上一页",
+        "next": "下一页"
+      },
+      "footer": {
+        "note": "本页: {{count}} 个可见 / 使用箭头保存阶段更改"
+      },
+      "card": {
+        "waiting": "等待 {{days}} 天",
+        "noDate": "无日期",
+        "movePrev": "移至上一阶段",
+        "moveNext": "移至下一阶段",
+        "openMonitor": "打开监控",
+        "editProject": "编辑项目"
+      },
+      "row": {
+        "edit": "编辑",
+        "open": "打开"
+      },
+      "edit": {
+        "title": "编辑项目",
+        "sheetDescription": "更新项目详情、分配、截止日期和展台尺寸。",
+        "name": "项目名称",
+        "namePlaceholder": "车展展台",
+        "client": "客户",
+        "clientPlaceholder": "快车公司",
+        "exhibition": "展览",
+        "exhibitionPlaceholder": "车展",
+        "manager": "项目经理",
+        "managerPlaceholder": "选择项目经理",
+        "keepManager": "保留当前分配",
+        "unassigned": "未分配",
+        "deadline": "截止日期",
+        "system": "系统",
+        "systemPlaceholder": "展台系统",
+        "octanorm": "Octanorm",
+        "maxima": "Maxima",
+        "custom": "自定义",
+        "width": "宽度 (m)",
+        "depth": "深度 (m)",
+        "descriptionLabel": "描述",
+        "descriptionPlaceholder": "项目备注",
+        "cancel": "取消",
+        "saving": "保存中...",
+        "save": "保存项目"
+      },
+      "close": {
+        "title": "关闭项目",
+        "description": "将 {{name}} 移至已关闭？此项目将标记为已完成。",
+        "cancel": "取消",
+        "closing": "关闭中...",
+        "confirm": "关闭项目"
+      },
+      "error": {
+        "load": "无法加载项目",
+        "save": "无法保存项目",
+        "stage": "无法保存阶段"
+      },
+      "toast": {
+        "updated": "{{name}} 已更新",
+        "openMonitor": "正在打开 {{name}} 的监控",
+        "moved": "{{name}} 已移至 {{stage}}"
+      },
+      "validate": {
+        "required": "项目名称和客户为必填项。",
+        "dimensions": "宽度和深度必须在 1 到 100 米之间。"
+      }
+    },
+    "calendar": {
+      "title": "展览日历",
+      "breadcrumb": "日历",
+      "addEvent": "添加活动",
+      "allMonths": "所有月份",
+      "prevMonth": "上个月",
+      "nextMonth": "下个月",
+      "today": "今天",
+      "addEventTitle": "在此日添加活动",
+      "moreEvents": "+{{count}} 更多",
+      "exhibitionsThisMonth_one": "本月 {{count}} 个展览",
+      "exhibitionsThisMonth_other": "本月 {{count}} 个展览",
+      "yearExhibitions_one": "{{count}} 个展览",
+      "yearExhibitions_other": "{{count}} 个展览",
+      "noExhibitions": "暂无展览",
+      "loading": "正在加载展览日历...",
+      "status": {
+        "active": "进行中",
+        "completed": "已完成",
+        "delayed": "已延误",
+        "pending": "待处理"
+      },
+      "filter": {
+        "searchPlaceholder": "搜索展览、客户、城市",
+        "pmPlaceholder": "项目经理",
+        "allManagers": "所有经理",
+        "clientPlaceholder": "客户",
+        "allClients": "所有客户",
+        "statusPlaceholder": "状态",
+        "allStatuses": "所有状态",
+        "shown": "显示 {{count}} 条",
+        "resetFilters": "重置筛选"
+      },
+      "form": {
+        "nameLabel": "展览名称 *",
+        "namePlaceholder": "例：TechCon 2027",
+        "clientLabel": "客户",
+        "clientPlaceholder": "客户公司",
+        "pmLabel": "项目经理",
+        "pmPlaceholder": "经理姓名",
+        "startLabel": "开始日期 *",
+        "endLabel": "结束日期 *",
+        "locationLabel": "地点",
+        "locationPlaceholder": "城市 / 场馆",
+        "standLabel": "展台类型",
+        "standPlaceholder": "例：Maxima",
+        "statusLabel": "状态"
+      },
+      "add": {
+        "title": "添加展览活动",
+        "description": "在日历中安排新展览。",
+        "cancel": "取消",
+        "saving": "保存中...",
+        "save": "保存活动"
+      },
+      "edit": {
+        "title": "编辑展览活动",
+        "description": "更新此展览的详情。",
+        "cancel": "取消",
+        "saving": "保存中...",
+        "save": "保存更改"
+      },
+      "detail": {
+        "description": "展览详情",
+        "client": "客户",
+        "pm": "项目经理",
+        "location": "地点",
+        "standType": "展台类型",
+        "startDate": "开始日期",
+        "endDate": "结束日期",
+        "confirmDelete": "永久删除？",
+        "deleting": "删除中...",
+        "confirm": "确认",
+        "cancel": "取消",
+        "delete": "删除",
+        "edit": "编辑",
+        "close": "关闭"
+      },
+      "error": {
+        "load": "无法加载日历活动",
+        "save": "无法保存活动",
+        "update": "无法更新活动",
+        "delete": "无法删除活动"
+      }
+    },
+    "monitor": {
+      "title": "工作区监控",
+      "breadcrumb": "监控",
+      "activeNow": "{{count}} 个活跃",
+      "refresh": "刷新",
+      "loading": "正在加载实时工作区数据...",
+      "errorSuffix": "。实时数据模式下不显示演示数据。",
+      "searchPlaceholder": "搜索工作区...",
+      "pmPlaceholder": "项目经理",
+      "allManagers": "所有项目经理",
+      "legend": "实时 — 每 8 秒刷新",
+      "status": {
+        "all": "全部",
+        "live": "实时",
+        "review": "审核中",
+        "pending": "待处理",
+        "blocked": "已阻塞"
+      },
+      "stat": {
+        "total": "总计",
+        "totalDesc": "所有工作区",
+        "liveDesc": "工作区中",
+        "reviewDesc": "客户审批",
+        "pendingDesc": "需要关注",
+        "blockedDesc": "需要操作"
+      },
+      "bottleneck": {
+        "title_one": "瓶颈警报 — {{count}} 个项目等待客户响应",
+        "title_other": "瓶颈警报 — {{count}} 个项目等待客户响应",
+        "waiting": "等待 {{days}} 天"
+      },
+      "card": {
+        "editingNow": "正在编辑",
+        "minutesAgo": "{{mins}} 分钟前",
+        "hoursAgo": "{{hours}} 小时前",
+        "waitingDays": "等待 {{days}} 天",
+        "openPreview": "展开 {{name}} 预览",
+        "reassign": "重新分配",
+        "join": "加入"
+      },
+      "reassign": {
+        "title": "重新分配项目经理",
+        "description": "为 {{name}} 选择新的项目经理。",
+        "client": "客户",
+        "current": "当前",
+        "unassigned": "未分配",
+        "cancel": "取消",
+        "confirm": "重新分配"
+      },
+      "error": {
+        "load": "无法加载工作区监控数据",
+        "noManagers": "没有可用的活跃项目经理",
+        "reassign": "无法重新分配项目"
+      },
+      "toast": {
+        "refreshed": "所有工作区已刷新",
+        "openedPreview": "已打开 {{name}} 的预览",
+        "joinedSession": "已加入 {{name}} 的监控会话",
+        "reassigned": "{{name}} 已重新分配给 {{pm}}"
+      }
+    },
+    "settings": {
+      "pageTitle": "设置 | ENS",
+      "title": "设置",
+      "breadcrumb": "设置",
+      "export": "导出",
+      "reset": "重置",
+      "tabs": {
+        "profile": "个人资料",
+        "notifications": "通知",
+        "security": "安全",
+        "appearance": "外观"
+      },
+      "profile": {
+        "title": "个人资料信息",
+        "description": "更新个人和专业信息",
+        "unsaved": "未保存",
+        "changeAvatar": "更换头像",
+        "uploadPicture": "上传图片",
+        "fullName": "全名",
+        "emailLabel": "电子邮件地址",
+        "roleLabel": "角色",
+        "phone": "电话号码",
+        "phonePlaceholder": "+86 (555) 000-0000",
+        "revert": "撤销",
+        "saveChanges": "保存更改",
+        "avatarDialog": {
+          "title": "更换头像",
+          "description": "为此账户选择头像风格。",
+          "cancel": "取消",
+          "apply": "应用头像"
+        },
+        "avatarTones": {
+          "primary": "主色",
+          "blue": "蓝色",
+          "green": "绿色",
+          "amber": "琥珀色"
+        },
+        "validation": {
+          "nameRequired": "名称为必填项",
+          "emailInvalid": "请输入有效的电子邮件",
+          "phoneInvalid": "请输入有效的电话号码"
+        },
+        "toast": {
+          "saved": "个人资料更改已保存",
+          "reverted": "个人资料更改已撤销",
+          "avatarUpdated": "头像已更新",
+          "pictureSelected": "头像已选择",
+          "loadError": "无法加载设置",
+          "saveError": "无法保存个人资料",
+          "avatarError": "无法保存头像",
+          "imageTypeError": "请选择图片文件",
+          "imageSizeError": "请选择小于1.5 MB的图片"
+        }
+      },
+      "notifications": {
+        "title": "电子邮件通知",
+        "description": "配置要通过电子邮件接收的更新",
+        "enabledCount": "{{count}}/4 已启用",
+        "items": {
+          "assignments": {
+            "title": "新项目分配",
+            "desc": "创建并分配新项目时收到通知。"
+          },
+          "milestones": {
+            "title": "项目里程碑",
+            "desc": "已完成阶段或审批请求的提醒。"
+          },
+          "reports": {
+            "title": "经理活动报告",
+            "desc": "每周经理绩效和工作量摘要。"
+          },
+          "system": {
+            "title": "系统提醒",
+            "desc": "关键更新和安全通知。"
+          }
+        },
+        "enableAll": "全部启用",
+        "criticalOnly": "仅关键",
+        "savePreferences": "保存偏好",
+        "toast": {
+          "saved": "通知偏好已保存",
+          "allEnabled": "所有通知已启用",
+          "criticalOnly": "仅系统提醒处于活动状态",
+          "saveError": "无法保存通知"
+        }
+      },
+      "security": {
+        "title": "安全设置",
+        "description": "管理密码和账户安全",
+        "currentPassword": "当前密码",
+        "newPassword": "新密码",
+        "confirmNewPassword": "确认新密码",
+        "updatePassword": "更新密码",
+        "strengthPrefix": "强度：",
+        "passwordStrength": {
+          "empty": "空",
+          "weak": "弱",
+          "fair": "一般",
+          "good": "良好",
+          "strong": "强"
+        },
+        "twoFactor": {
+          "title": "双重身份验证",
+          "description": "对敏感账户操作使用验证码。",
+          "enabled": "已启用",
+          "disabled": "已禁用",
+          "newCodes": "新恢复代码",
+          "disable": "禁用 2FA",
+          "enable": "启用 2FA"
+        },
+        "twoFactorDialog": {
+          "title": "启用双重身份验证",
+          "description": "打开身份验证器应用，扫描二维码，然后输入6位验证码。",
+          "qrPlaceholder": "二维码将在生产环境中显示",
+          "showCode": "显示演示验证码",
+          "hideCode": "隐藏代码",
+          "demoLabel": "演示代码",
+          "codeLabel": "验证码",
+          "codePlaceholder": "输入6位代码",
+          "cancel": "取消",
+          "verify": "验证并启用"
+        },
+        "recoveryCodes": {
+          "title": "恢复代码",
+          "copyAll": "全部复制",
+          "description": "将这些代码保存在安全的地方。每个代码只能使用一次。"
+        },
+        "sessions": {
+          "title": "活动会话",
+          "description": "查看当前登录此账户的设备。",
+          "signOutOthers": "退出其他会话",
+          "signOut": "退出登录",
+          "current": "当前"
+        },
+        "toast": {
+          "passwordSaved": "密码已更新",
+          "twoFactorEnabled": "双重身份验证已启用",
+          "twoFactorDisabled": "双重身份验证已禁用",
+          "codesRegenerated": "恢复代码已重新生成",
+          "codesCopied": "恢复代码已复制",
+          "sessionSignedOut": "{{device}} 已退出",
+          "sessionsSignedOut_one": "{{count}} 个会话已退出",
+          "sessionsSignedOut_other": "{{count}} 个会话已退出",
+          "passwordAllFields": "请填写所有密码字段",
+          "passwordMismatch": "新密码不匹配",
+          "passwordWeak": "请使用更强的密码",
+          "passwordSame": "新密码必须与旧密码不同",
+          "passwordError": "无法更新密码",
+          "twoFactorWrongCode": "验证码不正确 — 请检查您的验证器应用",
+          "twoFactorSetupError": "无法保存 2FA 配置",
+          "twoFactorDisableError": "无法保存 2FA 状态",
+          "twoFactorRequired": "请先启用 2FA",
+          "codesError": "无法保存恢复代码",
+          "clipboardError": "无法复制 — 请手动复制代码",
+          "sessionError": "无法退出会话",
+          "sessionsError": "无法退出会话",
+          "noOtherSessions": "没有其他会话"
+        }
+      },
+      "appearance": {
+        "title": "显示设置",
+        "description": "自定义仪表板的外观",
+        "themeMode": "主题模式",
+        "themeModeDesc": "在浅色、深色和系统主题之间切换。",
+        "light": "浅色",
+        "dark": "深色",
+        "system": "系统",
+        "compactView": "紧凑视图",
+        "compactViewDesc": "减少表格和列表中的间距。",
+        "language": "语言",
+        "languageDesc": "选择首选显示语言。",
+        "resetDisplay": "重置显示",
+        "saveDisplay": "保存显示设置",
+        "toast": {
+          "saved": "显示设置已保存",
+          "reset": "显示设置已重置",
+          "saveError": "无法保存显示设置"
+        }
+      },
+      "resetDialog": {
+        "title": "重置设置",
+        "description": "将本地账户设置恢复为默认演示值。",
+        "cancel": "取消",
+        "confirm": "重置设置"
+      },
+      "toast": {
+        "exported": "设置已导出",
+        "restored": "设置已恢复为默认值",
+        "restoredLocal": "本地设置已恢复"
+      }
+    }
+  },
+  "layout": {
+    "logout": "退出登录",
+    "notifications": "通知",
+    "unread": "{{count}} 未读",
+    "markAllRead": "全部标为已读",
+    "notificationNew": "新",
+    "noNotifications": "暂无通知。",
+    "skipToContent": "跳至主要内容",
+    "navigation": "主导航",
+    "expandSidebar": "展开侧栏",
+    "collapseSidebar": "折叠侧栏",
+    "switchToLight": "切换到浅色主题",
+    "switchToDark": "切换到深色主题",
+    "selectLanguage": "选择语言"
+  },
+  "pm": {
+    "nav": {
+      "dashboard": "仪表板",
+      "myClients": "我的客户",
+      "projects": "项目",
+      "calendar": "日历",
+      "workspace": "工作区",
+      "requests": "请求",
+      "messages": "消息",
+      "tasks": "任务",
+      "reports": "报告",
+      "settings": "设置"
+    },
+    "common": {
+      "noDeadline": "无截止日期",
+      "today": "今天",
+      "tomorrow": "明天",
+      "overdue": "逾期 {{count}} 天",
+      "inDays": "{{count}} 天后",
+      "loading": "加载中...",
+      "noResults": "未找到结果。",
+      "cancel": "取消",
+      "save": "保存",
+      "create": "创建",
+      "saving": "保存中...",
+      "search": "搜索",
+      "filter": "筛选",
+      "priority": {
+        "high": "高",
+        "medium": "中",
+        "low": "低"
+      },
+      "status": {
+        "active": "活跃",
+        "pending": "待处理",
+        "lead": "潜在客户",
+        "inactive": "不活跃",
+        "planning": "规划中",
+        "inDesign": "设计中",
+        "clientReview": "客户审核",
+        "revision": "修订",
+        "delayed": "已延迟",
+        "approved": "已批准",
+        "completed": "已完成",
+        "inProgress": "进行中",
+        "resolved": "已解决",
+        "declined": "已拒绝"
+      }
+    },
+    "dashboard": {
+      "title": "项目经理仪表板",
+      "overview": "概览",
+      "loadError": "无法加载仪表板数据。",
+      "stats": {
+        "assignedClients": "已分配客户",
+        "activeProjects": "活跃项目",
+        "pendingReviews": "待审核",
+        "completed": "已完成",
+        "workspaceFiles": "工作区文件"
+      },
+      "activeWork": {
+        "title": "活跃项目工作",
+        "viewAll": "查看全部",
+        "loading": "正在加载分配的项目工作...",
+        "empty": "目前没有分配的活跃项目。",
+        "openProject": "打开 {{name}}"
+      },
+      "actionItems": {
+        "title": "行动项目",
+        "loading": "正在加载行动项目...",
+        "empty": "该组织目前没有紧急操作。"
+      },
+      "actions": {
+        "pendingApprovals": "{{count}} 个待处理审批",
+        "pendingApprovalsDesc": "客户审核工作正在等待决定。",
+        "openApprovals": "打开审批",
+        "delayedProjects": "{{count}} 个延迟项目",
+        "delayedProjectsDesc": "项目需要 PM 关注。",
+        "reviewRisk": "查看风险",
+        "activeWorkspaces": "{{count}} 个活跃工作区",
+        "activeWorkspacesDesc": "展台设计可供编辑。",
+        "openWorkspace": "打开工作区"
+      },
+      "recentActivity": {
+        "title": "近期活动",
+        "loading": "正在加载活动...",
+        "empty": "尚未记录任何活动事件。"
+      }
+    },
+    "projects": {
+      "title": "我的项目",
+      "loadError": "无法加载项目。",
+      "loading": "正在加载项目...",
+      "noMatch": "没有项目符合筛选条件。",
+      "newProject": "新建项目",
+      "searchPlaceholder": "搜索项目...",
+      "filter": {
+        "all": "全部"
+      },
+      "stats": {
+        "total": "总计",
+        "inDesign": "设计中",
+        "review": "审核",
+        "delayed": "已延迟"
+      },
+      "view": {
+        "list": "列表视图",
+        "grid": "网格视图"
+      },
+      "table": {
+        "project": "项目",
+        "client": "客户",
+        "size": "尺寸",
+        "progress": "进度",
+        "deadline": "截止日期",
+        "status": "状态",
+        "actions": "操作"
+      },
+      "grid": {
+        "system": "系统",
+        "size": "尺寸",
+        "deadline": "截止日期",
+        "pm": "PM",
+        "progress": "进度"
+      },
+      "actions": {
+        "open": "打开",
+        "details": "详情",
+        "openWorkspace": "打开工作区"
+      },
+      "modal": {
+        "title": "创建新项目",
+        "projectName": "项目名称",
+        "client": "客户",
+        "deadline": "截止日期",
+        "system": "系统",
+        "systemCustom": "自定义",
+        "width": "宽度 (m)",
+        "depth": "深度 (m)",
+        "submit": "创建项目"
+      },
+      "toast": {
+        "created": "项目「{{name}}」已保存。",
+        "createError": "无法创建项目。"
+      }
+    },
+    "clients": {
+      "title": "我的客户",
+      "loadError": "无法加载客户。",
+      "loading": "正在加载客户...",
+      "noMatch": "没有客户符合当前搜索。",
+      "searchPlaceholder": "搜索客户...",
+      "stats": {
+        "total": "客户总数",
+        "active": "活跃",
+        "needsSetup": "需要设置"
+      },
+      "actions": {
+        "email": "发送邮件",
+        "emailClient": "给 {{name}} 发邮件",
+        "openWorkspace": "打开工作区",
+        "openWorkspaceFor": "为 {{name}} 打开工作区",
+        "toggleExpand": "展开/折叠 {{name}} 的详情"
+      },
+      "detail": {
+        "clientDetails": "客户详情",
+        "operationalStatus": "运营状态",
+        "assignedPm": "负责PM：{{name}}",
+        "lastActivity": "最近活动：{{time}}",
+        "dataSource": "从 PostgreSQL 记录加载"
+      }
+    },
+    "tasks": {
+      "title": "任务看板",
+      "newTask": "新建任务",
+      "addTask": "添加任务",
+      "noTasks": "暂无任务",
+      "filter": {
+        "all": "全部"
+      },
+      "cols": {
+        "todo": "待办",
+        "inprogress": "进行中",
+        "review": "审核中",
+        "done": "已完成"
+      },
+      "actions": {
+        "moveLeft": "向左移动",
+        "moveRight": "向右移动",
+        "delete": "删除",
+        "deleteTask": "删除「{{title}}」"
+      },
+      "addToCol": "将任务添加到 {{col}}",
+      "stats": {
+        "total": "总计：{{count}} 个任务",
+        "overdue": "逾期：{{count}}"
+      },
+      "toast": {
+        "moved": "「{{title}}」→ {{col}}",
+        "created": "任务已创建：「{{title}}」"
+      },
+      "modal": {
+        "title": "创建任务",
+        "taskTitle": "标题",
+        "taskTitlePlaceholder": "任务描述…",
+        "client": "客户",
+        "project": "项目",
+        "priority": "优先级",
+        "deadline": "截止日期",
+        "initialCol": "初始列",
+        "submit": "创建任务",
+        "select": "选择…"
+      }
+    },
+    "messages": {
+      "title": "消息",
+      "unread": "{{count}} 条未读",
+      "justNow": "刚刚",
+      "loadContactsError": "无法加载联系人。",
+      "loadMessagesError": "无法加载消息。",
+      "sendError": "无法发送消息。",
+      "searchPlaceholder": "搜索联系人…",
+      "loadingContacts": "正在加载联系人…",
+      "noContacts": "未找到联系人。",
+      "chiefPortal": "首席门户",
+      "noMessages": "暂无消息，发送第一条吧！",
+      "selectContact": "选择联系人开始聊天。",
+      "inputPlaceholder": "输入消息…",
+      "enterToSend": "按 Enter 发送",
+      "toast": {
+        "callStarted": "正在与 {{name}} 通话…",
+        "videoReady": "正在与 {{name}} 开启视频…",
+        "optionsOpened": "选项菜单已打开。",
+        "attachmentOpened": "附件选择器已打开。"
+      },
+      "actions": {
+        "call": "开始语音通话",
+        "video": "开始视频通话",
+        "more": "更多选项",
+        "attach": "附加文件",
+        "send": "发送消息"
+      }
+    },
+    "requests": {
+      "title": "修改申请",
+      "pendingBadge": "{{count}} 待处理",
+      "justNow": "刚刚",
+      "pmInitials": "PM",
+      "replyCount": "{{count}} 条回复",
+      "replyPlaceholder": "添加回复…",
+      "noMatch": "没有申请符合此筛选条件。",
+      "filter": {
+        "all": "全部"
+      },
+      "status": {
+        "pending": "待处理",
+        "inProgress": "进行中",
+        "resolved": "已解决",
+        "declined": "已拒绝"
+      },
+      "priority": {
+        "high": "高",
+        "medium": "中",
+        "low": "低"
+      },
+      "actions": {
+        "start": "开始",
+        "decline": "拒绝",
+        "resolve": "解决",
+        "reply": "回复",
+        "sendReply": "发送回复",
+        "expand": "显示回复",
+        "collapse": "隐藏回复"
+      },
+      "toast": {
+        "started": "申请已开始",
+        "declined": "申请已拒绝",
+        "resolved": "申请已解决",
+        "pending": "申请设为待处理",
+        "replySent": "回复已发送"
+      }
+    },
+    "reports": {
+      "title": "绩效报告",
+      "export": "导出",
+      "vsLastPeriod": "与上期对比",
+      "total": "总计：{{count}} 个项目",
+      "period": {
+        "this_week": "本周",
+        "last_week": "上周"
+      },
+      "stats": {
+        "completionRate": "完成率",
+        "satisfaction": "客户满意度",
+        "activeClients": "活跃客户",
+        "avgResponse": "平均响应时间"
+      },
+      "chart": {
+        "tasks": "任务",
+        "revisions": "修改",
+        "approvals": "审批",
+        "efficiency": "效率",
+        "onTime": "准时",
+        "changes": "变更"
+      },
+      "cards": {
+        "weeklyTitle": "每周生产力",
+        "weeklyDesc": "任务、修改和审批 · {{period}}",
+        "efficiencyTitle": "项目效率",
+        "efficiencyDesc": "设计效率与准时交付",
+        "revisionTitle": "修改与变更趋势",
+        "revisionDesc": "月度修改请求与变更订单",
+        "statusTitle": "项目状态分布",
+        "statusDesc": "所有项目的当前分布"
+      },
+      "pieStatus": {
+        "active": "活跃",
+        "pending": "待处理",
+        "review": "审核中",
+        "delayed": "延迟"
+      },
+      "toast": {
+        "exporting": "导出已开始…"
+      }
+    }
+  },
+  "client": {
+    "nav": {
+      "dashboard": "仪表板",
+      "projects": "项目",
+      "calendar": "日历",
+      "workspace": "工作区",
+      "messages": "消息",
+      "approvals": "审批",
+      "documents": "文件",
+      "profile": "个人资料"
+    },
+    "dashboard": {
+      "pageTitle": "仪表板 | ENS",
+      "welcome": "欢迎回来，{{name}}",
+      "breadcrumb": "仪表板",
+      "errorLoad": "无法加载客户仪表板数据。",
+      "defaultClientName": "客户",
+      "loadingProject": "加载项目中...",
+      "noActiveProject": "无活跃项目",
+      "projectSubtitle": "项目数据从 PostgreSQL 加载",
+      "loadingActiveProject": "加载活跃项目中...",
+      "noProjectAssigned": "尚未分配活跃项目。",
+      "pmLabel": "项目经理",
+      "messagesBtn": "消息",
+      "overallProgress": "总体进度",
+      "viewWorkspace": "查看工作区",
+      "workspacePreview": "工作区预览",
+      "recentActivity": "最近活动",
+      "loadingActivity": "加载活动中...",
+      "noActivity": "尚未记录任何活动。",
+      "viewTimeline": "查看项目时间线",
+      "approvalProgress": "审批进度",
+      "stat": {
+        "progress": "项目进度",
+        "pendingApprovals": "待审批",
+        "workspaceVersions": "工作区版本",
+        "documents": "文档"
+      },
+      "step": {
+        "created": "已创建",
+        "designing": "设计中",
+        "review": "审核",
+        "approved": "已批准",
+        "production": "生产"
+      },
+      "approval": {
+        "created": "项目已创建",
+        "designing": "设计进行中",
+        "review": "客户审核",
+        "reviewRequired": "需要审核",
+        "noReview": "无待审核"
+      }
+    },
+    "approvals": {
+      "pageTitle": "审批 | ENS",
+      "title": "审批",
+      "breadcrumbDashboard": "仪表板",
+      "awaitingReview": "{{count}} 个待您审核",
+      "filterGroup": "筛选审批",
+      "filterByStatus": "按{{status}}筛选",
+      "justNow": "刚刚",
+      "emptyState": "暂无审批记录。",
+      "toggleDetails": "切换{{title}}的详情",
+      "commentPlaceholder": "给您的项目经理留言…",
+      "sendComment": "发送评论",
+      "status": {
+        "Pending": "待审核",
+        "Approved": "已批准",
+        "Rejected": "已拒绝"
+      },
+      "filter": {
+        "all": "全部"
+      },
+      "actions": {
+        "approve": "批准",
+        "requestChanges": "请求修改",
+        "viewDetails": "查看详情"
+      },
+      "toast": {
+        "approved": "✓ 设计已批准 — 项目经理已通知",
+        "rejected": "已请求修改 — 项目经理已通知",
+        "commentSent": "评论已发送给项目经理"
+      },
+      "badge": {
+        "me": "我",
+        "pm": "PM"
+      },
+      "comments_one": "{{count}} 条评论",
+      "comments_other": "{{count}} 条评论",
+      "confirm": {
+        "approveTitle": "批准此设计？",
+        "rejectTitle": "请求修改？",
+        "approveBody": "您的项目经理将收到通知，此版本将标记为已批准。",
+        "rejectBody": "您的项目经理将收到通知并处理您的反馈。",
+        "cancel": "取消",
+        "confirmApprove": "是，批准",
+        "confirmReject": "是，请求修改"
+      }
+    },
+    "documents": {
+      "pageTitle": "文档 | ENS",
+      "title": "文档",
+      "breadcrumbDashboard": "仪表板",
+      "uploadBtn": "上传文件",
+      "filterGroup": "按类别筛选",
+      "searchPlaceholder": "搜索文件、标签…",
+      "emptyState": "未找到文档。",
+      "filter": {
+        "all": "全部"
+      },
+      "stat": {
+        "total": "文件总数",
+        "final": "最终版",
+        "inReview": "审核中",
+        "drafts": "草稿"
+      },
+      "status": {
+        "final": "最终版",
+        "draft": "草稿",
+        "review": "审核中"
+      },
+      "dropZone": {
+        "ariaLabel": "文件上传区域",
+        "textBefore": "将文件拖放至此，或",
+        "browse": "浏览",
+        "hint": "PDF、PNG、XLSX、DOC — 每个文件最大50MB"
+      },
+      "table": {
+        "file": "文件",
+        "category": "类别",
+        "uploadedBy": "上传者",
+        "date": "日期",
+        "status": "状态"
+      },
+      "actions": {
+        "preview": "预览 {{name}}",
+        "download": "下载 {{name}}",
+        "remove": "删除 {{name}}"
+      },
+      "toast": {
+        "uploaded_one": "已上传 {{count}} 个文件",
+        "uploaded_other": "已上传 {{count}} 个文件",
+        "fileRemoved": "文件已删除",
+        "downloading": "正在下载 {{name}}…"
+      },
+      "preview": {
+        "close": "关闭预览",
+        "imageUnavailable": "演示版本中无法预览图片",
+        "typeUnavailable": "无法预览 {{type}} 文件",
+        "category": "类别",
+        "status": "状态",
+        "uploadedBy": "上传者",
+        "tags": "标签",
+        "downloadBtn": "下载文件"
+      }
+    },
+    "messages": {
+      "pageTitle": "消息 | ENS",
+      "title": "消息",
+      "breadcrumbDashboard": "仪表板",
+      "searchPlaceholder": "搜索消息...",
+      "contactListLabel": "对话",
+      "supportManager": "支持经理",
+      "activeNow": "当前在线",
+      "justNow": "刚刚",
+      "threadLabel": "消息记录",
+      "avatarYou": "我",
+      "avatarPm": "PM",
+      "inputPlaceholder": "输入您的消息...",
+      "actions": {
+        "phone": "开始通话",
+        "video": "开始视频通话",
+        "more": "更多选项",
+        "attach": "附加文件",
+        "send": "发送消息"
+      }
+    },
+    "projects": {
+      "pageTitle": "我的项目 | ENS",
+      "title": "我的项目",
+      "breadcrumbDashboard": "仪表板",
+      "breadcrumbProjects": "项目",
+      "actionRequired": "需要操作",
+      "exhibitionTbd": "展会待定",
+      "productionProgress": "生产进度",
+      "quickActions": "快速操作",
+      "stat": {
+        "total": "项目总数",
+        "active": "进行中",
+        "pendingReview": "待审核",
+        "avgProgress": "平均进度"
+      },
+      "status": {
+        "Active": "进行中",
+        "Pending": "待处理",
+        "Delayed": "已延迟",
+        "Completed": "已完成"
+      },
+      "meta": {
+        "system": "系统",
+        "size": "尺寸",
+        "pm": "项目经理",
+        "deadline": "截止日期"
+      },
+      "timeline": {
+        "heading": "项目时间线",
+        "defaultLabel": "项目已创建 — 设计进行中",
+        "defaultDate": "最近"
+      },
+      "action": {
+        "viewDesign": "查看设计",
+        "reviewPending": "待审核",
+        "approvals": "审批",
+        "documents": "文档",
+        "messagePm": "联系项目经理"
+      }
+    },
+    "profile": {
+      "pageTitle": "个人资料设置 | ENS",
+      "title": "个人资料设置",
+      "breadcrumbDashboard": "仪表板",
+      "breadcrumbProfile": "个人资料",
+      "tab": {
+        "profile": "个人信息",
+        "company": "公司",
+        "notifications": "通知",
+        "security": "安全"
+      },
+      "personalInfo": {
+        "heading": "个人信息",
+        "description": "更新您的个人详情和联系方式。"
+      },
+      "company": {
+        "heading": "公司信息",
+        "description": "管理您的公司详情和展览资料。"
+      },
+      "avatar": {
+        "heading": "头像",
+        "hint": "JPG、GIF 或 PNG。最大尺寸 1.5MB。",
+        "uploadNew": "上传新头像",
+        "remove": "删除",
+        "changeBtn": "更改头像"
+      },
+      "field": {
+        "name": "全名",
+        "email": "电子邮件地址",
+        "phone": "电话号码",
+        "companyName": "公司名称",
+        "industry": "行业",
+        "website": "网站",
+        "currentPassword": "当前密码",
+        "newPassword": "新密码",
+        "confirmPassword": "确认新密码"
+      },
+      "btn": {
+        "saveChanges": "保存更改",
+        "updateCompany": "更新公司信息",
+        "updatePassword": "更新密码"
+      },
+      "notifications": {
+        "heading": "通知偏好",
+        "description": "选择您希望如何接收项目更新通知。",
+        "enabled": "已启用",
+        "disabled": "已禁用",
+        "milestones": {
+          "title": "项目里程碑",
+          "desc": "阶段完成时收到通知。"
+        },
+        "assignments": {
+          "title": "新消息",
+          "desc": "项目经理发送消息时收到通知。"
+        },
+        "reports": {
+          "title": "修订请求",
+          "desc": "新设计版本准备好时收到通知。"
+        },
+        "system": {
+          "title": "安全提醒",
+          "desc": "账户登录时收到通知。"
+        }
+      },
+      "security": {
+        "heading": "安全",
+        "description": "管理您的密码和账户安全设置。"
+      },
+      "dangerZone": {
+        "heading": "危险区域",
+        "description": "一旦您删除账户，将无法恢复。请确认。",
+        "deleteBtn": "删除账户"
+      },
+      "validation": {
+        "nameMin": "姓名至少需要2个字符",
+        "emailInvalid": "无效的电子邮件地址",
+        "companyNameRequired": "公司名称为必填项",
+        "websiteInvalid": "无效的URL"
+      },
+      "toast": {
+        "profileSaved": "个人资料更改已保存",
+        "profileError": "无法保存个人资料",
+        "profileLoadError": "无法加载个人资料设置",
+        "companySaved": "公司信息已保存",
+        "avatarUpdated": "头像已更新",
+        "avatarRemoved": "头像已删除",
+        "avatarError": "无法保存头像",
+        "avatarRemoveError": "无法删除头像",
+        "avatarNotImage": "请选择图片文件",
+        "avatarTooLarge": "请选择小于1.5MB的图片",
+        "imageReadError": "无法读取图片",
+        "notificationError": "无法保存通知设置",
+        "passwordUpdated": "密码已更新",
+        "passwordError": "无法更新密码",
+        "passwordFillAll": "请填写所有密码字段",
+        "passwordMismatch": "新密码不匹配",
+        "passwordTooShort": "密码至少需要8个字符",
+        "deleteQueued": "账户删除请求已提交"
+      }
+    },
+    "workspace": {
+      "pageTitle": "设计工作区 | ENS",
+      "viewOnly": "仅查看",
+      "loadingWorkspace": "工作区加载中…",
+      "compareBtn": "对比",
+      "addPinBtn": "添加标注",
+      "pinningLabel": "放置中…",
+      "downloadBtn": "下载",
+      "requestChangesBtn": "申请修改",
+      "approvedLabel": "已批准",
+      "approveDesignBtn": "批准设计",
+      "assetLibraryLabel": "素材库",
+      "lockedLabel": "已锁定",
+      "reviewModeNote": "审核模式下素材已锁定。请联系您的项目经理申请修改。",
+      "canvasLabel": "展台3D预览画布",
+      "compareCurrentLabel": "v{{v}} — 当前版本",
+      "comparePreviousLabel": "v{{v}} — 上一版本",
+      "clickToPin": "点击画布放置标注",
+      "versionSelect": "选择版本",
+      "tab": {
+        "thread": "讨论",
+        "approvals": "审批",
+        "pins": "标注"
+      },
+      "pendingDot": "待审批",
+      "reviewThread": "审核讨论",
+      "notesCount_one": "{{count}} 条备注",
+      "notesCount_other": "{{count}} 条备注",
+      "commentPlaceholder": "添加评论…",
+      "sendComment": "发送评论",
+      "projectInfoLabel": "项目信息",
+      "info": {
+        "system": "系统",
+        "floorArea": "建筑面积",
+        "dimensions": "尺寸",
+        "approval": "审批",
+        "awaiting": "等待审批"
+      },
+      "elementApprovalHeading": "审核并批准每个设计元素",
+      "element": {
+        "structure": "结构",
+        "furniture": "家具",
+        "branding": "品牌形象",
+        "lighting": "照明"
+      },
+      "elementStatus": {
+        "approved": "已批准",
+        "pending": "待处理",
+        "rejected": "已发送反馈"
+      },
+      "approveBtn": "批准",
+      "requestFixBtn": "申请修正",
+      "resetBtn": "重置为待处理",
+      "allApprovedMsg": "所有元素已批准",
+      "pendingApprovalMsg": "待审批项目",
+      "approvedCount": "{{approved}} / {{total}} 已批准",
+      "canvasAnnotations": "画布标注",
+      "placingLabel": "放置中…",
+      "noPins": "尚未放置标注。点击「添加标注」后再点击画布。",
+      "removePin": "移除标注 #{{num}}",
+      "statusBar": {
+        "viewOnly": "仅查看",
+        "restricted": "客户审核 — 受限访问"
+      },
+      "statusReadOnly": "只读模式",
+      "statusCompare": "对比模式",
+      "dialog": {
+        "title": "申请设计修改",
+        "subtitle": "描述您希望修改的内容，您的项目经理将收到通知。",
+        "placeholder": "描述您希望的修改…",
+        "cancel": "取消",
+        "submit": "发送申请"
+      },
+      "toast": {
+        "allApproved": "所有元素已批准 — 谢谢！",
+        "changeRequestSent": "修改申请已发送给您的项目经理",
+        "pinAdded": "标注 #{{num}} 已添加",
+        "elementApproved": "{{label}} 已批准",
+        "feedbackSent": "反馈已发送给项目经理",
+        "downloadStarted": "下载已开始",
+        "designApproved": "设计已批准 — 谢谢！"
+      },
+      "justNow": "刚刚",
+      "changeRequestPrefix": "修改申请",
+      "pinPrefix": "标注",
+      "pinAnnotationPrompt": "为此标注添加备注",
+      "pinPlaceholder": "描述此位置…",
+      "confirmPin": "确认标注",
+      "cancelPin": "取消标注",
+      "errorLoad": "工作区加载失败",
+      "ctrl": {
+        "reset": "重置视图",
+        "zoomIn": "放大",
+        "zoomOut": "缩小",
+        "fullscreen": "全屏"
+      }
+    }
+  },
+  "notFound": {
+    "title": "404 – 页面未找到",
+    "badge": "页面未找到",
+    "heading": "该展位不存在",
+    "body": "您要找的页面可能已移动、删除或从未存在过。让我们带您回到平台。",
+    "backHome": "返回首页",
+    "goBack": "返回",
+    "links": {
+      "home": "首页",
+      "staffPortal": "员工门户",
+      "login": "登录",
+      "signUp": "注册"
+    }
+  },
+  "auth": {
+    "login": {
+      "pageTitle": "登录 | ENS",
+      "title": "欢迎回来",
+      "description": "登录以访问您的工作区",
+      "emailLabel": "电子邮件",
+      "emailPlaceholder": "姓名@公司.com",
+      "passwordLabel": "密码",
+      "passwordPlaceholder": "输入您的密码",
+      "forgotPassword": "忘记密码？",
+      "rememberMe": "保持登录 30 天",
+      "submit": "登录",
+      "submitting": "正在登录...",
+      "lockedBtn": "已锁定",
+      "lockMessage": "账户已被临时锁定。请在 {{time}} 后重试。",
+      "signInError": "无法登录。",
+      "attemptsRemaining_one": "临时锁定前还剩 {{count}} 次登录尝试",
+      "attemptsRemaining_other": "临时锁定前还剩 {{count}} 次登录尝试",
+      "noAccount": "还没有账户？",
+      "signUpFree": "免费注册",
+      "devSection": "本地测试账户",
+      "showPassword": "显示密码",
+      "hidePassword": "隐藏密码",
+      "validation": {
+        "email": "无效的电子邮件地址",
+        "passwordMin": "密码至少需要 8 个字符"
+      }
+    },
+    "signup": {
+      "pageTitle": "创建账户 | ENS",
+      "title": "创建客户账户",
+      "description": "公开注册将创建一个待代理商审批的审核账户",
+      "fullNameLabel": "全名",
+      "fullNamePlaceholder": "张三",
+      "companyLabel": "公司",
+      "companyPlaceholder": "Acme 展览",
+      "workEmailLabel": "工作邮箱",
+      "passwordLabel": "密码",
+      "passwordPlaceholder": "创建密码",
+      "confirmPasswordLabel": "确认密码",
+      "confirmPasswordPlaceholder": "确认您的密码",
+      "termsLabel": "我同意",
+      "termsOfService": "服务条款",
+      "and": "和",
+      "privacyPolicy": "隐私政策",
+      "submit": "创建客户账户",
+      "submitting": "正在创建账户...",
+      "createError": "无法创建账户。",
+      "haveAccount": "已有账户？",
+      "signIn": "登录",
+      "clientOnlyNote": "公开注册仅限客户。项目经理和负责人必须由组织所有者邀请。",
+      "showPassword": "显示密码",
+      "hidePassword": "隐藏密码",
+      "showConfirmPassword": "显示确认密码",
+      "hideConfirmPassword": "隐藏确认密码",
+      "strength": {
+        "weak": "弱",
+        "fair": "一般",
+        "good": "良好",
+        "strong": "强",
+        "suffix": "密码"
+      },
+      "validation": {
+        "nameMin": "姓名至少需要 2 个字符",
+        "companyMin": "公司名称至少需要 2 个字符",
+        "email": "无效的电子邮件地址",
+        "passwordMin": "密码至少需要 8 个字符",
+        "passwordUpper": "必须包含一个大写字母",
+        "passwordNumber": "必须包含一个数字",
+        "confirmRequired": "请确认您的密码",
+        "termsRequired": "您必须接受条款",
+        "passwordsMismatch": "密码不匹配"
+      }
+    },
+    "forgotPassword": {
+      "pageTitle": "重置密码 | ENS",
+      "title": "重置密码",
+      "description": "输入您的电子邮件，我们将发送重置链接",
+      "emailLabel": "电子邮件地址",
+      "submit": "发送重置链接",
+      "submitting": "发送链接中...",
+      "sentTitle": "查看您的收件箱",
+      "sentTo": "我们已将密码重置链接发送至",
+      "checkSpam": "如果几分钟内没有看到，请检查垃圾邮件文件夹。",
+      "resending": "发送中...",
+      "resendIn": "{{seconds}}s 后重新发送",
+      "resendEmail": "重新发送邮件",
+      "differentEmail": "使用其他邮箱",
+      "backToLogin": "返回登录",
+      "validation": {
+        "email": "请输入有效的电子邮件地址"
+      }
+    },
+    "resetPassword": {
+      "pageTitle": "设置新密码 | ENS",
+      "title": "设置新密码",
+      "description": "为您的账户选择一个强密码",
+      "newPasswordLabel": "新密码",
+      "confirmPasswordLabel": "确认密码",
+      "passwordPlaceholder": "••••••••",
+      "submit": "更新密码",
+      "submitting": "正在更新密码...",
+      "successTitle": "密码已更新",
+      "successMessage": "您的密码已成功更新。现在可以使用新凭据登录。",
+      "continueToSignIn": "继续登录",
+      "backToLogin": "返回登录",
+      "showPassword": "显示密码",
+      "hidePassword": "隐藏密码",
+      "showConfirmPassword": "显示确认",
+      "hideConfirmPassword": "隐藏确认",
+      "requirements": {
+        "length": "至少 8 个字符",
+        "uppercase": "一个大写字母",
+        "number": "一个数字"
+      },
+      "strength": {
+        "weak": "弱",
+        "fair": "一般",
+        "good": "良好",
+        "strong": "强",
+        "suffix": "密码"
+      },
+      "validation": {
+        "passwordMin": "密码至少需要 8 个字符",
+        "passwordUpper": "必须包含至少一个大写字母",
+        "passwordNumber": "必须包含至少一个数字",
+        "confirmRequired": "请确认您的密码",
+        "passwordsMismatch": "密码不匹配"
+      }
     }
   }
 }

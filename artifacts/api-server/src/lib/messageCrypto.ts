@@ -1,6 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
 const PREFIX = "enc:v1:";
+const BINARY_MAGIC = Buffer.from("ensmsgbin1", "utf8");
 
 export function encryptMessageBody(body: string) {
   const iv = randomBytes(12);
@@ -28,6 +29,30 @@ export function decryptMessageBody(body: string) {
   } catch {
     return "[Encrypted message unavailable]";
   }
+}
+
+export function encryptMessageBytes(bytes: Buffer) {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", messageEncryptionKey(), iv);
+  const ciphertext = Buffer.concat([cipher.update(bytes), cipher.final()]);
+  const tag = cipher.getAuthTag();
+
+  return Buffer.concat([BINARY_MAGIC, iv, tag, ciphertext]);
+}
+
+export function decryptMessageBytes(bytes: Buffer) {
+  if (!bytes.subarray(0, BINARY_MAGIC.length).equals(BINARY_MAGIC)) return bytes;
+
+  const ivStart = BINARY_MAGIC.length;
+  const tagStart = ivStart + 12;
+  const ciphertextStart = tagStart + 16;
+  const iv = bytes.subarray(ivStart, tagStart);
+  const tag = bytes.subarray(tagStart, ciphertextStart);
+  const ciphertext = bytes.subarray(ciphertextStart);
+
+  const decipher = createDecipheriv("aes-256-gcm", messageEncryptionKey(), iv);
+  decipher.setAuthTag(tag);
+  return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 }
 
 function messageEncryptionKey() {

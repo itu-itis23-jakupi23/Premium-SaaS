@@ -45,7 +45,7 @@ export function ENSLogo({
   const rx = size === 'md' ? 3 : 2;
 
   return (
-    <Link href={href}>
+    <Link href={href} aria-label="ENS">
       <motion.div
         initial="rest"
         animate="rest"
@@ -56,8 +56,9 @@ export function ENSLogo({
           className
         )}
       >
-        {/* 2×2 grid of squares */}
+        {/* 2×2 grid of squares — purely decorative */}
         <div
+          aria-hidden="true"
           style={{
             display: 'grid',
             gridTemplateColumns: `repeat(2, ${sq}px)`,
@@ -77,7 +78,7 @@ export function ENSLogo({
 
         {/* Text block */}
         {!iconOnly && (
-          <div className="flex flex-col justify-center">
+          <div aria-hidden="true" className="flex flex-col justify-center">
             <span
               className={cn(
                 'font-black tracking-tighter leading-none',

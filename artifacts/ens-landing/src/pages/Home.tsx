@@ -7,6 +7,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Button } from '@/components/ui/button';
 import { PORTAL_MODE } from '@/lib/portal';
+import { useDemoAccess } from '@/hooks/useDemoAccess';
 import { 
   Box, 
   MonitorPlay, 
@@ -64,10 +65,15 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [billingAnnual, setBillingAnnual] = useState(false);
   const [, navigate] = useLocation();
+  const { enterAs, pendingRole } = useDemoAccess();
   const { t } = useTranslation();
   const showStaffLinks = PORTAL_MODE !== 'client';
   const showClientLinks = PORTAL_MODE !== 'staff';
   const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+
+  useEffect(() => {
+    document.title = t('home.pageTitle');
+  }, [t]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -285,19 +291,19 @@ export default function Home() {
             <div className="flex flex-wrap items-center gap-3">
               {showStaffLinks && (
                 <>
-                  <Button size="sm" onClick={() => navigate('/chief')} className="gap-2 rounded-full px-5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30" variant="ghost" data-testid="btn-demo-chief">
+                  <Button size="sm" onClick={() => void enterAs('chief', '/chief')} disabled={pendingRole !== null} className="gap-2 rounded-full px-5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30" variant="ghost" data-testid="btn-demo-chief">
                     <LayoutDashboard className="w-4 h-4" /> Chief Manager
                   </Button>
-                  <Button size="sm" onClick={() => navigate('/pm')} className="gap-2 rounded-full px-5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30" variant="ghost" data-testid="btn-demo-pm">
+                  <Button size="sm" onClick={() => void enterAs('pm', '/pm')} disabled={pendingRole !== null} className="gap-2 rounded-full px-5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30" variant="ghost" data-testid="btn-demo-pm">
                     <Settings className="w-4 h-4" /> Project Manager
                   </Button>
-                  <Button size="sm" onClick={() => navigate('/pm/workspace')} className="gap-2 rounded-full px-5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30" variant="ghost" data-testid="btn-demo-workspace">
+                  <Button size="sm" onClick={() => void enterAs('pm', '/pm/workspace')} disabled={pendingRole !== null} className="gap-2 rounded-full px-5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30" variant="ghost" data-testid="btn-demo-workspace">
                     <Box className="w-4 h-4" /> 3D Workspace
                   </Button>
                 </>
               )}
               {showClientLinks && (
-                <Button size="sm" onClick={() => navigate('/client')} className="gap-2 rounded-full px-5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" variant="ghost" data-testid="btn-demo-client">
+                <Button size="sm" onClick={() => void enterAs('client', '/client')} disabled={pendingRole !== null} className="gap-2 rounded-full px-5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" variant="ghost" data-testid="btn-demo-client">
                   <Eye className="w-4 h-4" /> Client View
                 </Button>
               )}

@@ -6,8 +6,14 @@ const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
 const MOCK_AUTH_STORAGE_KEY = "ens-mock-auth-user";
 const MOCK_ACCOUNT_SETTINGS_PREFIX = "ens-mock-account-settings";
 const MOCK_ACCOUNT_SESSIONS_PREFIX = "ens-mock-account-sessions";
+const MOCK_NOTIFICATIONS_PREFIX = "ens-mock-notifications";
+const MOCK_CALENDAR_PREFIX = "ens-mock-calendar-events";
+const MOCK_PM_REQUESTS_KEY         = "ens-mock-pm-requests";
+const MOCK_PROJECTS_KEY            = "ens-mock-projects";
+const MOCK_CLIENT_STATUSES_KEY     = "ens-mock-client-statuses";
 
-export const ACCOUNT_SETTINGS_EVENT = "ens-account-settings-updated";
+export const ACCOUNT_SETTINGS_EVENT   = "ens-account-settings-updated";
+export const PM_REQUESTS_UPDATED_EVENT = "ens-pm-requests-updated";
 
 export interface PlatformMetrics {
   clients: number;
@@ -35,7 +41,33 @@ export interface PlatformProject {
   exhibition: string;
   standType: string;
   description: string;
+  pipelineStage?: string | null;
+  lifecycleHistory?: PlatformProjectLifecycleHistoryItem[];
   lastUpdate: string;
+}
+
+export interface PlatformProjectLifecycleHistoryItem {
+  id: string;
+  fromStage?: string | null;
+  toStage: string;
+  fromStatus?: string | null;
+  toStatus?: string | null;
+  actorUserId?: string | null;
+  actorName: string;
+  createdAt: string;
+  time: string;
+}
+
+export interface PlatformProjectUpdateInput {
+  name: string;
+  client: string;
+  managerId?: string | null;
+  deadline: string;
+  system: string;
+  widthM: number;
+  depthM: number;
+  exhibition: string;
+  description?: string;
 }
 
 export interface PlatformClient {
@@ -44,10 +76,156 @@ export interface PlatformClient {
   company: string;
   contactName: string;
   contactEmail: string;
+  projectId?: string | null;
   pm: string;
   exhibition: string;
   status: string;
   lastActivity: string;
+}
+
+export interface PlatformPagination {
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
+export interface PlatformProjectListParams {
+  q?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface PlatformClientListParams {
+  q?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface PlatformProjectSummary {
+  total: number;
+  inDesign: number;
+  review: number;
+  delayed: number;
+}
+
+export interface PlatformClientSummary {
+  total: number;
+  active: number;
+  needsSetup: number;
+}
+
+export type PmTaskColumn = "todo" | "in_progress" | "blocked" | "done";
+export type PmTaskPriority = "High" | "Medium" | "Low";
+
+export interface PmTask {
+  id: string;
+  title: string;
+  client: string;
+  project: string;
+  projectId: string | null;
+  priority: PmTaskPriority;
+  deadline: string;
+  col: PmTaskColumn;
+  notes?: string;
+}
+
+export interface PmTaskProjectOption {
+  id: string;
+  name: string;
+  client: string;
+}
+
+export interface PmTaskBoard {
+  tasks: PmTask[];
+  projects: PmTaskProjectOption[];
+}
+
+export type PmRequestStatus = "Pending" | "In Progress" | "Resolved" | "Declined";
+export type PmRequestPriority = "High" | "Medium" | "Low";
+
+export interface PmRequestComment {
+  id: string;
+  text: string;
+  author: string;
+  isMe: boolean;
+  time: string;
+}
+
+export interface PmRequestHistoryItem {
+  id: string;
+  type: string;
+  message: string;
+  actor: string;
+  isMe: boolean;
+  createdAt: string;
+  time: string;
+}
+
+export interface PmRequestItem {
+  id: string;
+  client: string;
+  project: string;
+  request: string;
+  timestamp: string;
+  status: PmRequestStatus;
+  priority: PmRequestPriority;
+  history?: PmRequestHistoryItem[];
+  comments: PmRequestComment[];
+}
+
+export interface PmRequestSummary {
+  total: number;
+  pending: number;
+  inProgress: number;
+  resolved: number;
+  declined: number;
+}
+
+export interface PmRequestListParams {
+  q?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export type PmReportPeriod = "this_week" | "last_week" | "this_month" | "last_month" | "this_quarter";
+
+export interface PmReportPayload {
+  period: PmReportPeriod;
+  stats: {
+    completionRate: number;
+    completionRateDelta: number;
+    satisfaction: number | null;
+    satisfactionDelta: number | null;
+    activeClients: number;
+    activeClientsDelta: number;
+    avgResponseHours: number;
+    avgResponseHoursDelta: number;
+  };
+  weeklyData: Array<{ key: string; tasks: number; revisions: number; approvals: number }>;
+  projectEfficiency: Array<{ name: string; efficiency: number; onTime: number }>;
+  revisionTrend: Array<{ month: string; revisions: number; changes: number }>;
+  statusPie: Array<{ key: string; value: number; color: string }>;
+}
+
+export interface ClientArchiveBlocker {
+  id: string;
+  name: string;
+  status: string;
+  deadline: string | null;
+}
+
+export class ClientArchiveBlockedError extends Error {
+  projects: ClientArchiveBlocker[];
+
+  constructor(message: string, projects: ClientArchiveBlocker[]) {
+    super(message);
+    this.name = "ClientArchiveBlockedError";
+    this.projects = projects;
+  }
 }
 
 export interface PlatformActivity {
@@ -166,11 +344,20 @@ export interface DirectMessage {
   id: string;
   body: string;
   text: string;
+  attachments?: DirectMessageAttachment[];
   senderUserId: string;
   isMe: boolean;
   read: boolean;
   createdAt: string;
   time: string;
+}
+
+export interface DirectMessageAttachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url?: string;
 }
 
 export interface MessageContext {
@@ -261,6 +448,22 @@ export interface ManagedProject {
   system: string;
 }
 
+export interface WorkspaceMonitorProject {
+  id: string;
+  name: string;
+  client: string;
+  system: string;
+  status: "live" | "pending" | "review" | "blocked";
+  version: string;
+  dims: string;
+  pm: string;
+  managerId: string | null;
+  lastActionMins: number;
+  currentAction: string;
+  waitingDays: number;
+  progress: number;
+}
+
 export interface ManagerInvitation {
   id: string;
   email: string;
@@ -281,6 +484,48 @@ export interface ManagerWorkspace {
   invitations: ManagerInvitation[];
 }
 
+export interface ManagerAssignmentItemsParams {
+  managerId?: string | null;
+  clientQ?: string;
+  projectQ?: string;
+  clientLimit?: number;
+  clientOffset?: number;
+  projectLimit?: number;
+  projectOffset?: number;
+}
+
+export interface ManagerAssignmentItems {
+  clients: ManagedClient[];
+  projects: ManagedProject[];
+  clientPagination: PlatformPagination;
+  projectPagination: PlatformPagination;
+}
+
+export interface PlatformNotification {
+  id: string;
+  title: string;
+  body: string;
+  href: string | null;
+  readAt: string | null;
+  read: boolean;
+  createdAt: string;
+  time: string;
+}
+
+export interface NotificationCenterPayload {
+  unread: number;
+  notifications: PlatformNotification[];
+}
+
+export interface ChiefReportPayload {
+  range: "3M" | "6M" | "12M";
+  revenueData: Array<{ month: string; revenue: number; target: number; projects: number }>;
+  pmPerformance: Array<{ name: string; projects: number; satisfaction: number; onTime: number; revenue: number }>;
+  systemSplit: Array<{ name: string; value: number; color: string }>;
+  bottlenecks: Array<{ name: string; waitDays: number; stage: string }>;
+  monthlyTrend: Array<{ month: string; revenue: number; projects: number; satisfaction: number }>;
+}
+
 export interface CalendarEvent {
   id: string;
   name: string;
@@ -293,14 +538,45 @@ export interface CalendarEvent {
   standType: string;
 }
 
+export type CalendarEventInput = Omit<CalendarEvent, "id">;
+
 export async function getPlatformOverview() {
   if (USE_MOCK_API) return mockPlatformOverview();
   return apiGet<PlatformOverview>("/platform/overview");
 }
 
-export async function getPlatformProjects() {
-  if (USE_MOCK_API) return { projects: mockPlatformProjects() };
-  return apiGet<{ projects: PlatformProject[] }>("/platform/projects");
+export async function getPlatformProjects(params: PlatformProjectListParams = {}) {
+  if (USE_MOCK_API) {
+    const limit = params.limit ?? 25;
+    const offset = params.offset ?? 0;
+    const q = params.q?.trim().toLowerCase() ?? "";
+    const status = params.status?.trim();
+    const filtered = mockPlatformProjects().filter((project) => {
+      const matchesSearch = !q || [project.name, project.client, project.pm, project.exhibition, project.system]
+        .some((value) => value.toLowerCase().includes(q));
+      const matchesStatus = !status || chiefStatusParam(project.status) === chiefStatusParam(status) || project.status === status;
+      return matchesSearch && matchesStatus;
+    });
+    const summary = projectSummary(filtered);
+    return {
+      projects: filtered.slice(offset, offset + limit),
+      pagination: {
+        total: filtered.length,
+        limit,
+        offset,
+        hasMore: offset + limit < filtered.length,
+      },
+      summary,
+    };
+  }
+
+  const query = new URLSearchParams();
+  if (params.q?.trim()) query.set("q", params.q.trim());
+  if (params.status?.trim()) query.set("status", params.status.trim());
+  if (params.limit) query.set("limit", String(params.limit));
+  if (params.offset) query.set("offset", String(params.offset));
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return apiGet<{ projects: PlatformProject[]; pagination: PlatformPagination; summary: PlatformProjectSummary }>(`/platform/projects${suffix}`);
 }
 
 export async function createPlatformProject(input: {
@@ -312,24 +588,24 @@ export async function createPlatformProject(input: {
   deadline: string;
 }) {
   if (USE_MOCK_API) {
-    return {
-      project: {
-        id: `mock-project-${Date.now()}`,
-        name: input.name,
-        client: input.client,
-        pm: "Project Manager",
-        status: "Pending",
-        health: "On Track",
-        progress: 0,
-        deadline: input.deadline || null,
-        system: input.system,
-        dimensions: `${input.width}x${input.depth}m`,
-        exhibition: input.name,
-        standType: input.system,
-        description: "Local mock project.",
-        lastUpdate: "Just now",
-      },
+    const newProject: PlatformProject = {
+      id: `mock-project-${Date.now()}`,
+      name: input.name,
+      client: input.client,
+      pm: "Project Manager",
+      status: "Planning",
+      health: "On Track",
+      progress: 0,
+      deadline: input.deadline || null,
+      system: input.system,
+      dimensions: `${input.width} x ${input.depth} m`,
+      exhibition: input.name,
+      standType: input.system,
+      description: "",
+      lastUpdate: "Just now",
     };
+    saveMockPlatformProjects([newProject, ...mockPlatformProjects()]);
+    return { project: newProject };
   }
 
   return apiJson<{ project: PlatformProject }>("/platform/projects", {
@@ -342,9 +618,308 @@ export async function createPlatformProject(input: {
   });
 }
 
-export async function getPlatformClients() {
-  if (USE_MOCK_API) return { clients: mockPlatformClients() };
-  return apiGet<{ clients: PlatformClient[] }>("/platform/clients");
+export async function updatePlatformProjectStage(projectId: string, stage: string) {
+  if (USE_MOCK_API) {
+    const projects = mockPlatformProjects().map((project) =>
+      project.id === projectId
+        ? {
+            ...project,
+            pipelineStage: stage,
+            status: stage === "closed" ? "Completed" : stage === "review" ? "Active" : stage === "production" ? "Active" : "Pending",
+            lastUpdate: "Just now",
+          }
+        : project,
+    );
+    saveMockPlatformProjects(projects);
+    return { ok: true, project: projects.find((project) => project.id === projectId) ?? null, projects };
+  }
+  return apiJsonWithMethod<{ ok: boolean; project: { id: string; name: string }; projects: PlatformProject[] }>(
+    "PUT",
+    `/platform/projects/${projectId}/pipeline-stage`,
+    { stage },
+  );
+}
+
+export async function updatePlatformProject(projectId: string, input: PlatformProjectUpdateInput) {
+  if (USE_MOCK_API) {
+    const manager = input.managerId ? mockManagerWorkspace().managers.find((item) => item.id === input.managerId) : null;
+    const projects = mockPlatformProjects().map((project) =>
+      project.id === projectId
+        ? {
+            ...project,
+            name: input.name,
+            client: input.client,
+            pm: input.managerId === undefined ? project.pm : manager?.name ?? "Unassigned",
+            deadline: input.deadline || null,
+            system: input.system,
+            dimensions: `${input.widthM} x ${input.depthM} m`,
+            exhibition: input.exhibition || input.name,
+            description: input.description ?? project.description,
+            lastUpdate: "Just now",
+          }
+        : project,
+    );
+    saveMockPlatformProjects(projects);
+    return { ok: true, project: projects.find((project) => project.id === projectId) ?? projects[0], projects };
+  }
+
+  return apiJsonWithMethod<{ ok: boolean; project: PlatformProject; projects: PlatformProject[] }>(
+    "PUT",
+    `/platform/projects/${projectId}`,
+    input,
+  );
+}
+
+export async function deletePlatformProject(projectId: string) {
+  if (USE_MOCK_API) {
+    const projects = mockPlatformProjects().filter((p) => p.id !== projectId);
+    saveMockPlatformProjects(projects);
+    return { ok: true, projects };
+  }
+  return apiDelete<{ ok: boolean; projects: PlatformProject[] }>(`/platform/projects/${projectId}`);
+}
+
+export async function getPmTaskBoard() {
+  if (USE_MOCK_API) {
+    return {
+      tasks: [] as PmTask[],
+      projects: mockPlatformProjects().slice(0, 20).map((project) => ({
+        id: project.id,
+        name: project.name,
+        client: project.client,
+      })),
+    };
+  }
+  return apiGet<PmTaskBoard>("/platform/tasks");
+}
+
+export async function createPmTask(input: {
+  title: string;
+  projectId: string;
+  priority: PmTaskPriority;
+  deadline: string;
+  status: PmTaskColumn;
+  notes?: string;
+}) {
+  if (USE_MOCK_API) return getPmTaskBoard();
+  return apiJson<PmTaskBoard>("/platform/tasks", input);
+}
+
+export async function updatePmTask(taskId: string, input: Partial<{
+  title: string;
+  projectId: string;
+  priority: PmTaskPriority;
+  deadline: string | null;
+  status: PmTaskColumn;
+  notes: string | null;
+}>) {
+  if (USE_MOCK_API) return getPmTaskBoard();
+  return apiPatch<PmTaskBoard>(`/platform/tasks/${taskId}`, input);
+}
+
+export async function deletePmTask(taskId: string) {
+  if (USE_MOCK_API) return getPmTaskBoard();
+  return apiDelete<PmTaskBoard>(`/platform/tasks/${taskId}`);
+}
+
+export async function getPmRequests(params: PmRequestListParams = {}) {
+  if (USE_MOCK_API) {
+    const stored = mockPmRequestsStore();
+    const q = params.q?.trim().toLowerCase() ?? "";
+    const status = params.status?.trim();
+    const filtered = stored.filter((req) => {
+      const matchesSearch = !q || [req.client, req.project, req.request].some((v) => v.toLowerCase().includes(q));
+      const matchesStatus = !status || req.status === status;
+      return matchesSearch && matchesStatus;
+    });
+    const limit = params.limit ?? 10;
+    const offset = params.offset ?? 0;
+    const page = filtered.slice(offset, offset + limit);
+    const pending    = stored.filter((r) => r.status === "Pending").length;
+    const inProgress = stored.filter((r) => r.status === "In Progress").length;
+    const resolved   = stored.filter((r) => r.status === "Resolved").length;
+    const declined   = stored.filter((r) => r.status === "Declined").length;
+    return {
+      requests: page,
+      pagination: { total: filtered.length, limit, offset, hasMore: offset + limit < filtered.length },
+      summary: { total: stored.length, pending, inProgress, resolved, declined },
+    };
+  }
+  return apiGet<{ requests: PmRequestItem[]; pagination: PlatformPagination; summary: PmRequestSummary }>(`/platform/requests${pmRequestQuerySuffix(params)}`);
+}
+
+export async function updatePmRequestStatus(requestId: string, status: PmRequestStatus, params: PmRequestListParams = {}) {
+  if (USE_MOCK_API) {
+    const stored = mockPmRequestsStore();
+    saveMockPmRequests(stored.map((r) => r.id === requestId ? { ...r, status } : r));
+    window.dispatchEvent(new Event(PM_REQUESTS_UPDATED_EVENT));
+    return getPmRequests(params);
+  }
+  const result = await apiPatch<{ requests: PmRequestItem[]; pagination: PlatformPagination; summary: PmRequestSummary }>(`/platform/requests/${requestId}/status${pmRequestQuerySuffix(params)}`, { status });
+  window.dispatchEvent(new Event(PM_REQUESTS_UPDATED_EVENT));
+  return result;
+}
+
+export async function replyPmRequest(requestId: string, body: string, params: PmRequestListParams = {}) {
+  if (USE_MOCK_API) {
+    const stored = mockPmRequestsStore();
+    const comment: PmRequestComment = {
+      id: `mock-comment-${Date.now()}`,
+      text: body,
+      author: "PM",
+      isMe: true,
+      time: "Just now",
+    };
+    saveMockPmRequests(stored.map((r) => r.id === requestId ? { ...r, comments: [...r.comments, comment] } : r));
+    return getPmRequests(params);
+  }
+  return apiJson<{ requests: PmRequestItem[]; pagination: PlatformPagination; summary: PmRequestSummary }>(`/platform/requests/${requestId}/replies${pmRequestQuerySuffix(params)}`, { body });
+}
+
+function pmRequestQuerySuffix(params: PmRequestListParams) {
+  const query = new URLSearchParams();
+  if (params.q?.trim()) query.set("q", params.q.trim());
+  if (params.status?.trim()) query.set("status", params.status.trim());
+  if (params.limit) query.set("limit", String(params.limit));
+  if (params.offset) query.set("offset", String(params.offset));
+  return query.toString() ? `?${query.toString()}` : "";
+}
+
+export async function getPlatformClients(params: PlatformClientListParams = {}) {
+  if (USE_MOCK_API) {
+    const limit = params.limit ?? 25;
+    const offset = params.offset ?? 0;
+    const q = params.q?.trim().toLowerCase() ?? "";
+    const status = params.status?.trim();
+    const filtered = mockPlatformClients().filter((client) => {
+      const matchesStatus = !status || client.status === status;
+      const matchesSearch = !q || [client.name, client.company, client.contactEmail, client.exhibition, client.pm]
+        .some((value) => value.toLowerCase().includes(q));
+      return matchesStatus && matchesSearch;
+    });
+    const summary = clientSummary(filtered);
+    return {
+      clients: filtered.slice(offset, offset + limit),
+      pagination: {
+        total: filtered.length,
+        limit,
+        offset,
+        hasMore: offset + limit < filtered.length,
+      },
+      summary,
+    };
+  }
+
+  const query = new URLSearchParams();
+  if (params.q?.trim()) query.set("q", params.q.trim());
+  if (params.status?.trim()) query.set("status", params.status.trim());
+  if (params.limit) query.set("limit", String(params.limit));
+  if (params.offset) query.set("offset", String(params.offset));
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return apiGet<{ clients: PlatformClient[]; pagination: PlatformPagination; summary: PlatformClientSummary }>(`/platform/clients${suffix}`);
+}
+
+export async function createPlatformClient(input: {
+  name: string;
+  company: string;
+  email: string;
+  exhibition: string;
+}) {
+  if (USE_MOCK_API) {
+    return {
+      clients: [
+        {
+          id: `client-${Date.now()}`,
+          name: input.name,
+          company: input.company || input.name,
+          contactName: input.name,
+          contactEmail: input.email || "pending@email.local",
+          pm: "Unassigned",
+          exhibition: input.exhibition || "New Exhibition",
+          status: "Pending",
+          lastActivity: "Just now",
+        },
+        ...mockPlatformClients(),
+      ],
+    };
+  }
+  return apiJson<{ clients: PlatformClient[] }>("/platform/clients", {
+    name: input.name,
+    company: input.company,
+    email: input.email,
+    exhibition: input.exhibition,
+  });
+}
+
+export async function updatePlatformClient(clientId: string, input: {
+  name: string;
+  company: string;
+  email: string;
+  exhibition: string;
+}) {
+  if (USE_MOCK_API) {
+    return {
+      ok: true,
+      clients: mockPlatformClients().map((client) =>
+        client.id === clientId
+          ? {
+              ...client,
+              name: input.company || input.name,
+              company: input.company || input.name,
+              contactName: input.name,
+              contactEmail: input.email || "pending@email.local",
+              exhibition: input.exhibition || "No active exhibition",
+              lastActivity: "Just now",
+            }
+          : client,
+      ),
+    };
+  }
+  return apiJsonWithMethod<{ ok: boolean; clients: PlatformClient[] }>("PUT", `/platform/clients/${clientId}`, {
+    name: input.name,
+    company: input.company,
+    email: input.email,
+    exhibition: input.exhibition,
+  });
+}
+
+export async function deletePlatformClient(clientId: string) {
+  if (USE_MOCK_API) {
+    return {
+      ok: true,
+      clients: mockPlatformClients().filter((client) => client.id !== clientId),
+    };
+  }
+  const response = await apiFetch(`/platform/clients/${clientId}`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: {
+      accept: "application/json",
+      "x-organization-slug": ORGANIZATION_SLUG,
+    },
+  });
+
+  if (!response.ok) {
+    const body = await readApiBody<{ error?: string; projects?: ClientArchiveBlocker[] }>(response);
+    if (response.status === 409 && body?.projects?.length) {
+      throw new ClientArchiveBlockedError(body.error ?? "Client has active projects and cannot be archived", body.projects);
+    }
+    throw new Error(apiErrorMessage(body, response));
+  }
+
+  return response.json() as Promise<{ ok: boolean; clients: PlatformClient[] }>;
+}
+
+export async function updatePlatformClientStatus(clientId: string, status: string) {
+  if (USE_MOCK_API) {
+    saveMockClientStatus(clientId, status);
+    return { ok: true, clients: mockPlatformClients() };
+  }
+  return apiJsonWithMethod<{ ok: boolean; clients: PlatformClient[] }>(
+    "PUT",
+    `/platform/clients/${clientId}/status`,
+    { status },
+  );
 }
 
 export async function getCurrentWorkspace() {
@@ -384,13 +959,19 @@ export async function getConversationMessages(contactId: string, context?: Messa
   return apiGet<{ conversationId: string; messages: DirectMessage[] }>(`/platform/messages/${contactId}${params}`);
 }
 
-export async function sendConversationMessage(contactId: string, body: string, context?: MessageContext) {
+export async function sendConversationMessage(
+  contactId: string,
+  body: string,
+  context?: MessageContext,
+  attachments: DirectMessageAttachment[] = [],
+) {
   if (USE_MOCK_API) {
     const current = mockConversationMessages(contactId, context);
     const message = {
       id: `mock-message-${Date.now()}`,
       body,
       text: body,
+      attachments,
       senderUserId: "mock-current-user",
       isMe: true,
       read: true,
@@ -403,7 +984,43 @@ export async function sendConversationMessage(contactId: string, body: string, c
     };
   }
 
-  return apiJson<{ message: DirectMessage }>(`/platform/messages/${contactId}`, { body, context });
+  return apiJson<{ message: DirectMessage }>(`/platform/messages/${contactId}`, { body, context, attachments });
+}
+
+export async function uploadConversationAttachment(file: File) {
+  if (USE_MOCK_API) {
+    return {
+      attachment: {
+        id: `mock-attachment-${Date.now()}`,
+        name: file.name,
+        size: file.size,
+        type: file.type || "application/octet-stream",
+      },
+    };
+  }
+
+  const response = await apiFetch("/platform/messages/attachments", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      accept: "application/json",
+      "content-type": file.type || "application/octet-stream",
+      "x-file-name": encodeURIComponent(file.name),
+      "x-organization-slug": ORGANIZATION_SLUG,
+    },
+    body: file,
+  });
+
+  if (!response.ok) {
+    throw new Error(await readApiError(response));
+  }
+
+  return response.json() as Promise<{ attachment: DirectMessageAttachment }>;
+}
+
+export function messageAttachmentHref(attachment: DirectMessageAttachment) {
+  const url = attachment.url ?? `/platform/messages/attachments/${attachment.id}`;
+  return url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 }
 
 export async function getAccountSettings() {
@@ -449,6 +1066,68 @@ export async function getManagerWorkspace() {
   return apiGet<ManagerWorkspace>("/platform/managers");
 }
 
+export async function getManagerAssignmentItems(params: ManagerAssignmentItemsParams = {}) {
+  if (USE_MOCK_API) {
+    const workspace = mockManagerWorkspace();
+    const clientLimit = params.clientLimit ?? 20;
+    const projectLimit = params.projectLimit ?? 20;
+    const clientOffset = params.clientOffset ?? 0;
+    const projectOffset = params.projectOffset ?? 0;
+    const managerId = params.managerId ?? null;
+    const clientQ = params.clientQ?.trim().toLowerCase() ?? "";
+    const projectQ = params.projectQ?.trim().toLowerCase() ?? "";
+    const clients = workspace.clients.filter((client) => {
+      const matchesManager = !managerId || client.managerId === managerId || !client.managerId;
+      const matchesSearch = !clientQ || [client.name, client.contactName, client.contactEmail, client.exhibition, client.managerName]
+        .some((value) => value.toLowerCase().includes(clientQ));
+      return matchesManager && matchesSearch;
+    });
+    const projects = workspace.projects.filter((project) => {
+      const matchesManager = !managerId || project.managerId === managerId || !project.managerId;
+      const matchesSearch = !projectQ || [project.name, project.client, project.exhibition, project.system, project.managerName]
+        .some((value) => value.toLowerCase().includes(projectQ));
+      return matchesManager && matchesSearch;
+    });
+    return {
+      clients: clients.slice(clientOffset, clientOffset + clientLimit),
+      projects: projects.slice(projectOffset, projectOffset + projectLimit),
+      clientPagination: {
+        total: clients.length,
+        limit: clientLimit,
+        offset: clientOffset,
+        hasMore: clientOffset + clientLimit < clients.length,
+      },
+      projectPagination: {
+        total: projects.length,
+        limit: projectLimit,
+        offset: projectOffset,
+        hasMore: projectOffset + projectLimit < projects.length,
+      },
+    };
+  }
+
+  const query = new URLSearchParams();
+  if (params.managerId) query.set("managerId", params.managerId);
+  if (params.clientQ?.trim()) query.set("clientQ", params.clientQ.trim());
+  if (params.projectQ?.trim()) query.set("projectQ", params.projectQ.trim());
+  if (params.clientLimit) query.set("clientLimit", String(params.clientLimit));
+  if (params.clientOffset) query.set("clientOffset", String(params.clientOffset));
+  if (params.projectLimit) query.set("projectLimit", String(params.projectLimit));
+  if (params.projectOffset) query.set("projectOffset", String(params.projectOffset));
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return apiGet<ManagerAssignmentItems>(`/platform/managers/assignment-items${suffix}`);
+}
+
+export async function getWorkspaceMonitor() {
+  if (USE_MOCK_API) {
+    return {
+      projects: mockWorkspaceMonitorProjects(),
+      managers: mockManagerWorkspace().managers,
+    };
+  }
+  return apiGet<{ projects: WorkspaceMonitorProject[]; managers: PlatformManager[] }>("/platform/workspaces/monitor");
+}
+
 export async function invitePlatformManager(input: { name: string; email: string }) {
   if (USE_MOCK_API) {
     const workspace = mockManagerWorkspace();
@@ -459,7 +1138,7 @@ export async function invitePlatformManager(input: { name: string; email: string
       role: "pm",
       status: "Pending",
       token: `mock-token-${Date.now()}`,
-      inviteUrl: `/signup?invite=mock-token-${Date.now()}`,
+      inviteUrl: `/pm/join?token=mock-token-${Date.now()}`,
       expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
       createdAt: new Date().toISOString(),
     };
@@ -467,6 +1146,40 @@ export async function invitePlatformManager(input: { name: string; email: string
     return { invitation };
   }
   return apiJson<{ invitation: ManagerInvitation }>("/platform/managers/invitations", input);
+}
+
+export async function resendManagerInvitation(invitationId: string) {
+  if (USE_MOCK_API) {
+    const workspace = mockManagerWorkspace();
+    const invitations = workspace.invitations.map((invitation) => (
+      invitation.id === invitationId
+        ? {
+            ...invitation,
+            status: "Pending",
+            token: `mock-token-${Date.now()}`,
+            inviteUrl: `/pm/join?token=mock-token-${Date.now()}`,
+            expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
+          }
+        : invitation
+    ));
+    const invitation = invitations.find((item) => item.id === invitationId);
+    saveMockManagerWorkspace({ ...workspace, invitations });
+    if (!invitation) throw new Error("Invitation was not found");
+    return { invitation };
+  }
+  return apiJson<{ invitation: ManagerInvitation }>(`/platform/managers/invitations/${invitationId}/resend`, {});
+}
+
+export async function revokeManagerInvitation(invitationId: string) {
+  if (USE_MOCK_API) {
+    const workspace = mockManagerWorkspace();
+    const invitations = workspace.invitations.map((invitation) => (
+      invitation.id === invitationId ? { ...invitation, status: "Revoked" } : invitation
+    ));
+    saveMockManagerWorkspace({ ...workspace, invitations });
+    return { ok: true, invitations };
+  }
+  return apiDelete<{ ok: boolean; invitations: ManagerInvitation[] }>(`/platform/managers/invitations/${invitationId}`);
 }
 
 export async function updateManagerAssignments(input: {
@@ -512,9 +1225,156 @@ export async function updateManagerStatus(managerId: string, status: "active" | 
   return apiPatch<{ ok: boolean }>(`/platform/managers/${managerId}/status`, { status });
 }
 
+export async function updateManagerRating(managerId: string, rating: number) {
+  if (rating < 1 || rating > 5) throw new Error("Rating must be between 1 and 5");
+  if (USE_MOCK_API) {
+    const workspace = mockManagerWorkspace();
+    const next = {
+      ...workspace,
+      managers: workspace.managers.map((manager) =>
+        manager.id === managerId ? { ...manager, rating: Math.round(rating * 10) / 10 } : manager
+      ),
+    };
+    saveMockManagerWorkspace(next);
+    return { ok: true };
+  }
+  return apiPatch<{ ok: boolean }>(`/platform/managers/${managerId}/rating`, { rating });
+}
+
+export async function sendManagerReminder(managerId: string, input: { itemCount: number; delayedCount: number; urgentCount: number }) {
+  if (USE_MOCK_API) return { ok: true };
+  return apiJson<{ ok: boolean }>(`/platform/managers/${managerId}/reminders`, input);
+}
+
+export async function getNotifications() {
+  if (USE_MOCK_API) return mockNotifications();
+  return apiGet<NotificationCenterPayload>("/platform/notifications");
+}
+
+export async function markNotificationRead(notificationId: string) {
+  if (USE_MOCK_API) return markMockNotificationRead(notificationId);
+  return apiPatch<{ ok: boolean } & NotificationCenterPayload>(`/platform/notifications/${notificationId}/read`, {});
+}
+
+export async function markAllNotificationsRead() {
+  if (USE_MOCK_API) return markAllMockNotificationsRead();
+  return apiPatch<{ updated: number } & NotificationCenterPayload>("/platform/notifications/read-all", {});
+}
+
+export async function recordReportExport(input: { report: string; range?: string; format: string }) {
+  if (USE_MOCK_API) {
+    const current = mockNotifications().notifications;
+    saveMockNotifications([
+      {
+        id: `mock-report-export-${Date.now()}`,
+        title: "Report exported",
+        body: `${input.report} was exported as ${input.format.toUpperCase()}.`,
+        href: "/chief/reports",
+        readAt: null,
+        read: false,
+        createdAt: new Date().toISOString(),
+        time: "Just now",
+      },
+      ...current,
+    ]);
+    return { ok: true };
+  }
+  return apiJson<{ ok: boolean }>("/platform/reports/export-audit", input);
+}
+
+export async function getChiefReport(range: "3M" | "6M" | "12M") {
+  if (USE_MOCK_API) return mockChiefReport(range);
+  return apiGet<ChiefReportPayload>(`/platform/reports/chief?range=${encodeURIComponent(range)}`);
+}
+
+export async function getPmReport(period: PmReportPeriod) {
+  if (USE_MOCK_API) return mockPmReport(period);
+  return apiGet<PmReportPayload>(`/platform/reports/pm?period=${encodeURIComponent(period)}`);
+}
+
 export async function getPlatformCalendar() {
   if (USE_MOCK_API) return { events: mockCalendarEvents() };
   return apiGet<{ events: CalendarEvent[] }>("/platform/calendar");
+}
+
+export async function createCalendarEvent(input: CalendarEventInput) {
+  if (USE_MOCK_API) {
+    const events = [{ id: `mock-calendar-${Date.now()}`, ...input }, ...mockCalendarEvents()];
+    return { event: events[0], ...saveMockCalendarEvents(events) };
+  }
+  return apiJson<{ event: CalendarEvent; events: CalendarEvent[] }>("/platform/calendar/events", input);
+}
+
+export async function updateCalendarEvent(eventId: string, input: CalendarEventInput) {
+  if (USE_MOCK_API) {
+    const events = mockCalendarEvents().map((event) => event.id === eventId ? { id: eventId, ...input } : event);
+    const event = events.find((item) => item.id === eventId);
+    if (!event) throw new Error("Calendar event was not found");
+    return { event, ...saveMockCalendarEvents(events) };
+  }
+  return apiJsonWithMethod<{ event: CalendarEvent; events: CalendarEvent[] }>("PUT", `/platform/calendar/events/${eventId}`, input);
+}
+
+export async function deleteCalendarEvent(eventId: string) {
+  if (USE_MOCK_API) {
+    return { ok: true, ...saveMockCalendarEvents(mockCalendarEvents().filter((event) => event.id !== eventId)) };
+  }
+  return apiDelete<{ ok: boolean; events: CalendarEvent[] }>(`/platform/calendar/events/${eventId}`);
+}
+
+// ---------------------------------------------------------------------------
+// Invitation acceptance (PM join flow)
+// ---------------------------------------------------------------------------
+
+export interface InviteTokenPayload {
+  valid: boolean;
+  email: string;
+  name: string | null;
+  expiresAt: string;
+  role: string;
+}
+
+export async function validateInviteToken(token: string): Promise<InviteTokenPayload> {
+  if (USE_MOCK_API) {
+    const workspace = mockManagerWorkspace();
+    const invitation = workspace.invitations.find((inv) => inv.token === token);
+    if (!invitation || invitation.status === "Revoked") {
+      throw new Error("This invitation link is invalid. Please ask your administrator for a new one.");
+    }
+    if (invitation.status === "Accepted") {
+      throw new Error("This invitation has already been used. Please log in with your credentials.");
+    }
+    if (new Date(invitation.expiresAt) < new Date()) {
+      throw new Error("This invitation link has expired. Please ask your administrator to resend the invitation.");
+    }
+    return {
+      valid: true,
+      email: invitation.email,
+      name: invitation.name ?? null,
+      expiresAt: invitation.expiresAt,
+      role: invitation.role,
+    };
+  }
+  return apiGet<InviteTokenPayload>(`/platform/managers/invitations/validate?token=${encodeURIComponent(token)}`);
+}
+
+export async function acceptManagerInvitation(token: string, input: { name: string; password: string }): Promise<{ ok: boolean }> {
+  if (USE_MOCK_API) {
+    const workspace = mockManagerWorkspace();
+    const invitation = workspace.invitations.find((inv) => inv.token === token);
+    if (!invitation || invitation.status !== "Pending") {
+      throw new Error("Invalid or already used invitation link.");
+    }
+    if (new Date(invitation.expiresAt) < new Date()) {
+      throw new Error("This invitation link has expired.");
+    }
+    const invitations = workspace.invitations.map((inv) =>
+      inv.id === invitation.id ? { ...inv, status: "Accepted", name: input.name } : inv
+    );
+    saveMockManagerWorkspace({ ...workspace, invitations });
+    return { ok: true };
+  }
+  return apiJson<{ ok: boolean }>("/platform/managers/invitations/accept", { token, ...input });
 }
 
 async function apiGet<T>(path: string): Promise<T> {
@@ -527,7 +1387,7 @@ async function apiGet<T>(path: string): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    throw new Error(await readApiError(response));
   }
 
   if (response.status === 204) return undefined as T;
@@ -551,7 +1411,7 @@ async function apiJsonWithMethod<T>(method: "POST" | "PUT", path: string, body: 
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    throw new Error(await readApiError(response));
   }
 
   return response.json() as Promise<T>;
@@ -570,7 +1430,7 @@ async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    throw new Error(await readApiError(response));
   }
 
   return response.json() as Promise<T>;
@@ -587,28 +1447,57 @@ async function apiDelete<T>(path: string): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    throw new Error(await readApiError(response));
   }
 
   return response.json() as Promise<T>;
 }
 
+// Single shared refresh promise — prevents concurrent 401s from firing multiple refresh requests
+let _refreshPromise: Promise<boolean> | null = null;
+
 async function apiFetch(path: string, init: RequestInit, retried = false): Promise<Response> {
   const response = await fetch(`${API_BASE_URL}${path}`, init);
   if (response.status !== 401 || retried) return response;
 
-  const refreshed = await fetch(`${API_BASE_URL}/auth/refresh`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      accept: "application/json",
-      "content-type": "application/json",
-      "x-organization-slug": ORGANIZATION_SLUG,
-    },
-  });
+  // Deduplicate: all concurrent 401s share the same refresh attempt
+  if (!_refreshPromise) {
+    _refreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "x-organization-slug": ORGANIZATION_SLUG,
+      },
+    })
+      .then((r) => r.ok)
+      .catch(() => false)
+      .finally(() => { _refreshPromise = null; });
+  }
 
-  if (!refreshed.ok) return response;
+  const refreshed = await _refreshPromise;
+  if (!refreshed) return response;
   return apiFetch(path, init, true);
+}
+
+async function readApiError(response: Response) {
+  const body = await readApiBody<{ error?: string | { message?: string } }>(response);
+  return apiErrorMessage(body, response);
+}
+
+async function readApiBody<T>(response: Response) {
+  try {
+    return await response.json() as T;
+  } catch {
+    return null;
+  }
+}
+
+function apiErrorMessage(body: { error?: string | { message?: string } } | null, response: Response) {
+  if (typeof body?.error === "string") return body.error;
+  if (body?.error && typeof body.error === "object" && body.error.message) return body.error.message;
+  return `API request failed: ${response.status} ${response.statusText}`;
 }
 
 function mockPlatformOverview(): PlatformOverview {
@@ -645,7 +1534,7 @@ function mockPlatformOverview(): PlatformOverview {
   };
 }
 
-function mockPlatformProjects(): PlatformProject[] {
+function mockPlatformProjectsSeed(): PlatformProject[] {
   return mockProjects.map((project) => ({
     id: project.id,
     name: project.name,
@@ -664,18 +1553,190 @@ function mockPlatformProjects(): PlatformProject[] {
   }));
 }
 
+function mockPlatformProjects(): PlatformProject[] {
+  try {
+    const raw = localStorage.getItem(MOCK_PROJECTS_KEY);
+    if (raw) return JSON.parse(raw) as PlatformProject[];
+  } catch { /* ignore */ }
+  return mockPlatformProjectsSeed();
+}
+
+function saveMockPlatformProjects(projects: PlatformProject[]) {
+  localStorage.setItem(MOCK_PROJECTS_KEY, JSON.stringify(projects));
+}
+
+function projectSummary(projects: PlatformProject[]): PlatformProjectSummary {
+  return {
+    total: projects.length,
+    inDesign: projects.filter((project) => project.status === "In Design").length,
+    review: projects.filter((project) => project.status === "Client Review" || project.status === "Revision").length,
+    delayed: projects.filter((project) => project.status === "Delayed" || project.health.toLowerCase().includes("risk")).length,
+  };
+}
+
+function chiefStatusParam(status: string) {
+  const value = status.toLowerCase().replace(/[\s-]+/g, "_");
+  if (value.includes("delay")) return "delayed";
+  if (value.includes("complete") || value.includes("approved")) return "completed";
+  if (value.includes("active") || value.includes("review") || value.includes("design") || value.includes("production")) return "active";
+  return "pending";
+}
+
+function readMockClientStatuses(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(MOCK_CLIENT_STATUSES_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveMockClientStatus(clientId: string, status: string) {
+  const current = readMockClientStatuses();
+  current[clientId] = status;
+  localStorage.setItem(MOCK_CLIENT_STATUSES_KEY, JSON.stringify(current));
+}
+
 function mockPlatformClients(): PlatformClient[] {
+  const projectsByClient = mockPlatformProjects();
+  const statusOverrides = readMockClientStatuses();
   return mockClients.map((client) => ({
     id: client.id,
     name: client.name,
     company: client.name,
     contactName: client.name,
     contactEmail: `${client.name.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@example.com`,
+    projectId: projectsByClient.find((project) => project.client === client.name)?.id ?? null,
     pm: client.pm,
     exhibition: client.exhibition,
-    status: client.status,
+    status: statusOverrides[client.id] ?? client.status,
     lastActivity: client.lastActivity,
   }));
+}
+
+function clientSummary(clients: PlatformClient[]): PlatformClientSummary {
+  return {
+    total: clients.length,
+    active: clients.filter((client) => client.status === "Active").length,
+    needsSetup: clients.filter((client) => client.status === "Lead" || client.status === "Pending").length,
+  };
+}
+
+function mockChiefReport(range: "3M" | "6M" | "12M"): ChiefReportPayload {
+  const months = range === "3M" ? 3 : range === "12M" ? 12 : 6;
+  const projects = mockPlatformProjects();
+  const monthLabels = Array.from({ length: months }, (_, index) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - months + index + 1);
+    return date.toLocaleString("en-US", { month: "short" });
+  });
+  const revenueData = monthLabels.map((month, index) => {
+    const count = Math.max(1, Math.round(projects.length / months) + (index % 2));
+    const revenue = count * 38_000 + index * 4_200;
+    return { month, revenue, target: Math.round(revenue * 0.92), projects: count };
+  });
+  const pmNames = Array.from(new Set(projects.map((project) => project.pm || "Unassigned")));
+  const pmPerformance = pmNames.map((name) => {
+    const pmProjects = projects.filter((project) => (project.pm || "Unassigned") === name);
+    const delayed = pmProjects.filter((project) => project.status === "Delayed").length;
+    const onTime = pmProjects.length ? Math.round(((pmProjects.length - delayed) / pmProjects.length) * 100) : 0;
+    return {
+      name,
+      projects: pmProjects.length,
+      satisfaction: Number(Math.min(5, 4.1 + onTime / 120).toFixed(1)),
+      onTime,
+      revenue: pmProjects.length * 42_000,
+    };
+  });
+  const systems = Array.from(new Set(projects.map((project) => project.system || "Custom")));
+  const systemSplit = systems.map((system, index) => ({
+    name: system,
+    value: Math.round((projects.filter((project) => project.system === system).length / Math.max(1, projects.length)) * 100),
+    color: index === 0 ? "#1d4ed8" : index === 1 ? "#c2410c" : "#2f7d3a",
+  }));
+  const bottlenecks = projects
+    .filter((project) => project.status === "Delayed" || project.status === "Pending")
+    .slice(0, 6)
+    .map((project, index) => ({ name: project.name, waitDays: 2 + index, stage: project.status }));
+
+  return {
+    range,
+    revenueData,
+    pmPerformance,
+    systemSplit,
+    bottlenecks,
+    monthlyTrend: revenueData.map((item) => ({
+      month: item.month,
+      revenue: item.revenue,
+      projects: item.projects,
+      satisfaction: Number((4.1 + item.projects / 20).toFixed(1)),
+    })),
+  };
+}
+
+function mockPmReport(period: PmReportPeriod): PmReportPayload {
+  const projects = mockPlatformProjects();
+  const active = projects.filter((project) => project.status !== "Completed");
+  const delayed = projects.filter((project) => project.status === "Delayed" || project.health.toLowerCase().includes("risk"));
+
+  // Build the weekly-activity axis differently per period
+  const isWeekly = period === "this_week" || period === "last_week";
+  const isMonthly = period === "this_month" || period === "last_month";
+  const activityKeys: string[] = isWeekly
+    ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    : isMonthly
+      ? ["W1", "W2", "W3", "W4"]
+      : ["Jan", "Feb", "Mar"]; // quarter
+
+  const weeklyData = activityKeys.map((key, index) => ({
+    key,
+    tasks: Math.max(0, projects.length - (index % 3)),
+    revisions: (index + 1) % 3,
+    approvals: index % 2,
+  }));
+
+  // Completion-rate delta varies by period to show something meaningful
+  const completionRate = projects.length
+    ? Math.round((projects.filter((project) => project.status === "Completed").length / projects.length) * 100)
+    : 0;
+  const deltaBySeed: Record<PmReportPeriod, number> = {
+    this_week: 2.4,
+    last_week: -1.1,
+    this_month: 5.8,
+    last_month: 3.2,
+    this_quarter: 8.1,
+  };
+
+  return {
+    period,
+    stats: {
+      completionRate,
+      completionRateDelta: deltaBySeed[period] ?? 0,
+      satisfaction: null,
+      satisfactionDelta: null,
+      activeClients: clientSummary(mockPlatformClients()).active,
+      activeClientsDelta: 0,
+      avgResponseHours: period === "this_week" ? 3.2 : period === "this_month" ? 4.1 : 3.8,
+      avgResponseHoursDelta: 0,
+    },
+    weeklyData,
+    projectEfficiency: projects.slice(0, 8).map((project) => ({
+      name: project.name,
+      efficiency: project.progress,
+      onTime: delayed.some((item) => item.id === project.id) ? 0 : 100,
+    })),
+    revisionTrend: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map((month, index) => ({
+      month,
+      revisions: index % 4,
+      changes: index % 5,
+    })),
+    statusPie: [
+      { key: "active", value: active.length, color: "#2f7d3a" },
+      { key: "pending", value: projects.filter((project) => project.status === "Pending").length, color: "#d97706" },
+      { key: "review", value: projects.filter((project) => project.status === "Client Review" || project.status === "Revision").length, color: "#1d4ed8" },
+      { key: "delayed", value: delayed.length, color: "#dc2626" },
+    ].filter((item) => item.value > 0),
+  };
 }
 
 function mockProjectWorkspace(projectId = "p1"): ProjectWorkspace {
@@ -979,9 +2040,87 @@ function saveMockManagerWorkspace(workspace: ManagerWorkspace) {
   localStorage.setItem("ens-mock-manager-workspace", JSON.stringify(workspace));
 }
 
+function mockWorkspaceMonitorProjects(): WorkspaceMonitorProject[] {
+  const statuses: WorkspaceMonitorProject["status"][] = ["live", "review", "live", "pending", "blocked", "live"];
+  return mockManagerWorkspace().projects.map((project, index) => ({
+    id: project.id,
+    name: project.name,
+    client: project.client,
+    system: project.system,
+    status: statuses[index % statuses.length],
+    version: `v${2 + (index % 3)}.0`,
+    dims: ["6x3", "8x6", "4x4", "10x5", "6x6"][index % 5],
+    pm: project.managerName,
+    managerId: project.managerId,
+    lastActionMins: [1, 5, 12, 35, 92, 180][index % 6],
+    currentAction: project.health === "Delayed" ? "Waiting for recovery action" : "Workspace updated",
+    waitingDays: project.health === "Delayed" ? 5 : [0, 0, 2, 1][index % 4],
+    progress: project.progress,
+  }));
+}
+
+function mockNotifications(): NotificationCenterPayload {
+  const key = `${MOCK_NOTIFICATIONS_PREFIX}:${mockAccountId()}`;
+  const raw = localStorage.getItem(key);
+  const notifications = raw
+    ? JSON.parse(raw) as PlatformNotification[]
+    : [
+        {
+          id: "mock-notification-1",
+          title: "Chief manager reminder",
+          body: "Review delayed and due-soon project items.",
+          href: "/pm/projects",
+          readAt: null,
+          read: false,
+          createdAt: new Date().toISOString(),
+          time: "Just now",
+        },
+      ];
+
+  localStorage.setItem(key, JSON.stringify(notifications));
+  return {
+    unread: notifications.filter((notification) => !notification.readAt).length,
+    notifications,
+  };
+}
+
+function saveMockNotifications(notifications: PlatformNotification[]) {
+  const key = `${MOCK_NOTIFICATIONS_PREFIX}:${mockAccountId()}`;
+  localStorage.setItem(key, JSON.stringify(notifications));
+  return {
+    unread: notifications.filter((notification) => !notification.readAt).length,
+    notifications,
+  };
+}
+
+function markMockNotificationRead(notificationId: string) {
+  const current = mockNotifications().notifications;
+  return { ok: true, ...saveMockNotifications(current.map((notification) => (
+    notification.id === notificationId ? { ...notification, readAt: new Date().toISOString(), read: true } : notification
+  ))) };
+}
+
+function markAllMockNotificationsRead() {
+  const current = mockNotifications().notifications;
+  return {
+    updated: current.filter((notification) => !notification.readAt).length,
+    ...saveMockNotifications(current.map((notification) => ({ ...notification, readAt: notification.readAt ?? new Date().toISOString(), read: true }))),
+  };
+}
+
 function mockCalendarEvents(): CalendarEvent[] {
+  const key = `${MOCK_CALENDAR_PREFIX}:${mockAccountId()}`;
+  const raw = localStorage.getItem(key);
+  if (raw) {
+    try {
+      return JSON.parse(raw) as CalendarEvent[];
+    } catch {
+      localStorage.removeItem(key);
+    }
+  }
+
   const workspace = mockManagerWorkspace();
-  return workspace.projects.map((project) => ({
+  const events = workspace.projects.map((project) => ({
     id: project.id,
     name: project.exhibition || project.name,
     client: project.client,
@@ -992,4 +2131,90 @@ function mockCalendarEvents(): CalendarEvent[] {
     location: "Location TBD",
     standType: project.system,
   }));
+  saveMockCalendarEvents(events);
+  return events;
+}
+
+function saveMockCalendarEvents(events: CalendarEvent[]) {
+  const key = `${MOCK_CALENDAR_PREFIX}:${mockAccountId()}`;
+  localStorage.setItem(key, JSON.stringify(events));
+  return { events };
+}
+
+// ── PM Requests mock store ─────────────────────────────────────────────────────
+
+const MOCK_REQUESTS_SEED: PmRequestItem[] = [
+  {
+    id: "req-1",
+    client: "TechCorp Industries",
+    project: "TechCon 2024",
+    priority: "High",
+    timestamp: "2h ago",
+    status: "Pending",
+    request: "Change the back wall to charcoal and add a small storage unit behind the reception desk. Also, can we increase the reception counter width by 20cm?",
+    comments: [],
+  },
+  {
+    id: "req-2",
+    client: "MediLife",
+    project: "HealthExpo Booth",
+    priority: "Medium",
+    timestamp: "5h ago",
+    status: "In Progress",
+    request: "Increase the height of the fascia by 20cm to accommodate the new logo size. The logo was recently rebranded and needs more vertical space.",
+    comments: [
+      { id: "c1", author: "MediLife", isMe: false, time: "6h ago",
+        text: "Working on the fascia update now — will send revised render by EOD." },
+    ],
+  },
+  {
+    id: "req-3",
+    client: "FastCars Co",
+    project: "AutoShow Premium Stand",
+    priority: "Low",
+    timestamp: "1d ago",
+    status: "Resolved",
+    request: "Add 4 more spotlights to the left display area. The current lighting feels insufficient for the product showcase.",
+    comments: [
+      { id: "c2", author: "PM", isMe: true, time: "22h ago",
+        text: "Spotlights added in v2.3. Client confirmed it looks great." },
+    ],
+  },
+  {
+    id: "req-4",
+    client: "GreenTech",
+    project: "EcoFair Stand",
+    priority: "Medium",
+    timestamp: "2d ago",
+    status: "Pending",
+    request: "The carpet color needs to match our brand green. Current dark gray does not align with our sustainability message.",
+    comments: [],
+  },
+  {
+    id: "req-5",
+    client: "RetailBrand",
+    project: "RetailPeak Expo",
+    priority: "High",
+    timestamp: "3d ago",
+    status: "Declined",
+    request: "Move the entire stand to a corner configuration with two open sides instead of the original single open-front.",
+    comments: [
+      { id: "c3", author: "PM", isMe: true, time: "2d ago",
+        text: "Unfortunately the venue floor plan does not permit corner configuration at this booth size." },
+    ],
+  },
+];
+
+function mockPmRequestsStore(): PmRequestItem[] {
+  const raw = localStorage.getItem(MOCK_PM_REQUESTS_KEY);
+  if (raw) {
+    try { return JSON.parse(raw) as PmRequestItem[]; } catch { /* fall through */ }
+  }
+  localStorage.setItem(MOCK_PM_REQUESTS_KEY, JSON.stringify(MOCK_REQUESTS_SEED));
+  return MOCK_REQUESTS_SEED;
+}
+
+function saveMockPmRequests(requests: PmRequestItem[]): PmRequestItem[] {
+  localStorage.setItem(MOCK_PM_REQUESTS_KEY, JSON.stringify(requests));
+  return requests;
 }
