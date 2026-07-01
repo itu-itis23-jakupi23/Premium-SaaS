@@ -1,0 +1,79 @@
+import { z } from "zod";
+
+export const workspaceBoothSchema = z.object({
+  width: z.number().min(1).max(100),
+  depth: z.number().min(1).max(100),
+  height: z.number().min(1.5).max(12),
+  system: z.enum(["octanorm", "maxima"]),
+  companyName: z.string().min(1).max(80),
+  openFront: z.boolean(),
+  openBack: z.boolean(),
+  openLeft: z.boolean(),
+  openRight: z.boolean(),
+  fasciaEnabled: z.boolean().optional(),
+  fasciaOption: z.enum(["classic", "full", "custom"]).optional(),
+});
+
+export const workspacePlacedItemSchema = z.object({
+  id: z.string().min(1),
+  catalogId: z.string().min(1),
+  name: z.string().min(1),
+  sku: z.string().min(1),
+  qty: z.number().int().min(1).max(999),
+  w: z.number().positive(),
+  d: z.number().positive(),
+  h: z.number().positive(),
+  color: z.string().min(1),
+  weight: z.number().min(0),
+  x: z.number().optional(),
+  z: z.number().optional(),
+  rotation: z.number().optional(),
+  kind: z.enum(["furniture", "light", "structure", "fascia", "asset"]).optional(),
+  shape: z.string().optional(),
+  modelUrl: z.string().optional(),
+  source: z.string().optional(),
+});
+
+export const workspaceRoomSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  width: z.number().positive(),
+  depth: z.number().positive(),
+  height: z.number().positive(),
+  x: z.number(),
+  z: z.number(),
+  hasDoor: z.boolean(),
+  hasCeiling: z.boolean(),
+  doorPosition: z.enum(["left", "center", "right"]),
+  doorSwing: z.enum(["left-in", "right-in", "left-out", "right-out"]),
+  doorOpen: z.boolean(),
+});
+
+export const workspaceNoteSchema = z.object({
+  id: z.string().min(1),
+  text: z.string().min(1),
+  color: z.string().min(1),
+  createdAt: z.string().min(1),
+});
+
+export const workspaceStateSchema = z.object({
+  booth: workspaceBoothSchema,
+  themeIdx: z.number().int().min(0).max(3),
+  wallFinishIdx: z.number().int().min(0).max(3).optional(),
+  frameFinishIdx: z.number().int().min(0).max(3).optional(),
+  fasciaFinishIdx: z.number().int().min(0).max(3).optional(),
+  carpetIdx: z.number().int().min(0).max(5),
+  lightingPreset: z.enum(["neutral", "exhibition", "accent", "spotlight", "ambient"]).optional(),
+  placedItems: z.array(workspacePlacedItemSchema),
+  rooms: z.array(workspaceRoomSchema).optional(),
+  notes: z.array(workspaceNoteSchema),
+});
+
+export const workspaceInputSchema = z.object({
+  title: z.string().min(1).max(120).optional(),
+  status: z.enum(["draft", "submitted"]).optional(),
+  workspace: workspaceStateSchema,
+});
+
+export type WorkspaceStateInput = z.infer<typeof workspaceStateSchema>;
+export type WorkspaceInput = z.infer<typeof workspaceInputSchema>;
