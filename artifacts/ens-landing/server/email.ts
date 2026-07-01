@@ -7,10 +7,16 @@
  */
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY ?? "");
-
 const FROM    = process.env.RESEND_FROM ?? "ENS Agency <onboarding@resend.dev>";
 const APP_URL = (process.env.APP_URL ?? "http://localhost:5173").replace(/\/$/, "");
+
+function resendClient() {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || key === "your-resend-api-key-here") {
+    throw new Error("RESEND_API_KEY is not configured.");
+  }
+  return new Resend(key);
+}
 
 // ── Templates ────────────────────────────────────────────────────────────────
 
@@ -78,7 +84,7 @@ export async function sendInvitationEmail(opts: {
     <p style="font-size:13px; color:#555770; margin:0;">If you have questions, contact your Chief Manager.</p>
   `);
 
-  return resend.emails.send({
+  return resendClient().emails.send({
     from: FROM,
     to,
     subject: "You have been invited to ENS Agency Portal",
@@ -110,7 +116,7 @@ export async function sendResendInvitationEmail(opts: {
     <div class="box">${fullUrl}</div>
   `);
 
-  return resend.emails.send({
+  return resendClient().emails.send({
     from: FROM,
     to,
     subject: "Reminder: Your ENS Agency invitation is waiting",

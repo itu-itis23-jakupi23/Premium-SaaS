@@ -35,6 +35,10 @@ node_modules
 npm-debug.log
 yarn-error.log
 testem.log
+*.log
+*.out.log
+*.err.log
+artifacts/ens-landing/.dev-data/
 /typings
 
 # System Files

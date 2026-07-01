@@ -124,7 +124,15 @@ interface Manager {
 interface ManagedClient {
   id: string;
   name: string;
+  contactName?: string;
+  contactEmail?: string;
   exhibition: string;
+  boothWidthM?: number | null;
+  boothDepthM?: number | null;
+  preferredSystem?: string;
+  venueCity?: string;
+  targetDate?: string;
+  intakeNotes?: string;
   managerId: string | null;
   status: WorkStatus;
   lastActivity: string;
@@ -169,6 +177,8 @@ interface RebalancePreview {
 
 const AUDIT_PAGE_SIZE = 6;
 const ASSIGNMENT_PAGE_SIZE = 20;
+const PM_ACTIVE_PROJECT_CAPACITY = 3;
+const PM_CLIENT_CAPACITY = 8;
 const EMPTY_ASSIGNMENT_PAGINATION: PlatformPagination = {
   total: 0,
   limit: ASSIGNMENT_PAGE_SIZE,
@@ -298,7 +308,15 @@ export default function ChiefManagers() {
         const nextClients = payload.clients.map((client) => ({
           id: client.id,
           name: client.name,
+          contactName: client.contactName,
+          contactEmail: client.contactEmail,
           exhibition: client.exhibition,
+          boothWidthM: client.boothWidthM,
+          boothDepthM: client.boothDepthM,
+          preferredSystem: client.preferredSystem,
+          venueCity: client.venueCity,
+          targetDate: client.targetDate,
+          intakeNotes: client.intakeNotes,
           managerId: client.managerId,
           status: normalizeWorkStatus(client.status),
           lastActivity: client.lastActivity,
@@ -452,7 +470,15 @@ export default function ChiefManagers() {
     setClients(workspace.clients.map((client) => ({
       id: client.id,
       name: client.name,
+      contactName: client.contactName,
+      contactEmail: client.contactEmail,
       exhibition: client.exhibition,
+      boothWidthM: client.boothWidthM,
+      boothDepthM: client.boothDepthM,
+      preferredSystem: client.preferredSystem,
+      venueCity: client.venueCity,
+      targetDate: client.targetDate,
+      intakeNotes: client.intakeNotes,
       managerId: client.managerId,
       status: normalizeWorkStatus(client.status),
       lastActivity: client.lastActivity,
@@ -1419,6 +1445,11 @@ function PendingInvitationsPanel({
                   <p className="mt-1 max-w-[260px] truncate text-[11px] text-muted-foreground">
                     {invitation.email} / {t("chief.managers.invitations.expires", { date: formatDate(invitation.expiresAt, i18n.language) })}
                   </p>
+                  {invitation.emailStatus === "failed" && (
+                    <p className="mt-1 max-w-[260px] text-[11px] text-amber-500">
+                      Email not sent: {invitation.emailWarning || "email provider is not configured"}
+                    </p>
+                  )}
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onCopy(invitation)} aria-label={t("chief.managers.invitations.copyLink", { email: invitation.email })}>
@@ -1586,6 +1617,16 @@ function ManagerCard({
           </span>
         </div>
         <Progress value={manager.workload} className="h-1.5" />
+        <div className={cn(
+          "rounded-md border px-3 py-2 text-xs",
+          manager.activeProjects.length >= PM_ACTIVE_PROJECT_CAPACITY || manager.clients.length >= PM_CLIENT_CAPACITY
+            ? "border-red-500/30 bg-red-500/5 text-red-500"
+            : manager.workload >= 70
+              ? "border-yellow-500/30 bg-yellow-500/5 text-yellow-600"
+              : "border-green-500/30 bg-green-500/5 text-green-600",
+        )}>
+          Capacity: {manager.activeProjects.length}/{PM_ACTIVE_PROJECT_CAPACITY} active projects · {manager.clients.length}/{PM_CLIENT_CAPACITY} clients
+        </div>
 
         <div className="grid grid-cols-3 gap-3 py-2">
           <Metric label={t("chief.managers.table.projects")} value={String(manager.activeProjects.length)} icon={Briefcase} />
@@ -1774,6 +1815,16 @@ function AssignmentSheet({
   const [bulkTarget, setBulkTarget] = useState(focusManagerId ?? "unassigned");
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
+  const bulkManager = managers.find((manager) => manager.id === bulkTarget) ?? null;
+  const bulkCurrentProjects = projects.filter((project) => project.managerId === bulkTarget).length;
+  const bulkCurrentClients = clients.filter((client) => client.managerId === bulkTarget).length;
+  const bulkWouldOverload = Boolean(
+    bulkManager &&
+    (
+      bulkCurrentProjects + selectedProjectIds.length > PM_ACTIVE_PROJECT_CAPACITY ||
+      bulkCurrentClients + selectedClientIds.length > PM_CLIENT_CAPACITY
+    ),
+  );
 
   // When a focus manager is set, only show their items; otherwise show all
   const visibleClients = focusManagerId
@@ -1868,6 +1919,16 @@ function AssignmentSheet({
                 {t("chief.managers.assignments.applySelected")}
               </Button>
             </div>
+            {bulkManager && selectedCount > 0 && (
+              <div className={cn(
+                "mt-3 rounded-md border px-3 py-2 text-xs",
+                bulkWouldOverload
+                  ? "border-red-500/30 bg-red-500/5 text-red-500"
+                  : "border-green-500/30 bg-green-500/5 text-green-600",
+              )}>
+                {bulkManager.name}: {bulkCurrentProjects + selectedProjectIds.length}/{PM_ACTIVE_PROJECT_CAPACITY} active projects · {bulkCurrentClients + selectedClientIds.length}/{PM_CLIENT_CAPACITY} clients after this change
+              </div>
+            )}
             <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-md border bg-background/40 p-3">
               <input
                 type="checkbox"
@@ -1904,7 +1965,11 @@ function AssignmentSheet({
               id: client.id,
               title: client.name,
               meta: `${client.exhibition} / ${client.status}`,
+              secondary: client.contactEmail || client.contactName,
+              details: clientIntakeSummary(client),
               value: clientDraft[client.id] ?? client.managerId ?? "unassigned",
+              actionLabel: "Create project",
+              actionHref: createProjectHrefForClient(client),
             }))}
             managerOptions={managerOptions}
             onChange={onClientDraftChange}
@@ -1978,7 +2043,7 @@ function AssignmentSection({
   loading: boolean;
   onPreviousPage: () => void;
   onNextPage: () => void;
-  rows: Array<{ id: string; title: string; meta: string; value: string }>;
+  rows: Array<{ id: string; title: string; meta: string; value: string; secondary?: string; details?: string; actionLabel?: string; actionHref?: string }>;
   managerOptions: Array<{ id: string; name: string }>;
   onChange: (id: string, managerId: string) => void;
   selectedIds?: string[];
@@ -2033,18 +2098,27 @@ function AssignmentSection({
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{row.title}</p>
               <p className="truncate text-xs text-muted-foreground">{row.meta}</p>
+              {row.secondary && <p className="truncate text-[11px] text-muted-foreground">{row.secondary}</p>}
+              {row.details && <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">{row.details}</p>}
             </div>
           </div>
-          <Select value={row.value} onValueChange={(value) => onChange(row.id, value)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {managerOptions.map((manager) => (
-                <SelectItem key={manager.id} value={manager.id}>{manager.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+            <Select value={row.value} onValueChange={(value) => onChange(row.id, value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {managerOptions.map((manager) => (
+                  <SelectItem key={manager.id} value={manager.id}>{manager.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {row.actionHref && row.actionLabel && (
+              <Button type="button" variant="outline" size="sm" className="h-10" onClick={() => window.location.assign(row.actionHref!)}>
+                <Briefcase className="mr-2 h-3.5 w-3.5" /> {row.actionLabel}
+              </Button>
+            )}
+          </div>
         </div>
       )) : !loading ? (
         <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">{empty}</div>
@@ -2427,6 +2501,31 @@ function assignmentValue(managerId: string | null | undefined) {
   return managerId ?? "unassigned";
 }
 
+function clientIntakeSummary(client: ManagedClient) {
+  const details = [
+    client.boothWidthM && client.boothDepthM ? `${client.boothWidthM} x ${client.boothDepthM} m` : "",
+    client.preferredSystem ? client.preferredSystem : "",
+    client.venueCity ? client.venueCity : "",
+    client.targetDate ? `Target ${client.targetDate}` : "",
+    client.intakeNotes ? client.intakeNotes : "",
+  ].filter(Boolean);
+  return details.join(" / ");
+}
+
+function createProjectHrefForClient(client: ManagedClient) {
+  const params = new URLSearchParams({
+    new: "1",
+    client: client.name,
+    exhibition: client.exhibition,
+    clientId: client.id,
+  });
+  if (client.boothWidthM) params.set("width", String(client.boothWidthM));
+  if (client.boothDepthM) params.set("depth", String(client.boothDepthM));
+  if (client.preferredSystem) params.set("system", client.preferredSystem);
+  if (client.targetDate) params.set("deadline", client.targetDate);
+  return `/chief/projects?${params.toString()}`;
+}
+
 function mergeAssignmentOriginals<T extends { id: string; managerId: string | null }>(
   current: Record<string, string>,
   rows: T[],
@@ -2505,7 +2604,10 @@ function computeWorkload(status: ManagerStatus, projects: ManagedProject[], clie
     return sum + statusWeight + urgency;
   }, 0);
 
-  const raw = projectScore + clientCount * 5;
+  const capacityPressure =
+    Math.max(0, projects.length - PM_ACTIVE_PROJECT_CAPACITY) * 18 +
+    Math.max(0, clientCount - PM_CLIENT_CAPACITY) * 8;
+  const raw = projectScore + clientCount * 5 + capacityPressure;
   const adjusted = status === "On Leave" ? Math.min(raw, 35) : raw;
   return Math.max(0, Math.min(100, Math.round(adjusted)));
 }

@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { motion } from "framer-motion";
+import { lazy, Suspense, useEffect, type ComponentType } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,49 +10,26 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { getPortalLoginPath, isRoleAllowedInPortal, PORTAL_MODE } from "@/lib/portal";
 import { StaffGateway } from "@/components/StaffGateway";
 import { RuntimeTextTranslator } from "@/i18n/RuntimeTextTranslator";
-import NotFound from "@/pages/not-found";
-import Home from "@/pages/Home";
-import TeamLanding from "@/pages/TeamLanding";
-
-import Login from "@/pages/auth/Login";
-import Signup from "@/pages/auth/Signup";
-import ForgotPassword from "@/pages/auth/ForgotPassword";
-import ResetPassword from "@/pages/auth/ResetPassword";
-
-import ChiefDashboard from "@/pages/chief/ChiefDashboard";
-import ChiefClients from "@/pages/chief/ChiefClients";
-import ChiefManagers from "@/pages/chief/ChiefManagers";
-import ChiefProjects from "@/pages/chief/ChiefProjects";
-import ChiefWorkspaceMonitor from "@/pages/chief/ChiefWorkspaceMonitor";
-import ChiefReports from "@/pages/chief/ChiefReports";
-import ChiefMessages from "@/pages/chief/ChiefMessages";
-import ChiefSettings from "@/pages/chief/ChiefSettings";
-import ChiefCalendar from "@/pages/chief/ChiefCalendar";
-
-import PMDashboard from "@/pages/pm/PMDashboard";
-import PMCalendar from "@/pages/pm/PMCalendar";
-import PMJoin from "@/pages/pm/PMJoin";
-import PMClients from "@/pages/pm/PMClients";
-import PMProjects from "@/pages/pm/PMProjects";
-import PMWorkspace from "@/pages/pm/PMWorkspace";
-import PMRequests from "@/pages/pm/PMRequests";
-import PMMessages from "@/pages/pm/PMMessages";
-import PMTasks from "@/pages/pm/PMTasks";
-import PMReports from "@/pages/pm/PMReports";
-import PMSettings from "@/pages/pm/PMSettings";
-
-import ClientDashboard from "@/pages/client/ClientDashboard";
-import ClientProjects from "@/pages/client/ClientProjects";
-import ClientWorkspace from "@/pages/client/ClientWorkspace";
-import ClientMessages from "@/pages/client/ClientMessages";
-import ClientApprovals from "@/pages/client/ClientApprovals";
-import ClientDocuments from "@/pages/client/ClientDocuments";
-import ClientProfile from "@/pages/client/ClientProfile";
+import { LoadingScreen } from "@/components/LoadingScreen";
 
 const queryClient = new QueryClient();
 
+const lazyPage = (loader: () => Promise<{ default: ComponentType<Record<string, unknown>> }>) =>
+  lazy(loader) as unknown as ComponentType<Record<string, unknown>>;
+
+const NotFound = lazyPage(() => import("@/pages/not-found"));
+const Home = lazyPage(() => import("@/pages/Home"));
+const TeamLanding = lazyPage(() => import("@/pages/TeamLanding"));
+const Login = lazyPage(() => import("@/pages/auth/Login"));
+const Signup = lazyPage(() => import("@/pages/auth/Signup"));
+const ForgotPassword = lazyPage(() => import("@/pages/auth/ForgotPassword"));
+const ResetPassword = lazyPage(() => import("@/pages/auth/ResetPassword"));
+
+const INCLUDE_STAFF_ROUTES = import.meta.env.VITE_PORTAL !== "client";
+const INCLUDE_CLIENT_ROUTES = import.meta.env.VITE_PORTAL !== "staff";
+
 function PortalRoot() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
@@ -62,8 +38,12 @@ function PortalRoot() {
       navigate(getRoleDashboard(user.role), { replace: true });
       return;
     }
+    if (isAuthenticated && user && !isRoleAllowedInPortal(user.role)) {
+      void logout().finally(() => navigate(getPortalLoginPath(), { replace: true }));
+      return;
+    }
     navigate(getPortalLoginPath(), { replace: true });
-  }, [isAuthenticated, isLoading, navigate, user]);
+  }, [isAuthenticated, isLoading, logout, navigate, user]);
 
   return null;
 }
@@ -74,20 +54,10 @@ function AuthModalRoute({ component: Component }: { component: React.ComponentTy
 
   return (
     <div className="relative min-h-screen bg-background overflow-hidden">
-      <motion.div
-        initial={{ opacity: 0, scale: 1 }}
-        animate={{ opacity: 0.7, scale: 1.02 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="absolute inset-0 blur-md pointer-events-none select-none"
-      >
+      <div className="absolute inset-0 blur-md pointer-events-none select-none opacity-70 scale-[1.02]">
         <Background />
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.18 }}
-        className="absolute inset-0 bg-background/55 backdrop-blur-sm"
-      />
+      </div>
+      <div className="absolute inset-0 bg-background/55 backdrop-blur-sm" />
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
         <button
           type="button"
@@ -97,22 +67,41 @@ function AuthModalRoute({ component: Component }: { component: React.ComponentTy
         >
           x
         </button>
-        <motion.div
-          initial={{ opacity: 0, y: 14, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.22, ease: "easeOut" }}
-          className="w-full"
-        >
+        <div className="w-full animate-in fade-in slide-in-from-bottom-3 zoom-in-95 duration-200">
           <Component />
-        </motion.div>
+        </div>
       </div>
     </div>
   );
 }
 
-function StaffRoutes() {
-  return (
-    <>
+const EmptyRoutes = () => null;
+
+function createStaffRoutes() {
+  const ChiefDashboard = lazyPage(() => import("@/pages/chief/ChiefDashboard"));
+  const ChiefClients = lazyPage(() => import("@/pages/chief/ChiefClients"));
+  const ChiefManagers = lazyPage(() => import("@/pages/chief/ChiefManagers"));
+  const ChiefProjects = lazyPage(() => import("@/pages/chief/ChiefProjects"));
+  const ChiefWorkspaceMonitor = lazyPage(() => import("@/pages/chief/ChiefWorkspaceMonitor"));
+  const ChiefReports = lazyPage(() => import("@/pages/chief/ChiefReports"));
+  const ChiefMessages = lazyPage(() => import("@/pages/chief/ChiefMessages"));
+  const ChiefSettings = lazyPage(() => import("@/pages/chief/ChiefSettings"));
+  const ChiefCalendar = lazyPage(() => import("@/pages/chief/ChiefCalendar"));
+
+  const PMDashboard = lazyPage(() => import("@/pages/pm/PMDashboard"));
+  const PMCalendar = lazyPage(() => import("@/pages/pm/PMCalendar"));
+  const PMClients = lazyPage(() => import("@/pages/pm/PMClients"));
+  const PMProjects = lazyPage(() => import("@/pages/pm/PMProjects"));
+  const PMWorkspace = lazyPage(() => import("@/pages/pm/PMWorkspace"));
+  const PMRequests = lazyPage(() => import("@/pages/pm/PMRequests"));
+  const PMMessages = lazyPage(() => import("@/pages/pm/PMMessages"));
+  const PMTasks = lazyPage(() => import("@/pages/pm/PMTasks"));
+  const PMReports = lazyPage(() => import("@/pages/pm/PMReports"));
+  const PMSettings = lazyPage(() => import("@/pages/pm/PMSettings"));
+
+  return function StaffRoutes() {
+    return (
+      <>
       <ErrorBoundary label="Chief Dashboard">
         <Route path="/chief">
           {(params) => <ProtectedRoute component={ChiefDashboard} allowedRoles={["chief"]} params={params} />}
@@ -209,13 +198,31 @@ function StaffRoutes() {
           {(params) => <ProtectedRoute component={PMSettings} allowedRoles={["pm"]} params={params} />}
         </Route>
       </ErrorBoundary>
-    </>
-  );
+      </>
+    );
+  };
 }
 
-function ClientRoutes() {
-  return (
-    <>
+function createStaffPublicRoutes() {
+  const PMJoin = lazyPage(() => import("@/pages/pm/PMJoin"));
+
+  return function StaffPublicRoutes() {
+    return <Route path="/pm/join">{() => <PMJoin />}</Route>;
+  };
+}
+
+function createClientRoutes() {
+  const ClientDashboard = lazyPage(() => import("@/pages/client/ClientDashboard"));
+  const ClientProjects = lazyPage(() => import("@/pages/client/ClientProjects"));
+  const ClientWorkspace = lazyPage(() => import("@/pages/client/ClientWorkspace"));
+  const ClientMessages = lazyPage(() => import("@/pages/client/ClientMessages"));
+  const ClientApprovals = lazyPage(() => import("@/pages/client/ClientApprovals"));
+  const ClientDocuments = lazyPage(() => import("@/pages/client/ClientDocuments"));
+  const ClientProfile = lazyPage(() => import("@/pages/client/ClientProfile"));
+
+  return function ClientRoutes() {
+    return (
+      <>
       <ErrorBoundary label="Client Dashboard">
         <Route path="/client">
           {(params) => <ProtectedRoute component={ClientDashboard} allowedRoles={["client"]} params={params} />}
@@ -251,9 +258,14 @@ function ClientRoutes() {
           {(params) => <ProtectedRoute component={ClientProfile} allowedRoles={["client"]} params={params} />}
         </Route>
       </ErrorBoundary>
-    </>
-  );
+      </>
+    );
+  };
 }
+
+const StaffRoutes = INCLUDE_STAFF_ROUTES ? createStaffRoutes() : EmptyRoutes;
+const StaffPublicRoutes = INCLUDE_STAFF_ROUTES ? createStaffPublicRoutes() : EmptyRoutes;
+const ClientRoutes = INCLUDE_CLIENT_ROUTES ? createClientRoutes() : EmptyRoutes;
 
 function Router() {
   const showMarketing = PORTAL_MODE === "all";
@@ -261,14 +273,15 @@ function Router() {
   const showClient = PORTAL_MODE === "all" || PORTAL_MODE === "client";
 
   return (
+    <Suspense fallback={<LoadingScreen label="Loading page" />}>
     <Switch>
-      {showMarketing && <Route path="/" component={Home} />}
-      {PORTAL_MODE === "staff" && <Route path="/" component={TeamLanding} />}
-      {PORTAL_MODE === "client" && <Route path="/" component={Home} />}
-      {showStaff && <Route path="/team" component={TeamLanding} />}
+      {showMarketing && <Route path="/">{() => <Home />}</Route>}
+      {PORTAL_MODE === "staff" && <Route path="/">{() => <TeamLanding />}</Route>}
+      {PORTAL_MODE === "client" && <Route path="/">{() => <Home />}</Route>}
+      {showStaff && <Route path="/team">{() => <TeamLanding />}</Route>}
 
       {/* PM invitation join — accessible without authentication */}
-      <Route path="/pm/join" component={PMJoin} />
+      {showStaff && <StaffPublicRoutes />}
 
       {/* Auth routes — wrapped in StaffGateway when running the staff portal */}
       <Route path="/login">
@@ -303,8 +316,9 @@ function Router() {
       {showStaff && <StaffGateway><StaffRoutes /></StaffGateway>}
       {showClient && <ClientRoutes />}
 
-      <Route component={NotFound} />
+      <Route>{() => <NotFound />}</Route>
     </Switch>
+    </Suspense>
   );
 }
 

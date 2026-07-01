@@ -9,13 +9,38 @@
  *   POST   /api/platform/managers/invitations/accept       accept invitation
  */
 import { Router, type Request, type Response } from "express";
-import crypto from "crypto";
+import crypto, { randomBytes, scrypt as scryptCallback } from "crypto";
+import { promisify } from "util";
 import { invitations, type DBInvitation } from "../db.js";
 import { sendInvitationEmail, sendResendInvitationEmail } from "../email.js";
+import { readJsonStore, writeJsonStore } from "../storage.js";
 
 const router = Router();
+const scrypt = promisify(scryptCallback);
 
 const APP_URL = (process.env.APP_URL ?? "http://localhost:5173").replace(/\/$/, "");
+const AUTH_STORE_KEY = "auth";
+
+type StaffRole = "pm" | "chief";
+
+interface StoredAuthUser {
+  id: string;
+  name: string;
+  company: string;
+  email: string;
+  role: "chief" | "pm" | "client";
+  systemRole: string;
+  passwordHash: string;
+  avatarUrl: string;
+  avatarTone: string;
+  createdAt: string;
+}
+
+interface AuthStore {
+  users: StoredAuthUser[];
+  sessions?: unknown[];
+  loginAttempts?: unknown[];
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -54,6 +79,47 @@ function isExpired(row: DBInvitation): boolean {
     ? new Date(row.expires_at)
     : (row.expires_at as unknown as Date);
   return d < new Date();
+}
+
+function normalizedInviteRole(role: string): StaffRole {
+  return role === "chief" ? "chief" : "pm";
+}
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const derived = await scrypt(password, salt, 64) as Buffer;
+  return `scrypt:${salt}:${derived.toString("hex")}`;
+}
+
+async function createStaffAuthAccount(row: DBInvitation, name: string, password: string) {
+  const store = await readJsonStore<AuthStore>(AUTH_STORE_KEY, { users: [], sessions: [], loginAttempts: [] });
+  store.users ??= [];
+  store.sessions ??= [];
+  store.loginAttempts ??= [];
+
+  const email = row.email.trim().toLowerCase();
+  if (store.users.some((user) => user.email.trim().toLowerCase() === email)) {
+    return { ok: false as const, status: 409, error: "An account already exists for this invitation email." };
+  }
+
+  const role = normalizedInviteRole(row.role);
+  const company = process.env.DEFAULT_AGENCY_NAME || process.env.DEFAULT_ORGANIZATION_NAME || "NIKA";
+  const user: StoredAuthUser = {
+    id: `user-${Date.now()}-${randomBytes(4).toString("hex")}`,
+    name,
+    company,
+    email,
+    role,
+    systemRole: role === "chief" ? "owner" : "pm",
+    passwordHash: await hashPassword(password),
+    avatarUrl: "",
+    avatarTone: role === "chief" ? "primary" : "blue",
+    createdAt: new Date().toISOString(),
+  };
+
+  store.users.push(user);
+  await writeJsonStore(AUTH_STORE_KEY, store);
+  return { ok: true as const, user };
 }
 
 // ── POST /api/platform/managers/invitations ──────────────────────────────────
@@ -116,7 +182,7 @@ router.post("/", async (req: Request, res: Response) => {
 
 router.post("/:id/resend", async (req: Request, res: Response) => {
   try {
-    const row = await invitations.findById(req.params.id);
+    const row = await invitations.findById(String(req.params.id));
     if (!row)                      return res.status(404).json({ error: "Invitation not found." });
     if (row.status === "Revoked")  return res.status(400).json({ error: "This invitation has been revoked." });
     if (row.status === "Accepted") return res.status(400).json({ error: "This invitation has already been accepted." });
@@ -155,7 +221,7 @@ router.post("/:id/resend", async (req: Request, res: Response) => {
 
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    const row = await invitations.findById(req.params.id);
+    const row = await invitations.findById(String(req.params.id));
     if (!row) return res.status(404).json({ error: "Invitation not found." });
 
     await invitations.updateStatus("Revoked", row.id);
@@ -214,8 +280,8 @@ router.post("/accept", async (req: Request, res: Response) => {
     if (!token || !password) {
       return res.status(400).json({ error: "token and password are required." });
     }
-    if ((password?.length ?? 0) < 8) {
-      return res.status(400).json({ error: "Password must be at least 8 characters." });
+    if ((password?.length ?? 0) < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+      return res.status(400).json({ error: "Password must be at least 8 characters and include one uppercase letter and one number." });
     }
 
     const row = await invitations.findByToken(token.trim());
@@ -232,21 +298,22 @@ router.post("/accept", async (req: Request, res: Response) => {
     }
 
     const displayName = (name ?? "").trim() || row.name;
+    const account = await createStaffAuthAccount(row, displayName, password);
+    if (!account.ok) {
+      return res.status(account.status).json({ error: account.error });
+    }
     await invitations.acceptInvitation(displayName, token.trim(), "Pending");
 
-    // TODO (production): hash password with bcrypt and INSERT into managers table
-    // const hash = await bcrypt.hash(password, 12);
-    // await pool.query(
-    //   "INSERT INTO managers (id,name,email,role,password_hash,created_at) VALUES ($1,$2,$3,$4,$5,NOW())",
-    //   [`mgr-${Date.now()}`, displayName, row.email, row.role, hash]
-    // );
-
-    console.log(
-      `[invite] Accepted — name: ${displayName}, email: ${row.email}. ` +
-      `TODO: create auth account with hashed password.`
-    );
-
-    return res.json({ ok: true });
+    return res.status(201).json({
+      ok: true,
+      user: {
+        id: account.user.id,
+        name: account.user.name,
+        email: account.user.email,
+        role: account.user.role,
+        systemRole: account.user.systemRole,
+      },
+    });
   } catch (err) {
     console.error("[POST /invitations/accept]", err);
     return res.status(500).json({ error: "Internal server error." });

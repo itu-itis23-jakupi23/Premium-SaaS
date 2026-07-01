@@ -12,11 +12,31 @@ export interface BoothConfig3D {
   system: BoothSystem;
   companyName: string;
   primaryColor?: string;
+  wallColor?: string;
+  frameColor?: string;
+  fasciaColor?: string;
   carpetColor?: string;
   openFront?: boolean;
   openLeft?: boolean;
   openRight?: boolean;
   openBack?: boolean;
+  placedItems?: any[];
+  rooms?: any[];
+  panelOverrides?: Record<string, any>;
+  frontSupportPositions?: number[];
+  fasciaEnabled?: boolean;
+  fasciaOption?: string;
+  lightingPreset?: string;
+  pins?: any[];
+  pinMode?: boolean;
+  invalidItemIds?: string[];
+  onItemMove?: (id: string, patch: { x: number; z: number }) => void;
+  onItemSelect?: (id: string | null, partId?: string | null, detail?: any) => void;
+  onItemDelete?: (id: string) => void;
+  onItemRotate?: (id: string, patch: { rotationY: number }) => void;
+  onRoomMove?: (id: string, patch: any) => void;
+  onFrontSupportMove?: (positions: number[]) => void;
+  onPinRequest?: (partId: string, detail: any) => void;
 }
 
 const DEFAULT: BoothConfig3D = {
@@ -26,6 +46,9 @@ const DEFAULT: BoothConfig3D = {
   system: 'octanorm',
   companyName: 'COMPANY NAME',
   primaryColor: '#1a3a7a',
+  wallColor: '#f8fafc',
+  frameColor: '#b8bdc3',
+  fasciaColor: '#ffffff',
   carpetColor: '#3b3e44',
   openFront: true,
   openLeft: false,
@@ -48,11 +71,31 @@ export function Booth3D({ config }: { config?: Partial<BoothConfig3D> }) {
       system:      cfg.system,
       companyName: cfg.companyName,
       primaryColor:cfg.primaryColor,
+      wallColor:   cfg.wallColor,
+      frameColor:  cfg.frameColor,
+      fasciaColor: cfg.fasciaColor,
       carpetColor: cfg.carpetColor,
       openFront:   cfg.openFront,
       openLeft:    cfg.openLeft,
       openRight:   cfg.openRight,
       openBack:    cfg.openBack,
+      placedItems: cfg.placedItems,
+      rooms:       cfg.rooms,
+      panelOverrides: cfg.panelOverrides,
+      frontSupportPositions: cfg.frontSupportPositions,
+      fasciaEnabled: cfg.fasciaEnabled,
+      fasciaOption: cfg.fasciaOption,
+      lightingPreset: cfg.lightingPreset,
+      pins:        cfg.pins,
+      pinMode:     cfg.pinMode,
+      invalidItemIds: cfg.invalidItemIds,
+      onItemMove:  cfg.onItemMove,
+      onItemSelect: cfg.onItemSelect,
+      onItemDelete: cfg.onItemDelete,
+      onItemRotate: cfg.onItemRotate,
+      onRoomMove:  cfg.onRoomMove,
+      onFrontSupportMove: cfg.onFrontSupportMove,
+      onPinRequest: cfg.onPinRequest,
     }} />
   );
 }

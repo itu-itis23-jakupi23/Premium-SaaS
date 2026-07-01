@@ -343,34 +343,49 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <div className="aspect-video rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 grid-pattern opacity-20" />
-                <svg
-                  viewBox="0 0 220 220"
-                  className="w-40 h-40 text-blue-400/70 group-hover:scale-110 transition-transform"
+              {/* Animated Octanorm booth wireframe */}
+              <div className="aspect-video rounded-xl bg-blue-500/8 border border-blue-500/20 flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 grid-pattern opacity-15" />
+                <motion.svg
+                  viewBox="0 0 240 180"
+                  className="w-52 h-40 text-blue-400"
                   fill="none"
                   aria-hidden="true"
+                  whileHover={{ scale: 1.06 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  <circle cx="110" cy="110" r="27" stroke="currentColor" strokeWidth="10" />
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <g key={i} transform={`rotate(${i * 45} 110 110)`}>
-                      <path
-                        d="M110 78 L110 54 L96 40 L96 24 M124 40 L124 24 M96 24 H124"
-                        stroke="currentColor"
-                        strokeWidth="10"
-                        strokeLinecap="square"
-                        strokeLinejoin="miter"
-                      />
-                      <path
-                        d="M102 77 L90 90 M118 77 L130 90"
-                        stroke="currentColor"
-                        strokeWidth="10"
-                        strokeLinecap="square"
-                        strokeLinejoin="miter"
-                      />
-                    </g>
+                  {/* Floor */}
+                  <polygon points="20,140 120,160 220,140 120,120" stroke="currentColor" strokeWidth="1.2" fill="rgba(59,130,246,0.05)" />
+                  {/* Back wall left panel */}
+                  <polygon points="20,60 70,50 70,140 20,140" stroke="currentColor" strokeWidth="1.2" fill="rgba(59,130,246,0.06)" />
+                  {/* Back wall right panel */}
+                  <polygon points="70,50 170,50 170,140 70,140" stroke="currentColor" strokeWidth="1.2" fill="rgba(59,130,246,0.04)" />
+                  {/* Side wing */}
+                  <polygon points="170,50 220,60 220,140 170,140" stroke="currentColor" strokeWidth="1.2" fill="rgba(59,130,246,0.06)" />
+                  {/* Ceiling / top fascia */}
+                  <polygon points="20,60 70,50 170,50 220,60 170,30 70,30" stroke="currentColor" strokeWidth="1.2" fill="rgba(59,130,246,0.08)" />
+                  {/* Upright columns */}
+                  <line x1="70" y1="50" x2="70" y2="140" stroke="currentColor" strokeWidth="2" />
+                  <line x1="170" y1="50" x2="170" y2="140" stroke="currentColor" strokeWidth="2" />
+                  {/* Horizontal rail top */}
+                  <line x1="20" y1="60" x2="220" y2="60" stroke="currentColor" strokeWidth="1.5" opacity="0.6" />
+                  {/* Panel grid lines */}
+                  <line x1="95" y1="50" x2="95" y2="140" stroke="currentColor" strokeWidth="0.7" opacity="0.35" />
+                  <line x1="120" y1="50" x2="120" y2="140" stroke="currentColor" strokeWidth="0.7" opacity="0.35" />
+                  <line x1="145" y1="50" x2="145" y2="140" stroke="currentColor" strokeWidth="0.7" opacity="0.35" />
+                  <line x1="20" y1="95" x2="220" y2="95" stroke="currentColor" strokeWidth="0.7" opacity="0.35" />
+                  {/* Counter */}
+                  <rect x="80" y="108" width="40" height="32" rx="1" stroke="currentColor" strokeWidth="1.5" fill="rgba(59,130,246,0.1)" />
+                  {/* Animated glow dot */}
+                  <motion.circle cx="120" cy="55" r="3" fill="rgb(59,130,246)"
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 2, repeat: Infinity }} />
+                  {/* Corner connectors */}
+                  {[[20,60],[70,50],[170,50],[220,60],[70,140],[170,140]].map(([cx, cy], i) => (
+                    <circle key={i} cx={cx} cy={cy} r="3" fill="currentColor" opacity="0.6" />
                   ))}
-                </svg>
+                </motion.svg>
+                <div className="absolute bottom-2 right-3 text-[9px] text-blue-400/50 font-mono">OCTANORM 3D</div>
               </div>
             </motion.div>
 
@@ -396,11 +411,44 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <div className="aspect-video rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 grid-pattern opacity-20" />
-                <div className="w-24 h-24 border-2 border-purple-400/50 rotate-45 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <div className="w-16 h-16 border border-purple-400/30" />
-                </div>
+              {/* Animated Maxima architectural arch */}
+              <div className="aspect-video rounded-xl bg-purple-500/8 border border-purple-500/20 flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 grid-pattern opacity-15" />
+                <motion.svg
+                  viewBox="0 0 240 180"
+                  className="w-52 h-40 text-purple-400"
+                  fill="none"
+                  aria-hidden="true"
+                  whileHover={{ scale: 1.06 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* Floor plane */}
+                  <polygon points="20,148 120,162 220,148 120,134" stroke="currentColor" strokeWidth="1.2" fill="rgba(168,85,247,0.04)" />
+                  {/* Left tower */}
+                  <rect x="20" y="50" width="36" height="98" stroke="currentColor" strokeWidth="1.5" fill="rgba(168,85,247,0.06)" />
+                  {/* Right tower */}
+                  <rect x="184" y="50" width="36" height="98" stroke="currentColor" strokeWidth="1.5" fill="rgba(168,85,247,0.06)" />
+                  {/* Center span */}
+                  <rect x="56" y="80" width="128" height="68" stroke="currentColor" strokeWidth="1.5" fill="rgba(168,85,247,0.04)" />
+                  {/* Arch curve on top of span */}
+                  <path d="M56,80 Q120,20 184,80" stroke="currentColor" strokeWidth="2" fill="rgba(168,85,247,0.08)" />
+                  {/* Tower top caps */}
+                  <rect x="16" y="44" width="44" height="10" rx="2" stroke="currentColor" strokeWidth="1.2" fill="rgba(168,85,247,0.12)" />
+                  <rect x="180" y="44" width="44" height="10" rx="2" stroke="currentColor" strokeWidth="1.2" fill="rgba(168,85,247,0.12)" />
+                  {/* Panel grid inside center */}
+                  <line x1="56" y1="110" x2="184" y2="110" stroke="currentColor" strokeWidth="0.7" opacity="0.3" />
+                  <line x1="92" y1="80" x2="92" y2="148" stroke="currentColor" strokeWidth="0.7" opacity="0.3" />
+                  <line x1="148" y1="80" x2="148" y2="148" stroke="currentColor" strokeWidth="0.7" opacity="0.3" />
+                  {/* Lighting strip at top of arch */}
+                  <motion.path d="M60,82 Q120,24 180,82" stroke="rgba(168,85,247,0.8)" strokeWidth="1.5" fill="none"
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 2.5, repeat: Infinity }} />
+                  {/* Corner dots */}
+                  {[[20,50],[56,50],[56,80],[184,80],[184,50],[220,50],[120,35]].map(([cx, cy], i) => (
+                    <circle key={i} cx={cx} cy={cy} r="2.5" fill="currentColor" opacity="0.5" />
+                  ))}
+                </motion.svg>
+                <div className="absolute bottom-2 right-3 text-[9px] text-purple-400/50 font-mono">MAXIMA 3D</div>
               </div>
             </motion.div>
           </div>
@@ -535,6 +583,100 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Showcase */}
+      <section id="showcase" className="py-28 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-muted/10 via-transparent to-transparent pointer-events-none" />
+        <div className="container mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center max-w-2xl mx-auto mb-16"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-xs font-bold uppercase tracking-widest text-primary mb-6">
+              <Eye className="w-3.5 h-3.5" /> {t('nav.showcase')}
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">
+              See Every Role in Action
+            </h2>
+            <p className="text-muted-foreground">
+              From the chief's command centre to the client's design review — every screen is built for its user.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {[
+              {
+                title: "Chief Dashboard",
+                role: "Chief Manager",
+                gradient: "from-violet-600 to-indigo-600",
+                icon: LayoutDashboard,
+                metrics: ["6 Active Projects", "3 Delayed — Action Required", "₺2.4M Budget Tracked"],
+                badge: "Command Centre",
+              },
+              {
+                title: "PM Workspace Builder",
+                role: "Project Manager",
+                gradient: "from-blue-600 to-cyan-500",
+                icon: Box,
+                metrics: ["Octanorm 8×6m Stand", "Furniture placed: 12 items", "v2.4 → Pending Chief Review"],
+                badge: "3D Design",
+              },
+              {
+                title: "Client Review Portal",
+                role: "Client",
+                gradient: "from-emerald-600 to-teal-500",
+                icon: Eye,
+                metrics: ["Design v2.4 — Pending Approval", "Revisions: 1 / 2", "Pins & comments enabled"],
+                badge: "Read-Only View",
+              },
+            ].map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.12 }}
+                  whileHover={{ y: -6, scale: 1.01 }}
+                  className="rounded-3xl border border-border/50 bg-card overflow-hidden group hover:border-primary/30 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] transition-all"
+                >
+                  <div className={`h-2 bg-gradient-to-r ${item.gradient}`} />
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center flex-shrink-0`}>
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
+                        {item.badge}
+                      </span>
+                    </div>
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">{item.role}</p>
+                    <h3 className="text-lg font-bold mb-5">{item.title}</h3>
+                    <div className="space-y-2">
+                      {item.metrics.map((m, j) => (
+                        <div key={j} className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-br ${item.gradient} flex-shrink-0`} />
+                          {m}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-5 h-1 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full bg-gradient-to-r ${item.gradient} transition-all duration-700`}
+                        style={{ width: `${[72, 45, 88][i]}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] font-mono text-muted-foreground mt-1.5">{[72, 45, 88][i]}% complete</p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* Pricing */}
       <section className="py-24 bg-muted/5 border-t border-border/50">
         <div className="container mx-auto px-6">
@@ -561,15 +703,15 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
               {
-                tier: "Starter", monthlyPrice: "$99", annualPrice: "$79",
+                tier: "Starter", monthlyPrice: "$99", annualPrice: "$79", monthlyPriceCents: 9900, annualPriceCents: 7900,
                 features: ["5 Active Projects", "Octanorm System", "Standard Furniture Library", "2 GB Storage", "Email Support"]
               },
               {
-                tier: "Professional", monthlyPrice: "$299", annualPrice: "$239",
+                tier: "Professional", monthlyPrice: "$299", annualPrice: "$239", monthlyPriceCents: 29900, annualPriceCents: 23900,
                 features: ["Unlimited Projects", "Octanorm & Maxima", "Full Furniture Library", "Client Review Links", "Priority Support", "Advanced Analytics"], recommended: true
               },
               {
-                tier: "Enterprise", monthlyPrice: "Custom", annualPrice: "Custom",
+                tier: "Enterprise", monthlyPrice: "Custom", annualPrice: "Custom", monthlyPriceCents: null, annualPriceCents: null,
                 features: ["White-label Client Links", "Custom Object Imports", "Full API Access", "Dedicated Success Manager", "99.9% SLA", "On-site Training"]
               }
             ].map((p, i) => (
@@ -590,12 +732,12 @@ export default function Home() {
                     <span className="text-muted-foreground text-sm">{billingAnnual ? '/mo · billed annually' : t('home.pricing.perMonth')}</span>
                   )}
                 </div>
-                {p.monthlyPrice !== 'Custom' && billingAnnual && (
+                {p.monthlyPriceCents !== null && billingAnnual && (
                   <p className="text-xs text-green-500 font-medium mb-6">
-                    Save ${(parseInt(p.monthlyPrice.replace('$','')) - parseInt(p.annualPrice.replace('$',''))) * 12}/year
+                    Save ${(((p.monthlyPriceCents ?? 0) - (p.annualPriceCents ?? 0)) * 12 / 100).toFixed(0)}/year
                   </p>
                 )}
-                {(p.monthlyPrice === 'Custom' || !billingAnnual) && <div className="mb-8" />}
+                {(p.monthlyPriceCents === null || !billingAnnual) && <div className="mb-8" />}
                 <ul className="space-y-3 mb-10 flex-1">
                   {p.features.map((f, j) => (
                     <li key={j} className="flex items-center gap-3 text-sm">

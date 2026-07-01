@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth, UserRole, getRoleDashboard } from '@/contexts/AuthContext';
-import { getPortalHomePath, getPortalLoginPath, isRoleAllowedInPortal } from '@/lib/portal';
+import { getPortalLoginPath, isRoleAllowedInPortal } from '@/lib/portal';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { Clock, Mail } from 'lucide-react';
 
 interface ProtectedRouteProps {
   component: React.ComponentType<Record<string, unknown>>;
@@ -10,8 +11,32 @@ interface ProtectedRouteProps {
   params?: Record<string, unknown>;
 }
 
+function ClientPendingScreen({ name }: { name: string }) {
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)' }}>
+      <div style={{ maxWidth: 440, width: '100%', background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', padding: '48px 40px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', textAlign: 'center' }}>
+        <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#fef9c3', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          <Clock size={26} style={{ color: '#a16207' }} />
+        </div>
+        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 10px', color: '#0f172a' }}>
+          Pending Approval
+        </h1>
+        <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.6, margin: '0 0 24px' }}>
+          Hi {name.split(' ')[0]}, your account has been created and is waiting for your agency to review and approve it. You'll have full access once they do.
+        </p>
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
+          <Mail size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />
+          <p style={{ fontSize: 13, color: '#475569', margin: 0, lineHeight: 1.5 }}>
+            You'll receive an email notification when your account is activated.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ProtectedRoute({ component: Component, allowedRoles, params = {} }: ProtectedRouteProps) {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
@@ -21,18 +46,24 @@ export function ProtectedRoute({ component: Component, allowedRoles, params = {}
       return;
     }
     if (user && !isRoleAllowedInPortal(user.role)) {
-      navigate(getPortalHomePath());
+      void logout().finally(() => navigate(getPortalLoginPath(), { replace: true }));
       return;
     }
     if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-      navigate(getRoleDashboard(user.role));
+      navigate(getRoleDashboard(user.role), { replace: true });
     }
-  }, [isAuthenticated, isLoading, user, allowedRoles, navigate]);
+  }, [isAuthenticated, isLoading, user, allowedRoles, navigate, logout]);
 
   if (isLoading) return <LoadingScreen label="Checking access" />;
   if (!isAuthenticated) return null;
   if (user && !isRoleAllowedInPortal(user.role)) return null;
   if (allowedRoles && user && !allowedRoles.includes(user.role)) return null;
+
+  // Client accounts that haven't been approved yet see a holding screen
+  // rather than empty dashboards or confusing 403 errors.
+  if (user?.role === 'client' && user.clientStatus && user.clientStatus !== 'active') {
+    return <ClientPendingScreen name={user.name} />;
+  }
 
   return <Component {...params} />;
 }

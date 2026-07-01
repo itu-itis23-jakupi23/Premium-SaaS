@@ -78,6 +78,8 @@ export function RuntimeTextTranslator() {
   const language = normalizeLanguageCode(i18n.resolvedLanguage ?? i18n.language);
 
   useEffect(() => {
+    if (language === "en") return;
+
     const translate = () => translateRoot(language, i18n.t.bind(i18n));
     translate();
 

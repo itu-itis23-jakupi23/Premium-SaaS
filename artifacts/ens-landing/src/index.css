@@ -4,20 +4,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@font-face {
-  font-family: "SamsungOne";
-  src:
-    local("SamsungOne"),
-    local("SamsungOne UI"),
-    local("SamsungOneKorean"),
-    local("Samsung Sharp Sans");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
-  --app-font-samsung: "SamsungOne", "SamsungOne UI", "SamsungOneKorean", "Samsung Sharp Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --app-font-samsung: "SamsungOne", "Samsung One", "SamsungOne UI", "Samsung Sharp Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, ui-sans-serif, sans-serif;
+  --app-font-sans: var(--app-font-samsung);
+  --app-font-mono: var(--app-font-samsung);
 }
 
 @theme inline {
@@ -72,8 +62,8 @@
   --color-sidebar-accent-border: var(--sidebar-accent-border);
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  --font-sans: var(--app-font-samsung);
-  --font-mono: var(--app-font-samsung);
+  --font-sans: var(--app-font-sans);
+  --font-mono: var(--app-font-mono);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -153,8 +143,27 @@
   --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --accent-border: hsl(var(--accent));
   --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
-  --destructive-border: hsl(var(--destructive));
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Workspace specific variables (light mode) */
+  --workspace-bg: #f3f1ec;
+  --workspace-panel: #ffffff;
+  --workspace-panel-e0: rgba(255, 255, 255, 0.88);
+  --workspace-ink: #181613;
+  --workspace-hair: #d8d3c9;
+  --workspace-muted: #6b6560;
+  --workspace-bg-hover: #ece9e3;
+  --workspace-blue: #1d4ed8;
+  --workspace-blue-12: rgba(29, 78, 216, 0.07);
+  --workspace-blue-15: rgba(29, 78, 216, 0.08);
+  --workspace-blue-08: rgba(29, 78, 216, 0.03);
+  --workspace-orange: #c2410c;
+  --workspace-orange-12: rgba(194, 65, 12, 0.07);
+  --workspace-orange-14: rgba(194, 65, 12, 0.08);
+  --workspace-orange-18: rgba(194, 65, 12, 0.09);
+  --workspace-green: #2f7d3a;
+  --workspace-green-12: rgba(47, 125, 58, 0.07);
+  --workspace-green-08: rgba(47, 125, 58, 0.03);
 }
 
 .dark {
@@ -208,8 +217,27 @@
   --shadow: 0px 2px 0px 0px rgba(0,0,0,0.2), 0px 1px 2px -1px rgba(0,0,0,0.2);
   --shadow-md: 0px 2px 0px 0px rgba(0,0,0,0.2), 0px 2px 4px -1px rgba(0,0,0,0.2);
   --shadow-lg: 0px 2px 0px 0px rgba(0,0,0,0.2), 0px 4px 6px -1px rgba(0,0,0,0.2);
-  --shadow-xl: 0px 2px 0px 0px rgba(0,0,0,0.2), 0px 8px 10px -1px rgba(0,0,0,0.2);
   --shadow-2xl: 0px 2px 0px 0px rgba(0,0,0,0.2);
+
+  /* Workspace specific variables (dark mode) */
+  --workspace-bg: #09090b;
+  --workspace-panel: #18181b;
+  --workspace-panel-e0: rgba(24, 24, 27, 0.88);
+  --workspace-ink: #f4f4f5;
+  --workspace-hair: #27272a;
+  --workspace-muted: #a1a1aa;
+  --workspace-bg-hover: #27272a;
+  --workspace-blue: #3b82f6;
+  --workspace-blue-12: rgba(59, 130, 246, 0.07);
+  --workspace-blue-15: rgba(59, 130, 246, 0.08);
+  --workspace-blue-08: rgba(59, 130, 246, 0.03);
+  --workspace-orange: #f97316;
+  --workspace-orange-12: rgba(249, 115, 22, 0.07);
+  --workspace-orange-14: rgba(249, 115, 22, 0.08);
+  --workspace-orange-18: rgba(249, 115, 22, 0.09);
+  --workspace-green: #22c55e;
+  --workspace-green-12: rgba(34, 197, 94, 0.07);
+  --workspace-green-08: rgba(34, 197, 94, 0.03);
 }
 
 @layer base {
@@ -220,6 +248,9 @@
   html,
   body {
     @apply font-sans antialiased bg-background text-foreground selection:bg-primary/30 selection:text-primary-foreground;
+    font-family: var(--app-font-samsung);
+    font-feature-settings: "kern" 1, "ss01" 1, "tnum" 1;
+    text-rendering: geometricPrecision;
   }
 
   html,
@@ -233,6 +264,7 @@
   [role="button"],
   [style] {
     font-family: var(--app-font-samsung) !important;
+    letter-spacing: 0 !important;
   }
 
   svg,
@@ -286,6 +318,10 @@
     background-image: 
       linear-gradient(to right, hsl(var(--border) / 0.5) 1px, transparent 1px),
       linear-gradient(to bottom, hsl(var(--border) / 0.5) 1px, transparent 1px);
+  }
+  .dot-pattern {
+    background-image: radial-gradient(circle, hsl(var(--primary) / 0.12) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
   
   .wireframe-box {

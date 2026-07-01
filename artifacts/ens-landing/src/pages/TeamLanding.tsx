@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ENSLogo } from '@/components/ENSLogo';
 import { motion, useScroll, useTransform, useInView, Variants } from 'framer-motion';
@@ -9,12 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDemoAccess } from '@/hooks/useDemoAccess';
 import {
-  LayoutDashboard, Settings, Users, Eye, Activity, BarChart3,
-  ChevronRight, Menu, X, Zap, Box, Layers, MessageSquare,
-  ClipboardList, CheckCircle2, AlertTriangle, TrendingUp,
-  Monitor, Package, Calendar, FileText, Bell, ArrowRight,
-  Building2, UserCog, Shield, Clock, Star, Globe,
-  Hexagon, Circle
+  LayoutDashboard, Settings, Users, Eye, BarChart3,
+  ChevronRight, Menu, X, Zap, Box, MessageSquare,
+  ClipboardList, CheckCircle2, TrendingUp,
+  Monitor, Package, FileText, ArrowRight,
+  Building2, UserCog, Shield, Star, Globe,
 } from 'lucide-react';
 
 // ─── Animation variants ───────────────────────────────────────────
@@ -28,19 +27,53 @@ const STAGGER: Variants = {
 };
 
 // ─── Data ─────────────────────────────────────────────────────────
-// Icons only — titles/descs are translated inside the component
 const CHIEF_FEATURE_ICONS = [Monitor, Users, Building2, BarChart3, CheckCircle2, MessageSquare];
 const CHIEF_FEATURE_KEYS  = ['workspaceMonitor', 'teamManagement', 'clientPortfolio', 'analytics', 'approvalGateway', 'commsHub'] as const;
 const PM_FEATURE_ICONS    = [Box, Users, ClipboardList, Package, FileText, MessageSquare];
 const PM_FEATURE_KEYS     = ['boothWorkspace', 'clientMgmt', 'taskTracker', 'pipeline', 'requestMgmt', 'messaging'] as const;
 
 const PLATFORM_STATS = [
-  { numericValue: 2400, valueSuffix: '+', tKey: 'team.stats.boothsDesigned',   color: 'text-primary',    bg: 'bg-primary/10',    icon: Box         },
-  { numericValue: 98,   valueSuffix: '%', tKey: 'team.stats.approvalRate',     color: 'text-blue-400',  bg: 'bg-blue-500/10',   icon: CheckCircle2 },
-  { numericValue: 60,   valueSuffix: '%', tKey: 'team.stats.fasterTurnaround', color: 'text-cyan-400',  bg: 'bg-cyan-500/10',   icon: TrendingUp   },
+  { numericValue: 2400, valueSuffix: '+', tKey: 'team.stats.boothsDesigned',   color: 'text-primary',    bg: 'bg-primary/10',    icon: Box          },
+  { numericValue: 98,   valueSuffix: '%', tKey: 'team.stats.approvalRate',     color: 'text-blue-400',   bg: 'bg-blue-500/10',   icon: CheckCircle2 },
+  { numericValue: 60,   valueSuffix: '%', tKey: 'team.stats.fasterTurnaround', color: 'text-cyan-400',   bg: 'bg-cyan-500/10',   icon: TrendingUp   },
   { numericValue: 40,   valueSuffix: '+', tKey: 'team.stats.activeProjects',   color: 'text-purple-400', bg: 'bg-purple-500/10', icon: Globe        },
 ];
 
+const WORKFLOW_STEP_ICONS = [FileText, Settings, Box, Eye, Users, CheckCircle2, Package];
+const WORKFLOW_STEP_ROLES = ['chief', 'pm', 'pm', 'chief', 'client', 'chief', 'pm'] as const;
+const WORKFLOW_STEP_KEYS  = ['brief', 'workspace', 'design', 'review', 'signoff', 'approval', 'export'] as const;
+
+const ROLE_BADGE: Record<string, string> = {
+  chief:  'bg-primary/10 text-primary border-primary/20',
+  pm:     'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  client: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+};
+
+const TESTIMONIALS = [
+  {
+    quote: "The 3D workspace has completely changed how we communicate stand designs to clients. Approval cycles are down to days, not weeks.",
+    name: 'Lena Hoffmann',
+    role: 'Senior Project Manager',
+    initials: 'LH',
+    color: 'bg-primary/20 text-primary',
+  },
+  {
+    quote: "Having full visibility of all active projects in one dashboard means I can spot bottlenecks before they become problems. It's indispensable.",
+    name: 'Marco Di Luca',
+    role: 'Chief Operations Manager',
+    initials: 'MD',
+    color: 'bg-blue-500/20 text-blue-400',
+  },
+  {
+    quote: "Our clients love the live review portal. They can comment directly on the 3D model, and we see changes in real time. Huge confidence boost.",
+    name: 'Aisha Kamal',
+    role: 'Project Manager – Exhibition Design',
+    initials: 'AK',
+    color: 'bg-cyan-500/20 text-cyan-400',
+  },
+];
+
+// ─── CountUp ──────────────────────────────────────────────────────
 function CountUp({ target, suffix = '', className = '' }: { target: number; suffix?: string; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-60px' });
@@ -67,15 +100,98 @@ function CountUp({ target, suffix = '', className = '' }: { target: number; suff
   );
 }
 
-const WORKFLOW_STEP_ICONS  = [FileText, Settings, Box, Eye, Users, CheckCircle2, Package];
-const WORKFLOW_STEP_ROLES  = ['chief', 'pm', 'pm', 'chief', 'client', 'chief', 'pm'] as const;
-const WORKFLOW_STEP_KEYS   = ['brief', 'workspace', 'design', 'review', 'signoff', 'approval', 'export'] as const;
+// ─── Hero Dashboard Preview ───────────────────────────────────────
+function HeroDashboardPreview() {
+  const projects = [
+    { name: 'TechCon 2024 – Global Exhibit', pm: 'J. Rivera',   status: 'In Design', pct: 72,  color: 'bg-blue-500',   badge: 'bg-blue-500/15 text-blue-400'     },
+    { name: 'AutoShow Berlin – Main Stand',  pm: 'K. Müller',   status: 'In Review', pct: 88,  color: 'bg-yellow-500', badge: 'bg-yellow-500/15 text-yellow-400'  },
+    { name: 'MedExpo Dubai – Pharma Zone',   pm: 'S. Al-Farsi', status: 'Approved',  pct: 100, color: 'bg-green-500',  badge: 'bg-green-500/15 text-green-400'    },
+  ];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      className="mt-14 max-w-4xl mx-auto relative"
+    >
+      <div className="absolute -inset-4 bg-primary/8 blur-[60px] rounded-3xl pointer-events-none" />
+      <div className="relative rounded-2xl border border-border/60 bg-background/80 backdrop-blur-xl shadow-2xl overflow-hidden">
+        {/* Browser chrome */}
+        <div className="h-9 border-b border-border/50 bg-muted/20 flex items-center gap-3 px-4">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
+            <div className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
+          </div>
+          <div className="flex-1 flex justify-center">
+            <div className="text-[11px] font-mono text-muted-foreground/60 bg-background/40 px-3 py-0.5 rounded border border-border/30">
+              ens.io / chief / dashboard
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-[10px] text-muted-foreground/60">Live</span>
+          </div>
+        </div>
 
-const ROLE_BADGE: Record<string, string> = {
-  chief:  'bg-primary/10 text-primary border-primary/20',
-  pm:     'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  client: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-};
+        <div className="flex" style={{ height: 260 }}>
+          {/* Sidebar */}
+          <div className="w-40 border-r border-border/40 bg-muted/5 p-3 hidden sm:flex flex-col gap-0.5 flex-shrink-0">
+            {[
+              { icon: LayoutDashboard, label: 'Dashboard',  active: true  },
+              { icon: Monitor,         label: 'WS Monitor', active: false },
+              { icon: Users,           label: 'Team',       active: false },
+              { icon: Building2,       label: 'Clients',    active: false },
+              { icon: BarChart3,       label: 'Reports',    active: false },
+              { icon: MessageSquare,   label: 'Messages',   active: false },
+            ].map((item, i) => (
+              <div key={i}
+                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium
+                  ${item.active ? 'bg-primary/12 text-primary' : 'text-muted-foreground/60'}`}>
+                <item.icon className="w-3 h-3 flex-shrink-0" />
+                {item.label}
+              </div>
+            ))}
+          </div>
+          {/* Main */}
+          <div className="flex-1 p-4 overflow-hidden">
+            <div className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest mb-3">Overview</div>
+            <div className="grid grid-cols-3 gap-2.5 mb-4">
+              {[
+                { label: 'Active Projects', val: '12', change: '+2', color: 'text-primary',     bg: 'bg-primary/8'      },
+                { label: 'Open Approvals',  val: '3',  change: '-1', color: 'text-yellow-400',  bg: 'bg-yellow-500/8'  },
+                { label: 'Active PMs',      val: '7',  change: '0',  color: 'text-blue-400',    bg: 'bg-blue-500/8'    },
+              ].map((c, i) => (
+                <div key={i} className={`rounded-xl border border-border/40 p-2.5 ${c.bg}`}>
+                  <div className="text-[9px] text-muted-foreground/60 mb-1">{c.label}</div>
+                  <div className={`text-xl font-black leading-none ${c.color}`}>{c.val}</div>
+                  <div className="text-[9px] text-muted-foreground/50 mt-0.5">
+                    <span className={c.change.startsWith('+') ? 'text-green-400' : c.change.startsWith('-') ? 'text-red-400' : ''}>{c.change}</span> this week
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-widest mb-2">Active Projects</div>
+            <div className="space-y-1.5">
+              {projects.map((p, i) => (
+                <div key={i} className="flex items-center gap-2.5 bg-muted/15 rounded-lg px-3 py-1.5 border border-border/20">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-semibold truncate">{p.name}</div>
+                    <div className="text-[9px] text-muted-foreground/50">PM: {p.pm}</div>
+                  </div>
+                  <div className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${p.badge}`}>{p.status}</div>
+                  <div className="w-14 h-1 bg-muted rounded-full overflow-hidden flex-shrink-0">
+                    <div className={`h-full ${p.color} rounded-full`} style={{ width: `${p.pct}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 // ─── Component ────────────────────────────────────────────────────
 export default function TeamLanding() {
@@ -153,7 +269,6 @@ export default function TeamLanding() {
           </div>
         </div>
 
-        {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden bg-background/95 border-b border-border px-6 py-4 space-y-3 backdrop-blur-xl">
             {['roles', 'features', 'workflow'].map(s => (
@@ -168,12 +283,10 @@ export default function TeamLanding() {
 
       {/* ── Hero ────────────────────────────────────────────────── */}
       <section className="relative pt-44 pb-16 md:pt-56 md:pb-24 overflow-hidden">
-        {/* Background glow layers */}
         <div className="absolute inset-0 grid-pattern opacity-[0.05] dark:opacity-[0.12] -z-10" />
         <motion.div style={{ y }} className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[950px] h-[600px] rounded-full bg-primary/18 blur-[150px] pointer-events-none -z-10" />
         <div className="absolute top-1/4 right-0 w-[500px] h-[500px] rounded-full bg-blue-500/12 blur-[120px] pointer-events-none -z-10" />
         <div className="absolute bottom-0 left-1/4 w-[350px] h-[350px] rounded-full bg-cyan-500/8 blur-[100px] pointer-events-none -z-10" />
-        {/* Subtle decorative rings */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[720px] rounded-full border border-primary/5 pointer-events-none -z-10" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] rounded-full border border-blue-500/5 pointer-events-none -z-10" />
 
@@ -211,6 +324,9 @@ export default function TeamLanding() {
               </Button>
             </motion.div>
           </motion.div>
+
+          {/* Hero Dashboard Preview */}
+          <HeroDashboardPreview />
         </div>
       </section>
 
@@ -288,7 +404,6 @@ export default function TeamLanding() {
                 ))}
               </div>
 
-              {/* Decorative dashboard preview */}
               <div className="rounded-xl bg-background/50 border border-primary/15 p-4 space-y-2">
                 {[
                   { label: 'Active Projects', val: '12', color: 'bg-primary' },
@@ -310,7 +425,7 @@ export default function TeamLanding() {
 
               <Button className="w-full mt-6 rounded-full gap-2 shadow-[0_0_15px_rgba(109,40,217,0.2)]"
                 disabled={isOpeningPortal}
-                onClick={e => { e.stopPropagation(); void enterAs('chief', '/chief'); }}>
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); void enterAs('chief', '/chief'); }}>
                 <LayoutDashboard className="w-4 h-4" /> {t('team.roles.chiefEnter')}
               </Button>
             </motion.div>
@@ -355,7 +470,6 @@ export default function TeamLanding() {
                 ))}
               </div>
 
-              {/* Decorative workspace preview */}
               <div className="rounded-xl bg-background/50 border border-blue-500/15 p-4 space-y-2">
                 {[
                   { label: 'My Projects', val: '5', color: 'bg-blue-500' },
@@ -378,7 +492,7 @@ export default function TeamLanding() {
               <Button variant="outline"
                 className="w-full mt-6 rounded-full gap-2 border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
                 disabled={isOpeningPortal}
-                onClick={e => { e.stopPropagation(); void enterAs('pm', '/pm'); }}>
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); void enterAs('pm', '/pm'); }}>
                 <Settings className="w-4 h-4" /> {t('team.roles.pmEnter')}
               </Button>
             </motion.div>
@@ -394,11 +508,11 @@ export default function TeamLanding() {
             <span className="text-xs text-muted-foreground font-medium">Quick access:</span>
             <div className="flex flex-wrap gap-2">
               {[
-                { label: 'Chief Dashboard',     path: '/chief',              clx: 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/15' },
-                { label: 'Chief Monitor',        path: '/chief/workspace-monitor', clx: 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/15' },
-                { label: 'PM Dashboard',         path: '/pm',                 clx: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/15' },
-                { label: '3D Workspace',         path: '/pm/workspace',       clx: 'bg-purple-500/10 text-purple-400 border-purple-500/20 hover:bg-purple-500/15' },
-                { label: 'PM Tasks',             path: '/pm/tasks',           clx: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/15' },
+                { label: 'Chief Dashboard',  path: '/chief',                   clx: 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/15'         },
+                { label: 'Chief Monitor',    path: '/chief/workspace-monitor', clx: 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/15'         },
+                { label: 'PM Dashboard',     path: '/pm',                      clx: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/15'     },
+                { label: '3D Workspace',     path: '/pm/workspace',            clx: 'bg-purple-500/10 text-purple-400 border-purple-500/20 hover:bg-purple-500/15' },
+                { label: 'PM Tasks',         path: '/pm/tasks',                clx: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/15'     },
               ].map(({ label, path, clx }) => (
                 <button key={path}
                   disabled={isOpeningPortal}
@@ -423,25 +537,48 @@ export default function TeamLanding() {
                 <UserCog className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-0.5">For {t('team.roles.chiefTitle')}s</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-0.5">For Chief Managers</div>
                 <h2 className="text-2xl md:text-3xl font-bold">Operational Command Tools</h2>
               </div>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {chiefFeatures.map((f, i) => (
+            <div className="space-y-5">
+              {chiefFeatures.slice(0, 1).map((f, i) => (
                 <motion.div key={i}
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                  className="p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-[0_0_20px_rgba(109,40,217,0.07)] transition-all group">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <f.icon className="w-5 h-5" />
+                  className="relative p-8 rounded-2xl bg-card border border-primary/25 hover:border-primary/45 transition-all group overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-primary/8 blur-3xl pointer-events-none rounded-full" />
+                  <div className="flex items-start gap-6">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/15 text-primary flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(109,40,217,0.2)]">
+                      <f.icon className="w-7 h-7" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-lg font-bold">{f.title}</h3>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Key Feature</span>
+                      </div>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
+                    </div>
                   </div>
-                  <h3 className="font-semibold mb-2">{f.title}</h3>
-                  <p className="text-muted-foreground text-xs leading-relaxed">{f.desc}</p>
                 </motion.div>
               ))}
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {chiefFeatures.slice(1).map((f, i) => (
+                  <motion.div key={i}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.05 }}
+                    className="p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-[0_0_20px_rgba(109,40,217,0.07)] transition-all group">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <f.icon className="w-5 h-5" />
+                    </div>
+                    <h3 className="font-semibold mb-2">{f.title}</h3>
+                    <p className="text-muted-foreground text-xs leading-relaxed">{f.desc}</p>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -452,172 +589,140 @@ export default function TeamLanding() {
                 <Settings className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-0.5">For {t('team.roles.pmTitle')}s</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-0.5">For Project Managers</div>
                 <h2 className="text-2xl md:text-3xl font-bold">Design & Delivery Tools</h2>
               </div>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {pmFeatures.map((f, i) => (
+            <div className="space-y-5">
+              {pmFeatures.slice(0, 1).map((f, i) => (
                 <motion.div key={i}
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                  className="p-6 rounded-2xl bg-card border border-border/50 hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.07)] transition-all group">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <f.icon className="w-5 h-5" />
+                  className="relative p-8 rounded-2xl bg-card border border-blue-500/25 hover:border-blue-500/45 transition-all group overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/8 blur-3xl pointer-events-none rounded-full" />
+                  <div className="flex items-start gap-6">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-500/15 text-blue-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                      <f.icon className="w-7 h-7" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-lg font-bold">{f.title}</h3>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Core Tool</span>
+                      </div>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
+                      <div className="mt-4 flex items-end gap-1 h-8">
+                        {[40, 55, 45, 70, 60, 80, 75, 90, 85, 100].map((h, idx) => (
+                          <motion.div key={idx}
+                            className="flex-1 bg-blue-500/30 rounded-sm"
+                            style={{ height: `${h}%` }}
+                            initial={{ scaleY: 0 }}
+                            whileInView={{ scaleY: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: idx * 0.04, duration: 0.4, ease: 'easeOut' }}
+                          />
+                        ))}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground/60 mt-1">Design sessions — last 10 days</div>
+                    </div>
                   </div>
-                  <h3 className="font-semibold mb-2">{f.title}</h3>
-                  <p className="text-muted-foreground text-xs leading-relaxed">{f.desc}</p>
                 </motion.div>
               ))}
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {pmFeatures.slice(1).map((f, i) => (
+                  <motion.div key={i}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.05 }}
+                    className="p-6 rounded-2xl bg-card border border-border/50 hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.07)] transition-all group">
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <f.icon className="w-5 h-5" />
+                    </div>
+                    <h3 className="font-semibold mb-2">{f.title}</h3>
+                    <p className="text-muted-foreground text-xs leading-relaxed">{f.desc}</p>
+                  </motion.div>
+                ))}
+              </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Testimonials ────────────────────────────────────────── */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="absolute inset-0 dot-pattern opacity-[0.04] dark:opacity-[0.08] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/6 blur-[80px] rounded-full pointer-events-none" />
+        <div className="container mx-auto px-6">
+          <div className="text-center max-w-xl mx-auto mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-4 border border-primary/20">
+              <Star className="w-3.5 h-3.5" /> Trusted by exhibition professionals
+            </div>
+            <h2 className="text-3xl font-bold">What our <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">team says</span></h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {TESTIMONIALS.map((testimonial, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="p-6 rounded-2xl bg-card border border-border/50 hover:border-border transition-all flex flex-col gap-4">
+                <div className="text-muted-foreground text-sm leading-relaxed italic">&ldquo;{testimonial.quote}&rdquo;</div>
+                <div className="flex items-center gap-3 mt-auto pt-2 border-t border-border/40">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${testimonial.color}`}>
+                    {testimonial.initials}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">{testimonial.name}</div>
+                    <div className="text-xs text-muted-foreground">{testimonial.role}</div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ── Workflow Timeline ────────────────────────────────────── */}
       <section id="workflow" className="py-24 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-primary/5 blur-[80px] -z-10" />
+        <div className="absolute inset-0 dot-pattern opacity-[0.05] dark:opacity-[0.1] pointer-events-none" />
+        <div className="absolute top-1/2 left-0 w-64 h-64 bg-blue-500/5 blur-3xl -z-10" />
         <div className="container mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-20">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-4 border border-primary/20">
+              <Zap className="w-3.5 h-3.5" /> {t('team.workflow.badge')}
+            </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('team.workflow.heading')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">{t('team.workflow.headingAccent')}</span></h2>
-            <p className="text-muted-foreground">{t('team.hero.subtitle')}</p>
+            <p className="text-muted-foreground">{t('team.workflow.subheading')}</p>
           </div>
 
-          <div className="max-w-3xl mx-auto relative">
-            <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary/60 via-blue-500/40 to-transparent -translate-x-1/2" />
-
-            <div className="space-y-10">
-              {workflowSteps.map((step, i) => (
-                <motion.div key={i}
-                  initial={{ opacity: 0, x: i % 2 === 0 ? -40 : 40 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, margin: '-80px' }}
-                  className={`flex items-center gap-6 md:gap-8 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
-                  <div className="flex-1 hidden md:block" />
-                  <div className={`relative z-10 w-12 h-12 rounded-full bg-background border-2 flex items-center justify-center font-black text-sm flex-shrink-0
-                    ${step.role === 'chief' ? 'border-primary text-primary shadow-[0_0_12px_rgba(109,40,217,0.3)]'
-                      : step.role === 'pm' ? 'border-blue-500 text-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.3)]'
-                      : 'border-cyan-500 text-cyan-400'}`}>
-                    {i + 1}
+          <div className="max-w-4xl mx-auto space-y-4">
+            {workflowSteps.map((step, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.07 }}
+                className="flex items-start gap-5 p-5 rounded-2xl bg-card border border-border/50 hover:border-border transition-all">
+                <div className="flex-shrink-0 flex flex-col items-center gap-2">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${ROLE_BADGE[step.role]}`}>
+                    <step.icon className="w-5 h-5" />
                   </div>
-                  <div className="flex-1">
-                    <div className={`p-5 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm hover:border-border transition-colors ${i % 2 === 0 ? '' : 'md:text-right'}`}>
-                      <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wider mb-3 ${ROLE_BADGE[step.role]}`}>
-                        {step.role === 'chief' ? <UserCog className="w-2.5 h-2.5" />
-                          : step.role === 'pm' ? <Settings className="w-2.5 h-2.5" />
-                          : <Eye className="w-2.5 h-2.5" />}
-                        {step.role === 'chief' ? 'Chief Manager' : step.role === 'pm' ? 'Project Manager' : 'Client'}
-                      </div>
-                      <h3 className="text-base font-bold mb-1">{step.title}</h3>
-                      <p className="text-muted-foreground text-sm">{step.desc}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Dashboard UI Preview ─────────────────────────────────── */}
-      <section className="py-20 bg-black/30 border-y border-border/40 relative overflow-hidden">
-        <div className="absolute inset-0 grid-pattern opacity-[0.06]" />
-        <div className="container mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl font-bold mb-3">Professional Management Environment</h2>
-            <p className="text-muted-foreground text-sm">A clear, information-dense interface built for fast decision-making.</p>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="rounded-xl border border-border/50 bg-background shadow-2xl overflow-hidden max-w-5xl mx-auto"
-          >
-            {/* App chrome */}
-            <div className="h-11 border-b border-border/50 bg-muted/30 flex items-center gap-4 px-4">
-              <div className="flex gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-              </div>
-              <div className="text-xs font-mono text-muted-foreground bg-background/40 px-3 py-0.5 rounded border border-border/40">
-                ENS Platform — Chief Manager Dashboard
-              </div>
-              <div className="ml-auto flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[10px] text-muted-foreground">Live</span>
-              </div>
-            </div>
-
-            <div className="flex" style={{ height: 380 }}>
-              {/* Sidebar nav */}
-              <div className="w-48 border-r border-border/50 bg-muted/10 p-4 flex flex-col gap-1 hidden md:flex">
-                {[
-                  { icon: LayoutDashboard, label: 'Dashboard',    active: true  },
-                  { icon: Monitor,         label: 'WS Monitor',   active: false },
-                  { icon: Users,           label: 'Team',         active: false },
-                  { icon: Building2,       label: 'Clients',      active: false },
-                  { icon: BarChart3,       label: 'Reports',      active: false },
-                  { icon: MessageSquare,   label: 'Messages',     active: false },
-                  { icon: Settings,        label: 'Settings',     active: false },
-                ].map((item, i) => (
-                  <div key={i}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer
-                      ${item.active ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}>
-                    <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                    {item.label}
-                  </div>
-                ))}
-              </div>
-
-              {/* Main content */}
-              <div className="flex-1 p-5 overflow-hidden">
-                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Overview</div>
-
-                <div className="grid grid-cols-3 gap-3 mb-5">
-                  {[
-                    { label: 'Active Projects', val: '12', change: '+2', color: 'text-primary', bg: 'bg-primary/10' },
-                    { label: 'Open Approvals',  val: '3',  change: '-1', color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-                    { label: 'Active PMs',      val: '7',  change: '0',  color: 'text-blue-400', bg: 'bg-blue-500/10' },
-                  ].map((card, i) => (
-                    <div key={i} className={`rounded-xl border border-border/50 p-3 ${card.bg}`}>
-                      <div className="text-[9px] text-muted-foreground mb-1">{card.label}</div>
-                      <div className={`text-2xl font-black ${card.color}`}>{card.val}</div>
-                      <div className="text-[9px] text-muted-foreground mt-0.5">
-                        <span className={card.change.startsWith('+') ? 'text-green-400' : card.change.startsWith('-') ? 'text-red-400' : ''}>{card.change}</span> this week
-                      </div>
-                    </div>
-                  ))}
+                  <div className="text-[10px] font-bold text-muted-foreground/50">{String(i + 1).padStart(2, '0')}</div>
                 </div>
-
-                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Active Projects</div>
-                <div className="space-y-2">
-                  {[
-                    { name: 'TechCon 2024 – Global Exhibit',    pm: 'J. Rivera', status: 'In Design',   pct: 72, color: 'bg-blue-500' },
-                    { name: 'AutoShow Berlin – Main Stand',     pm: 'K. Müller', status: 'In Review',   pct: 88, color: 'bg-yellow-500' },
-                    { name: 'MedExpo Dubai – Pharma Zone',      pm: 'S. Al-Farsi', status: 'Approved',  pct: 100, color: 'bg-green-500' },
-                  ].map((p, i) => (
-                    <div key={i} className="flex items-center gap-3 bg-muted/20 rounded-lg px-3 py-2 border border-border/30">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[10px] font-semibold truncate">{p.name}</div>
-                        <div className="text-[9px] text-muted-foreground">PM: {p.pm}</div>
-                      </div>
-                      <div className={`text-[9px] font-bold px-2 py-0.5 rounded-full
-                        ${p.status === 'Approved' ? 'bg-green-500/15 text-green-400'
-                          : p.status === 'In Review' ? 'bg-yellow-500/15 text-yellow-400'
-                          : 'bg-blue-500/15 text-blue-400'}`}>{p.status}</div>
-                      <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden flex-shrink-0">
-                        <div className={`h-full ${p.color} rounded-full`} style={{ width: `${p.pct}%` }} />
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex-1 min-w-0 pt-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-sm">{step.title}</h3>
+                    <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${ROLE_BADGE[step.role]}`}>
+                      {step.role}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
                 </div>
-              </div>
-            </div>
-          </motion.div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -625,9 +730,7 @@ export default function TeamLanding() {
       <section className="py-24 relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/10 blur-[100px] rounded-full -z-10" />
         <div className="container mx-auto px-6 text-center max-w-2xl">
-          <motion.div
-            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={STAGGER}
-          >
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={STAGGER}>
             <motion.div variants={FADE_UP}
               className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-6 border border-primary/20">
               <Star className="w-3.5 h-3.5" /> Ready to get started?
@@ -660,7 +763,6 @@ export default function TeamLanding() {
       <footer className="border-t border-border/50 bg-background pt-16 pb-8">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
-            {/* Brand */}
             <div className="col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <ENSLogo size="sm" href="/" />
@@ -681,7 +783,6 @@ export default function TeamLanding() {
               </div>
             </div>
 
-            {/* Chief tools */}
             <div>
               <div className="text-[10px] font-bold uppercase tracking-widest text-primary/60 mb-4">{t('team.footer.chiefManager')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
@@ -691,7 +792,6 @@ export default function TeamLanding() {
               </ul>
             </div>
 
-            {/* PM tools */}
             <div>
               <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400/60 mb-4">{t('team.footer.projectManager')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
@@ -701,7 +801,6 @@ export default function TeamLanding() {
               </ul>
             </div>
 
-            {/* Support */}
             <div>
               <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('team.footer.resources')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">

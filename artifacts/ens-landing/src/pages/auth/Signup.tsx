@@ -18,7 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Spinner } from '@/components/ui/spinner';
 import { Eye, EyeOff, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { useAuth, getRoleDashboard } from '@/contexts/AuthContext';
+import { useAuth, getRoleDashboard, type UserRole } from '@/contexts/AuthContext';
+import { PORTAL_MODE } from '@/lib/portal';
 
 function PasswordStrength({ password }: { password: string }) {
   const { t } = useTranslation();
@@ -64,16 +65,34 @@ export default function Signup() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const isStaffPortal = PORTAL_MODE === 'staff';
+  const [selectedRole, setSelectedRole] = useState<UserRole>(isStaffPortal ? 'pm' : 'client');
 
   useEffect(() => {
     document.title = t('auth.signup.pageTitle');
   }, [t]);
 
   // Schema defined inside component so t() is available for validation messages
+  const needsCompany = selectedRole !== 'pm';
   const signupSchema = z
     .object({
       name: z.string().min(2, t('auth.signup.validation.nameMin')),
-      company: z.string().min(2, t('auth.signup.validation.companyMin')),
+      company: needsCompany
+        ? z.string().min(2, t('auth.signup.validation.companyMin'))
+        : z.string().default(''),
+      exhibition: selectedRole === 'client'
+        ? z.string().min(2, 'Exhibition is required')
+        : z.string().default(''),
+      boothWidthM: selectedRole === 'client'
+        ? z.coerce.number().min(1, 'Width is required').max(50)
+        : z.coerce.number().optional(),
+      boothDepthM: selectedRole === 'client'
+        ? z.coerce.number().min(1, 'Depth is required').max(50)
+        : z.coerce.number().optional(),
+      preferredSystem: z.string().default('octanorm'),
+      venueCity: z.string().default(''),
+      targetDate: z.string().default(''),
+      intakeNotes: z.string().max(1000).default(''),
       email: z.string().email(t('auth.signup.validation.email')),
       password: z
         .string()
@@ -97,6 +116,13 @@ export default function Signup() {
     defaultValues: {
       name: '',
       company: '',
+      exhibition: '',
+      boothWidthM: 6,
+      boothDepthM: 3,
+      preferredSystem: 'octanorm',
+      venueCity: '',
+      targetDate: '',
+      intakeNotes: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -114,8 +140,16 @@ export default function Signup() {
       const createdUser = await auth.signup({
         name: values.name,
         company: values.company,
+        exhibition: values.exhibition,
+        boothWidthM: values.boothWidthM,
+        boothDepthM: values.boothDepthM,
+        preferredSystem: values.preferredSystem,
+        venueCity: values.venueCity,
+        targetDate: values.targetDate,
+        intakeNotes: values.intakeNotes,
         email: values.email,
         password: values.password,
+        role: selectedRole,
       });
       navigate(getRoleDashboard(createdUser.role));
     } catch (err) {
@@ -127,8 +161,8 @@ export default function Signup() {
 
   return (
     <AuthLayout
-      title={t('auth.signup.title')}
-      description={t('auth.signup.description')}
+      title={isStaffPortal ? 'Create staff account' : t('auth.signup.title')}
+      description={isStaffPortal ? 'Create a real PM or Chief Manager login for this staff portal.' : t('auth.signup.description')}
     >
       {error && (
         <div
@@ -143,12 +177,43 @@ export default function Signup() {
       <div className="mb-4 flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
         <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" aria-hidden="true" />
         <p className="text-sm text-muted-foreground">
-          {t('auth.signup.clientOnlyNote')}
+          {isStaffPortal
+            ? 'Staff signup creates a real account with access to the PM or Chief Manager portal.'
+            : t('auth.signup.clientOnlyNote')}
         </p>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {isStaffPortal && (
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Account role
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  ['pm', 'Project Manager', 'Workspace, clients, tasks'],
+                  ['chief', 'Chief Manager', 'Full team oversight'],
+                ] as const).map(([role, label, description]) => (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setSelectedRole(role)}
+                    className={`rounded-lg border p-3 text-left transition-colors ${
+                      selectedRole === role
+                        ? 'border-primary bg-primary/10 text-foreground'
+                        : 'border-border bg-background/40 text-muted-foreground hover:border-primary/50'
+                    }`}
+                    data-testid={`button-role-${role}`}
+                  >
+                    <span className="block text-sm font-semibold">{label}</span>
+                    <span className="mt-1 block text-[11px]">{description}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}
@@ -168,25 +233,152 @@ export default function Signup() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="company"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('auth.signup.companyLabel')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={t('auth.signup.companyPlaceholder')}
-                      autoComplete="organization"
-                      {...field}
-                      data-testid="input-company"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {needsCompany && (
+              <FormField
+                control={form.control}
+                name="company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {selectedRole === 'client' ? t('auth.signup.companyLabel') : t('auth.signup.companyLabel')}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={selectedRole === 'client' ? t('auth.signup.companyPlaceholder') : t('auth.signup.companyPlaceholder')}
+                        autoComplete="organization"
+                        {...field}
+                        data-testid="input-company"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </div>
+
+          {selectedRole === 'client' && (
+            <div className="space-y-3 rounded-xl border border-border/70 bg-background/35 p-3">
+              <div>
+                <p className="text-sm font-semibold">Exhibition request</p>
+                <p className="text-xs text-muted-foreground">This helps Chief assign the right project manager.</p>
+              </div>
+              <FormField
+                control={form.control}
+                name="exhibition"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Registered Exhibition</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g. AutoShow Istanbul 2026"
+                        autoComplete="off"
+                        {...field}
+                        data-testid="input-exhibition"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="boothWidthM"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Width (m)</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="1" max="50" step="1" {...field} data-testid="input-booth-width" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="boothDepthM"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Depth (m)</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="1" max="50" step="1" {...field} data-testid="input-booth-depth" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="preferredSystem"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preferred System</FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          data-testid="select-preferred-system"
+                        >
+                          <option value="octanorm">Octanorm</option>
+                          <option value="maxima">Maxima</option>
+                          <option value="custom">Custom / unsure</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="targetDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Target Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} data-testid="input-target-date" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="venueCity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City / Venue</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Istanbul Tuyap" {...field} data-testid="input-venue-city" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="intakeNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <textarea
+                        rows={3}
+                        placeholder="Branding, deadline, booth type, or special requirements"
+                        {...field}
+                        className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        data-testid="input-intake-notes"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
 
           <FormField
             control={form.control}
@@ -212,10 +404,11 @@ export default function Signup() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('auth.signup.passwordLabel')}</FormLabel>
+                <FormLabel htmlFor="signup-password">{t('auth.signup.passwordLabel')}</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
+                      id="signup-password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder={t('auth.signup.passwordPlaceholder')}
                       autoComplete="new-password"
@@ -248,10 +441,11 @@ export default function Signup() {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('auth.signup.confirmPasswordLabel')}</FormLabel>
+                <FormLabel htmlFor="signup-confirm-password">{t('auth.signup.confirmPasswordLabel')}</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
+                      id="signup-confirm-password"
                       type={showConfirm ? 'text' : 'password'}
                       placeholder={t('auth.signup.confirmPasswordPlaceholder')}
                       autoComplete="new-password"
@@ -295,10 +489,7 @@ export default function Signup() {
                     className="mt-0.5"
                     data-testid="checkbox-terms"
                   />
-                  <label
-                    htmlFor="terms"
-                    className="text-xs text-muted-foreground leading-relaxed cursor-pointer select-none"
-                  >
+                  <div className="text-xs text-muted-foreground leading-relaxed select-none">
                     {t('auth.signup.termsLabel')}{' '}
                     <a href="#" className="text-primary hover:underline font-medium">
                       {t('auth.signup.termsOfService')}
@@ -307,7 +498,7 @@ export default function Signup() {
                     <a href="#" className="text-primary hover:underline font-medium">
                       {t('auth.signup.privacyPolicy')}
                     </a>
-                  </label>
+                  </div>
                 </div>
                 <FormMessage />
               </FormItem>
@@ -326,7 +517,7 @@ export default function Signup() {
                 {t('auth.signup.submitting')}
               </span>
             ) : (
-              t('auth.signup.submit')
+              isStaffPortal ? `Create ${selectedRole === 'chief' ? 'Chief Manager' : 'PM'} Account` : t('auth.signup.submit')
             )}
           </Button>
         </form>

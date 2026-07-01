@@ -11,6 +11,7 @@ export interface AuthUser {
   systemRole?: string;
   avatarUrl?: string;
   avatarTone?: string;
+  clientStatus?: string;
 }
 
 interface AuthContextValue {
@@ -31,9 +32,18 @@ interface LoginCredentials {
 interface SignupInput {
   name: string;
   company: string;
+  exhibition?: string;
+  boothWidthM?: number;
+  boothDepthM?: number;
+  preferredSystem?: string;
+  venueCity?: string;
+  targetDate?: string;
+  intakeNotes?: string;
   email: string;
   password: string;
   organizationSlug?: string;
+  role?: UserRole;
+  setupKey?: string;
 }
 
 interface AuthResponse {
@@ -50,13 +60,16 @@ interface AuthResponse {
     name: string;
     slug: string;
   } | null;
+  clientRecord?: { id: string; status: string } | null;
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api').replace(/\/+$/, '');
 const ORGANIZATION_SLUG = import.meta.env.VITE_ORGANIZATION_SLUG ?? 'ens-demo-agency';
 const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true';
 const MOCK_AUTH_STORAGE_KEY = 'ens-mock-auth-user';
-const MOCK_PASSWORD = 'EnsDev2026!';
+// Dev-only: set VITE_MOCK_DEV_PASSWORD in .env.local to override the default demo password.
+// This only applies when VITE_USE_MOCK_API=true and never reaches production.
+const MOCK_PASSWORD = import.meta.env.VITE_MOCK_DEV_PASSWORD ?? 'EnsDev2026!';
 
 const MOCK_USERS: Record<string, AuthUser> = {
   'owner@ens.test': {
@@ -117,12 +130,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let isMounted = true;
 
-    request<AuthResponse>('/auth/me')
+    request<AuthResponse>('/auth/me', {
+      headers: { 'x-auth-optional': '1' },
+    })
       .then((response) => {
-        if (isMounted) setUser(toAuthUser(response));
+        if (!isMounted) return;
+        const nextUser = toAuthUser(response);
+        setUser(nextUser);
+        persistCurrentUser(nextUser);
       })
       .catch(() => {
-        if (isMounted) setUser(null);
+        if (!isMounted) return;
+        setUser(null);
+        persistCurrentUser(null);
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
@@ -149,35 +169,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const nextUser = requireAuthUser(response);
     setUser(nextUser);
+    persistCurrentUser(nextUser);
     return nextUser;
   }, []);
 
   const signup = useCallback(async (input: SignupInput) => {
     if (USE_MOCK_API) {
+      const role = input.role ?? 'client';
       const nextUser: AuthUser = {
         id: `mock-${Date.now()}`,
-        name: input.name.trim() || input.email.split('@')[0] || 'Client Reviewer',
+        name: input.name.trim() || input.email.split('@')[0] || (role === 'chief' ? 'Chief Manager' : role === 'pm' ? 'Project Manager' : 'Client Reviewer'),
         email: input.email,
         company: input.company.trim() || 'ENS Demo Agency',
-        role: 'client',
-        systemRole: 'client',
+        role,
+        systemRole: role === 'chief' ? 'owner' : role,
         avatarUrl: '',
-        avatarTone: 'green',
+        avatarTone: role === 'chief' ? 'primary' : role === 'pm' ? 'blue' : 'green',
       };
       localStorage.setItem(MOCK_AUTH_STORAGE_KEY, JSON.stringify(nextUser));
       setUser(nextUser);
       return nextUser;
     }
 
-    const response = await request<AuthResponse>('/auth/signup', {
+    const role = input.role ?? 'client';
+    const signupPath = role === 'client' ? '/auth/signup' : '/auth/signup-staff';
+    const response = await request<AuthResponse>(signupPath, {
       method: 'POST',
       body: JSON.stringify({
         ...input,
+        role,
         organizationSlug: input.organizationSlug ?? ORGANIZATION_SLUG,
       }),
     });
     const nextUser = requireAuthUser(response);
     setUser(nextUser);
+    persistCurrentUser(nextUser);
     return nextUser;
   }, []);
 
@@ -191,6 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await request('/auth/logout', { method: 'POST' });
     } finally {
+      persistCurrentUser(null);
       setUser(null);
     }
   }, []);
@@ -278,6 +305,7 @@ function toAuthUser(response: AuthResponse): AuthUser | null {
     systemRole: response.user.systemRole,
     avatarUrl: response.user.avatarUrl,
     avatarTone: response.user.avatarTone,
+    clientStatus: response.clientRecord?.status,
   };
 }
 
@@ -294,6 +322,14 @@ function readMockUser(): AuthUser | null {
   } catch {
     localStorage.removeItem(MOCK_AUTH_STORAGE_KEY);
     return null;
+  }
+}
+
+function persistCurrentUser(user: AuthUser | null) {
+  if (user) {
+    localStorage.setItem(MOCK_AUTH_STORAGE_KEY, JSON.stringify(user));
+  } else {
+    localStorage.removeItem(MOCK_AUTH_STORAGE_KEY);
   }
 }
 

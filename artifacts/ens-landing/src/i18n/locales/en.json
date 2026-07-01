@@ -1570,7 +1570,9 @@
         "openDetails": "Open details for {{name}}",
         "viewProject": "View project",
         "message": "Message",
-        "messageClient": "Message {{name}}"
+        "messageClient": "Message {{name}}",
+        "sendWorkspace": "Send Workspace Link",
+        "sendBill": "Send Bill of Everything"
       },
       "paging": {
         "showing": "Showing {{start}}-{{end}} of {{total}} clients"
@@ -1586,7 +1588,35 @@
         "dataSource": "Loaded from PostgreSQL client and project records",
         "workspaceReady": "Project workspace link is available.",
         "workspaceMissing": "No project workspace is linked to this client yet.",
-        "changeStatus": "Change client status"
+        "changeStatus": "Change client status",
+        "tabs": {
+          "overview": "Overview",
+          "credentials": "Credentials",
+          "billing": "Billing"
+        },
+        "credentials": {
+          "title": "Account & Security",
+          "accountId": "Account ID",
+          "role": "Portal Access Role",
+          "username": "Username/Email",
+          "password": "Password",
+          "showPassword": "Show Password",
+          "mfa": "MFA Security Status",
+          "mfaDisabled": "MFA Disabled",
+          "session": "Active Session info",
+          "webSession": "Web Browser (Chrome/Windows)"
+        },
+        "billing": {
+          "title": "Project Billing",
+          "contractValue": "Contract Value",
+          "billed": "Total Billed",
+          "outstanding": "Outstanding",
+          "status": "Invoice Status",
+          "statusPartial": "Partial Payment",
+          "sendSuccess": "Bill successfully sent to client!",
+          "linkSendSuccess": "Workspace link successfully sent to client!",
+          "detailSource": "Project finance module & contracts"
+        }
       }
     },
     "tasks": {

@@ -8,16 +8,20 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import {
   getPlatformClients,
   updatePlatformClientStatus,
+  sendConversationMessage,
   type PlatformClient,
   type PlatformClientSummary,
   type PlatformPagination,
 } from "@/lib/platform-api";
 import {
   Search, Monitor, Mail, Building2, CheckCircle2,
-  Clock, AlertCircle, Layers, Users, ArrowUpRight, X, MessageSquare, type LucideIcon,
+  Clock, AlertCircle, Layers, Users, ArrowUpRight, X, MessageSquare,
+  Key, DollarSign, ShieldCheck, Laptop, Check, Copy, CreditCard, ArrowRight,
+  type LucideIcon,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
   Active:   { bg: "rgba(47,125,58,0.1)",   text: "#2f7d3a" },
@@ -222,29 +226,6 @@ export default function PMClients() {
                       >
                         <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
                       </button>
-                      {client.projectId ? (
-                        <Link href={`/pm/workspace?projectId=${encodeURIComponent(client.projectId)}`}>
-                          <button
-                            onClick={(event) => event.stopPropagation()}
-                            title={t("pm.clients.actions.openWorkspace")}
-                            aria-label={t("pm.clients.actions.openWorkspaceFor", { name: client.name })}
-                            className="p-2 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/5 border border-border hover:border-primary/30 transition-colors"
-                          >
-                            <Monitor aria-hidden="true" className="h-3.5 w-3.5" />
-                          </button>
-                        </Link>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled
-                          onClick={(event) => event.stopPropagation()}
-                          title={t("pm.clients.actions.noWorkspace")}
-                          aria-label={t("pm.clients.actions.noWorkspace")}
-                          className="p-2 rounded-md text-muted-foreground border border-border opacity-40"
-                        >
-                          <Monitor className="h-3.5 w-3.5" />
-                        </button>
-                      )}
                       <button
                         type="button"
                         onClick={(event) => { event.stopPropagation(); setSelectedClient(client); }}
@@ -318,6 +299,12 @@ const CLIENT_STATUS_OPTIONS = ["Active", "Lead", "Pending", "Inactive"] as const
 function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: { client: PlatformClient; onClose: () => void; onMessage: () => void; onStatusChange: (newStatus: string) => void; t: TFn }) {
   const [localStatus, setLocalStatus] = useState(client.status);
   const [isSavingStatus, setIsSavingStatus] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "credentials" | "billing">("overview");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSendingLink, setIsSendingLink] = useState(false);
+  const [isSendingBill, setIsSendingBill] = useState(false);
+  const { toast } = useToast();
+
   const statusCfg = STATUS_COLOR[localStatus] ?? STATUS_COLOR.Pending;
   const projectSearch = encodeURIComponent(client.exhibition || client.name);
   const drawerRef = useRef<HTMLElement>(null);
@@ -336,6 +323,65 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
       setIsSavingStatus(false);
     }
   }, [client.id, isSavingStatus, localStatus, onStatusChange]);
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: `${label} copied to clipboard.`,
+    });
+  };
+
+  const handleSendWorkspaceLink = async () => {
+    if (!client.projectId || isSendingLink) return;
+    setIsSendingLink(true);
+    try {
+      const workspaceUrl = `${window.location.origin}/client/workspace?projectId=${client.projectId}`;
+      await sendConversationMessage(
+        client.id,
+        `Hi! I have set up the 3D design workspace for your stand (${client.exhibition || client.name}). You can access it and review the latest draft here: ${workspaceUrl}`
+      );
+      toast({
+        title: "Success",
+        description: t("pm.clients.detail.billing.linkSendSuccess"),
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to send workspace link",
+      });
+    } finally {
+      setIsSendingLink(false);
+    }
+  };
+
+  const handleSendBill = async () => {
+    if (isSendingBill) return;
+    setIsSendingBill(true);
+    try {
+      const billMessage = `Billing details for ${client.exhibition || client.name}:
+- Base booth cost: $4,500.00
+- Total billed to date: $2,800.00
+- Outstanding balance: $1,700.00
+
+Please review the billing details and process the outstanding invoice.`;
+
+      await sendConversationMessage(client.id, billMessage);
+      toast({
+        title: "Success",
+        description: t("pm.clients.detail.billing.sendSuccess"),
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to send bill",
+      });
+    } finally {
+      setIsSendingBill(false);
+    }
+  };
 
   return (
     <>
@@ -358,8 +404,26 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5">
-          <div className="mb-5 flex flex-wrap items-center gap-2">
+        {/* Tab Headers */}
+        <div className="border-b px-5 flex gap-4 text-xs font-semibold">
+          {(["overview", "credentials", "billing"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                "py-3 border-b-2 transition-all outline-none",
+                activeTab === tab
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t(`pm.clients.detail.tabs.${tab}`)}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Status selector */}
             <div className="relative">
               <select
@@ -386,49 +450,192 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
             </span>
           </div>
 
-          <section className="mb-5 rounded-lg border bg-card/50 p-4">
-            <h3 className="mb-3 text-sm font-bold">{t("pm.clients.detail.contact")}</h3>
-            <div className="space-y-2.5">
-              <DetailRow icon={Building2} value={client.company || client.name} />
-              <DetailRow icon={Users} value={client.contactName} />
-              <DetailRow icon={Mail} value={client.contactEmail} />
-            </div>
-          </section>
-
-          <section className="mb-5 rounded-lg border bg-card/50 p-4">
-            <h3 className="mb-3 text-sm font-bold">{t("pm.clients.detail.linkedProject")}</h3>
-            <div className="rounded-md border bg-background/60 p-3">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                  <Layers aria-hidden="true" className="h-4 w-4 text-primary" />
+          {activeTab === "overview" && (
+            <div className="space-y-5">
+              <section className="rounded-lg border bg-card/50 p-4">
+                <h3 className="mb-3 text-sm font-bold">{t("pm.clients.detail.contact")}</h3>
+                <div className="space-y-2.5">
+                  <DetailRow icon={Building2} value={client.company || client.name} />
+                  <DetailRow icon={Users} value={client.contactName} />
+                  <DetailRow icon={Mail} value={client.contactEmail} />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{client.exhibition || t("pm.clients.detail.noLinkedProject")}</p>
-                  <p className="mt-1 text-[11px] font-mono text-muted-foreground">{t("pm.clients.detail.dataSource")}</p>
-                </div>
-              </div>
-            </div>
-          </section>
+              </section>
 
-          <section className="rounded-lg border bg-card/50 p-4">
-            <h3 className="mb-3 text-sm font-bold">{t("pm.clients.detail.operationalStatus")}</h3>
-            <div className="flex items-start gap-3 rounded-md border border-border/50 bg-card p-2.5">
-              <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded bg-primary/10">
-                <Clock aria-hidden="true" className="h-3 w-3 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11.5px] font-medium leading-tight">
-                  {t("pm.clients.detail.lastActivity", { time: client.lastActivity })}
-                </p>
-                <p className="mt-0.5 text-[9.5px] font-mono text-muted-foreground">
-                  {client.projectId ? t("pm.clients.detail.workspaceReady") : t("pm.clients.detail.workspaceMissing")}
-                </p>
-              </div>
+              <section className="rounded-lg border bg-card/50 p-4">
+                <h3 className="mb-3 text-sm font-bold">{t("pm.clients.detail.linkedProject")}</h3>
+                <div className="rounded-md border bg-background/60 p-3">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                      <Layers aria-hidden="true" className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{client.exhibition || t("pm.clients.detail.noLinkedProject")}</p>
+                      <p className="mt-1 text-[11px] font-mono text-muted-foreground">{t("pm.clients.detail.dataSource")}</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-lg border bg-card/50 p-4">
+                <h3 className="mb-3 text-sm font-bold">{t("pm.clients.detail.operationalStatus")}</h3>
+                <div className="flex items-start gap-3 rounded-md border border-border/50 bg-card p-2.5">
+                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded bg-primary/10">
+                    <Clock aria-hidden="true" className="h-3 w-3 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11.5px] font-medium leading-tight">
+                      {t("pm.clients.detail.lastActivity", { time: client.lastActivity })}
+                    </p>
+                    <p className="mt-0.5 text-[9.5px] font-mono text-muted-foreground">
+                      {client.projectId ? t("pm.clients.detail.workspaceReady") : t("pm.clients.detail.workspaceMissing")}
+                    </p>
+                  </div>
+                </div>
+              </section>
             </div>
-          </section>
+          )}
+
+          {activeTab === "credentials" && (
+            <div className="space-y-5">
+              <section className="rounded-lg border bg-card/50 p-4 space-y-4">
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  <Key className="w-4 h-4 text-primary" />
+                  {t("pm.clients.detail.credentials.title")}
+                </h3>
+                
+                <div className="space-y-3.5">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-1">
+                      {t("pm.clients.detail.credentials.accountId")}
+                    </label>
+                    <div className="flex items-center justify-between gap-2 bg-background border rounded px-3 py-1.5">
+                      <span className="font-mono text-xs text-foreground truncate">{client.id}</span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(client.id, t("pm.clients.detail.credentials.accountId"))}
+                        className="text-muted-foreground hover:text-primary transition-colors p-1"
+                        title="Copy Account ID"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-1">
+                      {t("pm.clients.detail.credentials.username")}
+                    </label>
+                    <div className="flex items-center justify-between gap-2 bg-background border rounded px-3 py-1.5">
+                      <span className="font-mono text-xs text-foreground truncate">{client.contactEmail}</span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(client.contactEmail, t("pm.clients.detail.credentials.username"))}
+                        className="text-muted-foreground hover:text-primary transition-colors p-1"
+                        title="Copy Username"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-1">
+                      {t("pm.clients.detail.credentials.password")}
+                    </label>
+                    <div className="flex items-center justify-between gap-2 bg-background border rounded px-3 py-1.5">
+                      <span className="font-mono text-xs text-foreground font-semibold">
+                        {showPassword ? "EnsDev2026!" : "••••••••"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-[10px] font-semibold text-primary hover:text-primary/80 hover:underline transition-colors"
+                      >
+                        {showPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-lg border bg-card/50 p-4 space-y-3">
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-green-500" />
+                  Security Configuration
+                </h3>
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center justify-between py-1.5 border-b border-border/30">
+                    <span className="text-muted-foreground">{t("pm.clients.detail.credentials.role")}</span>
+                    <span className="font-semibold text-foreground">Client Portal User</span>
+                  </div>
+                  <div className="flex items-center justify-between py-1.5 border-b border-border/30">
+                    <span className="text-muted-foreground">{t("pm.clients.detail.credentials.mfa")}</span>
+                    <span className="text-orange-500 font-medium">{t("pm.clients.detail.credentials.mfaDisabled")}</span>
+                  </div>
+                  <div className="flex items-start justify-between py-1.5">
+                    <span className="text-muted-foreground">{t("pm.clients.detail.credentials.session")}</span>
+                    <span className="font-medium text-foreground text-right flex items-center gap-1.5">
+                      <Laptop className="w-3.5 h-3.5 text-muted-foreground" />
+                      {t("pm.clients.detail.credentials.webSession")}
+                    </span>
+                  </div>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activeTab === "billing" && (
+            <div className="space-y-5">
+              <section className="rounded-lg border bg-card/50 p-4 space-y-4">
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-primary" />
+                  {t("pm.clients.detail.billing.title")}
+                </h3>
+                
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground">Exhibition Booth</span>
+                    <span className="font-semibold text-foreground truncate max-w-[200px]">{client.exhibition || "—"}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground">{t("pm.clients.detail.billing.contractValue")}</span>
+                    <span className="font-bold text-foreground">$4,500.00</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground">{t("pm.clients.detail.billing.billed")}</span>
+                    <span className="font-bold text-green-600">$2,800.00</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground">{t("pm.clients.detail.billing.outstanding")}</span>
+                    <span className="font-bold text-orange-600">$1,700.00</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-muted-foreground">{t("pm.clients.detail.billing.status")}</span>
+                    <span className="px-2 py-0.5 rounded bg-orange-500/10 text-orange-500 font-semibold text-[10px]">
+                      {t("pm.clients.detail.billing.statusPartial")}
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              <button
+                type="button"
+                onClick={handleSendBill}
+                disabled={isSendingBill}
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold h-11 text-sm shadow-md transition-colors disabled:opacity-50"
+              >
+                {isSendingBill ? "Sending..." : t("pm.clients.actions.sendBill")}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <p className="text-[10px] text-center text-muted-foreground italic">
+                * {t("pm.clients.detail.billing.detailSource")}
+              </p>
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2 border-t p-4">
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t p-4 bg-muted/20">
           <button
             type="button"
             onClick={onMessage}
@@ -437,17 +644,31 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
             <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
             {t("pm.clients.actions.message")}
           </button>
+          
           <Link href={`/pm/projects?q=${projectSearch}`}>
             <button className="rounded-md border px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
               {t("pm.clients.actions.viewProject")}
             </button>
           </Link>
+          
           {client.projectId ? (
-            <Link href={`/pm/workspace?projectId=${encodeURIComponent(client.projectId)}`}>
-              <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
-                {t("pm.clients.actions.openWorkspace")}
-              </button>
-            </Link>
+            <>
+              {activeTab === "overview" && (
+                <button
+                  type="button"
+                  onClick={handleSendWorkspaceLink}
+                  disabled={isSendingLink}
+                  className="rounded-md border border-primary/30 bg-primary/5 hover:bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition-colors disabled:opacity-50"
+                >
+                  {isSendingLink ? "Sending..." : t("pm.clients.actions.sendWorkspace")}
+                </button>
+              )}
+              <Link href={`/pm/workspace?projectId=${encodeURIComponent(client.projectId)}`}>
+                <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 shadow-md">
+                  {t("pm.clients.actions.openWorkspace")}
+                </button>
+              </Link>
+            </>
           ) : (
             <button type="button" disabled className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground opacity-40">
               {t("pm.clients.actions.openWorkspace")}

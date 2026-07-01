@@ -43,12 +43,20 @@ export default defineConfig(async ({ mode }) => {
   build: {
     outDir: path.resolve(import.meta.dirname, outDir),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: splitVendorChunks,
+      },
+    },
   },
   server: {
     port,
     strictPort: true,
     host: "0.0.0.0",
     allowedHosts: true,
+    watch: {
+      ignored: ["**/.dev-data/**"],
+    },
     fs: {
       strict: true,
     },
@@ -79,4 +87,50 @@ function parsePort(rawPort: string | undefined, fallback: number) {
   }
 
   return parsed;
+}
+
+function splitVendorChunks(id: string) {
+  const normalizedId = id.replace(/\\/g, "/");
+
+  if (!normalizedId.includes("/node_modules/")) {
+    return undefined;
+  }
+
+  if (
+    normalizedId.includes("/react/") ||
+    normalizedId.includes("/react-dom/") ||
+    normalizedId.includes("/scheduler/")
+  ) {
+    return "vendor-react";
+  }
+
+  if (normalizedId.includes("/@radix-ui/")) {
+    return "vendor-radix";
+  }
+
+  if (
+    normalizedId.includes("/recharts/") ||
+    normalizedId.includes("/d3-") ||
+    normalizedId.includes("/victory-vendor/")
+  ) {
+    return "vendor-charts";
+  }
+
+  if (normalizedId.includes("/three/") || normalizedId.includes("/@react-three/")) {
+    return "vendor-three";
+  }
+
+  if (normalizedId.includes("/i18next/") || normalizedId.includes("/react-i18next/")) {
+    return "vendor-i18n";
+  }
+
+  if (normalizedId.includes("/framer-motion/")) {
+    return "vendor-motion";
+  }
+
+  if (normalizedId.includes("/lucide-react/")) {
+    return "vendor-icons";
+  }
+
+  return undefined;
 }

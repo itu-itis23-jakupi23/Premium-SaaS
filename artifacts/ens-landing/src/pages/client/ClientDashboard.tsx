@@ -26,6 +26,7 @@ import {
   Clock,
   FileText,
   Layout,
+  Lock,
   TrendingUp,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -162,6 +163,25 @@ export default function ClientDashboard() {
           <StatCard key={stat.label} {...stat} />
         ))}
       </div>
+
+      {!isLoading && !activeProject && (
+        <Card className="mt-6 border-yellow-500/30 bg-yellow-500/5">
+          <CardContent className="grid gap-4 p-6 md:grid-cols-[auto_1fr_auto] md:items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-yellow-500/30 bg-background text-yellow-500">
+              <Lock className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold">Waiting for Chief assignment</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your account is in the system. The Chief Manager needs to assign a project manager and project before your workspace unlocks.
+              </p>
+            </div>
+            <Button variant="outline" asChild>
+              <Link href="/client/messages">Message team</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 mt-6 md:grid-cols-3">
         <Card className="md:col-span-2 border-primary/20 bg-primary/5">
@@ -309,13 +329,17 @@ export default function ClientDashboard() {
                 </div>
               </div>
             ) : (
-              <EmptyPanel
-                text={
-                  isLoading
-                    ? t("client.dashboard.loadingActiveProject")
-                    : t("client.dashboard.noProjectAssigned")
-                }
-              />
+              isLoading ? (
+                <EmptyPanel text={t("client.dashboard.loadingActiveProject")} />
+              ) : (
+                <div className="rounded-lg border border-dashed border-yellow-500/30 bg-background/50 px-4 py-8 text-center">
+                  <Lock className="mx-auto h-6 w-6 text-yellow-500" aria-hidden="true" />
+                  <p className="mt-3 text-sm font-medium">Workspace locked until assignment</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    You will be notified when your project manager is assigned.
+                  </p>
+                </div>
+              )
             )}
           </CardContent>
         </Card>

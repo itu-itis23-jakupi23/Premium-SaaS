@@ -22,14 +22,14 @@ router.get("/auth/me", async (req, res) => {
   const auth = await authFromAccessCookie(req.cookies?.[ACCESS_COOKIE]);
 
   if (auth) {
-    res.json(authResponse(auth));
+    res.json(await enrichAuthResponse(auth));
     return;
   }
 
   const refreshedAuth = await refreshAuthFromCookie(req.cookies?.[REFRESH_COOKIE], res);
 
   if (refreshedAuth) {
-    res.json(authResponse(refreshedAuth));
+    res.json(await enrichAuthResponse(refreshedAuth));
     return;
   }
 
@@ -155,8 +155,34 @@ router.post("/auth/signup", async (req, res) => {
   `);
 
   await db.execute(sql`
-    insert into clients (organization_id, company_name, contact_name, contact_email, status, metadata)
-    values (${organization.id}::uuid, ${input.value.company}, ${input.value.name}, ${input.value.email}, 'pending_approval', '{}'::jsonb)
+    insert into clients (
+      organization_id,
+      company_name,
+      contact_name,
+      contact_email,
+      status,
+      intake_exhibition_name,
+      intake_booth_size_sqm,
+      intake_city,
+      intake_deadline_at,
+      intake_preferred_system,
+      intake_notes,
+      metadata
+    )
+    values (
+      ${organization.id}::uuid,
+      ${input.value.company},
+      ${input.value.name},
+      ${input.value.email},
+      'pending_approval',
+      ${input.value.exhibitionName},
+      ${input.value.boothSizeSqm},
+      ${input.value.city},
+      ${input.value.deadline}::timestamptz,
+      ${input.value.preferredSystem}::booth_system,
+      ${input.value.notes},
+      '{}'::jsonb
+    )
   `);
 
   const auth = await createSession({
@@ -176,6 +202,107 @@ router.post("/auth/signup", async (req, res) => {
 
   setAuthCookies(res, auth.accessToken, auth.refreshToken);
   await auditAuthEvent(organization.id, userId, "auth_signup", "created client account");
+  res.status(201).json(authResponse(auth.context));
+});
+
+router.post("/auth/signup-staff", async (req, res) => {
+  const input = parseSignupStaffInput(req.body);
+
+  if (!input.ok) {
+    res.status(400).json({
+      error: {
+        code: "invalid_signup_input",
+        message: input.error,
+      },
+    });
+    return;
+  }
+
+  const isDev = process.env.NODE_ENV !== "production";
+  const requiredKey = process.env.STAFF_SIGNUP_KEY || process.env.CHIEF_BOOTSTRAP_KEY || process.env.STAFF_ACCESS_CODE;
+  if (!isDev && (!requiredKey || input.value.setupKey !== requiredKey)) {
+    res.status(403).json({
+      error: {
+        code: "setup_key_required",
+        message: "Staff signup requires a valid setup key.",
+      },
+    });
+    return;
+  }
+
+  const existing = await queryRows<{ id: string }>(sql`
+    select id::text
+    from users
+    where lower(email) = lower(${input.value.email})
+      and deleted_at is null
+    limit 1
+  `);
+
+  if (existing[0]) {
+    res.status(409).json({
+      error: {
+        code: "email_exists",
+        message: "An account with this email already exists.",
+      },
+    });
+    return;
+  }
+
+  const orgSlug = slugify(input.value.company);
+  let finalSlug = orgSlug;
+  const existingOrg = await findOrganizationBySlug(finalSlug);
+  if (existingOrg) {
+    finalSlug = `${orgSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
+  }
+
+  const orgRows = await queryRows<{ id: string; name: string; slug: string; plan: string }>(sql`
+    insert into organizations (name, slug, plan, timezone, seat_limit, active_project_limit, storage_limit_mb, metadata)
+    values (${input.value.company}, ${finalSlug}, 'starter', 'Europe/Istanbul', 10, 20, 10240, '{}'::jsonb)
+    returning id::text, name, slug, plan
+  `);
+
+  const org = orgRows[0];
+  if (!org) {
+    throw new Error("Organization signup insert did not return a row");
+  }
+
+  const passwordHash = hashPassword(input.value.password);
+  const userRows = await queryRows<{ id: string }>(sql`
+    insert into users (email, name, role, password_hash, email_verified_at, metadata)
+    values (${input.value.email}, ${input.value.name}, ${input.value.role}, ${passwordHash}, now(), '{}'::jsonb)
+    returning id::text
+  `);
+
+  const userId = userRows[0]?.id;
+  if (!userId) {
+    throw new Error("User signup insert did not return an id");
+  }
+
+  await db.execute(sql`
+    insert into memberships (organization_id, user_id, role, status, joined_at)
+    values (${org.id}::uuid, ${userId}::uuid, ${input.value.role}, 'active', now())
+  `);
+
+  // Instantly seed/fill the organization with active demo data
+  await seedStaffOrganizationData(org.id, userId, input.value.role, input.value.name, passwordHash);
+
+  const auth = await createSession({
+    userId,
+    userName: input.value.name,
+    userEmail: input.value.email,
+    role: input.value.role,
+    avatarUrl: "",
+    avatarTone: input.value.role === "chief" ? "primary" : "blue",
+    organizationId: org.id,
+    organizationName: org.name,
+    organizationSlug: org.slug,
+    organizationPlan: org.plan,
+    userAgent: req.header("user-agent") ?? null,
+    ipAddress: req.ip,
+  });
+
+  setAuthCookies(res, auth.accessToken, auth.refreshToken);
+  await auditAuthEvent(org.id, userId, "auth_signup", `created staff account (${input.value.role})`);
   res.status(201).json(authResponse(auth.context));
 });
 
@@ -397,7 +524,7 @@ async function findOrganizationBySlug(slug: string) {
   return rows[0] ?? null;
 }
 
-function authResponse(auth: AuthContext) {
+function authResponse(auth: AuthContext, clientRecord?: { status: string; id: string } | null) {
   return {
     user: {
       id: auth.user.id,
@@ -409,7 +536,21 @@ function authResponse(auth: AuthContext) {
       avatarTone: auth.user.avatarTone,
     },
     organization: auth.organization,
+    clientRecord: clientRecord ?? null,
   };
+}
+
+async function enrichAuthResponse(auth: AuthContext) {
+  if (auth.user.role !== "client") return authResponse(auth, null);
+  const rows = await queryRows<{ id: string; status: string }>(sql`
+    select id::text, status::text
+    from clients
+    where organization_id = ${auth.organization.id}::uuid
+      and lower(contact_email) = lower(${auth.user.email})
+      and deleted_at is null
+    limit 1
+  `);
+  return authResponse(auth, rows[0] ?? null);
 }
 
 function emptyAuthResponse() {
@@ -528,6 +669,8 @@ function parseLoginInput(body: unknown) {
   return { ok: true as const, value: { email, password, organizationSlug } };
 }
 
+const INTAKE_BOOTH_SYSTEMS = ["octanorm", "maxima", "custom"] as const;
+
 function parseSignupInput(body: unknown) {
   if (!body || typeof body !== "object") return { ok: false as const, error: "Request body must be an object" };
   const data = body as Record<string, unknown>;
@@ -537,12 +680,46 @@ function parseSignupInput(body: unknown) {
   const password = stringValue(data.password);
   const organizationSlug = stringValue(data.organizationSlug);
 
+  const exhibitionName = stringValue(data.exhibitionName);
+  const boothSizeSqmRaw = stringValue(String(data.boothSizeSqm ?? ""));
+  const boothSizeSqm = boothSizeSqmRaw ? Number(boothSizeSqmRaw) : null;
+  const city = stringValue(data.city);
+  const deadline = stringValue(data.deadline);
+  const preferredSystemRaw = stringValue(data.preferredSystem);
+  const preferredSystem = preferredSystemRaw && (INTAKE_BOOTH_SYSTEMS as readonly string[]).includes(preferredSystemRaw)
+    ? (preferredSystemRaw as (typeof INTAKE_BOOTH_SYSTEMS)[number])
+    : null;
+  const notes = stringValue(data.notes);
+
   if (!name || name.length < 2) return { ok: false as const, error: "Name is required" };
   if (!company || company.length < 2) return { ok: false as const, error: "Company is required" };
   if (!email || !email.includes("@")) return { ok: false as const, error: "Valid email is required" };
   if (!password || password.length < 8) return { ok: false as const, error: "Password must be at least 8 characters" };
+  if (!exhibitionName || exhibitionName.length < 2) return { ok: false as const, error: "Exhibition name is required" };
+  if (!boothSizeSqm || !Number.isFinite(boothSizeSqm) || boothSizeSqm <= 0) return { ok: false as const, error: "A valid booth size (sqm) is required" };
+  if (!city) return { ok: false as const, error: "City is required" };
+  if (!deadline || !isIsoDate(deadline)) return { ok: false as const, error: "A valid deadline (YYYY-MM-DD) is required" };
 
-  return { ok: true as const, value: { name, company, email, password, organizationSlug } };
+  return {
+    ok: true as const,
+    value: {
+      name,
+      company,
+      email,
+      password,
+      organizationSlug,
+      exhibitionName,
+      boothSizeSqm,
+      city,
+      deadline,
+      preferredSystem,
+      notes,
+    },
+  };
+}
+
+function isIsoDate(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 function stringValue(value: unknown) {
@@ -557,6 +734,262 @@ async function auditAuthEvent(organizationId: string, actorUserId: string, type:
   await db.execute(sql`
     insert into activity_events (organization_id, actor_user_id, event_type, message, metadata)
     values (${organizationId}::uuid, ${actorUserId}::uuid, ${type}, ${message}, '{}'::jsonb)
+  `);
+}
+
+function parseSignupStaffInput(body: unknown) {
+  if (!body || typeof body !== "object") return { ok: false as const, error: "Request body must be an object" };
+  const data = body as Record<string, unknown>;
+  const name = stringValue(data.name);
+  const company = stringValue(data.company);
+  const email = stringValue(data.email)?.toLowerCase();
+  const password = stringValue(data.password);
+  const roleRaw = stringValue(data.role);
+  const setupKey = stringValue(data.setupKey);
+
+  if (!name || name.length < 2) return { ok: false as const, error: "Name is required" };
+  if (!company || company.length < 2) return { ok: false as const, error: "Company name is required" };
+  if (!email || !email.includes("@")) return { ok: false as const, error: "Valid email is required" };
+  if (!password || password.length < 8) return { ok: false as const, error: "Password must be at least 8 characters" };
+
+  const role: "pm" | "chief" = roleRaw === "chief" ? "chief" : "pm";
+
+  return { ok: true as const, value: { name, company, email, password, role, setupKey } };
+}
+
+function slugify(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "agency";
+}
+
+async function seedStaffOrganizationData(orgId: string, primaryUserId: string, primaryUserRole: "chief" | "pm", primaryUserName: string, passwordHash: string) {
+  let pmUserId = primaryUserId;
+  let chiefUserId = primaryUserId;
+
+  if (primaryUserRole === "chief") {
+    // Seed a PM user under this chief
+    const pmUserRows = await queryRows<{ id: string }>(sql`
+      insert into users (email, name, role, password_hash, email_verified_at, metadata)
+      values (${`jane.pm+${orgId.slice(0, 8)}@example.com`}, 'Jane Project Manager', 'pm', ${passwordHash}, now(), '{}'::jsonb)
+      returning id::text
+    `);
+    pmUserId = pmUserRows[0]?.id ?? primaryUserId;
+    await db.execute(sql`
+      insert into memberships (organization_id, user_id, role, status, joined_at)
+      values (${orgId}::uuid, ${pmUserId}::uuid, 'pm', 'active', now())
+    `);
+  } else {
+    // Seed a Chief/Owner user
+    const chiefUserRows = await queryRows<{ id: string }>(sql`
+      insert into users (email, name, role, password_hash, email_verified_at, metadata)
+      values (${`owner+${orgId.slice(0, 8)}@example.com`}, 'Agency Owner', 'chief', ${passwordHash}, now(), '{}'::jsonb)
+      returning id::text
+    `);
+    chiefUserId = chiefUserRows[0]?.id ?? primaryUserId;
+    await db.execute(sql`
+      insert into memberships (organization_id, user_id, role, status, joined_at)
+      values (${orgId}::uuid, ${chiefUserId}::uuid, 'chief', 'active', now())
+    `);
+  }
+
+  // Seed 3 Clients
+  const client1Rows = await queryRows<{ id: string }>(sql`
+    insert into clients (organization_id, company_name, contact_name, contact_email, status, assigned_pm_user_id, activated_at, metadata)
+    values (${orgId}::uuid, 'Acme Corp', 'John Acme', ${`john@acme+${orgId.slice(0, 8)}.com`}, 'active', ${pmUserId}::uuid, now(), '{}'::jsonb)
+    returning id::text
+  `);
+  const c1Id = client1Rows[0]?.id;
+
+  const client2Rows = await queryRows<{ id: string }>(sql`
+    insert into clients (organization_id, company_name, contact_name, contact_email, status, assigned_pm_user_id, activated_at, metadata)
+    values (${orgId}::uuid, 'Globex Showcase', 'Hank Globex', ${`hank@globex+${orgId.slice(0, 8)}.com`}, 'active', ${pmUserId}::uuid, now(), '{}'::jsonb)
+    returning id::text
+  `);
+  const c2Id = client2Rows[0]?.id;
+
+  const client3Rows = await queryRows<{ id: string }>(sql`
+    insert into clients (organization_id, company_name, contact_name, contact_email, status, assigned_pm_user_id, activated_at, metadata)
+    values (${orgId}::uuid, 'Initech Labs', 'Peter Initech', ${`peter@initech+${orgId.slice(0, 8)}.com`}, 'pending_approval', ${pmUserId}::uuid, null, '{}'::jsonb)
+    returning id::text
+  `);
+  const c3Id = client3Rows[0]?.id;
+
+  if (!c1Id || !c2Id || !c3Id) return;
+
+  // Seed 3 Projects
+  const proj1Rows = await queryRows<{ id: string }>(sql`
+    insert into projects (organization_id, client_id, assigned_pm_user_id, created_by_user_id, name, exhibition_name, status, health, budget_cents, currency, starts_at, deadline_at, metadata)
+    values (
+      ${orgId}::uuid,
+      ${c1Id}::uuid,
+      ${pmUserId}::uuid,
+      ${chiefUserId}::uuid,
+      'Acme Exhibition Stand',
+      'Acme Exhibition Stand',
+      'in_design',
+      'on_track',
+      3500000,
+      'EUR',
+      now() - interval '5 days',
+      now() + interval '20 days',
+      '{"pipelineStage": "design"}'::jsonb
+    )
+    returning id::text
+  `);
+  const p1Id = proj1Rows[0]?.id;
+
+  const proj2Rows = await queryRows<{ id: string }>(sql`
+    insert into projects (organization_id, client_id, assigned_pm_user_id, created_by_user_id, name, exhibition_name, status, health, budget_cents, currency, starts_at, deadline_at, metadata)
+    values (
+      ${orgId}::uuid,
+      ${c2Id}::uuid,
+      ${pmUserId}::uuid,
+      ${chiefUserId}::uuid,
+      'Globex Summit Booth',
+      'Globex Summit Booth',
+      'completed',
+      'on_track',
+      6200000,
+      'EUR',
+      now() - interval '15 days',
+      now() - interval '2 days',
+      '{"pipelineStage": "closed"}'::jsonb
+    )
+    returning id::text
+  `);
+  const p2Id = proj2Rows[0]?.id;
+
+  const proj3Rows = await queryRows<{ id: string }>(sql`
+    insert into projects (organization_id, client_id, assigned_pm_user_id, created_by_user_id, name, exhibition_name, status, health, budget_cents, currency, starts_at, deadline_at, metadata)
+    values (
+      ${orgId}::uuid,
+      ${c3Id}::uuid,
+      ${pmUserId}::uuid,
+      ${chiefUserId}::uuid,
+      'Initech Showcase',
+      'Initech Showcase',
+      'delayed',
+      'delayed',
+      1500000,
+      'EUR',
+      now() - interval '3 days',
+      now() + interval '5 days',
+      '{"pipelineStage": "review"}'::jsonb
+    )
+    returning id::text
+  `);
+  const p3Id = proj3Rows[0]?.id;
+
+  if (!p1Id || !p2Id || !p3Id) return;
+
+  // Project Members
+  for (const pid of [p1Id, p2Id, p3Id]) {
+    await db.execute(sql`
+      insert into project_members (project_id, user_id, role)
+      values (${pid}::uuid, ${pmUserId}::uuid, 'pm')
+    `);
+    await db.execute(sql`
+      insert into project_members (project_id, user_id, role)
+      values (${pid}::uuid, ${chiefUserId}::uuid, 'chief')
+    `);
+  }
+
+  // Booth Designs
+  const d1Rows = await queryRows<{ id: string }>(sql`
+    insert into booth_designs (organization_id, project_id, name, booth_system, booth_type, width_mm, depth_mm, height_mm, grid_size_mm, units, current_version_number, created_by_user_id)
+    values (${orgId}::uuid, ${p1Id}::uuid, 'Acme layout design', 'octanorm', 'inline', 6000, 4000, 2500, 1000, 'metric', 1, ${pmUserId}::uuid)
+    returning id::text
+  `);
+  const d1Id = d1Rows[0]?.id;
+
+  const d2Rows = await queryRows<{ id: string }>(sql`
+    insert into booth_designs (organization_id, project_id, name, booth_system, booth_type, width_mm, depth_mm, height_mm, grid_size_mm, units, current_version_number, created_by_user_id)
+    values (${orgId}::uuid, ${p2Id}::uuid, 'Globex booth layout', 'maxima', 'corner', 8000, 5000, 4000, 1000, 'metric', 1, ${pmUserId}::uuid)
+    returning id::text
+  `);
+  const d2Id = d2Rows[0]?.id;
+
+  const d3Rows = await queryRows<{ id: string }>(sql`
+    insert into booth_designs (organization_id, project_id, name, booth_system, booth_type, width_mm, depth_mm, height_mm, grid_size_mm, units, current_version_number, created_by_user_id)
+    values (${orgId}::uuid, ${p3Id}::uuid, 'Initech booth design', 'custom', 'peninsula', 4000, 3000, 2500, 1000, 'metric', 1, ${pmUserId}::uuid)
+    returning id::text
+  `);
+  const d3Id = d3Rows[0]?.id;
+
+  if (!d1Id || !d2Id || !d3Id) return;
+
+  // Booth Versions
+  const v1Rows = await queryRows<{ id: string }>(sql`
+    insert into booth_versions (organization_id, design_id, project_id, version_number, status, title, layout_json, asset_summary, cost_estimate_cents, created_by_user_id)
+    values (${orgId}::uuid, ${d1Id}::uuid, ${p1Id}::uuid, 1, 'draft', 'Initial concept layout', '{"gridMm": 1000, "boothSystem": "octanorm", "dimensions": {"widthMm": 6000, "depthMm": 4000, "heightMm": 2500}, "objects": []}'::jsonb, '{}'::jsonb, 0, ${pmUserId}::uuid)
+    returning id::text
+  `);
+  const v1Id = v1Rows[0]?.id;
+
+  const v2Rows = await queryRows<{ id: string }>(sql`
+    insert into booth_versions (organization_id, design_id, project_id, version_number, status, title, layout_json, asset_summary, cost_estimate_cents, created_by_user_id)
+    values (${orgId}::uuid, ${d2Id}::uuid, ${p2Id}::uuid, 1, 'approved', 'Final build version', '{"gridMm": 1000, "boothSystem": "maxima", "dimensions": {"widthMm": 8000, "depthMm": 5000, "heightMm": 4000}, "objects": []}'::jsonb, '{}'::jsonb, 0, ${pmUserId}::uuid)
+    returning id::text
+  `);
+  const v2Id = v2Rows[0]?.id;
+
+  const v3Rows = await queryRows<{ id: string }>(sql`
+    insert into booth_versions (organization_id, design_id, project_id, version_number, status, title, layout_json, asset_summary, cost_estimate_cents, created_by_user_id)
+    values (${orgId}::uuid, ${d3Id}::uuid, ${p3Id}::uuid, 1, 'submitted', 'Review draft', '{"gridMm": 1000, "boothSystem": "custom", "dimensions": {"widthMm": 4000, "depthMm": 3000, "heightMm": 2500}, "objects": []}'::jsonb, '{}'::jsonb, 0, ${pmUserId}::uuid)
+    returning id::text
+  `);
+  const v3Id = v3Rows[0]?.id;
+
+  if (!v1Id || !v2Id || !v3Id) return;
+
+  // Tasks
+  await db.execute(sql`
+    insert into tasks (organization_id, project_id, assigned_to_user_id, created_by_user_id, title, description, status, priority, due_at)
+    values 
+      (${orgId}::uuid, ${p1Id}::uuid, ${pmUserId}::uuid, ${chiefUserId}::uuid, 'Design initial concept layout', 'Create 3D octanorm mockups.', 'done', 'high', now() - interval '2 days'),
+      (${orgId}::uuid, ${p1Id}::uuid, ${pmUserId}::uuid, ${chiefUserId}::uuid, 'Review materials quote', 'Check prices for PVC panels.', 'in_progress', 'normal', now() + interval '3 days'),
+      (${orgId}::uuid, ${p1Id}::uuid, ${pmUserId}::uuid, ${chiefUserId}::uuid, 'Submit budget proposal', 'Send total cost estimation.', 'todo', 'urgent', now() + interval '5 days')
+  `);
+
+  await db.execute(sql`
+    insert into tasks (organization_id, project_id, assigned_to_user_id, created_by_user_id, title, description, status, priority, due_at)
+    values 
+      (${orgId}::uuid, ${p3Id}::uuid, ${pmUserId}::uuid, ${chiefUserId}::uuid, 'Setup structure frame', 'Assemble the booth space frame.', 'todo', 'high', now() + interval '1 day'),
+      (${orgId}::uuid, ${p3Id}::uuid, ${pmUserId}::uuid, ${chiefUserId}::uuid, 'Prepare graphic assets', 'Review print resolution.', 'todo', 'normal', now() + interval '2 days')
+  `);
+
+  // Approvals
+  await db.execute(sql`
+    insert into approvals (organization_id, project_id, booth_version_id, requested_by_user_id, status, message, requested_at, due_at)
+    values (${orgId}::uuid, ${p1Id}::uuid, ${v1Id}::uuid, ${pmUserId}::uuid, 'requested', 'Initial 3D Layout review request', now() - interval '1 day', now() + interval '3 days')
+  `);
+
+  await db.execute(sql`
+    insert into approvals (organization_id, project_id, booth_version_id, requested_by_user_id, status, message, requested_at, due_at)
+    values (${orgId}::uuid, ${p3Id}::uuid, ${v3Id}::uuid, ${pmUserId}::uuid, 'under_review', 'Please review the custom graphic panel placements', now() - interval '2 days', now() + interval '1 day')
+  `);
+
+  // Comments
+  await db.execute(sql`
+    insert into comments (organization_id, project_id, booth_version_id, author_user_id, body, created_at)
+    values (${orgId}::uuid, ${p1Id}::uuid, ${v1Id}::uuid, ${pmUserId}::uuid, 'Please review the structure heights.', now() - interval '12 hours')
+  `);
+
+  // Invoices
+  await db.execute(sql`
+    insert into invoices (organization_id, client_id, invoice_number, status, currency, subtotal_cents, tax_cents, total_cents, due_at, paid_at, created_at)
+    values 
+      (${orgId}::uuid, ${c1Id}::uuid, 'INV-2026-001', 'paid', 'EUR', 300000, 60000, 360000, now() - interval '20 days', now() - interval '20 days', now() - interval '25 days'),
+      (${orgId}::uuid, ${c2Id}::uuid, 'INV-2026-002', 'paid', 'EUR', 500000, 100000, 600000, now() - interval '10 days', now() - interval '10 days', now() - interval '12 days'),
+      (${orgId}::uuid, ${c3Id}::uuid, 'INV-2026-003', 'open', 'EUR', 150000, 30000, 180000, now() + interval '10 days', null, now() - interval '2 days')
+  `);
+
+  // Activity Events
+  await db.execute(sql`
+    insert into activity_events (organization_id, actor_user_id, project_id, event_type, message, created_at)
+    values 
+      (${orgId}::uuid, ${primaryUserId}::uuid, ${p1Id}::uuid, 'project_created', 'created project', now() - interval '5 days'),
+      (${orgId}::uuid, ${pmUserId}::uuid, ${p1Id}::uuid, 'layout_updated', 'saved booth layout v1', now() - interval '3 days'),
+      (${orgId}::uuid, ${pmUserId}::uuid, ${p1Id}::uuid, 'approval_requested', 'requested layout approval', now() - interval '1 day')
   `);
 }
 

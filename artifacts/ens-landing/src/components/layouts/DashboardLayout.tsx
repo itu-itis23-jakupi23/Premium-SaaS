@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ElementType, ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,6 +57,13 @@ interface DashboardLayoutProps {
   role: "chief" | "pm" | "client";
 }
 
+type CachedProfile = { name: string; email: string; avatarUrl: string };
+
+const cachedProfiles: Record<string, CachedProfile> = {};
+const cachedNotificationsByUser: Record<string, PlatformNotification[]> = {};
+const cachedUnreadNotificationsByUser: Record<string, number> = {};
+const cachedPendingRequestsCountByUser: Record<string, number> = {};
+
 const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
   chief: [
     { icon: LayoutDashboard, labelKey: "chief.nav.dashboard",  href: "/chief" },
@@ -74,7 +81,6 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
     { icon: Users,           labelKey: "pm.nav.myClients",  href: "/pm/clients" },
     { icon: Briefcase,       labelKey: "pm.nav.projects",   href: "/pm/projects" },
     { icon: CalendarDays,    labelKey: "pm.nav.calendar",   href: "/pm/calendar" },
-    { icon: Layers,          labelKey: "pm.nav.workspace",  href: "/pm/workspace" },
     { icon: ClipboardList,   labelKey: "pm.nav.requests",   href: "/pm/requests" },
     { icon: MessageSquare,   labelKey: "pm.nav.messages",   href: "/pm/messages" },
     { icon: CheckCircle,     labelKey: "pm.nav.tasks",      href: "/pm/tasks" },
@@ -98,10 +104,11 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const [location, navigate] = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { logout, user } = useAuth();
-  const [profile, setProfile] = useState<{ name: string; email: string; avatarUrl: string } | null>(null);
-  const [notifications, setNotifications] = useState<PlatformNotification[]>([]);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const cacheKey = user?.id || user?.email || "anonymous";
+  const [profile, setProfile] = useState<CachedProfile | null>(() => cachedProfiles[cacheKey] ?? null);
+  const [notifications, setNotifications] = useState<PlatformNotification[]>(() => cachedNotificationsByUser[cacheKey] ?? []);
+  const [unreadNotifications, setUnreadNotifications] = useState(() => cachedUnreadNotificationsByUser[cacheKey] ?? 0);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(() => cachedPendingRequestsCountByUser[cacheKey] ?? 0);
   const items = sidebarItems[role];
   const accountHref = role === "client" ? "/client/profile" : role === "pm" ? "/pm/settings" : "/chief/settings";
 
@@ -114,18 +121,24 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         return;
       }
 
+      setProfile(cachedProfiles[cacheKey] ?? { name: user.name, email: user.email, avatarUrl: user.avatarUrl || "" });
+
       getAccountSettings()
         .then((settings) => {
           if (!mounted) return;
-          setProfile({
+          const nextProfile = {
             name: settings.profile.name || user.name,
             email: settings.profile.email || user.email,
             avatarUrl: settings.profile.avatarUrl || user.avatarUrl || "",
-          });
+          };
+          setProfile(nextProfile);
+          cachedProfiles[cacheKey] = nextProfile;
         })
         .catch(() => {
           if (!mounted) return;
-          setProfile({ name: user.name, email: user.email, avatarUrl: user.avatarUrl || "" });
+          const fallback = { name: user.name, email: user.email, avatarUrl: user.avatarUrl || "" };
+          cachedProfiles[cacheKey] = fallback;
+          setProfile(fallback);
         });
     }
 
@@ -136,7 +149,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       mounted = false;
       window.removeEventListener(ACCOUNT_SETTINGS_EVENT, loadProfile);
     };
-  }, [user]);
+  }, [cacheKey, user]);
 
   useEffect(() => {
     let mounted = true;
@@ -148,16 +161,23 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         return;
       }
 
+      setNotifications(cachedNotificationsByUser[cacheKey] ?? []);
+      setUnreadNotifications(cachedUnreadNotificationsByUser[cacheKey] ?? 0);
+
       getNotifications()
         .then((payload) => {
           if (!mounted) return;
           setNotifications(payload.notifications);
           setUnreadNotifications(payload.unread);
+          cachedNotificationsByUser[cacheKey] = payload.notifications;
+          cachedUnreadNotificationsByUser[cacheKey] = payload.unread;
         })
         .catch(() => {
           if (!mounted) return;
           setNotifications([]);
           setUnreadNotifications(0);
+          cachedNotificationsByUser[cacheKey] = [];
+          cachedUnreadNotificationsByUser[cacheKey] = 0;
         });
     }
 
@@ -168,7 +188,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       mounted = false;
       window.clearInterval(timer);
     };
-  }, [user]);
+  }, [cacheKey, user]);
 
   useEffect(() => {
     if (role !== "pm") return;
@@ -179,10 +199,12 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         .then((payload) => {
           if (!mounted) return;
           setPendingRequestsCount(payload.summary.pending);
+          cachedPendingRequestsCountByUser[cacheKey] = payload.summary.pending;
         })
         .catch(() => {/* silently ignore — badge is best-effort */});
     }
 
+    setPendingRequestsCount(cachedPendingRequestsCountByUser[cacheKey] ?? 0);
     loadPendingRequests();
     const timer = window.setInterval(loadPendingRequests, 60_000);
     window.addEventListener(PM_REQUESTS_UPDATED_EVENT, loadPendingRequests);
@@ -192,7 +214,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       window.clearInterval(timer);
       window.removeEventListener(PM_REQUESTS_UPDATED_EVENT, loadPendingRequests);
     };
-  }, [role]);
+  }, [cacheKey, role]);
 
   function handleLogout() {
     logout();
@@ -205,9 +227,20 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         const payload = await markNotificationRead(notification.id);
         setNotifications(payload.notifications);
         setUnreadNotifications(payload.unread);
+        cachedNotificationsByUser[cacheKey] = payload.notifications;
+        cachedUnreadNotificationsByUser[cacheKey] = payload.unread;
       } catch {
-        setNotifications((current) => current.map((item) => item.id === notification.id ? { ...item, read: true, readAt: new Date().toISOString() } : item));
-        setUnreadNotifications((current) => Math.max(0, current - 1));
+        const readAt = new Date().toISOString();
+        setNotifications((current) => {
+          const next = current.map((item) => item.id === notification.id ? { ...item, read: true, readAt } : item);
+          cachedNotificationsByUser[cacheKey] = next;
+          return next;
+        });
+        setUnreadNotifications((current) => {
+          const next = Math.max(0, current - 1);
+          cachedUnreadNotificationsByUser[cacheKey] = next;
+          return next;
+        });
       }
     }
     if (notification.href) navigate(notification.href);
@@ -218,9 +251,17 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       const payload = await markAllNotificationsRead();
       setNotifications(payload.notifications);
       setUnreadNotifications(payload.unread);
+      cachedNotificationsByUser[cacheKey] = payload.notifications;
+      cachedUnreadNotificationsByUser[cacheKey] = payload.unread;
     } catch {
-      setNotifications((current) => current.map((notification) => ({ ...notification, read: true, readAt: notification.readAt ?? new Date().toISOString() })));
+      const readAt = new Date().toISOString();
+      setNotifications((current) => {
+        const next = current.map((notification) => ({ ...notification, read: true, readAt: notification.readAt ?? readAt }));
+        cachedNotificationsByUser[cacheKey] = next;
+        return next;
+      });
       setUnreadNotifications(0);
+      cachedUnreadNotificationsByUser[cacheKey] = 0;
     }
   }
 
@@ -361,18 +402,9 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         </header>
 
         <main id="main-content" className="flex-1 p-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="mx-auto max-w-7xl"
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+          <div className="mx-auto max-w-7xl">
+            {children}
+          </div>
         </main>
       </div>
     </div>

@@ -3,6 +3,15 @@ import { useTranslation } from "react-i18next";
 import { Booth3D } from "@/components/workspace/Booth3D";
 import {
   getCurrentWorkspace,
+  submitClientChangeRequest,
+  getWorkspaceComments,
+  createWorkspaceComment,
+  updateWorkspaceCommentStatus,
+  saveElementStatus,
+  approveProjectWorkspace,
+  createWorkspaceSubscriptionRequest,
+  workspaceApprovalStage,
+  workspaceApprovalStageLabel,
   type ProjectWorkspace,
   type WorkspaceState,
 } from "@/lib/platform-api";
@@ -31,19 +40,17 @@ import {
 void Square;
 
 const C = {
-  bg: "#f3f1ec",
-  panel: "#ffffff",
-  ink: "#181613",
-  hair: "#d8d3c9",
-  blue: "#1d4ed8",
-  orange: "#c2410c",
-  green: "#2f7d3a",
-  muted: "#6b6560",
+  bg:    'var(--workspace-bg, #f3f1ec)',
+  panel: 'var(--workspace-panel, #ffffff)',
+  ink:   'var(--workspace-ink, #181613)',
+  hair:  'var(--workspace-hair, #d8d3c9)',
+  blue:  'var(--workspace-blue, #1d4ed8)',
+  orange:'var(--workspace-orange, #c2410c)',
+  green: 'var(--workspace-green, #2f7d3a)',
+  muted: 'var(--workspace-muted, #6b6560)',
 } as const;
-const MONO =
-  '"SamsungOne","SamsungOne UI","SamsungOneKorean","Samsung Sharp Sans",system-ui,sans-serif';
-const UI =
-  '"SamsungOne","SamsungOne UI","SamsungOneKorean","Samsung Sharp Sans",system-ui,sans-serif';
+const MONO = 'var(--app-font-mono)';
+const UI   = 'var(--app-font-samsung)';
 
 const CATALOG = [
   {
@@ -62,6 +69,9 @@ const CATALOG = [
   { name: "Lighting", items: ["Spotlight", "LED Strip", "Arm Light"] },
 ];
 const THEME_COLORS = ["#3b3e44", "#dde0e4", "#7a4a2a", "#1a2640"];
+const WALL_COLORS = ["#f8fafc", "#dfe4ea", "#f3eadc", "#9aa1aa"];
+const FRAME_COLORS = ["#b8bdc3", "#3d4249", "#c7b99a", "#e4e7eb"];
+const FASCIA_COLORS = ["#ffffff", "#eef2f7", "#fff7ed", "#d2d7de"];
 const CARPET_COLORS = [
   "#1a1a1a",
   "#dde0e4",
@@ -72,12 +82,24 @@ const CARPET_COLORS = [
 ];
 
 interface Comment {
-  id: number;
+  id: string | number;
   user: string;
   initials: string;
   text: string;
   time: string;
   type?: "comment" | "change" | "pin";
+  status?: "open" | "resolved";
+  partId?: string;
+}
+interface PinAnnotation {
+  id: string | number;
+  x: number;
+  y: number;
+  z?: number;
+  text: string;
+  num: number;
+  status?: "open" | "resolved";
+  partId?: string;
 }
 const INITIAL_COMMENTS: Comment[] = [
   {
@@ -111,6 +133,7 @@ const VERSIONS = [
 ];
 
 type RightTab = "thread" | "approvals" | "pins";
+type FeedbackFilter = "open" | "all" | "resolved";
 
 function MonoLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -140,11 +163,17 @@ function workspaceToBoothConfig(workspace?: WorkspaceState | null) {
     system: booth?.system ?? "maxima",
     companyName: booth?.companyName ?? "TECHCORP INDUSTRIES",
     primaryColor: THEME_COLORS[workspace?.themeIdx ?? 0] ?? THEME_COLORS[0],
+    wallColor: WALL_COLORS[workspace?.wallFinishIdx ?? 0] ?? WALL_COLORS[0],
+    frameColor: FRAME_COLORS[workspace?.frameFinishIdx ?? 0] ?? FRAME_COLORS[0],
+    fasciaColor: FASCIA_COLORS[workspace?.fasciaFinishIdx ?? 0] ?? FASCIA_COLORS[0],
     carpetColor: CARPET_COLORS[workspace?.carpetIdx ?? 0] ?? CARPET_COLORS[0],
     openFront: booth?.openFront ?? true,
     openBack: booth?.openBack ?? false,
     openLeft: booth?.openLeft ?? false,
     openRight: booth?.openRight ?? false,
+    fasciaEnabled: booth?.fasciaEnabled ?? true,
+    fasciaOption: booth?.fasciaOption ?? "classic",
+    lightingPreset: workspace?.lightingPreset ?? "exhibition",
   };
 }
 
@@ -159,19 +188,21 @@ export default function ClientWorkspace() {
   const [compareVersion, setCompareVersion] = useState("2.3");
   const [showVersions, setShowVersions] = useState(false);
   const [showChangeDlg, setShowChangeDlg] = useState(false);
+  const [showSubscriptionDlg, setShowSubscriptionDlg] = useState(false);
   const [changeText, setChangeText] = useState("");
   const [approved, setApproved] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [pinMode, setPinMode] = useState(false);
-  const [pins, setPins] = useState<
-    { id: number; x: number; y: number; text: string; num: number }[]
-  >([]);
+  const [pins, setPins] = useState<PinAnnotation[]>([]);
   const [pinText, setPinText] = useState("");
   const [pendingPin, setPendingPin] = useState<{
     x: number;
     y: number;
+    z?: number;
+    partId?: string;
   } | null>(null);
   const [rightTab, setRightTab] = useState<RightTab>("thread");
+  const [feedbackFilter, setFeedbackFilter] = useState<FeedbackFilter>("open");
   const [elementStatus, setElementStatus] = useState<
     Record<string, "approved" | "pending" | "rejected">
   >({
@@ -182,6 +213,16 @@ export default function ClientWorkspace() {
   });
   const [toastMsg, setToastMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
+  const [revisionCount, setRevisionCount] = useState(0);
+  const revisionLimit = workspaceRecord ? (workspaceRecord.revisionLimit ?? 2) : 2;
+  const revisionsExhausted = revisionCount >= revisionLimit;
+  const feedbackMatchesFilter = (status: "open" | "resolved" | undefined) => (
+    feedbackFilter === "all" || (status ?? "open") === feedbackFilter
+  );
+  const visibleComments = comments.filter((comment) => feedbackMatchesFilter(comment.status));
+  const visiblePins = pins.filter((pin) => feedbackMatchesFilter(pin.status));
+  const openFeedbackCount = comments.filter((comment) => (comment.status ?? "open") === "open").length
+    + pins.filter((pin) => (pin.status ?? "open") === "open").length;
 
   useEffect(() => {
     document.title = t("client.workspace.pageTitle");
@@ -218,11 +259,32 @@ export default function ClientWorkspace() {
     workspaceRecord?.versions.find(
       (v) => String(v.versionNumber) === compareVersion,
     )?.workspace ?? selectedWorkspace;
-  const selectedBoothConfig = workspaceToBoothConfig(selectedWorkspace);
-  const comparedBoothConfig = workspaceToBoothConfig(comparedWorkspace);
+  const selectedBoothConfig = useMemo(() => ({
+    ...workspaceToBoothConfig(selectedWorkspace),
+    placedItems: selectedWorkspace?.placedItems ?? [],
+    rooms: selectedWorkspace?.rooms ?? [],
+    pins,
+    pinMode,
+  }), [selectedWorkspace, pins, pinMode]);
+  const comparedBoothConfig = useMemo(() => ({
+    ...workspaceToBoothConfig(comparedWorkspace),
+    placedItems: comparedWorkspace?.placedItems ?? [],
+    rooms: comparedWorkspace?.rooms ?? [],
+    pins: [],
+    pinMode: false,
+  }), [comparedWorkspace]);
   const selectedBooth = selectedWorkspace?.booth;
   const projectTitle =
     workspaceRecord?.project.name ?? t("client.workspace.loadingWorkspace");
+  const approvalStage = workspaceApprovalStage(workspaceRecord);
+  const approvalStageLabel = workspaceApprovalStageLabel(approvalStage);
+  const approvalStageColor = approvalStage === "approved" || approvalStage === "locked"
+    ? C.green
+    : approvalStage === "revision_requested"
+      ? C.orange
+      : approvalStage === "sent" || approvalStage === "viewed"
+        ? C.blue
+        : C.muted;
 
   useEffect(() => {
     if (allApproved && !approved) {
@@ -238,6 +300,13 @@ export default function ClientWorkspace() {
       .then((record) => {
         if (!isMounted) return;
         setWorkspaceRecord(record);
+        setRevisionCount(record.revisionCount ?? 0);
+        if (record.elementStatus) {
+          setElementStatus(record.elementStatus);
+        }
+        if (record.approved !== undefined) {
+          setApproved(record.approved);
+        }
         const current = String(
           record.currentVersion?.versionNumber ??
             record.design.currentVersionNumber,
@@ -266,36 +335,114 @@ export default function ClientWorkspace() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!workspaceRecord?.project.id) return;
+    let isMounted = true;
+    getWorkspaceComments(workspaceRecord.project.id)
+      .then(({ comments: loadedComments }) => {
+        if (!isMounted) return;
+        // Parse database comments to match frontend structure
+        const formatted = loadedComments.map(c => ({
+          id: c.id,
+          user: c.user,
+          initials: c.initials,
+          text: c.text,
+          time: c.time,
+          type: c.type,
+          status: c.status ?? "open",
+        }));
+        setComments(formatted);
+
+        const loadedPins = loadedComments
+          .filter((c) => c.type === "pin" && c.pin)
+          .map((c, i) => ({
+            id: c.id,
+            x: c.pin!.x,
+            y: c.pin!.y,
+            z: c.pin!.z,
+            text: c.text.replace(/^.*Pin Annotation #\d+(?: \([^)]+\))?: /, ""),
+            num: i + 1,
+            status: c.status ?? "open",
+          }));
+        setPins(loadedPins);
+      })
+      .catch((err) => {
+        console.error("Failed to load comments", err);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [workspaceRecord?.project.id]);
+
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (!e.data || typeof e.data !== 'object') return;
+      if (e.data.type === 'pinRequested') {
+        setPendingPin({
+          x: e.data.x,
+          y: e.data.y,
+          z: e.data.z,
+          partId: typeof e.data.partId === "string" ? e.data.partId : undefined,
+        });
+        setPinText("");
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   const addComment = () => {
-    if (!newComment.trim()) return;
-    setComments((c) => [
-      ...c,
-      {
-        id: Date.now(),
-        user: "You",
-        initials: "YO",
-        text: newComment.trim(),
-        time: t("client.workspace.justNow"),
-      },
-    ]);
-    setNewComment("");
+    if (!newComment.trim() || !workspaceRecord?.project.id) return;
+    const body = newComment.trim();
+    createWorkspaceComment(workspaceRecord.project.id, body, null, "comment")
+      .then(({ comment }) => {
+        setComments((c) => [
+          ...c,
+          {
+            id: comment.id,
+            user: comment.user,
+            initials: comment.initials,
+            text: comment.text,
+            time: comment.time,
+            type: comment.type,
+            status: comment.status ?? "open",
+          },
+        ]);
+        setNewComment("");
+      })
+      .catch(() => {
+        showToast("Failed to post comment.");
+      });
   };
   const submitChange = () => {
-    if (!changeText.trim()) return;
-    setComments((c) => [
-      ...c,
-      {
-        id: Date.now(),
-        user: "You",
-        initials: "YO",
-        text: `[${t("client.workspace.changeRequestPrefix")}] ${changeText.trim()}`,
-        time: t("client.workspace.justNow"),
-        type: "change",
-      },
-    ]);
-    setChangeText("");
-    setShowChangeDlg(false);
-    showToast(t("client.workspace.toast.changeRequestSent"));
+    if (!changeText.trim() || !workspaceRecord?.project.id) return;
+    const projectId = workspaceRecord.project.id;
+    submitClientChangeRequest(projectId, changeText.trim())
+      .then((updated) => {
+        setWorkspaceRecord(updated);
+        setRevisionCount(updated.revisionCount);
+        setChangeText("");
+        setShowChangeDlg(false);
+        showToast(t("client.workspace.toast.changeRequestSent"));
+
+        getWorkspaceComments(projectId).then(({ comments: loadedComments }) => {
+          const formatted = loadedComments.map(c => ({
+            id: c.id,
+            user: c.user,
+            initials: c.initials,
+            text: c.text,
+            time: c.time,
+            type: c.type,
+            status: c.status ?? "open",
+          }));
+          setComments(formatted);
+        });
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Failed to submit change request.";
+        showToast(msg);
+        setShowChangeDlg(false);
+      });
   };
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!pinMode) return;
@@ -306,43 +453,213 @@ export default function ClientWorkspace() {
     });
   };
   const addPin = () => {
-    if (!pendingPin || !pinText.trim()) return;
+    if (!pendingPin || !pinText.trim() || !workspaceRecord?.project.id) return;
     const num = pins.length + 1;
-    setPins((prev) => [
-      ...prev,
-      { id: Date.now(), ...pendingPin, text: pinText.trim(), num },
-    ]);
-    setComments((c) => [
-      ...c,
-      {
-        id: Date.now(),
-        user: "You",
-        initials: "YO",
-        text: `📍 ${t("client.workspace.pinPrefix")} #${num}: ${pinText.trim()}`,
-        time: t("client.workspace.justNow"),
-        type: "pin",
-      },
-    ]);
-    setPinText("");
-    setPendingPin(null);
-    setPinMode(false);
-    showToast(t("client.workspace.toast.pinAdded", { num }));
+    const body = `Pin Annotation #${num}${pendingPin.partId ? ` (${pendingPin.partId})` : ''}: ${pinText.trim()}`;
+    const pinCoords = { x: pendingPin.x, y: pendingPin.y, z: pendingPin.z };
+    createWorkspaceComment(workspaceRecord.project.id, body, pinCoords, "pin")
+      .then(({ comment }) => {
+        setComments((c) => [
+          ...c,
+          {
+            id: comment.id,
+            user: comment.user,
+            initials: comment.initials,
+            text: comment.text,
+            time: comment.time,
+            type: comment.type,
+            status: comment.status ?? "open",
+          },
+        ]);
+        setPins((prev) => [
+          ...prev,
+          {
+            id: comment.id,
+            x: pinCoords.x,
+            y: pinCoords.y,
+            z: pinCoords.z,
+            text: pinText.trim(),
+            num,
+            status: comment.status ?? "open",
+            partId: pendingPin.partId,
+          },
+        ]);
+        setPinText("");
+        setPendingPin(null);
+        setPinMode(false);
+        showToast(t("client.workspace.toast.pinAdded", { num }));
+      })
+      .catch(() => {
+        showToast("Failed to place pin.");
+      });
+  };
+  const setFeedbackStatus = (feedbackId: string | number, status: "open" | "resolved") => {
+    const previousComments = comments;
+    const previousPins = pins;
+    const applyStatus = <T extends { id: string | number; status?: "open" | "resolved" }>(item: T): T =>
+      item.id === feedbackId ? { ...item, status } : item;
+
+    setComments((current) => current.map(applyStatus));
+    setPins((current) => current.map(applyStatus));
+
+    if (!workspaceRecord?.project.id || typeof feedbackId !== "string") return;
+
+    updateWorkspaceCommentStatus(workspaceRecord.project.id, feedbackId, status)
+      .catch(() => {
+        setComments(previousComments);
+        setPins(previousPins);
+        showToast("Failed to save feedback status.");
+      });
   };
   const approveElement = (id: string) => {
-    setElementStatus((p) => ({ ...p, [id]: "approved" }));
-    showToast(
-      t("client.workspace.toast.elementApproved", {
-        label: elements.find((e) => e.id === id)?.label,
-      }),
-    );
+    if (!workspaceRecord?.project.id) return;
+    const nextStatus = { ...elementStatus, [id]: "approved" as const };
+    setElementStatus(nextStatus);
+    saveElementStatus(workspaceRecord.project.id, nextStatus)
+      .then(() => {
+        showToast(
+          t("client.workspace.toast.elementApproved", {
+            label: elements.find((e) => e.id === id)?.label,
+          }),
+        );
+      })
+      .catch(() => {
+        showToast("Failed to save status.");
+      });
   };
   const rejectElement = (id: string) => {
-    setElementStatus((p) => ({ ...p, [id]: "rejected" }));
-    showToast(t("client.workspace.toast.feedbackSent"));
+    if (!workspaceRecord?.project.id) return;
+    const nextStatus = { ...elementStatus, [id]: "rejected" as const };
+    setElementStatus(nextStatus);
+    saveElementStatus(workspaceRecord.project.id, nextStatus)
+      .then(() => {
+        showToast(t("client.workspace.toast.feedbackSent"));
+      })
+      .catch(() => {
+        showToast("Failed to save status.");
+      });
   };
   const simulateDownload = () => {
+    const lines = [
+      `Workspace approval summary - ${projectTitle}`,
+      `Client: ${workspaceRecord?.project.client ?? "Client"}`,
+      `Exhibition: ${workspaceRecord?.project.exhibition ?? "Review"}`,
+      `Approval status: ${approvalStageLabel}`,
+      `Version: v${version}`,
+      '',
+      'Stand',
+      `- System: ${selectedBoothConfig.system === "maxima" ? "Maxima" : "Octanorm"}`,
+      `- Dimensions: ${selectedBoothConfig.width} x ${selectedBoothConfig.depth} x ${selectedBoothConfig.height} m`,
+      `- Floor area: ${(selectedBoothConfig.width * selectedBoothConfig.depth).toFixed(1)} m2`,
+      `- Open sides: ${[
+        selectedBoothConfig.openFront ? "front" : "",
+        selectedBoothConfig.openBack ? "back" : "",
+        selectedBoothConfig.openLeft ? "left" : "",
+        selectedBoothConfig.openRight ? "right" : "",
+      ].filter(Boolean).join(", ") || "none"}`,
+      '',
+      'Element approvals',
+      ...elements.map((element) => `- ${element.label}: ${elementStatus[element.id] ?? "pending"}`),
+      '',
+      'Feedback',
+      `- Open feedback items: ${openFeedbackCount}`,
+      `- Pins: ${pins.length}`,
+      `- Comments: ${comments.length}`,
+    ].join('\r\n');
+    const blob = new Blob([lines], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const safeName = projectTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'workspace';
+    link.href = url;
+    link.download = `${safeName}-approval-summary.txt`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
     showToast(t("client.workspace.toast.downloadStarted"));
   };
+  const handlePurchasePlan = (planCode: string) => {
+    if (!workspaceRecord?.project.id) return;
+    createWorkspaceSubscriptionRequest(workspaceRecord.project.id, planCode)
+      .then(({ checkout_url }) => {
+        if (checkout_url) {
+          window.location.href = checkout_url;
+        } else {
+          showToast("Failed to initiate upgrade.");
+        }
+      })
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : "Failed to initiate upgrade.";
+        showToast(msg);
+      });
+  };
+
+  if (workspaceError && !workspaceRecord) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: C.bg,
+          color: C.ink,
+          fontFamily: UI,
+          padding: 24,
+        }}
+      >
+        <div
+          style={{
+            width: "min(520px, 100%)",
+            background: C.panel,
+            border: `1px solid ${C.hair}`,
+            borderRadius: 18,
+            padding: 28,
+            textAlign: "center",
+            boxShadow: "0 18px 50px rgba(0,0,0,0.08)",
+          }}
+        >
+          <div
+            style={{
+              width: 58,
+              height: 58,
+              borderRadius: "50%",
+              margin: "0 auto 18px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#fff7ed",
+              border: "1px solid #fed7aa",
+              color: "#c2410c",
+            }}
+          >
+            <Lock size={24} aria-hidden />
+          </div>
+          <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Workspace waiting for assignment</h1>
+          <p style={{ fontSize: 14, lineHeight: 1.6, color: C.muted, marginBottom: 20 }}>
+            Your account exists, but the Chief Manager has not assigned a project manager and booth project yet.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.assign("/client")}
+            style={{
+              height: 38,
+              borderRadius: 999,
+              border: `1px solid ${C.hair}`,
+              background: C.panel,
+              color: C.ink,
+              padding: "0 18px",
+              fontFamily: UI,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Back to dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -446,6 +763,24 @@ export default function ClientWorkspace() {
             }}
           >
             <Eye size={10} aria-hidden /> {t("client.workspace.viewOnly")}
+          </span>
+          <span
+            style={{
+              fontFamily: MONO,
+              fontSize: 9.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              background: `${approvalStageColor}12`,
+              color: approvalStageColor,
+              border: `1px solid ${approvalStageColor}30`,
+              borderRadius: 4,
+              padding: "3px 9px",
+              flexShrink: 0,
+              textTransform: "uppercase",
+            }}
+          >
+            {approvalStageLabel}
           </span>
         </div>
         <div
@@ -588,10 +923,36 @@ export default function ClientWorkspace() {
           >
             <Download size={12} aria-hidden /> {t("client.workspace.downloadBtn")}
           </button>
+          {/* Revision counter badge */}
+          <span
+            style={{
+              fontFamily: MONO,
+              fontSize: 9.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              background: revisionsExhausted ? `${C.orange}18` : `${C.green}12`,
+              color: revisionsExhausted ? C.orange : C.green,
+              border: `1px solid ${revisionsExhausted ? C.orange : C.green}30`,
+              borderRadius: 4,
+              padding: "3px 9px",
+              flexShrink: 0,
+            }}
+            title="Number of change requests used"
+          >
+            Revisions: {revisionCount} / {revisionLimit}
+          </span>
           {/* Request Changes */}
           <button
-            onClick={() => setShowChangeDlg(true)}
-            aria-label={t("client.workspace.requestChangesBtn")}
+            onClick={() => {
+              if (revisionsExhausted) {
+                setShowSubscriptionDlg(true);
+                return;
+              }
+              setShowChangeDlg(true);
+            }}
+            aria-label={revisionsExhausted ? "Upgrade Revisions" : t("client.workspace.requestChangesBtn")}
+            title={revisionsExhausted ? "Choose a plan to request more revisions" : undefined}
             style={{
               background: "none",
               border: `1px solid ${C.orange}40`,
@@ -604,10 +965,11 @@ export default function ClientWorkspace() {
               fontSize: 11.5,
               fontFamily: UI,
               color: C.orange,
+              opacity: 1,
             }}
           >
             <AlertCircle size={12} aria-hidden />{" "}
-            {t("client.workspace.requestChangesBtn")}
+            {revisionsExhausted ? "Upgrade Revisions" : t("client.workspace.requestChangesBtn")}
           </button>
           {/* Approve */}
           {approved ? (
@@ -631,8 +993,16 @@ export default function ClientWorkspace() {
           ) : (
             <button
               onClick={() => {
-                setApproved(true);
-                showToast(t("client.workspace.toast.designApproved"));
+                if (!workspaceRecord?.project.id) return;
+                approveProjectWorkspace(workspaceRecord.project.id)
+                  .then((record) => {
+                    setWorkspaceRecord(record);
+                    setApproved(true);
+                    showToast(t("client.workspace.toast.designApproved"));
+                  })
+                  .catch(() => {
+                    showToast("Failed to approve design.");
+                  });
               }}
               style={{
                 background: C.green,
@@ -661,6 +1031,42 @@ export default function ClientWorkspace() {
           onClick={() => setShowVersions(false)}
           aria-hidden="true"
         />
+      )}
+
+      {revisionsExhausted && (
+        <div
+          style={{
+            background: "#fdf2f8",
+            borderBottom: "1px solid #fbcfe8",
+            padding: "8px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            color: "#9d174d",
+            fontSize: 12.5,
+            fontWeight: 500,
+            flexShrink: 0,
+          }}
+        >
+          <AlertCircle size={15} style={{ color: "#db2777" }} />
+          <span>You have used all included arrangement rounds. Upgrade your plan to unlock more revisions.</span>
+          <button
+            onClick={() => setShowSubscriptionDlg(true)}
+            style={{
+              marginLeft: "auto",
+              background: "#db2777",
+              color: "white",
+              border: "none",
+              borderRadius: 4,
+              padding: "4px 12px",
+              cursor: "pointer",
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+          >
+            Upgrade Revisions
+          </button>
+        </div>
       )}
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
@@ -1082,49 +1488,7 @@ export default function ClientWorkspace() {
             )}
           </div>
 
-          {/* View controls */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: 38,
-              left: "50%",
-              transform: "translateX(-50%)",
-              display: "flex",
-              background: C.panel,
-              border: `1px solid ${C.hair}`,
-              borderRadius: 20,
-              overflow: "hidden",
-              zIndex: 10,
-              padding: "2px 4px",
-              gap: 2,
-            }}
-          >
-            {[
-              { Icon: RotateCcw, label: t("client.workspace.ctrl.reset") },
-              { Icon: ZoomIn, label: t("client.workspace.ctrl.zoomIn") },
-              { Icon: ZoomOut, label: t("client.workspace.ctrl.zoomOut") },
-              { Icon: Maximize2, label: t("client.workspace.ctrl.fullscreen") },
-            ].map(({ Icon, label }, i) => (
-              <button
-                key={i}
-                aria-label={label}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "5px 9px",
-                  color: C.muted,
-                  borderRight:
-                    i < 3 ? `1px solid ${C.hair}` : "none",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Icon size={13} aria-hidden />
-              </button>
-            ))}
-          </div>
+
 
           {/* VIEW ONLY watermark */}
           <div
@@ -1148,81 +1512,7 @@ export default function ClientWorkspace() {
             {t("client.workspace.viewOnly")}
           </div>
 
-          {/* Bottom info bar */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 32,
-              background: C.panel,
-              borderTop: `1px solid ${C.hair}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "0 12px",
-              zIndex: 10,
-            }}
-            aria-hidden="true"
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
-              {[
-                {
-                  text:
-                    selectedBooth?.system === "maxima"
-                      ? "Maxima Premium"
-                      : "Octanorm",
-                  style: { fontWeight: 700 },
-                },
-                { text: "|", style: { color: C.hair, margin: "0 8px" } },
-                {
-                  text: selectedBooth?.openFront
-                    ? "OPEN SIDE - FRONT"
-                    : "REVIEW MODE",
-                  style: {
-                    color: selectedBooth?.openFront ? C.orange : C.muted,
-                  },
-                },
-                { text: "|", style: { color: C.hair, margin: "0 8px" } },
-                {
-                  text: `${selectedBoothConfig.width.toFixed(1)} x ${selectedBoothConfig.depth.toFixed(1)} m`,
-                  style: {},
-                },
-                {
-                  text: `H ${selectedBoothConfig.height.toFixed(2)} m`,
-                  style: { marginLeft: 10 },
-                },
-              ].map((s, i) => (
-                <span
-                  key={i}
-                  style={{
-                    fontFamily: MONO,
-                    fontSize: 9.5,
-                    color: C.ink,
-                    letterSpacing: "0.04em",
-                    ...s.style,
-                  }}
-                >
-                  {s.text}
-                </span>
-              ))}
-            </div>
-            <span
-              style={{
-                fontFamily: MONO,
-                fontSize: 9,
-                color: workspaceError ? C.orange : C.muted,
-              }}
-            >
-              v{version} -{" "}
-              {workspaceError ||
-                (compareMode
-                  ? t("client.workspace.statusCompare")
-                  : t("client.workspace.statusReadOnly"))}{" "}
-              - PERSPECTIVE VIEW
-            </span>
-          </div>
+
         </main>
 
         {/* ── Right — Tabs ─────────────────────────────────────── */}
@@ -1323,10 +1613,38 @@ export default function ClientWorkspace() {
                     marginLeft: "auto",
                   }}
                 >
-                  {t("client.workspace.notesCount", {
-                    count: comments.length,
-                  })}
+                  {openFeedbackCount} open
                 </span>
+              </div>
+              <div
+                style={{
+                  padding: "8px 16px",
+                  borderBottom: `1px solid ${C.hair}`,
+                  display: "flex",
+                  gap: 6,
+                  flexShrink: 0,
+                }}
+              >
+                {(["open", "all", "resolved"] as FeedbackFilter[]).map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setFeedbackFilter(filter)}
+                    style={{
+                      border: `1px solid ${feedbackFilter === filter ? C.blue : C.hair}`,
+                      background: feedbackFilter === filter ? `${C.blue}10` : "none",
+                      color: feedbackFilter === filter ? C.blue : C.muted,
+                      borderRadius: 4,
+                      padding: "4px 9px",
+                      cursor: "pointer",
+                      fontFamily: MONO,
+                      fontSize: 9.5,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {filter}
+                  </button>
+                ))}
               </div>
               <div
                 role="log"
@@ -1341,8 +1659,9 @@ export default function ClientWorkspace() {
                   gap: 10,
                 }}
               >
-                {comments.map((comment) => {
+                {visibleComments.map((comment) => {
                   const isMe = comment.user === "You";
+                  const isResolved = (comment.status ?? "open") === "resolved";
                   return (
                     <div
                       key={comment.id}
@@ -1411,6 +1730,20 @@ export default function ClientWorkspace() {
                             </span>
                           </div>
                         )}
+                        <span
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 8,
+                            color: isResolved ? C.green : C.orange,
+                            border: `1px solid ${isResolved ? C.green : C.orange}30`,
+                            background: `${isResolved ? C.green : C.orange}10`,
+                            borderRadius: 3,
+                            padding: "1px 5px",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {isResolved ? "Resolved" : "Open"}
+                        </span>
                       </div>
                       <div
                         style={{
@@ -1450,6 +1783,21 @@ export default function ClientWorkspace() {
                       >
                         {comment.time}
                       </span>
+                      <button
+                        onClick={() => setFeedbackStatus(comment.id, isResolved ? "open" : "resolved")}
+                        style={{
+                          background: "none",
+                          border: `1px solid ${C.hair}`,
+                          borderRadius: 4,
+                          color: C.muted,
+                          cursor: "pointer",
+                          fontFamily: MONO,
+                          fontSize: 8.5,
+                          padding: "3px 7px",
+                        }}
+                      >
+                        {isResolved ? "Reopen" : "Resolve"}
+                      </button>
                     </div>
                   );
                 })}
@@ -1535,9 +1883,7 @@ export default function ClientWorkspace() {
                     ],
                     [
                       t("client.workspace.info.approval"),
-                      approved
-                        ? t("client.workspace.approvedLabel")
-                        : t("client.workspace.info.awaiting"),
+                      approvalStageLabel,
                     ],
                   ].map(([l, v]) => (
                     <div key={l}>
@@ -1560,9 +1906,7 @@ export default function ClientWorkspace() {
                           fontFamily: MONO,
                           color:
                             l === t("client.workspace.info.approval")
-                              ? approved
-                                ? C.green
-                                : C.orange
+                              ? approvalStageColor
                               : "inherit",
                         }}
                       >
@@ -1696,9 +2040,14 @@ export default function ClientWorkspace() {
                     )}
                     {st !== "pending" && (
                       <button
-                        onClick={() =>
-                          setElementStatus((p) => ({ ...p, [el.id]: "pending" }))
-                        }
+                        onClick={() => {
+                          if (!workspaceRecord?.project.id) return;
+                          const nextStatus = { ...elementStatus, [el.id]: "pending" as const };
+                          setElementStatus(nextStatus);
+                          saveElementStatus(workspaceRecord.project.id, nextStatus).catch(() => {
+                            showToast("Failed to save status.");
+                          });
+                        }}
                         style={{
                           width: "100%",
                           background: "none",
@@ -1797,7 +2146,29 @@ export default function ClientWorkspace() {
                     : t("client.workspace.addPinBtn")}
                 </button>
               </div>
-              {pins.length === 0 && (
+              <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                {(["open", "all", "resolved"] as FeedbackFilter[]).map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setFeedbackFilter(filter)}
+                    style={{
+                      border: `1px solid ${feedbackFilter === filter ? C.blue : C.hair}`,
+                      background: feedbackFilter === filter ? `${C.blue}10` : "none",
+                      color: feedbackFilter === filter ? C.blue : C.muted,
+                      borderRadius: 4,
+                      padding: "4px 9px",
+                      cursor: "pointer",
+                      fontFamily: MONO,
+                      fontSize: 9.5,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+              {visiblePins.length === 0 && (
                 <div
                   style={{
                     textAlign: "center",
@@ -1815,7 +2186,9 @@ export default function ClientWorkspace() {
                   {t("client.workspace.noPins")}
                 </div>
               )}
-              {pins.map((pin) => (
+              {visiblePins.map((pin) => {
+                const isResolved = (pin.status ?? "open") === "resolved";
+                return (
                 <div
                   key={pin.id}
                   style={{
@@ -1823,9 +2196,9 @@ export default function ClientWorkspace() {
                     gap: 10,
                     padding: "10px",
                     borderRadius: 5,
-                    border: `1px solid ${C.hair}`,
+                    border: `1px solid ${isResolved ? C.green : C.hair}`,
                     marginBottom: 7,
-                    background: C.bg,
+                    background: isResolved ? `${C.green}06` : C.bg,
                   }}
                 >
                   <div
@@ -1833,7 +2206,7 @@ export default function ClientWorkspace() {
                       width: 22,
                       height: 22,
                       borderRadius: "50%",
-                      background: C.orange,
+                      background: isResolved ? C.green : C.orange,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1853,6 +2226,27 @@ export default function ClientWorkspace() {
                     </span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                      <span
+                        style={{
+                          fontFamily: MONO,
+                          fontSize: 8,
+                          color: isResolved ? C.green : C.orange,
+                          border: `1px solid ${isResolved ? C.green : C.orange}30`,
+                          background: `${isResolved ? C.green : C.orange}10`,
+                          borderRadius: 3,
+                          padding: "1px 5px",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {isResolved ? "Resolved" : "Open"}
+                      </span>
+                      {pin.partId && (
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: C.muted }}>
+                          {pin.partId}
+                        </span>
+                      )}
+                    </div>
                     <p
                       style={{
                         fontSize: 12,
@@ -1872,6 +2266,22 @@ export default function ClientWorkspace() {
                     >
                       {pin.x.toFixed(0)}% × {pin.y.toFixed(0)}%
                     </p>
+                    <button
+                      onClick={() => setFeedbackStatus(pin.id, isResolved ? "open" : "resolved")}
+                      style={{
+                        background: "none",
+                        border: `1px solid ${C.hair}`,
+                        borderRadius: 4,
+                        color: C.muted,
+                        cursor: "pointer",
+                        fontFamily: MONO,
+                        fontSize: 8.5,
+                        padding: "3px 7px",
+                        marginTop: 8,
+                      }}
+                    >
+                      {isResolved ? "Reopen" : "Resolve"}
+                    </button>
                   </div>
                   <button
                     onClick={() =>
@@ -1893,7 +2303,8 @@ export default function ClientWorkspace() {
                     <X size={11} aria-hidden />
                   </button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </aside>
@@ -2070,6 +2481,189 @@ export default function ClientWorkspace() {
                 }}
               >
                 {t("client.workspace.dialog.submit")}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Upgrade Revisions Dialog ──────────────────────────────── */}
+      {showSubscriptionDlg && (
+        <>
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(24,22,19,0.4)",
+              zIndex: 100,
+            }}
+            onClick={() => setShowSubscriptionDlg(false)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="subscription-dlg-title"
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%,-50%)",
+              background: C.panel,
+              border: `1px solid ${C.hair}`,
+              borderRadius: 8,
+              padding: 24,
+              zIndex: 101,
+              width: 500,
+              boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
+              color: C.ink,
+            }}
+          >
+            <h3
+              id="subscription-dlg-title"
+              style={{
+                fontSize: 17,
+                fontWeight: 700,
+                marginBottom: 6,
+                marginTop: 0,
+                color: C.blue,
+              }}
+            >
+              Upgrade Revisions Plan
+            </h3>
+            <p
+              style={{
+                fontSize: 12.5,
+                color: C.muted,
+                marginBottom: 20,
+                lineHeight: 1.4,
+              }}
+            >
+              You have completed the 2 free revisions included with your stand. Choose a workspace revision plan below to continue working on your design.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+              {/* Starter Plan */}
+              <div style={{
+                border: `1px solid ${C.hair}`,
+                borderRadius: 6,
+                padding: 12,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                background: C.bg
+              }}>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>Starter Plan</h4>
+                  <p style={{ margin: "2px 0 0 0", fontSize: 11.5, color: C.muted }}>Adds 3 extra client revision rounds</p>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>$2.99</div>
+                  <button
+                    onClick={() => handlePurchasePlan("starter")}
+                    style={{
+                      background: C.blue,
+                      color: "white",
+                      border: "none",
+                      borderRadius: 4,
+                      padding: "5px 12px",
+                      cursor: "pointer",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      marginTop: 4
+                    }}
+                  >
+                    Select
+                  </button>
+                </div>
+              </div>
+
+              {/* Pro Plan */}
+              <div style={{
+                border: `2px solid ${C.blue}`,
+                borderRadius: 6,
+                padding: 12,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                background: "#f0f9ff"
+              }}>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.blue }}>Pro Plan (Recommended)</h4>
+                  <p style={{ margin: "2px 0 0 0", fontSize: 11.5, color: C.muted }}>Adds 8 extra client revision rounds</p>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.blue }}>$9.99</div>
+                  <button
+                    onClick={() => handlePurchasePlan("pro")}
+                    style={{
+                      background: C.blue,
+                      color: "white",
+                      border: "none",
+                      borderRadius: 4,
+                      padding: "5px 12px",
+                      cursor: "pointer",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      marginTop: 4
+                    }}
+                  >
+                    Select
+                  </button>
+                </div>
+              </div>
+
+              {/* Unlimited Plan */}
+              <div style={{
+                border: `1px solid ${C.hair}`,
+                borderRadius: 6,
+                padding: 12,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                background: C.bg
+              }}>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>Unlimited Plan</h4>
+                  <p style={{ margin: "2px 0 0 0", fontSize: 11.5, color: C.muted }}>Unlocks unlimited workspace revision rounds</p>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>$11.99</div>
+                  <button
+                    onClick={() => handlePurchasePlan("unlimited")}
+                    style={{
+                      background: C.blue,
+                      color: "white",
+                      border: "none",
+                      borderRadius: 4,
+                      padding: "5px 12px",
+                      cursor: "pointer",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      marginTop: 4
+                    }}
+                  >
+                    Select
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowSubscriptionDlg(false)}
+                style={{
+                  background: "none",
+                  border: `1px solid ${C.hair}`,
+                  borderRadius: 4,
+                  padding: "7px 16px",
+                  cursor: "pointer",
+                  fontFamily: UI,
+                  fontSize: 12,
+                  color: C.ink,
+                }}
+              >
+                Cancel
               </button>
             </div>
           </div>

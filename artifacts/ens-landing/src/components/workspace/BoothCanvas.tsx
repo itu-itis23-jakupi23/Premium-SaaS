@@ -113,7 +113,7 @@ function DimLabel({ax,ay,bx,by,label}:{ax:number;ay:number;bx:number;by:number;l
     <line x1={ax} y1={ay-4} x2={ax} y2={ay+4} stroke="#505870" strokeWidth={0.8}/>
     <line x1={bx} y1={by-4} x2={bx} y2={by+4} stroke="#505870" strokeWidth={0.8}/>
     <rect x={mx-19} y={my-7} width={38} height={13} rx={4} fill="#141824" stroke="#303850" strokeWidth={0.8}/>
-    <text x={mx} y={my+0.5} textAnchor="middle" dominantBaseline="middle" fill="#7888a8" fontSize="7" fontFamily="monospace" fontWeight="bold" letterSpacing="0.5">{label}</text>
+    <text x={mx} y={my+0.5} textAnchor="middle" dominantBaseline="middle" fill="#7888a8" fontSize="7" fontFamily="var(--app-font-samsung)" fontWeight="bold" letterSpacing="0.5">{label}</text>
   </g>);
 }
 
@@ -176,10 +176,10 @@ function PlanView({cfg}:{cfg:Required<BoothConfig>}) {
     <line x1={tx(0)} y1={ty(0)} x2={tx(0)} y2={ty(D)} {...wallStroke(openLeft)}/>
     <line x1={tx(W)} y1={ty(0)} x2={tx(W)} y2={ty(D)} {...wallStroke(openRight)}/>
     {/* Open side labels */}
-    {openFront && <text x={tx(W/2)} y={ty(0)-8} textAnchor="middle" fontSize="8" fontFamily="monospace" fill="#c2410c" fontWeight="700">OPEN</text>}
-    {openBack  && <text x={tx(W/2)} y={ty(D)+14} textAnchor="middle" fontSize="8" fontFamily="monospace" fill="#c2410c" fontWeight="700">OPEN</text>}
-    {openLeft  && <text x={tx(0)-10} y={ty(D/2)} textAnchor="middle" fontSize="7" fontFamily="monospace" fill="#c2410c" fontWeight="700" transform={`rotate(-90,${tx(0)-10},${ty(D/2)})`}>OPEN</text>}
-    {openRight && <text x={tx(W)+10} y={ty(D/2)} textAnchor="middle" fontSize="7" fontFamily="monospace" fill="#c2410c" fontWeight="700" transform={`rotate(90,${tx(W)+10},${ty(D/2)})`}>OPEN</text>}
+    {openFront && <text x={tx(W/2)} y={ty(0)-8} textAnchor="middle" fontSize="8" fontFamily="var(--app-font-samsung)" fill="#c2410c" fontWeight="700">OPEN</text>}
+    {openBack  && <text x={tx(W/2)} y={ty(D)+14} textAnchor="middle" fontSize="8" fontFamily="var(--app-font-samsung)" fill="#c2410c" fontWeight="700">OPEN</text>}
+    {openLeft  && <text x={tx(0)-10} y={ty(D/2)} textAnchor="middle" fontSize="7" fontFamily="var(--app-font-samsung)" fill="#c2410c" fontWeight="700" transform={`rotate(-90,${tx(0)-10},${ty(D/2)})`}>OPEN</text>}
+    {openRight && <text x={tx(W)+10} y={ty(D/2)} textAnchor="middle" fontSize="7" fontFamily="var(--app-font-samsung)" fill="#c2410c" fontWeight="700" transform={`rotate(90,${tx(W)+10},${ty(D/2)})`}>OPEN</text>}
     {/* Mid rails */}
     {xs.slice(0,-1).map((xi,i)=>{
       const x0=tx(xi)+ps/2, x1=tx(xs[i+1])-ps/2;
@@ -196,7 +196,7 @@ function PlanView({cfg}:{cfg:Required<BoothConfig>}) {
           fill={item.color+'30'} stroke={item.color} strokeWidth={1.2} rx={2}/>
         <text x={tx(item.x)+item.w*scale/2} y={ty(item.y)+item.d*scale/2}
           textAnchor="middle" dominantBaseline="middle" fontSize={Math.min(9,item.w*scale*0.5)}
-          fontFamily="monospace" fill={item.color} fontWeight="700">{item.name.slice(0,8)}</text>
+          fontFamily="var(--app-font-samsung)" fill={item.color} fontWeight="700">{item.name.slice(0,8)}</text>
       </g>
     ))}
     {/* Annotations */}
@@ -204,7 +204,7 @@ function PlanView({cfg}:{cfg:Required<BoothConfig>}) {
       <g key={a.id}>
         <circle cx={tx(a.x)} cy={ty(a.y)} r={8} fill={a.color} opacity={0.9}/>
         <text x={tx(a.x)} y={ty(a.y)} textAnchor="middle" dominantBaseline="middle"
-          fontSize="8" fontFamily="monospace" fill="#fff" fontWeight="700">{a.num}</text>
+          fontSize="8" fontFamily="var(--app-font-samsung)" fill="#fff" fontWeight="700">{a.num}</text>
       </g>
     ))}
     {/* Dimension labels */}
@@ -213,22 +213,22 @@ function PlanView({cfg}:{cfg:Required<BoothConfig>}) {
       <line x1={tx(0)} y1={ty(-0.7)} x2={tx(W)} y2={ty(-0.7)} stroke="#9090a0" strokeWidth={0.8}/>
       <line x1={tx(0)} y1={ty(-0.7)-4} x2={tx(0)} y2={ty(-0.7)+4} stroke="#9090a0" strokeWidth={0.8}/>
       <line x1={tx(W)} y1={ty(-0.7)-4} x2={tx(W)} y2={ty(-0.7)+4} stroke="#9090a0" strokeWidth={0.8}/>
-      <text x={tx(W/2)} y={ty(-0.7)-5} textAnchor="middle" fontSize="8.5" fontFamily="monospace" fill="#6b6560">{W.toFixed(1)} m</text>
+      <text x={tx(W/2)} y={ty(-0.7)-5} textAnchor="middle" fontSize="8.5" fontFamily="var(--app-font-samsung)" fill="#6b6560">{W.toFixed(1)} m</text>
       {/* Depth */}
       <line x1={tx(-0.7)} y1={ty(0)} x2={tx(-0.7)} y2={ty(D)} stroke="#9090a0" strokeWidth={0.8}/>
       <line x1={tx(-0.7)-4} y1={ty(0)} x2={tx(-0.7)+4} y2={ty(0)} stroke="#9090a0" strokeWidth={0.8}/>
       <line x1={tx(-0.7)-4} y1={ty(D)} x2={tx(-0.7)+4} y2={ty(D)} stroke="#9090a0" strokeWidth={0.8}/>
-      <text x={tx(-0.7)-6} y={ty(D/2)} textAnchor="middle" dominantBaseline="middle" fontSize="8.5" fontFamily="monospace" fill="#6b6560" transform={`rotate(-90,${tx(-0.7)-6},${ty(D/2)})`}>{D.toFixed(1)} m</text>
+      <text x={tx(-0.7)-6} y={ty(D/2)} textAnchor="middle" dominantBaseline="middle" fontSize="8.5" fontFamily="var(--app-font-samsung)" fill="#6b6560" transform={`rotate(-90,${tx(-0.7)-6},${ty(D/2)})`}>{D.toFixed(1)} m</text>
     </g>
     {/* Labels */}
-    <text x={tx(W/2)} y={ty(-0.7)-18} textAnchor="middle" fontSize="8" fontFamily="monospace" fill="#c2410c" letterSpacing="1">FRONT</text>
-    <text x={tx(W/2)} y={ty(D)+20} textAnchor="middle" fontSize="8" fontFamily="monospace" fill="#6b6560" letterSpacing="1">BACK</text>
+    <text x={tx(W/2)} y={ty(-0.7)-18} textAnchor="middle" fontSize="8" fontFamily="var(--app-font-samsung)" fill="#c2410c" letterSpacing="1">FRONT</text>
+    <text x={tx(W/2)} y={ty(D)+20} textAnchor="middle" fontSize="8" fontFamily="var(--app-font-samsung)" fill="#6b6560" letterSpacing="1">BACK</text>
     {/* System badge */}
     <rect x="14" y="14" width={isMax?78:86} height="20" rx="5" fill="#f3f1ec" stroke="#d8d3c9" strokeWidth="0.8"/>
-    <text x={isMax?53:57} y="26" textAnchor="middle" fill="#6b6560" fontSize="7.5" fontFamily="monospace" fontWeight="700" letterSpacing="1.5">{isMax?'◈ MAXIMA':'⬡ OCTANORM'}</text>
+    <text x={isMax?53:57} y="26" textAnchor="middle" fill="#6b6560" fontSize="7.5" fontFamily="var(--app-font-samsung)" fontWeight="700" letterSpacing="1.5">{isMax?'◈ MAXIMA':'⬡ OCTANORM'}</text>
     {/* PLAN VIEW badge */}
     <rect x="420" y="14" width="90" height="20" rx="5" fill="#1d4ed814" stroke="#1d4ed830" strokeWidth="0.8"/>
-    <text x="465" y="26" textAnchor="middle" fill="#1d4ed8" fontSize="7.5" fontFamily="monospace" fontWeight="700" letterSpacing="1">PLAN VIEW</text>
+    <text x="465" y="26" textAnchor="middle" fill="#1d4ed8" fontSize="7.5" fontFamily="var(--app-font-samsung)" fontWeight="700" letterSpacing="1">PLAN VIEW</text>
   </>);
 }
 
@@ -236,7 +236,7 @@ function PlanView({cfg}:{cfg:Required<BoothConfig>}) {
 function ElevationBadge({label}:{label:string}) {
   return (<>
     <rect x="420" y="14" width="90" height="20" rx="5" fill="#1d4ed814" stroke="#1d4ed830" strokeWidth="0.8"/>
-    <text x="465" y="26" textAnchor="middle" fill="#1d4ed8" fontSize="7.5" fontFamily="monospace" fontWeight="700" letterSpacing="1">{label}</text>
+    <text x="465" y="26" textAnchor="middle" fill="#1d4ed8" fontSize="7.5" fontFamily="var(--app-font-samsung)" fontWeight="700" letterSpacing="1">{label}</text>
   </>);
 }
 
@@ -405,7 +405,7 @@ export function BoothCanvas({ config }: { config?: Partial<BoothConfig> }) {
         const[bx,by]=project(cam,W*0.85,-ps/2-0.02,H+fH*0.5);
         const mx=(ax+bx)/2,my=(ay+by)/2,ang=Math.atan2(by-ay,bx-ax)*180/Math.PI;
         const span=Math.hypot(bx-ax,by-ay),fSize=Math.max(5,Math.min(11,span/(companyName.length*0.62)));
-        return(<text x={mx} y={my} fill="#1c2130" fontSize={fSize} fontFamily="'Helvetica Neue',Arial,sans-serif"
+        return(<text x={mx} y={my} fill="#1c2130" fontSize={fSize} fontFamily="var(--app-font-samsung)"
           fontWeight="600" letterSpacing={fSize*0.55} textAnchor="middle" dominantBaseline="middle"
           transform={`rotate(${ang},${mx},${my})`}>{companyName}</text>);
       })()}
@@ -415,7 +415,7 @@ export function BoothCanvas({ config }: { config?: Partial<BoothConfig> }) {
         const[sx,sy]=project(cam,a.x,a.y,H*0.5);
         return(<g key={a.id}>
           <circle cx={sx} cy={sy} r={9} fill={a.color} opacity={0.85}/>
-          <text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize="8" fontFamily="monospace" fill="#fff" fontWeight="700">{a.num}</text>
+          <text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize="8" fontFamily="var(--app-font-samsung)" fill="#fff" fontWeight="700">{a.num}</text>
         </g>);
       })}
 
@@ -430,13 +430,13 @@ export function BoothCanvas({ config }: { config?: Partial<BoothConfig> }) {
           <line x1={ax} y1={ay-3} x2={ax} y2={ay+3} stroke="#4a5268" strokeWidth="1"/>
           <line x1={bx} y1={by-3} x2={bx} y2={by+3} stroke="#4a5268" strokeWidth="1"/>
           <rect x={(ax+bx)/2-18} y={(ay+by)/2+3} width={36} height={12} rx={3} fill="#0e1220"/>
-          <text x={(ax+bx)/2} y={(ay+by)/2+10} textAnchor="middle" fill="#4a5268" fontSize="6.5" fontFamily="monospace">scale 1.0 m</text>
+          <text x={(ax+bx)/2} y={(ay+by)/2+10} textAnchor="middle" fill="#4a5268" fontSize="6.5" fontFamily="var(--app-font-samsung)">scale 1.0 m</text>
         </g>);
       })()}
 
       {/* System badge */}
       <rect x="14" y="14" width={isMax?78:86} height="20" rx="5" fill="#0e1220" stroke="#252a3e" strokeWidth="0.8"/>
-      <text x={isMax?53:57} y="26" textAnchor="middle" fill="#4c5878" fontSize="7.5" fontFamily="'Helvetica Neue',Arial,sans-serif" fontWeight="700" letterSpacing="1.5">{isMax?'◈ MAXIMA':'⬡ OCTANORM'}</text>
+      <text x={isMax?53:57} y="26" textAnchor="middle" fill="#4c5878" fontSize="7.5" fontFamily="var(--app-font-samsung)" fontWeight="700" letterSpacing="1.5">{isMax?'◈ MAXIMA':'⬡ OCTANORM'}</text>
 
       {/* Elevation badge */}
       {viewMode!=='iso' && <ElevationBadge label={viewMode==='front'?'FRONT ELEV':'SIDE ELEV'}/>}

@@ -3,6 +3,8 @@ import { chartData, mockActivity, mockClients, mockMessages, mockProjects } from
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api").replace(/\/+$/, "");
 const ORGANIZATION_SLUG = import.meta.env.VITE_ORGANIZATION_SLUG ?? "ens-demo-agency";
 const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
+const USE_REAL_MESSAGES = import.meta.env.VITE_USE_REAL_MESSAGES === "true";
+const USE_REAL_CORE = import.meta.env.VITE_USE_REAL_CORE === "true";
 const MOCK_AUTH_STORAGE_KEY = "ens-mock-auth-user";
 const MOCK_ACCOUNT_SETTINGS_PREFIX = "ens-mock-account-settings";
 const MOCK_ACCOUNT_SESSIONS_PREFIX = "ens-mock-account-sessions";
@@ -11,6 +13,7 @@ const MOCK_CALENDAR_PREFIX = "ens-mock-calendar-events";
 const MOCK_PM_REQUESTS_KEY         = "ens-mock-pm-requests";
 const MOCK_PROJECTS_KEY            = "ens-mock-projects";
 const MOCK_CLIENT_STATUSES_KEY     = "ens-mock-client-statuses";
+const MOCK_PM_TASKS_KEY            = "ens-mock-pm-tasks";
 
 export const ACCOUNT_SETTINGS_EVENT   = "ens-account-settings-updated";
 export const PM_REQUESTS_UPDATED_EVENT = "ens-pm-requests-updated";
@@ -247,6 +250,8 @@ export interface WorkspaceBoothState {
   openBack: boolean;
   openLeft: boolean;
   openRight: boolean;
+  fasciaEnabled?: boolean;
+  fasciaOption?: "classic" | "full" | "custom";
 }
 
 export interface WorkspacePlacedItem {
@@ -260,6 +265,31 @@ export interface WorkspacePlacedItem {
   h: number;
   color: string;
   weight: number;
+  x?: number;
+  z?: number;
+  rotation?: number;
+  rotationX?: number;
+  rotationY?: number;
+  rotationZ?: number;
+  kind?: "furniture" | "light" | "structure" | "fascia" | "asset";
+  shape?: string;
+  modelUrl?: string;
+  source?: string;
+}
+
+export interface WorkspaceRoom {
+  id: string;
+  name: string;
+  width: number;
+  depth: number;
+  height: number;
+  x: number;
+  z: number;
+  hasDoor: boolean;
+  hasCeiling: boolean;
+  doorPosition: "left" | "center" | "right";
+  doorSwing: "left-in" | "right-in" | "left-out" | "right-out";
+  doorOpen: boolean;
 }
 
 export interface WorkspaceNote {
@@ -272,8 +302,13 @@ export interface WorkspaceNote {
 export interface WorkspaceState {
   booth: WorkspaceBoothState;
   themeIdx: number;
+  wallFinishIdx?: number;
+  frameFinishIdx?: number;
+  fasciaFinishIdx?: number;
   carpetIdx: number;
+  lightingPreset?: "neutral" | "exhibition" | "accent" | "spotlight" | "ambient";
   placedItems: WorkspacePlacedItem[];
+  rooms?: WorkspaceRoom[];
   notes: WorkspaceNote[];
 }
 
@@ -289,6 +324,26 @@ export interface WorkspaceVersion {
   lockedAt: string | null;
   createdAt: string;
   workspace: WorkspaceState;
+}
+
+export interface ClientArrangementPermissions {
+  can_edit: boolean;
+  can_save: boolean;
+  can_send_arrangement: boolean;
+  arrangement_round_limit: number;
+  arrangement_rounds_used: number;
+  arrangement_rounds_remaining: number | null;
+  total_round_limit: number | null;
+  subscription_active: boolean;
+  subscription_unlimited: boolean;
+  subscription_status: string;
+  subscription_pending: boolean;
+  subscription_required: boolean;
+  subscription_plan: string | null;
+  subscription_plan_label: string | null;
+  subscription_price: number;
+  subscription_currency: string;
+  edit_disabled_reason: string | null;
 }
 
 export interface ProjectWorkspace {
@@ -313,6 +368,39 @@ export interface ProjectWorkspace {
   versions: WorkspaceVersion[];
   workspace: WorkspaceState;
   readonly: boolean;
+  /** Number of change requests the client has already submitted */
+  revisionCount: number;
+  /** Maximum change requests allowed (business rule: 2) */
+  revisionLimit: number;
+  elementStatus?: Record<string, "approved" | "pending" | "rejected">;
+  approved?: boolean;
+  permissions?: ClientArrangementPermissions;
+}
+
+export type WorkspaceApprovalStage = "draft" | "sent" | "viewed" | "approved" | "revision_requested" | "locked";
+
+export function workspaceApprovalStage(record: ProjectWorkspace | null | undefined): WorkspaceApprovalStage {
+  const projectStatus = record?.project.status?.toLowerCase() ?? "";
+  const versionStatus = record?.currentVersion?.status?.toLowerCase() ?? "";
+
+  if (record?.currentVersion?.lockedAt) return "locked";
+  if (record?.approved || projectStatus.includes("approved") || versionStatus.includes("approved")) return "approved";
+  if (projectStatus.includes("revision") || versionStatus.includes("revision")) return "revision_requested";
+  if (versionStatus.includes("viewed") || versionStatus.includes("under_review")) return "viewed";
+  if (record?.currentVersion?.submittedAt || versionStatus.includes("submitted")) return "sent";
+  return "draft";
+}
+
+export function workspaceApprovalStageLabel(stage: WorkspaceApprovalStage) {
+  const labels: Record<WorkspaceApprovalStage, string> = {
+    draft: "Draft",
+    sent: "Sent",
+    viewed: "Viewed",
+    approved: "Approved",
+    revision_requested: "Revision Requested",
+    locked: "Locked",
+  };
+  return labels[stage];
 }
 
 export interface PlatformOverview {
@@ -325,6 +413,35 @@ export interface PlatformOverview {
     activity: Array<{ day: string; projects: number }>;
     distribution: Array<{ name: string; value: number; color: string }>;
     activityCount: number;
+  };
+  workflow?: ChiefWorkflowSummary | null;
+}
+
+export interface ChiefWorkflowSummary {
+  unassignedClients: Array<{ id: string; name: string; contactEmail: string; exhibition: string; status: string; lastActivity: string }>;
+  unassignedProjects: Array<{ id: string; name: string; client: string; exhibition: string; status: string; deadline: string | null }>;
+  newProjectManagers: Array<{ id: string; name: string; email: string; company: string; createdAt: string | null }>;
+  approvalAging: Array<{ id: string; name: string; client: string; status: string; waitingDays: number }>;
+  workloadAlerts: Array<{
+    id: string;
+    name: string;
+    activeProjects: number;
+    clients: number;
+    delayedProjects: number;
+    workload: number;
+    projectCapacity: number;
+    clientCapacity: number;
+    remainingProjects: number;
+    remainingClients: number;
+    overloaded: boolean;
+  }>;
+  counts: {
+    pendingClientApprovals: number;
+    unassignedClients: number;
+    unassignedProjects: number;
+    newProjectManagers: number;
+    stalledApprovals: number;
+    overloadedManagers: number;
   };
 }
 
@@ -417,6 +534,13 @@ export interface PlatformManager {
   delayedProjects: number;
   urgentProjects: number;
   clients: number;
+  capacity?: {
+    activeProjects: number;
+    clients: number;
+    remainingProjects: number;
+    remainingClients: number;
+    overloaded: boolean;
+  };
   nextDeadline: string | null;
   joinedAt: string;
 }
@@ -429,6 +553,12 @@ export interface ManagedClient {
   managerId: string | null;
   managerName: string;
   exhibition: string;
+  boothWidthM?: number | null;
+  boothDepthM?: number | null;
+  preferredSystem?: string;
+  venueCity?: string;
+  targetDate?: string;
+  intakeNotes?: string;
   status: string;
   lastActivity: string;
 }
@@ -470,6 +600,8 @@ export interface ManagerInvitation {
   name?: string;
   role: string;
   status: string;
+  emailStatus?: "pending" | "sent" | "failed";
+  emailWarning?: string | null;
   token?: string;
   inviteUrl?: string;
   expiresAt: string;
@@ -541,12 +673,12 @@ export interface CalendarEvent {
 export type CalendarEventInput = Omit<CalendarEvent, "id">;
 
 export async function getPlatformOverview() {
-  if (USE_MOCK_API) return mockPlatformOverview();
+  if (USE_MOCK_API && !USE_REAL_CORE) return mockPlatformOverview();
   return apiGet<PlatformOverview>("/platform/overview");
 }
 
 export async function getPlatformProjects(params: PlatformProjectListParams = {}) {
-  if (USE_MOCK_API) {
+  if (USE_MOCK_API && !USE_REAL_CORE) {
     const limit = params.limit ?? 25;
     const offset = params.offset ?? 0;
     const q = params.q?.trim().toLowerCase() ?? "";
@@ -581,17 +713,22 @@ export async function getPlatformProjects(params: PlatformProjectListParams = {}
 
 export async function createPlatformProject(input: {
   name: string;
-  client: string;
+  client?: string;
+  clientId?: string;
   system: string;
   width: string;
   depth: string;
   deadline: string;
+  exhibition?: string;
+  managerId?: string;
 }) {
+  const client = input.client?.trim() || "Unassigned client";
+  const exhibition = input.exhibition?.trim() || input.name;
   if (USE_MOCK_API) {
     const newProject: PlatformProject = {
       id: `mock-project-${Date.now()}`,
       name: input.name,
-      client: input.client,
+      client,
       pm: "Project Manager",
       status: "Planning",
       health: "On Track",
@@ -599,7 +736,7 @@ export async function createPlatformProject(input: {
       deadline: input.deadline || null,
       system: input.system,
       dimensions: `${input.width} x ${input.depth} m`,
-      exhibition: input.name,
+      exhibition,
       standType: input.system,
       description: "",
       lastUpdate: "Just now",
@@ -610,11 +747,14 @@ export async function createPlatformProject(input: {
 
   return apiJson<{ project: PlatformProject }>("/platform/projects", {
     name: input.name,
-    client: input.client,
+    client,
+    clientId: input.clientId?.trim() || null,
     system: input.system,
     widthM: Number(input.width),
     depthM: Number(input.depth),
     deadline: input.deadline || null,
+    exhibition,
+    managerId: input.managerId && input.managerId !== "unassigned" ? input.managerId : null,
   });
 }
 
@@ -679,17 +819,33 @@ export async function deletePlatformProject(projectId: string) {
   return apiDelete<{ ok: boolean; projects: PlatformProject[] }>(`/platform/projects/${projectId}`);
 }
 
-export async function getPmTaskBoard() {
-  if (USE_MOCK_API) {
-    return {
-      tasks: [] as PmTask[],
-      projects: mockPlatformProjects().slice(0, 20).map((project) => ({
-        id: project.id,
-        name: project.name,
-        client: project.client,
-      })),
-    };
+// ── Mock task store helpers ────────────────────────────────────────────────────
+function mockPmTasksStore(): PmTask[] {
+  const raw = localStorage.getItem(MOCK_PM_TASKS_KEY);
+  if (raw) {
+    try { return JSON.parse(raw) as PmTask[]; } catch { /* fall through */ }
   }
+  return [];
+}
+
+function saveMockPmTasks(tasks: PmTask[]): PmTask[] {
+  localStorage.setItem(MOCK_PM_TASKS_KEY, JSON.stringify(tasks));
+  return tasks;
+}
+
+function mockTaskBoard(): PmTaskBoard {
+  return {
+    tasks: mockPmTasksStore(),
+    projects: mockPlatformProjects().slice(0, 20).map((project) => ({
+      id: project.id,
+      name: project.name,
+      client: project.client,
+    })),
+  };
+}
+
+export async function getPmTaskBoard() {
+  if (USE_MOCK_API) return mockTaskBoard();
   return apiGet<PmTaskBoard>("/platform/tasks");
 }
 
@@ -701,7 +857,23 @@ export async function createPmTask(input: {
   status: PmTaskColumn;
   notes?: string;
 }) {
-  if (USE_MOCK_API) return getPmTaskBoard();
+  if (USE_MOCK_API) {
+    const projects = mockPlatformProjects();
+    const project = projects.find((p) => p.id === input.projectId);
+    const newTask: PmTask = {
+      id: `task-${Date.now()}`,
+      title: input.title,
+      client: project?.client ?? "",
+      project: project?.name ?? "",
+      projectId: input.projectId,
+      priority: input.priority,
+      deadline: input.deadline,
+      col: input.status,
+      notes: input.notes?.trim() || undefined,
+    };
+    saveMockPmTasks([...mockPmTasksStore(), newTask]);
+    return mockTaskBoard();
+  }
   return apiJson<PmTaskBoard>("/platform/tasks", input);
 }
 
@@ -713,12 +885,34 @@ export async function updatePmTask(taskId: string, input: Partial<{
   status: PmTaskColumn;
   notes: string | null;
 }>) {
-  if (USE_MOCK_API) return getPmTaskBoard();
+  if (USE_MOCK_API) {
+    const tasks = mockPmTasksStore();
+    const projects = mockPlatformProjects();
+    const updated = tasks.map((task) => {
+      if (task.id !== taskId) return task;
+      const project = input.projectId ? projects.find((p) => p.id === input.projectId) : null;
+      return {
+        ...task,
+        ...(input.title !== undefined && { title: input.title }),
+        ...(input.projectId !== undefined && { projectId: input.projectId }),
+        ...(project && { client: project.client, project: project.name }),
+        ...(input.priority !== undefined && { priority: input.priority }),
+        ...(input.deadline !== undefined && { deadline: input.deadline ?? "" }),
+        ...(input.status !== undefined && { col: input.status }),
+        ...(input.notes !== undefined && { notes: input.notes ?? undefined }),
+      } as PmTask;
+    });
+    saveMockPmTasks(updated);
+    return mockTaskBoard();
+  }
   return apiPatch<PmTaskBoard>(`/platform/tasks/${taskId}`, input);
 }
 
 export async function deletePmTask(taskId: string) {
-  if (USE_MOCK_API) return getPmTaskBoard();
+  if (USE_MOCK_API) {
+    saveMockPmTasks(mockPmTasksStore().filter((task) => task.id !== taskId));
+    return mockTaskBoard();
+  }
   return apiDelete<PmTaskBoard>(`/platform/tasks/${taskId}`);
 }
 
@@ -786,7 +980,7 @@ function pmRequestQuerySuffix(params: PmRequestListParams) {
 }
 
 export async function getPlatformClients(params: PlatformClientListParams = {}) {
-  if (USE_MOCK_API) {
+  if (USE_MOCK_API && !USE_REAL_CORE) {
     const limit = params.limit ?? 25;
     const offset = params.offset ?? 0;
     const q = params.q?.trim().toLowerCase() ?? "";
@@ -940,21 +1134,139 @@ export async function saveProjectWorkspace(projectId: string, workspace: Workspa
   });
 }
 
-export async function createProjectWorkspaceVersion(projectId: string, workspace: WorkspaceState, title: string) {
+export interface WorkspaceComment {
+  id: string;
+  user: string;
+  initials: string;
+  text: string;
+  time: string;
+  type: "comment" | "change" | "pin";
+  pin?: { x: number; y: number; z?: number } | null;
+  status?: "open" | "resolved";
+  resolvedAt?: string | null;
+}
+
+export async function getWorkspaceComments(projectId: string): Promise<{ comments: WorkspaceComment[] }> {
+  if (USE_MOCK_API) return { comments: [] };
+  return apiGet<{ comments: WorkspaceComment[] }>(`/platform/projects/${projectId}/comments`);
+}
+
+export async function createWorkspaceComment(
+  projectId: string,
+  body: string,
+  pin?: { x: number; y: number; z?: number } | null,
+  type?: "comment" | "change" | "pin"
+): Promise<{ comment: WorkspaceComment }> {
+  if (USE_MOCK_API) {
+    return {
+      comment: {
+        id: `mock-comment-${Date.now()}`,
+        user: "You",
+        initials: "YO",
+        text: body,
+        time: "Just now",
+        type: pin ? "pin" : type || "comment",
+        pin: pin || null,
+        status: "open",
+        resolvedAt: null,
+      }
+    };
+  }
+  return apiJson<{ comment: WorkspaceComment }>(`/platform/projects/${projectId}/comments`, { body, pin, type });
+}
+
+export async function updateWorkspaceCommentStatus(
+  projectId: string,
+  commentId: string,
+  status: "open" | "resolved",
+): Promise<{ comment: Pick<WorkspaceComment, "id" | "status" | "resolvedAt"> }> {
+  if (USE_MOCK_API) {
+    return {
+      comment: {
+        id: commentId,
+        status,
+        resolvedAt: status === "resolved" ? new Date().toISOString() : null,
+      },
+    };
+  }
+  return apiJsonWithMethod("PUT", `/platform/projects/${projectId}/comments/${commentId}/status`, { status });
+}
+
+export async function saveElementStatus(
+  projectId: string,
+  elementStatus: Record<string, string>
+): Promise<{ ok: boolean; elementStatus: Record<string, string> }> {
+  if (USE_MOCK_API) return { ok: true, elementStatus };
+  return apiJsonWithMethod("PUT", `/platform/projects/${projectId}/element-status`, { elementStatus });
+}
+
+export async function approveProjectWorkspace(projectId: string): Promise<ProjectWorkspace> {
+  if (USE_MOCK_API) return mockProjectWorkspace(projectId);
+  return apiJsonWithMethod("POST", `/platform/projects/${projectId}/approve`, {});
+}
+
+export async function createProjectWorkspaceVersion(projectId: string, workspace: WorkspaceState, title: string, status: "draft" | "submitted" = "draft") {
   if (USE_MOCK_API) return { ...mockProjectWorkspace(projectId), workspace };
   return apiJsonWithMethod<ProjectWorkspace>("POST", `/platform/projects/${projectId}/workspace/versions`, {
     title,
+    status,
     workspace,
   });
 }
 
+export async function createWorkspaceSubscriptionRequest(projectId: string, plan: string): Promise<{ checkout_url: string; already_active?: boolean }> {
+  if (USE_MOCK_API) {
+    return { checkout_url: `http://localhost:5000/api/platform/workspace/billing/simulation?reference=mock-${projectId}&plan=${plan}&client_id=mock-client-id&redirect=${encodeURIComponent(window.location.href)}` };
+  }
+  return apiJson<{ checkout_url: string; already_active?: boolean }>(`/platform/projects/${projectId}/workspace/subscription-request`, { plan });
+}
+
+/**
+ * Client submits a change request for a workspace version.
+ * Enforces a hard limit of `revisionLimit` requests per project.
+ * Returns the updated ProjectWorkspace so the UI can reflect the new count.
+ */
+export async function submitClientChangeRequest(
+  projectId: string,
+  changeText: string,
+): Promise<ProjectWorkspace> {
+  if (USE_MOCK_API) {
+    const current = mockProjectWorkspace(projectId);
+    if (current.revisionCount >= current.revisionLimit) {
+      throw new Error(
+        `Revision limit reached (${current.revisionLimit}/${current.revisionLimit}). No further change requests are allowed.`,
+      );
+    }
+    const revisionKey = `${MOCK_REVISION_COUNT_PREFIX}:${projectId}`;
+    const next = current.revisionCount + 1;
+    localStorage.setItem(revisionKey, String(next));
+    // Persist the change text as a note for the PM to see
+    const pmRequestsKey = "ens-mock-pm-requests";
+    const raw = localStorage.getItem(pmRequestsKey);
+    const existing: PmRequestItem[] = raw ? (JSON.parse(raw) as PmRequestItem[]) : [];
+    const newRequest: PmRequestItem = {
+      id: `req-client-${Date.now()}`,
+      client: current.project.client,
+      project: current.project.name,
+      priority: "High",
+      timestamp: "Just now",
+      status: "Pending",
+      request: changeText,
+      comments: [],
+    };
+    localStorage.setItem(pmRequestsKey, JSON.stringify([newRequest, ...existing]));
+    return mockProjectWorkspace(projectId);
+  }
+  return apiJson<ProjectWorkspace>(`/platform/projects/${projectId}/change-requests`, { changeText });
+}
+
 export async function getMessageContacts() {
-  if (USE_MOCK_API) return { contacts: mockMessageContacts() };
+  if (USE_MOCK_API && !USE_REAL_MESSAGES) return { contacts: mockMessageContacts() };
   return apiGet<{ contacts: MessageContact[] }>("/platform/messages/contacts");
 }
 
 export async function getConversationMessages(contactId: string, context?: MessageContext) {
-  if (USE_MOCK_API) return { conversationId: mockConversationId(contactId, context), messages: mockConversationMessages(contactId, context) };
+  if (USE_MOCK_API && !USE_REAL_MESSAGES) return { conversationId: mockConversationId(contactId, context), messages: mockConversationMessages(contactId, context) };
   const params = messageContextSearchParams(context);
   return apiGet<{ conversationId: string; messages: DirectMessage[] }>(`/platform/messages/${contactId}${params}`);
 }
@@ -965,7 +1277,7 @@ export async function sendConversationMessage(
   context?: MessageContext,
   attachments: DirectMessageAttachment[] = [],
 ) {
-  if (USE_MOCK_API) {
+  if (USE_MOCK_API && !USE_REAL_MESSAGES) {
     const current = mockConversationMessages(contactId, context);
     const message = {
       id: `mock-message-${Date.now()}`,
@@ -988,7 +1300,7 @@ export async function sendConversationMessage(
 }
 
 export async function uploadConversationAttachment(file: File) {
-  if (USE_MOCK_API) {
+  if (USE_MOCK_API && !USE_REAL_MESSAGES) {
     return {
       attachment: {
         id: `mock-attachment-${Date.now()}`,
@@ -1007,6 +1319,7 @@ export async function uploadConversationAttachment(file: File) {
       "content-type": file.type || "application/octet-stream",
       "x-file-name": encodeURIComponent(file.name),
       "x-organization-slug": ORGANIZATION_SLUG,
+      ...actorHeaders(),
     },
     body: file,
   });
@@ -1383,6 +1696,7 @@ async function apiGet<T>(path: string): Promise<T> {
     headers: {
       accept: "application/json",
       "x-organization-slug": ORGANIZATION_SLUG,
+      ...actorHeaders(),
     },
   });
 
@@ -1406,6 +1720,7 @@ async function apiJsonWithMethod<T>(method: "POST" | "PUT", path: string, body: 
       accept: "application/json",
       "content-type": "application/json",
       "x-organization-slug": ORGANIZATION_SLUG,
+      ...actorHeaders(),
     },
     body: JSON.stringify(body),
   });
@@ -1425,6 +1740,7 @@ async function apiPatch<T>(path: string, body: unknown): Promise<T> {
       accept: "application/json",
       "content-type": "application/json",
       "x-organization-slug": ORGANIZATION_SLUG,
+      ...actorHeaders(),
     },
     body: JSON.stringify(body),
   });
@@ -1443,6 +1759,7 @@ async function apiDelete<T>(path: string): Promise<T> {
     headers: {
       accept: "application/json",
       "x-organization-slug": ORGANIZATION_SLUG,
+      ...actorHeaders(),
     },
   });
 
@@ -1498,6 +1815,18 @@ function apiErrorMessage(body: { error?: string | { message?: string } } | null,
   if (typeof body?.error === "string") return body.error;
   if (body?.error && typeof body.error === "object" && body.error.message) return body.error.message;
   return `API request failed: ${response.status} ${response.statusText}`;
+}
+
+function actorHeaders(): Record<string, string> {
+  const user = readMockAuthUser();
+  if (!user) return {};
+  return {
+    "x-user-id": String(user.id),
+    "x-user-name": encodeURIComponent(String(user.name ?? "")),
+    "x-user-email": String(user.email ?? ""),
+    "x-user-role": String(user.role ?? ""),
+    "x-user-company": String(user.company ?? ""),
+  };
 }
 
 function mockPlatformOverview(): PlatformOverview {
@@ -1739,6 +2068,8 @@ function mockPmReport(period: PmReportPeriod): PmReportPayload {
   };
 }
 
+const MOCK_REVISION_COUNT_PREFIX = "ens-mock-revision-count";
+
 function mockProjectWorkspace(projectId = "p1"): ProjectWorkspace {
   const project = mockPlatformProjects().find((item) => item.id === projectId) ?? mockPlatformProjects()[0];
   const workspace: WorkspaceState = {
@@ -1758,6 +2089,9 @@ function mockProjectWorkspace(projectId = "p1"): ProjectWorkspace {
     placedItems: [],
     notes: [],
   };
+
+  const revisionKey = `${MOCK_REVISION_COUNT_PREFIX}:${project.id}`;
+  const revisionCount = Number(localStorage.getItem(revisionKey) ?? "0");
 
   return {
     project: {
@@ -1781,8 +2115,11 @@ function mockProjectWorkspace(projectId = "p1"): ProjectWorkspace {
     versions: [],
     workspace,
     readonly: false,
+    revisionCount,
+    revisionLimit: 2,
   };
 }
+
 
 function mockMessageContacts(): MessageContact[] {
   const role = readMockAuthUser()?.role ?? "chief";
@@ -1960,10 +2297,10 @@ function mockAccountId() {
   return user?.id ?? user?.email ?? "anonymous";
 }
 
-function readMockAuthUser(): { id?: string; name?: string; email?: string; role?: string; systemRole?: string } | null {
+function readMockAuthUser(): { id?: string; name?: string; email?: string; company?: string; role?: string; systemRole?: string } | null {
   try {
     const raw = localStorage.getItem(MOCK_AUTH_STORAGE_KEY);
-    return raw ? JSON.parse(raw) as { id?: string; name?: string; email?: string; role?: string; systemRole?: string } : null;
+    return raw ? JSON.parse(raw) as { id?: string; name?: string; email?: string; company?: string; role?: string; systemRole?: string } : null;
   } catch {
     return null;
   }

@@ -1,0 +1,255 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  verify:
+    name: Typecheck, Smoke, Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck libraries
+        run: pnpm run typecheck
+
+      - name: Typecheck ENS app
+        run: pnpm --filter @workspace/ens-landing run typecheck
+
+      - name: Typecheck API server
+        run: pnpm --filter @workspace/api-server run typecheck
+
+      - name: Start ENS API
+        working-directory: artifacts/ens-landing
+        env:
+          NODE_ENV: development
+          PORT: 5000
+          VITE_USE_MOCK_API: "false"
+          VITE_USE_REAL_CORE: "true"
+          VITE_USE_REAL_MESSAGES: "true"
+        run: |
+          pnpm exec tsx server/index.ts > ens-api-ci.out.log 2> ens-api-ci.err.log &
+          for i in {1..30}; do
+            if curl -fsS http://localhost:5000/api/health > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat ens-api-ci.err.log
+          exit 1
+
+      - name: Smoke workflow
+        working-directory: artifacts/ens-landing
+        env:
+          API_BASE_URL: http://localhost:5000/api
+        run: pnpm run smoke:workflow
+
+      - name: Build staff portal
+        working-directory: artifacts/ens-landing
+        run: pnpm run build:staff
+
+      - name: Build client portal
+        working-directory: artifacts/ens-landing
+        run: pnpm run build:client
+
+  playwright:
+    name: Playwright browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: verify
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: ens_e2e
+          POSTGRES_USER: ens_e2e
+          POSTGRES_PASSWORD: ens_e2e_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ens_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://ens_e2e:ens_e2e_pass@localhost:5432/ens_e2e
+      NODE_ENV: development
+      PORT: 5000
+      AUTH_SECRET: e2e-test-secret-ci
+      STAFF_SIGNUP_KEY: e2e-test-staff-key
+      DEFAULT_ORGANIZATION_SLUG: ens-demo-agency
+      VITE_ORGANIZATION_SLUG: ens-demo-agency
+      VITE_API_BASE_URL: http://localhost:5000/api
+      VITE_USE_MOCK_API: "false"
+      VITE_USE_REAL_CORE: "true"
+      VITE_USE_REAL_MESSAGES: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        working-directory: artifacts/ens-landing
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Apply migrations
+        working-directory: lib/db
+        run: pnpm run migrate
+
+      - name: Seed demo org + staff accounts via signup-staff
+        run: |
+          node -e "
+            const r = require('node:child_process');
+            const base='http://localhost:5000/api';
+            // Staff signup creates the demo org automatically
+            const chief = JSON.stringify({name:'E2E Chief',company:'ENS Demo Agency',email:'owner@ens.test',password:'EnsDev2026!',role:'chief',setupKey:'e2e-test-staff-key'});
+            const pm = JSON.stringify({name:'E2E PM',company:'ENS Demo Agency',email:'pm@ens.test',password:'EnsDev2026!',role:'pm',setupKey:'e2e-test-staff-key'});
+            // Start server, seed, then exit
+          "
+          # Start backend
+          pnpm --filter @workspace/ens-landing run server > /tmp/e2e-server.log 2>&1 &
+          sleep 5
+          # Seed chief (creates org)
+          curl -fsS -X POST http://localhost:5000/api/auth/signup-staff \
+            -H 'content-type: application/json' \
+            -d '{"name":"E2E Chief","company":"ENS Demo Agency","email":"owner@ens.test","password":"EnsDev2026!","role":"chief","setupKey":"e2e-test-staff-key"}' | jq .user.role || cat /tmp/e2e-server.log
+
+      - name: Build and start Vite dev server
+        working-directory: artifacts/ens-landing
+        run: |
+          pnpm exec vite --config vite.config.ts --host 0.0.0.0 --port 5173 &
+          for i in {1..30}; do
+            if curl -fsS http://localhost:5173 > /dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Run Playwright tests
+        working-directory: artifacts/ens-landing
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:5173
+          API_URL: http://localhost:5000
+        run: pnpm run e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: artifacts/ens-landing/playwright-report/
+          retention-days: 7
+
+  verify-api-server:
+    name: api-server build + smoke test (production backend)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # api-server is the production backend (see docker-compose.yml) — it's a
+    # separate codebase from artifacts/ens-landing/server, which only runs in
+    # local dev. CI must verify both independently or production-only bugs
+    # ship undetected.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: ens_ci
+          POSTGRES_USER: ens_ci
+          POSTGRES_PASSWORD: ens_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ens_ci -d ens_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://ens_ci:ens_ci_password@localhost:5432/ens_ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations to CI database
+        working-directory: lib/db
+        run: pnpm run migrate
+
+      - name: Test api-server (Zod schemas + integration tests)
+        working-directory: artifacts/api-server
+        env:
+          AUTH_SECRET: ci-test-secret-not-for-production-use-only-ci
+          STAFF_SIGNUP_KEY: ci-test-staff-key
+        run: pnpm run test
+
+      - name: Test lib/api-zod (Zod schema unit tests)
+        working-directory: lib/api-zod
+        run: pnpm run test
+
+      - name: Build api-server
+        working-directory: artifacts/api-server
+        run: pnpm run build
+
+      - name: Start api-server
+        working-directory: artifacts/api-server
+        env:
+          NODE_ENV: production
+          PORT: 5000
+          AUTH_SECRET: ci-test-secret-not-for-production-use-only-ci
+          STAFF_SIGNUP_KEY: ci-test-staff-key
+        run: |
+          node --enable-source-maps dist/index.mjs > api-server-ci.out.log 2> api-server-ci.err.log &
+          for i in {1..30}; do
+            if curl -fsS http://localhost:5000/api/healthz/ready > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "--- stdout ---"; cat api-server-ci.out.log
+          echo "--- stderr ---"; cat api-server-ci.err.log
+          exit 1

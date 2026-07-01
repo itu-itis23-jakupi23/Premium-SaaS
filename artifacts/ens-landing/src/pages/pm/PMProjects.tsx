@@ -220,7 +220,7 @@ export default function PMProjects() {
   const pageEnd = Math.min(pagination.offset + projects.length, pagination.total);
 
   async function createProject() {
-    if (!newProject.name.trim() || !newProject.client.trim() || isSaving) return;
+    if (!newProject.name.trim() || isSaving) return;
     const width = Number(newProject.width);
     const depth = Number(newProject.depth);
     if (!Number.isFinite(width) || width < 1 || width > 100 || !Number.isFinite(depth) || depth < 1 || depth > 100) {
@@ -1207,7 +1207,7 @@ function CreateProjectModal({
           </button>
           <button
             onClick={onSubmit}
-            disabled={!value.name.trim() || !value.client.trim() || isSaving}
+            disabled={!value.name.trim() || isSaving}
             className="flex items-center gap-2 rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
           >
             {isSaving && <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />}
@@ -1599,4 +1599,3 @@ function formatDeadline(value: string | null, locale = "en-GB"): string {
   if (Number.isNaN(d.getTime())) return value;
   return d.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "2-digit" });
 }
-

@@ -40,6 +40,7 @@ import {
   updatePlatformProject,
   updatePlatformProjectStage,
   type PlatformPagination,
+  type ManagedClient,
   type PlatformManager,
   type PlatformProject,
 } from "@/lib/platform-api";
@@ -109,6 +110,7 @@ const EMPTY_PROJECT_FORM: ProjectEditForm = {
 interface CreateProjectForm {
   name: string;
   client: string;
+  clientId: string;
   managerId: string;
   deadline: string;
   system: string;
@@ -120,6 +122,7 @@ interface CreateProjectForm {
 const EMPTY_CREATE_FORM: CreateProjectForm = {
   name: "",
   client: "",
+  clientId: "",
   managerId: "unassigned",
   deadline: "",
   system: "octanorm",
@@ -155,10 +158,12 @@ const PAGE_SIZE = 25;
 export default function ChiefProjects() {
   const { t, i18n } = useTranslation();
   const [location, navigate] = useLocation();
-  const initialManager = new URLSearchParams(location.split("?")[1] ?? "").get("pm") ?? "";
+  const initialParams = new URLSearchParams(location.split("?")[1] ?? "");
+  const initialManager = initialParams.get("pm") ?? "";
 
   const [projects, setProjects]             = useState<KanbanProject[]>([]);
   const [managers, setManagers]             = useState<PlatformManager[]>([]);
+  const [managedClients, setManagedClients] = useState<ManagedClient[]>([]);
   const [pagination, setPagination]         = useState<PlatformPagination>({ total: 0, limit: PAGE_SIZE, offset: 0, hasMore: false });
   const [page, setPage]                     = useState(0);
   const [view, setView]                     = useState<"kanban" | "list">("kanban");
@@ -185,6 +190,32 @@ export default function ChiefProjects() {
   useEffect(() => {
     document.title = t("chief.projects.title");
   }, [t]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.split("?")[1] ?? "");
+    if (params.get("new") !== "1") return;
+
+    setCreateForm((current) => ({
+      ...current,
+      client: params.get("client") ?? current.client,
+      clientId: params.get("clientId") ?? current.clientId,
+      exhibition: params.get("exhibition") ?? current.exhibition,
+      width: params.get("width") ?? current.width,
+      depth: params.get("depth") ?? current.depth,
+      system: params.get("system") ?? current.system,
+      deadline: params.get("deadline") ?? current.deadline,
+    }));
+    setCreateOpen(true);
+    params.delete("new");
+    params.delete("client");
+    params.delete("exhibition");
+    params.delete("clientId");
+    params.delete("width");
+    params.delete("depth");
+    params.delete("system");
+    params.delete("deadline");
+    navigate(`${location.split("?")[0]}${params.toString() ? `?${params.toString()}` : ""}`, { replace: true });
+  }, [location, navigate]);
 
   useEffect(() => {
     let mounted = true;
@@ -220,8 +251,16 @@ export default function ChiefProjects() {
   useEffect(() => {
     let mounted = true;
     getManagerWorkspace()
-      .then((workspace) => { if (mounted) setManagers(workspace.managers); })
-      .catch(() => { if (mounted) setManagers([]); });
+      .then((workspace) => {
+        if (!mounted) return;
+        setManagers(workspace.managers);
+        setManagedClients(workspace.clients);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setManagers([]);
+        setManagedClients([]);
+      });
     return () => { mounted = false; };
   }, []);
 
@@ -251,6 +290,18 @@ export default function ChiefProjects() {
   const managerOptions = managers
     .filter((m) => m.status === "Active")
     .map((m) => ({ id: m.id, name: m.name }));
+
+  const createSelectedClient = managedClients.find((client) => client.id === createForm.clientId) ?? null;
+  const clientOptions = managedClients
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((client) => ({
+      id: client.id,
+      name: client.name,
+      email: client.contactEmail,
+      exhibition: cleanClientExhibition(client.exhibition),
+      booth: formatClientBoothSummary(client),
+    }));
 
   const filtered = useMemo(
     () => projects.filter((p) => priorityFilter === "All" || p.priority === priorityFilter),
@@ -302,6 +353,32 @@ export default function ChiefProjects() {
       description: project.description,
     });
     setEditError("");
+  }
+
+  function selectCreateClient(clientId: string) {
+    if (clientId === "none") {
+      setCreateForm((f) => ({ ...f, clientId: "", client: "" }));
+      return;
+    }
+
+    const client = managedClients.find((item) => item.id === clientId);
+    if (!client) return;
+
+    const exhibition = cleanClientExhibition(client.exhibition);
+    const clientName = client.name || client.contactName || client.contactEmail;
+
+    setCreateForm((f) => ({
+      ...f,
+      clientId: client.id,
+      client: clientName,
+      exhibition: exhibition || f.exhibition,
+      width: client.boothWidthM ? String(client.boothWidthM) : f.width,
+      depth: client.boothDepthM ? String(client.boothDepthM) : f.depth,
+      system: client.preferredSystem ? normalizeSystem(client.preferredSystem) : f.system,
+      deadline: client.targetDate || f.deadline,
+      managerId: client.managerId || f.managerId,
+      name: f.name.trim() ? f.name : exhibition ? `${exhibition} - ${clientName}` : `${clientName} project`,
+    }));
   }
 
   async function saveEdit() {
@@ -384,10 +461,11 @@ export default function ChiefProjects() {
   async function createProject() {
     const name  = createForm.name.trim();
     const client = createForm.client.trim();
+    const exhibition = createForm.exhibition.trim() || name;
     const widthN = Number(createForm.width);
     const depthN = Number(createForm.depth);
 
-    if (!name || !client) {
+    if (!name) {
       setCreateError(t("chief.projects.validate.required"));
       return;
     }
@@ -402,10 +480,13 @@ export default function ChiefProjects() {
       await createPlatformProject({
         name,
         client,
+        clientId: createForm.clientId,
+        exhibition,
         system:   createForm.system,
         width:    createForm.width,
         depth:    createForm.depth,
         deadline: createForm.deadline,
+        managerId: createForm.managerId,
       });
       // If a manager was chosen, we'd reassign here — for now update after creation
       await reloadProjects();
@@ -509,8 +590,15 @@ export default function ChiefProjects() {
         </PageHeader>
 
         {error && (
-          <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-500">
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-500">
             {error}
+            <button
+              type="button"
+              onClick={() => { setIsLoading(true); void reloadProjects().finally(() => setIsLoading(false)); }}
+              className="rounded-md border border-red-500/30 px-3 py-1 text-xs font-semibold hover:bg-red-500/10 transition-colors"
+            >
+              Retry
+            </button>
           </div>
         )}
 
@@ -914,6 +1002,44 @@ export default function ChiefProjects() {
             </DialogHeader>
 
             <div className="mt-2 grid gap-4">
+              <div className="grid gap-2">
+                <Label>Registered client</Label>
+                <Select
+                  value={createForm.clientId || "none"}
+                  onValueChange={selectCreateClient}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select registered client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No client yet - create exhibition shell</SelectItem>
+                    {clientOptions.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}{client.exhibition ? ` - ${client.exhibition}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {createSelectedClient ? (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
+                    <div className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span className="font-semibold text-foreground">{createSelectedClient.name}</span>
+                      <span>{createSelectedClient.contactEmail}</span>
+                    </div>
+                    <div className="grid gap-1 sm:grid-cols-2">
+                      <span>Exhibition: {cleanClientExhibition(createSelectedClient.exhibition) || "Not registered yet"}</span>
+                      <span>Booth: {formatClientBoothSummary(createSelectedClient)}</span>
+                      <span>System: {createSelectedClient.preferredSystem || "Octanorm"}</span>
+                      <span>Assigned PM: {createSelectedClient.managerName || "Unassigned"}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+                    ENS flow: create the exhibition shell first, then attach the client and PM when the registration arrives.
+                  </div>
+                )}
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
                   <Label htmlFor="create-name">
@@ -930,14 +1056,13 @@ export default function ChiefProjects() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="create-client">
-                    {t("chief.projects.edit.client")}
-                    <span className="ml-0.5 text-red-500">*</span>
+                    Client / company
                   </Label>
                   <Input
                     id="create-client"
                     value={createForm.client}
                     onChange={(e) => setCreateForm((f) => ({ ...f, client: e.target.value }))}
-                    placeholder={t("chief.projects.edit.clientPlaceholder")}
+                    placeholder="Optional until assigned"
                   />
                 </div>
               </div>
@@ -1042,7 +1167,7 @@ export default function ChiefProjects() {
               </Button>
               <Button
                 onClick={createProject}
-                disabled={isCreating || !createForm.name.trim() || !createForm.client.trim()}
+                disabled={isCreating || !createForm.name.trim()}
               >
                 {isCreating ? (
                   <>
@@ -1358,6 +1483,19 @@ function formatShortDate(date: string, locale: string, noDateText: string): stri
 function parseProjectDimensions(dimensions: string) {
   const match = dimensions.match(/([\d.]+)\s*x\s*([\d.]+)/i);
   return { width: match?.[1] ?? "6", depth: match?.[2] ?? "3" };
+}
+
+function cleanClientExhibition(value: string | undefined) {
+  const text = String(value ?? "").trim();
+  if (!text || text.toLowerCase() === "pending onboarding") return "";
+  return text;
+}
+
+function formatClientBoothSummary(client: ManagedClient) {
+  const width = client.boothWidthM;
+  const depth = client.boothDepthM;
+  if (!width || !depth) return "Size not set";
+  return `${width} x ${depth} m`;
 }
 
 function normalizeSystem(system: string) {

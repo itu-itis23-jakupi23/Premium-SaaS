@@ -3,6 +3,17 @@ import { useTranslation } from "react-i18next";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import {
+  approveProjectWorkspace,
+  createWorkspaceComment,
+  getCurrentWorkspace,
+  getWorkspaceComments,
+  submitClientChangeRequest,
+  workspaceApprovalStage,
+  workspaceApprovalStageLabel,
+  type ProjectWorkspace,
+  type WorkspaceComment,
+} from "@/lib/platform-api";
+import {
   CheckCircle2,
   X,
   Clock,
@@ -18,6 +29,7 @@ type ApprovalStatus = "Pending" | "Approved" | "Rejected";
 
 interface ApprovalItem {
   id: string;
+  projectId?: string;
   title: string;
   version: string;
   project: string;
@@ -124,14 +136,56 @@ const INITIAL: ApprovalItem[] = [
   },
 ];
 
+function approvalStatusFor(record: ProjectWorkspace): ApprovalStatus {
+  const stage = workspaceApprovalStage(record);
+  if (stage === "approved" || stage === "locked") return "Approved";
+  if (stage === "revision_requested") return "Rejected";
+  return "Pending";
+}
+
+function submittedLabel(value: string | null | undefined) {
+  if (!value) return "Not sent yet";
+  return new Date(value).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function approvalItemFromWorkspace(record: ProjectWorkspace, comments: WorkspaceComment[]): ApprovalItem {
+  const versionNumber = record.currentVersion?.versionNumber ?? record.design.currentVersionNumber;
+  const stage = workspaceApprovalStage(record);
+  const dims = `${(record.design.widthMm / 1000).toFixed(1)} x ${(record.design.depthMm / 1000).toFixed(1)} m`;
+  return {
+    id: record.currentVersion?.id ?? record.design.id,
+    projectId: record.project.id,
+    title: `${record.design.name} - v${versionNumber}`,
+    version: `v${versionNumber}`,
+    project: `${record.project.name} - ${record.project.client}`,
+    description: `${record.design.system} workspace, ${dims}. Current workflow state: ${workspaceApprovalStageLabel(stage)}.`,
+    submittedAt: submittedLabel(record.currentVersion?.submittedAt ?? record.currentVersion?.createdAt),
+    status: approvalStatusFor(record),
+    previewHint: `${record.design.system} - ${dims}`,
+    comments: comments.map((comment) => ({
+      id: comment.id,
+      text: comment.text,
+      author: comment.user === "Client Reviewer" ? "You" : comment.user,
+      time: comment.time,
+    })),
+    notes: stage === "draft" ? "PM has not sent this workspace for client approval yet." : undefined,
+  };
+}
+
 export default function ClientApprovals() {
   const { t } = useTranslation();
-  const [items, setItems] = useState<ApprovalItem[]>(INITIAL);
-  const [expanded, setExpanded] = useState<string | null>("a1");
+  const [items, setItems] = useState<ApprovalItem[]>([]);
+  const [expanded, setExpanded] = useState<string | null>(null);
   const [replyText, setReply] = useState<Record<string, string>>({});
   const [filterSt, setFilter] = useState<ApprovalStatus | "All">("All");
   const [toastMsg, setToastMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [confirmDlg, setConfirm] = useState<{
     id: string;
     action: "Approved" | "Rejected";
@@ -141,6 +195,32 @@ export default function ClientApprovals() {
     document.title = t("client.approvals.pageTitle");
   }, [t]);
 
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true);
+    getCurrentWorkspace()
+      .then(async (record) => {
+        const { comments } = await getWorkspaceComments(record.project.id).catch(() => ({ comments: [] as WorkspaceComment[] }));
+        if (!active) return;
+        const item = approvalItemFromWorkspace(record, comments);
+        setItems([item]);
+        setExpanded(item.id);
+      })
+      .catch(() => {
+        if (!active) return;
+        setItems(INITIAL);
+        setExpanded(INITIAL[0]?.id ?? null);
+        showToast("Could not load live approvals. Showing fallback data.");
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setToastVisible(true);
@@ -148,40 +228,61 @@ export default function ClientApprovals() {
   };
 
   const doAction = (id: string, action: "Approved" | "Rejected") => {
-    setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, status: action } : i)),
-    );
-    setConfirm(null);
-    showToast(
-      action === "Approved"
-        ? t("client.approvals.toast.approved")
-        : t("client.approvals.toast.rejected"),
-    );
+    const item = items.find((entry) => entry.id === id);
+    if (!item?.projectId) return;
+    const request = action === "Approved"
+      ? approveProjectWorkspace(item.projectId)
+      : submitClientChangeRequest(
+          item.projectId,
+          replyText[id]?.trim() || "Client requested changes from the approvals page.",
+        );
+    request
+      .then(async (record) => {
+        const { comments } = await getWorkspaceComments(record.project.id).catch(() => ({ comments: [] as WorkspaceComment[] }));
+        const next = approvalItemFromWorkspace(record, comments);
+        setItems([next]);
+        setExpanded(next.id);
+        setReply((prev) => ({ ...prev, [id]: "" }));
+        showToast(
+          action === "Approved"
+            ? t("client.approvals.toast.approved")
+            : t("client.approvals.toast.rejected"),
+        );
+      })
+      .catch((err: unknown) => {
+        showToast(err instanceof Error ? err.message : "Approval action failed.");
+      })
+      .finally(() => setConfirm(null));
   };
 
   const sendReply = (id: string) => {
+    const item = items.find((entry) => entry.id === id);
     const text = replyText[id]?.trim();
-    if (!text) return;
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === id
-          ? {
-              ...i,
-              comments: [
-                ...i.comments,
-                {
-                  id: `c${Date.now()}`,
-                  text,
-                  author: "You",
-                  time: t("client.approvals.justNow"),
-                },
-              ],
-            }
-          : i,
-      ),
-    );
-    setReply((p) => ({ ...p, [id]: "" }));
-    showToast(t("client.approvals.toast.commentSent"));
+    if (!text || !item?.projectId) return;
+    createWorkspaceComment(item.projectId, text, null, "comment")
+      .then(({ comment }) => {
+        setItems((prev) =>
+          prev.map((entry) =>
+            entry.id === id
+              ? {
+                  ...entry,
+                  comments: [
+                    ...entry.comments,
+                    {
+                      id: comment.id,
+                      text: comment.text,
+                      author: "You",
+                      time: comment.time,
+                    },
+                  ],
+                }
+              : entry,
+          ),
+        );
+        setReply((p) => ({ ...p, [id]: "" }));
+        showToast(t("client.approvals.toast.commentSent"));
+      })
+      .catch(() => showToast("Could not send comment."));
   };
 
   const visible = items.filter(
@@ -288,6 +389,11 @@ export default function ClientApprovals() {
 
         {/* Items */}
         <div className="space-y-3">
+          {isLoading && (
+            <div className="text-center py-16 text-muted-foreground text-sm font-mono border-2 border-dashed rounded-lg">
+              Loading live approval workflow...
+            </div>
+          )}
           {visible.map((item) => {
             const sc = STATUS_CFG[item.status];
             const isExp = expanded === item.id;
@@ -361,6 +467,7 @@ export default function ClientApprovals() {
                   {item.status === "Pending" && (
                     <div className="flex items-center gap-2 mt-3 pt-3 border-t">
                       <button
+                        data-testid={`button-approve-${item.id}`}
                         onClick={() =>
                           setConfirm({ id: item.id, action: "Approved" })
                         }
@@ -373,6 +480,7 @@ export default function ClientApprovals() {
                         {t("client.approvals.actions.approve")}
                       </button>
                       <button
+                        data-testid={`button-reject-${item.id}`}
                         onClick={() =>
                           setConfirm({ id: item.id, action: "Rejected" })
                         }
@@ -382,6 +490,7 @@ export default function ClientApprovals() {
                         {t("client.approvals.actions.requestChanges")}
                       </button>
                       <button
+                        data-testid={`button-view-details-${item.id}`}
                         onClick={() => setExpanded(isExp ? null : item.id)}
                         className="flex items-center gap-1.5 border rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors ml-auto"
                       >
@@ -465,7 +574,7 @@ export default function ClientApprovals() {
               </div>
             );
           })}
-          {visible.length === 0 && (
+          {!isLoading && visible.length === 0 && (
             <div className="text-center py-16 text-muted-foreground text-sm font-mono border-2 border-dashed rounded-lg">
               {t("client.approvals.emptyState")}
             </div>

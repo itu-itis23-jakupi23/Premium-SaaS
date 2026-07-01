@@ -176,6 +176,7 @@ export const users = pgTable(
     emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     disabledAt: timestamp("disabled_at", { withTimezone: true }),
+    pmCapacityLimit: integer("pm_capacity_limit"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -280,6 +281,18 @@ export const clients = pgTable(
     }),
     activatedAt: timestamp("activated_at", { withTimezone: true }),
     billingCustomerId: varchar("billing_customer_id", { length: 120 }),
+    workspaceEditorSubscriptionActive: boolean("workspace_editor_subscription_active").notNull().default(false),
+    workspaceEditorSubscriptionPlan: varchar("workspace_editor_subscription_plan", { length: 40 }),
+    workspaceEditorSubscriptionStatus: varchar("workspace_editor_subscription_status", { length: 40 }).notNull().default("inactive"),
+    workspaceEditorExtraRevisionRounds: integer("workspace_editor_extra_revision_rounds").notNull().default(0),
+    workspaceEditorSubscriptionReference: varchar("workspace_editor_subscription_reference", { length: 120 }),
+    workspaceEditorSubscriptionUpdatedAt: timestamp("workspace_editor_subscription_updated_at", { withTimezone: true }),
+    intakeExhibitionName: varchar("intake_exhibition_name", { length: 180 }),
+    intakeBoothSizeSqm: numeric("intake_booth_size_sqm", { precision: 8, scale: 2 }),
+    intakeCity: varchar("intake_city", { length: 120 }),
+    intakeDeadlineAt: timestamp("intake_deadline_at", { withTimezone: true }),
+    intakePreferredSystem: boothSystemEnum("intake_preferred_system"),
+    intakeNotes: text("intake_notes"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -359,6 +372,40 @@ export const projectMembers = pgTable(
     userIdx: index("project_members_user_idx").on(table.userId),
     userProjectIdx: index("project_members_user_project_idx").on(table.userId, table.projectId),
     projectRoleIdx: index("project_members_project_role_idx").on(table.projectId, table.role),
+  }),
+);
+
+export const assignmentTargetEnum = pgEnum("assignment_target", [
+  "project_pm",
+  "client_pm",
+]);
+
+export const projectAssignmentHistory = pgTable(
+  "project_assignment_history",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    targetType: assignmentTargetEnum("target_type").notNull(),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }),
+    changedByUserId: uuid("changed_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    previousPmUserId: uuid("previous_pm_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    newPmUserId: uuid("new_pm_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    reason: text("reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    orgCreatedIdx: index("project_assignment_history_org_created_idx").on(table.organizationId, table.createdAt),
+    projectIdx: index("project_assignment_history_project_idx").on(table.projectId, table.createdAt),
+    clientIdx: index("project_assignment_history_client_idx").on(table.clientId, table.createdAt),
   }),
 );
 

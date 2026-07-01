@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ElementType } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { 
@@ -32,7 +32,8 @@ import {
   AlertCircle,
   Monitor,
   UserSquare2,
-  Users
+  Users,
+  UserPlus,
 } from "lucide-react";
 
 const EMPTY_OVERVIEW: PlatformOverview = {
@@ -61,6 +62,7 @@ const EMPTY_OVERVIEW: PlatformOverview = {
     ],
     activityCount: 0,
   },
+  workflow: null,
 };
 
 export default function ChiefDashboard() {
@@ -76,6 +78,22 @@ export default function ChiefDashboard() {
   useEffect(() => {
     document.title = t("chief.dashboard.pageTitle");
   }, [t]);
+
+  function reloadData() {
+    setIsLoading(true);
+    setError(null);
+    getPlatformOverview()
+      .then((data) => {
+        setOverview(data);
+        setError(null);
+      })
+      .catch((reason: unknown) => {
+        setError(reason instanceof Error ? reason.message : t("chief.dashboard.loadError"));
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -240,8 +258,15 @@ export default function ChiefDashboard() {
 
         {error && (
           <Card className="border-red-500/30 bg-red-500/5">
-            <CardContent className="p-4 text-sm text-red-500">
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm text-red-500">
               {error}
+              <button
+                type="button"
+                onClick={reloadData}
+                className="rounded-md border border-red-500/30 px-3 py-1 text-xs font-semibold hover:bg-red-500/10 transition-colors"
+              >
+                Retry
+              </button>
             </CardContent>
           </Card>
         )}
@@ -261,6 +286,74 @@ export default function ChiefDashboard() {
               ))
           }
         </div>
+
+        {!isLoading && overview.workflow && (
+          <Card className="border-primary/20 bg-card/70">
+            <CardHeader className="pb-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <CardTitle>Assignment control</CardTitle>
+                  <CardDescription>New accounts and unassigned work that need Chief action.</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => navigate("/chief/managers")}>
+                  Open assignments <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <WorkflowQueueTile
+                  label="Pending accounts"
+                  value={overview.workflow.counts.pendingClientApprovals ?? 0}
+                  detail={overview.workflow.counts.pendingClientApprovals ? "Client accounts awaiting review" : "No accounts pending"}
+                  tone={overview.workflow.counts.pendingClientApprovals ? "danger" : "clear"}
+                  icon={UserSquare2}
+                  onOpen={() => navigate("/chief/clients")}
+                />
+                <WorkflowQueueTile
+                  label="New PMs"
+                  value={overview.workflow.counts.newProjectManagers}
+                  detail={overview.workflow.newProjectManagers[0]?.name ?? "No PM accounts waiting"}
+                  tone={overview.workflow.counts.newProjectManagers ? "info" : "clear"}
+                  icon={UserPlus}
+                  onOpen={() => navigate("/chief/managers")}
+                />
+                <WorkflowQueueTile
+                  label="Unassigned clients"
+                  value={overview.workflow.counts.unassignedClients}
+                  detail={overview.workflow.unassignedClients[0]?.name ?? "All clients assigned"}
+                  tone={overview.workflow.counts.unassignedClients ? "warning" : "clear"}
+                  icon={Users}
+                  onOpen={() => navigate("/chief/managers")}
+                />
+                <WorkflowQueueTile
+                  label="Unassigned projects"
+                  value={overview.workflow.counts.unassignedProjects}
+                  detail={overview.workflow.unassignedProjects[0]?.name ?? "All projects assigned"}
+                  tone={overview.workflow.counts.unassignedProjects ? "warning" : "clear"}
+                  icon={Briefcase}
+                  onOpen={() => navigate("/chief/managers")}
+                />
+                <WorkflowQueueTile
+                  label="Stalled approvals"
+                  value={overview.workflow.counts.stalledApprovals}
+                  detail={overview.workflow.approvalAging[0] ? `${overview.workflow.approvalAging[0].name} · ${overview.workflow.approvalAging[0].waitingDays}d` : "No stale approvals"}
+                  tone={overview.workflow.counts.stalledApprovals ? "danger" : "clear"}
+                  icon={Clock}
+                  onOpen={() => navigate("/chief/clients")}
+                />
+                <WorkflowQueueTile
+                  label="Overloaded PMs"
+                  value={overview.workflow.counts.overloadedManagers}
+                  detail={overview.workflow.workloadAlerts[0] ? `${overview.workflow.workloadAlerts[0].name} · ${overview.workflow.workloadAlerts[0].workload}%` : "Capacity looks stable"}
+                  tone={overview.workflow.counts.overloadedManagers ? "danger" : "clear"}
+                  icon={AlertCircle}
+                  onOpen={() => navigate("/chief/managers")}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-7">
           {/* Activity Chart */}
@@ -530,6 +623,47 @@ export default function ChiefDashboard() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+function WorkflowQueueTile({
+  label,
+  value,
+  detail,
+  tone,
+  icon: Icon,
+  onOpen,
+}: {
+  label: string;
+  value: number;
+  detail: string;
+  tone: "clear" | "info" | "warning" | "danger";
+  icon: ElementType;
+  onOpen: () => void;
+}) {
+  const toneClass = {
+    clear: "border-green-500/25 bg-green-500/5 text-green-500",
+    info: "border-blue-500/25 bg-blue-500/5 text-blue-500",
+    warning: "border-yellow-500/25 bg-yellow-500/5 text-yellow-500",
+    danger: "border-red-500/25 bg-red-500/5 text-red-500",
+  }[tone];
+  return (
+    <button
+      type="button"
+      className="rounded-lg border bg-background/40 p-4 text-left transition-colors hover:bg-muted/60"
+      onClick={onOpen}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+          <p className="mt-2 text-2xl font-bold text-foreground">{value}</p>
+        </div>
+        <span className={cn("rounded-md border p-2", toneClass)}>
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <p className="mt-3 truncate text-xs text-muted-foreground">{detail}</p>
+    </button>
   );
 }
 

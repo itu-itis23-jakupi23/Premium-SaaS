@@ -6,32 +6,124 @@ import {
   createProjectWorkspaceVersion,
   getCurrentWorkspace,
   getProjectWorkspace,
+  getWorkspaceComments,
   getPlatformProjects,
   saveProjectWorkspace,
+  updateWorkspaceCommentStatus,
+  workspaceApprovalStage,
+  workspaceApprovalStageLabel,
   type ProjectWorkspace,
   type PlatformProject,
+  type WorkspaceComment,
 } from "@/lib/platform-api";
 import {
   ChevronLeft, Undo2, Redo2, Save, Camera, History, Send,
-  ZoomIn, ZoomOut, Maximize2, Search, Plus, ChevronDown, Trash2,
+  ZoomIn, ZoomOut, Maximize2, Search, Plus, ChevronDown, Trash2, Download,
   Square, LayoutTemplate, Lightbulb, Monitor, Layers, Map, Box, PanelLeft, X,
-  CheckCircle2, Package, StickyNote, Settings2, Home,
+  CheckCircle2, Package, StickyNote, Settings2, Home, Copy, MessageSquare, ImagePlus,
 } from "lucide-react";
 
 // ── Palette ────────────────────────────────────────────────────────
-const C = { bg:'#f3f1ec', panel:'#ffffff', ink:'#181613', hair:'#d8d3c9', blue:'#1d4ed8', orange:'#c2410c', green:'#2f7d3a', muted:'#6b6560', bgHover:'#ece9e3' } as const;
-const MONO = '"SamsungOne","SamsungOne UI","SamsungOneKorean","Samsung Sharp Sans",system-ui,sans-serif';
-const UI   = '"SamsungOne","SamsungOne UI","SamsungOneKorean","Samsung Sharp Sans",system-ui,sans-serif';
+const C = {
+  bg:    'var(--workspace-bg, #f3f1ec)',
+  panel: 'var(--workspace-panel, #ffffff)',
+  panel0:'var(--workspace-panel-e0, rgba(255,255,255,0.88))',
+  ink:   'var(--workspace-ink, #181613)',
+  hair:  'var(--workspace-hair, #d8d3c9)',
+  blue:  'var(--workspace-blue, #1d4ed8)',
+  orange:'var(--workspace-orange, #c2410c)',
+  green: 'var(--workspace-green, #2f7d3a)',
+  muted: 'var(--workspace-muted, #6b6560)',
+  bgHover:'var(--workspace-bg-hover, #ece9e3)'
+} as const;
+const MONO = 'var(--app-font-mono)';
+const UI   = 'var(--app-font-samsung)';
 
 // ── Types ──────────────────────────────────────────────────────────
-interface BoothState { width:number; depth:number; height:number; system:BoothSystem; companyName:string; openFront:boolean; openBack:boolean; openLeft:boolean; openRight:boolean; }
-interface WorkspacePlacedItem { id:string; catalogId:string; name:string; sku:string; qty:number; w:number; d:number; h:number; color:string; weight:number; }
+type FasciaOption = 'classic' | 'full' | 'custom';
+type LightingPreset = 'neutral' | 'exhibition' | 'accent' | 'spotlight' | 'ambient';
+type DoorPosition = 'left' | 'center' | 'right';
+type DoorSwing = 'left-in' | 'right-in' | 'left-out' | 'right-out';
+interface BoothState { width:number; depth:number; height:number; system:BoothSystem; companyName:string; openFront:boolean; openBack:boolean; openLeft:boolean; openRight:boolean; fasciaEnabled:boolean; fasciaOption:FasciaOption; }
+interface WorkspacePlacedItem { id:string; catalogId:string; name:string; sku:string; qty:number; w:number; d:number; h:number; color:string; weight:number; x:number; z:number; rotation:number; rotationX?:number; rotationY?:number; rotationZ?:number; kind:'furniture'|'light'|'structure'|'fascia'|'asset'; shape?:CatItem['shape']; modelUrl?:string; source?:string; }
+interface WorkspaceRoom { id:string; name:string; width:number; depth:number; height:number; x:number; z:number; hasDoor:boolean; hasCeiling:boolean; doorPosition:DoorPosition; doorSwing:DoorSwing; doorOpen:boolean; }
+interface PanelOverride { color?:string; brandText?:string; brandColor?:string; brandScale?:number; designImageUrl?:string; designImageName?:string; designOpacity?:number; }
 interface Note { id:string; text:string; color:string; createdAt:string; }
 interface Snapshot { id:string; name:string; data:WSData; createdAt:string; }
-interface WSData { booth:BoothState; themeIdx:number; carpetIdx:number; placedItems:WorkspacePlacedItem[]; notes:Note[]; }
+interface WSData { booth:BoothState; themeIdx:number; wallFinishIdx:number; frameFinishIdx:number; fasciaFinishIdx:number; carpetIdx:number; lightingPreset:LightingPreset; placedItems:WorkspacePlacedItem[]; rooms:WorkspaceRoom[]; notes:Note[]; panelOverrides:Record<string,PanelOverride>; frontSupportPositions:number[]; }
+type SaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';
+type FeedbackFilter = 'open' | 'all' | 'resolved';
 
 // ── Catalog ────────────────────────────────────────────────────────
-interface CatItem { id:string; name:string; sku:string; dim:string; inStand:number; icon:React.ElementType; }
+interface CatItem { id:string; name:string; sku:string; dim:string; inStand:number; icon:React.ElementType; family?:string; price?:number; stock?:number; lowStockAt?:number; shape?:'round_table'|'rect_table'|'counter'|'shelf'|'wall_shelf'|'cabinet'|'cube'|'chair'|'bar_stool'|'light'|'rail_light'|'box'; modelUrl?:string; furnitureCategory?:FurnitureCategory; }
+type FurnitureCategory = 'all' | 'chairs' | 'stools' | 'seating' | 'tables' | 'storage' | 'shelves' | 'appliances' | 'lighting' | 'decor' | 'parts';
+const SEDEF_FURNITURE_ITEMS: Omit<CatItem,'icon'>[] = [
+  {id:'sedef-149', name:'PLASTIK HARE SANDALYE - PLASTIC CHAIR', sku:'149', dim:'0.55 x 0.55 x 0.85', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'chair', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/149%20PLASTIK%20HARE%20SANDALYE%20-%20PLASTIC%20CHAIR.glb'},
+  {id:'sedef-221', name:'PANEL - PANEL', sku:'221', dim:'1.00 x 0.08 x 2.50', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/221%20PANEL%20-%20PANEL.glb'},
+  {id:'sedef-224', name:'RAF - SHELF', sku:'224', dim:'1.00 x 0.30 x 0.08', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'shelf', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/224%20RAF%20-%20SHELF.glb'},
+  {id:'sedef-231', name:'AHSAP KAPI - WOODEN DOOR', sku:'231', dim:'0.90 x 0.08 x 2.10', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/231%20AHSAP%20KAPI%20-%20WOODEN%20DOOR.glb'},
+  {id:'sedef-250-b', name:'AHSAP SANDALYE BEYAZ - WHITE WOOD CHAIR', sku:'250-B', dim:'0.55 x 0.55 x 0.85', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'chair', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/250-B%20AHSAP%20SANDALYE%20BEYAZ%20-%20WHITE%20WOOD%20CHAIR.glb'},
+  {id:'sedef-255-b', name:'DERI BAR SANDALYESI - LEATHER BAR CHAIR', sku:'255-B', dim:'0.50 x 0.50 x 1.05', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'bar_stool', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/255-B%20DERI%20BAR%20SANDALYESI%20-%20LEATHER%20BAR%20CHAIR.glb'},
+  {id:'sedef-255-s', name:'AVEA DERI BAR TABURESI SIYAH - BLACK LEATHER BAR STOOL', sku:'255-S', dim:'0.50 x 0.50 x 1.05', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'bar_stool', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/255-S%20AVEA%20DERI%20BAR%20TABURESI%20SIYAH%20-%20BLACK%20LEATHER%20BAR%20STOOL.glb'},
+  {id:'sedef-307', name:'Z BAR TABURESI - Z BAR STOOL', sku:'307', dim:'0.45 x 0.45 x 1.00', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'bar_stool', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/307%20Z%20BAR%20TABURESI%20-%20Z%20BAR%20STOOL.glb'},
+  {id:'sedef-309', name:'DERI SANDALYE - LEATHER CHAIR', sku:'309', dim:'0.55 x 0.55 x 0.85', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'chair', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/309%20DERI%20SANDALYE%20-%20LEATHER%20CHAIR.glb'},
+  {id:'sedef-312-s', name:'TEK KISILIK KOLTUK SIYAH - ARMCHAIR BLACK', sku:'312-S', dim:'0.90 x 0.85 x 0.80', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'chair', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/312-S%20TEK%20KISILIK%20KOLTUK%20SIYAH%20-%20ARMCHAIR%20BLACK.glb'},
+  {id:'sedef-313-s', name:'CIFT KISILIK KOLTUK SIYAH - DOUBLE SOFA BLACK', sku:'313-S', dim:'1.55 x 0.85 x 0.80', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/313-S%20CIFT%20KISILIK%20KOLTUK%20SIYAH%20-%20DOUBLE%20SOFA%20BLACK.glb'},
+  {id:'sedef-315', name:'VESTIYER - CLOTHES RACK', sku:'315', dim:'0.75 x 0.45 x 1.75', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/315%20VESTIYER%20-%20CLOTHES%20RACK.glb'},
+  {id:'sedef-316-k', name:'DERI PUF KIRMIZI - LEATHER POUFFE RED', sku:'316-K', dim:'0.45 x 0.45 x 0.45', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'cube', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/316-K%20DERI%20PUF%20KIRMIZI%20-%20LEATHER%20POUFFE%20RED.glb'},
+  {id:'sedef-318', name:'COP KOVASI - WASTE BIN', sku:'318', dim:'0.32 x 0.32 x 0.70', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/318%20COP%20KOVASI%20-%20WASTE%20BIN.glb'},
+  {id:'sedef-321', name:'BITKI - PLANT', sku:'321', dim:'0.55 x 0.55 x 1.30', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/321%20BITKI%20-%20PLANT.glb'},
+  {id:'sedef-326-s', name:'OFIS SANDALYESI - OFFICE CHAIR', sku:'326-S', dim:'0.60 x 0.60 x 0.90', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'chair', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/326-S%20OFIS%20SANDALYESI%20-%20OFFICE%20CHAIR.glb'},
+  {id:'sedef-401', name:'TV - TV', sku:'401', dim:'1.10 x 0.08 x 0.65', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/401%20TV%20-%20TV.glb'},
+  {id:'sedef-406', name:'DIZUSTU BILGISAYAR - LAPTOP', sku:'406', dim:'0.36 x 0.25 x 0.04', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/406%20DIZUSTU%20BILGISAYAR%20-%20LAPTOP.glb'},
+  {id:'sedef-411', name:'BUZDOLABI - REFRIGERATOR', sku:'411', dim:'0.65 x 0.65 x 1.45', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'cabinet', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/411%20BUZDOLABI%20-%20REFRIGERATOR.glb'},
+  {id:'sedef-412', name:'SEBIL - WATER FOUNTAIN', sku:'412', dim:'0.38 x 0.38 x 1.15', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/412%20SEBIL%20-%20WATER%20FOUNTAIN.glb'},
+  {id:'sedef-413', name:'BROSURLUK - BROCHURE RACK', sku:'413', dim:'0.45 x 0.38 x 1.45', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'shelf', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/413%20BROSURLUK%20-%20BROCHURE%20RACK.glb'},
+  {id:'sedef-417', name:'100 W 3 RENKLI LAMBA - 100 W 3-COLORED LAMP', sku:'417', dim:'0.18 x 0.18 x 0.28', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'rail_light', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/417%20100%20W%203%20RENKLI%20LAMBA%20-%20100%20W%203-COLORED%20LAMP.glb'},
+  {id:'sedef-418', name:'100 W GRI PROJEKTOR - 100 W SPOTLIGHT LAMP', sku:'418', dim:'0.22 x 0.18 x 0.26', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'rail_light', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/418%20100%20W%20GRI%20PROJEKTOR%20-%20100%20W%20SPOTLIGHT%20LAMP.glb'},
+  {id:'sedef-419', name:'100 W LED KOLLU PROJEKTOR - 100 W SPOTLIGHT LAMP', sku:'419', dim:'0.22 x 0.18 x 0.26', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'rail_light', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/419%20100%20W%20LED%20KOLLU%20PROJEKTOR%20-%20100%20W%20SPOTLIGHT%20LAMP.glb'},
+  {id:'sedef-422', name:'MESRUBAT DOLABI - DRINK REFRIGERATOR', sku:'422', dim:'0.70 x 0.65 x 1.60', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'cabinet', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/422%20MESRUBAT%20DOLABI%20-%20DRINK%20REFRIGERATOR.glb'},
+  {id:'sedef-431', name:'AHSAP CICEKLIK - WOOD FLORAL', sku:'431', dim:'0.70 x 0.35 x 0.75', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/431%20AHSAP%20CICEKLIK%20-%20WOOD%20FLORAL.glb'},
+  {id:'sedef-440', name:'EVYE DOLAPLI - SINK CABINET', sku:'440', dim:'0.85 x 0.60 x 0.90', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'cabinet', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/440%20EVYE%20DOLAPLI%20-%20SINK%20CABINET.glb'},
+  {id:'sedef-447', name:'BUYUK BUZDOLABI - LARGE REFRIGERATOR', sku:'447', dim:'0.75 x 0.70 x 1.85', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'cabinet', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/447%20BUYUK%20BUZDOLABI%20-%20LARGE%20REFRIGERATOR.glb'},
+  {id:'sedef-513', name:'TEL BAR SANDALYESI - WIRE BLACK BAR CHAIR', sku:'513', dim:'0.50 x 0.50 x 1.05', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'bar_stool', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/513%20TEL%20BAR%20SANDALYESI%20-%20WIRE%20BLACK%20BAR%20CHAIR.glb'},
+];
+const FURNITURE_CATEGORY_LABELS: Record<FurnitureCategory,string> = {
+  all: 'All',
+  chairs: 'Chairs',
+  stools: 'Bar stools',
+  seating: 'Sofas & poufs',
+  tables: 'Tables',
+  storage: 'Storage',
+  shelves: 'Shelves',
+  appliances: 'Appliances',
+  lighting: 'Lights',
+  decor: 'Decor',
+  parts: 'Parts',
+};
+const FURNITURE_CATEGORY_ORDER: FurnitureCategory[] = ['all','chairs','stools','seating','tables','storage','shelves','appliances','lighting','decor','parts'];
+function furnitureCategoryFor(item: Pick<CatItem,'name'|'sku'|'shape'>): FurnitureCategory {
+  const text = `${item.name} ${item.sku}`.toLowerCase();
+  if (item.shape === 'bar_stool' || text.includes('tabure') || text.includes('bar stool') || text.includes('bar chair')) return 'stools';
+  if (item.shape === 'chair' || text.includes('sandalye') || text.includes('chair')) {
+    if (text.includes('koltuk') || text.includes('armchair') || text.includes('sofa')) return 'seating';
+    return 'chairs';
+  }
+  if (text.includes('koltuk') || text.includes('sofa') || text.includes('puf') || text.includes('pouffe')) return 'seating';
+  if (item.shape === 'round_table' || item.shape === 'rect_table' || text.includes('masa') || text.includes('table')) return 'tables';
+  if (item.shape === 'shelf' || item.shape === 'wall_shelf' || text.includes('raf') || text.includes('shelf') || text.includes('brosurluk') || text.includes('brochure')) return 'shelves';
+  if (text.includes('buzdolabi') || text.includes('refrigerator') || text.includes('sebil') || text.includes('water fountain') || text.includes('evye') || text.includes('sink')) return 'appliances';
+  if (item.shape === 'cabinet' || text.includes('dolap') || text.includes('cabinet') || text.includes('rack')) return 'storage';
+  if (item.shape === 'rail_light' || item.shape === 'light' || text.includes('lamba') || text.includes('lamp') || text.includes('spotlight')) return 'lighting';
+  if (text.includes('bitki') || text.includes('plant') || text.includes('ciceklik') || text.includes('floral')) return 'decor';
+  return 'parts';
+}
+const SEDEF_ITEM_PROPS: Record<string,{w:number;d:number;h:number;color:string;weight:number}> = Object.fromEntries(
+  SEDEF_FURNITURE_ITEMS.map(item => {
+    const [w,d,h] = item.dim.split(' x ').map(Number);
+    return [item.id, {w:w || 0.8, d:d || 0.8, h:h || 0.8, color:'#d9d2c5', weight:12}];
+  })
+) as Record<string,{w:number;d:number;h:number;color:string;weight:number}>;
 const CATALOG: Record<string,CatItem[]> = {
   Structure: [
     {id:'s1',name:'Solid Wall',sku:'OCT-SW-100',dim:'1.0 × 2.5',inStand:6,icon:Square},
@@ -43,18 +135,11 @@ const CATALOG: Record<string,CatItem[]> = {
     {id:'f1',name:'Std Fascia',sku:'FAS-STD-01',dim:'1.0 × 0.3',inStand:6,icon:LayoutTemplate},
     {id:'f2',name:'Corner Fascia',sku:'FAS-COR-01',dim:'0.3 × 0.3',inStand:4,icon:LayoutTemplate},
   ],
-  Furniture: [
-    {id:'u1',name:'Reception Counter',sku:'FUR-RC-04',dim:'1.2 × 0.6',inStand:1,icon:Monitor},
-    {id:'u2',name:'Design Chair',sku:'FUR-DC-12',dim:'0.45 × 0.6',inStand:2,icon:PanelLeft},
-    {id:'u3',name:'Bar Stool',sku:'FUR-BS-08',dim:'0.4 × 0.4',inStand:0,icon:PanelLeft},
-    {id:'u4',name:'Meeting Table',sku:'FUR-MT-01',dim:'1.8 × 0.8',inStand:0,icon:Monitor},
-    {id:'u5',name:'Display Shelf',sku:'FUR-DS-02',dim:'1.0 × 0.35',inStand:0,icon:Layers},
-    {id:'u6',name:'Storage Cabinet',sku:'FUR-SC-01',dim:'0.8 × 0.5',inStand:0,icon:Box},
-  ],
+  Furniture: SEDEF_FURNITURE_ITEMS.map(item => ({...item, icon:Box, furnitureCategory: furnitureCategoryFor(item)})),
   Lighting: [
-    {id:'l1',name:'Spotlight',sku:'LIT-SP-100',dim:'0.15 × 0.15',inStand:4,icon:Lightbulb},
-    {id:'l2',name:'LED Strip',sku:'LIT-LED-01',dim:'1.0 × 0.03',inStand:8,icon:Lightbulb},
-    {id:'l3',name:'Arm Light',sku:'LIT-AR-100',dim:'0.4 × 0.3',inStand:2,icon:Lightbulb},
+    {id:'417',name:'Spotlight',sku:'417',dim:'0.18 x 0.18 x 0.28',inStand:4,icon:Lightbulb,family:'Rail Lights',price:15,stock:12,lowStockAt:4,shape:'rail_light'},
+    {id:'418',name:'Floodlight',sku:'418',dim:'0.22 x 0.18 x 0.26',inStand:0,icon:Lightbulb,family:'Rail Lights',price:18,stock:6,lowStockAt:2,shape:'rail_light'},
+    {id:'fascia_light',name:'Fascia Light',sku:'fascia_light',dim:'0.32 x 0.14 x 0.14',inStand:0,icon:Lightbulb,family:'Fascia Lights',price:12,stock:8,lowStockAt:2,shape:'rail_light'},
   ],
 };
 
@@ -62,17 +147,36 @@ const ITEM_PROPS: Record<string,{w:number;d:number;h:number;color:string;weight:
   s1:{w:1.0,d:0.08,h:2.5,color:'#4a90d9',weight:28}, s2:{w:1.0,d:0.05,h:2.5,color:'#7bb8f0',weight:22},
   s3:{w:1.0,d:0.08,h:2.5,color:'#6bb0e8',weight:26}, s4:{w:2.0,d:0.15,h:0.85,color:'#5580c0',weight:18},
   f1:{w:1.0,d:0.15,h:0.3,color:'#8868ee',weight:8},   f2:{w:0.3,d:0.3,h:0.3,color:'#9878f0',weight:5},
-  u1:{w:1.2,d:0.6,h:1.0,color:'#e67e22',weight:45},   u2:{w:0.45,d:0.5,h:0.9,color:'#f39c12',weight:12},
-  u3:{w:0.4,d:0.4,h:1.0,color:'#e5890a',weight:8},    u4:{w:1.8,d:0.8,h:0.75,color:'#d4790c',weight:38},
-  u5:{w:1.0,d:0.35,h:1.8,color:'#cf6d17',weight:22},  u6:{w:0.8,d:0.5,h:1.8,color:'#ba5d0b',weight:35},
   l1:{w:0.15,d:0.15,h:0.3,color:'#d4af37',weight:2},  l2:{w:1.0,d:0.05,h:0.1,color:'#c8a020',weight:1},
   l3:{w:0.4,d:0.3,h:0.5,color:'#b89018',weight:3},
+  '417':{w:0.18,d:0.18,h:0.28,color:'#2b3037',weight:2}, '418':{w:0.22,d:0.18,h:0.26,color:'#313740',weight:2.5},
+  fascia_light:{w:0.32,d:0.14,h:0.14,color:'#dce3ea',weight:1.8},
+  ...SEDEF_ITEM_PROPS,
 };
 
+const ENS_MODEL_URLS: Record<string,string> = {};
+const KNOWN_CATALOG_IDS = new Set(Object.values(CATALOG).flat().map(item => item.id));
+
 const THEMES  = [{label:'Charcoal',color:'#3b3e44'},{label:'White',color:'#dde0e4'},{label:'Walnut',color:'#7a4a2a'},{label:'Navy',color:'#1a2640'}];
+const WALL_FINISHES = [{label:'White Laminate',color:'#f8fafc'},{label:'Cool Grey',color:'#dfe4ea'},{label:'Warm Ivory',color:'#f3eadc'},{label:'Graphite',color:'#9aa1aa'}];
+const FRAME_FINISHES = [{label:'Anodized',color:'#b8bdc3'},{label:'Black',color:'#3d4249'},{label:'Champagne',color:'#c7b99a'},{label:'White',color:'#e4e7eb'}];
+const FASCIA_FINISHES = [{label:'White',color:'#ffffff'},{label:'Ice Grey',color:'#eef2f7'},{label:'Warm White',color:'#fff7ed'},{label:'Graphite',color:'#d2d7de'}];
 const CARPETS = [{label:'Black',color:'#1a1a1a'},{label:'Bone',color:'#dde0e4'},{label:'Gray',color:'#7a7e84'},{label:'Navy',color:'#1a2640'},{label:'Forest',color:'#1e3a28'},{label:'Terracotta',color:'#5a2316'}];
 const NOTE_COLORS = ['#1d4ed8','#c2410c','#2f7d3a','#7c3aed','#b45309'];
-const CAT_TOTAL: Record<string,number> = { Structure:4, Fascia:2, Furniture:6, Lighting:3 };
+const CAT_TOTAL: Record<string,number> = { Structure:4, Fascia:2, Furniture:SEDEF_FURNITURE_ITEMS.length, Lighting:3 };
+const FASCIA_OPTIONS: {value:FasciaOption; label:string; price:number; minWidth:number; note:string; boardMm:number}[] = [
+  {value:'classic', label:'Standard rail sign', price:1200, minWidth:2, note:'Front and rear fascia integrated into the top rail.', boardMm:110},
+  {value:'full', label:'Full length rail sign', price:1800, minWidth:2, note:'Longer rail-integrated fascia with continuous front/rear branding.', boardMm:110},
+  {value:'custom', label:'Custom oval fascia', price:2500, minWidth:3, note:'Custom face board for wider stands; text is required.', boardMm:140},
+];
+const LIGHTING_PRESETS: {value:LightingPreset; label:string}[] = [
+  {value:'neutral', label:'Neutral'},
+  {value:'exhibition', label:'Exhibition'},
+  {value:'accent', label:'Accent'},
+  {value:'spotlight', label:'Spotlight'},
+  {value:'ambient', label:'Ambient'},
+];
+const STRUCT_UNIT_PRICE: Record<string,number> = { post:95, rail:42, panel:85, fascia:120, foot:28 };
 
 // ── Sub-components ─────────────────────────────────────────────────
 function Hairline({margin=16}:{margin?:number}) { return <div style={{height:1,background:C.hair,margin:`0 -${margin}px`}}/>; }
@@ -81,6 +185,9 @@ function MonoLabel({children,right}:{children:React.ReactNode;right?:React.React
 }
 function PropBlock({label,right,children}:{label:string;right?:React.ReactNode;children:React.ReactNode}) {
   return <div style={{padding:'12px 0'}}><MonoLabel right={right}>{label}</MonoLabel>{children}</div>;
+}
+function formatUsd(value:number) {
+  return `USD ${Math.max(0, Math.round(value)).toLocaleString()}`;
 }
 function DimInput({label,value,min,max,step,onChange}:{label:string;value:number;min:number;max:number;step:number;onChange:(v:number)=>void}) {
   return (<div>
@@ -98,6 +205,77 @@ function Swatch({color,active,onClick,size=28,title}:{color:string;active:boolea
   return (<button onClick={onClick} title={title??color} style={{width:size,height:size,borderRadius:4,background:color,cursor:'pointer',flexShrink:0,border:`${active?2:1}px solid ${active?C.ink:C.hair}`,position:'relative'}}>
     {active&&<span style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke={light?C.ink:'#fff'} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg></span>}
   </button>);
+}
+function catalogPreviewUrl(item: CatItem) {
+  if (!item.modelUrl) return '';
+  const filename = decodeURIComponent(item.modelUrl.split('/').pop() || '').replace(/\.glb$/i, ' - preview.png');
+  return `/ens-workspace-assets/sedef_remaining_furniture_refined_v2/previews/${encodeURIComponent(filename)}`;
+}
+function CatalogImagePreview({item,active}:{item:CatItem;active:boolean}) {
+  const previewUrl = catalogPreviewUrl(item);
+  return (
+    <div style={{width:'100%',height:46,border:`1px solid ${active?C.ink:'rgba(156,163,175,0.32)'}`,borderRadius:4,background:active?'#f8fafc':'#ffffff',overflow:'hidden',display:'grid',placeItems:'center'}}>
+      {previewUrl ? (
+        <img src={previewUrl} alt="" loading="lazy" style={{width:'100%',height:'100%',objectFit:'contain',display:'block'}}/>
+      ) : (
+        <Box size={18} color={C.muted}/>
+      )}
+    </div>
+  );
+}
+function CatalogPreview({item,active}:{item:CatItem;active:boolean}) {
+  const props = ITEM_PROPS[item.id] ?? {w:0.6,d:0.6,h:0.8,color:'#d8d3c9',weight:1};
+  const color = props.color;
+  const stroke = active ? C.ink : '#9ca3af';
+  const shape = item.shape ?? 'box';
+  if (item.modelUrl) return <CatalogImagePreview item={item} active={active}/>;
+  return (
+    <svg viewBox="0 0 72 46" width="100%" height="46" aria-hidden="true" style={{display:'block'}}>
+      <rect x="1" y="1" width="70" height="44" rx="4" fill={active?'rgba(24,22,19,0.05)':'rgba(255,255,255,0.48)'} stroke="rgba(156,163,175,0.32)"/>
+      {shape==='round_table'&&<>
+        <ellipse cx="36" cy="19" rx="18" ry="10" fill={color} stroke={stroke} strokeWidth="1"/>
+        <rect x="34" y="20" width="4" height="14" rx="1" fill="#565b63"/>
+        <ellipse cx="36" cy="36" rx="12" ry="3" fill="#565b63" opacity="0.65"/>
+      </>}
+      {shape==='rect_table'&&<>
+        <rect x="18" y="14" width="36" height="14" rx="2" fill={color} stroke={stroke} strokeWidth="1"/>
+        {[22,48].map(x=><rect key={x} x={x} y="27" width="4" height="12" rx="1" fill="#565b63"/>)}
+      </>}
+      {shape==='counter'&&<>
+        <rect x="14" y="16" width="44" height="20" rx="2" fill={color} stroke={stroke} strokeWidth="1"/>
+        <rect x="18" y="13" width="36" height="6" rx="2" fill="#fff" stroke="rgba(80,80,80,0.2)"/>
+      </>}
+      {(shape==='shelf'||shape==='cabinet')&&<>
+        <rect x="20" y="8" width="32" height="30" rx="2" fill={color} stroke={stroke} strokeWidth="1"/>
+        {[17,26,34].map(y=><line key={y} x1="22" y1={y} x2="50" y2={y} stroke="#fff" strokeWidth="2" opacity="0.85"/>)}
+      </>}
+      {shape==='cube'&&<>
+        <rect x="24" y="14" width="24" height="24" rx="2" fill={color} stroke={stroke} strokeWidth="1"/>
+        <path d="M24 14 L31 9 H55 L48 14" fill="rgba(255,255,255,0.45)" stroke={stroke} strokeWidth="0.8"/>
+        <path d="M48 14 L55 9 V33 L48 38" fill="rgba(0,0,0,0.08)" stroke={stroke} strokeWidth="0.8"/>
+      </>}
+      {shape==='chair'&&<>
+        <path d="M21 29 L24 17 Q36 10 48 17 L51 29 Z" fill={color} stroke={stroke} strokeWidth="1"/>
+        <rect x="24" y="28" width="24" height="8" rx="2" fill={color} stroke={stroke} strokeWidth="1"/>
+        {[27,45].map(x=><line key={x} x1={x} y1="36" x2={x-2} y2="41" stroke="#565b63" strokeWidth="2"/>)}
+      </>}
+      {shape==='bar_stool'&&<>
+        <ellipse cx="36" cy="18" rx="14" ry="7" fill={color} stroke={stroke} strokeWidth="1"/>
+        <rect x="34" y="19" width="4" height="16" rx="1" fill="#565b63"/>
+        <ellipse cx="36" cy="37" rx="12" ry="3" fill="#565b63" opacity="0.75"/>
+      </>}
+      {(shape==='light'||shape==='rail_light')&&<>
+        <rect x="28" y="10" width="16" height="10" rx="3" fill="#303741" stroke={stroke} strokeWidth="1"/>
+        <path d="M26 21 H46 L40 36 H32 Z" fill={color} opacity="0.38"/>
+        <ellipse cx="36" cy="21" rx="11" ry="5" fill={color} stroke={stroke} strokeWidth="1"/>
+      </>}
+      {shape==='wall_shelf'&&<>
+        <rect x="16" y="20" width="40" height="6" rx="1" fill={color} stroke={stroke} strokeWidth="1"/>
+        {[24,48].map(x=><path key={x} d={`M${x} 26 L${x-5} 36 H${x+5} Z`} fill="#9aa1aa" opacity="0.8"/>)}
+      </>}
+      {shape==='box'&&<rect x="22" y="12" width="28" height="24" rx="2" fill={color} stroke={stroke} strokeWidth="1"/>}
+    </svg>
+  );
 }
 function OpenSidesPlan({openFront,openBack,openLeft,openRight}:{openFront:boolean;openBack:boolean;openLeft:boolean;openRight:boolean}) {
   const open=(on:boolean)=>({stroke:on?C.orange:C.ink,strokeDasharray:on?'5 3.5':undefined});
@@ -134,8 +312,306 @@ function Toast({msg,onClose}:{msg:string;onClose:()=>void}) {
 }
 
 // ── Initial state ──────────────────────────────────────────────────
-const INITIAL_BOOTH: BoothState = {width:6,depth:3,height:2.5,system:'octanorm',companyName:'TECHCORP INDUSTRIES',openFront:true,openBack:false,openLeft:false,openRight:false};
-const INITIAL_WS: WSData = {booth:INITIAL_BOOTH,themeIdx:0,carpetIdx:0,placedItems:[],notes:[]};
+const INITIAL_BOOTH: BoothState = {width:6,depth:3,height:2.5,system:'octanorm',companyName:'TECHCORP INDUSTRIES',openFront:true,openBack:false,openLeft:false,openRight:false,fasciaEnabled:true,fasciaOption:'classic'};
+const INITIAL_WS: WSData = {booth:INITIAL_BOOTH,themeIdx:0,wallFinishIdx:0,frameFinishIdx:0,fasciaFinishIdx:0,carpetIdx:0,lightingPreset:'exhibition',placedItems:[],rooms:[],notes:[],panelOverrides:{},frontSupportPositions:[]};
+
+function clampNumber(value:number, min:number, max:number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function snapNumber(value:number, step = 0.5) {
+  return Number((Math.round(value / step) * step).toFixed(3));
+}
+
+function itemPositionBounds(w:number, d:number, booth:BoothState) {
+  const clearance = 0.25;
+  const minX = Math.min(booth.width / 2, w / 2 + clearance);
+  const maxX = Math.max(minX, booth.width - w / 2 - clearance);
+  const minZ = Math.min(booth.depth / 2, d / 2 + clearance);
+  const maxZ = Math.max(minZ, booth.depth - d / 2 - clearance);
+  return { minX, maxX, minZ, maxZ };
+}
+
+type PlacementIssue = { itemId:string; message:string };
+type Rect2D = { x0:number; x1:number; z0:number; z1:number };
+
+function itemRect(item:WorkspacePlacedItem, pad = 0.03): Rect2D {
+  return {
+    x0: item.x - item.w / 2 - pad,
+    x1: item.x + item.w / 2 + pad,
+    z0: item.z - item.d / 2 - pad,
+    z1: item.z + item.d / 2 + pad,
+  };
+}
+
+function roomRect(room:WorkspaceRoom, pad = 0.03): Rect2D {
+  return {
+    x0: room.x - room.width / 2 - pad,
+    x1: room.x + room.width / 2 + pad,
+    z0: room.z - room.depth / 2 - pad,
+    z1: room.z + room.depth / 2 + pad,
+  };
+}
+
+function rectsOverlap(a:Rect2D, b:Rect2D) {
+  return a.x0 < b.x1 && a.x1 > b.x0 && a.z0 < b.z1 && a.z1 > b.z0;
+}
+
+function isFloorPlacedItem(item:WorkspacePlacedItem) {
+  return (item.kind === 'furniture' || item.kind === 'asset') && item.shape !== 'wall_shelf' && item.shape !== 'light' && item.shape !== 'rail_light';
+}
+
+function placementIssuesFor(items:WorkspacePlacedItem[], rooms:WorkspaceRoom[]): PlacementIssue[] {
+  const issues: PlacementIssue[] = [];
+  const floorItems = items.filter(isFloorPlacedItem);
+  const seen = new Set<string>();
+  const addIssue = (itemId:string, message:string) => {
+    const key = `${itemId}:${message}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    issues.push({ itemId, message });
+  };
+
+  for (let i = 0; i < floorItems.length; i += 1) {
+    const a = floorItems[i];
+    const aRect = itemRect(a);
+    for (let j = i + 1; j < floorItems.length; j += 1) {
+      const b = floorItems[j];
+      if (!rectsOverlap(aRect, itemRect(b))) continue;
+      addIssue(a.id, `Overlaps ${b.name}`);
+      addIssue(b.id, `Overlaps ${a.name}`);
+    }
+    for (const room of rooms) {
+      if (!rectsOverlap(aRect, roomRect(room))) continue;
+      addIssue(a.id, `Overlaps ${room.name}`);
+    }
+  }
+  return issues;
+}
+
+function normalizeDoorPosition(value:unknown): DoorPosition {
+  return value === 'left' || value === 'right' ? value : 'center';
+}
+
+function normalizeDoorSwing(value:unknown): DoorSwing {
+  return value === 'right-in' || value === 'left-out' || value === 'right-out' ? value : 'left-in';
+}
+
+function roomDoorCenterX(room:WorkspaceRoom) {
+  const sectionCount = Math.max(1, Math.floor(room.width));
+  const sectionWidth = room.width / sectionCount;
+  const index = room.doorPosition === 'left' ? 0 : room.doorPosition === 'right' ? sectionCount - 1 : Math.round((sectionCount - 1) / 2);
+  return room.x - room.width / 2 + sectionWidth * (index + 0.5);
+}
+
+function snapRoomToTarget(room:WorkspaceRoom, booth:BoothState, target:'front'|'back'|'left'|'right'|'center') {
+  const centered = {
+    x: clampNumber(snapNumber(room.x), room.width/2, Math.max(room.width/2, booth.width-room.width/2)),
+    z: clampNumber(snapNumber(room.z), room.depth/2, Math.max(room.depth/2, booth.depth-room.depth/2)),
+  };
+  if(target === 'front') return {...centered, z: booth.depth - room.depth/2};
+  if(target === 'back') return {...centered, z: room.depth/2};
+  if(target === 'left') return {...centered, x: room.width/2};
+  if(target === 'right') return {...centered, x: booth.width - room.width/2};
+  return {x: booth.width/2, z: booth.depth/2};
+}
+
+function normalizePanelOverrides(raw:unknown): Record<string,PanelOverride> {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: Record<string,PanelOverride> = {};
+  Object.entries(raw as Record<string,unknown>).forEach(([id,value]) => {
+    if (!/^(panel-(front|back|left|right)-\d+|fascia-(front|back|left|right))$/.test(id) || !value || typeof value !== 'object') return;
+    const entry = value as Partial<PanelOverride>;
+    const next: PanelOverride = {};
+    if (typeof entry.color === 'string' && /^#[0-9a-f]{6}$/i.test(entry.color)) next.color = entry.color;
+    if (typeof entry.brandText === 'string') next.brandText = entry.brandText.slice(0, 40);
+    if (typeof entry.brandColor === 'string' && /^#[0-9a-f]{6}$/i.test(entry.brandColor)) next.brandColor = entry.brandColor;
+    if (entry.brandScale != null) next.brandScale = clampNumber(Number(entry.brandScale) || 0.15, 0.08, 0.45);
+    if (typeof entry.designImageUrl === 'string' && /^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i.test(entry.designImageUrl) && entry.designImageUrl.length < 2_500_000) next.designImageUrl = entry.designImageUrl;
+    if (typeof entry.designImageName === 'string') next.designImageName = entry.designImageName.slice(0, 80);
+    if (entry.designOpacity != null) next.designOpacity = clampNumber(Number(entry.designOpacity) || 1, 0.15, 1);
+    if (Object.keys(next).length) out[id] = next;
+  });
+  return out;
+}
+
+function panelDetails(partId:string, booth:BoothState) {
+  const match = /^panel-(front|back|left|right)-(\d+)$/.exec(partId);
+  if (!match) return null;
+  const side = match[1] as 'front'|'back'|'left'|'right';
+  const index = Number(match[2]);
+  const bays = side === 'front' || side === 'back' ? Math.max(1, Math.round(booth.width)) : Math.max(1, Math.round(booth.depth));
+  const width = (side === 'front' || side === 'back' ? booth.width : booth.depth) / bays;
+  const height = Math.max(0.8, booth.height - 0.3);
+  return {
+    id: partId,
+    side,
+    index,
+    label: `${side.toUpperCase()} panel ${index + 1}`,
+    width,
+    height,
+    diagonal: Math.sqrt(width * width + height * height),
+    area: width * height,
+    bayCount: bays,
+  };
+}
+
+function shellPartDetails(partId:string, booth:BoothState) {
+  const panel = panelDetails(partId, booth);
+  if (panel) return { type:'panel' as const, label:panel.label, rows:[
+    ['Side', panel.side],
+    ['Bay', `${panel.index + 1} / ${panel.bayCount}`],
+    ['Width', `${panel.width.toFixed(2)} m`],
+    ['Height', `${panel.height.toFixed(2)} m`],
+    ['Diagonal', `${panel.diagonal.toFixed(2)} m`],
+    ['Area', `${panel.area.toFixed(2)} m2`],
+  ]};
+  if (partId === 'carpet') return { type:'carpet' as const, label:'Carpet / workplane', rows:[
+    ['Width', `${booth.width.toFixed(2)} m`],
+    ['Depth', `${booth.depth.toFixed(2)} m`],
+    ['Area', `${(booth.width * booth.depth).toFixed(2)} m2`],
+  ]};
+  if (partId.startsWith('post-')) return { type:'frame' as const, label:'Structural column', rows:[
+    ['Profile', booth.system === 'maxima' ? '40 x 40 mm Maxima' : '40 mm Octanorm'],
+    ['Height', `${booth.height.toFixed(2)} m`],
+    ['Material', 'Anodized aluminum'],
+  ]};
+  if (partId.startsWith('rail-') || partId.includes('-rail') || partId.includes('-bracket')) return { type:'frame' as const, label:'Frame rail / bracket', rows:[
+    ['Profile', booth.system === 'maxima' ? 'Maxima rail' : 'Octanorm rail'],
+    ['Material', 'Anodized aluminum'],
+    ['System', booth.system],
+  ]};
+  if (partId.startsWith('fascia-')) return { type:'fascia' as const, label:'Fascia shell part', rows:[
+    ['Width', `${booth.width.toFixed(2)} m`],
+    ['Board', '300 mm shell band'],
+    ['Text', booth.companyName || 'None'],
+  ]};
+  return null;
+}
+
+function canonicalShellPartId(partId?:string|null) {
+  if (!partId) return '';
+  return (
+    partId.match(/panel-(front|back|left|right)-\d+/)?.[0] ||
+    partId.match(/post-front-support-\d+/)?.[0] ||
+    partId.match(/post-(front|back|left|right)-\d+/)?.[0] ||
+    partId.match(/fascia-(front|back|left|right)/)?.[0] ||
+    partId.match(/rail-(front|back|left|right|front-ceiling|back-ceiling|left-ceiling|right-ceiling)/)?.[0] ||
+    (partId.includes('carpet') ? 'carpet' : partId)
+  );
+}
+
+function anchorFromSelection(detail?:{xPct?:number|null;yPct?:number|null;label?:string|null;partType?:string|null}, label = 'Selection', partType = 'shell') {
+  return {
+    x: detail?.xPct != null ? detail.xPct : 50,
+    y: detail?.yPct != null ? detail.yPct : 38,
+    label: detail?.label || label,
+    partType: detail?.partType || partType,
+  };
+}
+
+function defaultFrontSupportPositionsFor(width:number) {
+  const positions:number[] = [];
+  if (width >= 5) for (let value = 3; value < width - 0.001; value += 3) positions.push(value);
+  return positions;
+}
+
+function activeFrontSupportPositionsFor(width:number, positions:number[]) {
+  const merged = [...positions];
+  defaultFrontSupportPositionsFor(width).forEach(value => {
+    if (!merged.some(existing => Math.abs(Number(existing) - value) < 0.12)) merged.push(value);
+  });
+  return merged
+    .map(value => clampNumber(Number(value) || 0, 0.45, Math.max(0.45, width - 0.45)))
+    .filter((value, index, list) => value > 0.45 && value < width - 0.45 && list.findIndex(other => Math.abs(other - value) < 0.12) === index)
+    .sort((a,b) => a - b);
+}
+
+function normalizeWorkspaceData(raw: unknown): WSData {
+  const source = raw && typeof raw === 'object' ? raw as Partial<WSData> : {};
+  const boothSource = source.booth && typeof source.booth === 'object' ? source.booth as Partial<BoothState> : {};
+  const booth: BoothState = {
+    ...INITIAL_BOOTH,
+    ...boothSource,
+    width: clampNumber(Number(boothSource.width ?? INITIAL_BOOTH.width) || INITIAL_BOOTH.width, 1, 40),
+    depth: clampNumber(Number(boothSource.depth ?? INITIAL_BOOTH.depth) || INITIAL_BOOTH.depth, 1, 40),
+    height: clampNumber(Number(boothSource.height ?? INITIAL_BOOTH.height) || INITIAL_BOOTH.height, 1.5, 6),
+    system: boothSource.system === 'maxima' ? 'maxima' : 'octanorm',
+    companyName: String(boothSource.companyName || INITIAL_BOOTH.companyName).slice(0, 60),
+    fasciaEnabled: boothSource.fasciaEnabled !== false,
+    fasciaOption: FASCIA_OPTIONS.some(option => option.value === boothSource.fasciaOption) ? boothSource.fasciaOption as FasciaOption : 'classic',
+  };
+  return {
+    booth,
+    themeIdx: clampNumber(Number(source.themeIdx ?? 0) || 0, 0, THEMES.length - 1),
+    wallFinishIdx: clampNumber(Number(source.wallFinishIdx ?? 0) || 0, 0, WALL_FINISHES.length - 1),
+    frameFinishIdx: clampNumber(Number(source.frameFinishIdx ?? 0) || 0, 0, FRAME_FINISHES.length - 1),
+    fasciaFinishIdx: clampNumber(Number(source.fasciaFinishIdx ?? 0) || 0, 0, FASCIA_FINISHES.length - 1),
+    carpetIdx: clampNumber(Number(source.carpetIdx ?? 0) || 0, 0, CARPETS.length - 1),
+    lightingPreset: LIGHTING_PRESETS.some(option => option.value === source.lightingPreset) ? source.lightingPreset as LightingPreset : 'exhibition',
+    placedItems: Array.isArray(source.placedItems)
+      ? source.placedItems
+        .map((item, index) => normalizePlacedItem(item, index, booth))
+        .filter(item => item.kind !== 'asset' && (item.kind !== 'furniture' || KNOWN_CATALOG_IDS.has(item.catalogId)))
+      : [],
+    rooms: Array.isArray(source.rooms) ? source.rooms.map((room, index) => normalizeRoom(room, index, booth)) : [],
+    notes: Array.isArray(source.notes) ? source.notes as Note[] : [],
+    panelOverrides: normalizePanelOverrides(source.panelOverrides),
+    frontSupportPositions: Array.isArray(source.frontSupportPositions)
+      ? source.frontSupportPositions.map(Number).filter(Number.isFinite).map(value => clampNumber(value, 0.45, Math.max(0.45, booth.width - 0.45)))
+      : [],
+  };
+}
+
+function normalizePlacedItem(raw: unknown, index: number, booth: BoothState): WorkspacePlacedItem {
+  const item = raw && typeof raw === 'object' ? raw as Partial<WorkspacePlacedItem> : {};
+  const props = ITEM_PROPS[String(item.catalogId || item.id || '')] ?? {w:Number(item.w) || 0.6,d:Number(item.d) || 0.6,h:Number(item.h) || 0.8,color:String(item.color || '#888'),weight:Number(item.weight) || 10};
+  const kind = item.kind || (String(item.name || '').toLowerCase().includes('light') || String(item.catalogId || '').startsWith('4') ? 'light' : 'furniture');
+  const w = Number(item.w ?? props.w) || props.w;
+  const d = Number(item.d ?? props.d) || props.d;
+  const bounds = itemPositionBounds(w, d, booth);
+  return {
+    id: String(item.id || `item-${index + 1}`),
+    catalogId: String(item.catalogId || item.id || `custom-${index + 1}`),
+    name: String(item.name || 'Furniture'),
+    sku: String(item.sku || item.catalogId || ''),
+    qty: Math.max(1, Number(item.qty) || 1),
+    w, d,
+    h: Number(item.h ?? props.h) || props.h,
+    color: String(item.color || props.color),
+    weight: Number(item.weight ?? props.weight) || props.weight,
+    x: clampNumber(Number(item.x) || booth.width / 2, bounds.minX, bounds.maxX),
+    z: clampNumber(Number(item.z) || booth.depth / 2, bounds.minZ, bounds.maxZ),
+    rotation: Number(item.rotation) || 0,
+    rotationX: Number(item.rotationX) || 0,
+    rotationY: Number(item.rotationY ?? item.rotation) || 0,
+    rotationZ: Number(item.rotationZ) || 0,
+    kind: kind === 'light' || kind === 'structure' || kind === 'fascia' || kind === 'asset' ? kind : 'furniture',
+    shape: item.shape,
+    modelUrl: typeof item.modelUrl === 'string' ? item.modelUrl : undefined,
+    source: typeof item.source === 'string' ? item.source : undefined,
+  };
+}
+
+function normalizeRoom(raw: unknown, index: number, booth: BoothState): WorkspaceRoom {
+  const room = raw && typeof raw === 'object' ? raw as Partial<WorkspaceRoom> : {};
+  const width = clampNumber(snapNumber(Number(room.width) || 3, 1), 1, Math.max(1, booth.width));
+  const depth = clampNumber(snapNumber(Number(room.depth) || 3, 1), 1, Math.max(1, booth.depth));
+  return {
+    id: String(room.id || `room-${index + 1}`),
+    name: String(room.name || `Room ${index + 1}`),
+    width,
+    depth,
+    height: clampNumber(Number(room.height) || 2.4, 1.8, booth.height),
+    x: clampNumber(snapNumber(Number(room.x) || booth.width / 2, 1), width / 2, Math.max(width / 2, booth.width - width / 2)),
+    z: clampNumber(snapNumber(Number(room.z) || booth.depth / 2, 1), depth / 2, Math.max(depth / 2, booth.depth - depth / 2)),
+    hasDoor: room.hasDoor !== false,
+    hasCeiling: Boolean(room.hasCeiling),
+    doorPosition: normalizeDoorPosition(room.doorPosition),
+    doorSwing: normalizeDoorSwing(room.doorSwing),
+    doorOpen: Boolean(room.doorOpen),
+  };
+}
 
 function workspaceSnapshots(record: ProjectWorkspace): Snapshot[] {
   return record.versions.map(version => ({
@@ -156,23 +632,36 @@ export default function PMWorkspace() {
 
   const [viewMode,   setViewMode]   = useState('iso');
   const [search,     setSearch]     = useState('');
-  const [openCats,   setOpenCats]   = useState(new Set(['Structure','Furniture']));
-  const [activeTab,  setActiveTab]  = useState<'props'|'bom'|'notes'>('props');
-  const [activeId,   setActiveId]   = useState('s1');
+  const [openCats,   setOpenCats]   = useState(new Set(['Furniture','Lighting']));
+  const [activeFurnitureCategory, setActiveFurnitureCategory] = useState<FurnitureCategory>('all');
+  const [activeTab,  setActiveTab]  = useState<'props'|'panel'|'bom'|'notes'|'feedback'>('props');
+  const [activeShellPartId,setActiveShellPartId] = useState('');
+  const [selectionAnchor,setSelectionAnchor] = useState<{x:number;y:number;label:string;partType:string}|null>(null);
+  const [activeId,   setActiveId]   = useState('');
+  const [activePlacedId,setActivePlacedId] = useState('');
+  const [activeRoomId,setActiveRoomId] = useState('');
 
   const [showSendDlg,   setShowSendDlg]   = useState(false);
   const [showSnapDlg,   setShowSnapDlg]   = useState(false);
   const [showHistPanel, setShowHistPanel] = useState(false);
+  const [showGrid,      setShowGrid]      = useState(true);
+  const [previewMode,   setPreviewMode]   = useState(false);
   const [snapName,      setSnapName]      = useState('');
   const [snapshots,     setSnapshots]     = useState<Snapshot[]>([]);
   const [sendConfirmed, setSendConfirmed] = useState(false);
+  const [isSending,     setIsSending]     = useState(false);
   const [toast,         setToast]         = useState('');
   const [lastSaved,     setLastSaved]     = useState('Not saved');
+  const [saveStatus,    setSaveStatus]    = useState<SaveStatus>('idle');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [newNote,       setNewNote]       = useState('');
   const [noteColor,     setNoteColor]     = useState(NOTE_COLORS[0]);
   const [workspaceRecord, setWorkspaceRecord] = useState<ProjectWorkspace | null>(null);
   const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(true);
   const [workspaceError, setWorkspaceError] = useState('');
+  const [feedbackItems, setFeedbackItems] = useState<WorkspaceComment[]>([]);
+  const [feedbackFilter, setFeedbackFilter] = useState<FeedbackFilter>('open');
+  const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
 
   // ── Project picker ────────────────────────────────────────────
   const urlProjectId = useMemo(() => new URLSearchParams(window.location.search).get("projectId"), []);
@@ -183,14 +672,19 @@ export default function PMWorkspace() {
 
   // ── History helpers ───────────────────────────────────────────
   const resetWorkspace = useCallback((data:WSData)=>{
-    setWS(data);
-    histStackRef.current = [data];
+    const normalized = normalizeWorkspaceData(data);
+    setWS(normalized);
+    histStackRef.current = [normalized];
     histIdxRef.current = 0;
     setHistIdx(0);
     setHistLen(1);
+    setHasUnsavedChanges(false);
+    setSaveStatus('saved');
   },[]);
 
   const commit = useCallback((updater:(prev:WSData)=>WSData)=>{
+    setHasUnsavedChanges(true);
+    setSaveStatus('dirty');
     setWS(prev=>{
       const next = updater(prev);
       const stack = histStackRef.current.slice(0, histIdxRef.current+1);
@@ -209,18 +703,33 @@ export default function PMWorkspace() {
     histIdxRef.current--;
     setHistIdx(histIdxRef.current);
     setWS(histStackRef.current[histIdxRef.current]);
+    setHasUnsavedChanges(true);
+    setSaveStatus('dirty');
   };
   const redo = () => {
     if(histIdxRef.current>=histStackRef.current.length-1) return;
     histIdxRef.current++;
     setHistIdx(histIdxRef.current);
     setWS(histStackRef.current[histIdxRef.current]);
+    setHasUnsavedChanges(true);
+    setSaveStatus('dirty');
   };
   const canUndo = histIdx>0;
   const canRedo = histIdx<histLen-1;
 
   const set = (k:keyof BoothState, v:BoothState[keyof BoothState]) =>
-    commit(prev=>({...prev,booth:{...prev.booth,[k]:v}}));
+    commit(prev=>normalizeWorkspaceData({...prev,booth:{...prev.booth,[k]:v}}));
+  const setOpenSidePreset = (preset:'inline'|'corner'|'peninsula'|'island'|'closed') => {
+    const next = {
+      inline: {openFront:true, openBack:false, openLeft:false, openRight:false},
+      corner: {openFront:true, openBack:false, openLeft:false, openRight:true},
+      peninsula: {openFront:true, openBack:false, openLeft:true, openRight:true},
+      island: {openFront:true, openBack:true, openLeft:true, openRight:true},
+      closed: {openFront:false, openBack:false, openLeft:false, openRight:false},
+    }[preset];
+    commit(prev=>normalizeWorkspaceData({...prev,booth:{...prev.booth,...next}}));
+    setToast(`${preset.charAt(0).toUpperCase() + preset.slice(1)} side preset applied`);
+  };
 
   const save = async () => {
     if(!workspaceRecord) {
@@ -229,15 +738,19 @@ export default function PMWorkspace() {
     }
 
     setLastSaved('Saving...');
+    setSaveStatus('saving');
     try {
       const saved = await saveProjectWorkspace(workspaceRecord.project.id, ws, 'Manual save');
       setWorkspaceRecord(saved);
       setSnapshots(workspaceSnapshots(saved));
       setLastSaved('Just now');
+      setHasUnsavedChanges(false);
+      setSaveStatus('saved');
       setWorkspaceError('');
       setToast('Design saved to PostgreSQL');
     } catch (err) {
       setLastSaved('Save failed');
+      setSaveStatus('error');
       setWorkspaceError(err instanceof Error ? err.message : 'Could not save workspace');
       setToast('Save failed');
     }
@@ -274,12 +787,15 @@ export default function PMWorkspace() {
         resetWorkspace(record.workspace as WSData);
         setSnapshots(workspaceSnapshots(record));
         setLastSaved(record.currentVersion ? `v${record.currentVersion.versionNumber}` : 'Loaded');
+        setHasUnsavedChanges(false);
+        setSaveStatus('saved');
         setWorkspaceError('');
       })
       .catch(err => {
         if(!isMounted) return;
         setWorkspaceError(err instanceof Error ? err.message : 'Could not load workspace');
         setLastSaved('Load failed');
+        setSaveStatus('error');
       })
       .finally(() => {
         if(isMounted) setIsWorkspaceLoading(false);
@@ -299,33 +815,73 @@ export default function PMWorkspace() {
         resetWorkspace(record.workspace as WSData);
         setSnapshots(workspaceSnapshots(record));
         setLastSaved(record.currentVersion ? `v${record.currentVersion.versionNumber}` : 'Loaded');
+        setHasUnsavedChanges(false);
+        setSaveStatus('saved');
         setWorkspaceError('');
       })
       .catch(err => {
         setWorkspaceError(err instanceof Error ? err.message : 'Could not load workspace');
         setLastSaved('Load failed');
+        setSaveStatus('error');
       })
       .finally(() => setIsWorkspaceLoading(false));
   },[resetWorkspace]);
 
+  useEffect(()=>{
+    if(!workspaceRecord?.project.id) {
+      setFeedbackItems([]);
+      return;
+    }
+
+    let isMounted = true;
+    setIsFeedbackLoading(true);
+    getWorkspaceComments(workspaceRecord.project.id)
+      .then(({ comments }) => {
+        if(isMounted) setFeedbackItems(comments);
+      })
+      .catch(() => {
+        if(isMounted) setFeedbackItems([]);
+      })
+      .finally(() => {
+        if(isMounted) setIsFeedbackLoading(false);
+      });
+
+    return () => { isMounted = false; };
+  },[workspaceRecord?.project.id]);
+
+  const setFeedbackStatus = (feedbackId:string, status:'open'|'resolved') => {
+    if(!workspaceRecord?.project.id) return;
+    const previous = feedbackItems;
+    setFeedbackItems(current => current.map(item => item.id === feedbackId ? {...item, status} : item));
+    updateWorkspaceCommentStatus(workspaceRecord.project.id, feedbackId, status)
+      .catch(() => {
+        setFeedbackItems(previous);
+        setToast('Feedback status failed to save');
+      });
+  };
+
   // Auto-save every 30s
   useEffect(()=>{
-    if(!workspaceRecord || isWorkspaceLoading) return;
+    if(!workspaceRecord || isWorkspaceLoading || !hasUnsavedChanges) return;
     const t=setInterval(()=>{
+      setSaveStatus('saving');
       saveProjectWorkspace(workspaceRecord.project.id, ws, 'Autosave')
         .then(saved => {
           setWorkspaceRecord(saved);
           setSnapshots(workspaceSnapshots(saved));
           setLastSaved(new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+          setHasUnsavedChanges(false);
+          setSaveStatus('saved');
           setWorkspaceError('');
         })
         .catch(err => {
           setLastSaved('Autosave failed');
+          setSaveStatus('error');
           setWorkspaceError(err instanceof Error ? err.message : 'Autosave failed');
         });
     },30000);
     return()=>clearInterval(t);
-  },[isWorkspaceLoading, workspaceRecord?.project.id, ws]);
+  },[hasUnsavedChanges, isWorkspaceLoading, workspaceRecord?.project.id, ws]);
 
   const createSnapshot = async () => {
     if(!snapName.trim() || !workspaceRecord) return;
@@ -337,37 +893,238 @@ export default function PMWorkspace() {
       setSnapName('');
       setShowSnapDlg(false);
       setLastSaved(`v${saved.currentVersion?.versionNumber ?? saved.design.currentVersionNumber}`);
+      setHasUnsavedChanges(false);
+      setSaveStatus('saved');
       setWorkspaceError('');
       setToast(`Snapshot "${name}" saved`);
     } catch (err) {
       setWorkspaceError(err instanceof Error ? err.message : 'Could not save snapshot');
+      setSaveStatus('error');
       setToast('Snapshot failed');
     }
   };
   const restoreSnapshot = (snap:Snapshot) => {
     resetWorkspace(snap.data);
+    setHasUnsavedChanges(true);
+    setSaveStatus('dirty');
     setShowHistPanel(false);
     setToast(`Restored locally: ${snap.name}`);
   };
 
+  const sendToClient = async () => {
+    if(!workspaceRecord || isSending) return;
+    setIsSending(true);
+    try {
+      const title = `Client review - ${new Date().toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}`;
+      const saved = await createProjectWorkspaceVersion(workspaceRecord.project.id, ws, title, 'submitted');
+      setWorkspaceRecord(saved);
+      setSnapshots(workspaceSnapshots(saved));
+      setLastSaved(`v${saved.currentVersion?.versionNumber ?? saved.design.currentVersionNumber}`);
+      setHasUnsavedChanges(false);
+      setSaveStatus('saved');
+      setWorkspaceError('');
+      setSendConfirmed(true);
+    } catch (err) {
+      setWorkspaceError(err instanceof Error ? err.message : 'Could not send workspace');
+      setSaveStatus('error');
+      setToast('Send failed');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   // ── Item placement ────────────────────────────────────────────
+  const nextItemPosition = (prev:WSData, props:{w:number;d:number}) => {
+    const count = prev.placedItems.length;
+    const columns = Math.max(1, Math.floor(prev.booth.width / Math.max(1, props.w + 0.4)));
+    const col = count % columns;
+    const row = Math.floor(count / columns);
+    return {
+      x: clampNumber(props.w / 2 + 0.35 + col * Math.max(1, props.w + 0.55), props.w / 2, Math.max(props.w / 2, prev.booth.width - props.w / 2)),
+      z: clampNumber(props.d / 2 + 0.45 + row * Math.max(1, props.d + 0.55), props.d / 2, Math.max(props.d / 2, prev.booth.depth - props.d / 2)),
+    };
+  };
+
   const addItem = (item:CatItem) => {
+    const placedCount = ws.placedItems.filter(p=>p.catalogId===item.id).reduce((sum,p)=>sum+p.qty,0);
+    if(item.stock != null && placedCount >= item.stock) {
+      setActiveId(item.id);
+      setToast(`${item.name} is out of stock`);
+      return;
+    }
     const props = ITEM_PROPS[item.id] ?? {w:0.5,d:0.5,h:1,color:'#888',weight:10};
+    let nextId = '';
     commit(prev=>{
-      const existing = prev.placedItems.find(p=>p.catalogId===item.id);
-      if(existing) {
-        return {...prev,placedItems:prev.placedItems.map(p=>p.catalogId===item.id?{...p,qty:p.qty+1}:p)};
-      }
+      const position = nextItemPosition(prev, props);
+      const modelUrl = item.modelUrl ?? ENS_MODEL_URLS[item.id];
       const newItem:WorkspacePlacedItem = {
-        id:`${item.id}-${Date.now()}`, catalogId:item.id,
-        name:item.name, sku:item.sku, qty:1, ...props,
+        id:`${item.id}-${Date.now()}-${Math.random().toString(16).slice(2,6)}`,
+        catalogId:item.id,
+        name:item.name,
+        sku:item.sku,
+        qty:1,
+        ...props,
+        ...position,
+        rotation:0,
+        rotationX:0,
+        rotationY:0,
+        rotationZ:0,
+        kind:Object.values(CATALOG.Lighting).some(light => light.id === item.id) ? 'light' : (Object.values(CATALOG.Fascia).some(fascia => fascia.id === item.id) ? 'fascia' : (Object.values(CATALOG.Structure).some(struct => struct.id === item.id) ? 'structure' : 'furniture')),
+        shape:item.shape,
+        modelUrl,
+        source:modelUrl ? 'ENS asset library' : undefined,
       };
+      nextId = newItem.id;
       return {...prev,placedItems:[...prev.placedItems,newItem]};
     });
     setActiveId(item.id);
-    setToast(`${item.name} added to BOM`);
+    setActivePlacedId(nextId);
+    setActiveRoomId('');
+    setToast(`${item.name} added to workspace`);
   };
-  const removeItem = (id:string) => commit(prev=>({...prev,placedItems:prev.placedItems.filter(p=>p.id!==id)}));
+  const removeCatalogItem = (catalogId:string) => {
+    const latest = [...placedItems].reverse().find(item => item.catalogId === catalogId);
+    if(!latest) return;
+    removeItem(latest.id);
+  };
+  const removeItem = (id:string) => {
+    if(activePlacedId===id) setActivePlacedId('');
+    commit(prev=>({...prev,placedItems:prev.placedItems.filter(p=>p.id!==id)}));
+  };
+  const updateItem = (id:string, patch:Partial<WorkspacePlacedItem>) => commit(prev=>normalizeWorkspaceData({
+    ...prev,
+    placedItems: prev.placedItems.map(item => item.id === id ? {...item, ...patch} : item),
+  }));
+  const updatePanelOverride = (id:string, patch:PanelOverride) => commit(prev=>{
+    const current = prev.panelOverrides[id] || {};
+    const next: PanelOverride = {...current, ...patch};
+    Object.keys(next).forEach(key => {
+      const value = next[key as keyof PanelOverride];
+      if (value === '' || value == null) delete next[key as keyof PanelOverride];
+    });
+    const panelOverrides = {...prev.panelOverrides};
+    if (Object.keys(next).length) panelOverrides[id] = next;
+    else delete panelOverrides[id];
+    return {...prev, panelOverrides};
+  });
+  const uploadPanelDesign = (id:string, file?:File|null) => {
+    if(!file) return;
+    if(!file.type.startsWith('image/')) {
+      setToast('Please choose an image file');
+      return;
+    }
+    if(file.size > 2_000_000) {
+      setToast('Image must be under 2 MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      if(!result.startsWith('data:image/')) {
+        setToast('Image could not be loaded');
+        return;
+      }
+      updatePanelOverride(id,{designImageUrl:result,designImageName:file.name,designOpacity:1});
+      setToast('Panel design uploaded');
+    };
+    reader.onerror = () => setToast('Image could not be loaded');
+    reader.readAsDataURL(file);
+  };
+  const resetPanelOverride = (id:string) => commit(prev=>{
+    const panelOverrides = {...prev.panelOverrides};
+    delete panelOverrides[id];
+    return {...prev, panelOverrides};
+  });
+  const rotateItem = (id:string, delta:number) => {
+    const item = placedItems.find(entry => entry.id === id);
+    if(!item) return;
+    const next = ((Number(item.rotationY ?? item.rotation) + delta) % 360 + 360) % 360;
+    updateItem(id,{rotation:next, rotationY:next});
+  };
+  const duplicateItem = (id:string) => {
+    let nextId = '';
+    commit(prev=>{
+      const source = prev.placedItems.find(item => item.id === id);
+      if(!source) return prev;
+      const bounds = itemPositionBounds(source.w, source.d, prev.booth);
+      const next:WorkspacePlacedItem = {
+        ...source,
+        id:`${source.catalogId}-${Date.now()}-${Math.random().toString(16).slice(2,6)}`,
+        x:clampNumber(snapNumber(source.x + 0.35,0.05), bounds.minX, bounds.maxX),
+        z:clampNumber(snapNumber(source.z + 0.35,0.05), bounds.minZ, bounds.maxZ),
+      };
+      nextId = next.id;
+      return {...prev,placedItems:[...prev.placedItems,next]};
+    });
+    if(nextId) {
+      setActivePlacedId(nextId);
+      setActiveRoomId('');
+      setToast('Furniture duplicated');
+    }
+  };
+  const moveItemLive = useCallback((id:string, patch:{x:number;z:number}) => {
+    setHasUnsavedChanges(true);
+    setSaveStatus('dirty');
+    setWS(prev=>normalizeWorkspaceData({
+      ...prev,
+      placedItems: prev.placedItems.map(item => item.id === id ? {...item, ...patch} : item),
+    }));
+  },[]);
+
+  const addRoom = () => commit(prev=>{
+    const width = Math.min(3, Math.max(1, prev.booth.width - 0.5));
+    const depth = Math.min(2, Math.max(1, prev.booth.depth - 0.5));
+    const room: WorkspaceRoom = normalizeRoom({
+      id:`room-${Date.now()}`,
+      name:`Room ${prev.rooms.length + 1}`,
+      width,
+      depth,
+      height:Math.min(2.4, prev.booth.height),
+      x:width / 2,
+      z:depth / 2,
+      hasDoor:true,
+      hasCeiling:false,
+      doorPosition:'center',
+      doorSwing:'left-in',
+      doorOpen:true,
+    }, prev.rooms.length, prev.booth);
+    setToast(`${room.name} created`);
+    setActiveRoomId(room.id);
+    setActivePlacedId('');
+    return {...prev,rooms:[...prev.rooms,room]};
+  });
+  const updateRoom = (id:string, patch:Partial<WorkspaceRoom>) => commit(prev=>normalizeWorkspaceData({
+    ...prev,
+    rooms: prev.rooms.map(room => room.id === id ? {...room, ...patch} : room),
+  }));
+  const moveRoomLive = useCallback((id:string, patch:Partial<WorkspaceRoom>) => {
+    setHasUnsavedChanges(true);
+    setSaveStatus('dirty');
+    setWS(prev=>normalizeWorkspaceData({
+      ...prev,
+      rooms: prev.rooms.map(room => room.id === id ? {...room, ...patch} : room),
+    }));
+  },[]);
+  const moveFrontSupportsLive = useCallback((positions:number[]) => {
+    setHasUnsavedChanges(true);
+    setSaveStatus('dirty');
+    setWS(prev=>normalizeWorkspaceData({
+      ...prev,
+      frontSupportPositions: activeFrontSupportPositionsFor(prev.booth.width, positions),
+    }));
+  },[]);
+  const updateFrontSupportPosition = (index:number, value:number) => commit(prev=>{
+    const positions = activeFrontSupportPositionsFor(prev.booth.width, prev.frontSupportPositions);
+    positions[index] = value;
+    return normalizeWorkspaceData({
+      ...prev,
+      frontSupportPositions: positions,
+    });
+  });
+  const removeRoom = (id:string) => {
+    if(activeRoomId===id) setActiveRoomId('');
+    commit(prev=>({...prev,rooms:prev.rooms.filter(room=>room.id!==id)}));
+  };
 
   const addNote = () => {
     if(!newNote.trim()) return;
@@ -377,16 +1134,63 @@ export default function PMWorkspace() {
   };
   const removeNote = (id:string) => commit(prev=>({...prev,notes:prev.notes.filter(n=>n.id!==id)}));
 
-  const { booth, themeIdx, carpetIdx, placedItems, notes } = ws;
+  const { booth, themeIdx, wallFinishIdx, frameFinishIdx, fasciaFinishIdx, carpetIdx, lightingPreset, placedItems, rooms, notes, panelOverrides, frontSupportPositions } = ws;
+  const activePlacedItem = placedItems.find(item => item.id === activePlacedId) || null;
+  const activePanel = activeShellPartId ? panelDetails(activeShellPartId, booth) : null;
+  const activeShellPart = activeShellPartId ? shellPartDetails(activeShellPartId, booth) : null;
+  const activePanelOverride = activePanel ? (panelOverrides[activePanel.id] || {}) : {};
+  const activeFasciaId = activeShellPart?.type === 'fascia' ? canonicalShellPartId(activeShellPartId) : '';
+  const activeFasciaOverride = activeFasciaId ? (panelOverrides[activeFasciaId] || {}) : {};
+  const activeFrontSupportIndex = Number(activeShellPartId.match(/^post-front-support-(\d+)$/)?.[1] ?? -1);
+  const activeFrontSupportPositions = activeFrontSupportPositionsFor(booth.width, frontSupportPositions);
+  const projectLabel = workspaceRecord?.project.name ?? 'Workspace';
+  const clientLabel = workspaceRecord?.project.client ?? booth.companyName;
+  const exhibitionLabel = workspaceRecord?.project.exhibition ?? 'Client review';
+  const feedbackMatchesFilter = (status:'open'|'resolved'|undefined) => feedbackFilter === 'all' || (status ?? 'open') === feedbackFilter;
+  const visibleFeedbackItems = feedbackItems.filter(item => feedbackMatchesFilter(item.status));
+  const openFeedbackCount = feedbackItems.filter(item => (item.status ?? 'open') === 'open').length;
+  const approvalStage = workspaceApprovalStage(workspaceRecord);
+  const approvalStageLabel = workspaceApprovalStageLabel(approvalStage);
+  const approvalStageColor = approvalStage === 'approved' || approvalStage === 'locked'
+    ? C.green
+    : approvalStage === 'revision_requested'
+      ? C.orange
+      : approvalStage === 'sent' || approvalStage === 'viewed'
+        ? C.blue
+        : C.muted;
   const floorArea    = (booth.width*booth.depth).toFixed(1);
   const openCount    = [booth.openFront,booth.openBack,booth.openLeft,booth.openRight].filter(Boolean).length;
+  const boothType = openCount >= 4 ? 'Island' : openCount === 3 ? 'Peninsula' : openCount === 2 ? 'Corner' : openCount === 1 ? 'Inline' : 'Enclosed';
   const totalWeight  = placedItems.reduce((a,p)=>a+p.weight*p.qty,0);
   const totalParts   = placedItems.reduce((a,p)=>a+p.qty,0);
+  const placementIssues = useMemo(() => placementIssuesFor(placedItems, rooms), [placedItems, rooms]);
+  const invalidItemIds = useMemo(() => Array.from(new Set(placementIssues.map(issue => issue.itemId))), [placementIssues]);
+  const placementIssueByItem = useMemo(() => {
+    const map = new globalThis.Map<string, PlacementIssue[]>();
+    placementIssues.forEach(issue => map.set(issue.itemId, [...(map.get(issue.itemId) || []), issue]));
+    return map;
+  }, [placementIssues]);
+  const wallFinish = WALL_FINISHES[wallFinishIdx] || WALL_FINISHES[0];
+  const frameFinish = FRAME_FINISHES[frameFinishIdx] || FRAME_FINISHES[0];
+  const fasciaFinish = FASCIA_FINISHES[fasciaFinishIdx] || FASCIA_FINISHES[0];
   const carpetColor  = CARPETS[carpetIdx].color;
+  const fasciaMeta = FASCIA_OPTIONS.find(option => option.value === booth.fasciaOption) || FASCIA_OPTIONS[0];
+  const fasciaValid = !booth.fasciaEnabled || booth.width >= fasciaMeta.minWidth;
 
+  const visibleCatalog = Object.fromEntries(Object.entries(CATALOG).filter(([cat,items])=>cat !== 'Structure' && cat !== 'Fascia' && items.length > 0));
+  const furnitureCategoryCounts = useMemo(() => {
+    const counts = new globalThis.Map<FurnitureCategory, number>();
+    CATALOG.Furniture.forEach(item => {
+      const category = item.furnitureCategory || furnitureCategoryFor(item);
+      counts.set(category, (counts.get(category) || 0) + 1);
+    });
+    counts.set('all', CATALOG.Furniture.length);
+    return counts;
+  }, []);
   const filteredCatalog = Object.fromEntries(
-    Object.entries(CATALOG).map(([cat,items])=>[cat,
-      search?items.filter(i=>`${i.name} ${i.sku}`.toLowerCase().includes(search.toLowerCase())):items
+    Object.entries(visibleCatalog).map(([cat,items])=>[cat,
+      (search?items.filter(i=>`${i.name} ${i.sku}`.toLowerCase().includes(search.toLowerCase())):items)
+        .filter(item => cat !== 'Furniture' || activeFurnitureCategory === 'all' || (item.furnitureCategory || furnitureCategoryFor(item)) === activeFurnitureCategory)
     ])
   );
 
@@ -396,24 +1200,160 @@ export default function PMWorkspace() {
   const cols  = Math.ceil(booth.width/mod)+1;
   const rows  = Math.ceil(booth.depth/mod)+1;
   const rl    = isMax?1:2;
-  const closedSides = [!booth.openFront,!booth.openBack,!booth.openLeft,!booth.openRight].filter(Boolean).length;
+  const wallPanelQty =
+    (booth.openFront ? 0 : cols - 1) +
+    (booth.openBack ? 0 : cols - 1) +
+    (booth.openLeft ? 0 : rows - 1) +
+    (booth.openRight ? 0 : rows - 1);
+  const fasciaBoardQty = booth.fasciaEnabled ? (booth.fasciaOption === 'classic' ? (cols-1)*2 : (cols-1)*2 + Math.ceil(booth.depth/mod)*2) : 0;
   const structItems = [
-    {name:'Upright Post',   sku:`${isMax?'MAX':'OCT'}-UP-01`, qty:cols*rows,                            unit:'ea',weight:4.5},
-    {name:'Horizontal Rail',sku:`${isMax?'MAX':'OCT'}-HR-01`, qty:(cols-1)*rows*rl+(rows-1)*cols*rl,   unit:'ea',weight:2.2},
-    {name:'Wall Panel',     sku:`${isMax?'MAX':'OCT'}-WP-01`, qty:Math.max(0,(cols-1)*(rows-1)*closedSides), unit:'ea',weight:3.8},
-    {name:'Fascia Board',   sku:'FAS-STD-01',                 qty:(cols-1)*2+(rows-1)*2,               unit:'ea',weight:1.4},
-    {name:'Base Foot',      sku:`${isMax?'MAX':'OCT'}-BF-01`, qty:cols*rows,                            unit:'ea',weight:1.2},
+    {name:'Upright Post',   sku:`${isMax?'MAX':'OCT'}-UP-01`, qty:cols*rows,                          unit:'ea',weight:4.5,unitPrice:STRUCT_UNIT_PRICE.post},
+    {name:'Horizontal Rail',sku:`${isMax?'MAX':'OCT'}-HR-01`, qty:(cols-1)*rows*rl+(rows-1)*cols*rl, unit:'ea',weight:2.2,unitPrice:STRUCT_UNIT_PRICE.rail},
+    {name:'Wall Panel',     sku:`${isMax?'MAX':'OCT'}-WP-01`, qty:Math.max(0,wallPanelQty),           unit:'ea',weight:3.8,unitPrice:STRUCT_UNIT_PRICE.panel},
+    {name:'Fascia Board',   sku:`FAS-${booth.fasciaOption.toUpperCase()}-01`, qty:fasciaBoardQty,     unit:'ea',weight:1.4,unitPrice:STRUCT_UNIT_PRICE.fascia},
+    {name:'Base Foot',      sku:`${isMax?'MAX':'OCT'}-BF-01`, qty:cols*rows,                          unit:'ea',weight:1.2,unitPrice:STRUCT_UNIT_PRICE.foot},
   ];
   const structWeight = structItems.reduce((a,s)=>a+s.qty*s.weight,0);
+  const structSubtotal = structItems.reduce((a,s)=>a+s.qty*s.unitPrice,0);
+  const catalogItemFor = (catalogId:string) => Object.values(CATALOG).reduce<CatItem | undefined>((found, items) => found || items.find(item => item.id === catalogId), undefined);
+  const placedSubtotal = placedItems.reduce((sum,item)=>sum+(catalogItemFor(item.catalogId)?.price || 0)*item.qty,0);
+  const unpricedItems = placedItems.filter(item => !catalogItemFor(item.catalogId)?.price).length;
+  const fasciaSubtotal = booth.fasciaEnabled ? fasciaMeta.price : 0;
+  const quoteSubtotal = structSubtotal + placedSubtotal + fasciaSubtotal;
+  const quoteAllowance = quoteSubtotal * 0.1;
+  const quoteTotal = quoteSubtotal + quoteAllowance;
+  const csvCell = (value:string|number) => `"${String(value).replace(/"/g,'""')}"`;
+  const exportBomCsv = () => {
+    const rows = [
+      ['Section','Name','SKU','Qty','Unit','Unit Weight Kg','Total Weight Kg','Unit Price USD','Total USD','Notes'],
+      ...structItems.map(item => [
+        'Structure',
+        item.name,
+        item.sku,
+        item.qty,
+        item.unit,
+        item.weight,
+        (item.qty * item.weight).toFixed(2),
+        item.unitPrice,
+        item.qty * item.unitPrice,
+        '',
+      ]),
+      ...placedItems.map(item => {
+        const catalogItem = catalogItemFor(item.catalogId);
+        const unitPrice = catalogItem?.price ?? 0;
+        return [
+          'Placed Item',
+          item.name,
+          item.sku,
+          item.qty,
+          'ea',
+          item.weight,
+          (item.qty * item.weight).toFixed(2),
+          unitPrice || 'TBD',
+          unitPrice ? unitPrice * item.qty : 'TBD',
+          `${item.kind} / ${item.w}x${item.d}x${item.h}m / X ${item.x} Z ${item.z} Rot ${item.rotation}`,
+        ];
+      }),
+      ['Summary','Fascia Option',booth.fasciaEnabled ? fasciaMeta.label : 'Disabled',1,'lot','','',fasciaSubtotal,fasciaSubtotal,booth.fasciaEnabled ? booth.fasciaOption : 'off'],
+      ['Summary','Quote Allowance','CONTINGENCY',1,'lot','','',quoteAllowance,quoteAllowance,'10 percent allowance'],
+      ['Summary','Quote Total','TOTAL',1,'lot','','',quoteTotal,quoteTotal,`${booth.width}x${booth.depth}x${booth.height}m / ${boothType}`],
+      ['Summary','Total Weight','WEIGHT',1,'lot','',(structWeight + totalWeight).toFixed(2),'','','kg'],
+    ];
+    const csv = rows.map(row => row.map(csvCell).join(',')).join('\r\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const safeName = projectLabel.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'workspace';
+    link.href = url;
+    link.download = `${safeName}-bom.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setToast('BOM CSV exported');
+  };
+  const downloadTextFile = (filename:string, content:string, type = 'text/plain;charset=utf-8') => {
+    const blob = new Blob([content], {type});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+  const safeProjectFileName = () => projectLabel.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'workspace';
+  const exportProductionChecklist = () => {
+    const lines = [
+      `Production checklist - ${projectLabel}`,
+      `Client: ${clientLabel}`,
+      `Exhibition: ${exhibitionLabel}`,
+      `Status: ${approvalStageLabel}`,
+      '',
+      'Stand',
+      `- System: ${booth.system === 'maxima' ? 'Maxima' : 'Octanorm'}`,
+      `- Dimensions: ${booth.width} x ${booth.depth} x ${booth.height} m`,
+      `- Type: ${boothType}`,
+      `- Open sides: ${[
+        booth.openFront ? 'front' : '',
+        booth.openBack ? 'back' : '',
+        booth.openLeft ? 'left' : '',
+        booth.openRight ? 'right' : '',
+      ].filter(Boolean).join(', ') || 'none'}`,
+      `- Wall finish: ${wallFinish.label}`,
+      `- Frame finish: ${frameFinish.label}`,
+      `- Fascia: ${booth.fasciaEnabled ? fasciaMeta.label : 'disabled'}`,
+      `- Lighting: ${lightingPreset}`,
+      `- Carpet: ${CARPETS[carpetIdx].label}`,
+      '',
+      'Rooms',
+      ...(rooms.length ? rooms.map(room => `- ${room.name}: ${room.width} x ${room.depth} x ${room.height} m, door ${room.hasDoor ? room.doorPosition : 'none'}, ceiling ${room.hasCeiling ? 'yes' : 'no'}`) : ['- None']),
+      '',
+      'BOM',
+      `- Structural parts: ${structItems.reduce((a,s)=>a+s.qty,0)}`,
+      `- Placed items: ${totalParts}`,
+      `- Total weight: ${(structWeight + totalWeight).toFixed(0)} kg`,
+      `- Quote estimate: ${formatUsd(quoteTotal)}`,
+      '',
+      'Open Feedback',
+      ...(feedbackItems.filter(item => (item.status ?? 'open') === 'open').length
+        ? feedbackItems.filter(item => (item.status ?? 'open') === 'open').map(item => `- [${item.type}] ${item.text}`)
+        : ['- None']),
+      '',
+      'Production checks',
+      '- Confirm floor plan dimensions with venue.',
+      '- Confirm wall/open-side configuration before ordering profiles.',
+      '- Confirm client logo/fascia artwork dimensions.',
+      '- Confirm furniture stock and replacements for unpriced/TBD items.',
+      '- Confirm electrical load and lighting placement.',
+      '- Confirm transport, installation crew, and dismantle schedule.',
+    ].join('\r\n');
+    downloadTextFile(`${safeProjectFileName()}-production-checklist.txt`, lines);
+    setToast('Production checklist exported');
+  };
 
-  const iconBtn = (Icon:React.ElementType,tooltip:string,onClick?:()=>void,disabled?:boolean,style?:React.CSSProperties) => (
-    <button title={tooltip} onClick={onClick} disabled={disabled}
-      style={{background:'none',border:'none',cursor:disabled?'not-allowed':'pointer',padding:'5px 7px',color:disabled?C.hair:C.muted,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:3,opacity:disabled?0.4:1,...style}}>
-      <Icon size={13}/>
-    </button>
-  );
+  const iconBtn = (Icon:React.ComponentType<{size?:number}>,tooltip:string,onClick?:()=>void,disabled?:boolean,style?:React.CSSProperties) => {
+    const IconComponent = Icon;
+    return (
+      <button title={tooltip} onClick={onClick} disabled={disabled}
+        style={{background:'none',border:'none',cursor:disabled?'not-allowed':'pointer',padding:'5px 7px',color:disabled?C.hair:C.muted,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:3,opacity:disabled?0.4:1,...style}}>
+        <IconComponent size={13}/>
+      </button>
+    );
+  };
 
   // ── Project picker ────────────────────────────────────────────
+  const saveStatusMeta = workspaceError || saveStatus === 'error'
+    ? {label:'SAVE ISSUE', detail:lastSaved, color:C.orange}
+    : isWorkspaceLoading
+      ? {label:'LOADING WORKSPACE', detail:'Loading...', color:C.muted}
+      : saveStatus === 'saving'
+        ? {label:'SAVING...', detail:'Saving...', color:C.blue}
+        : hasUnsavedChanges || saveStatus === 'dirty'
+          ? {label:'UNSAVED CHANGES', detail:'Unsaved', color:C.orange}
+          : {label:'SAVED', detail:lastSaved, color:C.green};
+
   const filteredPickerProjects = useMemo(()=>{
     const q = pickerSearch.trim().toLowerCase();
     if(!q) return pickerProjects;
@@ -525,9 +1465,12 @@ export default function PMWorkspace() {
           <span style={{fontFamily:MONO,fontSize:9.5,background:`${C.blue}12`,color:C.blue,border:`1px solid ${C.blue}28`,borderRadius:4,padding:'2px 7px',flexShrink:0}}>
             v{workspaceRecord?.currentVersion?.versionNumber ?? workspaceRecord?.design.currentVersionNumber ?? 1}
           </span>
+          <span style={{fontFamily:MONO,fontSize:9.5,background:`${approvalStageColor}12`,color:approvalStageColor,border:`1px solid ${approvalStageColor}28`,borderRadius:4,padding:'2px 7px',flexShrink:0,textTransform:'uppercase'}}>
+            {approvalStageLabel}
+          </span>
           <div style={{width:1,height:18,background:C.hair,flexShrink:0}}/>
-          <span style={{fontFamily:MONO,fontSize:9.5,display:'flex',alignItems:'center',gap:5,color:C.green,flexShrink:0}}>
-            <span style={{width:6,height:6,borderRadius:'50%',background:workspaceError?C.orange:C.green,display:'inline-block',flexShrink:0}}/>{workspaceError?'WORKSPACE ISSUE':isWorkspaceLoading?'LOADING WORKSPACE':'LIVE WORKSPACE'}
+          <span style={{fontFamily:MONO,fontSize:9.5,display:'flex',alignItems:'center',gap:5,color:saveStatusMeta.color,flexShrink:0}}>
+            <span style={{width:6,height:6,borderRadius:'50%',background:saveStatusMeta.color,display:'inline-block',flexShrink:0}}/>{saveStatusMeta.label}
           </span>
           <button
             onClick={()=>{ setPickerSearch(''); setShowProjectPicker(true); }}
@@ -543,8 +1486,8 @@ export default function PMWorkspace() {
             {iconBtn(Redo2,'Redo (Ctrl+Y)',redo,!canRedo)}
           </div>
           <div style={{width:1,height:18,background:C.hair}}/>
-          <button onClick={save} title="Save" style={{background:'none',border:`1px solid ${C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:C.ink}}>
-            <Save size={12}/> Save
+          <button onClick={save} disabled={saveStatus === 'saving'} title="Save" style={{background:'none',border:`1px solid ${hasUnsavedChanges || saveStatus === 'dirty' ? C.orange : C.hair}`,borderRadius:4,padding:'5px 10px',cursor:saveStatus === 'saving'?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:hasUnsavedChanges || saveStatus === 'dirty' ? C.orange : C.ink,opacity:saveStatus === 'saving'?0.7:1}}>
+            <Save size={12}/> {saveStatus === 'saving' ? 'Saving...' : 'Save'}
           </button>
           <button onClick={()=>setShowSnapDlg(true)} title="Save snapshot" style={{background:'none',border:`1px solid ${C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:C.ink}}>
             <Camera size={12}/> Snapshot
@@ -552,6 +1495,12 @@ export default function PMWorkspace() {
           <button onClick={()=>setShowHistPanel(h=>!h)} style={{background:showHistPanel?C.bg:'none',border:`1px solid ${showHistPanel?C.ink:C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:C.ink}}>
             <History size={12}/> History
             <span style={{fontFamily:MONO,fontSize:9,background:`${C.blue}15`,color:C.blue,borderRadius:3,padding:'1px 5px'}}>{snapshots.length}</span>
+          </button>
+          <button onClick={()=>setShowGrid(value=>!value)} title="Toggle grid" style={{background:showGrid?`${C.blue}10`:'none',border:`1px solid ${showGrid?C.blue:C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:showGrid?C.blue:C.ink}}>
+            <Map size={12}/> Grid
+          </button>
+          <button onClick={()=>setPreviewMode(value=>!value)} title="Preview workspace" style={{background:previewMode?`${C.orange}12`:'none',border:`1px solid ${previewMode?C.orange:C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:previewMode?C.orange:C.ink}}>
+            <Maximize2 size={12}/> Preview
           </button>
           <button onClick={()=>setShowSendDlg(true)} style={{background:C.blue,border:'none',color:'#fff',borderRadius:4,padding:'6px 14px',cursor:'pointer',display:'flex',alignItems:'center',gap:6,fontSize:12,fontWeight:600,fontFamily:UI}}>
             <Send size={12}/> Send to Client
@@ -562,10 +1511,10 @@ export default function PMWorkspace() {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Left — Component Catalog ────────────────────────── */}
-        <aside style={{width:240,borderRight:`1px solid ${C.hair}`,background:C.panel,display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
+        {!previewMode&&<aside style={{width:240,borderRight:`1px solid ${C.hair}`,background:C.panel,display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
           <div style={{padding:'8px 14px',borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
             <span style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,letterSpacing:'0.12em',color:C.muted,textTransform:'uppercase'}}>§ Components</span>
-            <span style={{fontFamily:MONO,fontSize:9.5,color:C.muted}}>{Object.values(CATALOG).reduce((a,b)=>a+b.length,0)} items</span>
+            <span style={{fontFamily:MONO,fontSize:9.5,color:C.muted}}>{Object.values(visibleCatalog).reduce((a,b)=>a+b.length,0)} items</span>
           </div>
 
           <div style={{padding:'8px 10px',borderBottom:`1px solid ${C.hair}`,flexShrink:0}}>
@@ -591,31 +1540,67 @@ export default function PMWorkspace() {
                   </button>
 
                   {isOpen&&(
-                    <div style={{padding:'6px 10px 10px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:5}}>
+                    <div style={{padding:'8px 10px 10px',display:'flex',flexDirection:'column',gap:7}}>
+                      {cat === 'Furniture'&&(
+                        <div style={{display:'flex',gap:5,overflowX:'auto',paddingBottom:2,marginBottom:1}}>
+                          {FURNITURE_CATEGORY_ORDER.filter(category => (furnitureCategoryCounts.get(category) || 0) > 0).map(category=>{
+                            const active = activeFurnitureCategory === category;
+                            return (
+                              <button key={category} type="button" onClick={()=>setActiveFurnitureCategory(category)}
+                                style={{height:24,whiteSpace:'nowrap',border:`1px solid ${active?C.blue:C.hair}`,borderRadius:4,background:active?`${C.blue}12`:C.bg,color:active?C.blue:C.muted,cursor:'pointer',fontFamily:MONO,fontSize:8.5,fontWeight:active?700:600,padding:'0 7px',display:'flex',alignItems:'center',gap:5,flexShrink:0}}>
+                                <span>{FURNITURE_CATEGORY_LABELS[category]}</span>
+                                <span style={{opacity:0.75}}>{furnitureCategoryCounts.get(category)}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                       {items.map(item=>{
                         const isActive = activeId===item.id;
-                        const placed   = placedItems.find(p=>p.catalogId===item.id);
+                        const placedCount = placedItems.filter(p=>p.catalogId===item.id).reduce((sum,p)=>sum+p.qty,0);
+                        const placed   = placedCount > 0;
                         const hasCount = item.inStand>0;
-                        const Icon     = item.icon;
+                        const stockLimit = item.stock;
+                        const remaining = stockLimit == null ? null : Math.max(0, stockLimit - placedCount);
+                        const isOut = remaining === 0;
+                        const isLow = remaining != null && remaining > 0 && remaining <= (item.lowStockAt ?? 2);
+                        const availability = remaining == null ? 'Available' : isOut ? 'Out of stock' : isLow ? `${remaining} left` : `${remaining} available`;
                         return (
-                          <button key={item.id} onClick={()=>addItem(item)}
-                            style={{position:'relative',background:isActive?'#f0ecff':placed?`${C.blue}08`:C.bg,border:`1px ${isActive?'solid':hasCount?'solid':'dashed'} ${isActive?C.ink:placed?C.blue:C.hair}`,borderRadius:4,padding:'9px 7px 7px',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:3,textAlign:'center',transition:'all 0.1s'}}>
+                          <div key={item.id} onClick={()=>!isOut&&addItem(item)}
+                            style={{position:'relative',opacity:isOut?0.58:1,background:isActive?'#f0ecff':placed?`${C.blue}08`:C.bg,border:`1px ${isActive?'solid':hasCount?'solid':'dashed'} ${isActive?C.ink:placed?C.blue:C.hair}`,borderRadius:5,padding:7,cursor:isOut?'not-allowed':'pointer',display:'grid',gridTemplateColumns:'72px 1fr',gap:8,textAlign:'left',transition:'all 0.1s',alignItems:'center'}}>
                             {placed&&(
                               <div style={{position:'absolute',top:3,right:3,background:C.blue,borderRadius:2,padding:'1px 4px'}}>
-                                <span style={{fontFamily:MONO,fontSize:8,color:'#fff',fontWeight:700}}>x{placed.qty}</span>
+                                <span style={{fontFamily:MONO,fontSize:8,color:'#fff',fontWeight:700}}>x{placedCount}</span>
                               </div>
                             )}
                             {!placed&&hasCount&&(
                               <span style={{position:'absolute',top:3,right:3,fontFamily:MONO,fontSize:8,color:C.blue,fontWeight:700}}>×{item.inStand}</span>
                             )}
-                            <Icon size={17} style={{color:isActive?C.ink:C.muted,flexShrink:0}}/>
-                            <span style={{fontSize:10.5,fontWeight:600,color:C.ink,lineHeight:1.2,wordBreak:'break-word'}}>{item.name}</span>
-                            <span style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{item.sku}</span>
-                          </button>
+                            <CatalogPreview item={item} active={isActive}/>
+                            <span style={{minWidth:0,display:'flex',flexDirection:'column',gap:3}}>
+                              <span style={{fontSize:11.5,fontWeight:700,color:C.ink,lineHeight:1.15,wordBreak:'break-word'}}>{item.name}</span>
+                              <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted,display:'flex',gap:5,flexWrap:'wrap'}}>
+                                <span>{item.sku}</span>
+                                {item.family&&<span>/ {item.family}</span>}
+                              </span>
+                              <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted}}>{item.dim} m</span>
+                              {item.price!=null&&<span style={{fontFamily:MONO,fontSize:8.5,color:C.green,fontWeight:700}}>USD {item.price.toLocaleString()}</span>}
+                              <span style={{fontFamily:MONO,fontSize:8.5,color:isOut?C.orange:isLow?'#8a6b20':C.muted,fontWeight:isOut||isLow?700:500}}>
+                                {availability}
+                              </span>
+                              <span style={{display:'flex',alignItems:'center',gap:5,marginTop:2}}>
+                                <button type="button" disabled={!placed} onClick={(event)=>{event.stopPropagation();removeCatalogItem(item.id);}}
+                                  style={{width:24,height:22,border:`1px solid ${C.hair}`,borderRadius:4,background:placed?C.panel:C.bg,color:placed?C.ink:C.muted,cursor:placed?'pointer':'not-allowed',fontFamily:MONO,fontSize:13,lineHeight:1,opacity:placed?1:0.45}}>−</button>
+                                <span style={{minWidth:24,textAlign:'center',fontFamily:MONO,fontSize:9.5,fontWeight:700,color:C.ink}}>{placedCount}</span>
+                                <button type="button" disabled={isOut} onClick={(event)=>{event.stopPropagation();addItem(item);}}
+                                  style={{width:24,height:22,border:`1px solid ${isOut?C.hair:C.blue}`,borderRadius:4,background:isOut?C.bg:`${C.blue}12`,color:isOut?C.muted:C.blue,cursor:isOut?'not-allowed':'pointer',fontFamily:MONO,fontSize:13,lineHeight:1,opacity:isOut?0.5:1}}>+</button>
+                              </span>
+                            </span>
+                          </div>
                         );
                       })}
-                      <button style={{background:'none',border:`1px dashed ${C.hair}`,borderRadius:4,padding:'9px 7px',display:'flex',flexDirection:'column',alignItems:'center',gap:3,cursor:'pointer',color:C.muted}}>
-                        <Plus size={13}/><span style={{fontFamily:MONO,fontSize:9}}>Custom</span>
+                      <button style={{background:'none',border:`1px dashed ${C.hair}`,borderRadius:5,padding:'10px 8px',display:'flex',alignItems:'center',justifyContent:'center',gap:6,cursor:'pointer',color:C.muted}}>
+                        <Plus size={13}/><span style={{fontFamily:MONO,fontSize:9}}>Custom asset</span>
                       </button>
                     </div>
                   )}
@@ -628,23 +1613,26 @@ export default function PMWorkspace() {
           {placedItems.length>0&&(
             <div style={{padding:'8px 14px',borderTop:`1px solid ${C.hair}`,background:C.bg,flexShrink:0}}>
               <div style={{fontFamily:MONO,fontSize:9,color:C.muted,marginBottom:4}}>PLACED IN STAND</div>
-              {placedItems.map(p=>(
+              {placedItems.map(p=>{
+                const issues = placementIssueByItem.get(p.id) || [];
+                return (
                 <div key={p.id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
-                  <div style={{width:8,height:8,borderRadius:2,background:p.color,flexShrink:0}}/>
+                  <div style={{width:8,height:8,borderRadius:2,background:issues.length?C.orange:p.color,flexShrink:0}} title={issues.map(issue=>issue.message).join(', ')}/>
                   <span style={{fontFamily:MONO,fontSize:9,flex:1,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
+                  {issues.length>0&&<span title={issues.map(issue=>issue.message).join(', ')} style={{fontFamily:MONO,fontSize:8,color:C.orange,border:`1px solid ${C.orange}40`,borderRadius:3,padding:'1px 4px',background:`${C.orange}10`}}>CHECK</span>}
                   <span style={{fontFamily:MONO,fontSize:9,color:C.muted}}>×{p.qty}</span>
                   <button onClick={()=>removeItem(p.id)} style={{background:'none',border:'none',cursor:'pointer',padding:2,color:C.muted,display:'flex'}}>
                     <Trash2 size={10}/>
                   </button>
                 </div>
-              ))}
+              );})}
             </div>
           )}
-        </aside>
+        </aside>}
 
         {/* ── Center — Canvas (Booth3D iframe renderer) ────────── */}
         <main style={{flex:1,position:'relative',overflow:'hidden',backgroundColor:C.bg,
-          backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 39px,#d8d3c9 39px,#d8d3c9 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,#d8d3c9 39px,#d8d3c9 40px)'}}>
+          backgroundImage:showGrid?'repeating-linear-gradient(0deg,transparent,transparent 39px,#d8d3c9 39px,#d8d3c9 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,#d8d3c9 39px,#d8d3c9 40px)':'none'}}>
 
           {/* Booth3D fills canvas — iframe handles orbit/zoom internally */}
           <div style={{position:'absolute',inset:0}}>
@@ -652,9 +1640,53 @@ export default function PMWorkspace() {
               width:booth.width, depth:booth.depth, height:booth.height,
               system:booth.system, companyName:booth.companyName,
               primaryColor:THEMES[themeIdx].color,
+              wallColor: wallFinish.color,
+              frameColor: frameFinish.color,
+              fasciaColor: fasciaFinish.color,
               carpetColor,
               openFront:booth.openFront, openBack:booth.openBack,
               openLeft:booth.openLeft, openRight:booth.openRight,
+              placedItems: placedItems,
+              rooms,
+              panelOverrides,
+              frontSupportPositions,
+              fasciaEnabled: booth.fasciaEnabled,
+              fasciaOption: booth.fasciaOption,
+              lightingPreset,
+              invalidItemIds,
+              onItemMove: moveItemLive,
+              onItemSelect: (id:string|null, partId?:string|null, detail?:{xPct?:number|null;yPct?:number|null;label?:string|null;partType?:string|null})=>{
+                const shellId = canonicalShellPartId(partId);
+                const panelId = shellId.match(/panel-(front|back|left|right)-\d+/)?.[0];
+                if (panelId) {
+                  setActiveShellPartId(panelId);
+                  setSelectionAnchor(anchorFromSelection(detail, 'Panel', 'panel'));
+                  setActivePlacedId('');
+                  setActiveRoomId('');
+                  setActiveTab('panel');
+                  return;
+                }
+                if (shellId && shellPartDetails(shellId, booth)) {
+                  setActiveShellPartId(shellId);
+                  setSelectionAnchor(anchorFromSelection(detail, 'Selection', 'shell'));
+                  setActivePlacedId('');
+                  setActiveRoomId('');
+                  setActiveTab('panel');
+                  return;
+                }
+                setActiveShellPartId('');
+                setSelectionAnchor(null);
+                if (id) {
+                  setActivePlacedId(id);
+                  setActiveRoomId('');
+                  setSelectionAnchor(anchorFromSelection(detail, 'Furniture', 'furniture'));
+                  setActiveTab('bom');
+                }
+              },
+              onRoomMove: moveRoomLive,
+              onFrontSupportMove: moveFrontSupportsLive,
+              onItemDelete: (id: string) => removeItem(id),
+              onItemRotate: (id: string, patch: { rotationY: number }) => updateItem(id, { rotationY: patch.rotationY }),
             }}/>
           </div>
 
@@ -663,84 +1695,185 @@ export default function PMWorkspace() {
             {[
               {text:'● LIVE WORKSPACE', color:C.green},
               {text:`${booth.system==='maxima'?'◈ MAXIMA':'⬡ OCTANORM'} · ${booth.width}×${booth.depth}M`, color:C.muted},
+              ...(placementIssues.length ? [{text:`${placementIssues.length} PLACEMENT ISSUE${placementIssues.length>1?'S':''}`, color:C.orange}] : []),
             ].map(b=>(
               <span key={b.text} style={{fontFamily:MONO,fontSize:9.5,display:'flex',alignItems:'center',gap:5,background:C.panel,border:`1px solid ${C.hair}`,borderRadius:4,padding:'4px 9px',color:b.color,letterSpacing:'0.04em'}}>{b.text}</span>
             ))}
           </div>
 
-          {/* View mode toggle — top right (cosmetic; iframe handles its own camera) */}
-          <div style={{position:'absolute',top:12,right:12,display:'flex',gap:1,background:C.panel,border:`1px solid ${C.hair}`,borderRadius:4,padding:2,zIndex:10}}>
-            {([{icon:Home,key:'home'},{icon:Box,key:'iso'},{icon:Map,key:'plan'},{icon:Layers,key:'front'}] as const).map(({icon:Icon,key})=>(
-              <button key={key} onClick={()=>setViewMode(key)}
-                style={{background:viewMode===key?C.ink:'none',border:'none',borderRadius:3,padding:'5px 8px',cursor:'pointer',color:viewMode===key?'#fff':C.muted,transition:'all 0.1s'}}>
-                <Icon size={12}/>
-              </button>
-            ))}
-          </div>
-
-          {/* Axis gizmo */}
-          <div style={{position:'absolute',top:58,right:12,zIndex:10,background:`${C.panel}e0`,border:`1px solid ${C.hair}`,borderRadius:4,padding:5}}>
-            <AxisGizmo/>
-          </div>
-
-          {/* Height dimension label — left center */}
-          <div style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',zIndex:10,pointerEvents:'none'}}>
-            <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
-              <div style={{width:1,height:28,background:C.muted,opacity:0.5}}/>
-              <div style={{transform:'rotate(-90deg)',whiteSpace:'nowrap',fontFamily:MONO,fontSize:9.5,color:C.muted,letterSpacing:'0.04em'}}>{booth.height.toFixed(2)} m</div>
-              <div style={{width:1,height:28,background:C.muted,opacity:0.5}}/>
-            </div>
-          </div>
-
-          {/* Zoom hint controls — bottom left */}
-          <div style={{position:'absolute',bottom:38,left:12,display:'flex',background:C.panel,border:`1px solid ${C.hair}`,borderRadius:4,overflow:'hidden',zIndex:10}}>
-            {([ZoomIn, ZoomOut, Maximize2] as const).map((Icon,i)=>(
-              <button key={i} title={i===0?'Zoom In':i===1?'Zoom Out':'Fit'} style={{background:'none',border:'none',cursor:'pointer',padding:'6px 8px',color:C.muted,borderRight:i<2?`1px solid ${C.hair}`:'none'}}>
-                <Icon size={13}/>
-              </button>
-            ))}
-          </div>
-
-          {/* Bottom viewport info bar */}
-          <div style={{position:'absolute',bottom:0,left:0,right:0,height:32,background:C.panel,borderTop:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px',zIndex:10}}>
-            <div style={{display:'flex',alignItems:'center',gap:0}}>
-              {[
-                {text:booth.system==='maxima'?'Maxima':'Octanorm',style:{fontWeight:700}},
-                {text:'|',style:{color:C.hair,margin:'0 8px'}},
-                {text:openCount>0?`OPEN: ${[booth.openFront&&'FRONT',booth.openBack&&'BACK',booth.openLeft&&'LEFT',booth.openRight&&'RIGHT'].filter(Boolean).join(' + ')}`:'ALL SIDES CLOSED',style:{color:openCount>0?C.orange:C.muted}},
-                {text:'|',style:{color:C.hair,margin:'0 8px'}},
-                {text:`${booth.width.toFixed(1)} × ${booth.depth.toFixed(1)} m`},
-                {text:`H ${booth.height.toFixed(2)} m`,style:{marginLeft:10}},
-                {text:'40 mm profile',style:{marginLeft:10}},
-              ].map((item,i)=>(
-                <span key={i} style={{fontFamily:MONO,fontSize:9.5,color:C.ink,letterSpacing:'0.04em',...item.style}}>{item.text}</span>
-              ))}
-            </div>
-            <div style={{display:'flex',alignItems:'center',gap:12}}>
-              <span style={{fontFamily:MONO,fontSize:9,color:C.muted}}>SCROLL zoom · CLICK inspect part · CAM 40° · FOV 32mm</span>
-              <div style={{display:'flex',alignItems:'center',gap:5}}>
-                <div style={{position:'relative',width:40,height:10}}>
-                  <div style={{position:'absolute',left:0,right:0,top:'50%',height:1,background:C.ink}}/>
-                  <div style={{position:'absolute',left:0,top:0,bottom:0,width:1,background:C.ink}}/>
-                  <div style={{position:'absolute',right:0,top:0,bottom:0,width:1,background:C.ink}}/>
-                  {[0.25,0.5,0.75].map(f=>(
-                    <div key={f} style={{position:'absolute',left:`${f*100}%`,top:'30%',height:'40%',width:1,background:C.ink,opacity:0.5}}/>
-                  ))}
+          {selectionAnchor&&activePlacedItem&&(
+            <div style={{
+              position:'absolute',
+              left:`clamp(16px, ${selectionAnchor.x}%, calc(100% - 286px))`,
+              top:`clamp(16px, calc(${selectionAnchor.y}% - 92px), calc(100% - 108px))`,
+              width:270,
+              zIndex:22,
+              background:C.panel,
+              border:`1px solid ${C.hair}`,
+              borderRadius:6,
+              boxShadow:'0 14px 42px rgba(0,0,0,0.18)',
+              padding:9,
+            }}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                <div style={{width:9,height:9,borderRadius:2,background:activePlacedItem.color,flexShrink:0}}/>
+                <div style={{minWidth:0,flex:1}}>
+                  <div style={{fontFamily:MONO,fontSize:8.5,color:C.muted,textTransform:'uppercase',letterSpacing:'0.08em'}}>Furniture selection</div>
+                  <div style={{fontSize:12,fontWeight:800,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{activePlacedItem.name}</div>
                 </div>
-                <span style={{fontFamily:MONO,fontSize:9,color:C.muted}}>1.0 m</span>
+                <button onClick={()=>{setSelectionAnchor(null);setActivePlacedId('');}} title="Close" style={{width:24,height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center'}}>
+                  <X size={12}/>
+                </button>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(5, 1fr)',gap:5}}>
+                <button title="Rotate left" onClick={()=>rotateItem(activePlacedItem.id,-15)} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:10,fontWeight:800}}>Y-</button>
+                <button title="Rotate right" onClick={()=>rotateItem(activePlacedItem.id,15)} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:10,fontWeight:800}}>Y+</button>
+                <button title="Tilt X" onClick={()=>updateItem(activePlacedItem.id,{rotationX:((Number(activePlacedItem.rotationX)||0)+15)})} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:10,fontWeight:800}}>X+</button>
+                <button title="Duplicate" onClick={()=>duplicateItem(activePlacedItem.id)} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center'}}><Copy size={12}/></button>
+                <button title="Delete" onClick={()=>{removeItem(activePlacedItem.id);setSelectionAnchor(null);}} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:`${C.orange}12`,color:C.orange,cursor:'pointer',display:'grid',placeItems:'center'}}><Trash2 size={12}/></button>
+              </div>
+              <div style={{display:'flex',justifyContent:'space-between',marginTop:6,fontFamily:MONO,fontSize:8.5,color:C.muted}}>
+                <span>{activePlacedItem.sku}</span>
+                <span>{activePlacedItem.w.toFixed(2)} x {activePlacedItem.d.toFixed(2)} x {activePlacedItem.h.toFixed(2)} m</span>
               </div>
             </div>
-          </div>
+          )}
+
+          {selectionAnchor&&activePanel&&(
+            <div style={{
+              position:'absolute',
+              left:`clamp(16px, ${selectionAnchor.x}%, calc(100% - 292px))`,
+              top:`clamp(16px, calc(${selectionAnchor.y}% - 184px), calc(100% - 260px))`,
+              width:276,
+              zIndex:18,
+              background:C.panel,
+              border:`1px solid ${C.hair}`,
+              borderRadius:6,
+              boxShadow:'0 14px 42px rgba(0,0,0,0.18)',
+              padding:10,
+            }}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                <div style={{width:9,height:9,borderRadius:2,background:activePanelOverride.color || wallFinish.color,flexShrink:0}}/>
+                <div style={{minWidth:0,flex:1}}>
+                  <div style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.08em'}}>Panel selection</div>
+                  <div style={{fontSize:12,fontWeight:800,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{activePanel.label}</div>
+                </div>
+                <button onClick={()=>{setSelectionAnchor(null);setActiveShellPartId('');}} style={{width:24,height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center'}}>
+                  <X size={12}/>
+                </button>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:9}}>
+                {[
+                  ['W', `${activePanel.width.toFixed(2)} m`],
+                  ['H', `${activePanel.height.toFixed(2)} m`],
+                  ['Diag', `${activePanel.diagonal.toFixed(2)} m`],
+                ].map(([label,value])=>(
+                  <div key={label} style={{border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,padding:'5px 6px'}}>
+                    <div style={{fontFamily:MONO,fontSize:8,color:C.muted,textTransform:'uppercase'}}>{label}</div>
+                    <div style={{fontFamily:MONO,fontSize:10.5,fontWeight:800,color:C.ink,marginTop:1}}>{value}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:8}}>
+                <input type="color" value={activePanelOverride.color || wallFinish.color} onChange={e=>updatePanelOverride(activePanel.id,{color:e.target.value})}
+                  style={{width:34,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',padding:2}}/>
+                <input value={activePanelOverride.brandText || ''} onChange={e=>updatePanelOverride(activePanel.id,{brandText:e.target.value.slice(0,40)})}
+                  placeholder="Brand / sticker text"
+                  style={{flex:1,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:UI,fontSize:11.5,color:C.ink,paddingLeft:8,outline:'none'}}/>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:7,alignItems:'center',marginBottom:8}}>
+                <label style={{height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,fontFamily:MONO,fontSize:8.5,fontWeight:800,overflow:'hidden',padding:'0 8px'}}>
+                  <ImagePlus size={11}/>
+                  <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{activePanelOverride.designImageName || 'Upload image design'}</span>
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" onChange={e=>{uploadPanelDesign(activePanel.id,e.target.files?.[0]); e.currentTarget.value='';}} style={{display:'none'}}/>
+                </label>
+                {activePanelOverride.designImageUrl&&(
+                  <button onClick={()=>updatePanelOverride(activePanel.id,{designImageUrl:'',designImageName:'',designOpacity:undefined})}
+                    style={{height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',fontFamily:MONO,fontSize:8.5,fontWeight:800,padding:'0 8px'}}>
+                    Clear
+                  </button>
+                )}
+              </div>
+              {activePanelOverride.designImageUrl&&(
+                <div style={{display:'grid',gridTemplateColumns:'54px 1fr',gap:7,alignItems:'center',marginBottom:8}}>
+                  <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted,textTransform:'uppercase'}}>Image</span>
+                  <input type="range" min={0.15} max={1} step={0.05} value={activePanelOverride.designOpacity ?? 1} onChange={e=>updatePanelOverride(activePanel.id,{designOpacity:Number(e.target.value)})}
+                    style={{width:'100%',accentColor:C.blue}}/>
+                </div>
+              )}
+              <div style={{display:'grid',gridTemplateColumns:'34px 1fr 54px',gap:7,alignItems:'center'}}>
+                <input type="color" value={activePanelOverride.brandColor || '#111827'} onChange={e=>updatePanelOverride(activePanel.id,{brandColor:e.target.value})}
+                  style={{width:34,height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',padding:2}}/>
+                <input type="range" min={0.08} max={0.45} step={0.01} value={activePanelOverride.brandScale ?? 0.15} onChange={e=>updatePanelOverride(activePanel.id,{brandScale:Number(e.target.value)})}
+                  style={{width:'100%',accentColor:C.blue}}/>
+                <button onClick={()=>resetPanelOverride(activePanel.id)}
+                  style={{height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:8.5,fontWeight:800}}>
+                  Reset
+                </button>
+              </div>
+            </div>
+          )}
+
+          {selectionAnchor&&activeShellPart&&!activePanel&&(
+            <div style={{
+              position:'absolute',
+              left:`clamp(16px, ${selectionAnchor.x}%, calc(100% - 260px))`,
+              top:`clamp(16px, calc(${selectionAnchor.y}% - 130px), calc(100% - 214px))`,
+              width:244,
+              zIndex:18,
+              background:C.panel,
+              border:`1px solid ${C.hair}`,
+              borderRadius:6,
+              boxShadow:'0 14px 42px rgba(0,0,0,0.18)',
+              padding:10,
+            }}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                <div style={{width:9,height:9,borderRadius:2,background:activeShellPart.type==='carpet'?carpetColor:activeShellPart.type==='fascia'?fasciaFinish.color:frameFinish.color,flexShrink:0}}/>
+                <div style={{minWidth:0,flex:1}}>
+                  <div style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.08em'}}>{activeShellPart.type} selection</div>
+                  <div style={{fontSize:12,fontWeight:800,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{activeShellPart.label}</div>
+                </div>
+                <button onClick={()=>{setSelectionAnchor(null);setActiveShellPartId('');}} style={{width:24,height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center'}}>
+                  <X size={12}/>
+                </button>
+              </div>
+              <div style={{border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,padding:'6px 8px',display:'grid',gap:4}}>
+                {activeShellPart.rows.slice(0,4).map(([label,value])=>(
+                  <div key={label} style={{display:'flex',justifyContent:'space-between',gap:8,fontFamily:MONO,fontSize:9.5}}>
+                    <span style={{color:C.muted,textTransform:'uppercase'}}>{label}</span>
+                    <span style={{color:C.ink,fontWeight:800,textAlign:'right'}}>{value}</span>
+                  </div>
+                ))}
+              </div>
+              {activeFrontSupportIndex>=0&&(
+                <div style={{marginTop:8}}>
+                  <label style={{fontFamily:MONO,fontSize:8.5,color:C.muted,textTransform:'uppercase',letterSpacing:'0.06em',display:'block',marginBottom:4}}>Support X position</label>
+                  <input type="range" min={0.45} max={Math.max(0.45,booth.width-0.45)} step={0.05}
+                    value={activeFrontSupportPositions[activeFrontSupportIndex] ?? 3}
+                    onChange={e=>updateFrontSupportPosition(activeFrontSupportIndex, Number(e.target.value))}
+                    style={{width:'100%',accentColor:C.blue}}/>
+                  <div style={{display:'flex',alignItems:'center',gap:6,marginTop:5}}>
+                    <input type="number" min={0.45} max={Math.max(0.45,booth.width-0.45)} step={0.05}
+                      value={Number(activeFrontSupportPositions[activeFrontSupportIndex] ?? 3).toFixed(2)}
+                      onChange={e=>updateFrontSupportPosition(activeFrontSupportIndex, Number(e.target.value))}
+                      style={{width:76,height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:MONO,fontSize:10.5,color:C.ink,paddingLeft:7,outline:'none'}}/>
+                    <span style={{fontFamily:MONO,fontSize:9,color:C.muted}}>meters from left front corner</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
         </main>
 
         {/* ── Right — Properties / BOM / Notes ─────────────────── */}
-        <aside style={{width:282,borderLeft:`1px solid ${C.hair}`,background:C.panel,display:'flex',flexDirection:'column',flexShrink:0}}>
+        {!previewMode&&<aside style={{width:282,borderLeft:`1px solid ${C.hair}`,background:C.panel,display:'flex',flexDirection:'column',flexShrink:0}}>
           {/* Tab bar */}
           <div style={{display:'flex',borderBottom:`1px solid ${C.hair}`,flexShrink:0}}>
-            {([['props','Properties',Settings2],['bom','BOM',Package],['notes','Notes',StickyNote]] as const).map(([k,label,Icon])=>(
+            {([['props','Properties',Settings2],['panel','Selection',Square],['bom','BOM',Package],['notes','Notes',StickyNote],['feedback','Feedback',MessageSquare]] as const).map(([k,label,Icon])=>(
               <button key={k} onClick={()=>setActiveTab(k as typeof activeTab)}
                 style={{flex:1,background:activeTab===k?C.panel:'transparent',border:'none',borderBottom:activeTab===k?`2px solid ${C.blue}`:'2px solid transparent',padding:'8px 4px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:4,fontFamily:MONO,fontSize:9,fontWeight:700,letterSpacing:'0.08em',color:activeTab===k?C.blue:C.muted,textTransform:'uppercase'}}>
                 <Icon size={10}/> {label}
+                {k==='feedback'&&openFeedbackCount>0&&<span style={{background:C.orange,color:'#fff',borderRadius:8,padding:'1px 5px',fontSize:8,lineHeight:1}}>{openFeedbackCount}</span>}
               </button>
             ))}
           </div>
@@ -748,24 +1881,12 @@ export default function PMWorkspace() {
           {/* Properties Tab */}
           {activeTab==='props'&&(
             <div style={{flex:1,overflowY:'auto',padding:'0 16px'}}>
-              <PropBlock label="Workspace Theme">
-                <div style={{display:'flex',gap:6}}>
-                  {THEMES.map((t,i)=><Swatch key={t.label} color={t.color} active={themeIdx===i} onClick={()=>commit(p=>({...p,themeIdx:i}))} title={t.label}/>)}
-                </div>
-              </PropBlock>
-              <Hairline/>
-              <PropBlock label="Workplane · Carpet" right="6 swatches">
-                <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-                  {CARPETS.map((c,i)=><Swatch key={c.label} color={c.color} active={carpetIdx===i} onClick={()=>commit(p=>({...p,carpetIdx:i}))} size={24} title={c.label}/>)}
-                </div>
-              </PropBlock>
-              <Hairline/>
               <PropBlock label="Stand Configuration" right="metric">
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
-                  <DimInput label="Width"  value={booth.width}  min={1} max={40} step={0.5} onChange={v=>set('width',v)}/>
-                  <DimInput label="Depth"  value={booth.depth}  min={1} max={40} step={0.5} onChange={v=>set('depth',v)}/>
+                  <DimInput label="Width"  value={booth.width}  min={1} max={40} step={1} onChange={v=>set('width',v)}/>
+                  <DimInput label="Depth"  value={booth.depth}  min={1} max={40} step={1} onChange={v=>set('depth',v)}/>
                 </div>
-                <DimInput label="Height" value={booth.height} min={1.5} max={6} step={0.5} onChange={v=>set('height',v)}/>
+                <DimInput label="Height" value={booth.height} min={1.5} max={6} step={1} onChange={v=>set('height',v)}/>
                 <div style={{marginTop:8}}>
                   <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:3}}>System</label>
                   <select value={booth.system} onChange={e=>set('system',e.target.value as BoothSystem)}
@@ -776,12 +1897,133 @@ export default function PMWorkspace() {
                 </div>
               </PropBlock>
               <Hairline/>
-              <PropBlock label="Fascia / Company Name" right={`${booth.companyName.length}/22`}>
-                <input value={booth.companyName} onChange={e=>set('companyName',e.target.value.toUpperCase().slice(0,22))}
-                  style={{width:'100%',height:34,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:MONO,fontSize:12,fontWeight:700,color:C.ink,paddingLeft:10,boxSizing:'border-box',outline:'none',letterSpacing:'0.06em'}}/>
+              <PropBlock label="Fascia Sign" right={booth.fasciaEnabled ? `${fasciaMeta.boardMm} mm` : 'Disabled'}>
+                <label style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,border:`1px solid ${C.hair}`,borderRadius:5,background:C.bg,padding:'8px 10px',cursor:'pointer'}}>
+                  <span style={{fontSize:12,fontWeight:700,color:C.ink}}>Enable rail fascia</span>
+                  <input type="checkbox" checked={booth.fasciaEnabled} onChange={e=>set('fasciaEnabled',e.target.checked)}
+                    style={{width:16,height:16,accentColor:C.blue,cursor:'pointer'}}/>
+                </label>
+                <input value={booth.companyName} disabled={!booth.fasciaEnabled} onChange={e=>set('companyName',e.target.value.toUpperCase().slice(0,22))}
+                  style={{width:'100%',height:34,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:booth.fasciaEnabled?C.bg:'#f2f0eb',fontFamily:MONO,fontSize:12,fontWeight:700,color:C.ink,paddingLeft:10,boxSizing:'border-box',outline:'none',letterSpacing:'0.06em',opacity:booth.fasciaEnabled?1:0.55}}/>
+                <select value={booth.fasciaOption} disabled={!booth.fasciaEnabled} onChange={e=>set('fasciaOption',e.target.value as FasciaOption)}
+                  style={{width:'100%',height:30,marginTop:8,border:`1px solid ${fasciaValid?C.hair:C.orange}`,borderRadius:4,background:booth.fasciaEnabled?C.bg:'#f2f0eb',fontFamily:UI,fontSize:12,color:C.ink,paddingLeft:8,boxSizing:'border-box',outline:'none',cursor:booth.fasciaEnabled?'pointer':'not-allowed',opacity:booth.fasciaEnabled?1:0.55}}>
+                  {FASCIA_OPTIONS.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+                <div style={{marginTop:7,fontFamily:MONO,fontSize:8.7,color:fasciaValid?C.muted:C.orange,lineHeight:1.45}}>
+                  {booth.fasciaEnabled ? `${fasciaMeta.note} Price impact: USD ${fasciaMeta.price.toLocaleString()}.` : 'Fascia board removed from rail and BOM.'}
+                  {!fasciaValid && ` Minimum width for this fascia is ${fasciaMeta.minWidth.toFixed(1)} m.`}
+                </div>
               </PropBlock>
               <Hairline/>
-              <PropBlock label="Open Sides" right={`${openCount} of 4 open`}>
+              <PropBlock label="Lighting" right={lightingPreset}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5}}>
+                  {LIGHTING_PRESETS.map(option=>(
+                    <button key={option.value} onClick={()=>commit(prev=>({...prev,lightingPreset:option.value}))}
+                      style={{height:28,border:`1px solid ${lightingPreset===option.value?C.blue:C.hair}`,borderRadius:4,background:lightingPreset===option.value?`${C.blue}12`:C.bg,color:lightingPreset===option.value?C.blue:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:9.5,fontWeight:700}}>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </PropBlock>
+              <Hairline/>
+              <PropBlock label="Rooms" right={`${rooms.length} placed`}>
+                <button onClick={addRoom}
+                  style={{width:'100%',height:32,border:`1px solid ${C.blue}`,borderRadius:4,background:`${C.blue}12`,color:C.blue,cursor:'pointer',fontFamily:UI,fontSize:12,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginBottom:8}}>
+                  <Plus size={13}/> Create Room
+                </button>
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                  {rooms.map((room,index)=>(
+                    <div key={room.id} style={{border:`1px solid ${C.hair}`,borderRadius:5,background:C.bg,padding:9}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+                        <input value={room.name} onChange={e=>updateRoom(room.id,{name:e.target.value})}
+                          style={{flex:1,minWidth:0,height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,fontFamily:UI,fontSize:12,fontWeight:700,color:C.ink,paddingLeft:7,outline:'none'}}/>
+                        <button onClick={()=>removeRoom(room.id)} title="Remove room" style={{width:26,height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center',flexShrink:0}}>
+                          <Trash2 size={11}/>
+                        </button>
+                      </div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
+                        <DimInput label="W" value={room.width} min={1} max={booth.width} step={1} onChange={v=>updateRoom(room.id,{width:v})}/>
+                        <DimInput label="D" value={room.depth} min={1} max={booth.depth} step={1} onChange={v=>updateRoom(room.id,{depth:v})}/>
+                        <DimInput label="H" value={room.height} min={1.8} max={booth.height} step={0.1} onChange={v=>updateRoom(room.id,{height:v})}/>
+                      </div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginTop:6}}>
+                        <DimInput label="X" value={room.x} min={room.width/2} max={Math.max(room.width/2,booth.width-room.width/2)} step={1} onChange={v=>updateRoom(room.id,{x:v})}/>
+                        <DimInput label="Z" value={room.z} min={room.depth/2} max={Math.max(room.depth/2,booth.depth-room.depth/2)} step={1} onChange={v=>updateRoom(room.id,{z:v})}/>
+                      </div>
+                      <div style={{marginTop:7}}>
+                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Snap target</label>
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:4}}>
+                          {(['back','left','center','right','front'] as const).map(target=>{
+                            const next = snapRoomToTarget(room, booth, target);
+                            return (
+                              <button key={target} onClick={()=>updateRoom(room.id,next)}
+                                style={{height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:8.5,textTransform:'uppercase'}}>
+                                {target.slice(0,1)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div style={{marginTop:7}}>
+                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Door position</label>
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:4}}>
+                          {(['left','center','right'] as DoorPosition[]).map(position=>(
+                            <button key={position} onClick={()=>updateRoom(room.id,{doorPosition:position,hasDoor:true})}
+                              style={{height:24,border:`1px solid ${room.doorPosition===position&&room.hasDoor?C.orange:C.hair}`,borderRadius:4,background:room.doorPosition===position&&room.hasDoor?`${C.orange}12`:C.panel,color:room.doorPosition===position&&room.hasDoor?C.orange:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:8.5,textTransform:'uppercase'}}>
+                              {position.slice(0,1)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{marginTop:7}}>
+                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Door swing</label>
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:4}}>
+                          {([
+                            ['left-in','L in'],
+                            ['right-in','R in'],
+                            ['left-out','L out'],
+                            ['right-out','R out'],
+                          ] as [DoorSwing,string][]).map(([swing,label])=>(
+                            <button key={swing} onClick={()=>updateRoom(room.id,{doorSwing:swing,hasDoor:true,doorOpen:true})}
+                              style={{height:24,border:`1px solid ${room.doorSwing===swing&&room.hasDoor?C.orange:C.hair}`,borderRadius:4,background:room.doorSwing===swing&&room.hasDoor?`${C.orange}12`:C.panel,color:room.doorSwing===swing&&room.hasDoor?C.orange:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:8,textTransform:'uppercase'}}>
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{display:'flex',gap:10,marginTop:7}}>
+                        <label style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:C.ink,cursor:'pointer'}}>
+                          <input type="checkbox" checked={room.hasDoor} onChange={e=>updateRoom(room.id,{hasDoor:e.target.checked})}/> Door
+                        </label>
+                        <label style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:C.ink,cursor:'pointer'}}>
+                          <input type="checkbox" checked={room.doorOpen} onChange={e=>updateRoom(room.id,{doorOpen:e.target.checked,hasDoor:true})}/> Open
+                        </label>
+                        <label style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:C.ink,cursor:'pointer'}}>
+                          <input type="checkbox" checked={room.hasCeiling} onChange={e=>updateRoom(room.id,{hasCeiling:e.target.checked})}/> Ceiling
+                        </label>
+                        <span style={{marginLeft:'auto',fontFamily:MONO,fontSize:9,color:C.muted}}>#{index+1}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {rooms.length===0&&<div style={{fontFamily:MONO,fontSize:9.5,color:C.muted,textAlign:'center',padding:'8px 0'}}>No rooms yet.</div>}
+                </div>
+              </PropBlock>
+              <Hairline/>
+              <PropBlock label="Open Sides" right={`${boothType} · ${openCount}/4`}>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:4,marginBottom:8}}>
+                  {([
+                    ['inline','Inline'],
+                    ['corner','Corner'],
+                    ['peninsula','Penin.'],
+                    ['island','Island'],
+                    ['closed','Closed'],
+                  ] as const).map(([preset,label])=>(
+                    <button key={preset} onClick={()=>setOpenSidePreset(preset)}
+                      style={{height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:8.2,fontWeight:700,textTransform:'uppercase'}}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:2,marginBottom:10}}>
                   {([['openFront','Front'],['openBack','Back'],['openLeft','Left'],['openRight','Right']] as [keyof BoothState,string][]).map(([key,label])=>{
                     const on=!!booth[key];
@@ -800,20 +2042,202 @@ export default function PMWorkspace() {
             </div>
           )}
 
+          {/* Panel Tab */}
+          {activeTab==='panel'&&(
+            <div style={{flex:1,overflowY:'auto',padding:'0 16px'}}>
+              {!activeShellPart&&(
+                <div style={{padding:'24px 0',textAlign:'center',fontFamily:MONO,fontSize:9.5,color:C.muted,lineHeight:1.6}}>
+                  Select a panel, column, rail, fascia, or carpet in the booth to edit its properties.
+                </div>
+              )}
+              {activeShellPart&&(
+                <>
+                  <PropBlock label="Selected Shell Part" right={activeShellPart.label}>
+                    <div style={{border:`1px solid ${C.hair}`,borderRadius:5,background:C.bg,padding:10}}>
+                      {activeShellPart.rows.map(([label,value])=>(
+                        <div key={label} style={{display:'flex',justifyContent:'space-between',gap:10,padding:'3px 0',fontFamily:MONO,fontSize:9.5}}>
+                          <span style={{color:C.muted,textTransform:'uppercase'}}>{label}</span>
+                          <span style={{color:C.ink,fontWeight:700}}>{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </PropBlock>
+                  {activePanel&&<>
+                  <Hairline/>
+                  <PropBlock label="Panel Finish" right={activePanelOverride.color ? 'Custom' : wallFinish.label}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <input type="color" value={activePanelOverride.color || wallFinish.color} onChange={e=>updatePanelOverride(activePanel.id,{color:e.target.value})}
+                        style={{width:38,height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',padding:2}}/>
+                      <input value={activePanelOverride.color || wallFinish.color} onChange={e=>updatePanelOverride(activePanel.id,{color:e.target.value})}
+                        style={{flex:1,height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:MONO,fontSize:11,color:C.ink,paddingLeft:8,outline:'none'}}/>
+                    </div>
+                    <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:8}}>
+                      {WALL_FINISHES.map(finish=>(
+                        <Swatch key={finish.label} color={finish.color} active={(activePanelOverride.color || wallFinish.color)===finish.color} onClick={()=>updatePanelOverride(activePanel.id,{color:finish.color})} size={24} title={finish.label}/>
+                      ))}
+                    </div>
+                  </PropBlock>
+                  <Hairline/>
+                  <PropBlock label="Brand / Sticker" right={activePanelOverride.brandText ? 'Applied' : 'None'}>
+                    <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Text</label>
+                    <input value={activePanelOverride.brandText || ''} onChange={e=>updatePanelOverride(activePanel.id,{brandText:e.target.value.slice(0,40)})}
+                      placeholder="Company logo, product name, sticker"
+                      style={{width:'100%',height:32,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:UI,fontSize:12,color:C.ink,paddingLeft:9,boxSizing:'border-box',outline:'none'}}/>
+                    <div style={{display:'grid',gridTemplateColumns:'72px 1fr',gap:8,marginTop:9,alignItems:'center'}}>
+                      <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Color</label>
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <input type="color" value={activePanelOverride.brandColor || '#111827'} onChange={e=>updatePanelOverride(activePanel.id,{brandColor:e.target.value})}
+                          style={{width:34,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',padding:2}}/>
+                        <input value={activePanelOverride.brandColor || '#111827'} onChange={e=>updatePanelOverride(activePanel.id,{brandColor:e.target.value})}
+                          style={{flex:1,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:MONO,fontSize:10.5,color:C.ink,paddingLeft:8,outline:'none'}}/>
+                      </div>
+                      <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Scale</label>
+                      <input type="range" min={0.08} max={0.45} step={0.01} value={activePanelOverride.brandScale ?? 0.15} onChange={e=>updatePanelOverride(activePanel.id,{brandScale:Number(e.target.value)})}
+                        style={{width:'100%',accentColor:C.blue}}/>
+                    </div>
+                    <div style={{marginTop:8,fontFamily:MONO,fontSize:8.5,color:C.muted}}>
+                      Text is projected directly onto this panel face.
+                    </div>
+                  </PropBlock>
+                  <Hairline/>
+                  <PropBlock label="Image Design" right={activePanelOverride.designImageUrl ? 'Uploaded' : 'None'}>
+                    <label style={{height:34,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:7,fontFamily:MONO,fontSize:9.5,fontWeight:800,padding:'0 10px',overflow:'hidden'}}>
+                      <ImagePlus size={13}/>
+                      <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{activePanelOverride.designImageName || 'Choose logo or wall graphic'}</span>
+                      <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" onChange={e=>{uploadPanelDesign(activePanel.id,e.target.files?.[0]); e.currentTarget.value='';}} style={{display:'none'}}/>
+                    </label>
+                    {activePanelOverride.designImageUrl&&<>
+                      <div style={{height:62,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
+                        <img src={activePanelOverride.designImageUrl} alt="" style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
+                      </div>
+                      <div style={{display:'grid',gridTemplateColumns:'72px 1fr',gap:8,alignItems:'center',marginTop:9}}>
+                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
+                        <input type="range" min={0.15} max={1} step={0.05} value={activePanelOverride.designOpacity ?? 1} onChange={e=>updatePanelOverride(activePanel.id,{designOpacity:Number(e.target.value)})}
+                          style={{width:'100%',accentColor:C.blue}}/>
+                      </div>
+                      <button onClick={()=>updatePanelOverride(activePanel.id,{designImageUrl:'',designImageName:'',designOpacity:undefined})}
+                        style={{width:'100%',height:30,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:UI,fontSize:12,fontWeight:700}}>
+                        Remove image design
+                      </button>
+                    </>}
+                  </PropBlock>
+                  <Hairline/>
+                  <button onClick={()=>resetPanelOverride(activePanel.id)}
+                    style={{width:'100%',height:34,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:UI,fontSize:12,fontWeight:700}}>
+                    Reset selected panel
+                  </button>
+                  </>}
+                  {activeShellPart.type==='frame'&&<>
+                    <Hairline/>
+                    <PropBlock label="Frame Profile Finish" right={frameFinish.label}>
+                      <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                        {FRAME_FINISHES.map((finish,i)=><Swatch key={finish.label} color={finish.color} active={frameFinishIdx===i} onClick={()=>commit(p=>({...p,frameFinishIdx:i}))} size={24} title={finish.label}/>)}
+                      </div>
+                    </PropBlock>
+                  </>}
+                  {activeShellPart.type==='fascia'&&<>
+                    <Hairline/>
+                    <PropBlock label="Fascia Finish" right={activeFasciaOverride.color ? 'Custom' : fasciaFinish.label}>
+                      <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                        {FASCIA_FINISHES.map((finish,i)=><Swatch key={finish.label} color={finish.color} active={(activeFasciaOverride.color || fasciaFinish.color)===finish.color} onClick={()=>{
+                          if (activeFasciaId) updatePanelOverride(activeFasciaId,{color:finish.color});
+                          else commit(p=>({...p,fasciaFinishIdx:i}));
+                        }} size={24} title={finish.label}/>)}
+                      </div>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginTop:9}}>
+                        <input type="color" value={activeFasciaOverride.color || fasciaFinish.color} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{color:e.target.value})}
+                          style={{width:38,height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',padding:2}}/>
+                        <input value={activeFasciaOverride.color || fasciaFinish.color} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{color:e.target.value})}
+                          style={{flex:1,height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:MONO,fontSize:11,color:C.ink,paddingLeft:8,outline:'none'}}/>
+                      </div>
+                    </PropBlock>
+                    <Hairline/>
+                    <PropBlock label="Fascia Graphics" right={activeFasciaOverride.designImageUrl ? 'Image' : activeFasciaOverride.brandText ? 'Text' : 'None'}>
+                      <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Text / logo wordmark</label>
+                      <input value={activeFasciaOverride.brandText || ''} disabled={!activeFasciaId} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandText:e.target.value.slice(0,40)})}
+                        placeholder={activeFasciaId === 'fascia-front' ? booth.companyName : 'Brand / fascia text'}
+                        style={{width:'100%',height:32,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:UI,fontSize:12,color:C.ink,paddingLeft:9,boxSizing:'border-box',outline:'none'}}/>
+                      <div style={{display:'grid',gridTemplateColumns:'72px 1fr',gap:8,marginTop:9,alignItems:'center'}}>
+                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Color</label>
+                        <div style={{display:'flex',alignItems:'center',gap:8}}>
+                          <input type="color" value={activeFasciaOverride.brandColor || '#23262c'} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandColor:e.target.value})}
+                            style={{width:34,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',padding:2}}/>
+                          <input value={activeFasciaOverride.brandColor || '#23262c'} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandColor:e.target.value})}
+                            style={{flex:1,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:MONO,fontSize:10.5,color:C.ink,paddingLeft:8,outline:'none'}}/>
+                        </div>
+                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Scale</label>
+                        <input type="range" min={0.08} max={0.45} step={0.01} value={activeFasciaOverride.brandScale ?? 0.2} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandScale:Number(e.target.value)})}
+                          style={{width:'100%',accentColor:C.blue}}/>
+                      </div>
+                      <label style={{height:34,marginTop:10,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:7,fontFamily:MONO,fontSize:9.5,fontWeight:800,padding:'0 10px',overflow:'hidden'}}>
+                        <ImagePlus size={13}/>
+                        <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{activeFasciaOverride.designImageName || 'Choose logo or fascia design'}</span>
+                        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" disabled={!activeFasciaId} onChange={e=>{if(activeFasciaId) uploadPanelDesign(activeFasciaId,e.target.files?.[0]); e.currentTarget.value='';}} style={{display:'none'}}/>
+                      </label>
+                      {activeFasciaOverride.designImageUrl&&<>
+                        <div style={{height:62,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
+                          <img src={activeFasciaOverride.designImageUrl} alt="" style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
+                        </div>
+                        <div style={{display:'grid',gridTemplateColumns:'72px 1fr',gap:8,alignItems:'center',marginTop:9}}>
+                          <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
+                          <input type="range" min={0.15} max={1} step={0.05} value={activeFasciaOverride.designOpacity ?? 1} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{designOpacity:Number(e.target.value)})}
+                            style={{width:'100%',accentColor:C.blue}}/>
+                        </div>
+                        <button onClick={()=>activeFasciaId&&updatePanelOverride(activeFasciaId,{designImageUrl:'',designImageName:'',designOpacity:undefined})}
+                          style={{width:'100%',height:30,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:UI,fontSize:12,fontWeight:700}}>
+                          Remove fascia design
+                        </button>
+                      </>}
+                    </PropBlock>
+                    <Hairline/>
+                    <button onClick={()=>activeFasciaId&&resetPanelOverride(activeFasciaId)}
+                      style={{width:'100%',height:34,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:UI,fontSize:12,fontWeight:700}}>
+                      Reset selected fascia
+                    </button>
+                  </>}
+                  {activeShellPart.type==='carpet'&&<>
+                    <Hairline/>
+                    <PropBlock label="Carpet Finish" right={CARPETS[carpetIdx].label}>
+                      <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                        {CARPETS.map((c,i)=><Swatch key={c.label} color={c.color} active={carpetIdx===i} onClick={()=>commit(p=>({...p,carpetIdx:i}))} size={24} title={c.label}/>)}
+                      </div>
+                    </PropBlock>
+                  </>}
+                </>
+              )}
+            </div>
+          )}
+
           {/* BOM Tab */}
           {activeTab==='bom'&&(
             <div style={{flex:1,overflowY:'auto',padding:'0 16px'}}>
+              <div style={{padding:'10px 0',borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+                <div>
+                  <div style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:'0.08em'}}>BOM Export</div>
+                  <div style={{fontFamily:MONO,fontSize:8.5,color:C.muted,marginTop:2}}>{structItems.reduce((a,s)=>a+s.qty,0) + totalParts} parts / {formatUsd(quoteTotal)}</div>
+                </div>
+                <div style={{display:'flex',gap:6,flexShrink:0}}>
+                  <button onClick={exportBomCsv}
+                    style={{height:30,border:`1px solid ${C.blue}`,borderRadius:4,background:`${C.blue}10`,color:C.blue,cursor:'pointer',display:'flex',alignItems:'center',gap:6,fontFamily:MONO,fontSize:9,fontWeight:700,padding:'0 9px',whiteSpace:'nowrap'}}>
+                    <Download size={11}/> CSV
+                  </button>
+                  <button onClick={exportProductionChecklist}
+                    style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',gap:6,fontFamily:MONO,fontSize:9,fontWeight:700,padding:'0 9px',whiteSpace:'nowrap'}}>
+                    <Download size={11}/> TXT
+                  </button>
+                </div>
+              </div>
               <div style={{padding:'12px 0',borderBottom:`1px solid ${C.hair}`}}>
                 <MonoLabel right={`${structWeight.toFixed(0)} kg`}>§ Structural</MonoLabel>
                 {structItems.map((s,i)=>(
                   <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'4px 0',borderBottom:`1px solid ${C.hair}28`}}>
                     <div>
                       <div style={{fontSize:11,fontWeight:600,color:C.ink}}>{s.name}</div>
-                      <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{s.sku}</div>
+                      <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{s.sku} / {formatUsd(s.unitPrice)} {s.unit}</div>
                     </div>
                     <div style={{textAlign:'right'}}>
                       <div style={{fontFamily:MONO,fontSize:11,fontWeight:700,color:C.ink}}>×{s.qty}</div>
-                      <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{(s.qty*s.weight).toFixed(0)} kg</div>
+                      <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{(s.qty*s.weight).toFixed(0)} kg / {formatUsd(s.qty*s.unitPrice)}</div>
                     </div>
                   </div>
                 ))}
@@ -821,19 +2245,42 @@ export default function PMWorkspace() {
               {placedItems.length>0&&(
                 <div style={{padding:'12px 0',borderBottom:`1px solid ${C.hair}`}}>
                   <MonoLabel right={`${totalWeight.toFixed(0)} kg`}>§ Placed Items</MonoLabel>
-                  {placedItems.map(p=>(
-                    <div key={p.id} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:`1px solid ${C.hair}28`}}>
-                      <div style={{width:10,height:10,borderRadius:2,background:p.color,flexShrink:0}}/>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:11,fontWeight:600,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
-                        <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{p.sku}</div>
+                  {placedItems.map(p=>{
+                    const issues = placementIssueByItem.get(p.id) || [];
+                    return (
+                    <div key={p.id} onClick={()=>{setActivePlacedId(p.id);setActiveRoomId('');}} style={{padding:'7px 0',borderBottom:`1px solid ${issues.length?C.orange:C.hair}28`,background:issues.length?`${C.orange}08`:activePlacedId===p.id?`${C.orange}12`:'transparent',cursor:'pointer'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <div style={{width:10,height:10,borderRadius:2,background:issues.length?C.orange:p.color,flexShrink:0}}/>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:11,fontWeight:600,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
+                          <div style={{fontFamily:MONO,fontSize:8,color:issues.length?C.orange:C.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{issues.length ? issues.map(issue=>issue.message).join(' / ') : `${p.sku} / ${p.kind} / ${catalogItemFor(p.catalogId)?.price ? formatUsd(catalogItemFor(p.catalogId)?.price || 0) : 'Unpriced'}${p.modelUrl ? ` / ${p.modelUrl}` : ''}`}</div>
+                        </div>
+                        <div style={{fontFamily:MONO,fontSize:9,fontWeight:700,color:C.ink,whiteSpace:'nowrap'}}>{catalogItemFor(p.catalogId)?.price ? formatUsd((catalogItemFor(p.catalogId)?.price || 0)*p.qty) : 'TBD'}</div>
+                        <button onClick={(event)=>{event.stopPropagation();duplicateItem(p.id);}} title="Duplicate item" style={{width:24,height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center',flexShrink:0}}>
+                          <Copy size={10}/>
+                        </button>
+                        <button onClick={(event)=>{event.stopPropagation();removeItem(p.id);}} title="Remove item" style={{width:24,height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center',flexShrink:0}}>
+                          <Trash2 size={10}/>
+                        </button>
                       </div>
-                      <div style={{textAlign:'right',flexShrink:0}}>
-                        <div style={{fontFamily:MONO,fontSize:11,fontWeight:700,color:C.ink}}>×{p.qty}</div>
-                        <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{(p.qty*p.weight).toFixed(0)} kg</div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:5,marginTop:6}}>
+                        <DimInput label="X" value={p.x} min={itemPositionBounds(p.w,p.d,booth).minX} max={itemPositionBounds(p.w,p.d,booth).maxX} step={0.25} onChange={v=>updateItem(p.id,{x:v})}/>
+                        <DimInput label="Z" value={p.z} min={itemPositionBounds(p.w,p.d,booth).minZ} max={itemPositionBounds(p.w,p.d,booth).maxZ} step={0.25} onChange={v=>updateItem(p.id,{z:v})}/>
+                        <div>
+                          <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:3}}>Yaw</label>
+                          <button onClick={(event)=>{event.stopPropagation();rotateItem(p.id,90);}}
+                            style={{width:'100%',height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',fontFamily:MONO,fontSize:11,color:C.ink}}>
+                            {Number(p.rotationY ?? p.rotation)} deg
+                          </button>
+                        </div>
+                      </div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:5,marginTop:5}}>
+                        <DimInput label="Rot X" value={Number(p.rotationX) || 0} min={-180} max={180} step={15} onChange={v=>updateItem(p.id,{rotationX:v})}/>
+                        <DimInput label="Rot Y" value={Number(p.rotationY ?? p.rotation) || 0} min={0} max={360} step={15} onChange={v=>updateItem(p.id,{rotation:v,rotationY:v})}/>
+                        <DimInput label="Rot Z" value={Number(p.rotationZ) || 0} min={-180} max={180} step={15} onChange={v=>updateItem(p.id,{rotationZ:v})}/>
                       </div>
                     </div>
-                  ))}
+                  );})}
                 </div>
               )}
               <div style={{padding:'12px 0'}}>
@@ -841,6 +2288,11 @@ export default function PMWorkspace() {
                 {[
                   {label:'Structural Parts', value:`${structItems.reduce((a,s)=>a+s.qty,0)}`},
                   {label:'Placed Items',      value:`${totalParts}`},
+                  {label:'Structure Estimate',value:formatUsd(structSubtotal)},
+                  {label:'Placed Estimate',   value:unpricedItems?`${formatUsd(placedSubtotal)} + ${unpricedItems} TBD`:formatUsd(placedSubtotal)},
+                  {label:'Fascia Option',     value:booth.fasciaEnabled?formatUsd(fasciaSubtotal):'Off'},
+                  {label:'Quote Allowance',   value:formatUsd(quoteAllowance)},
+                  {label:'Quote Total',       value:formatUsd(quoteTotal)},
                   {label:'Total Weight',      value:`${(structWeight+totalWeight).toFixed(0)} kg`},
                   {label:'Floor Area',        value:`${floorArea} m²`},
                   {label:'System',            value:booth.system==='maxima'?'Maxima (2 m)':'Octanorm (1 m)'},
@@ -896,11 +2348,67 @@ export default function PMWorkspace() {
               </div>
             </div>
           )}
-        </aside>
+
+          {/* Feedback Tab */}
+          {activeTab==='feedback'&&(
+            <div style={{flex:1,display:'flex',flexDirection:'column',minHeight:0}}>
+              <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.hair}`,background:C.bg,flexShrink:0}}>
+                <MonoLabel right={`${openFeedbackCount} open`}>§ Client Feedback</MonoLabel>
+                <div style={{display:'flex',gap:5}}>
+                  {(['open','all','resolved'] as FeedbackFilter[]).map(filter=>(
+                    <button key={filter} onClick={()=>setFeedbackFilter(filter)}
+                      style={{height:24,border:`1px solid ${feedbackFilter===filter?C.blue:C.hair}`,borderRadius:4,background:feedbackFilter===filter?`${C.blue}10`:C.panel,color:feedbackFilter===filter?C.blue:C.muted,cursor:'pointer',fontFamily:MONO,fontSize:8.5,fontWeight:700,textTransform:'uppercase',padding:'0 8px'}}>
+                      {filter}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{flex:1,overflowY:'auto',padding:'10px 12px',display:'flex',flexDirection:'column',gap:8}}>
+                {isFeedbackLoading&&(
+                  <div style={{padding:'20px 0',textAlign:'center',color:C.muted,fontFamily:MONO,fontSize:9.5}}>
+                    Loading feedback...
+                  </div>
+                )}
+                {!isFeedbackLoading&&visibleFeedbackItems.length===0&&(
+                  <div style={{padding:'20px 0',textAlign:'center',color:C.muted,fontFamily:MONO,fontSize:9.5}}>
+                    No {feedbackFilter==='all'?'client':feedbackFilter}<br/>feedback items
+                  </div>
+                )}
+                {!isFeedbackLoading&&visibleFeedbackItems.map(item=>{
+                  const isResolved = (item.status ?? 'open') === 'resolved';
+                  const isPin = item.type === 'pin' && item.pin;
+                  return (
+                    <div key={item.id} style={{border:`1px solid ${isResolved?C.green:C.hair}`,borderRadius:5,background:isResolved?`${C.green}06`:C.bg,padding:'10px 10px 9px'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+                        <span style={{fontFamily:MONO,fontSize:8,color:isResolved?C.green:C.orange,border:`1px solid ${isResolved?C.green:C.orange}30`,background:`${isResolved?C.green:C.orange}10`,borderRadius:3,padding:'1px 5px',textTransform:'uppercase'}}>
+                          {isResolved?'Resolved':'Open'}
+                        </span>
+                        <span style={{fontFamily:MONO,fontSize:8,color:C.blue,border:`1px solid ${C.blue}25`,background:`${C.blue}08`,borderRadius:3,padding:'1px 5px',textTransform:'uppercase'}}>
+                          {isPin?'Pin':item.type}
+                        </span>
+                        <span style={{fontFamily:MONO,fontSize:8,color:C.muted,marginLeft:'auto'}}>{item.time}</span>
+                      </div>
+                      <div style={{fontSize:12,color:C.ink,lineHeight:1.45,wordBreak:'break-word'}}>{item.text}</div>
+                      <div style={{display:'flex',alignItems:'center',gap:6,marginTop:8}}>
+                        <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>
+                          {item.user}{isPin&&item.pin ? ` / ${item.pin.x.toFixed(0)}% x ${item.pin.y.toFixed(0)}%` : ''}
+                        </span>
+                        <button onClick={()=>setFeedbackStatus(item.id, isResolved?'open':'resolved')}
+                          style={{height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:8.5,padding:'0 8px',whiteSpace:'nowrap'}}>
+                          {isResolved?'Reopen':'Resolve'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </aside>}
 
         {/* ── History Panel (slide-over) ────────────────────────── */}
         {showHistPanel&&(
-          <div style={{position:'absolute',top:0,bottom:0,right:282,width:240,background:C.panel,borderLeft:`1px solid ${C.hair}`,zIndex:20,display:'flex',flexDirection:'column',boxShadow:'-4px 0 20px rgba(0,0,0,0.08)'}}>
+          <div style={{position:'absolute',top:0,bottom:0,right:previewMode?0:282,width:240,background:C.panel,borderLeft:`1px solid ${C.hair}`,zIndex:20,display:'flex',flexDirection:'column',boxShadow:'-4px 0 20px rgba(0,0,0,0.08)'}}>
             <div style={{padding:'8px 14px',borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
               <span style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,letterSpacing:'0.1em',color:C.muted,textTransform:'uppercase'}}>§ Snapshots</span>
               <button onClick={()=>setShowHistPanel(false)} style={{background:'none',border:'none',cursor:'pointer',padding:4,color:C.muted,display:'flex'}}><X size={12}/></button>
@@ -932,13 +2440,14 @@ export default function PMWorkspace() {
           <span style={{fontFamily:MONO,fontSize:9.5,color:'#4a8a5e',display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
             <span style={{width:5,height:5,borderRadius:'50%',background:'#4a8a5e',display:'inline-block'}}/>Connected
           </span>
-          {[`TechCorp_WS`,`${booth.system==='maxima'?'Maxima':'Octanorm'}`,`Floor ${floorArea} m²`,`${booth.width}×${booth.depth}×${booth.height}m`,`${totalParts} placed`,`${(structWeight+totalWeight).toFixed(0)} kg`].map((s,i)=>(
+          {[projectLabel,approvalStageLabel,`${booth.system==='maxima'?'Maxima':'Octanorm'}`,`Floor ${floorArea} m²`,`${booth.width}×${booth.depth}×${booth.height}m`,`${totalParts} placed`,`${(structWeight+totalWeight).toFixed(0)} kg`].map((s,i)=>(
             <span key={i} style={{fontFamily:MONO,fontSize:9.5,color:'#6b6058',marginLeft:4,whiteSpace:'nowrap'}}>· {s}</span>
           ))}
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+          <span style={{fontFamily:MONO,fontSize:9.5,color:'#d8d3c9'}}>{formatUsd(quoteTotal)}</span>
           <span style={{fontFamily:MONO,fontSize:9.5,color:'#6b6058'}}>History: {histIdx+1}/{histLen}</span>
-          <span style={{fontFamily:MONO,fontSize:9.5,color:'#4a8a5e'}}>Saved: {lastSaved}</span>
+          <span style={{fontFamily:MONO,fontSize:9.5,color:saveStatusMeta.color}}>{saveStatusMeta.detail}</span>
         </div>
       </footer>
 
@@ -953,16 +2462,18 @@ export default function PMWorkspace() {
                   <div style={{width:36,height:36,borderRadius:'50%',background:`${C.blue}14`,display:'flex',alignItems:'center',justifyContent:'center'}}><Send size={16} style={{color:C.blue}}/></div>
                   <div>
                     <h3 style={{fontSize:15,fontWeight:700,margin:0}}>Send Design to Client</h3>
-                    <p style={{fontFamily:MONO,fontSize:9.5,color:C.muted,margin:'2px 0 0'}}>TechCorp Industries · TechCon 2024</p>
+                    <p style={{fontFamily:MONO,fontSize:9.5,color:C.muted,margin:'2px 0 0'}}>{clientLabel} · {exhibitionLabel}</p>
                   </div>
                 </div>
                 <div style={{background:C.bg,borderRadius:6,padding:'12px 14px',marginBottom:16}}>
                   {[
                     {label:'Stand Size',value:`${booth.width} × ${booth.depth} × ${booth.height} m`},
                     {label:'System',    value:booth.system==='maxima'?'Maxima':'Octanorm'},
-                    {label:'Open Sides',value:openCount>0?`${openCount} side${openCount>1?'s':''}`:'Closed'},
+                  {label:'Open Sides',value:`${boothType} · ${openCount>0?`${openCount} side${openCount>1?'s':''}`:'Closed'}`},
+                    {label:'Fascia',value:booth.fasciaEnabled?fasciaMeta.label:'Disabled'},
                     {label:'BOM Items', value:`${structItems.reduce((a,s)=>a+s.qty,0) + totalParts} parts`},
                     {label:'Est. Weight',value:`${(structWeight+totalWeight).toFixed(0)} kg`},
+                    {label:'Est. Quote',value:formatUsd(quoteTotal)},
                   ].map(row=>(
                     <div key={row.label} style={{display:'flex',justifyContent:'space-between',padding:'3px 0'}}>
                       <span style={{fontFamily:MONO,fontSize:9.5,color:C.muted}}>{row.label}</span>
@@ -972,8 +2483,8 @@ export default function PMWorkspace() {
                 </div>
                 <div style={{display:'flex',gap:8}}>
                   <button onClick={()=>{setShowSendDlg(false);setSendConfirmed(false);}} style={{flex:1,height:38,background:'none',border:`1px solid ${C.hair}`,borderRadius:5,cursor:'pointer',fontFamily:UI,fontSize:13,color:C.ink}}>Cancel</button>
-                  <button onClick={()=>setSendConfirmed(true)} style={{flex:2,height:38,background:C.blue,border:'none',color:'#fff',borderRadius:5,cursor:'pointer',fontFamily:UI,fontSize:13,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
-                    <Send size={13}/> Send for Approval
+                  <button onClick={sendToClient} disabled={isSending || !workspaceRecord} style={{flex:2,height:38,background:C.blue,border:'none',color:'#fff',borderRadius:5,cursor:isSending || !workspaceRecord?'not-allowed':'pointer',fontFamily:UI,fontSize:13,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:6,opacity:isSending || !workspaceRecord?0.65:1}}>
+                    <Send size={13}/> {isSending ? 'Sending...' : 'Send for Approval'}
                   </button>
                 </div>
               </>
@@ -983,7 +2494,7 @@ export default function PMWorkspace() {
                   <CheckCircle2 size={24} style={{color:C.green}}/>
                 </div>
                 <h3 style={{fontSize:16,fontWeight:700,margin:'0 0 8px'}}>Sent to Client</h3>
-                <p style={{fontFamily:MONO,fontSize:10,color:C.muted,margin:'0 0 20px',lineHeight:1.6}}>The booth design has been shared<br/>with TechCorp Industries for approval.</p>
+                <p style={{fontFamily:MONO,fontSize:10,color:C.muted,margin:'0 0 20px',lineHeight:1.6}}>The booth design has been shared<br/>with {clientLabel} for approval.</p>
                 <button onClick={()=>{setShowSendDlg(false);setSendConfirmed(false);setToast('Design sent to client');}}
                   style={{width:'100%',height:38,background:C.ink,border:'none',color:'#fff',borderRadius:5,cursor:'pointer',fontFamily:UI,fontSize:13,fontWeight:600}}>
                   Done

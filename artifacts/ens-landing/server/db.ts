@@ -83,6 +83,12 @@ export async function initSchema(): Promise<void> {
       password_hash TEXT        NOT NULL,
       created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS app_kv (
+      key        TEXT        PRIMARY KEY,
+      value      JSONB       NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
   `);
 
   console.log("[db] Schema ready");

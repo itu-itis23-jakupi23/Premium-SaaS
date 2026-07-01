@@ -1,5 +1,6 @@
 import { sql, type SQL } from "drizzle-orm";
 import express, { Router } from "express";
+import { deliverNotification } from "../lib/notifications";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -151,15 +152,24 @@ router.post("/platform/messages/:contactId", requireRoles(["admin", "owner", "ch
   `);
 
   await db.execute(sql`
-    insert into notifications (organization_id, user_id, title, body, href)
+    insert into activity_events (organization_id, actor_user_id, event_type, message, metadata)
     values (
       ${auth.organization.id}::uuid,
-      ${contactId}::uuid,
-      ${`New message from ${auth.user.name}`},
-      ${scope.value.isScoped ? `Encrypted message about ${scope.value.exhibitionName}` : "Encrypted message"},
-      ${auth.user.role === "pm" ? "/chief/messages" : "/pm/messages"}
+      ${auth.user.id}::uuid,
+      'message_sent',
+      ${`sent message to ${contactId}`},
+      ${JSON.stringify({ conversationId, contactId, hasAttachments: validatedAttachments.attachments.length > 0 })}::jsonb
     )
   `);
+
+  await deliverNotification(
+    auth.organization.id,
+    contactId,
+    `New message from ${auth.user.name}`,
+    scope.value.isScoped ? `Encrypted message about ${scope.value.exhibitionName}` : "Encrypted message",
+    auth.user.role === "pm" ? "/chief/messages" : "/pm/messages",
+    "system",
+  );
 
   res.status(201).json({ message: toMessage(message, auth.user.id) });
 });

@@ -146,16 +146,22 @@ export function StaffGateway({ children }: { children: ReactNode }) {
   const isLocked = lockedFor > 0;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="relative flex min-h-screen items-center justify-center p-4 overflow-hidden bg-background">
+      {/* Ambient glow layers — matching hero aesthetic */}
+      <div className="absolute inset-0 grid-pattern opacity-[0.06] dark:opacity-[0.12] pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-primary/15 blur-[130px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/4 right-0 w-[400px] h-[400px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-cyan-500/8 blur-[90px] rounded-full pointer-events-none" />
+
       <AnimatePresence>
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="w-full max-w-sm"
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-sm relative z-10"
         >
-          {/* Card */}
-          <div className="rounded-2xl border bg-card p-8 shadow-xl shadow-black/10">
+          {/* Card — dark, on-brand */}
+          <div className="rounded-2xl border border-primary/20 bg-card/90 backdrop-blur-xl p-8 shadow-[0_0_60px_rgba(109,40,217,0.15),0_0_0_1px_rgba(109,40,217,0.08)]">
             {/* Logo */}
             <div className="mb-6 flex justify-center">
               <ENSLogo size="sm" href="/" />
@@ -163,14 +169,21 @@ export function StaffGateway({ children }: { children: ReactNode }) {
 
             {/* Header */}
             <div className="mb-6 text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                {isLocked
-                  ? <ShieldAlert className="h-6 w-6 text-destructive" />
-                  : <Lock className="h-6 w-6 text-primary" />
-                }
+              {/* Glowing lock icon ring */}
+              <div className="relative mx-auto mb-4 flex h-14 w-14 items-center justify-center">
+                <div className="absolute inset-0 rounded-full bg-primary/10 border border-primary/25 shadow-[0_0_20px_rgba(109,40,217,0.3)]" />
+                <motion.div
+                  animate={{ opacity: isLocked ? [1, 0.4, 1] : 1 }}
+                  transition={{ duration: 1.5, repeat: isLocked ? Infinity : 0 }}
+                >
+                  {isLocked
+                    ? <ShieldAlert className="h-6 w-6 text-destructive relative z-10" />
+                    : <Lock className="h-6 w-6 text-primary relative z-10" />
+                  }
+                </motion.div>
               </div>
               <h1 className="text-xl font-bold tracking-tight">Staff Portal Access</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
                 This portal is restricted to ENS team members only.
                 Enter the company access code to continue.
               </p>
@@ -179,7 +192,7 @@ export function StaffGateway({ children }: { children: ReactNode }) {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="space-y-1.5">
-                <Label htmlFor="access-code">Access Code</Label>
+                <Label htmlFor="access-code" className="text-foreground/80 text-xs font-semibold uppercase tracking-wider">Access Code</Label>
                 <div className="relative">
                   <Input
                     ref={inputRef}
@@ -191,13 +204,13 @@ export function StaffGateway({ children }: { children: ReactNode }) {
                     disabled={isLocked}
                     autoComplete="off"
                     spellCheck={false}
-                    className="pr-10"
+                    className="pr-10 bg-background/50 border-border/60 focus:border-primary/50 focus:ring-primary/20 placeholder:text-muted-foreground/50"
                   />
                   <button
                     type="button"
                     tabIndex={-1}
                     onClick={() => setShowCode((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     aria-label={showCode ? "Hide access code" : "Show access code"}
                   >
                     {showCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -213,7 +226,7 @@ export function StaffGateway({ children }: { children: ReactNode }) {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+                    className="rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 text-xs text-destructive"
                   >
                     {isLocked
                       ? `Account temporarily locked. Try again in ${lockedFor}s.`
@@ -225,7 +238,7 @@ export function StaffGateway({ children }: { children: ReactNode }) {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)] transition-all"
                 disabled={isLocked || code.trim().length === 0}
               >
                 {isLocked ? `Locked (${lockedFor}s)` : "Enter Portal"}

@@ -1,10 +1,34 @@
 import { sql, type SQL } from "drizzle-orm";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
+import {
+  createProjectSchema,
+  updateProjectSchema,
+  pipelineStageSchema,
+  createClientSchema,
+  updateClientSchema,
+  assignmentsSchema,
+  inviteManagerSchema,
+  pmCapacityLimitSchema,
+  pmTaskSchema,
+  pmTaskPatchSchema,
+} from "@workspace/api-zod";
 import { requireAuth, requireRoles, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { createRefreshToken, hashToken } from "../lib/tokens";
+import { sendClientApprovedEmail, sendManagerInvitationEmail } from "../lib/email";
+
+function zParse<T>(
+  schema: { safeParse: (v: unknown) => { success: true; data: T } | { success: false; error: { issues: Array<{ message?: string }> } } },
+  body: unknown,
+) {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    return { ok: false as const, error: result.error.issues[0]?.message ?? "Invalid input" };
+  }
+  return { ok: true as const, value: result.data };
+}
 
 const router: IRouter = Router();
 
@@ -17,13 +41,43 @@ async function queryRows<T>(statement: SQL) {
 
 router.get("/platform/overview", async (req, res) => {
   const organization = req.tenant!;
+  const auth = req.auth!;
+  const isChief = canManageOrganization(auth);
 
-  const [metrics, projects, clients, activity] = await Promise.all([
-    getMetrics(organization.id, req.auth!),
-    getProjects(organization.id, 8, req.auth!),
-    getClients(organization.id, 8, req.auth!).then((result) => result.clients),
-    getActivity(organization.id, 8, req.auth!),
+  const [metrics, projects, clients, activity, workflowRows] = await Promise.all([
+    getMetrics(organization.id, auth),
+    getProjects(organization.id, 8, auth),
+    getClients(organization.id, 8, auth).then((result) => result.clients),
+    getActivity(organization.id, 8, auth),
+    isChief ? queryRows<{
+      pendingClientApprovals: number;
+      unassignedClients: number;
+      unassignedProjects: number;
+      newPMs: number;
+      stalledApprovals: number;
+      overloadedPMs: number;
+    }>(sql`
+      select
+        (select count(*)::int from clients c where c.organization_id = ${organization.id}::uuid and c.status::text = 'pending_approval' and c.deleted_at is null) as "pendingClientApprovals",
+        (select count(*)::int from clients c where c.organization_id = ${organization.id}::uuid and c.assigned_pm_user_id is null and c.status::text = 'active' and c.deleted_at is null) as "unassignedClients",
+        (select count(*)::int from projects p where p.organization_id = ${organization.id}::uuid and p.assigned_pm_user_id is null and p.deleted_at is null and p.status::text not in ('completed','archived','cancelled')) as "unassignedProjects",
+        (select count(*)::int from users u join memberships m on m.user_id = u.id and m.organization_id = ${organization.id}::uuid where u.role::text = 'pm' and m.joined_at > now() - interval '7 days') as "newPMs",
+        (select count(*)::int from approvals a where a.organization_id = ${organization.id}::uuid and a.status::text in ('requested','under_review') and a.requested_at < now() - interval '3 days') as "stalledApprovals",
+        (select count(*)::int from users u join memberships m on m.user_id = u.id and m.organization_id = ${organization.id}::uuid where u.role::text = 'pm' and u.pm_capacity_limit is not null and (select count(*) from projects p where p.assigned_pm_user_id = u.id and p.organization_id = ${organization.id}::uuid and p.deleted_at is null and p.status::text not in ('completed','archived','cancelled'))::float / u.pm_capacity_limit >= 1.0) as "overloadedPMs"
+    `) : Promise.resolve([]),
   ]);
+
+  const wf = workflowRows[0];
+  const workflow = isChief && wf ? {
+    counts: {
+      pendingClientApprovals: wf.pendingClientApprovals,
+      unassignedClients: wf.unassignedClients,
+      unassignedProjects: wf.unassignedProjects,
+      newProjectManagers: wf.newPMs,
+      stalledApprovals: wf.stalledApprovals,
+      overloadedManagers: wf.overloadedPMs,
+    },
+  } : null;
 
   res.json({
     organization,
@@ -32,6 +86,7 @@ router.get("/platform/overview", async (req, res) => {
     clients,
     activity,
     charts: buildCharts(metrics, activity),
+    workflow,
   });
 });
 
@@ -144,7 +199,10 @@ router.post("/platform/clients", requireRoles(["admin", "owner", "chief"]), asyn
     return;
   }
 
-  const clientId = await createClientRecord(organization.id, input.value);
+  const clientId = await createClientRecord(organization.id, {
+    ...input.value,
+    contactName: input.value.contactName ?? input.value.companyName,
+  });
   await auditEvent(organization.id, req.auth!.user.id, "client_created", `created client ${input.value.companyName}`, {
     clientId,
     companyName: input.value.companyName,
@@ -202,6 +260,152 @@ router.delete("/platform/clients/:clientId", requireRoles(["admin", "owner", "ch
     });
     return;
   }
+
+  res.json({ ok: true, clients: (await getClients(organization.id, 100, req.auth!)).clients });
+});
+
+router.patch("/platform/clients/:clientId/approve", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
+  const organization = req.tenant!;
+  const actorUserId = req.auth!.user.id;
+  const clientId = stringValue(req.params.clientId);
+
+  if (!clientId || !isUuid(clientId)) {
+    res.status(400).json({ error: "A valid client id is required" });
+    return;
+  }
+
+  const data = req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {};
+  const managerIdRaw = stringValue(data.managerId);
+  const managerId = managerIdRaw === "unassigned" ? null : managerIdRaw ?? null;
+  const note = stringValue(data.note);
+
+  if (managerId && !isUuid(managerId)) {
+    res.status(400).json({ error: "A valid manager id is required" });
+    return;
+  }
+
+  const clientRows = await queryRows<{ id: string; companyName: string; contactEmail: string; status: string }>(sql`
+    select id::text, company_name as "companyName", contact_email as "contactEmail", status::text
+    from clients
+    where id = ${clientId}::uuid
+      and organization_id = ${organization.id}::uuid
+      and deleted_at is null
+    limit 1
+  `);
+  const client = clientRows[0];
+  if (!client) {
+    res.status(404).json({ error: "Client was not found" });
+    return;
+  }
+  if (client.status !== "pending_approval") {
+    res.status(409).json({ error: "Client is not in pending_approval state", currentStatus: client.status });
+    return;
+  }
+
+  await db.execute(sql`
+    update clients
+    set
+      status = 'active',
+      activated_at = now(),
+      assigned_pm_user_id = ${managerId}::uuid,
+      updated_at = now()
+    where id = ${clientId}::uuid
+      and organization_id = ${organization.id}::uuid
+  `);
+
+  if (managerId) {
+    await recordAssignmentHistory(organization.id, {
+      targetType: "client_pm",
+      projectId: null,
+      clientId,
+      actorUserId,
+      previousManagerId: null,
+      newManagerId: managerId,
+      reason: note ?? "Assigned at client approval",
+    });
+  }
+
+  await auditEvent(organization.id, actorUserId, "client_approved", `approved client ${client.companyName}`, {
+    clientId,
+    managerId,
+    note,
+  });
+
+  // Notify the client user if their account is linked by email
+  const userRows = await queryRows<{ id: string }>(sql`
+    select u.id::text
+    from users u
+    join memberships m on m.user_id = u.id
+      and m.organization_id = ${organization.id}::uuid
+      and m.role::text = 'client'
+    where lower(u.email) = lower(${client.contactEmail})
+    limit 1
+  `);
+  if (userRows[0]) {
+    await db.execute(sql`
+      insert into notifications (organization_id, user_id, title, body, href)
+      values (
+        ${organization.id}::uuid,
+        ${userRows[0].id}::uuid,
+        'Your account has been approved',
+        ${`Welcome, ${client.companyName}! Your portal access is now active.`},
+        '/client/dashboard'
+      )
+    `);
+  }
+
+  // Send email to the newly-activated client (non-blocking — failure is logged, never thrown)
+  await sendClientApprovedEmail({ to: client.contactEmail, name: client.companyName });
+
+  res.json({ ok: true, clients: (await getClients(organization.id, 100, req.auth!)).clients });
+});
+
+router.patch("/platform/clients/:clientId/reject", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
+  const organization = req.tenant!;
+  const actorUserId = req.auth!.user.id;
+  const clientId = stringValue(req.params.clientId);
+
+  if (!clientId || !isUuid(clientId)) {
+    res.status(400).json({ error: "A valid client id is required" });
+    return;
+  }
+
+  const data = req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {};
+  const reason = stringValue(data.reason);
+  if (!reason) {
+    res.status(400).json({ error: "A reason is required when rejecting a client account" });
+    return;
+  }
+
+  const clientRows = await queryRows<{ id: string; companyName: string; status: string }>(sql`
+    select id::text, company_name as "companyName", status::text
+    from clients
+    where id = ${clientId}::uuid
+      and organization_id = ${organization.id}::uuid
+      and deleted_at is null
+    limit 1
+  `);
+  const client = clientRows[0];
+  if (!client) {
+    res.status(404).json({ error: "Client was not found" });
+    return;
+  }
+  if (client.status !== "pending_approval") {
+    res.status(409).json({ error: "Client is not in pending_approval state", currentStatus: client.status });
+    return;
+  }
+
+  await db.execute(sql`
+    update clients
+    set status = 'archived', updated_at = now()
+    where id = ${clientId}::uuid
+      and organization_id = ${organization.id}::uuid
+  `);
+
+  await auditEvent(organization.id, actorUserId, "client_rejected", `rejected client ${client.companyName}`, {
+    clientId,
+    reason,
+  });
 
   res.json({ ok: true, clients: (await getClients(organization.id, 100, req.auth!)).clients });
 });
@@ -409,6 +613,12 @@ router.post("/platform/managers/invitations", requireRoles(["admin", "owner", "c
 
   const invitation = await inviteManager(organization.id, req.auth!.user.id, input.value);
   await auditEvent(organization.id, req.auth!.user.id, "manager_invited", `invited ${input.value.email}`, { email: input.value.email });
+  await sendManagerInvitationEmail({
+    to: input.value.email,
+    name: input.value.name,
+    inviteUrl: invitation.inviteUrl,
+    expiresAt: invitation.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  });
   res.status(201).json({ invitation });
 });
 
@@ -427,6 +637,12 @@ router.post("/platform/managers/invitations/:invitationId/resend", requireRoles(
     return;
   }
 
+  await sendManagerInvitationEmail({
+    to: invitation.email,
+    name: invitation.email,
+    inviteUrl: invitation.inviteUrl,
+    expiresAt: invitation.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  });
   res.json({ invitation });
 });
 
@@ -458,7 +674,76 @@ router.put("/platform/managers/assignments", requireRoles(["admin", "owner", "ch
   }
 
   const result = await updateAssignments(organization.id, req.auth!.user.id, input.value);
+  if ("error" in result) {
+    res.status(422).json(result);
+    return;
+  }
   res.json(result);
+});
+
+router.get("/platform/assignment-history", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
+  const organization = req.tenant!;
+  const projectId = stringValue(req.query.projectId);
+  const clientId = stringValue(req.query.clientId);
+  if (projectId && !isUuid(projectId)) {
+    res.status(400).json({ error: "A valid projectId is required" });
+    return;
+  }
+  if (clientId && !isUuid(clientId)) {
+    res.status(400).json({ error: "A valid clientId is required" });
+    return;
+  }
+
+  const rows = await queryRows<{
+    id: string;
+    targetType: string;
+    projectId: string | null;
+    clientId: string | null;
+    changedBy: string | null;
+    previousPm: string | null;
+    newPm: string | null;
+    reason: string | null;
+    createdAt: string;
+  }>(sql`
+    select
+      h.id::text,
+      h.target_type::text as "targetType",
+      h.project_id::text as "projectId",
+      h.client_id::text as "clientId",
+      changedBy.name as "changedBy",
+      previousPm.name as "previousPm",
+      newPm.name as "newPm",
+      h.reason,
+      h.created_at as "createdAt"
+    from project_assignment_history h
+    left join users changedBy on changedBy.id = h.changed_by_user_id
+    left join users previousPm on previousPm.id = h.previous_pm_user_id
+    left join users newPm on newPm.id = h.new_pm_user_id
+    where h.organization_id = ${organization.id}::uuid
+      ${projectId ? sql`and h.project_id = ${projectId}::uuid` : sql``}
+      ${clientId ? sql`and h.client_id = ${clientId}::uuid` : sql``}
+    order by h.created_at desc
+    limit 200
+  `);
+
+  res.json({ history: rows });
+});
+
+router.get("/platform/managers/:managerId/capacity", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
+  const organization = req.tenant!;
+  const managerId = stringValue(req.params.managerId);
+  if (!managerId || !isUuid(managerId)) {
+    res.status(400).json({ error: "A valid manager id is required" });
+    return;
+  }
+  const info = await getPmCapacityInfo(organization.id, managerId);
+  res.json({
+    managerId,
+    count: info.count,
+    limit: info.limit,
+    percentage: info.limit ? Math.round((info.count / info.limit) * 100) : null,
+    status: info.status,
+  });
 });
 
 router.patch("/platform/managers/:managerId/status", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
@@ -1460,10 +1745,47 @@ async function updateAssignments(
     clientAssignments: Array<{ clientId: string; managerId: string | null }>;
     projectAssignments: Array<{ projectId: string; managerId: string | null }>;
     cascadeClientProjects: boolean;
+    reason: string | null;
+    confirmOverCapacity: boolean;
+    overrideReason: string | null;
   },
 ) {
   const clientChanges: AssignmentChange[] = [];
   const projectChanges: AssignmentChange[] = [];
+
+  // Capacity pre-check: count how many new assignments each target PM would gain.
+  const allTargetManagerIds = new Set(
+    [...input.clientAssignments, ...input.projectAssignments]
+      .map((a) => a.managerId)
+      .filter((id): id is string => id !== null),
+  );
+  for (const managerId of allTargetManagerIds) {
+    const capacity = await getPmCapacityInfo(organizationId, managerId);
+    if (capacity.limit === null) continue;
+    const newCount = [...input.clientAssignments, ...input.projectAssignments].filter(
+      (a) => a.managerId === managerId,
+    ).length;
+    const projectedCount = capacity.count + newCount;
+    const projectedRatio = projectedCount / capacity.limit;
+    if (projectedRatio >= PM_EXTREME_THRESHOLD && !input.overrideReason) {
+      return {
+        error: "extreme_overload",
+        managerId,
+        count: projectedCount,
+        limit: capacity.limit,
+        message: `PM would reach ${Math.round(projectedRatio * 100)}% capacity. An override reason is required.`,
+      } as const;
+    }
+    if (projectedRatio >= PM_BLOCK_THRESHOLD && !input.confirmOverCapacity && !input.overrideReason) {
+      return {
+        error: "over_capacity",
+        managerId,
+        count: projectedCount,
+        limit: capacity.limit,
+        message: `PM would be at ${Math.round(projectedRatio * 100)}% capacity. Confirm to proceed.`,
+      } as const;
+    }
+  }
 
   for (const assignment of input.clientAssignments) {
     const targetName = await getAssignmentTargetName(organizationId, assignment.managerId);
@@ -1492,6 +1814,15 @@ async function updateAssignments(
         and organization_id = ${organizationId}::uuid
         and deleted_at is null
     `);
+    await recordAssignmentHistory(organizationId, {
+      targetType: "client_pm",
+      projectId: null,
+      clientId: assignment.clientId,
+      actorUserId,
+      previousManagerId: client.managerId,
+      newManagerId: assignment.managerId,
+      reason: input.reason ?? null,
+    });
     clientChanges.push({
       id: client.id,
       name: client.name,
@@ -1517,7 +1848,7 @@ async function updateAssignments(
 
       for (const project of clientProjects) {
         if ((project.managerId ?? null) === assignment.managerId) continue;
-        await reassignProjectManager(organizationId, project.id, assignment.managerId);
+        await reassignProjectManager(organizationId, actorUserId, project.id, assignment.managerId, input.reason);
         projectChanges.push({
           id: project.id,
           name: project.name,
@@ -1550,7 +1881,7 @@ async function updateAssignments(
     const project = projectRows[0];
     if (!project || (project.managerId ?? null) === assignment.managerId) continue;
 
-    await reassignProjectManager(organizationId, project.id, assignment.managerId);
+    await reassignProjectManager(organizationId, actorUserId, project.id, assignment.managerId, input.reason);
     projectChanges.push({
       id: project.id,
       name: project.name,
@@ -1669,7 +2000,58 @@ async function getAssignmentTargetName(organizationId: string, managerId: string
   return rows[0]?.name ?? null;
 }
 
-async function reassignProjectManager(organizationId: string, projectId: string, managerId: string | null) {
+const PM_CAPACITY_DEFAULT = 10;
+const PM_WARN_THRESHOLD = 0.8;
+const PM_BLOCK_THRESHOLD = 1.0;
+const PM_EXTREME_THRESHOLD = 1.5;
+
+async function getPmCapacityInfo(organizationId: string, managerId: string) {
+  const rows = await queryRows<{ count: number; limit: number | null }>(sql`
+    select
+      count(p.id)::int as count,
+      u.pm_capacity_limit as limit
+    from users u
+    join memberships m
+      on m.user_id = u.id
+      and m.organization_id = ${organizationId}::uuid
+    left join projects p
+      on p.assigned_pm_user_id = u.id
+      and p.organization_id = ${organizationId}::uuid
+      and p.deleted_at is null
+      and p.status::text not in ('completed', 'archived', 'cancelled')
+    where u.id = ${managerId}::uuid
+    group by u.pm_capacity_limit
+  `);
+  const count = rows[0]?.count ?? 0;
+  const limit = rows[0]?.limit ?? null;
+  if (limit === null) return { count, limit: null, status: "ok" as const };
+  const ratio = count / limit;
+  const status =
+    ratio >= PM_EXTREME_THRESHOLD ? ("extreme" as const) :
+    ratio >= PM_BLOCK_THRESHOLD   ? ("over" as const) :
+    ratio >= PM_WARN_THRESHOLD    ? ("warn" as const) :
+    ("ok" as const);
+  return { count, limit, status };
+}
+
+async function reassignProjectManager(
+  organizationId: string,
+  actorUserId: string,
+  projectId: string,
+  managerId: string | null,
+  reason?: string | null,
+) {
+  const previous = await queryRows<{ managerId: string | null }>(sql`
+    select assigned_pm_user_id::text as "managerId"
+    from projects
+    where id = ${projectId}::uuid
+      and organization_id = ${organizationId}::uuid
+      and deleted_at is null
+    limit 1
+  `);
+  const previousManagerId = previous[0]?.managerId ?? null;
+  if (previousManagerId === managerId) return;
+
   await db.execute(sql`
     update projects
     set assigned_pm_user_id = ${managerId}::uuid, updated_at = now()
@@ -1691,6 +2073,52 @@ async function reassignProjectManager(organizationId: string, projectId: string,
       on conflict (project_id, user_id) do nothing
     `);
   }
+
+  await recordAssignmentHistory(organizationId, {
+    targetType: "project_pm",
+    projectId,
+    clientId: null,
+    actorUserId,
+    previousManagerId,
+    newManagerId: managerId,
+    reason: reason ?? null,
+  });
+}
+
+async function recordAssignmentHistory(
+  organizationId: string,
+  entry: {
+    targetType: "project_pm" | "client_pm";
+    projectId: string | null;
+    clientId: string | null;
+    actorUserId: string;
+    previousManagerId: string | null;
+    newManagerId: string | null;
+    reason: string | null;
+  },
+) {
+  await db.execute(sql`
+    insert into project_assignment_history (
+      organization_id,
+      target_type,
+      project_id,
+      client_id,
+      changed_by_user_id,
+      previous_pm_user_id,
+      new_pm_user_id,
+      reason
+    )
+    values (
+      ${organizationId}::uuid,
+      ${entry.targetType}::assignment_target,
+      ${entry.projectId}::uuid,
+      ${entry.clientId}::uuid,
+      ${entry.actorUserId}::uuid,
+      ${entry.previousManagerId}::uuid,
+      ${entry.newManagerId}::uuid,
+      ${entry.reason}
+    )
+  `);
 }
 
 async function queueManagerReminder(
@@ -1848,7 +2276,7 @@ async function createCalendarEvent(
 
   const eventId = rows[0]?.id;
   if (!eventId) throw new Error("Calendar event insert did not return an id");
-  if (managerId) await reassignProjectManager(organizationId, eventId, managerId);
+  if (managerId) await reassignProjectManager(organizationId, actorUserId, eventId, managerId);
 
   return (await getCalendarEventById(organizationId, managerAuth(organizationId), eventId)) ?? {
     id: eventId,
@@ -1908,7 +2336,7 @@ async function updateCalendarEvent(
       and organization_id = ${organizationId}::uuid
       and deleted_at is null
   `);
-  await reassignProjectManager(organizationId, eventId, managerId);
+  await reassignProjectManager(organizationId, actorUserId, eventId, managerId);
 
   return getCalendarEventById(organizationId, managerAuth(organizationId), eventId);
 }
@@ -2871,6 +3299,12 @@ async function getClients(organizationId: string, input: number | ClientListQuer
     exhibition: string | null;
     status: string;
     lastActivity: string;
+    intakeExhibitionName: string | null;
+    intakeBoothSizeSqm: string | null;
+    intakeCity: string | null;
+    intakeDeadlineAt: string | null;
+    intakePreferredSystem: string | null;
+    intakeNotes: string | null;
   }>(sql`
     select
       c.id::text,
@@ -2881,7 +3315,13 @@ async function getClients(organizationId: string, input: number | ClientListQuer
       coalesce(assigned_pm.name, member_pm.name) as pm,
       coalesce(max(p.exhibition_name), c.metadata ->> 'exhibition') as exhibition,
       c.status::text as status,
-      greatest(c.updated_at, coalesce(max(p.updated_at), c.updated_at))::text as "lastActivity"
+      greatest(c.updated_at, coalesce(max(p.updated_at), c.updated_at))::text as "lastActivity",
+      c.intake_exhibition_name as "intakeExhibitionName",
+      c.intake_booth_size_sqm::text as "intakeBoothSizeSqm",
+      c.intake_city as "intakeCity",
+      c.intake_deadline_at::text as "intakeDeadlineAt",
+      c.intake_preferred_system::text as "intakePreferredSystem",
+      c.intake_notes as "intakeNotes"
     from clients c
     left join users assigned_pm on assigned_pm.id = c.assigned_pm_user_id
     left join projects p on p.client_id = c.id and p.deleted_at is null
@@ -2935,6 +3375,14 @@ async function getClients(organizationId: string, input: number | ClientListQuer
       exhibition: client.exhibition ?? "No active exhibition",
       status: toTitle(client.status),
       lastActivity: relativeTime(client.lastActivity),
+      intake: {
+        exhibitionName: client.intakeExhibitionName,
+        boothSizeSqm: client.intakeBoothSizeSqm ? Number(client.intakeBoothSizeSqm) : null,
+        city: client.intakeCity,
+        deadlineAt: client.intakeDeadlineAt,
+        preferredSystem: client.intakePreferredSystem,
+        notes: client.intakeNotes,
+      },
     })),
     pagination: {
       total,
@@ -3896,7 +4344,7 @@ async function updateProjectRecord(
   if (!project) return canManage ? "not_found" as const : "not_authorized" as const;
 
   if (input.managerId !== undefined) {
-    await reassignProjectManager(organizationId, projectId, input.managerId);
+    await reassignProjectManager(organizationId, auth.user.id, projectId, input.managerId);
   }
   await updateProjectBoothDesign(organizationId, auth.user.id, projectId, input.name, input.system, input.widthM, input.depthM);
 
@@ -4400,90 +4848,17 @@ async function getFirstProjectManager(organizationId: string) {
 }
 
 function parseCreateProjectInput(body: unknown) {
-  if (!body || typeof body !== "object") {
-    return { ok: false as const, error: "Request body must be an object" };
-  }
-
-  const data = body as Record<string, unknown>;
-  const name = stringValue(data.name);
-  const client = stringValue(data.client);
-  const systemRaw = stringValue(data.system)?.toLowerCase() ?? "octanorm";
-  const widthM = numberValue(data.widthM ?? data.width);
-  const depthM = numberValue(data.depthM ?? data.depth);
-  const deadline = stringValue(data.deadline) ?? null;
-
-  if (!name) return { ok: false as const, error: "Project name is required" };
-  if (!client) return { ok: false as const, error: "Client name is required" };
-  if (!widthM || widthM < 1 || widthM > 100) return { ok: false as const, error: "Width must be between 1 and 100 meters" };
-  if (!depthM || depthM < 1 || depthM > 100) return { ok: false as const, error: "Depth must be between 1 and 100 meters" };
-  if (deadline && !isIsoDate(deadline)) return { ok: false as const, error: "Deadline must be a valid date" };
-
-  const system: "octanorm" | "maxima" | "custom" =
-    systemRaw === "maxima" || systemRaw === "custom" ? systemRaw : "octanorm";
-
-  return {
-    ok: true as const,
-    value: { name, client, system, widthM, depthM, deadline },
-  };
+  return zParse(createProjectSchema, body);
 }
 
 function parseUpdateProjectInput(body: unknown) {
-  if (!body || typeof body !== "object") {
-    return { ok: false as const, error: "Request body must be an object" };
-  }
-
-  const data = body as Record<string, unknown>;
-  const name = stringValue(data.name);
-  const client = stringValue(data.client);
-  const exhibition = stringValue(data.exhibition) ?? null;
-  const hasManagerId = Object.prototype.hasOwnProperty.call(data, "managerId");
-  const managerIdRaw = stringValue(data.managerId);
-  const managerId = !hasManagerId ? undefined : managerIdRaw === "unassigned" ? null : managerIdRaw ?? null;
-  const systemRaw = stringValue(data.system)?.toLowerCase() ?? "octanorm";
-  const widthM = numberValue(data.widthM ?? data.width);
-  const depthM = numberValue(data.depthM ?? data.depth);
-  const deadline = stringValue(data.deadline) ?? null;
-  const description = stringValue(data.description) ?? "";
-
-  if (!name) return { ok: false as const, error: "Project name is required" };
-  if (!client) return { ok: false as const, error: "Client name is required" };
-  if (managerId !== undefined && managerId && !isUuid(managerId)) return { ok: false as const, error: "Manager id is invalid" };
-  if (!widthM || widthM < 1 || widthM > 100) return { ok: false as const, error: "Width must be between 1 and 100 meters" };
-  if (!depthM || depthM < 1 || depthM > 100) return { ok: false as const, error: "Depth must be between 1 and 100 meters" };
-  if (deadline && !isIsoDate(deadline)) return { ok: false as const, error: "Deadline must be a valid date" };
-
-  const system: "octanorm" | "maxima" | "custom" =
-    systemRaw === "maxima" || systemRaw === "custom" ? systemRaw : "octanorm";
-
-  return {
-    ok: true as const,
-    value: {
-      name,
-      client,
-      exhibition,
-      managerId,
-      system,
-      widthM,
-      depthM,
-      deadline,
-      description,
-    },
-  };
+  return zParse(updateProjectSchema, body);
 }
 
 type PipelineStage = "intake" | "design" | "review" | "production" | "closed";
 
 function parsePipelineStageInput(body: unknown) {
-  if (!body || typeof body !== "object") {
-    return { ok: false as const, error: "Request body must be an object" };
-  }
-
-  const stage = stringValue((body as Record<string, unknown>).stage)?.toLowerCase();
-  if (stage !== "intake" && stage !== "design" && stage !== "review" && stage !== "production" && stage !== "closed") {
-    return { ok: false as const, error: "Pipeline stage must be intake, design, review, production, or closed" };
-  }
-
-  return { ok: true as const, value: { stage: stage as PipelineStage } };
+  return zParse(pipelineStageSchema, body);
 }
 
 function parseAccountSettingsInput(body: unknown) {
@@ -4550,68 +4925,15 @@ function parsePasswordInput(body: unknown) {
 }
 
 function parseInviteManagerInput(body: unknown) {
-  if (!body || typeof body !== "object") {
-    return { ok: false as const, error: "Request body must be an object" };
-  }
-
-  const data = body as Record<string, unknown>;
-  const name = stringValue(data.name) ?? "";
-  const email = stringValue(data.email)?.toLowerCase();
-
-  if (!email || !email.includes("@")) return { ok: false as const, error: "Valid manager email is required" };
-
-  return { ok: true as const, value: { name, email } };
+  return zParse(inviteManagerSchema, body);
 }
 
 function parseCreateClientInput(body: unknown) {
-  if (!body || typeof body !== "object") {
-    return { ok: false as const, error: "Request body must be an object" };
-  }
-
-  const data = body as Record<string, unknown>;
-  const companyName = stringValue(data.companyName ?? data.company ?? data.name);
-  const contactName = stringValue(data.contactName ?? data.name) ?? companyName;
-  const contactEmail = stringValue(data.contactEmail ?? data.email)?.toLowerCase() ?? null;
-  const exhibition = stringValue(data.exhibition) ?? null;
-
-  if (!companyName) return { ok: false as const, error: "Client company name is required" };
-  if (contactEmail && !contactEmail.includes("@")) return { ok: false as const, error: "Valid contact email is required" };
-
-  return {
-    ok: true as const,
-    value: {
-      companyName,
-      contactName: contactName ?? companyName,
-      contactEmail,
-      exhibition,
-    },
-  };
+  return zParse(createClientSchema, body);
 }
 
 function parseUpdateClientInput(body: unknown) {
-  if (!body || typeof body !== "object") {
-    return { ok: false as const, error: "Request body must be an object" };
-  }
-
-  const data = body as Record<string, unknown>;
-  const companyName = stringValue(data.companyName ?? data.company ?? data.name);
-  const contactName = stringValue(data.contactName ?? data.name);
-  const contactEmail = stringValue(data.contactEmail ?? data.email)?.toLowerCase() ?? null;
-  const exhibition = stringValue(data.exhibition) ?? null;
-
-  if (!companyName) return { ok: false as const, error: "Client company name is required" };
-  if (!contactName) return { ok: false as const, error: "Client contact name is required" };
-  if (contactEmail && !contactEmail.includes("@")) return { ok: false as const, error: "Valid contact email is required" };
-
-  return {
-    ok: true as const,
-    value: {
-      companyName,
-      contactName,
-      contactEmail,
-      exhibition,
-    },
-  };
+  return zParse(updateClientSchema, body);
 }
 
 type ClientStatus = "lead" | "pending_approval" | "active" | "inactive" | "archived";
@@ -4700,29 +5022,7 @@ function parseCalendarEventInput(body: unknown) {
 }
 
 function parseAssignmentsInput(body: unknown) {
-  if (!body || typeof body !== "object") {
-    return { ok: false as const, error: "Request body must be an object" };
-  }
-
-  const data = body as Record<string, unknown>;
-  const clientAssignments = Array.isArray(data.clientAssignments)
-    ? data.clientAssignments.map(parseAssignmentRow).filter(isAssignmentRow)
-    : [];
-  const projectAssignments = Array.isArray(data.projectAssignments)
-    ? data.projectAssignments.map(parseAssignmentRow).filter(isAssignmentRow)
-    : [];
-
-  return {
-    ok: true as const,
-    value: {
-      clientAssignments: clientAssignments as Array<{ clientId: string; managerId: string | null }>,
-      projectAssignments: projectAssignments.map((item) => ({
-        projectId: item.clientId,
-        managerId: item.managerId,
-      })),
-      cascadeClientProjects: boolValue(data.cascadeClientProjects, false),
-    },
-  };
+  return zParse(assignmentsSchema, body);
 }
 
 function parseManagerAssignmentItemsQuery(query: Record<string, unknown>): ManagerAssignmentItemsQuery {
@@ -4739,90 +5039,11 @@ function parseManagerAssignmentItemsQuery(query: Record<string, unknown>): Manag
 }
 
 function parsePmTaskInput(body: unknown) {
-  if (!body || typeof body !== "object") {
-    return { ok: false as const, error: "Request body must be an object" };
-  }
-
-  const data = body as Record<string, unknown>;
-  const title = stringValue(data.title);
-  const projectId = stringValue(data.projectId);
-  const status = pmTaskStatusValue(data.status) ?? "todo";
-  const priority = pmTaskPriorityValue(data.priority) ?? "normal";
-  const deadline = stringValue(data.deadline);
-  const notes = stringValue(data.notes);
-
-  if (!title || title.length > 180) {
-    return { ok: false as const, error: "Task title is required and must be under 180 characters" };
-  }
-  if (!projectId || !isUuid(projectId)) {
-    return { ok: false as const, error: "A valid project is required" };
-  }
-  if (deadline && !isIsoDate(deadline)) {
-    return { ok: false as const, error: "Deadline must use YYYY-MM-DD format" };
-  }
-  if (notes && notes.length > 4000) {
-    return { ok: false as const, error: "Task notes must be under 4000 characters" };
-  }
-
-  return {
-    ok: true as const,
-    value: {
-      title,
-      projectId,
-      status,
-      priority,
-      deadline,
-      notes,
-    },
-  };
+  return zParse(pmTaskSchema, body);
 }
 
 function parsePmTaskPatch(body: unknown) {
-  if (!body || typeof body !== "object") {
-    return { ok: false as const, error: "Request body must be an object" };
-  }
-
-  const data = body as Record<string, unknown>;
-  const title = Object.prototype.hasOwnProperty.call(data, "title") ? stringValue(data.title) : undefined;
-  const projectId = Object.prototype.hasOwnProperty.call(data, "projectId") ? stringValue(data.projectId) : undefined;
-  const status = Object.prototype.hasOwnProperty.call(data, "status") ? pmTaskStatusValue(data.status) : undefined;
-  const priority = Object.prototype.hasOwnProperty.call(data, "priority") ? pmTaskPriorityValue(data.priority) : undefined;
-  const rawDeadline = Object.prototype.hasOwnProperty.call(data, "deadline") ? stringValue(data.deadline) : undefined;
-  const deadline = rawDeadline === undefined ? undefined : rawDeadline;
-  const rawNotes = Object.prototype.hasOwnProperty.call(data, "notes") ? stringValue(data.notes) : undefined;
-  const notes = rawNotes === undefined ? undefined : rawNotes;
-
-  if (Object.prototype.hasOwnProperty.call(data, "title") && (!title || title.length > 180)) {
-    return { ok: false as const, error: "Task title must be under 180 characters" };
-  }
-  if (Object.prototype.hasOwnProperty.call(data, "projectId") && (!projectId || !isUuid(projectId))) {
-    return { ok: false as const, error: "A valid project is required" };
-  }
-  if (Object.prototype.hasOwnProperty.call(data, "status") && !status) {
-    return { ok: false as const, error: "Task status is invalid" };
-  }
-  if (Object.prototype.hasOwnProperty.call(data, "priority") && !priority) {
-    return { ok: false as const, error: "Task priority is invalid" };
-  }
-  if (deadline && !isIsoDate(deadline)) {
-    return { ok: false as const, error: "Deadline must use YYYY-MM-DD format" };
-  }
-  if (notes && notes.length > 4000) {
-    return { ok: false as const, error: "Task notes must be under 4000 characters" };
-  }
-
-  const value: PmTaskPatch = {};
-  if (title !== undefined && title !== null) value.title = title;
-  if (projectId !== undefined && projectId !== null) value.projectId = projectId;
-  if (status !== undefined && status !== null) value.status = status;
-  if (priority !== undefined && priority !== null) value.priority = priority;
-  if (Object.prototype.hasOwnProperty.call(data, "deadline")) value.deadline = deadline ?? null;
-  if (Object.prototype.hasOwnProperty.call(data, "notes")) value.notes = notes ?? null;
-
-  return {
-    ok: true as const,
-    value,
-  };
+  return zParse(pmTaskPatchSchema, body);
 }
 
 function pmTaskStatusValue(value: unknown): PmTaskStatus | null {

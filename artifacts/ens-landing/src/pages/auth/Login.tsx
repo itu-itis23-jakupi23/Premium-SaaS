@@ -16,29 +16,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
-import { Shield, User, Briefcase, Eye, EyeOff, Zap, Lock, AlertTriangle } from 'lucide-react';
+import { Eye, EyeOff, Lock, AlertTriangle } from 'lucide-react';
 import { useAuth, getRoleDashboard, type UserRole } from '@/contexts/AuthContext';
-import { CLIENT_ROLES, getPortalForbiddenMessage, isRoleAllowedInPortal, PORTAL_MODE, STAFF_ROLES } from '@/lib/portal';
+import { getPortalForbiddenMessage, isRoleAllowedInPortal } from '@/lib/portal';
 
 const LOCK_KEY = 'ens-login-lock';
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 15 * 60 * 1000;
 const WINDOW_MS = 60 * 60 * 1000;
-const DEV_PASSWORD = 'EnsDev2026!';
-
-const DEV_ACCOUNTS = [
-  { email: 'owner@ens.test', role: 'chief', label: 'Owner / Chief', desc: 'Full organization control', icon: Shield, color: 'text-primary' },
-  { email: 'pm@ens.test', role: 'pm', label: 'Project Manager', desc: 'Assigned clients and booth workspace', icon: Briefcase, color: 'text-blue-400' },
-  { email: 'client@ens.test', role: 'client', label: 'Client Reviewer', desc: 'Review and approve assigned designs', icon: User, color: 'text-cyan-400' },
-] as const;
-
-const PORTAL_DEV_ACCOUNTS = DEV_ACCOUNTS.filter((account) => {
-  if (PORTAL_MODE === 'staff') return STAFF_ROLES.includes(account.role);
-  if (PORTAL_MODE === 'client') return CLIENT_ROLES.includes(account.role);
-  return true;
-});
 
 interface LockState {
   attempts: number;
@@ -181,28 +167,7 @@ export default function Login() {
     }
   }
 
-  async function quickAccess(email: string) {
-    setIsSubmitting(true);
-    setError('');
-
-    try {
-      const loggedInUser = await auth.login({ email, password: DEV_PASSWORD });
-      if (!isRoleAllowedInPortal(loggedInUser.role)) {
-        await auth.logout();
-        setError(getPortalForbiddenMessage(loggedInUser.role));
-        return;
-      }
-      localStorage.removeItem(LOCK_KEY);
-      navigate(getPostLoginPath(loggedInUser.role));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('auth.login.signInError'));
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   const isLocked = timeLeft > 0;
-  const lockState = getLockState();
 
   return (
     <AuthLayout
@@ -256,7 +221,7 @@ export default function Login() {
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between mb-1">
-                  <FormLabel className="mb-0">{t('auth.login.passwordLabel')}</FormLabel>
+                  <FormLabel htmlFor="login-password" className="mb-0">{t('auth.login.passwordLabel')}</FormLabel>
                   <Link
                     href="/forgot-password"
                     className="text-xs font-medium text-primary hover:underline"
@@ -267,6 +232,7 @@ export default function Login() {
                 <FormControl>
                   <div className="relative">
                     <Input
+                      id="login-password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder={t('auth.login.passwordPlaceholder')}
                       autoComplete="current-password"
@@ -304,12 +270,13 @@ export default function Login() {
                   onCheckedChange={field.onChange}
                   data-testid="checkbox-remember"
                 />
-                <label
-                  htmlFor="rememberMe"
+                <button
+                  type="button"
+                  onClick={() => field.onChange(!field.value)}
                   className="text-sm text-muted-foreground cursor-pointer select-none"
                 >
                   {t('auth.login.rememberMe')}
-                </label>
+                </button>
               </div>
             )}
           />
@@ -336,49 +303,6 @@ export default function Login() {
           </Button>
         </form>
       </Form>
-
-      {import.meta.env.DEV && (
-        <>
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center"><Separator /></div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-3 text-muted-foreground flex items-center gap-1.5">
-                <Zap className="h-3 w-3" aria-hidden="true" />
-                {t('auth.login.devSection')}
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            {PORTAL_DEV_ACCOUNTS.map(({ email, label, desc, icon: Icon, color }) => (
-              <button
-                key={email}
-                onClick={() => quickAccess(email)}
-                className="w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left border-border/50 hover:border-primary/40"
-                data-testid={`button-quick-${email}`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center flex-shrink-0 ${color}`}
-                  aria-hidden="true"
-                >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <div className={`text-sm font-semibold ${color}`}>{label}</div>
-                  <div className="text-[11px] text-muted-foreground truncate">{desc}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {lockState.attempts > 0 && !isLocked && (
-        <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2">
-          <AlertTriangle className="h-3 w-3 text-yellow-500 flex-shrink-0" aria-hidden="true" />
-          {t('auth.login.attemptsRemaining', { count: MAX_ATTEMPTS - lockState.attempts })}
-        </div>
-      )}
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {t('auth.login.noAccount')}{' '}

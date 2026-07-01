@@ -155,6 +155,14 @@ export default function ChiefReports() {
           </Card>
         )}
 
+        {!isLoading && !error && totalRevenue === 0 && (
+          <Card role="status" className="border-blue-500/30 bg-blue-500/5">
+            <CardContent className="p-4 text-sm text-blue-500">
+              Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data.
+            </CardContent>
+          </Card>
+        )}
+
         {/* KPI tiles */}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {isLoading ? (
@@ -170,10 +178,10 @@ export default function ChiefReports() {
             ))
           ) : (
             <>
-              <KpiTile label={t("chief.reports.kpi.revenue")} value={`$${(totalRevenue / 1000).toFixed(0)}K`} detail={t("chief.reports.kpi.revenueDetail")} icon={TrendingUp} />
+              <KpiTile label={t("chief.reports.kpi.revenue")} value={totalRevenue ? `$${(totalRevenue / 1000).toFixed(0)}K` : "Not configured"} detail={t("chief.reports.kpi.revenueDetail")} icon={TrendingUp} />
               <KpiTile label={t("chief.reports.kpi.projects")} value={String(totalProjects)} detail={t("chief.reports.kpi.projectsDetail", { range })} icon={Briefcase} />
               <KpiTile label={t("chief.reports.kpi.pms")} value={`${pmPerformance.length}`} detail={t("chief.reports.kpi.pmsDetail")} icon={Users} />
-              <KpiTile label={t("chief.reports.kpi.satisfaction")} value={`${averageSatisfaction(pmPerformance).toFixed(1)}/5`} detail={t("chief.reports.kpi.satisfactionDetail")} icon={Star} />
+              <KpiTile label={t("chief.reports.kpi.satisfaction")} value={averageSatisfaction(pmPerformance) ? `${averageSatisfaction(pmPerformance).toFixed(1)}/5` : "Not configured"} detail={t("chief.reports.kpi.satisfactionDetail")} icon={Star} />
             </>
           )}
         </div>

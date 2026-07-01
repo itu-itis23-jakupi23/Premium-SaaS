@@ -3,16 +3,6 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 import en from './locales/en.json';
-import de from './locales/de.json';
-import fr from './locales/fr.json';
-import es from './locales/es.json';
-import it from './locales/it.json';
-import pt from './locales/pt.json';
-import zh from './locales/zh.json';
-import ja from './locales/ja.json';
-import ar from './locales/ar.json';
-import nl from './locales/nl.json';
-import tr from './locales/tr.json';
 
 export const LANGUAGE_STORAGE_KEY = 'ens-lang';
 export const LANGUAGE_COOKIE_NAME = 'ens-lang';
@@ -32,6 +22,21 @@ export const LANGUAGES = [
 ] as const;
 
 export type LangCode = typeof LANGUAGES[number]['code'];
+
+type TranslationResource = Record<string, unknown>;
+
+const localeLoaders: Partial<Record<LangCode, () => Promise<{ default: TranslationResource }>>> = {
+  de: () => import('./locales/de.json'),
+  fr: () => import('./locales/fr.json'),
+  es: () => import('./locales/es.json'),
+  it: () => import('./locales/it.json'),
+  pt: () => import('./locales/pt.json'),
+  zh: () => import('./locales/zh.json'),
+  ja: () => import('./locales/ja.json'),
+  ar: () => import('./locales/ar.json'),
+  nl: () => import('./locales/nl.json'),
+  tr: () => import('./locales/tr.json'),
+};
 
 export function normalizeLanguageCode(value: string | null | undefined): LangCode {
   const raw = value?.trim();
@@ -79,10 +84,21 @@ export function persistLanguagePreference(code: string) {
 export async function setLanguagePreference(code: string) {
   const normalized = persistLanguagePreference(code);
   applyDir(normalized);
+  await ensureLanguageResource(normalized);
   if (i18n.language !== normalized) {
     await i18n.changeLanguage(normalized);
   }
   return normalized;
+}
+
+async function ensureLanguageResource(code: LangCode) {
+  if (code === 'en' || i18n.hasResourceBundle(code, 'translation')) return;
+
+  const loadLocale = localeLoaders[code];
+  if (!loadLocale) return;
+
+  const resource = await loadLocale();
+  i18n.addResourceBundle(code, 'translation', resource.default, true, true);
 }
 
 function readLanguageCookie() {
@@ -93,13 +109,15 @@ function readLanguageCookie() {
   return match ? decodeURIComponent(match.split('=').slice(1).join('=')) : null;
 }
 
+const initialLanguage = readLanguagePreference();
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources: { en: { translation: en }, de: { translation: de }, fr: { translation: fr }, es: { translation: es }, it: { translation: it }, pt: { translation: pt }, zh: { translation: zh }, ja: { translation: ja }, ar: { translation: ar }, nl: { translation: nl }, tr: { translation: tr } },
+    resources: { en: { translation: en } },
     fallbackLng: 'en',
-    lng: readLanguagePreference(),
+    lng: initialLanguage,
     supportedLngs: LANGUAGES.map(l => l.code),
     detection: {
       order: ['querystring', 'localStorage', 'cookie', 'navigator'],
@@ -121,6 +139,12 @@ export function applyDir(lang: string) {
 i18n.on('languageChanged', (language) => {
   const normalized = persistLanguagePreference(language);
   applyDir(normalized);
+});
+
+void ensureLanguageResource(initialLanguage).then(() => {
+  if (initialLanguage !== 'en') {
+    void i18n.changeLanguage(initialLanguage);
+  }
 });
 
 export default i18n;

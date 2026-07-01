@@ -10,13 +10,35 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import { initSchema, pool } from "./db.js";
-import invitationsRouter from "./routes/invitations.js";
+import authRouter, { accountRouter } from "./routes/auth.js";
+import messagesRouter from "./routes/messages.js";
+import platformCoreRouter from "./routes/platform-core.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const IS_PROD   = process.env.NODE_ENV === "production";
 const PORT      = Number(process.env.PORT ?? 5000);
 const APP_URL   = (process.env.APP_URL ?? `http://localhost:${PORT}`).replace(/\/$/, "");
+
+function productionConfigProblems() {
+  const staffCode = process.env.STAFF_SIGNUP_KEY || process.env.CHIEF_BOOTSTRAP_KEY || process.env.STAFF_ACCESS_CODE || "";
+  return [
+    !process.env.DATABASE_URL ? "DATABASE_URL is required in production." : null,
+    !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === "your-resend-api-key-here" ? "RESEND_API_KEY is required in production." : null,
+    !process.env.RESEND_FROM ? "RESEND_FROM is required in production." : null,
+    !process.env.APP_URL || !/^https?:\/\//.test(process.env.APP_URL) ? "APP_URL must be an absolute URL in production." : null,
+    !staffCode || staffCode === "change-me-before-deploy" || staffCode === "ens-staff-local-dev"
+      ? "A non-placeholder server-side staff signup key is required in production."
+      : null,
+  ].filter(Boolean);
+}
+
+if (IS_PROD) {
+  const problems = productionConfigProblems();
+  if (problems.length) {
+    console.error(`[prod] Refusing to start with incomplete configuration:\n- ${problems.join("\n- ")}`);
+    process.exit(1);
+  }
+}
 
 // Warn early if Resend key is missing
 if (!process.env.RESEND_API_KEY) {
@@ -46,7 +68,10 @@ app.get("/api/health", (_req, res) => {
 
 // ── API routes ────────────────────────────────────────────────────────────────
 
-app.use("/api/platform/managers/invitations", invitationsRouter);
+app.use("/api/platform/messages", messagesRouter);
+app.use("/api/platform", platformCoreRouter);
+app.use("/api/platform/account", accountRouter);
+app.use("/api/auth", authRouter);
 
 // ── Serve built frontend in production ───────────────────────────────────────
 // (In development, Vite own server handles the frontend.)
@@ -73,11 +98,20 @@ if (IS_PROD) {
 // Run schema migration first, then open the HTTP port.
 
 async function start() {
-  try {
-    await initSchema();
-  } catch (err) {
-    console.error("[db] Failed to connect or migrate — check DATABASE_URL.\n", err);
-    process.exit(1);
+  let pool: { end: () => Promise<void> } | null = null;
+
+  if (process.env.DATABASE_URL) {
+    try {
+      const db = await import("./db.js");
+      const invitationsRouter = (await import("./routes/invitations.js")).default;
+      await db.initSchema();
+      pool = db.pool;
+      app.use("/api/platform/managers/invitations", invitationsRouter);
+    } catch (err) {
+      console.error("[db] Invitations disabled; database connection failed.\n", err);
+    }
+  } else {
+    console.warn("[db] DATABASE_URL is not set; database-backed invitation routes are disabled.");
   }
 
   app.listen(PORT, "0.0.0.0", () => {
@@ -87,15 +121,14 @@ async function start() {
     }
     console.log(`   API health: http://localhost:${PORT}/api/health\n`);
   });
+
+  async function shutdown(signal: string) {
+    console.log(`\n[server] ${signal} received — shutting down`);
+    if (pool) await pool.end();
+    process.exit(0);
+  }
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT",  () => shutdown("SIGINT"));
 }
 
 start();
-
-// Graceful shutdown — drain the PG connection pool on SIGTERM / SIGINT
-async function shutdown(signal: string) {
-  console.log(`\n[server] ${signal} received — shutting down`);
-  await pool.end();
-  process.exit(0);
-}
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT",  () => shutdown("SIGINT"));

@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "pm_capacity_limit" integer;

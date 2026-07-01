@@ -14,10 +14,11 @@ import {
   projects,
   users,
 } from "@workspace/db";
+import { requireAuth, requireRoles } from "../middlewares/session";
 
 const router: IRouter = Router();
 
-router.get("/db/status", async (_req, res) => {
+router.get("/db/status", requireAuth, requireRoles(["admin", "owner", "chief"]), async (_req, res) => {
   try {
     const [
       connection,
