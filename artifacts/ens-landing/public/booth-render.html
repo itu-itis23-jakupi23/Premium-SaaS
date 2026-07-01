@@ -1820,6 +1820,33 @@ function drawSelectedItemGizmo(container) {
     g.appendChild(warn);
   }
 
+  // Rotation buttons — ◁ −15° and ▷ +15° — shown below the gizmo card.
+  // Provides mouse-based rotation in addition to the [ / ] keyboard shortcuts.
+  const btnY = labelY + cardHeight + 6;
+  const btnSize = 22;
+  [['◁', -15, labelX], ['▷', +15, labelX + btnSize + 4]].forEach(([label, delta, bx]) => {
+    const btn = document.createElementNS(SVG_NS, 'rect');
+    btn.setAttribute('x', String(bx)); btn.setAttribute('y', String(btnY));
+    btn.setAttribute('width', String(btnSize)); btn.setAttribute('height', String(btnSize));
+    btn.setAttribute('rx', '4');
+    btn.setAttribute('fill', 'rgba(255,255,255,0.9)');
+    btn.setAttribute('stroke', 'rgba(37,99,235,0.4)');
+    btn.style.cursor = 'pointer';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const currentY = Number.isFinite(Number(item.rotationY)) ? Number(item.rotationY) : 0;
+      const newY = ((currentY + Number(delta)) % 360 + 360) % 360;
+      window.parent.postMessage({ type: 'workspaceItemRotated', id: selectedItemId, rotationY: newY }, '*');
+    });
+    g.appendChild(btn);
+    const lbl = document.createElementNS(SVG_NS, 'text');
+    lbl.setAttribute('x', String(Number(bx) + btnSize / 2)); lbl.setAttribute('y', String(btnY + 14));
+    lbl.setAttribute('text-anchor', 'middle'); lbl.setAttribute('font-size', '12');
+    lbl.setAttribute('fill', '#2563eb'); lbl.setAttribute('pointer-events', 'none');
+    lbl.textContent = String(label);
+    g.appendChild(lbl);
+  });
+
   container.appendChild(g);
 }
 
@@ -2039,6 +2066,7 @@ function renderBooth() {
     }
   }
   drawInvalidItemWarnings(container);
+  drawGlbLoadingIndicators(container);
   drawSelectedItemGizmo(container);
 }
 
@@ -2154,6 +2182,37 @@ function notifyRoomPatched(room, patch) {
     id: room.id,
     ...patch,
   }, '*');
+}
+
+// Show a small "⟳ 3D" badge over any furniture item whose GLB model is still
+// fetching. Disappears automatically once __glbVisibleItems contains the item.
+function drawGlbLoadingIndicators(container) {
+  const glbVisible = window.__glbVisibleItems || new Set();
+  for (const item of placedItems) {
+    if (!item.modelUrl) continue;
+    const keyId = String(item.id || item.sku || item.modelUrl);
+    if (glbVisible.has(keyId)) continue;
+    // GLB hasn't loaded yet — find the projected top-center of this item.
+    const x = Number.isFinite(Number(item.x)) ? -BW / 2 + Number(item.x) : 0;
+    const z = Number.isFinite(Number(item.z)) ? Number(item.z) : BD / 2;
+    const h = Math.max(0.2, Number(item.h) || 0.8);
+    const p = project([x, h + 0.25, z]);
+    if (!p) continue;
+    const bx = p.x - 18, by = p.y - 9;
+    const rect = document.createElementNS(SVG_NS, 'rect');
+    rect.setAttribute('x', bx.toFixed(1)); rect.setAttribute('y', by.toFixed(1));
+    rect.setAttribute('width', '36'); rect.setAttribute('height', '16');
+    rect.setAttribute('rx', '4'); rect.setAttribute('fill', 'rgba(20,22,26,0.72)');
+    rect.setAttribute('pointer-events', 'none');
+    container.appendChild(rect);
+    const label = document.createElementNS(SVG_NS, 'text');
+    label.setAttribute('x', p.x.toFixed(1)); label.setAttribute('y', (by + 11).toFixed(1));
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('fill', '#e2e4ef'); label.setAttribute('font-size', '9');
+    label.setAttribute('font-weight', '600'); label.setAttribute('pointer-events', 'none');
+    label.textContent = '⟳ 3D';
+    container.appendChild(label);
+  }
 }
 
 function drawInvalidItemWarnings(container) {
