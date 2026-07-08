@@ -57,6 +57,13 @@
       "when": 1782845943118,
       "tag": "0007_pm_capacity_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783512820749,
+      "tag": "0008_puzzling_doomsday",
+      "breakpoints": true
     }
   ]
 }
