@@ -24,6 +24,7 @@ export interface BoothConfig3D {
   rooms?: any[];
   panelOverrides?: Record<string, any>;
   frontSupportPositions?: number[];
+  suppressedDefaultPositions?: number[];
   fasciaEnabled?: boolean;
   fasciaOption?: string;
   lightingPreset?: string;
@@ -35,7 +36,7 @@ export interface BoothConfig3D {
   onItemDelete?: (id: string) => void;
   onItemRotate?: (id: string, patch: { rotationY: number }) => void;
   onRoomMove?: (id: string, patch: any) => void;
-  onFrontSupportMove?: (positions: number[]) => void;
+  onFrontSupportMove?: (positions: number[], suppressedDefaultPositions: number[]) => void;
   onPinRequest?: (partId: string, detail: any) => void;
 }
 
@@ -83,6 +84,7 @@ export function Booth3D({ config }: { config?: Partial<BoothConfig3D> }) {
       rooms:       cfg.rooms,
       panelOverrides: cfg.panelOverrides,
       frontSupportPositions: cfg.frontSupportPositions,
+      suppressedDefaultPositions: cfg.suppressedDefaultPositions,
       fasciaEnabled: cfg.fasciaEnabled,
       fasciaOption: cfg.fasciaOption,
       lightingPreset: cfg.lightingPreset,

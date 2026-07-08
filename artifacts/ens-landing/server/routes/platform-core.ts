@@ -3,12 +3,15 @@ import { z } from "zod";
 import { authenticatedUserFromRequest, createInvitedUser } from "./auth.js";
 import { readJsonStore, writeJsonStore } from "../storage.js";
 import { sendInvitationEmail, sendResendInvitationEmail } from "../email.js";
+import { configReadiness, resendConfigured } from "../config-readiness.js";
+import { saveWorkspaceAsset } from "../workspace-assets.js";
 
 interface Project {
   id: string;
   name: string;
   client: string;
   pm: string;
+  managerId?: string | null;
   status: string;
   health: string;
   progress: number;
@@ -31,6 +34,7 @@ interface Client {
   contactEmail: string;
   projectId?: string | null;
   pm: string;
+  managerId?: string | null;
   exhibition: string;
   boothWidthM?: number | null;
   boothDepthM?: number | null;
@@ -48,6 +52,7 @@ interface CoreStore {
   projects: Project[];
   clients: Client[];
   activity: Array<{ id: string; type: string; user: string; action: string; project: string; time: string }>;
+  exhibitions?: Exhibition[];
   workspaces?: Record<string, StoredProjectWorkspace>;
   managerOverrides?: Record<string, { status?: string; rating?: number }>;
   invitations?: ManagerInvitation[];
@@ -55,6 +60,18 @@ interface CoreStore {
   calendarEvents?: CalendarEvent[];
   tasks?: PmTask[];
   requests?: PmRequestItem[];
+}
+
+interface Exhibition {
+  id: string;
+  name: string;
+  venue?: string;
+  city?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  status: "Draft" | "Active" | "Closed";
+  createdAt: string;
+  agency?: string;
 }
 
 interface ManagerInvitation {
@@ -194,6 +211,7 @@ const emptyStore: CoreStore = {
   projects: [],
   clients: [],
   activity: [],
+  exhibitions: [],
   workspaces: {},
   managerOverrides: {},
   invitations: [],
@@ -261,7 +279,7 @@ const seedStore: CoreStore = {
     },
   ],
   clients: [
-    { id: "c1", name: "TechCorp Industries", company: "TechCorp Industries", contactName: "Client Reviewer", contactEmail: "client@ens.test", projectId: "p1", pm: "Project Manager", exhibition: "TechCon 2024", status: "Active", lastActivity: "2 hours ago" },
+    { id: "c1", name: "TechCorp Industries", company: "TechCorp Industries", contactName: "Client Reviewer", contactEmail: "demo.client@example.com", projectId: "p1", pm: "Project Manager", exhibition: "TechCon 2024", status: "Active", lastActivity: "2 hours ago" },
     { id: "c2", name: "MediLife", company: "MediLife", contactName: "MediLife Reviewer", contactEmail: "medilife@example.com", projectId: "p2", pm: "Project Manager", exhibition: "HealthExpo", status: "Active", lastActivity: "1 day ago" },
     { id: "c3", name: "FastCars Co", company: "FastCars Co", contactName: "FastCars Reviewer", contactEmail: "fastcars@example.com", projectId: "p3", pm: "Unassigned", exhibition: "AutoShow", status: "Pending", lastActivity: "3 days ago" },
   ],
@@ -282,6 +300,11 @@ const DEFAULT_ELEMENT_STATUS: Record<string, "approved" | "pending" | "rejected"
 const boundedNumber = (min: number, max: number) => z.number().finite().min(min).max(max);
 const hexColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i);
 const dataImageSchema = z.string().regex(/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i).max(2_500_000);
+const uploadDataImageSchema = z.string().regex(/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i).max(6_800_000);
+const workspaceImageUrlSchema = z.union([
+  dataImageSchema,
+  z.string().trim().regex(/^\/workspace-assets\/[a-z0-9%._/-]+$/i).max(1000),
+]);
 const workspaceBoothSchema = z.object({
   width: boundedNumber(1, 30),
   depth: boundedNumber(1, 20),
@@ -341,7 +364,7 @@ const panelOverrideSchema = z.object({
   color: hexColorSchema.optional(),
   brandText: z.string().trim().max(120).optional(),
   brandColor: hexColorSchema.optional(),
-  designImageUrl: dataImageSchema.optional(),
+  designImageUrl: workspaceImageUrlSchema.optional(),
   opacity: boundedNumber(0, 1).optional(),
 }).passthrough();
 const workspaceStateSchema = z.object({
@@ -364,6 +387,11 @@ const workspacePayloadSchema = z.object({
 });
 const workspaceVersionPayloadSchema = workspacePayloadSchema.extend({
   status: z.enum(["draft", "submitted"]).optional(),
+});
+const workspaceAssetPayloadSchema = z.object({
+  dataUrl: uploadDataImageSchema,
+  name: z.string().trim().max(240).optional(),
+  purpose: z.enum(["panel", "room", "fascia", "logo", "snapshot", "workspace"]).default("workspace"),
 });
 const changeRequestPayloadSchema = z.object({
   changeText: z.string().trim().min(1).max(4000),
@@ -414,6 +442,14 @@ const managerReminderPayloadSchema = z.object({
   delayedCount: z.number().int().min(0).optional(),
   urgentCount: z.number().int().min(0).optional(),
 });
+const exhibitionPayloadSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  venue: z.string().trim().max(160).optional(),
+  city: z.string().trim().max(120).optional(),
+  startDate: z.string().trim().max(40).nullable().optional(),
+  endDate: z.string().trim().max(40).nullable().optional(),
+  status: z.enum(["Draft", "Active", "Closed"]).optional(),
+});
 const projectCreatePayloadSchema = z.object({
   name: z.string().trim().min(1).max(160),
   client: z.string().trim().max(160).optional(),
@@ -444,6 +480,12 @@ const clientPayloadSchema = z.object({
   company: z.string().trim().max(160).optional(),
   email: z.string().trim().email().max(254),
   exhibition: z.string().trim().max(160).optional(),
+  boothWidthM: z.number().finite().min(1).max(50).nullable().optional(),
+  boothDepthM: z.number().finite().min(1).max(50).nullable().optional(),
+  preferredSystem: z.string().trim().max(120).optional(),
+  venueCity: z.string().trim().max(120).optional(),
+  targetDate: z.string().trim().max(40).nullable().optional(),
+  intakeNotes: z.string().trim().max(2000).optional(),
 });
 const clientAccessPayloadSchema = z.object({
   email: z.string().trim().email().max(254),
@@ -491,7 +533,27 @@ const calendarEventPayloadSchema = z.object({
 
 async function readStore(): Promise<CoreStore> {
   const defaultStore = process.env.ENABLE_DEMO_SEED === "true" ? seedStore : emptyStore;
-  return readJsonStore<CoreStore>(STORE_KEY, defaultStore);
+  const store = await readJsonStore<CoreStore>(STORE_KEY, defaultStore);
+  store.projects ??= [];
+  store.clients ??= [];
+  store.activity ??= [];
+  store.exhibitions ??= [];
+  store.workspaces ??= {};
+  store.managerOverrides ??= {};
+  store.invitations ??= [];
+  store.notifications ??= {};
+  store.calendarEvents ??= [];
+  store.tasks ??= [];
+  store.requests ??= [];
+  store.clients = (store.clients ?? []).map((client) => {
+    const hasAssignedPm = Boolean(client.pm && client.pm !== "Unassigned");
+    const hasLinkedProject = Boolean(client.projectId);
+    if (client.status === "Pending" && (hasAssignedPm || hasLinkedProject)) {
+      return { ...client, status: "Active" };
+    }
+    return client;
+  });
+  return store;
 }
 
 async function writeStore(store: CoreStore) {
@@ -500,6 +562,20 @@ async function writeStore(store: CoreStore) {
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function projectHasAssignedManager(project: Pick<Project, "pm" | "managerId">) {
+  return Boolean(project.managerId || (project.pm && project.pm !== "Unassigned"));
+}
+
+function advanceProjectAfterAssignment(project: Project) {
+  if (!projectHasAssignedManager(project)) return;
+  project.progress = Math.max(project.progress || 0, 20);
+  if (project.status === "Pending" || project.status === "Planning") {
+    project.status = "In Design";
+    project.pipelineStage = "design";
+    project.lastUpdate = "Just now";
+  }
 }
 
 function badRequest(res: { status(code: number): { json(body: unknown): unknown } }, error: z.ZodError) {
@@ -765,6 +841,38 @@ function pushNotification(
   store.notifications![notificationKey(actor)] = current.slice(0, 100);
 }
 
+async function pushNotificationToAccount(
+  store: CoreStore,
+  emailOrId: string | null | undefined,
+  role: ActorRole,
+  notification: Omit<PlatformNotification, "id" | "readAt" | "read" | "createdAt" | "time">,
+) {
+  if (!emailOrId || emailOrId === "Unassigned") return false;
+  const lookup = emailOrId.toLowerCase();
+  const authStore = await readJsonStore<{ users: Array<{ id: string; email: string; role: ActorRole }> }>("auth", { users: [] });
+  const user = authStore.users.find((item) => (
+    item.id === emailOrId ||
+    String(item.email || "").toLowerCase() === lookup
+  ));
+  if (!user) return false;
+  pushNotification(store, { id: user.id, email: user.email, role }, notification);
+  return true;
+}
+
+async function markWorkspaceViewedByClient(store: CoreStore, actor: { role: ActorRole; name: string }, project: Project, workspace: StoredProjectWorkspace) {
+  const current = currentVersion(workspace);
+  if (actor.role !== "client" || current.status !== "submitted") return false;
+  current.status = "viewed";
+  project.lastUpdate = "Just now";
+  addActivity(store, "approval", actor.name, "viewed workspace", project);
+  await pushNotificationToAccount(store, project.managerId ?? project.pm, "pm", {
+    title: "Client viewed workspace",
+    body: `${project.client} opened the latest design for ${project.name}.`,
+    href: `/pm/workspace?projectId=${encodeURIComponent(project.id)}`,
+  });
+  return true;
+}
+
 function initialsFromName(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "U";
@@ -786,7 +894,8 @@ async function actorFromReq(req: Request, fallbackRole: ActorRole = "pm") {
       initials: initialsFromName(sessionUser.name),
     };
   }
-  if (process.env.NODE_ENV === "production") {
+  const demoAccessEnabled = process.env.ENABLE_DEMO_ACCESS === "true" || process.env.VITE_ENABLE_DEMO_ACCESS === "true";
+  if (process.env.NODE_ENV === "production" || !demoAccessEnabled) {
     return {
       id: "anonymous",
       name: "Unauthenticated",
@@ -1099,7 +1208,7 @@ function buildManagers(store: CoreStore) {
     return {
       id,
       name,
-      email: `${name.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/(^\.|\.$)/g, "") || "project.manager"}@ens.test`,
+      email: `${name.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/(^\.|\.$)/g, "") || "project.manager"}@example.com`,
       role: "Project Manager",
       status: overrides.status ?? "Active",
       rating: overrides.rating ?? Math.max(3.8, Math.round((4.8 - delayedProjects * 0.35) * 10) / 10),
@@ -1227,7 +1336,7 @@ async function buildManagersForCompany(store: CoreStore, companyName: string | n
       allPMsMap.set(name.toLowerCase(), {
         id: pmId,
         name,
-        email: `${name.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/(^\.|\.$)/g, "") || "pm"}@ens.test`,
+        email: "",
       });
     }
   }
@@ -1275,9 +1384,15 @@ async function buildManagersForCompany(store: CoreStore, companyName: string | n
 async function buildManagedClientsForCompany(store: CoreStore, companyName: string | null) {
   const authStore = await readJsonStore<{ users: any[] }>("auth", { users: [], sessions: [], loginAttempts: [] });
   const companyClients = store.clients.filter((client) => matchesCompany(client, companyName));
+  const companyKey = companyName?.trim().toLowerCase() ?? "";
   return companyClients.map((client) => {
-    const pmUser = authStore.users.find((u) => u.name.toLowerCase() === String(client.pm || "").trim().toLowerCase());
-    const managerId = pmUser ? pmUser.id : managerIdFromName(client.pm);
+    const pmUser = authStore.users.find((u) => {
+      if (u.role !== "pm") return false;
+      if (u.name.toLowerCase() !== String(client.pm || "").trim().toLowerCase()) return false;
+      if (!companyKey) return true;
+      return String(u.company || u.agency || "").trim().toLowerCase() === companyKey;
+    });
+    const managerId = client.managerId ?? (pmUser ? pmUser.id : managerIdFromName(client.pm));
     return {
       id: client.id,
       name: client.name,
@@ -1301,9 +1416,15 @@ async function buildManagedClientsForCompany(store: CoreStore, companyName: stri
 async function buildManagedProjectsForCompany(store: CoreStore, companyName: string | null) {
   const authStore = await readJsonStore<{ users: any[] }>("auth", { users: [], sessions: [], loginAttempts: [] });
   const companyProjects = store.projects.filter((project) => matchesCompany(project, companyName));
+  const companyKey = companyName?.trim().toLowerCase() ?? "";
   return companyProjects.map((project, index) => {
-    const pmUser = authStore.users.find((u) => u.name.toLowerCase() === String(project.pm || "").trim().toLowerCase());
-    const managerId = pmUser ? pmUser.id : managerIdFromName(project.pm);
+    const pmUser = authStore.users.find((u) => {
+      if (u.role !== "pm") return false;
+      if (u.name.toLowerCase() !== String(project.pm || "").trim().toLowerCase()) return false;
+      if (!companyKey) return true;
+      return String(u.company || u.agency || "").trim().toLowerCase() === companyKey;
+    });
+    const managerId = project.managerId ?? (pmUser ? pmUser.id : managerIdFromName(project.pm));
     return {
       id: project.id,
       name: project.name,
@@ -1367,6 +1488,111 @@ function addProjectLifecycle(project: Project, actor: { id: string; name: string
     },
     ...((project.lifecycleHistory ?? []) as unknown[]),
   ].slice(0, 50);
+}
+
+function projectNameFromClient(client: Client) {
+  const exhibition = client.exhibition?.trim() || "Pending Exhibition";
+  const company = client.company?.trim() || client.name?.trim() || "Client";
+  return `${exhibition} - ${company}`;
+}
+
+function numberOrDefault(value: unknown, fallback: number) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function projectDimensionsFromClient(client: Client) {
+  const widthM = numberOrDefault(client.boothWidthM, 6);
+  const depthM = numberOrDefault(client.boothDepthM, 3);
+  return `${widthM} x ${depthM} m`;
+}
+
+function ensureProjectForClient(store: CoreStore, client: Client, actor: { id: string; name: string; company?: string }) {
+  const company = client.company?.trim() || client.name?.trim();
+  const exhibition = client.exhibition?.trim() || "Pending Exhibition";
+  const assigned = Boolean(client.managerId || (client.pm && client.pm !== "Unassigned"));
+  const existing = (client.projectId ? store.projects.find((project) => project.id === client.projectId) : null)
+    ?? store.projects.find((project) => {
+      const sameCompany = project.client.trim().toLowerCase() === company.trim().toLowerCase();
+      const sameExhibition = (project.exhibition || "").trim().toLowerCase() === exhibition.trim().toLowerCase();
+      const sameAgency = String((project as any).agency || actor.company || "ENS Demo Agency").trim().toLowerCase()
+        === String((client as any).agency || actor.company || "ENS Demo Agency").trim().toLowerCase();
+      return sameCompany && sameExhibition && sameAgency;
+    });
+
+  if (existing) {
+    existing.name = projectNameFromClient(client);
+    existing.client = company;
+    existing.exhibition = exhibition;
+    existing.dimensions = projectDimensionsFromClient(client);
+    existing.system = client.preferredSystem?.trim() || existing.system || "Octanorm";
+    existing.standType = existing.system;
+    existing.deadline = client.targetDate || existing.deadline || null;
+    if (client.managerId || (client.pm && client.pm !== "Unassigned")) {
+      existing.managerId = client.managerId ?? existing.managerId ?? null;
+      existing.pm = client.pm || existing.pm;
+      advanceProjectAfterAssignment(existing);
+    }
+    (existing as any).agency = (client as any).agency || (existing as any).agency || actor.company;
+    client.projectId = existing.id;
+    return existing;
+  }
+
+  const project: Project = {
+    id: `p-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+    name: projectNameFromClient(client),
+    client: company,
+    pm: assigned ? client.pm : "Unassigned",
+    managerId: assigned ? client.managerId ?? null : null,
+    status: assigned ? "In Design" : "Pending",
+    health: "On Track",
+    progress: assigned ? 20 : 5,
+    deadline: client.targetDate || null,
+    system: client.preferredSystem?.trim() || "Octanorm",
+    dimensions: projectDimensionsFromClient(client),
+    exhibition,
+    standType: client.preferredSystem?.trim() || "Octanorm",
+    description: client.intakeNotes?.trim() || `Client intake project for ${company}.`,
+    pipelineStage: assigned ? "design" : "brief",
+    lifecycleHistory: [],
+    lastUpdate: "Just now",
+  };
+  (project as any).agency = (client as any).agency || actor.company;
+  (project as any).source = "client_intake";
+  addProjectLifecycle(project, actor, project.pipelineStage || "brief", project.status);
+  store.projects.unshift(project);
+  client.projectId = project.id;
+  return project;
+}
+
+function ensureExhibition(store: CoreStore, input: { name: string; agency?: string; city?: string; venue?: string; startDate?: string | null; endDate?: string | null; status?: Exhibition["status"] }) {
+  store.exhibitions ??= [];
+  const name = input.name.trim();
+  const agency = input.agency || "ENS Demo Agency";
+  const existing = store.exhibitions.find((item) => (
+    item.name.trim().toLowerCase() === name.toLowerCase()
+    && String(item.agency || "ENS Demo Agency").trim().toLowerCase() === agency.trim().toLowerCase()
+  ));
+  if (existing) {
+    existing.city = input.city ?? existing.city;
+    existing.venue = input.venue ?? existing.venue;
+    existing.startDate = input.startDate ?? existing.startDate ?? null;
+    existing.endDate = input.endDate ?? existing.endDate ?? null;
+    existing.status = input.status ?? existing.status;
+    return existing;
+  }
+  const exhibition: Exhibition = {
+    id: `exh-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+    name,
+    venue: input.venue || "",
+    city: input.city || "",
+    startDate: input.startDate || null,
+    endDate: input.endDate || null,
+    status: input.status || "Active",
+    createdAt: nowIso(),
+    agency,
+  };
+  store.exhibitions.unshift(exhibition);
+  return exhibition;
 }
 
 function projectSummary(projects: Project[]) {
@@ -1450,38 +1676,6 @@ function requestListResponse(
       declined: visible.filter((request) => request.status === "Declined").length,
     },
   };
-}
-
-function readinessStatus() {
-  const isProd = process.env.NODE_ENV === "production";
-  const databaseConfigured = Boolean(process.env.DATABASE_URL);
-  const emailConfigured = Boolean(process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== "your-resend-api-key-here" && process.env.RESEND_FROM);
-  const appUrlConfigured = Boolean(process.env.APP_URL && /^https?:\/\//.test(process.env.APP_URL));
-  const staffCode = process.env.STAFF_SIGNUP_KEY || process.env.CHIEF_BOOTSTRAP_KEY || process.env.STAFF_ACCESS_CODE || "";
-  const staffAccessConfigured = Boolean(staffCode && staffCode !== "change-me-before-deploy" && staffCode !== "ens-staff-local-dev");
-  const checks = {
-    databaseConfigured,
-    emailConfigured,
-    appUrlConfigured,
-    staffAccessConfigured,
-    productionMode: isProd,
-  };
-  const ready = Object.values(checks).every(Boolean);
-  return {
-    ready,
-    mode: isProd ? "production" : "development",
-    checks,
-    warnings: [
-      !databaseConfigured ? "DATABASE_URL is not configured." : null,
-      !emailConfigured ? "Resend email is not configured." : null,
-      !appUrlConfigured ? "APP_URL is not configured." : null,
-      !staffAccessConfigured ? "Staff access code is missing or still a placeholder." : null,
-    ].filter(Boolean),
-  };
-}
-
-function resendConfigured() {
-  return Boolean(process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== "your-resend-api-key-here" && process.env.RESEND_FROM);
 }
 
 async function deliverInvitationEmail(
@@ -1640,6 +1834,7 @@ async function workflowSummary(store: CoreStore, company?: string) {
 router.get("/overview", async (req, res) => {
   const store = await readStore();
   const actor = await actorFromReq(req, "pm");
+  if (!requireRole(res, actor, ["pm", "chief", "client"])) return;
   const actorCompany = actor.company || "ENS Demo Agency";
   const projects = visibleProjectsForActor(store, actor);
   const clients = visibleClientsForActor(store, actor);
@@ -1687,12 +1882,57 @@ router.get("/overview", async (req, res) => {
 });
 
 router.get("/system/readiness", async (_req, res) => {
-  res.json(readinessStatus());
+  res.json(configReadiness());
+});
+
+router.get("/exhibitions", async (req, res) => {
+  const store = await readStore();
+  const actor = await actorFromReq(req, "pm");
+  if (!requireRole(res, actor, ["pm", "chief"])) return;
+  const actorCompany = actor.company || "ENS Demo Agency";
+  const agencyKey = actorCompany.trim().toLowerCase();
+  const explicit = (store.exhibitions ?? []).filter((item) => String(item.agency || "ENS Demo Agency").trim().toLowerCase() === agencyKey);
+  const inferred = store.projects
+    .filter((project) => String((project as any).agency || "ENS Demo Agency").trim().toLowerCase() === agencyKey)
+    .map((project) => project.exhibition)
+    .filter(Boolean);
+  const known = new Set(explicit.map((item) => item.name.trim().toLowerCase()));
+  for (const name of inferred) {
+    if (!known.has(name.trim().toLowerCase())) {
+      explicit.push({
+        id: `inferred-${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+        name,
+        status: "Active",
+        createdAt: nowIso(),
+        agency: actorCompany,
+      });
+      known.add(name.trim().toLowerCase());
+    }
+  }
+  res.json({
+    exhibitions: explicit.sort((a, b) => a.name.localeCompare(b.name)),
+  });
+});
+
+router.post("/exhibitions", async (req, res) => {
+  const parsed = validateBody(exhibitionPayloadSchema, req.body);
+  if (!parsed.success) return badRequest(res, parsed.error);
+  const store = await readStore();
+  const actor = await actorFromReq(req, "chief");
+  if (!requireRole(res, actor, ["chief"])) return;
+  const exhibition = ensureExhibition(store, { ...parsed.data, agency: actor.company || "ENS Demo Agency" });
+  store.activity = [
+    { id: activityId(), type: "update", user: actor.name, action: "created exhibition", project: exhibition.name, time: "Just now" },
+    ...store.activity,
+  ].slice(0, 100);
+  await writeStore(store);
+  res.status(201).json({ exhibition, exhibitions: store.exhibitions ?? [] });
 });
 
 router.get("/projects", async (req, res) => {
   const store = await readStore();
   const actor = await actorFromReq(req, "pm");
+  if (!requireRole(res, actor, ["pm", "chief", "client"])) return;
   const q = String(req.query.q || "").trim().toLowerCase();
   const status = String(req.query.status || "").trim();
   const limit = Math.max(1, Number(req.query.limit || 25));
@@ -1724,7 +1964,8 @@ router.post("/projects", async (req, res) => {
     name: parsed.data.name,
     client: parsed.data.client?.trim() || "Unassigned client",
     pm: assignedManager === "Unassigned" ? "Unassigned" : assignedManager,
-    status: "Planning",
+    managerId: actor.role === "pm" ? actor.id : parsed.data.managerId ?? null,
+    status: assignedManager === "Unassigned" ? "Pending" : "In Design",
     health: "On Track",
     progress: 0,
     deadline: parsed.data.deadline || null,
@@ -1733,11 +1974,12 @@ router.post("/projects", async (req, res) => {
     exhibition: parsed.data.exhibition?.trim() || parsed.data.name,
     standType: parsed.data.system,
     description: "",
-    pipelineStage: "brief",
+    pipelineStage: assignedManager === "Unassigned" ? "brief" : "design",
     lifecycleHistory: [],
     lastUpdate: "Just now",
   };
   (project as any).agency = actor.company;
+  ensureExhibition(store, { name: project.exhibition, agency: actor.company || "ENS Demo Agency", status: "Active" });
   addProjectLifecycle(project, actor, "brief", project.status);
   const linkedClient = parsed.data.clientId
     ? store.clients.find((client) => client.id === parsed.data.clientId)
@@ -1745,7 +1987,10 @@ router.post("/projects", async (req, res) => {
   if (linkedClient) {
     linkedClient.projectId = project.id;
     linkedClient.exhibition = project.exhibition || linkedClient.exhibition;
-    if (project.pm !== "Unassigned") linkedClient.pm = project.pm;
+    if (project.pm !== "Unassigned") {
+      linkedClient.pm = project.pm;
+      linkedClient.managerId = project.managerId ?? null;
+    }
     linkedClient.lastActivity = "Just now";
   }
   store.projects.unshift(project);
@@ -1789,6 +2034,10 @@ router.put("/projects/:projectId", async (req, res) => {
   project.pm = actor.role === "chief" && parsed.data.managerId !== undefined
     ? await managerNameFromId(parsed.data.managerId)
     : project.pm;
+  if (actor.role === "chief" && parsed.data.managerId !== undefined) {
+    project.managerId = parsed.data.managerId ?? null;
+    advanceProjectAfterAssignment(project);
+  }
   project.deadline = parsed.data.deadline || null;
   project.system = parsed.data.system;
   project.dimensions = `${parsed.data.widthM} x ${parsed.data.depthM} m`;
@@ -1806,6 +2055,7 @@ router.put("/projects/:projectId", async (req, res) => {
     client.name = project.client;
     client.company = project.client;
     client.pm = project.pm;
+    client.managerId = project.managerId ?? null;
     client.exhibition = project.exhibition;
     client.lastActivity = "Just now";
   }
@@ -1864,13 +2114,23 @@ router.post("/clients", async (req, res) => {
     projectId: null,
     pm: actor.role === "pm" ? actor.name : "Unassigned",
     exhibition: parsed.data.exhibition || "New Exhibition",
+    boothWidthM: parsed.data.boothWidthM ?? undefined,
+    boothDepthM: parsed.data.boothDepthM ?? undefined,
+    preferredSystem: parsed.data.preferredSystem || undefined,
+    venueCity: parsed.data.venueCity || undefined,
+    targetDate: parsed.data.targetDate || undefined,
+    intakeNotes: parsed.data.intakeNotes || undefined,
     status: "Pending",
     lastActivity: "Just now",
   };
+  if (actor.role === "pm") {
+    client.managerId = actor.id;
+  }
   (client as any).agency = actor.company;
   store.clients.unshift(client);
+  const project = ensureProjectForClient(store, client, actor);
   store.activity = [
-    { id: activityId(), type: "update", user: actor.name, action: `created client ${client.company}`, project: client.exhibition, time: "Just now" },
+    { id: activityId(), type: "update", user: actor.name, action: `created client ${client.company}`, project: project.name, time: "Just now" },
     ...store.activity,
   ].slice(0, 100);
   await writeStore(store);
@@ -1892,7 +2152,14 @@ router.put("/clients/:clientId", async (req, res) => {
   client.contactName = parsed.data.name;
   client.contactEmail = parsed.data.email.toLowerCase();
   client.exhibition = parsed.data.exhibition || client.exhibition;
+  client.boothWidthM = parsed.data.boothWidthM ?? client.boothWidthM;
+  client.boothDepthM = parsed.data.boothDepthM ?? client.boothDepthM;
+  client.preferredSystem = parsed.data.preferredSystem || client.preferredSystem;
+  client.venueCity = parsed.data.venueCity || client.venueCity;
+  client.targetDate = parsed.data.targetDate || client.targetDate;
+  client.intakeNotes = parsed.data.intakeNotes || client.intakeNotes;
   client.lastActivity = "Just now";
+  ensureProjectForClient(store, client, actor);
   await writeStore(store);
   const clients = visibleClientsForActor(store, actor);
   res.json({ ok: true, clients, summary: clientSummary(clients) });
@@ -1904,7 +2171,11 @@ router.delete("/clients/:clientId", async (req, res) => {
   if (!requireRole(res, actor, ["chief"])) return;
   const client = store.clients.find((item) => item.id === req.params.clientId);
   if (!client) return res.status(404).json({ error: "Client not found." });
-  const activeProjects = store.projects.filter((project) => project.client === client.name || project.client === client.company || project.id === client.projectId)
+  const linkedProjects = store.projects.filter((project) => project.client === client.name || project.client === client.company || project.id === client.projectId);
+  const archiveableIntakeProjects = linkedProjects.filter((project) => (project as any).source === "client_intake" && !store.workspaces?.[project.id]);
+  const archiveableIds = new Set(archiveableIntakeProjects.map((project) => project.id));
+  const activeProjects = linkedProjects
+    .filter((project) => !archiveableIds.has(project.id))
     .filter((project) => !["Completed", "Approved"].includes(project.status));
   if (activeProjects.length) {
     return res.status(409).json({
@@ -1913,6 +2184,9 @@ router.delete("/clients/:clientId", async (req, res) => {
     });
   }
   store.clients = store.clients.filter((item) => item.id !== client.id);
+  if (archiveableIds.size) {
+    store.projects = store.projects.filter((project) => !archiveableIds.has(project.id));
+  }
   await writeStore(store);
   res.json({ ok: true, clients: store.clients });
 });
@@ -2115,6 +2389,9 @@ router.put("/managers/assignments", async (req, res) => {
     if (!matchesCompany(client, actor.company || "ENS Demo Agency")) continue;
     const managerName = await managerNameFromId(assignment.managerId);
     client.pm = managerName;
+    client.managerId = assignment.managerId ?? null;
+    if (managerName !== "Unassigned") client.status = "Active";
+    client.lastActivity = "Just now";
     notifyUser(assignment.managerId ?? managerName, "pm", "New client assigned", `${client.name} was assigned to you by Chief Manager.`, "/pm/clients");
     notifyUser(client.contactEmail, "client", "Project manager assigned", `${managerName} is now your project manager.`, "/client");
     if (cascadeClientProjects) {
@@ -2123,6 +2400,8 @@ router.put("/managers/assignments", async (req, res) => {
         .filter((project) => matchesCompany(project, actor.company || "ENS Demo Agency"))
         .forEach((project) => {
           project.pm = client.pm;
+          project.managerId = client.managerId ?? null;
+          advanceProjectAfterAssignment(project);
           notifyUser(assignment.managerId ?? managerName, "pm", "New project assigned", `${project.name} was assigned to you by Chief Manager.`, `/pm/workspace?projectId=${encodeURIComponent(project.id)}`);
         });
     }
@@ -2134,10 +2413,15 @@ router.put("/managers/assignments", async (req, res) => {
     if (!matchesCompany(project, actor.company || "ENS Demo Agency")) continue;
     const managerName = await managerNameFromId(assignment.managerId);
     project.pm = managerName;
+    project.managerId = assignment.managerId ?? null;
+    advanceProjectAfterAssignment(project);
     notifyUser(assignment.managerId ?? managerName, "pm", "New project assigned", `${project.name} was assigned to you by Chief Manager.`, `/pm/workspace?projectId=${encodeURIComponent(project.id)}`);
     const client = store.clients.find((item) => item.projectId === project.id || item.name === project.client);
     if (client) {
       client.pm = project.pm;
+      client.managerId = project.managerId ?? null;
+      if (project.pm !== "Unassigned") client.status = "Active";
+      client.lastActivity = "Just now";
       notifyUser(client.contactEmail, "client", "Project manager assigned", `${managerName} is now assigned to your project ${project.name}.`, "/client");
     }
   }
@@ -2208,6 +2492,7 @@ router.post("/managers/invitations/accept", async (req, res) => {
       email: invitation.email,
       password: parsed.data.password ?? "",
       role: invitation.role === "chief" ? "chief" : "pm",
+      company: (invitation as { agency?: string }).agency || "ENS Demo Agency",
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not create invited account.";
@@ -2476,16 +2761,29 @@ router.put("/projects/:projectId/client-access", async (req, res) => {
   if (!requireProjectAccess(res, store, actor, project)) return;
   const email = parsed.data.email.toLowerCase();
   const name = parsed.data.name || project.client;
-  let client = clientForProject(store, project);
+  let client = store.clients.find((item) => item.contactEmail.trim().toLowerCase() === email)
+    ?? clientForProject(store, project);
   if (client) {
+    const previousProjectId = client.projectId;
     client.contactEmail = email;
     client.contactName = name;
     client.projectId = project.id;
-    client.name = project.client;
-    client.company = project.client;
+    client.name = client.company || project.client;
+    client.company = client.company || project.client;
+    client.pm = project.pm;
+    client.managerId = project.managerId ?? client.managerId ?? null;
+    client.exhibition = project.exhibition || client.exhibition;
     client.agency = (project as any).agency || actor.company;
     client.status = "Active";
     client.lastActivity = "Just now";
+    project.client = client.company || project.client;
+    project.name = `${project.exhibition || project.name} - ${project.client}`;
+    if (previousProjectId && previousProjectId !== project.id) {
+      const previousProject = store.projects.find((item) => item.id === previousProjectId);
+      if (previousProject && (previousProject as any).source === "client_intake" && !store.workspaces?.[previousProject.id]) {
+        store.projects = store.projects.filter((item) => item.id !== previousProject.id);
+      }
+    }
   } else {
     client = {
       id: `c-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
@@ -2533,6 +2831,7 @@ router.get("/workspace/current", async (req, res) => {
     : store.projects.find((item) => canAccessProject(store, actor, item));
   if (!project) return res.status(404).json({ error: "No assigned workspace found." });
   const workspace = ensureWorkspace(store, project);
+  await markWorkspaceViewedByClient(store, actor, project, workspace);
   await writeStore(store);
   res.json(projectWorkspaceResponse(project, workspace));
 });
@@ -2544,8 +2843,33 @@ router.get("/projects/:projectId/workspace", async (req, res) => {
   if (!project) return res.status(404).json({ error: "Project not found." });
   if (!requireProjectAccess(res, store, actor, project)) return;
   const workspace = ensureWorkspace(store, project);
+  await markWorkspaceViewedByClient(store, actor, project, workspace);
   await writeStore(store);
   res.json(projectWorkspaceResponse(project, workspace));
+});
+
+router.post("/projects/:projectId/workspace/assets", async (req, res) => {
+  const parsed = validateBody(workspaceAssetPayloadSchema, req.body);
+  if (!parsed.success) return badRequest(res, parsed.error);
+  const store = await readStore();
+  const actor = await actorFromReq(req, "pm");
+  if (!requireRole(res, actor, ["pm", "chief"])) return;
+  const project = store.projects.find((item) => item.id === req.params.projectId);
+  if (!project) return res.status(404).json({ error: "Project not found." });
+  if (!requireProjectAccess(res, store, actor, project)) return;
+  try {
+    const asset = await saveWorkspaceAsset({
+      projectId: project.id,
+      dataUrl: parsed.data.dataUrl,
+      originalName: parsed.data.name,
+      purpose: parsed.data.purpose,
+    });
+    addActivity(store, "update", actor.name, `uploaded workspace ${parsed.data.purpose} asset`, project);
+    await writeStore(store);
+    res.status(201).json({ asset });
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : "Could not save workspace asset." });
+  }
 });
 
 router.put("/projects/:projectId/workspace", async (req, res) => {
@@ -2585,6 +2909,13 @@ router.post("/projects/:projectId/workspace/versions", async (req, res) => {
   if (!requireProjectAccess(res, store, actor, project)) return;
   const workspace = ensureWorkspace(store, project);
   const requestedStatus = parsed.data.status === "submitted" ? "submitted" : "draft";
+  const assignedClient = requestedStatus === "submitted" ? clientForProject(store, project) : null;
+  if (requestedStatus === "submitted" && !assignedClient?.contactEmail) {
+    return res.status(409).json({
+      error: "Client access is not linked.",
+      message: "Assign or link a real client account before sending this workspace for client review.",
+    });
+  }
   const createdAt = nowIso();
   const version: StoredWorkspaceVersion = {
     id: `${project.id}-v${workspace.versions.length + 1}-${Date.now()}`,
@@ -2607,6 +2938,18 @@ router.post("/projects/:projectId/workspace/versions", async (req, res) => {
     project.status = "Client Review";
     project.pipelineStage = "review";
     addActivity(store, "approval", actor.name, "sent workspace to client", project);
+    await pushNotificationToAccount(store, assignedClient?.contactEmail, "client", {
+      title: "Booth design ready for review",
+      body: `${actor.name} sent the latest design for ${project.name}. Open the workspace to approve it or request changes.`,
+      href: "/client/workspace",
+    });
+    if (project.managerId || project.pm !== "Unassigned") {
+      await pushNotificationToAccount(store, project.managerId ?? project.pm, "pm", {
+        title: "Workspace sent to client",
+        body: `${project.name} is now waiting for client approval.`,
+        href: `/pm/workspace?projectId=${encodeURIComponent(project.id)}`,
+      });
+    }
   } else {
     project.status = "In Design";
     project.pipelineStage = "design";

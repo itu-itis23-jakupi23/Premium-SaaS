@@ -102,7 +102,7 @@ export default function ClientProfile() {
   });
 
   const displayName =
-    profileForm.watch("name") || user?.name || "Client Reviewer";
+    profileForm.watch("name") || user?.name || "Client";
 
   useEffect(() => {
     let mounted = true;
@@ -111,9 +111,9 @@ export default function ClientProfile() {
       .then((settings) => {
         if (!mounted) return;
         profileForm.reset({
-          name: settings.profile.name || user?.name || "Client Reviewer",
+          name: settings.profile.name || user?.name || "Client",
           email:
-            settings.profile.email || user?.email || "client@ens.test",
+            settings.profile.email || user?.email || "",
           phone: settings.profile.phone,
         });
         setAvatarUrl(settings.profile.avatarUrl);

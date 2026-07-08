@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Link, useLocation } from 'wouter';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, Eye, EyeOff, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Eye, EyeOff, ArrowLeft, ShieldCheck, AlertCircle } from 'lucide-react';
+import { resetPassword } from '@/lib/platform-api';
 
 function PasswordStrength({ password }: { password: string }) {
   const { t } = useTranslation();
@@ -68,6 +69,8 @@ export default function ResetPassword() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const token = useMemo(() => new URLSearchParams(window.location.search).get('token'), []);
 
   useEffect(() => {
     document.title = t('auth.resetPassword.pageTitle');
@@ -97,11 +100,39 @@ export default function ResetPassword() {
 
   const passwordValue = form.watch('password');
 
-  async function onSubmit(_values: ResetFormValues) {
+  async function onSubmit(values: ResetFormValues) {
+    if (!token) return;
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setIsSubmitting(false);
-    setIsSuccess(true);
+    setError(null);
+    try {
+      await resetPassword(token, values.password);
+      setIsSuccess(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('auth.resetPassword.errorGeneric'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  if (!token) {
+    return (
+      <AuthLayout title={t('auth.resetPassword.invalidLinkTitle', { defaultValue: 'Invalid link' })}>
+        <div className="flex flex-col items-center text-center space-y-4 py-4">
+          <div className="h-14 w-14 rounded-full bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-2">
+            <AlertCircle className="h-7 w-7 text-destructive" aria-hidden="true" />
+          </div>
+          <p className="text-muted-foreground leading-relaxed">
+            {t('auth.resetPassword.invalidLinkMessage', { defaultValue: 'This password reset link is invalid or has expired. Please request a new one.' })}
+          </p>
+          <Link
+            href="/forgot-password"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            {t('auth.resetPassword.requestNewLink', { defaultValue: 'Request new reset link' })}
+          </Link>
+        </div>
+      </AuthLayout>
+    );
   }
 
   if (isSuccess) {
@@ -226,6 +257,13 @@ export default function ResetPassword() {
               </div>
             ))}
           </div>
+
+          {error && (
+            <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2" role="alert">
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {error}
+            </div>
+          )}
 
           <Button
             type="submit"

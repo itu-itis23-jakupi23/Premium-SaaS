@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import type { BoothSystem } from './BoothCanvas';
 
 // ── Minimal config interface — only what the iframe renderer needs ──
@@ -21,6 +21,7 @@ interface IframeBoothConfig {
   rooms?: any[];
   panelOverrides?: Record<string, any>;
   frontSupportPositions?: number[];
+  suppressedDefaultPositions?: number[];
   fasciaEnabled?: boolean;
   fasciaOption?: string;
   lightingPreset?: string;
@@ -32,13 +33,13 @@ interface IframeBoothConfig {
   onItemDelete?: (id: string) => void;
   onItemRotate?: (id: string, patch: { rotationY: number }) => void;
   onRoomMove?: (id: string, patch: any) => void;
-  onFrontSupportMove?: (positions: number[]) => void;
+  onFrontSupportMove?: (positions: number[], suppressedDefaultPositions: number[]) => void;
   onPinRequest?: (partId: string, detail: any) => void;
 }
 
-type RequiredIframeConfig = Required<Omit<IframeBoothConfig, 'placedItems' | 'rooms' | 'panelOverrides' | 'frontSupportPositions' | 'fasciaEnabled' | 'fasciaOption' | 'lightingPreset' | 'pins' | 'pinMode' | 'invalidItemIds' | 'onItemMove' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove' | 'onFrontSupportMove' | 'onPinRequest'>> & Pick<IframeBoothConfig, 'placedItems' | 'rooms' | 'panelOverrides' | 'frontSupportPositions' | 'fasciaEnabled' | 'fasciaOption' | 'lightingPreset' | 'pins' | 'pinMode' | 'invalidItemIds' | 'onItemMove' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove' | 'onFrontSupportMove' | 'onPinRequest'>;
+type RequiredIframeConfig = Required<Omit<IframeBoothConfig, 'placedItems' | 'rooms' | 'panelOverrides' | 'frontSupportPositions' | 'suppressedDefaultPositions' | 'fasciaEnabled' | 'fasciaOption' | 'lightingPreset' | 'pins' | 'pinMode' | 'invalidItemIds' | 'onItemMove' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove' | 'onFrontSupportMove' | 'onPinRequest'>> & Pick<IframeBoothConfig, 'placedItems' | 'rooms' | 'panelOverrides' | 'frontSupportPositions' | 'suppressedDefaultPositions' | 'fasciaEnabled' | 'fasciaOption' | 'lightingPreset' | 'pins' | 'pinMode' | 'invalidItemIds' | 'onItemMove' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove' | 'onFrontSupportMove' | 'onPinRequest'>;
 
-const DEFAULTS: Required<Omit<IframeBoothConfig, 'placedItems' | 'rooms' | 'panelOverrides' | 'frontSupportPositions' | 'fasciaOption' | 'lightingPreset' | 'pins' | 'pinMode' | 'invalidItemIds' | 'onItemMove' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove' | 'onFrontSupportMove' | 'onPinRequest'>> = {
+const DEFAULTS: Required<Omit<IframeBoothConfig, 'placedItems' | 'rooms' | 'panelOverrides' | 'frontSupportPositions' | 'suppressedDefaultPositions' | 'fasciaOption' | 'lightingPreset' | 'pins' | 'pinMode' | 'invalidItemIds' | 'onItemMove' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove' | 'onFrontSupportMove' | 'onPinRequest'>> = {
   width:        6,
   depth:        3,
   height:       2.5,
@@ -92,7 +93,26 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
   const configRef = useRef<IframeBoothConfig | undefined>(config);
   const latestPayloadRef = useRef<Record<string, unknown> | null>(null);
 
-  const [src] = useState(() => buildSrc(cfg));
+  const src = useMemo(() => buildSrc(cfg), [
+    cfg.width,
+    cfg.depth,
+    cfg.height,
+    cfg.system,
+    cfg.companyName,
+    cfg.wallColor,
+    cfg.frameColor,
+    cfg.fasciaColor,
+    cfg.carpetColor,
+    cfg.openFront,
+    cfg.openBack,
+    cfg.openLeft,
+    cfg.openRight,
+    cfg.fasciaEnabled,
+  ]);
+
+  useEffect(() => {
+    setReady(false);
+  }, [src]);
 
   useEffect(() => {
     configRef.current = config;
@@ -116,8 +136,9 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
       rooms: cfg.rooms ?? [],
       panelOverrides: cfg.panelOverrides ?? {},
       frontSupportPositions: cfg.frontSupportPositions ?? [],
+      suppressedDefaultPositions: cfg.suppressedDefaultPositions ?? [],
       fasciaEnabled: cfg.fasciaEnabled !== false,
-      fasciaOption: cfg.fasciaOption ?? 'classic',
+      fasciaOption: cfg.fasciaOption ?? 'full',
       lightingPreset: cfg.lightingPreset ?? 'exhibition',
       pins:   cfg.pins ?? [],
       pinMode: cfg.pinMode ?? false,
@@ -127,7 +148,7 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
     cfg.width, cfg.depth, cfg.height,
     cfg.system, cfg.companyName, cfg.wallColor, cfg.frameColor, cfg.fasciaColor, cfg.carpetColor,
     cfg.openFront, cfg.openBack, cfg.openLeft, cfg.openRight,
-    cfg.placedItems, cfg.rooms, cfg.panelOverrides, cfg.frontSupportPositions, cfg.fasciaEnabled, cfg.fasciaOption, cfg.lightingPreset, cfg.pins, cfg.pinMode, cfg.invalidItemIds,
+    cfg.placedItems, cfg.rooms, cfg.panelOverrides, cfg.frontSupportPositions, cfg.suppressedDefaultPositions, cfg.fasciaEnabled, cfg.fasciaOption, cfg.lightingPreset, cfg.pins, cfg.pinMode, cfg.invalidItemIds,
   ]);
 
   const sendUpdate = useCallback(() => {
@@ -135,7 +156,7 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
     if (!win) return;
     const payload = buildPayload();
     latestPayloadRef.current = payload;
-    win.postMessage(payload, '*');
+    win.postMessage(payload, location.origin);
   }, [
     buildPayload,
   ]);
@@ -183,7 +204,9 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
         return;
       }
       if (event.data.type === 'workspaceFrontSupportsMoved') {
-        bridgeConfig?.onFrontSupportMove?.(Array.isArray(event.data.positions) ? event.data.positions.map(Number).filter(Number.isFinite) : []);
+        const positions = Array.isArray(event.data.positions) ? event.data.positions.map(Number).filter(Number.isFinite) : [];
+        const suppressed = Array.isArray(event.data.suppressedDefaultPositions) ? event.data.suppressedDefaultPositions.map(Number).filter(Number.isFinite) : [];
+        bridgeConfig?.onFrontSupportMove?.(positions, suppressed);
         return;
       }
       if (event.data.type === 'workspaceItemDeleteRequested') {
@@ -202,15 +225,12 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
     window.addEventListener('message', handler);
     return () => {
       window.removeEventListener('message', handler);
-      // Blank the iframe src on unmount so the WebGL context is released immediately
-      // rather than waiting for GC.
-      const iframe = iframeRef.current;
-      if (iframe) iframe.src = 'about:blank';
     };
   }, [sendUpdate]);
 
   return (
     <iframe
+      key={src}
       ref={iframeRef}
       src={src}
       title="Booth Renderer"

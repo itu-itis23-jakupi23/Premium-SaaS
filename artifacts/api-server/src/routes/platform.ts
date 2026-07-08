@@ -39,7 +39,7 @@ async function queryRows<T>(statement: SQL) {
   return (result as unknown as { rows: T[] }).rows;
 }
 
-router.get("/platform/overview", async (req, res) => {
+router.get("/platform/overview", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const organization = req.tenant!;
   const auth = req.auth!;
   const isChief = canManageOrganization(auth);
@@ -90,7 +90,7 @@ router.get("/platform/overview", async (req, res) => {
   });
 });
 
-router.get("/platform/projects", async (req, res) => {
+router.get("/platform/projects", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const organization = req.tenant!;
   res.json(await getProjectList(organization.id, parseProjectListQuery(req.query), req.auth!));
 });
@@ -521,12 +521,12 @@ router.post("/platform/requests/:requestId/replies", requireRoles(["admin", "own
   res.status(201).json(await getPmRequests(req.auth!, parsePmRequestListQuery(req.query)));
 });
 
-router.get("/platform/account/settings", async (req, res) => {
+router.get("/platform/account/settings", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const settings = await getAccountSettings(req.auth!);
   res.json(settings);
 });
 
-router.put("/platform/account/settings", async (req, res) => {
+router.put("/platform/account/settings", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const input = parseAccountSettingsInput(req.body);
 
   if (!input.ok) {
@@ -539,7 +539,7 @@ router.put("/platform/account/settings", async (req, res) => {
   res.json(settings);
 });
 
-router.put("/platform/account/avatar", async (req, res) => {
+router.put("/platform/account/avatar", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const input = parseAvatarInput(req.body);
 
   if (!input.ok) {
@@ -552,7 +552,7 @@ router.put("/platform/account/avatar", async (req, res) => {
   res.json(settings);
 });
 
-router.put("/platform/account/password", async (req, res) => {
+router.put("/platform/account/password", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const input = parsePasswordInput(req.body);
 
   if (!input.ok) {
@@ -571,12 +571,12 @@ router.put("/platform/account/password", async (req, res) => {
   res.status(204).send();
 });
 
-router.get("/platform/account/sessions", async (req, res) => {
+router.get("/platform/account/sessions", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   res.json({ sessions: await getAccountSessions(req.auth!) });
 });
 
-router.delete("/platform/account/sessions/:sessionId", async (req, res) => {
-  const sessionId = req.params.sessionId;
+router.delete("/platform/account/sessions/:sessionId", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
+  const sessionId = stringValue(req.params.sessionId);
   if (!sessionId) {
     res.status(400).json({ error: "Session id is required" });
     return;
@@ -810,16 +810,16 @@ router.post("/platform/managers/:managerId/reminders", requireRoles(["admin", "o
   res.status(201).json({ ok: true });
 });
 
-router.get("/platform/notifications", async (req, res) => {
+router.get("/platform/notifications", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   res.json(await getNotifications(req.auth!, 20));
 });
 
-router.patch("/platform/notifications/read-all", async (req, res) => {
+router.patch("/platform/notifications/read-all", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const updated = await markAllNotificationsRead(req.auth!);
   res.json({ updated, ...(await getNotifications(req.auth!, 20)) });
 });
 
-router.patch("/platform/notifications/:notificationId/read", async (req, res) => {
+router.patch("/platform/notifications/:notificationId/read", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const notificationId = stringValue(req.params.notificationId);
 
   if (!notificationId || !isUuid(notificationId)) {

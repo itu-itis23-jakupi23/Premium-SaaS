@@ -27,6 +27,7 @@ interface StoredAuthUser {
   id: string;
   name: string;
   company: string;
+  organizationSlug?: string;
   email: string;
   role: "chief" | "pm" | "client";
   systemRole: string;
@@ -85,6 +86,14 @@ function normalizedInviteRole(role: string): StaffRole {
   return role === "chief" ? "chief" : "pm";
 }
 
+function fallbackAgencyName() {
+  return process.env.DEFAULT_AGENCY_NAME || process.env.DEFAULT_ORGANIZATION_NAME || "ENS Demo Agency";
+}
+
+function slugifyOrganization(value: string) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "ens-demo-agency";
+}
+
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
   const derived = await scrypt(password, salt, 64) as Buffer;
@@ -103,11 +112,12 @@ async function createStaffAuthAccount(row: DBInvitation, name: string, password:
   }
 
   const role = normalizedInviteRole(row.role);
-  const company = process.env.DEFAULT_AGENCY_NAME || process.env.DEFAULT_ORGANIZATION_NAME || "NIKA";
+  const company = fallbackAgencyName();
   const user: StoredAuthUser = {
     id: `user-${Date.now()}-${randomBytes(4).toString("hex")}`,
     name,
     company,
+    organizationSlug: process.env.DEFAULT_ORGANIZATION_SLUG || slugifyOrganization(company),
     email,
     role,
     systemRole: role === "chief" ? "owner" : "pm",

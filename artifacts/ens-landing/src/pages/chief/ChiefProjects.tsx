@@ -33,25 +33,32 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
+  createPlatformExhibition,
   createPlatformProject,
+  getPlatformExhibitions,
   getManagerWorkspace,
+  getWorkspaceMonitor,
   getPlatformProjects,
   recordReportExport,
   updatePlatformProject,
   updatePlatformProjectStage,
   type PlatformPagination,
+  type PlatformExhibition,
   type ManagedClient,
   type PlatformManager,
   type PlatformProject,
+  type WorkspaceMonitorProject,
 } from "@/lib/platform-api";
 import { downloadExcelWorkbook } from "@/lib/excel-export";
 import { cn } from "@/lib/utils";
 import {
+  Activity,
   AlertCircle,
   Calendar,
   ChevronLeft,
   ChevronRight,
   Download,
+  ExternalLink,
   Layers,
   List,
   Loader2,
@@ -162,11 +169,12 @@ export default function ChiefProjects() {
   const initialManager = initialParams.get("pm") ?? "";
 
   const [projects, setProjects]             = useState<KanbanProject[]>([]);
+  const [exhibitions, setExhibitions]       = useState<PlatformExhibition[]>([]);
   const [managers, setManagers]             = useState<PlatformManager[]>([]);
   const [managedClients, setManagedClients] = useState<ManagedClient[]>([]);
   const [pagination, setPagination]         = useState<PlatformPagination>({ total: 0, limit: PAGE_SIZE, offset: 0, hasMore: false });
   const [page, setPage]                     = useState(0);
-  const [view, setView]                     = useState<"kanban" | "list">("kanban");
+  const [view, setView]                     = useState<"kanban" | "list" | "live">("kanban");
   const [search, setSearch]                 = useState(initialManager);
   const debouncedSearch                     = useDebounce(search, 250);
   const [filterSt, setFilter]               = useState<"All" | "Active" | "Pending" | "Delayed" | "Completed">("All");
@@ -176,6 +184,7 @@ export default function ChiefProjects() {
   const [error, setError]                   = useState("");
   const [isLoading, setIsLoading]           = useState(true);
   const [movingProjectId, setMovingProjectId] = useState<string | null>(null);
+  const [wsMap, setWsMap]                   = useState<Map<string, WorkspaceMonitorProject>>(new Map());
   const [editProject, setEditProject]       = useState<KanbanProject | null>(null);
   const [editForm, setEditForm]             = useState<ProjectEditForm>(EMPTY_PROJECT_FORM);
   const [editError, setEditError]           = useState("");
@@ -186,6 +195,12 @@ export default function ChiefProjects() {
   const [createForm, setCreateForm]         = useState<CreateProjectForm>(EMPTY_CREATE_FORM);
   const [createError, setCreateError]       = useState("");
   const [isCreating, setIsCreating]         = useState(false);
+  // Tabs + exhibitions
+  const [activeTab, setActiveTab]           = useState<"projects" | "exhibitions">("projects");
+  const [exhibitionCreateOpen, setExhibitionCreateOpen] = useState(false);
+  const [exhibitionForm, setExhibitionForm] = useState({ name: "", venue: "", city: "", startDate: "", endDate: "" });
+  const [exhibitionCreateError, setExhibitionCreateError] = useState("");
+  const [isCreatingExhibition, setIsCreatingExhibition]   = useState(false);
 
   useEffect(() => {
     document.title = t("chief.projects.title");
@@ -264,7 +279,33 @@ export default function ChiefProjects() {
     return () => { mounted = false; };
   }, []);
 
+  // Load workspace monitor data silently — used to show live workspace status on project cards
+  useEffect(() => {
+    let mounted = true;
+    getWorkspaceMonitor()
+      .then((workspace) => {
+        if (!mounted) return;
+        const map = new Map<string, WorkspaceMonitorProject>();
+        for (const p of workspace.projects) map.set(p.id, p);
+        setWsMap(map);
+      })
+      .catch(() => { /* non-critical — cards degrade gracefully */ });
+    return () => { mounted = false; };
+  }, []);
+
   // Translated stage labels — reactive to language changes
+  useEffect(() => {
+    let mounted = true;
+    getPlatformExhibitions()
+      .then((response) => {
+        if (mounted) setExhibitions(response.exhibitions);
+      })
+      .catch(() => {
+        if (mounted) setExhibitions([]);
+      });
+    return () => { mounted = false; };
+  }, []);
+
   const stages = useMemo(
     () => STAGE_IDS.map((id) => ({ id, label: t(`chief.projects.stage.${id}`) })),
     [t],
@@ -453,9 +494,9 @@ export default function ChiefProjects() {
     }
   }
 
-  function openMonitor(projectName: string) {
+  function openMonitor(projectId: string, projectName: string) {
     showToast(t("chief.projects.toast.openMonitor", { name: projectName }));
-    window.setTimeout(() => navigate("/chief/workspace-monitor"), 500);
+    window.setTimeout(() => navigate(`/chief/workspace-monitor?project=${encodeURIComponent(projectId)}`), 500);
   }
 
   async function createProject() {
@@ -477,6 +518,20 @@ export default function ChiefProjects() {
     setCreateError("");
     setIsCreating(true);
     try {
+      if (!createForm.clientId && !client) {
+        await createPlatformExhibition({
+          name: exhibition,
+          status: "Active",
+          startDate: createForm.deadline || null,
+        });
+        const response = await getPlatformExhibitions();
+        setExhibitions(response.exhibitions);
+        await reloadProjects();
+        setCreateOpen(false);
+        setCreateForm(EMPTY_CREATE_FORM);
+        showToast(`Exhibition created: ${exhibition}. Projects will appear when clients register.`);
+        return;
+      }
       await createPlatformProject({
         name,
         client,
@@ -497,6 +552,32 @@ export default function ChiefProjects() {
       setCreateError(reason instanceof Error ? reason.message : t("chief.projects.error.save"));
     } finally {
       setIsCreating(false);
+    }
+  }
+
+  async function createExhibition() {
+    const name = exhibitionForm.name.trim();
+    if (!name) { setExhibitionCreateError("Exhibition name is required."); return; }
+    setExhibitionCreateError("");
+    setIsCreatingExhibition(true);
+    try {
+      await createPlatformExhibition({
+        name,
+        venue: exhibitionForm.venue.trim() || undefined,
+        city:  exhibitionForm.city.trim()  || undefined,
+        startDate: exhibitionForm.startDate || null,
+        endDate:   exhibitionForm.endDate   || null,
+        status: "Active",
+      });
+      const response = await getPlatformExhibitions();
+      setExhibitions(response.exhibitions);
+      setExhibitionCreateOpen(false);
+      setExhibitionForm({ name: "", venue: "", city: "", startDate: "", endDate: "" });
+      showToast(`Exhibition "${name}" created.`);
+    } catch (reason) {
+      setExhibitionCreateError(reason instanceof Error ? reason.message : "Failed to create exhibition.");
+    } finally {
+      setIsCreatingExhibition(false);
     }
   }
 
@@ -541,18 +622,24 @@ export default function ChiefProjects() {
         >
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 rounded-md border bg-muted/30 p-0.5">
-              {(["kanban", "list"] as const).map((mode) => (
+              {([
+                { id: "kanban", label: t("chief.projects.viewKanban") },
+                { id: "list",   label: t("chief.projects.viewList") },
+                { id: "live",   label: "Live" },
+              ] as const).map((mode) => (
                 <button
-                  key={mode}
-                  onClick={() => setView(mode)}
-                  aria-pressed={view === mode}
-                  aria-label={mode === "kanban" ? t("chief.projects.viewKanban") : t("chief.projects.viewList")}
+                  key={mode.id}
+                  onClick={() => setView(mode.id)}
+                  aria-pressed={view === mode.id}
                   className={cn(
-                    "rounded px-2.5 py-1 text-[11px] font-bold capitalize transition-all",
-                    view === mode ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                    "flex items-center gap-1 rounded px-2.5 py-1 text-[11px] font-bold transition-all",
+                    view === mode.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  {mode === "kanban" ? t("chief.projects.viewKanban") : t("chief.projects.viewList")}
+                  {mode.id === "live" && (
+                    <span className={cn("h-1.5 w-1.5 rounded-full", view === "live" ? "bg-green-500" : "bg-muted-foreground")} />
+                  )}
+                  {mode.label}
                 </button>
               ))}
             </div>
@@ -566,28 +653,52 @@ export default function ChiefProjects() {
                 className="h-8 w-52 rounded-md border bg-muted/30 pl-8 pr-3 text-xs outline-none focus:border-primary"
               />
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs"
-              onClick={exportProjects}
-              disabled={filtered.length === 0}
-              title={t("chief.projects.exportTooltip")}
-            >
-              <Download className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-              {t("chief.projects.export")}
-            </Button>
-            <Button
-              size="sm"
-              className="h-8 text-xs"
-              onClick={() => { setCreateForm(EMPTY_CREATE_FORM); setCreateError(""); setCreateOpen(true); }}
-              data-testid="button-create-project"
-            >
-              <Plus className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-              {t("chief.projects.newProject")}
-            </Button>
+            {activeTab === "projects" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={exportProjects}
+                disabled={filtered.length === 0}
+                title={t("chief.projects.exportTooltip")}
+              >
+                <Download className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                {t("chief.projects.export")}
+              </Button>
+            )}
+            {activeTab === "exhibitions" && (
+              <Button
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => { setExhibitionForm({ name: "", venue: "", city: "", startDate: "", endDate: "" }); setExhibitionCreateError(""); setExhibitionCreateOpen(true); }}
+              >
+                <Plus className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                Add Exhibition
+              </Button>
+            )}
           </div>
         </PageHeader>
+
+        {/* Tab switcher */}
+        <div className="flex gap-1 rounded-lg border bg-muted/30 p-1 w-fit">
+          {(["projects", "exhibitions"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              aria-pressed={activeTab === tab}
+              className={cn(
+                "rounded-md px-4 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors",
+                activeTab === tab
+                  ? "bg-card text-foreground shadow-sm border border-border/50"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {tab === "projects" ? "Projects" : "Exhibitions"}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "projects" && (<>
 
         {error && (
           <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-500">
@@ -602,60 +713,79 @@ export default function ChiefProjects() {
           </div>
         )}
 
-        {/* KPI tiles */}
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricTile label={t("chief.projects.metric.highRisk")} value={urgentCount}        tone={urgentCount        ? "warning" : "success"} />
-          <MetricTile label={t("chief.projects.metric.waiting")}  value={waitingCount}       tone={waitingCount       ? "warning" : "success"} />
-          <MetricTile label={t("chief.projects.metric.delayed")}  value={statusCounts.Delayed} tone={statusCounts.Delayed ? "warning" : "success"} />
-          <MetricTile label={t("chief.projects.metric.matching")} value={pagination.total}   tone="info" />
-        </div>
-
-        {/* Stage count tiles */}
-        <div className="grid grid-cols-5 gap-3">
-          {stages.map((stage) => {
-            const styles = STAGE_STYLES[stage.id];
-            return (
-              <div key={stage.id} className={cn("rounded-lg border border-t-[3px] bg-card p-3.5", styles.borderTop)}>
-                <p className={cn("mb-1.5 text-[9px] uppercase tracking-widest", styles.text)}>{stage.label}</p>
-                <p className={cn("text-xl font-bold", styles.text)}>{counts[stage.id] ?? 0}</p>
+        {/* Compact stats + filter bar */}
+        <div className="rounded-lg border bg-card/40 px-4 py-3 space-y-3">
+          {/* Stage pipeline inline */}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {stages.map((stage, i) => {
+              const styles = STAGE_STYLES[stage.id];
+              return (
+                <div key={stage.id} className="flex items-center gap-2">
+                  {i > 0 && <span className="hidden h-3 w-px bg-border sm:block" />}
+                  <span className={cn("h-2 w-2 rounded-full shrink-0", styles.dot)} />
+                  <span className="text-[11px] text-muted-foreground">{stage.label}</span>
+                  <span className={cn("text-sm font-bold tabular-nums", styles.text)}>{counts[stage.id] ?? 0}</span>
+                </div>
+              );
+            })}
+            <div className="ml-auto flex items-center gap-5">
+              <div className="flex items-center gap-1.5">
+                <AlertCircle className={cn("h-3.5 w-3.5 shrink-0", urgentCount ? "text-red-500" : "text-muted-foreground/30")} aria-hidden="true" />
+                <span className={cn("text-[11px] font-semibold tabular-nums", urgentCount ? "text-red-500" : "text-muted-foreground/50")}>{urgentCount}</span>
+                <span className="text-[11px] text-muted-foreground/60">{t("chief.projects.metric.highRisk")}</span>
               </div>
-            );
-          })}
-        </div>
+              <div className="flex items-center gap-1.5">
+                <span className={cn("text-[11px] font-semibold tabular-nums", waitingCount ? "text-amber-500" : "text-muted-foreground/50")}>{waitingCount}</span>
+                <span className="text-[11px] text-muted-foreground/60">{t("chief.projects.metric.waiting")}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className={cn("text-[11px] font-semibold tabular-nums", statusCounts.Delayed ? "text-orange-500" : "text-muted-foreground/50")}>{statusCounts.Delayed}</span>
+                <span className="text-[11px] text-muted-foreground/60">{t("chief.projects.metric.delayed")}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold tabular-nums text-foreground">{pagination.total}</span>
+                <span className="text-[11px] text-muted-foreground/60">{t("chief.projects.metric.matching")}</span>
+              </div>
+            </div>
+          </div>
 
-        {/* Filter bar */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          {statusFilters.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setFilter(key)}
-              aria-pressed={filterSt === key}
-              className={cn(
-                "rounded-md border px-3 py-1.5 text-[11px] font-bold transition-all",
-                filterSt === key
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-muted-foreground hover:border-foreground/50",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-          <div className="hidden h-4 w-px bg-border sm:block" />
-          {priorityFilters.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setPriorityFilter(key)}
-              aria-pressed={priorityFilter === key}
-              className={cn(
-                "rounded-md border px-3 py-1.5 text-[11px] font-bold transition-all",
-                priorityFilter === key
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : cn("border-border hover:border-foreground/50", key === "All" ? "text-muted-foreground" : PRIORITY_TEXT[key as Priority]),
-              )}
-            >
-              {label}
-            </button>
-          ))}
+          {/* Divider */}
+          <div className="h-px bg-border/50" />
+
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            {statusFilters.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setFilter(key)}
+                aria-pressed={filterSt === key}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-[11px] font-semibold transition-all",
+                  filterSt === key
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border/60 text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+            <div className="hidden h-4 w-px bg-border/50 sm:block" />
+            {priorityFilters.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setPriorityFilter(key)}
+                aria-pressed={priorityFilter === key}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-[11px] font-semibold transition-all",
+                  priorityFilter === key
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : cn("border-border/60 hover:border-foreground/40", key === "All" ? "text-muted-foreground" : PRIORITY_TEXT[key as Priority]),
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Kanban board */}
@@ -684,6 +814,7 @@ export default function ChiefProjects() {
                       onOpen={openMonitor}
                       onEdit={openEdit}
                       locale={locale}
+                      ws={wsMap.get(project.id)}
                     />
                   ))}
 
@@ -727,6 +858,7 @@ export default function ChiefProjects() {
                     t("chief.projects.list.col.stage"),
                     t("chief.projects.list.col.progress"),
                     t("chief.projects.list.col.health"),
+                    "Workspace",
                     "",
                   ].map((header, i) => (
                     <TableHead key={i} className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -737,7 +869,7 @@ export default function ChiefProjects() {
               </TableHeader>
               <TableBody>
                 {filtered.map((project) => (
-                  <ProjectRow key={project.id} project={project} stages={stages} onOpen={openMonitor} onEdit={openEdit} />
+                  <ProjectRow key={project.id} project={project} stages={stages} onOpen={openMonitor} onEdit={openEdit} ws={wsMap.get(project.id)} />
                 ))}
                 {isLoading && !filtered.length && Array.from({ length: 6 }).map((_, i) => (
                   <TableRow key={i}>
@@ -761,46 +893,300 @@ export default function ChiefProjects() {
           </div>
         )}
 
-        {/* Pagination bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 text-xs text-muted-foreground">
-          <span>
-            {t("chief.projects.paging.showing", { start: pageStart, end: pageEnd, total: pagination.total })}
-            {priorityFilter !== "All" ? ` ${t("chief.projects.paging.filtered", { count: filtered.length })}` : ""}
-          </span>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs"
-              disabled={isLoading || page === 0}
-              onClick={() => setPage((c) => Math.max(0, c - 1))}
-            >
-              {t("chief.projects.paging.previous")}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs"
-              disabled={isLoading || !pagination.hasMore}
-              onClick={() => setPage((c) => c + 1)}
-            >
-              {t("chief.projects.paging.next")}
-            </Button>
-          </div>
-        </div>
+        {/* Live view — workspace monitor embedded */}
+        {view === "live" && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {isLoading && Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-lg border bg-card/50 p-4 space-y-3">
+                <Skeleton className="h-20 w-full rounded-md" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-1.5 w-full rounded-full" />
+              </div>
+            ))}
+            {!isLoading && filtered.map((project) => {
+              const ws = wsMap.get(project.id);
+              const dotCls  = ws ? (WS_DOT[ws.status]  ?? "bg-muted-foreground") : "bg-muted-foreground/30";
+              const textCls = ws ? (WS_TEXT[ws.status] ?? "text-muted-foreground") : "text-muted-foreground/50";
+              return (
+                <div
+                  key={project.id}
+                  className="group overflow-hidden rounded-lg border bg-card/50 transition-colors hover:border-primary/40"
+                >
+                  {/* Booth mini preview */}
+                  <div className="relative h-24 overflow-hidden bg-muted/20">
+                    <LiveBoothSVG status={ws?.status ?? null} />
+                    <span className="absolute left-2 top-2 rounded border bg-card/90 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
+                      {project.system.toUpperCase()}
+                    </span>
+                    {ws && (
+                      <span className={cn(
+                        "absolute bottom-2 right-2 flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold bg-card/90",
+                        textCls,
+                      )}>
+                        <span className={cn("h-1.5 w-1.5 rounded-full", dotCls)} />
+                        {ws.lastActionMins === 0 ? "Editing now" : wsAge(ws.lastActionMins)}
+                      </span>
+                    )}
+                  </div>
 
-        {/* Stage legend footer */}
-        <div className="flex items-center gap-6 border-t pt-2 text-[10px] text-muted-foreground">
-          {stages.map((stage) => (
-            <span key={stage.id} className="flex items-center gap-1.5">
-              <span className={cn("h-2 w-2 rounded-full", STAGE_STYLES[stage.id].dot)} />
-              {stage.label}: {counts[stage.id] ?? 0}
+                  <div className="p-3 space-y-1.5">
+                    <div className="flex items-start justify-between gap-1">
+                      <p className="min-w-0 flex-1 truncate text-[12px] font-bold leading-tight group-hover:text-primary">
+                        {project.name}
+                      </p>
+                      {ws && (
+                        <span className={cn("shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase bg-card/90", textCls)}>
+                          {ws.status}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="truncate text-[11px] text-muted-foreground">{project.client || "Unassigned client"}</p>
+
+                    {ws?.currentAction && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-primary/80">
+                        <Activity className="h-3 w-3 shrink-0" aria-hidden="true" />
+                        <span className="truncate">{ws.currentAction}</span>
+                      </div>
+                    )}
+
+                    <div className="pt-1">
+                      <div className="mb-1 flex justify-between text-[9px] text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <User className="h-2.5 w-2.5" aria-hidden="true" />
+                          {project.pm}
+                        </span>
+                        <span>{project.progress}%</span>
+                      </div>
+                      <ProgressBar value={project.progress} stageId={project.stage} />
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-2">
+                      <button
+                        onClick={() => openEdit(project)}
+                        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Reassign PM"
+                      >
+                        Reassign
+                      </button>
+                      <button
+                        onClick={() => navigate(`/chief/workspace?projectId=${encodeURIComponent(project.id)}`)}
+                        className="flex items-center gap-1 rounded border border-primary/40 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary hover:bg-primary/20 transition-colors"
+                        aria-label={`Open workspace for ${project.name}`}
+                      >
+                        <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                        Open
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {!isLoading && filtered.length === 0 && (
+              <div className="col-span-full py-16 text-center text-sm text-muted-foreground">
+                No projects match the current filters.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Pagination + footer — hidden in live view */}
+        {view !== "live" && (<>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 text-xs text-muted-foreground">
+            <span>
+              {t("chief.projects.paging.showing", { start: pageStart, end: pageEnd, total: pagination.total })}
+              {priorityFilter !== "All" ? ` ${t("chief.projects.paging.filtered", { count: filtered.length })}` : ""}
             </span>
-          ))}
-          <span className="ml-auto">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                disabled={isLoading || page === 0}
+                onClick={() => setPage((c) => Math.max(0, c - 1))}
+              >
+                {t("chief.projects.paging.previous")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                disabled={isLoading || !pagination.hasMore}
+                onClick={() => setPage((c) => c + 1)}
+              >
+                {t("chief.projects.paging.next")}
+              </Button>
+            </div>
+          </div>
+          <p className="text-[11px] text-muted-foreground/60 text-right">
             {t("chief.projects.footer.note", { count: filtered.length })}
-          </span>
-        </div>
+          </p>
+        </>)}
+
+        </>)}
+
+        {/* Exhibitions tab */}
+        {activeTab === "exhibitions" && (
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg border bg-card/60 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total exhibitions</p>
+                <p className="mt-2 text-2xl font-bold">{exhibitions.length}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Each exhibition groups client booth projects.</p>
+              </div>
+              <div className="rounded-lg border bg-card/60 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Active</p>
+                <p className="mt-2 text-2xl font-bold">{exhibitions.filter((e) => e.status === "Active").length}</p>
+              </div>
+              <div className="rounded-lg border bg-card/60 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Draft / Closed</p>
+                <p className="mt-2 text-2xl font-bold">{exhibitions.filter((e) => e.status !== "Active").length}</p>
+              </div>
+            </div>
+
+            {exhibitions.length === 0 ? (
+              <div className="rounded-lg border-2 border-dashed border-border/50 py-16 text-center">
+                <p className="text-sm font-semibold text-muted-foreground">No exhibitions yet</p>
+                <p className="mt-1 text-xs text-muted-foreground/70">
+                  Create your first exhibition to organize client booth projects under a single event.
+                </p>
+                <button
+                  onClick={() => { setExhibitionForm({ name: "", venue: "", city: "", startDate: "", endDate: "" }); setExhibitionCreateOpen(true); }}
+                  className="mt-4 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <Plus className="inline-block h-3 w-3 mr-1.5" aria-hidden="true" />
+                  Add first exhibition
+                </button>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {exhibitions.map((ex) => {
+                  const statusColor =
+                    ex.status === "Active" ? "text-green-600 bg-green-500/10 border-green-500/30" :
+                    ex.status === "Draft"  ? "text-gray-500 bg-gray-500/10 border-gray-400/30" :
+                    "text-muted-foreground bg-muted/30 border-border";
+                  return (
+                    <div key={ex.id} className="rounded-lg border bg-card p-4 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-bold leading-tight">{ex.name}</p>
+                        <span className={cn("shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide", statusColor)}>
+                          {ex.status}
+                        </span>
+                      </div>
+                      {(ex.venue || ex.city) && (
+                        <p className="text-xs text-muted-foreground">{[ex.venue, ex.city].filter(Boolean).join(" · ")}</p>
+                      )}
+                      {(ex.startDate || ex.endDate) && (
+                        <p className="text-[10px] text-muted-foreground/70">
+                          {ex.startDate ? new Date(ex.startDate).toLocaleDateString() : "—"}
+                          {ex.endDate ? ` → ${new Date(ex.endDate).toLocaleDateString()}` : ""}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-muted-foreground/60">
+                        {projects.filter((p) => p.exhibition === ex.name).length} project(s) linked
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Add Exhibition dialog */}
+        <Dialog
+          open={exhibitionCreateOpen}
+          onOpenChange={(open) => {
+            if (isCreatingExhibition) return;
+            if (!open) { setExhibitionCreateOpen(false); setExhibitionForm({ name: "", venue: "", city: "", startDate: "", endDate: "" }); setExhibitionCreateError(""); }
+          }}
+        >
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>New Exhibition</DialogTitle>
+              <DialogDescription>
+                Add an exhibition to group client booth projects under a single event. Projects appear automatically when clients register.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-2 grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="ex-name">Exhibition name <span className="text-red-500">*</span></Label>
+                <Input
+                  id="ex-name"
+                  value={exhibitionForm.name}
+                  onChange={(e) => setExhibitionForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="e.g. CES Las Vegas 2027"
+                  autoFocus
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="ex-venue">Venue</Label>
+                  <Input
+                    id="ex-venue"
+                    value={exhibitionForm.venue}
+                    onChange={(e) => setExhibitionForm((f) => ({ ...f, venue: e.target.value }))}
+                    placeholder="Convention Center"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="ex-city">City</Label>
+                  <Input
+                    id="ex-city"
+                    value={exhibitionForm.city}
+                    onChange={(e) => setExhibitionForm((f) => ({ ...f, city: e.target.value }))}
+                    placeholder="Las Vegas, NV"
+                  />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="ex-start">Start date</Label>
+                  <Input
+                    id="ex-start"
+                    type="date"
+                    value={exhibitionForm.startDate}
+                    onChange={(e) => setExhibitionForm((f) => ({ ...f, startDate: e.target.value }))}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="ex-end">End date</Label>
+                  <Input
+                    id="ex-end"
+                    type="date"
+                    value={exhibitionForm.endDate}
+                    onChange={(e) => setExhibitionForm((f) => ({ ...f, endDate: e.target.value }))}
+                  />
+                </div>
+              </div>
+              {exhibitionCreateError && (
+                <div role="alert" className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-500">
+                  {exhibitionCreateError}
+                </div>
+              )}
+            </div>
+            <DialogFooter className="mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setExhibitionCreateOpen(false)}
+                disabled={isCreatingExhibition}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={createExhibition}
+                disabled={isCreatingExhibition || !exhibitionForm.name.trim()}
+              >
+                {isCreatingExhibition ? (
+                  <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" aria-hidden="true" />Creating…</>
+                ) : (
+                  <><Plus className="mr-2 h-3.5 w-3.5" aria-hidden="true" />Create Exhibition</>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Edit project sheet */}
         <Sheet
@@ -995,9 +1381,9 @@ export default function ChiefProjects() {
         >
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>{t("chief.projects.create.title")}</DialogTitle>
+              <DialogTitle>New Exhibition / Project</DialogTitle>
               <DialogDescription>
-                {t("chief.projects.create.description")}
+                Create an exhibition shell first, or attach a registered client to create the company project.
               </DialogDescription>
             </DialogHeader>
 
@@ -1035,7 +1421,7 @@ export default function ChiefProjects() {
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
-                    ENS flow: create the exhibition shell first, then attach the client and PM when the registration arrives.
+                    ENS flow: this will create only the exhibition. A company project appears when a client registers or is attached.
                   </div>
                 )}
               </div>
@@ -1206,6 +1592,41 @@ export default function ChiefProjects() {
 // Sub-components
 // ---------------------------------------------------------------------------
 
+function LiveBoothSVG({ status }: { status: string | null }) {
+  const color = status === "live" ? "#22c55e" : status === "review" ? "#3b82f6" : status === "pending" ? "#f97316" : status === "blocked" ? "#ef4444" : "#6b7280";
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid meet" className="block" aria-hidden="true"
+      style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 9px,hsl(var(--border)/0.3) 9px,hsl(var(--border)/0.3) 10px),repeating-linear-gradient(90deg,transparent,transparent 9px,hsl(var(--border)/0.3) 9px,hsl(var(--border)/0.3) 10px)" }}
+    >
+      <polygon points="40,65 80,80 120,65 80,50" fill={`${color}18`} stroke={color} strokeWidth="0.8" />
+      <polygon points="40,65 40,35 80,20 80,50" fill={`${color}10`} stroke={color} strokeWidth="0.8" />
+      <polygon points="80,50 80,20 120,35 120,65" fill={`${color}06`} stroke={color} strokeWidth="0.8" />
+      <polygon points="40,35 40,30 80,15 80,20" fill={color} opacity="0.6" />
+      <polygon points="80,20 80,15 120,30 120,35" fill={color} opacity="0.4" />
+    </svg>
+  );
+}
+
+const WS_DOT: Record<string, string> = {
+  live:    "bg-green-500",
+  review:  "bg-blue-500",
+  pending: "bg-orange-500",
+  blocked: "bg-red-500",
+};
+const WS_TEXT: Record<string, string> = {
+  live:    "text-green-500",
+  review:  "text-blue-500",
+  pending: "text-orange-500",
+  blocked: "text-red-500",
+};
+
+function wsAge(mins: number): string {
+  if (mins === 0)    return "editing now";
+  if (mins < 60)     return `${mins}m ago`;
+  if (mins < 1440)   return `${Math.floor(mins / 60)}h ago`;
+  return `${Math.floor(mins / 1440)}d ago`;
+}
+
 function ProjectCard({
   project,
   stage,
@@ -1214,14 +1635,16 @@ function ProjectCard({
   onOpen,
   onEdit,
   locale,
+  ws,
 }: {
   project: KanbanProject;
   stage: Stage;
   isMoving: boolean;
   onMove: (id: string, dir: "prev" | "next") => void;
-  onOpen: (name: string) => void;
+  onOpen: (id: string, name: string) => void;
   onEdit: (project: KanbanProject) => void;
   locale: string;
+  ws?: WorkspaceMonitorProject;
 }) {
   const { t } = useTranslation();
   const stageIndex = STAGE_IDS.indexOf(stage);
@@ -1238,13 +1661,24 @@ function ProjectCard({
         </span>
       </div>
 
-      <p className="mb-2 truncate text-[10px] text-muted-foreground">{project.client}</p>
+      <p className="mb-1.5 truncate text-[10px] font-semibold text-foreground/80">{project.client || "—"}</p>
 
-      {project.waitDays > 0 && (
+      {/* Live workspace status — shown when PM has an active workspace */}
+      {ws ? (
+        <div className="mb-2 flex items-center gap-1.5">
+          <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", WS_DOT[ws.status] ?? "bg-muted-foreground")} />
+          <span className={cn("text-[9.5px] font-semibold", WS_TEXT[ws.status] ?? "text-muted-foreground")}>
+            {ws.status}
+          </span>
+          <span className="text-[9px] text-muted-foreground/60">· {wsAge(ws.lastActionMins)}</span>
+        </div>
+      ) : project.waitDays > 0 ? (
         <div className="mb-2 flex items-center gap-1 text-[9.5px] text-red-500">
           <AlertCircle className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
           {t("chief.projects.card.waiting", { days: project.waitDays })}
         </div>
+      ) : (
+        <div className="mb-2 h-[1.125rem]" />
       )}
 
       <div className="mb-2">
@@ -1287,7 +1721,7 @@ function ProjectCard({
             </button>
           )}
           <button
-            onClick={() => onOpen(project.name)}
+            onClick={() => onOpen(project.id, project.name)}
             aria-label={t("chief.projects.card.openMonitor")}
             className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
@@ -1311,11 +1745,13 @@ function ProjectRow({
   stages,
   onOpen,
   onEdit,
+  ws,
 }: {
   project: KanbanProject;
   stages: { id: Stage; label: string }[];
-  onOpen: (name: string) => void;
+  onOpen: (id: string, name: string) => void;
   onEdit: (project: KanbanProject) => void;
+  ws?: WorkspaceMonitorProject;
 }) {
   const { t }     = useTranslation();
   const styles     = STAGE_STYLES[project.stage];
@@ -1327,7 +1763,7 @@ function ProjectRow({
         <div className="text-sm font-semibold leading-tight">{project.name}</div>
         <div className="mt-0.5 text-[10px] text-muted-foreground">{project.dimensions} / {project.exhibition}</div>
       </TableCell>
-      <TableCell className="text-sm">{project.client}</TableCell>
+      <TableCell className="text-sm font-medium">{project.client || "—"}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{project.pm}</TableCell>
       <TableCell>
         <span className="rounded bg-muted/50 px-2 py-0.5 text-[10px]">{project.system.toUpperCase()}</span>
@@ -1347,13 +1783,24 @@ function ProjectRow({
         <Badge variant="outline" className={healthBadge(project.health)}>{project.health}</Badge>
       </TableCell>
       <TableCell>
+        {ws ? (
+          <div className="flex items-center gap-1.5">
+            <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", WS_DOT[ws.status] ?? "bg-muted-foreground")} />
+            <span className={cn("text-[10px] font-semibold", WS_TEXT[ws.status] ?? "text-muted-foreground")}>{ws.status}</span>
+            <span className="text-[10px] text-muted-foreground/50">· {wsAge(ws.lastActionMins)}</span>
+          </div>
+        ) : (
+          <span className="text-[10px] text-muted-foreground/40">—</span>
+        )}
+      </TableCell>
+      <TableCell>
         <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => onEdit(project)}>
             <Pencil className="mr-2 h-3 w-3" aria-hidden="true" />
             {t("chief.projects.row.edit")}
           </Button>
-          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => onOpen(project.name)}>
-            <List className="mr-2 h-3 w-3" aria-hidden="true" />
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => onOpen(project.id, project.name)}>
+            <Layers className="mr-2 h-3 w-3" aria-hidden="true" />
             {t("chief.projects.row.open")}
           </Button>
         </div>

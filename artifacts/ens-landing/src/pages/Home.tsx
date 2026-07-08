@@ -7,7 +7,6 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Button } from '@/components/ui/button';
 import { PORTAL_MODE } from '@/lib/portal';
-import { useDemoAccess } from '@/hooks/useDemoAccess';
 import { 
   Box, 
   MonitorPlay, 
@@ -65,10 +64,8 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [billingAnnual, setBillingAnnual] = useState(false);
   const [, navigate] = useLocation();
-  const { enterAs, pendingRole } = useDemoAccess();
   const { t } = useTranslation();
   const showStaffLinks = PORTAL_MODE !== 'client';
-  const showClientLinks = PORTAL_MODE !== 'staff';
   const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 
   useEffect(() => {
@@ -275,42 +272,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Demo Access Strip */}
-      <div className="container mx-auto px-6 mb-16 relative z-20">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="bg-card/60 backdrop-blur-md border border-primary/20 rounded-2xl p-6"
-        >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-1">Try the platform instantly</p>
-              <p className="text-sm text-muted-foreground">Jump directly into any dashboard — no account required for the demo.</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              {showStaffLinks && (
-                <>
-                  <Button size="sm" onClick={() => void enterAs('chief', '/chief')} disabled={pendingRole !== null} className="gap-2 rounded-full px-5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30" variant="ghost" data-testid="btn-demo-chief">
-                    <LayoutDashboard className="w-4 h-4" /> Chief Manager
-                  </Button>
-                  <Button size="sm" onClick={() => void enterAs('pm', '/pm')} disabled={pendingRole !== null} className="gap-2 rounded-full px-5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30" variant="ghost" data-testid="btn-demo-pm">
-                    <Settings className="w-4 h-4" /> Project Manager
-                  </Button>
-                  <Button size="sm" onClick={() => void enterAs('pm', '/pm/workspace')} disabled={pendingRole !== null} className="gap-2 rounded-full px-5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30" variant="ghost" data-testid="btn-demo-workspace">
-                    <Box className="w-4 h-4" /> 3D Workspace
-                  </Button>
-                </>
-              )}
-              {showClientLinks && (
-                <Button size="sm" onClick={() => void enterAs('client', '/client')} disabled={pendingRole !== null} className="gap-2 rounded-full px-5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" variant="ghost" data-testid="btn-demo-client">
-                  <Eye className="w-4 h-4" /> Client View
-                </Button>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </div>
 
       {/* Features */}
       <section id="features" className="py-24 bg-muted/10">

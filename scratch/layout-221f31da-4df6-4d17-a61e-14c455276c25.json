@@ -1,0 +1,17 @@
+{
+  "booth": {
+    "depth": 3,
+    "width": 3.5,
+    "height": 3,
+    "system": "octanorm",
+    "openBack": false,
+    "openLeft": false,
+    "openFront": true,
+    "openRight": false,
+    "companyName": "TECHCORP INDUSTRIES"
+  },
+  "notes": [],
+  "themeIdx": 0,
+  "carpetIdx": 0,
+  "placedItems": []
+}

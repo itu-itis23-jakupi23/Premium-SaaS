@@ -11,6 +11,7 @@ interface StoredAuthUser {
   name: string;
   company: string;
   agency?: string;
+  organizationSlug?: string;
   email: string;
   role: UserRole;
   systemRole: string;
@@ -118,6 +119,7 @@ const invitedUserSchema = z.object({
   email: z.string().trim().email().max(254),
   password: z.string().min(8).max(200).regex(/[A-Z]/).regex(/[0-9]/),
   role: z.enum(["pm", "chief"]),
+  company: z.string().trim().min(2).max(160),
 });
 
 const accountSettingsSchema = z.object({
@@ -155,6 +157,9 @@ const passwordUpdateSchema = z.object({
   currentPassword: z.string().min(1).max(200),
   newPassword: z.string().min(8).max(200).regex(/[A-Z]/).regex(/[0-9]/),
 });
+const passwordCurrentSchema = z.object({
+  currentPassword: z.string().min(1).max(200),
+});
 
 const seedStore: AuthStore = {
   users: [],
@@ -162,9 +167,103 @@ const seedStore: AuthStore = {
   loginAttempts: [],
 };
 
+function slugifyOrganization(value: string) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+function resolveAgencyForSignup(users: StoredAuthUser[], organizationSlug: string | undefined) {
+  const requestedSlug = organizationSlug?.trim().toLowerCase();
+  if (requestedSlug) {
+    const owner = users.find((user) => (
+      user.role === "chief"
+      && (
+        user.organizationSlug?.trim().toLowerCase() === requestedSlug
+        || slugifyOrganization(user.company) === requestedSlug
+      )
+    ));
+    if (owner?.company) return owner.company;
+  }
+  return process.env.DEFAULT_AGENCY_NAME || "ENS Demo Agency";
+}
+
+function clientProjectName(client: any) {
+  const exhibition = String(client.exhibition || "Pending Exhibition").trim() || "Pending Exhibition";
+  const company = String(client.company || client.name || "Client").trim() || "Client";
+  return `${exhibition} - ${company}`;
+}
+
+function clientProjectDimensions(client: any) {
+  const widthM = typeof client.boothWidthM === "number" && Number.isFinite(client.boothWidthM) && client.boothWidthM > 0 ? client.boothWidthM : 6;
+  const depthM = typeof client.boothDepthM === "number" && Number.isFinite(client.boothDepthM) && client.boothDepthM > 0 ? client.boothDepthM : 3;
+  return `${widthM} x ${depthM} m`;
+}
+
+function ensureClientProject(store: any, client: any, actor: { id: string; name: string; company: string }) {
+  store.projects ??= [];
+  const company = String(client.company || client.name || "Client").trim();
+  const exhibition = String(client.exhibition || "Pending Exhibition").trim();
+  const agency = String(client.agency || actor.company || "ENS Demo Agency");
+  const existing = (client.projectId ? store.projects.find((project: any) => project.id === client.projectId) : null)
+    ?? store.projects.find((project: any) => (
+      String(project.client || "").trim().toLowerCase() === company.toLowerCase()
+      && String(project.exhibition || "").trim().toLowerCase() === exhibition.toLowerCase()
+      && String(project.agency || "ENS Demo Agency").trim().toLowerCase() === agency.trim().toLowerCase()
+    ));
+
+  if (existing) {
+    existing.name = clientProjectName(client);
+    existing.client = company;
+    existing.exhibition = exhibition;
+    existing.dimensions = clientProjectDimensions(client);
+    existing.system = client.preferredSystem || existing.system || "Octanorm";
+    existing.standType = existing.system;
+    existing.deadline = client.targetDate || existing.deadline || null;
+    existing.agency = agency;
+    client.projectId = existing.id;
+    return existing;
+  }
+
+  const project = {
+    id: `p-${Date.now()}-${randomBytes(3).toString("hex")}`,
+    name: clientProjectName(client),
+    client: company,
+    pm: client.pm && client.pm !== "Unassigned" ? client.pm : "Unassigned",
+    managerId: client.managerId ?? null,
+    status: client.managerId ? "In Design" : "Pending",
+    health: "On Track",
+    progress: client.managerId ? 20 : 5,
+    deadline: client.targetDate || null,
+    system: client.preferredSystem || "Octanorm",
+    dimensions: clientProjectDimensions(client),
+    exhibition,
+    standType: client.preferredSystem || "Octanorm",
+    description: client.intakeNotes || `Client intake project for ${company}.`,
+    pipelineStage: client.managerId ? "design" : "brief",
+    lifecycleHistory: [
+      {
+        id: `history-${Date.now()}-${randomBytes(3).toString("hex")}`,
+        fromStage: null,
+        toStage: client.managerId ? "design" : "brief",
+        fromStatus: null,
+        toStatus: client.managerId ? "In Design" : "Pending",
+        actorUserId: actor.id,
+        actorName: actor.name,
+        createdAt: new Date().toISOString(),
+        time: "Just now",
+      },
+    ],
+    lastUpdate: "Just now",
+    agency,
+    source: "client_intake",
+  };
+  store.projects.unshift(project);
+  client.projectId = project.id;
+  return project;
+}
+
 async function ensureOperationalClientRecord(user: StoredAuthUser) {
   if (user.role !== "client") return;
-  const agency = user.agency || process.env.DEFAULT_AGENCY_NAME || "NIKA";
+  const agency = user.agency || process.env.DEFAULT_AGENCY_NAME || "ENS Demo Agency";
   const coreSeed = {
     projects: [],
     clients: [],
@@ -183,6 +282,7 @@ async function ensureOperationalClientRecord(user: StoredAuthUser) {
 
   const email = user.email.trim().toLowerCase();
   const existing = store.clients.find((client: any) => String(client.contactEmail || "").trim().toLowerCase() === email);
+  let clientRecord: any;
   if (existing) {
     existing.name = user.company || user.name;
     existing.company = user.company || user.name;
@@ -199,8 +299,9 @@ async function ensureOperationalClientRecord(user: StoredAuthUser) {
     existing.status = existing.status || "Pending";
     existing.lastActivity = "Just now";
     existing.agency = existing.agency || agency;
+    clientRecord = existing;
   } else {
-    store.clients.unshift({
+    clientRecord = {
       id: `client-${Date.now()}-${randomBytes(3).toString("hex")}`,
       name: user.company || user.name,
       company: user.company || user.name,
@@ -218,15 +319,17 @@ async function ensureOperationalClientRecord(user: StoredAuthUser) {
       status: "Pending",
       lastActivity: "Just now",
       agency,
-    });
+    };
+    store.clients.unshift(clientRecord);
   }
+  const project = ensureClientProject(store, clientRecord, { id: user.id, name: user.name, company: agency });
   store.activity = [
     {
       id: `activity-${Date.now()}-${randomBytes(3).toString("hex")}`,
       type: "update",
       user: user.name,
       action: "created client account awaiting chief assignment",
-      project: "Client onboarding",
+      project: project.name,
       time: "Just now",
     },
     ...store.activity,
@@ -318,7 +421,7 @@ export async function createInvitedUser(input: {
   const user: StoredAuthUser = {
     id: `user-${Date.now()}-${randomBytes(4).toString("hex")}`,
     name: parsed.data.name,
-    company: input.company,
+    company: parsed.data.company,
     email,
     role: parsed.data.role,
     systemRole: parsed.data.role,
@@ -349,12 +452,14 @@ router.post("/signup", async (req, res) => {
   if (!parsed.success) return badRequest(res, parsed.error);
   const store = await readStore();
   const email = parsed.data.email.toLowerCase();
+  const agency = resolveAgencyForSignup(store.users, parsed.data.organizationSlug);
   const existingUser = store.users.find((user) => user.email.toLowerCase() === email);
   if (existingUser) {
     if (isDev && await verifyPassword(parsed.data.password, existingUser.passwordHash)) {
       existingUser.name = parsed.data.name;
       existingUser.company = parsed.data.company;
-      existingUser.agency = existingUser.agency || process.env.DEFAULT_AGENCY_NAME || "NIKA";
+      existingUser.agency = existingUser.agency || agency;
+      existingUser.organizationSlug = parsed.data.organizationSlug || existingUser.organizationSlug;
       existingUser.exhibition = parsed.data.exhibition;
       existingUser.boothWidthM = parsed.data.boothWidthM;
       existingUser.boothDepthM = parsed.data.boothDepthM;
@@ -381,7 +486,8 @@ router.post("/signup", async (req, res) => {
     id: `user-${Date.now()}-${randomBytes(4).toString("hex")}`,
     name: parsed.data.name,
     company: parsed.data.company,
-    agency: process.env.DEFAULT_AGENCY_NAME || "NIKA",
+    agency,
+    organizationSlug: parsed.data.organizationSlug,
     exhibition: parsed.data.exhibition,
     boothWidthM: parsed.data.boothWidthM,
     boothDepthM: parsed.data.boothDepthM,
@@ -425,6 +531,7 @@ router.post("/bootstrap-chief", async (req, res) => {
     id: `user-${Date.now()}-${randomBytes(4).toString("hex")}`,
     name: parsed.data.name,
     company: parsed.data.company,
+    organizationSlug: parsed.data.organizationSlug || slugifyOrganization(parsed.data.company),
     email,
     role: "chief",
     systemRole: "owner",
@@ -457,21 +564,6 @@ router.post("/signup-staff", async (req, res) => {
   const email = parsed.data.email.toLowerCase();
   const existingStaffUser = store.users.find((user) => user.email.toLowerCase() === email);
   if (existingStaffUser) {
-    if (isDev && await verifyPassword(parsed.data.password, existingStaffUser.passwordHash)) {
-      const role = parsed.data.role;
-      existingStaffUser.name = parsed.data.name;
-      existingStaffUser.company = parsed.data.company;
-      existingStaffUser.role = role;
-      existingStaffUser.systemRole = role === "chief" ? "owner" : "pm";
-      existingStaffUser.avatarTone = role === "chief" ? "primary" : "blue";
-      await notifyChiefsAboutStaffSignup(existingStaffUser);
-      const session = createSession(existingStaffUser.id);
-      store.sessions.push(session);
-      pruneSessions(store);
-      await writeStore(store);
-      setSessionCookie(res, session.id);
-      return res.status(200).json(authResponse(existingStaffUser));
-    }
     return res.status(409).json(errorBody("An account already exists for this email."));
   }
 
@@ -480,6 +572,7 @@ router.post("/signup-staff", async (req, res) => {
     id: `user-${Date.now()}-${randomBytes(4).toString("hex")}`,
     name: parsed.data.name,
     company: parsed.data.company,
+    organizationSlug: parsed.data.organizationSlug || slugifyOrganization(parsed.data.company),
     email,
     role,
     systemRole: role === "chief" ? "owner" : "pm",
@@ -592,13 +685,15 @@ accountRouter.put("/avatar", async (req, res) => {
 });
 
 accountRouter.put("/password", async (req, res) => {
-  const parsed = passwordUpdateSchema.safeParse(req.body);
-  if (!parsed.success) return badRequest(res, parsed.error);
+  const currentParsed = passwordCurrentSchema.safeParse(req.body);
+  if (!currentParsed.success) return badRequest(res, currentParsed.error);
   const auth = await currentAuth(req);
   if (!auth) return res.status(401).json(errorBody("Not signed in."));
-  if (!(await verifyPassword(parsed.data.currentPassword, auth.user.passwordHash))) {
+  if (!(await verifyPassword(currentParsed.data.currentPassword, auth.user.passwordHash))) {
     return res.status(403).json(errorBody("Current password is incorrect."));
   }
+  const parsed = passwordUpdateSchema.safeParse(req.body);
+  if (!parsed.success) return badRequest(res, parsed.error);
   auth.user.passwordHash = await hashPassword(parsed.data.newPassword);
   const currentSessionId = readCookie(req, SESSION_COOKIE);
   auth.store.sessions = auth.store.sessions.filter((session) => session.userId !== auth.user.id || session.id === currentSessionId);
@@ -855,375 +950,5 @@ function errorBody(message: string) {
   return { error: { message } };
 }
 
-async function seedStaffJsonStoreData(company: string, name: string, role: string) {
-  const STORE_KEY = "core";
-  const seedStore: any = {
-    projects: [],
-    clients: [],
-    activity: [],
-    workspaces: {},
-    tasks: [],
-    calendarEvents: [],
-  };
-  
-  const store = await readJsonStore<any>(STORE_KEY, seedStore);
-  
-  if (!store.projects) store.projects = [];
-  if (!store.clients) store.clients = [];
-  if (!store.activity) store.activity = [];
-  if (!store.workspaces) store.workspaces = {};
-  if (!store.tasks) store.tasks = [];
-  if (!store.calendarEvents) store.calendarEvents = [];
-
-  // Remove any pre-existing projects/clients/tasks/activity for this company name to avoid duplicates
-  store.projects = store.projects.filter((p: any) => !p.agency || p.agency.trim().toLowerCase() !== company.trim().toLowerCase());
-  store.clients = store.clients.filter((c: any) => !c.agency || c.agency.trim().toLowerCase() !== company.trim().toLowerCase());
-  store.tasks = store.tasks.filter((t: any) => !t.agency || t.agency.trim().toLowerCase() !== company.trim().toLowerCase());
-  store.activity = store.activity.filter((act: any) => {
-    if (!act.project) return true;
-    const project = store.projects.find((p: any) => p.name === act.project);
-    if (!project) return true;
-    return !project.agency || project.agency.trim().toLowerCase() !== company.trim().toLowerCase();
-  });
-
-  const pmName = role === "pm" ? name : "Jane Project Manager";
-
-  // 1. Seed 3 Clients
-  const client1Id = `c1-${Date.now()}`;
-  const client2Id = `c2-${Date.now()}`;
-  const client3Id = `c3-${Date.now()}`;
-
-  const c1: any = {
-    id: client1Id,
-    name: "Acme Corp",
-    company: "Acme Corp",
-    contactName: "John Acme",
-    contactEmail: `john@acme.${client1Id.slice(-4)}.com`,
-    projectId: `p1-${Date.now()}`,
-    pm: pmName,
-    exhibition: "Tech Expo 2026",
-    status: "Active",
-    lastActivity: "2h ago",
-    agency: company,
-  };
-
-  const c2: any = {
-    id: client2Id,
-    name: "Globex Showcase",
-    company: "Globex Showcase",
-    contactName: "Hank Globex",
-    contactEmail: `hank@globex.${client2Id.slice(-4)}.com`,
-    projectId: `p2-${Date.now()}`,
-    pm: pmName,
-    exhibition: "Global Fair 2026",
-    status: "Active",
-    lastActivity: "1d ago",
-    agency: company,
-  };
-
-  const c3: any = {
-    id: client3Id,
-    name: "Initech Labs",
-    company: "Initech Labs",
-    contactName: "Peter Initech",
-    contactEmail: `peter@initech.${client3Id.slice(-4)}.com`,
-    projectId: `p3-${Date.now()}`,
-    pm: pmName,
-    exhibition: "Initech Expo 2026",
-    status: "Pending",
-    lastActivity: "Just now",
-    agency: company,
-  };
-
-  store.clients.push(c1, c2, c3);
-
-  // 2. Seed 3 Projects
-  const p1: any = {
-    id: c1.projectId,
-    name: "Acme Exhibition Stand",
-    client: "Acme Corp",
-    pm: pmName,
-    status: "Active",
-    health: "On Track",
-    progress: 45,
-    deadline: new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10),
-    system: "Octanorm",
-    dimensions: "6 x 4 m",
-    exhibition: "Tech Expo 2026",
-    standType: "Octanorm",
-    description: "Modular exhibition stand with graphic panels.",
-    pipelineStage: "design",
-    lifecycleHistory: [],
-    lastUpdate: "2h ago",
-    agency: company,
-  };
-
-  const p2: any = {
-    id: c2.projectId,
-    name: "Globex Summit Booth",
-    client: "Globex Showcase",
-    pm: pmName,
-    status: "Completed",
-    health: "On Track",
-    progress: 100,
-    deadline: new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10),
-    system: "Maxima",
-    dimensions: "8 x 5 m",
-    exhibition: "Global Fair 2026",
-    standType: "Maxima",
-    description: "Double height premium presentation stand.",
-    pipelineStage: "closed",
-    lifecycleHistory: [],
-    lastUpdate: "1d ago",
-    agency: company,
-  };
-
-  const p3: any = {
-    id: c3.projectId,
-    name: "Initech Custom Space",
-    client: "Initech Labs",
-    pm: pmName,
-    status: "Delayed",
-    health: "Delayed",
-    progress: 20,
-    deadline: new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10),
-    system: "Custom",
-    dimensions: "4 x 3 m",
-    exhibition: "Initech Expo 2026",
-    standType: "Custom",
-    description: "Bespoke wooden design layout.",
-    pipelineStage: "review",
-    lifecycleHistory: [],
-    lastUpdate: "Just now",
-    agency: company,
-  };
-
-  store.projects.push(p1, p2, p3);
-
-  // 3. Seed workspaces
-  const w1: any = {
-    designId: `design-${p1.id}`,
-    designName: `${p1.name} design`,
-    widthMm: 6000,
-    depthMm: 4000,
-    heightMm: 2500,
-    currentVersionId: `v-${p1.id}`,
-    versions: [
-      {
-        id: `v-${p1.id}`,
-        versionNumber: 1,
-        status: "submitted",
-        title: "Initial concept layout",
-        snapshotUrl: null,
-        assetSummary: {},
-        costEstimateCents: 3500000,
-        submittedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
-        lockedAt: null,
-        createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-        workspace: { gridMm: 1000, boothSystem: "octanorm", dimensions: { widthMm: 6000, depthMm: 4000, heightMm: 2500 }, objects: [] },
-      }
-    ],
-    revisionCount: 0,
-    revisionLimit: 3,
-    elementStatus: {},
-    approved: false,
-    comments: [
-      {
-        id: `comment-${Date.now()}`,
-        user: pmName,
-        initials: "PM",
-        text: "Please review the structure heights.",
-        type: "comment",
-        status: "open",
-        resolvedAt: null,
-        createdAt: new Date(Date.now() - 12 * 3600000).toISOString(),
-      }
-    ],
-  };
-
-  const w2: any = {
-    designId: `design-${p2.id}`,
-    designName: `${p2.name} design`,
-    widthMm: 8000,
-    depthMm: 5000,
-    heightMm: 4000,
-    currentVersionId: `v-${p2.id}`,
-    versions: [
-      {
-        id: `v-${p2.id}`,
-        versionNumber: 1,
-        status: "approved",
-        title: "Final build version",
-        snapshotUrl: null,
-        assetSummary: {},
-        costEstimateCents: 6200000,
-        submittedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-        lockedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-        createdAt: new Date(Date.now() - 6 * 86400000).toISOString(),
-        workspace: { gridMm: 1000, boothSystem: "maxima", dimensions: { widthMm: 8000, depthMm: 5000, heightMm: 4000 }, objects: [] },
-      }
-    ],
-    revisionCount: 1,
-    revisionLimit: 3,
-    elementStatus: {},
-    approved: true,
-    comments: [],
-  };
-
-  const w3: any = {
-    designId: `design-${p3.id}`,
-    designName: `${p3.name} design`,
-    widthMm: 4000,
-    depthMm: 3000,
-    heightMm: 2500,
-    currentVersionId: `v-${p3.id}`,
-    versions: [
-      {
-        id: `v-${p3.id}`,
-        versionNumber: 1,
-        status: "submitted",
-        title: "Review draft",
-        snapshotUrl: null,
-        assetSummary: {},
-        costEstimateCents: 1500000,
-        submittedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-        lockedAt: null,
-        createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-        workspace: { gridMm: 1000, boothSystem: "custom", dimensions: { widthMm: 4000, depthMm: 3000, heightMm: 2500 }, objects: [] },
-      }
-    ],
-    revisionCount: 0,
-    revisionLimit: 3,
-    elementStatus: {},
-    approved: false,
-    comments: [],
-  };
-
-  store.workspaces[p1.id] = w1;
-  store.workspaces[p2.id] = w2;
-  store.workspaces[p3.id] = w3;
-
-  // 4. Seed tasks
-  store.tasks.push(
-    {
-      id: `t1-${Date.now()}`,
-      title: "Design initial concept layout",
-      client: "Acme Corp",
-      project: "Acme Exhibition Stand",
-      projectId: p1.id,
-      priority: "High",
-      deadline: new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10),
-      col: "done",
-      notes: "Create 3D octanorm mockups.",
-      agency: company,
-    },
-    {
-      id: `t2-${Date.now()}`,
-      title: "Review materials quote",
-      client: "Acme Corp",
-      project: "Acme Exhibition Stand",
-      projectId: p1.id,
-      priority: "Medium",
-      deadline: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
-      col: "in_progress",
-      notes: "Check prices for PVC panels.",
-      agency: company,
-    },
-    {
-      id: `t3-${Date.now()}`,
-      title: "Submit budget proposal",
-      client: "Acme Corp",
-      project: "Acme Exhibition Stand",
-      projectId: p1.id,
-      priority: "High",
-      deadline: new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10),
-      col: "todo",
-      notes: "Send total cost estimation.",
-      agency: company,
-    },
-    {
-      id: `t4-${Date.now()}`,
-      title: "Setup structure frame",
-      client: "Initech Labs",
-      project: "Initech Custom Space",
-      projectId: p3.id,
-      priority: "High",
-      deadline: new Date(Date.now() + 1 * 86400000).toISOString().slice(0, 10),
-      col: "todo",
-      notes: "Assemble the booth space frame.",
-      agency: company,
-    },
-    {
-      id: `t5-${Date.now()}`,
-      title: "Prepare graphic assets",
-      client: "Initech Labs",
-      project: "Initech Custom Space",
-      projectId: p3.id,
-      priority: "Medium",
-      deadline: new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10),
-      col: "todo",
-      notes: "Review print resolution.",
-      agency: company,
-    }
-  );
-
-  // 5. Seed activity
-  store.activity.push(
-    {
-      id: `act1-${Date.now()}`,
-      type: "project_created",
-      user: name,
-      action: "created project",
-      project: p1.name,
-      time: "5d ago",
-    },
-    {
-      id: `act2-${Date.now()}`,
-      type: "layout_updated",
-      user: pmName,
-      action: "saved booth layout v1",
-      project: p1.name,
-      time: "3d ago",
-    },
-    {
-      id: `act3-${Date.now()}`,
-      type: "approval_requested",
-      user: pmName,
-      action: "requested layout approval",
-      project: p1.name,
-      time: "1d ago",
-    }
-  );
-
-  // 6. Seed calendarEvents
-  store.calendarEvents.push(
-    {
-      id: `cal1-${Date.now()}`,
-      name: "Tech Expo 2026",
-      client: "Acme Corp",
-      pm: pmName,
-      status: "Active",
-      startDate: new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 10),
-      endDate: new Date(Date.now() + 19 * 86400000).toISOString().slice(0, 10),
-      location: "London Excel Center",
-      standType: "Octanorm",
-      agency: company,
-    },
-    {
-      id: `cal2-${Date.now()}`,
-      name: "Global Fair 2026",
-      client: "Globex Showcase",
-      pm: pmName,
-      status: "Completed",
-      startDate: new Date(Date.now() - 5 * 86400000).toISOString().slice(0, 10),
-      endDate: new Date(Date.now() - 1 * 86400000).toISOString().slice(0, 10),
-      location: "Frankfurt Messe",
-      standType: "Maxima",
-      agency: company,
-    }
-  );
-
-  await writeJsonStore(STORE_KEY, store);
-}
 
 export default router;

@@ -3,8 +3,14 @@ import { chartData, mockActivity, mockClients, mockMessages, mockProjects } from
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api").replace(/\/+$/, "");
 const ORGANIZATION_SLUG = import.meta.env.VITE_ORGANIZATION_SLUG ?? "ens-demo-agency";
 const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
-const USE_REAL_MESSAGES = import.meta.env.VITE_USE_REAL_MESSAGES === "true";
-const USE_REAL_CORE = import.meta.env.VITE_USE_REAL_CORE === "true";
+if (import.meta.env.PROD && USE_MOCK_API) {
+  throw new Error(
+    "[platform-api] VITE_USE_MOCK_API=true must not be set in production builds. " +
+    "Use mock mode only for explicit local demo builds."
+  );
+}
+const USE_REAL_MESSAGES = envFlag(import.meta.env.VITE_USE_REAL_MESSAGES, !USE_MOCK_API);
+const USE_REAL_CORE = envFlag(import.meta.env.VITE_USE_REAL_CORE, !USE_MOCK_API);
 const MOCK_AUTH_STORAGE_KEY = "ens-mock-auth-user";
 const MOCK_ACCOUNT_SETTINGS_PREFIX = "ens-mock-account-settings";
 const MOCK_ACCOUNT_SESSIONS_PREFIX = "ens-mock-account-sessions";
@@ -14,6 +20,12 @@ const MOCK_PM_REQUESTS_KEY         = "ens-mock-pm-requests";
 const MOCK_PROJECTS_KEY            = "ens-mock-projects";
 const MOCK_CLIENT_STATUSES_KEY     = "ens-mock-client-statuses";
 const MOCK_PM_TASKS_KEY            = "ens-mock-pm-tasks";
+
+function envFlag(value: unknown, fallback: boolean) {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
+}
 
 export const ACCOUNT_SETTINGS_EVENT   = "ens-account-settings-updated";
 export const PM_REQUESTS_UPDATED_EVENT = "ens-pm-requests-updated";
@@ -47,6 +59,17 @@ export interface PlatformProject {
   pipelineStage?: string | null;
   lifecycleHistory?: PlatformProjectLifecycleHistoryItem[];
   lastUpdate: string;
+}
+
+export interface PlatformExhibition {
+  id: string;
+  name: string;
+  venue?: string;
+  city?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  status: "Draft" | "Active" | "Closed";
+  createdAt: string;
 }
 
 export interface PlatformProjectLifecycleHistoryItem {
@@ -290,6 +313,12 @@ export interface WorkspaceRoom {
   doorPosition: "left" | "center" | "right";
   doorSwing: "left-in" | "right-in" | "left-out" | "right-out";
   doorOpen: boolean;
+  wallFinish?: "white" | "frosted" | "glass" | "dark";
+  floorColor?: string;
+  locked?: boolean;
+  designImageUrl?: string;
+  designImageName?: string;
+  designOpacity?: number;
 }
 
 export interface WorkspaceNote {
@@ -520,6 +549,20 @@ export interface AccountSession {
   current: boolean;
 }
 
+export interface SystemReadiness {
+  ready: boolean;
+  mode: "development" | "production" | "mock" | string;
+  checks: Record<string, boolean>;
+  limits?: {
+    apiJsonLimit?: string;
+  };
+  storage?: {
+    assetStorageProvider?: string;
+    workspaceAssetDirConfigured?: boolean;
+  };
+  warnings: string[];
+}
+
 export interface PlatformManager {
   id: string;
   name: string;
@@ -709,6 +752,54 @@ export async function getPlatformProjects(params: PlatformProjectListParams = {}
   if (params.offset) query.set("offset", String(params.offset));
   const suffix = query.toString() ? `?${query.toString()}` : "";
   return apiGet<{ projects: PlatformProject[]; pagination: PlatformPagination; summary: PlatformProjectSummary }>(`/platform/projects${suffix}`);
+}
+
+export async function getPlatformExhibitions() {
+  if (USE_MOCK_API && !USE_REAL_CORE) {
+    const names = Array.from(new Set(mockPlatformProjects().map((project) => project.exhibition).filter(Boolean)));
+    return {
+      exhibitions: names.map((name, index) => ({
+        id: `mock-exhibition-${index + 1}`,
+        name,
+        status: "Active" as const,
+        createdAt: new Date().toISOString(),
+      })),
+    };
+  }
+  return apiGet<{ exhibitions: PlatformExhibition[] }>("/platform/exhibitions");
+}
+
+export async function createPlatformExhibition(input: {
+  name: string;
+  venue?: string;
+  city?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  status?: "Draft" | "Active" | "Closed";
+}) {
+  if (USE_MOCK_API && !USE_REAL_CORE) {
+    return {
+      exhibition: {
+        id: `mock-exhibition-${Date.now()}`,
+        name: input.name,
+        venue: input.venue || "",
+        city: input.city || "",
+        startDate: input.startDate || null,
+        endDate: input.endDate || null,
+        status: input.status || "Active",
+        createdAt: new Date().toISOString(),
+      },
+      exhibitions: [],
+    };
+  }
+  return apiJson<{ exhibition: PlatformExhibition; exhibitions: PlatformExhibition[] }>("/platform/exhibitions", {
+    name: input.name,
+    venue: input.venue || "",
+    city: input.city || "",
+    startDate: input.startDate || null,
+    endDate: input.endDate || null,
+    status: input.status || "Active",
+  });
 }
 
 export async function createPlatformProject(input: {
@@ -1214,9 +1305,35 @@ export async function createProjectWorkspaceVersion(projectId: string, workspace
   });
 }
 
+export interface WorkspaceAssetUpload {
+  id: string;
+  url: string;
+  mimeType: string;
+  size: number;
+  originalName: string;
+}
+
+export async function uploadWorkspaceAsset(
+  projectId: string,
+  input: { dataUrl: string; name?: string; purpose?: "panel" | "room" | "fascia" | "logo" | "snapshot" | "workspace" },
+): Promise<{ asset: WorkspaceAssetUpload }> {
+  if (USE_MOCK_API) {
+    return {
+      asset: {
+        id: `mock-asset-${Date.now()}`,
+        url: input.dataUrl,
+        mimeType: input.dataUrl.slice(5, input.dataUrl.indexOf(";")) || "image/png",
+        size: input.dataUrl.length,
+        originalName: input.name || "workspace-image",
+      },
+    };
+  }
+  return apiJson<{ asset: WorkspaceAssetUpload }>(`/platform/projects/${projectId}/workspace/assets`, input);
+}
+
 export async function createWorkspaceSubscriptionRequest(projectId: string, plan: string): Promise<{ checkout_url: string; already_active?: boolean }> {
   if (USE_MOCK_API) {
-    return { checkout_url: `http://localhost:5000/api/platform/workspace/billing/simulation?reference=mock-${projectId}&plan=${plan}&client_id=mock-client-id&redirect=${encodeURIComponent(window.location.href)}` };
+    return { checkout_url: `http://localhost:5000/api/platform/workspace/billing/simulation?reference=mock-${projectId}&plan=${plan}&client_id=demo-client-id&redirect=${encodeURIComponent(window.location.href)}` };
   }
   return apiJson<{ checkout_url: string; already_active?: boolean }>(`/platform/projects/${projectId}/workspace/subscription-request`, { plan });
 }
@@ -1439,6 +1556,28 @@ export async function getWorkspaceMonitor() {
     };
   }
   return apiGet<{ projects: WorkspaceMonitorProject[]; managers: PlatformManager[] }>("/platform/workspaces/monitor");
+}
+
+export async function getSystemReadiness() {
+  if (USE_MOCK_API) {
+    return {
+      ready: false,
+      mode: "mock",
+      checks: {
+        databaseConfigured: false,
+        emailConfigured: false,
+        appUrlConfigured: false,
+        staffAccessConfigured: false,
+        authSecretConfigured: false,
+        assetStorageConfigured: false,
+        productionMode: false,
+      },
+      limits: { apiJsonLimit: "mock" },
+      storage: { assetStorageProvider: "mock", workspaceAssetDirConfigured: false },
+      warnings: ["Mock mode is active. This is not production-ready."],
+    } satisfies SystemReadiness;
+  }
+  return apiGet<SystemReadiness>("/platform/system/readiness");
 }
 
 export async function invitePlatformManager(input: { name: string; email: string }) {
@@ -1688,6 +1827,46 @@ export async function acceptManagerInvitation(token: string, input: { name: stri
     return { ok: true };
   }
   return apiJson<{ ok: boolean }>("/platform/managers/invitations/accept", { token, ...input });
+}
+
+// ── Client Documents ─────────────────────────────────────────────────────────
+
+export interface ClientDocument {
+  id: string;
+  projectId: string | null;
+  clientId: string | null;
+  kind: string;
+  visibility: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedBy: string | null;
+  uploadedByUserId: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+}
+
+export async function getClientDocuments(projectId?: string): Promise<ClientDocument[]> {
+  if (USE_MOCK_API) return [];
+  const params = projectId ? `?projectId=${encodeURIComponent(projectId)}` : "";
+  const data = await apiGet<{ documents: ClientDocument[] }>(`/platform/documents${params}`);
+  return data.documents;
+}
+
+export function getDocumentDownloadUrl(documentId: string): string {
+  return `${API_BASE_URL}/platform/documents/${documentId}/download`;
+}
+
+// ── Password reset ────────────────────────────────────────────────────────────
+
+export async function forgotPassword(email: string): Promise<void> {
+  if (USE_MOCK_API) return;
+  await apiJson<{ ok: boolean }>("/auth/forgot-password", { email, organizationSlug: ORGANIZATION_SLUG });
+}
+
+export async function resetPassword(token: string, password: string): Promise<void> {
+  if (USE_MOCK_API) return;
+  await apiJson<{ ok: boolean }>("/auth/reset-password", { token, password });
 }
 
 async function apiGet<T>(path: string): Promise<T> {
@@ -2126,9 +2305,9 @@ function mockMessageContacts(): MessageContact[] {
 
   if (role === "pm") {
     return [{
-      id: "mock-chief",
+      id: "demo-chief",
       name: "Owner Chief",
-      email: "owner@ens.test",
+      email: "owner@demo.example",
       role: "chief",
       lastMessage: "Review the latest workspace notes when ready.",
       lastMessageAt: new Date().toISOString(),
@@ -2313,9 +2492,9 @@ function defaultMockName(role: string) {
 }
 
 function defaultMockEmail(role: string) {
-  if (role === "pm") return "pm@ens.test";
-  if (role === "client") return "client@ens.test";
-  return "owner@ens.test";
+  if (role === "pm") return "pm@demo.example";
+  if (role === "client") return "client@demo.example";
+  return "owner@demo.example";
 }
 
 function mockManagerWorkspace(): ManagerWorkspace {
@@ -2352,9 +2531,9 @@ function mockManagerWorkspace(): ManagerWorkspace {
   }));
 
   const managers: PlatformManager[] = [
-    { id: "m1", name: "John Doe", email: "john.doe@ens.test", role: "Project Manager", status: "Active", rating: 4.8, avatarUrl: "", avatarTone: "blue", workload: 76, activeProjects: 1, delayedProjects: 0, urgentProjects: 0, clients: 1, nextDeadline: "2026-06-04", joinedAt: "2026-01-10" },
-    { id: "m2", name: "Jane Smith", email: "jane.smith@ens.test", role: "Project Manager", status: "Active", rating: 4.9, avatarUrl: "", avatarTone: "green", workload: 66, activeProjects: 1, delayedProjects: 1, urgentProjects: 1, clients: 1, nextDeadline: "2026-06-12", joinedAt: "2026-01-12" },
-    { id: "m3", name: "Mike Ross", email: "mike.ross@ens.test", role: "Project Manager", status: "On Leave", rating: 4.5, avatarUrl: "", avatarTone: "amber", workload: 35, activeProjects: 1, delayedProjects: 0, urgentProjects: 0, clients: 1, nextDeadline: "2026-09-01", joinedAt: "2026-02-01" },
+    { id: "m1", name: "John Doe", email: "john.doe@demo.example", role: "Project Manager", status: "Active", rating: 4.8, avatarUrl: "", avatarTone: "blue", workload: 76, activeProjects: 1, delayedProjects: 0, urgentProjects: 0, clients: 1, nextDeadline: "2026-06-04", joinedAt: "2026-01-10" },
+    { id: "m2", name: "Jane Smith", email: "jane.smith@demo.example", role: "Project Manager", status: "Active", rating: 4.9, avatarUrl: "", avatarTone: "green", workload: 66, activeProjects: 1, delayedProjects: 1, urgentProjects: 1, clients: 1, nextDeadline: "2026-06-12", joinedAt: "2026-01-12" },
+    { id: "m3", name: "Mike Ross", email: "mike.ross@demo.example", role: "Project Manager", status: "On Leave", rating: 4.5, avatarUrl: "", avatarTone: "amber", workload: 35, activeProjects: 1, delayedProjects: 0, urgentProjects: 0, clients: 1, nextDeadline: "2026-09-01", joinedAt: "2026-02-01" },
   ];
 
   return {

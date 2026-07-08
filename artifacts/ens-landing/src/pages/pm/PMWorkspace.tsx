@@ -9,6 +9,7 @@ import {
   getWorkspaceComments,
   getPlatformProjects,
   saveProjectWorkspace,
+  uploadWorkspaceAsset,
   updateWorkspaceCommentStatus,
   workspaceApprovalStage,
   workspaceApprovalStageLabel,
@@ -44,13 +45,14 @@ type FasciaOption = 'classic' | 'full' | 'custom';
 type LightingPreset = 'neutral' | 'exhibition' | 'accent' | 'spotlight' | 'ambient';
 type DoorPosition = 'left' | 'center' | 'right';
 type DoorSwing = 'left-in' | 'right-in' | 'left-out' | 'right-out';
+type RoomWallFinish = 'white' | 'frosted' | 'glass' | 'dark';
 interface BoothState { width:number; depth:number; height:number; system:BoothSystem; companyName:string; openFront:boolean; openBack:boolean; openLeft:boolean; openRight:boolean; fasciaEnabled:boolean; fasciaOption:FasciaOption; }
 interface WorkspacePlacedItem { id:string; catalogId:string; name:string; sku:string; qty:number; w:number; d:number; h:number; color:string; weight:number; x:number; z:number; rotation:number; rotationX?:number; rotationY?:number; rotationZ?:number; kind:'furniture'|'light'|'structure'|'fascia'|'asset'; shape?:CatItem['shape']; modelUrl?:string; source?:string; }
-interface WorkspaceRoom { id:string; name:string; width:number; depth:number; height:number; x:number; z:number; hasDoor:boolean; hasCeiling:boolean; doorPosition:DoorPosition; doorSwing:DoorSwing; doorOpen:boolean; }
+interface WorkspaceRoom { id:string; name:string; width:number; depth:number; height:number; x:number; z:number; hasDoor:boolean; hasCeiling:boolean; doorPosition:DoorPosition; doorSwing:DoorSwing; doorOpen:boolean; wallFinish:RoomWallFinish; floorColor:string; locked:boolean; designImageUrl?:string; designImageName?:string; designOpacity?:number; }
 interface PanelOverride { color?:string; brandText?:string; brandColor?:string; brandScale?:number; designImageUrl?:string; designImageName?:string; designOpacity?:number; }
 interface Note { id:string; text:string; color:string; createdAt:string; }
 interface Snapshot { id:string; name:string; data:WSData; createdAt:string; }
-interface WSData { booth:BoothState; themeIdx:number; wallFinishIdx:number; frameFinishIdx:number; fasciaFinishIdx:number; carpetIdx:number; lightingPreset:LightingPreset; placedItems:WorkspacePlacedItem[]; rooms:WorkspaceRoom[]; notes:Note[]; panelOverrides:Record<string,PanelOverride>; frontSupportPositions:number[]; }
+interface WSData { booth:BoothState; themeIdx:number; wallFinishIdx:number; frameFinishIdx:number; fasciaFinishIdx:number; carpetIdx:number; lightingPreset:LightingPreset; placedItems:WorkspacePlacedItem[]; rooms:WorkspaceRoom[]; notes:Note[]; panelOverrides:Record<string,PanelOverride>; frontSupportPositions:number[]; suppressedDefaultPositions:number[]; }
 type SaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';
 type FeedbackFilter = 'open' | 'all' | 'resolved';
 
@@ -189,13 +191,13 @@ function PropBlock({label,right,children}:{label:string;right?:React.ReactNode;c
 function formatUsd(value:number) {
   return `USD ${Math.max(0, Math.round(value)).toLocaleString()}`;
 }
-function DimInput({label,value,min,max,step,onChange}:{label:string;value:number;min:number;max:number;step:number;onChange:(v:number)=>void}) {
+function DimInput({label,value,min,max,step,onChange,disabled=false}:{label:string;value:number;min:number;max:number;step:number;onChange:(v:number)=>void;disabled?:boolean}) {
   return (<div>
     <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:3}}>{label}</label>
     <div style={{position:'relative'}}>
-      <input type="number" min={min} max={max} step={step} value={value}
-        onChange={e=>{const n=parseFloat(e.target.value);if(!isNaN(n)&&n>=min&&n<=max)onChange(n);}}
-        style={{width:'100%',height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:MONO,fontSize:12.5,fontWeight:600,color:C.ink,paddingLeft:8,paddingRight:22,boxSizing:'border-box',outline:'none'}}/>
+      <input type="number" id={`dim-${label.toLowerCase().replace(/\s+/g,'-')}`} name={`dim-${label.toLowerCase().replace(/\s+/g,'-')}`} min={min} max={max} step={step} value={value} disabled={disabled}
+        onChange={e=>{if(disabled)return;const n=parseFloat(e.target.value);if(!isNaN(n)&&n>=min&&n<=max)onChange(n);}}
+        style={{width:'100%',height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:disabled?'#f2f0eb':C.bg,fontFamily:MONO,fontSize:12.5,fontWeight:600,color:disabled?C.muted:C.ink,paddingLeft:8,paddingRight:22,boxSizing:'border-box',outline:'none',cursor:disabled?'not-allowed':'text'}}/>
       <span style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',fontFamily:MONO,fontSize:9,color:C.muted}}>m</span>
     </div>
   </div>);
@@ -214,9 +216,9 @@ function catalogPreviewUrl(item: CatItem) {
 function CatalogImagePreview({item,active}:{item:CatItem;active:boolean}) {
   const previewUrl = catalogPreviewUrl(item);
   return (
-    <div style={{width:'100%',height:46,border:`1px solid ${active?C.ink:'rgba(156,163,175,0.32)'}`,borderRadius:4,background:active?'#f8fafc':'#ffffff',overflow:'hidden',display:'grid',placeItems:'center'}}>
+    <div style={{width:'100%',height:62,border:`1px solid ${active?C.ink:'rgba(156,163,175,0.32)'}`,borderRadius:4,background:active?'#f8fafc':'#ffffff',overflow:'hidden',display:'grid',placeItems:'center'}}>
       {previewUrl ? (
-        <img src={previewUrl} alt="" loading="lazy" style={{width:'100%',height:'100%',objectFit:'contain',display:'block'}}/>
+        <img src={previewUrl} alt={`${item.name} preview`} loading="lazy" style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',display:'block',transform:'scale(1.18)'}}/>
       ) : (
         <Box size={18} color={C.muted}/>
       )}
@@ -312,8 +314,8 @@ function Toast({msg,onClose}:{msg:string;onClose:()=>void}) {
 }
 
 // ── Initial state ──────────────────────────────────────────────────
-const INITIAL_BOOTH: BoothState = {width:6,depth:3,height:2.5,system:'octanorm',companyName:'TECHCORP INDUSTRIES',openFront:true,openBack:false,openLeft:false,openRight:false,fasciaEnabled:true,fasciaOption:'classic'};
-const INITIAL_WS: WSData = {booth:INITIAL_BOOTH,themeIdx:0,wallFinishIdx:0,frameFinishIdx:0,fasciaFinishIdx:0,carpetIdx:0,lightingPreset:'exhibition',placedItems:[],rooms:[],notes:[],panelOverrides:{},frontSupportPositions:[]};
+const INITIAL_BOOTH: BoothState = {width:6,depth:3,height:2.5,system:'octanorm',companyName:'TECHCORP INDUSTRIES',openFront:true,openBack:false,openLeft:false,openRight:false,fasciaEnabled:true,fasciaOption:'full'};
+const INITIAL_WS: WSData = {booth:INITIAL_BOOTH,themeIdx:0,wallFinishIdx:0,frameFinishIdx:0,fasciaFinishIdx:0,carpetIdx:0,lightingPreset:'exhibition',placedItems:[],rooms:[],notes:[],panelOverrides:{},frontSupportPositions:[],suppressedDefaultPositions:[]};
 
 function clampNumber(value:number, min:number, max:number) {
   return Math.max(min, Math.min(max, value));
@@ -397,6 +399,15 @@ function normalizeDoorSwing(value:unknown): DoorSwing {
   return value === 'right-in' || value === 'left-out' || value === 'right-out' ? value : 'left-in';
 }
 
+function normalizeRoomWallFinish(value:unknown): RoomWallFinish {
+  return value === 'frosted' || value === 'glass' || value === 'dark' ? value : 'white';
+}
+
+function normalizeHexColor(value:unknown, fallback:string) {
+  const raw = String(value || '').trim();
+  return /^#[0-9a-f]{6}$/i.test(raw) ? raw : fallback;
+}
+
 function roomDoorCenterX(room:WorkspaceRoom) {
   const sectionCount = Math.max(1, Math.floor(room.width));
   const sectionWidth = room.width / sectionCount;
@@ -404,11 +415,17 @@ function roomDoorCenterX(room:WorkspaceRoom) {
   return room.x - room.width / 2 + sectionWidth * (index + 0.5);
 }
 
-function snapRoomToTarget(room:WorkspaceRoom, booth:BoothState, target:'front'|'back'|'left'|'right'|'center') {
+type RoomSnapTarget = 'front'|'back'|'left'|'right'|'center'|'back-left'|'back-right'|'front-left'|'front-right';
+
+function snapRoomToTarget(room:WorkspaceRoom, booth:BoothState, target:RoomSnapTarget) {
   const centered = {
     x: clampNumber(snapNumber(room.x), room.width/2, Math.max(room.width/2, booth.width-room.width/2)),
     z: clampNumber(snapNumber(room.z), room.depth/2, Math.max(room.depth/2, booth.depth-room.depth/2)),
   };
+  if(target === 'back-left') return {x: room.width/2, z: room.depth/2};
+  if(target === 'back-right') return {x: booth.width - room.width/2, z: room.depth/2};
+  if(target === 'front-left') return {x: room.width/2, z: booth.depth - room.depth/2};
+  if(target === 'front-right') return {x: booth.width - room.width/2, z: booth.depth - room.depth/2};
   if(target === 'front') return {...centered, z: booth.depth - room.depth/2};
   if(target === 'back') return {...centered, z: room.depth/2};
   if(target === 'left') return {...centered, x: room.width/2};
@@ -427,12 +444,19 @@ function normalizePanelOverrides(raw:unknown): Record<string,PanelOverride> {
     if (typeof entry.brandText === 'string') next.brandText = entry.brandText.slice(0, 40);
     if (typeof entry.brandColor === 'string' && /^#[0-9a-f]{6}$/i.test(entry.brandColor)) next.brandColor = entry.brandColor;
     if (entry.brandScale != null) next.brandScale = clampNumber(Number(entry.brandScale) || 0.15, 0.08, 0.45);
-    if (typeof entry.designImageUrl === 'string' && /^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i.test(entry.designImageUrl) && entry.designImageUrl.length < 2_500_000) next.designImageUrl = entry.designImageUrl;
+    if (typeof entry.designImageUrl === 'string' && isWorkspaceImageUrl(entry.designImageUrl)) next.designImageUrl = entry.designImageUrl;
     if (typeof entry.designImageName === 'string') next.designImageName = entry.designImageName.slice(0, 80);
     if (entry.designOpacity != null) next.designOpacity = clampNumber(Number(entry.designOpacity) || 1, 0.15, 1);
     if (Object.keys(next).length) out[id] = next;
   });
   return out;
+}
+
+function isWorkspaceImageUrl(value:string) {
+  return (
+    (/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i.test(value) && value.length < 2_500_000)
+    || (/^\/workspace-assets\/[a-z0-9%._/-]+$/i.test(value) && value.length < 1000)
+  );
 }
 
 function panelDetails(partId:string, booth:BoothState) {
@@ -516,9 +540,10 @@ function defaultFrontSupportPositionsFor(width:number) {
   return positions;
 }
 
-function activeFrontSupportPositionsFor(width:number, positions:number[]) {
+function activeFrontSupportPositionsFor(width:number, positions:number[], suppressed:number[]=[]) {
   const merged = [...positions];
   defaultFrontSupportPositionsFor(width).forEach(value => {
+    if (suppressed.some(s => Math.abs(s - value) < 0.12)) return;
     if (!merged.some(existing => Math.abs(Number(existing) - value) < 0.12)) merged.push(value);
   });
   return merged
@@ -539,7 +564,7 @@ function normalizeWorkspaceData(raw: unknown): WSData {
     system: boothSource.system === 'maxima' ? 'maxima' : 'octanorm',
     companyName: String(boothSource.companyName || INITIAL_BOOTH.companyName).slice(0, 60),
     fasciaEnabled: boothSource.fasciaEnabled !== false,
-    fasciaOption: FASCIA_OPTIONS.some(option => option.value === boothSource.fasciaOption) ? boothSource.fasciaOption as FasciaOption : 'classic',
+    fasciaOption: FASCIA_OPTIONS.some(option => option.value === boothSource.fasciaOption) ? boothSource.fasciaOption as FasciaOption : 'full',
   };
   return {
     booth,
@@ -559,6 +584,9 @@ function normalizeWorkspaceData(raw: unknown): WSData {
     panelOverrides: normalizePanelOverrides(source.panelOverrides),
     frontSupportPositions: Array.isArray(source.frontSupportPositions)
       ? source.frontSupportPositions.map(Number).filter(Number.isFinite).map(value => clampNumber(value, 0.45, Math.max(0.45, booth.width - 0.45)))
+      : [],
+    suppressedDefaultPositions: Array.isArray(source.suppressedDefaultPositions)
+      ? source.suppressedDefaultPositions.map(Number).filter(Number.isFinite)
       : [],
   };
 }
@@ -597,12 +625,13 @@ function normalizeRoom(raw: unknown, index: number, booth: BoothState): Workspac
   const room = raw && typeof raw === 'object' ? raw as Partial<WorkspaceRoom> : {};
   const width = clampNumber(snapNumber(Number(room.width) || 3, 1), 1, Math.max(1, booth.width));
   const depth = clampNumber(snapNumber(Number(room.depth) || 3, 1), 1, Math.max(1, booth.depth));
+  const wallHeight = Math.max(1.8, booth.height - 0.3);
   return {
     id: String(room.id || `room-${index + 1}`),
     name: String(room.name || `Room ${index + 1}`),
     width,
     depth,
-    height: clampNumber(Number(room.height) || 2.4, 1.8, booth.height),
+    height: wallHeight,
     x: clampNumber(snapNumber(Number(room.x) || booth.width / 2, 1), width / 2, Math.max(width / 2, booth.width - width / 2)),
     z: clampNumber(snapNumber(Number(room.z) || booth.depth / 2, 1), depth / 2, Math.max(depth / 2, booth.depth - depth / 2)),
     hasDoor: room.hasDoor !== false,
@@ -610,6 +639,12 @@ function normalizeRoom(raw: unknown, index: number, booth: BoothState): Workspac
     doorPosition: normalizeDoorPosition(room.doorPosition),
     doorSwing: normalizeDoorSwing(room.doorSwing),
     doorOpen: Boolean(room.doorOpen),
+    wallFinish: normalizeRoomWallFinish(room.wallFinish),
+    floorColor: normalizeHexColor(room.floorColor, '#1f2937'),
+    locked: Boolean(room.locked),
+    designImageUrl: typeof room.designImageUrl === 'string' && isWorkspaceImageUrl(room.designImageUrl) ? room.designImageUrl : undefined,
+    designImageName: typeof room.designImageName === 'string' ? room.designImageName.slice(0, 80) : undefined,
+    designOpacity: room.designOpacity != null ? clampNumber(Number(room.designOpacity) || 1, 0.15, 1) : undefined,
   };
 }
 
@@ -806,7 +841,7 @@ export default function PMWorkspace() {
 
   // Select a project from the picker
   const selectProject = useCallback((project: PlatformProject) => {
-    history.replaceState(null, '', `/pm/workspace?projectId=${encodeURIComponent(project.id)}`);
+    history.replaceState(null, '', `${window.location.pathname}?projectId=${encodeURIComponent(project.id)}`);
     setShowProjectPicker(false);
     setIsWorkspaceLoading(true);
     getProjectWorkspace(project.id)
@@ -913,6 +948,10 @@ export default function PMWorkspace() {
 
   const sendToClient = async () => {
     if(!workspaceRecord || isSending) return;
+    if(!workspaceRecord.permissions?.can_send_arrangement) {
+      setWorkspaceError('This workspace has already been sent or cannot be sent in its current state.');
+      return;
+    }
     setIsSending(true);
     try {
       const title = `Client review - ${new Date().toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}`;
@@ -1009,23 +1048,36 @@ export default function PMWorkspace() {
   });
   const uploadPanelDesign = (id:string, file?:File|null) => {
     if(!file) return;
+    if(!workspaceRecord?.project.id) {
+      setToast('Open a project before uploading images');
+      return;
+    }
     if(!file.type.startsWith('image/')) {
       setToast('Please choose an image file');
       return;
     }
-    if(file.size > 2_000_000) {
-      setToast('Image must be under 2 MB');
+    if(file.size > 5_000_000) {
+      setToast('Image must be under 5 MB');
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const result = typeof reader.result === 'string' ? reader.result : '';
       if(!result.startsWith('data:image/')) {
         setToast('Image could not be loaded');
         return;
       }
-      updatePanelOverride(id,{designImageUrl:result,designImageName:file.name,designOpacity:1});
-      setToast('Panel design uploaded');
+      try {
+        const uploaded = await uploadWorkspaceAsset(workspaceRecord.project.id, {
+          dataUrl: result,
+          name: file.name,
+          purpose: id.includes('fascia') ? 'fascia' : 'panel',
+        });
+        updatePanelOverride(id,{designImageUrl:uploaded.asset.url,designImageName:file.name,designOpacity:1});
+        setToast('Panel design uploaded');
+      } catch (error) {
+        setToast(error instanceof Error ? error.message : 'Image could not be uploaded');
+      }
     };
     reader.onerror = () => setToast('Image could not be loaded');
     reader.readAsDataURL(file);
@@ -1074,19 +1126,23 @@ export default function PMWorkspace() {
   const addRoom = () => commit(prev=>{
     const width = Math.min(3, Math.max(1, prev.booth.width - 0.5));
     const depth = Math.min(2, Math.max(1, prev.booth.depth - 0.5));
+    const wallHeight = Math.max(1.8, prev.booth.height - 0.3);
     const room: WorkspaceRoom = normalizeRoom({
       id:`room-${Date.now()}`,
       name:`Room ${prev.rooms.length + 1}`,
       width,
       depth,
-      height:Math.min(2.4, prev.booth.height),
+      height:wallHeight,
       x:width / 2,
       z:depth / 2,
       hasDoor:true,
       hasCeiling:false,
       doorPosition:'center',
       doorSwing:'left-in',
-      doorOpen:true,
+      doorOpen:false,
+      wallFinish:'white',
+      floorColor:'#1f2937',
+      locked:false,
     }, prev.rooms.length, prev.booth);
     setToast(`${room.name} created`);
     setActiveRoomId(room.id);
@@ -1097,6 +1153,42 @@ export default function PMWorkspace() {
     ...prev,
     rooms: prev.rooms.map(room => room.id === id ? {...room, ...patch} : room),
   }));
+  const uploadRoomDesign = (id:string, file?:File|null) => {
+    if(!file) return;
+    if(!workspaceRecord?.project.id) {
+      setToast('Open a project before uploading images');
+      return;
+    }
+    if(!file.type.startsWith('image/')) {
+      setToast('Please choose an image file');
+      return;
+    }
+    if(file.size > 5_000_000) {
+      setToast('Image must be under 5 MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      if(!result.startsWith('data:image/')) {
+        setToast('Image could not be loaded');
+        return;
+      }
+      try {
+        const uploaded = await uploadWorkspaceAsset(workspaceRecord.project.id, {
+          dataUrl: result,
+          name: file.name,
+          purpose: 'room',
+        });
+        updateRoom(id,{designImageUrl:uploaded.asset.url,designImageName:file.name,designOpacity:1});
+        setToast('Room wall image uploaded');
+      } catch (error) {
+        setToast(error instanceof Error ? error.message : 'Image could not be uploaded');
+      }
+    };
+    reader.onerror = () => setToast('Image could not be loaded');
+    reader.readAsDataURL(file);
+  };
   const moveRoomLive = useCallback((id:string, patch:Partial<WorkspaceRoom>) => {
     setHasUnsavedChanges(true);
     setSaveStatus('dirty');
@@ -1105,22 +1197,50 @@ export default function PMWorkspace() {
       rooms: prev.rooms.map(room => room.id === id ? {...room, ...patch} : room),
     }));
   },[]);
-  const moveFrontSupportsLive = useCallback((positions:number[]) => {
+  const moveFrontSupportsLive = useCallback((positions:number[], suppressed:number[]=[]) => {
     setHasUnsavedChanges(true);
     setSaveStatus('dirty');
     setWS(prev=>normalizeWorkspaceData({
       ...prev,
-      frontSupportPositions: activeFrontSupportPositionsFor(prev.booth.width, positions),
+      frontSupportPositions: positions,
+      suppressedDefaultPositions: suppressed,
     }));
   },[]);
   const updateFrontSupportPosition = (index:number, value:number) => commit(prev=>{
-    const positions = activeFrontSupportPositionsFor(prev.booth.width, prev.frontSupportPositions);
-    positions[index] = value;
+    const suppressed = Array.isArray(prev.suppressedDefaultPositions) ? prev.suppressedDefaultPositions : [];
+    const active = activeFrontSupportPositionsFor(prev.booth.width, prev.frontSupportPositions, suppressed);
+    const oldX = active[index];
+    const defaults = defaultFrontSupportPositionsFor(prev.booth.width);
+    const wasDefault = oldX != null && defaults.some(p => Math.abs(p - oldX) < 0.12);
+    const newSuppressed = wasDefault && oldX != null && !suppressed.some(p => Math.abs(p - oldX) < 0.12)
+      ? [...suppressed, oldX] : suppressed;
+    const custom = Array.isArray(prev.frontSupportPositions) ? prev.frontSupportPositions : [];
+    const withoutOld = oldX != null ? custom.filter(p => Math.abs(p - oldX) >= 0.12) : custom;
+    withoutOld.push(value);
     return normalizeWorkspaceData({
       ...prev,
-      frontSupportPositions: positions,
+      frontSupportPositions: withoutOld,
+      suppressedDefaultPositions: newSuppressed,
     });
   });
+  const removeFrontSupport = (index:number) => {
+    commit(prev=>{
+      const suppressed = Array.isArray(prev.suppressedDefaultPositions) ? prev.suppressedDefaultPositions : [];
+      const active = activeFrontSupportPositionsFor(prev.booth.width, prev.frontSupportPositions, suppressed);
+      const posToRemove = active[index];
+      if (posToRemove == null) return prev;
+      const defaults = defaultFrontSupportPositionsFor(prev.booth.width);
+      const isDefault = defaults.some(p => Math.abs(p - posToRemove) < 0.12);
+      const custom = Array.isArray(prev.frontSupportPositions) ? prev.frontSupportPositions : [];
+      return normalizeWorkspaceData({
+        ...prev,
+        frontSupportPositions: custom.filter(p => Math.abs(p - posToRemove) >= 0.12),
+        suppressedDefaultPositions: isDefault && !suppressed.some(p => Math.abs(p - posToRemove) < 0.12)
+          ? [...suppressed, posToRemove] : suppressed,
+      });
+    });
+    setActiveShellPartId('');
+  };
   const removeRoom = (id:string) => {
     if(activeRoomId===id) setActiveRoomId('');
     commit(prev=>({...prev,rooms:prev.rooms.filter(room=>room.id!==id)}));
@@ -1134,7 +1254,7 @@ export default function PMWorkspace() {
   };
   const removeNote = (id:string) => commit(prev=>({...prev,notes:prev.notes.filter(n=>n.id!==id)}));
 
-  const { booth, themeIdx, wallFinishIdx, frameFinishIdx, fasciaFinishIdx, carpetIdx, lightingPreset, placedItems, rooms, notes, panelOverrides, frontSupportPositions } = ws;
+  const { booth, themeIdx, wallFinishIdx, frameFinishIdx, fasciaFinishIdx, carpetIdx, lightingPreset, placedItems, rooms, notes, panelOverrides, frontSupportPositions, suppressedDefaultPositions } = ws;
   const activePlacedItem = placedItems.find(item => item.id === activePlacedId) || null;
   const activePanel = activeShellPartId ? panelDetails(activeShellPartId, booth) : null;
   const activeShellPart = activeShellPartId ? shellPartDetails(activeShellPartId, booth) : null;
@@ -1142,7 +1262,7 @@ export default function PMWorkspace() {
   const activeFasciaId = activeShellPart?.type === 'fascia' ? canonicalShellPartId(activeShellPartId) : '';
   const activeFasciaOverride = activeFasciaId ? (panelOverrides[activeFasciaId] || {}) : {};
   const activeFrontSupportIndex = Number(activeShellPartId.match(/^post-front-support-(\d+)$/)?.[1] ?? -1);
-  const activeFrontSupportPositions = activeFrontSupportPositionsFor(booth.width, frontSupportPositions);
+  const activeFrontSupportPositions = activeFrontSupportPositionsFor(booth.width, frontSupportPositions, suppressedDefaultPositions ?? []);
   const projectLabel = workspaceRecord?.project.name ?? 'Workspace';
   const clientLabel = workspaceRecord?.project.client ?? booth.companyName;
   const exhibitionLabel = workspaceRecord?.project.exhibition ?? 'Client review';
@@ -1151,6 +1271,16 @@ export default function PMWorkspace() {
   const openFeedbackCount = feedbackItems.filter(item => (item.status ?? 'open') === 'open').length;
   const approvalStage = workspaceApprovalStage(workspaceRecord);
   const approvalStageLabel = workspaceApprovalStageLabel(approvalStage);
+  const canSendToClient = Boolean(workspaceRecord?.permissions?.can_send_arrangement);
+  const sendDisabledReason = !workspaceRecord
+    ? 'Workspace is still loading'
+    : !canSendToClient
+      ? approvalStage === 'sent' || approvalStage === 'viewed'
+        ? 'Already sent to client'
+        : approvalStage === 'approved' || approvalStage === 'locked'
+          ? 'Approved workspaces are locked'
+          : 'Workspace cannot be sent in this state'
+      : '';
   const approvalStageColor = approvalStage === 'approved' || approvalStage === 'locked'
     ? C.green
     : approvalStage === 'revision_requested'
@@ -1502,8 +1632,13 @@ export default function PMWorkspace() {
           <button onClick={()=>setPreviewMode(value=>!value)} title="Preview workspace" style={{background:previewMode?`${C.orange}12`:'none',border:`1px solid ${previewMode?C.orange:C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:previewMode?C.orange:C.ink}}>
             <Maximize2 size={12}/> Preview
           </button>
-          <button onClick={()=>setShowSendDlg(true)} style={{background:C.blue,border:'none',color:'#fff',borderRadius:4,padding:'6px 14px',cursor:'pointer',display:'flex',alignItems:'center',gap:6,fontSize:12,fontWeight:600,fontFamily:UI}}>
-            <Send size={12}/> Send to Client
+          <button
+            onClick={()=>canSendToClient && setShowSendDlg(true)}
+            disabled={!canSendToClient}
+            title={sendDisabledReason || 'Send workspace to client'}
+            style={{background:canSendToClient?C.blue:`${C.muted}22`,border:'none',color:canSendToClient?'#fff':C.muted,borderRadius:4,padding:'6px 14px',cursor:canSendToClient?'pointer':'not-allowed',display:'flex',alignItems:'center',gap:6,fontSize:12,fontWeight:600,fontFamily:UI}}
+          >
+            <Send size={12}/> {approvalStage === 'sent' || approvalStage === 'viewed' ? 'Sent to Client' : 'Send to Client'}
           </button>
         </div>
       </header>
@@ -1520,7 +1655,7 @@ export default function PMWorkspace() {
           <div style={{padding:'8px 10px',borderBottom:`1px solid ${C.hair}`,flexShrink:0}}>
             <div style={{position:'relative'}}>
               <Search size={11} style={{position:'absolute',left:8,top:'50%',transform:'translateY(-50%)',color:C.muted}}/>
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search items, SKUs…"
+              <input id="furniture-search" name="furniture-search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search items, SKUs…"
                 style={{width:'100%',height:28,paddingLeft:26,paddingRight:32,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:UI,fontSize:11.5,color:C.ink,outline:'none',boxSizing:'border-box'}}/>
               <span style={{position:'absolute',right:7,top:'50%',transform:'translateY(-50%)',fontFamily:MONO,fontSize:8.5,color:C.muted,border:`1px solid ${C.hair}`,borderRadius:3,padding:'1px 4px',lineHeight:1.2}}>⌘K</span>
             </div>
@@ -1650,6 +1785,7 @@ export default function PMWorkspace() {
               rooms,
               panelOverrides,
               frontSupportPositions,
+              suppressedDefaultPositions: suppressedDefaultPositions ?? [],
               fasciaEnabled: booth.fasciaEnabled,
               fasciaOption: booth.fasciaOption,
               lightingPreset,
@@ -1858,6 +1994,10 @@ export default function PMWorkspace() {
                       style={{width:76,height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:MONO,fontSize:10.5,color:C.ink,paddingLeft:7,outline:'none'}}/>
                     <span style={{fontFamily:MONO,fontSize:9,color:C.muted}}>meters from left front corner</span>
                   </div>
+                  <button onClick={()=>removeFrontSupport(activeFrontSupportIndex)}
+                    style={{marginTop:8,width:'100%',height:28,background:'transparent',border:`1px solid ${C.orange}`,borderRadius:4,color:C.orange,fontFamily:MONO,fontSize:9.5,fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase',cursor:'pointer'}}>
+                    Remove Rail
+                  </button>
                 </div>
               )}
             </div>
@@ -1900,10 +2040,10 @@ export default function PMWorkspace() {
               <PropBlock label="Fascia Sign" right={booth.fasciaEnabled ? `${fasciaMeta.boardMm} mm` : 'Disabled'}>
                 <label style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,border:`1px solid ${C.hair}`,borderRadius:5,background:C.bg,padding:'8px 10px',cursor:'pointer'}}>
                   <span style={{fontSize:12,fontWeight:700,color:C.ink}}>Enable rail fascia</span>
-                  <input type="checkbox" checked={booth.fasciaEnabled} onChange={e=>set('fasciaEnabled',e.target.checked)}
+                  <input type="checkbox" id="fascia-enabled" name="fascia-enabled" checked={booth.fasciaEnabled} onChange={e=>set('fasciaEnabled',e.target.checked)}
                     style={{width:16,height:16,accentColor:C.blue,cursor:'pointer'}}/>
                 </label>
-                <input value={booth.companyName} disabled={!booth.fasciaEnabled} onChange={e=>set('companyName',e.target.value.toUpperCase().slice(0,22))}
+                <input id="company-name" name="company-name" value={booth.companyName} disabled={!booth.fasciaEnabled} onChange={e=>set('companyName',e.target.value.toUpperCase().slice(0,22))}
                   style={{width:'100%',height:34,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:booth.fasciaEnabled?C.bg:'#f2f0eb',fontFamily:MONO,fontSize:12,fontWeight:700,color:C.ink,paddingLeft:10,boxSizing:'border-box',outline:'none',letterSpacing:'0.06em',opacity:booth.fasciaEnabled?1:0.55}}/>
                 <select value={booth.fasciaOption} disabled={!booth.fasciaEnabled} onChange={e=>set('fasciaOption',e.target.value as FasciaOption)}
                   style={{width:'100%',height:30,marginTop:8,border:`1px solid ${fasciaValid?C.hair:C.orange}`,borderRadius:4,background:booth.fasciaEnabled?C.bg:'#f2f0eb',fontFamily:UI,fontSize:12,color:C.ink,paddingLeft:8,boxSizing:'border-box',outline:'none',cursor:booth.fasciaEnabled?'pointer':'not-allowed',opacity:booth.fasciaEnabled?1:0.55}}>
@@ -1944,21 +2084,70 @@ export default function PMWorkspace() {
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
                         <DimInput label="W" value={room.width} min={1} max={booth.width} step={1} onChange={v=>updateRoom(room.id,{width:v})}/>
                         <DimInput label="D" value={room.depth} min={1} max={booth.depth} step={1} onChange={v=>updateRoom(room.id,{depth:v})}/>
-                        <DimInput label="H" value={room.height} min={1.8} max={booth.height} step={0.1} onChange={v=>updateRoom(room.id,{height:v})}/>
+                        <DimInput label="Wall H" value={room.height} min={room.height} max={room.height} step={0.1} disabled onChange={()=>{}}/>
                       </div>
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginTop:6}}>
                         <DimInput label="X" value={room.x} min={room.width/2} max={Math.max(room.width/2,booth.width-room.width/2)} step={1} onChange={v=>updateRoom(room.id,{x:v})}/>
                         <DimInput label="Z" value={room.z} min={room.depth/2} max={Math.max(room.depth/2,booth.depth-room.depth/2)} step={1} onChange={v=>updateRoom(room.id,{z:v})}/>
                       </div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 42px',gap:6,marginTop:7}}>
+                        <label style={{display:'flex',flexDirection:'column',gap:4}}>
+                          <span style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em'}}>Wall finish</span>
+                          <select value={room.wallFinish} onChange={e=>updateRoom(room.id,{wallFinish:e.target.value as RoomWallFinish})}
+                            style={{height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.ink,fontFamily:UI,fontSize:11,fontWeight:700,paddingLeft:7,outline:'none'}}>
+                            <option value="white">White panel</option>
+                            <option value="frosted">Frosted glass</option>
+                            <option value="glass">Clear glass</option>
+                            <option value="dark">Dark wall</option>
+                          </select>
+                        </label>
+                        <label style={{display:'flex',flexDirection:'column',gap:4}}>
+                          <span style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em'}}>Floor</span>
+                          <input type="color" value={room.floorColor} onChange={e=>updateRoom(room.id,{floorColor:e.target.value})}
+                            style={{width:42,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,padding:2,cursor:'pointer'}}/>
+                        </label>
+                      </div>
+                      <div style={{marginTop:7}}>
+                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Room wall image</label>
+                        <label style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,fontFamily:MONO,fontSize:9,fontWeight:800,padding:'0 8px',overflow:'hidden'}}>
+                          <ImagePlus size={12}/>
+                          <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{room.designImageName || 'Upload room wall image'}</span>
+                          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" onChange={e=>{uploadRoomDesign(room.id,e.target.files?.[0]); e.currentTarget.value='';}} style={{display:'none'}}/>
+                        </label>
+                        {room.designImageUrl&&<>
+                          <div style={{height:54,marginTop:7,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
+                            <img src={room.designImageUrl} alt="" style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
+                          </div>
+                          <div style={{display:'grid',gridTemplateColumns:'62px 1fr',gap:7,alignItems:'center',marginTop:7}}>
+                            <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
+                            <input type="range" min={0.15} max={1} step={0.05} value={room.designOpacity ?? 1} onChange={e=>updateRoom(room.id,{designOpacity:Number(e.target.value)})}
+                              style={{width:'100%',accentColor:C.blue}}/>
+                          </div>
+                          <button onClick={()=>updateRoom(room.id,{designImageUrl:undefined,designImageName:undefined,designOpacity:undefined})}
+                            style={{width:'100%',height:28,marginTop:7,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:UI,fontSize:11,fontWeight:700}}>
+                            Remove room image
+                          </button>
+                        </>}
+                      </div>
                       <div style={{marginTop:7}}>
                         <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Snap target</label>
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:4}}>
-                          {(['back','left','center','right','front'] as const).map(target=>{
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:4}}>
+                          {([
+                            ['back-left','Back L'],
+                            ['back','Back'],
+                            ['back-right','Back R'],
+                            ['left','Left'],
+                            ['center','Center'],
+                            ['right','Right'],
+                            ['front-left','Front L'],
+                            ['front','Front'],
+                            ['front-right','Front R'],
+                          ] as [RoomSnapTarget,string][]).map(([target,label])=>{
                             const next = snapRoomToTarget(room, booth, target);
                             return (
                               <button key={target} onClick={()=>updateRoom(room.id,next)}
-                                style={{height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:8.5,textTransform:'uppercase'}}>
-                                {target.slice(0,1)}
+                                style={{height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:8,textTransform:'uppercase'}}>
+                                {label}
                               </button>
                             );
                           })}
@@ -1993,13 +2182,16 @@ export default function PMWorkspace() {
                       </div>
                       <div style={{display:'flex',gap:10,marginTop:7}}>
                         <label style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:C.ink,cursor:'pointer'}}>
-                          <input type="checkbox" checked={room.hasDoor} onChange={e=>updateRoom(room.id,{hasDoor:e.target.checked})}/> Door
+                          <input type="checkbox" name={`room-door-${room.id}`} checked={room.hasDoor} onChange={e=>updateRoom(room.id,{hasDoor:e.target.checked})}/> Door
                         </label>
                         <label style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:C.ink,cursor:'pointer'}}>
-                          <input type="checkbox" checked={room.doorOpen} onChange={e=>updateRoom(room.id,{doorOpen:e.target.checked,hasDoor:true})}/> Open
+                          <input type="checkbox" name={`room-door-open-${room.id}`} checked={room.doorOpen} onChange={e=>updateRoom(room.id,{doorOpen:e.target.checked,hasDoor:true})}/> Open
                         </label>
                         <label style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:C.ink,cursor:'pointer'}}>
-                          <input type="checkbox" checked={room.hasCeiling} onChange={e=>updateRoom(room.id,{hasCeiling:e.target.checked})}/> Ceiling
+                          <input type="checkbox" name={`room-ceiling-${room.id}`} checked={room.hasCeiling} onChange={e=>updateRoom(room.id,{hasCeiling:e.target.checked})}/> Ceiling
+                        </label>
+                        <label style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:C.ink,cursor:'pointer'}}>
+                          <input type="checkbox" name={`room-lock-${room.id}`} checked={room.locked} onChange={e=>updateRoom(room.id,{locked:e.target.checked})}/> Lock
                         </label>
                         <span style={{marginLeft:'auto',fontFamily:MONO,fontSize:9,color:C.muted}}>#{index+1}</span>
                       </div>
@@ -2338,7 +2530,7 @@ export default function PMWorkspace() {
                   ))}
                 </div>
                 <div style={{display:'flex',gap:6}}>
-                  <input value={newNote} onChange={e=>setNewNote(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addNote()}
+                  <input id="new-note" name="new-note" value={newNote} onChange={e=>setNewNote(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addNote()}
                     placeholder="Add a note…"
                     style={{flex:1,height:32,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,fontFamily:UI,fontSize:12,color:C.ink,paddingLeft:8,outline:'none',boxSizing:'border-box'}}/>
                   <button onClick={addNote} style={{background:C.blue,border:'none',color:'#fff',borderRadius:4,width:32,height:32,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
@@ -2483,7 +2675,7 @@ export default function PMWorkspace() {
                 </div>
                 <div style={{display:'flex',gap:8}}>
                   <button onClick={()=>{setShowSendDlg(false);setSendConfirmed(false);}} style={{flex:1,height:38,background:'none',border:`1px solid ${C.hair}`,borderRadius:5,cursor:'pointer',fontFamily:UI,fontSize:13,color:C.ink}}>Cancel</button>
-                  <button onClick={sendToClient} disabled={isSending || !workspaceRecord} style={{flex:2,height:38,background:C.blue,border:'none',color:'#fff',borderRadius:5,cursor:isSending || !workspaceRecord?'not-allowed':'pointer',fontFamily:UI,fontSize:13,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:6,opacity:isSending || !workspaceRecord?0.65:1}}>
+                  <button onClick={sendToClient} disabled={isSending || !workspaceRecord || !canSendToClient} title={sendDisabledReason || 'Send for approval'} style={{flex:2,height:38,background:canSendToClient?C.blue:`${C.muted}30`,border:'none',color:'#fff',borderRadius:5,cursor:isSending || !workspaceRecord || !canSendToClient?'not-allowed':'pointer',fontFamily:UI,fontSize:13,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:6,opacity:isSending || !workspaceRecord || !canSendToClient?0.65:1}}>
                     <Send size={13}/> {isSending ? 'Sending...' : 'Send for Approval'}
                   </button>
                 </div>
@@ -2511,7 +2703,7 @@ export default function PMWorkspace() {
           <div style={{position:'fixed',inset:0,background:'rgba(24,22,19,0.45)',zIndex:200}} onClick={()=>setShowSnapDlg(false)}/>
           <div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:C.panel,border:`1px solid ${C.hair}`,borderRadius:8,padding:24,zIndex:201,width:340,boxShadow:'0 8px 40px rgba(0,0,0,0.18)'}}>
             <h3 style={{fontSize:14,fontWeight:700,margin:'0 0 14px',display:'flex',alignItems:'center',gap:8}}><Camera size={15} style={{color:C.blue}}/> Save Snapshot</h3>
-            <input value={snapName} onChange={e=>setSnapName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&createSnapshot()}
+            <input id="snapshot-name" name="snapshot-name" value={snapName} onChange={e=>setSnapName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&createSnapshot()}
               placeholder="e.g. v2 — After client review"
               autoFocus
               style={{width:'100%',height:36,border:`1px solid ${C.hair}`,borderRadius:5,background:C.bg,fontFamily:UI,fontSize:13,color:C.ink,paddingLeft:10,boxSizing:'border-box',outline:'none',marginBottom:12}}/>

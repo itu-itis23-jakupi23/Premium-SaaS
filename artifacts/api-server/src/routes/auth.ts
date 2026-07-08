@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import type { CookieOptions, Response } from "express";
 import { Router, type IRouter } from "express";
 import { sql, type SQL } from "drizzle-orm";
@@ -5,6 +6,7 @@ import { db } from "@workspace/db";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { createRefreshToken, hashToken, signAccessToken, verifyAccessToken } from "../lib/tokens";
 import { getAuthContext, toUiRole, type AuthContext, type AuthRole } from "../middlewares/session";
+import { sendPasswordResetEmail } from "../lib/email";
 
 const ACCESS_COOKIE = "ens_access";
 const REFRESH_COOKIE = "ens_refresh";
@@ -16,6 +18,35 @@ const router: IRouter = Router();
 async function queryRows<T>(statement: SQL) {
   const result = await db.execute(statement);
   return (result as unknown as { rows: T[] }).rows;
+}
+
+// ── Login rate limiting (in-memory, per-process) ─────────────────────────────
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const LOGIN_RATE_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_RATE_MAX = 10;
+
+function checkLoginRateLimit(key: string): { blocked: boolean; retryAfterSeconds: number } {
+  const now = Date.now();
+  const entry = loginAttempts.get(key);
+  if (!entry || now > entry.resetAt) return { blocked: false, retryAfterSeconds: 0 };
+  if (entry.count >= LOGIN_RATE_MAX) {
+    return { blocked: true, retryAfterSeconds: Math.ceil((entry.resetAt - now) / 1000) };
+  }
+  return { blocked: false, retryAfterSeconds: 0 };
+}
+
+function recordFailedLogin(key: string) {
+  const now = Date.now();
+  const entry = loginAttempts.get(key);
+  if (!entry || now > entry.resetAt) {
+    loginAttempts.set(key, { count: 1, resetAt: now + LOGIN_RATE_WINDOW_MS });
+  } else {
+    entry.count++;
+  }
+}
+
+function clearLoginAttempts(key: string) {
+  loginAttempts.delete(key);
 }
 
 router.get("/auth/me", async (req, res) => {
@@ -53,9 +84,20 @@ router.post("/auth/login", async (req, res) => {
     return;
   }
 
+  const rateLimitKey = `${input.value.email}:${req.ip ?? "unknown"}`;
+  const rl = checkLoginRateLimit(rateLimitKey);
+  if (rl.blocked) {
+    res.set("Retry-After", String(rl.retryAfterSeconds));
+    res.status(429).json({
+      error: { code: "too_many_requests", message: "Too many login attempts. Please try again later." },
+    });
+    return;
+  }
+
   const account = await findLoginAccount(input.value.email, input.value.organizationSlug);
 
   if (!account || !account.passwordHash || !verifyPassword(input.value.password, account.passwordHash)) {
+    recordFailedLogin(rateLimitKey);
     res.status(401).json({
       error: {
         code: "invalid_credentials",
@@ -89,6 +131,7 @@ router.post("/auth/login", async (req, res) => {
   `);
 
   await auditAuthEvent(account.organizationId, account.userId, "auth_login", "signed in");
+  clearLoginAttempts(rateLimitKey);
   res.json(authResponse(auth.context));
 });
 
@@ -992,5 +1035,102 @@ async function seedStaffOrganizationData(orgId: string, primaryUserId: string, p
       (${orgId}::uuid, ${pmUserId}::uuid, ${p1Id}::uuid, 'approval_requested', 'requested layout approval', now() - interval '1 day')
   `);
 }
+
+// ── Password reset ────────────────────────────────────────────────────────────
+
+const APP_URL = (process.env.APP_URL ?? "http://localhost:5173").replace(/\/$/, "");
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+async function findUserByEmailForReset(email: string) {
+  const rows = await queryRows<{ id: string; email: string; name: string }>(sql`
+    select u.id::text, u.email, u.name
+    from users u
+    where lower(u.email) = lower(${email})
+      and u.deleted_at is null
+    limit 1
+  `);
+  return rows[0] ?? null;
+}
+
+router.post("/auth/forgot-password", async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const email = typeof body?.email === "string" ? body.email.toLowerCase().trim() : null;
+
+  if (!email || !email.includes("@")) {
+    res.status(400).json({ error: { code: "invalid_email", message: "A valid email address is required." } });
+    return;
+  }
+
+  // Find user — but always return 200 to avoid leaking which emails are registered
+  const user = await findUserByEmailForReset(email);
+
+  if (user) {
+    const token = randomBytes(32).toString("hex");
+    const tokenHash = hashToken(token);
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString();
+
+    // Invalidate any active tokens for this user
+    await db.execute(sql`
+      update password_reset_tokens
+      set used_at = now()
+      where user_id = ${user.id}::uuid
+        and used_at is null
+        and expires_at > now()
+    `);
+
+    await db.execute(sql`
+      insert into password_reset_tokens (user_id, token_hash, expires_at)
+      values (${user.id}::uuid, ${tokenHash}, ${expiresAt}::timestamptz)
+    `);
+
+    const resetUrl = `${APP_URL}/reset-password?token=${token}`;
+    await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl });
+  }
+
+  res.json({ ok: true });
+});
+
+router.post("/auth/reset-password", async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const token = typeof body?.token === "string" ? body.token.trim() : null;
+  const password = typeof body?.password === "string" ? body.password : null;
+
+  if (!token || !password || password.length < 8) {
+    res.status(400).json({ error: { code: "invalid_input", message: "A valid token and password (min 8 characters) are required." } });
+    return;
+  }
+
+  const tokenHash = hashToken(token);
+  const rows = await queryRows<{ id: string; userId: string }>(sql`
+    select id::text, user_id::text as "userId"
+    from password_reset_tokens
+    where token_hash = ${tokenHash}
+      and used_at is null
+      and expires_at > now()
+    limit 1
+  `);
+
+  if (!rows[0]) {
+    res.status(400).json({ error: { code: "invalid_token", message: "This reset link is invalid or has expired. Please request a new one." } });
+    return;
+  }
+
+  const { id: tokenId, userId } = rows[0];
+  const passwordHash = hashPassword(password);
+
+  await db.execute(sql`
+    update users
+    set password_hash = ${passwordHash}, updated_at = now()
+    where id = ${userId}::uuid
+  `);
+
+  await db.execute(sql`
+    update password_reset_tokens
+    set used_at = now()
+    where id = ${tokenId}::uuid
+  `);
+
+  res.json({ ok: true });
+});
 
 export default router;

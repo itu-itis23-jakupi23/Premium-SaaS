@@ -292,13 +292,14 @@ let FASCIA_COLOR = _P.get('fasciaColor') || '#ffffff';
 let placedItems = [];
 let rooms = [];
 let FASCIA_ENABLED = _P.get('fascia') !== '0';
-let FASCIA_OPTION = 'classic';
+let FASCIA_OPTION = 'full';
 let LIGHTING_PRESET = 'exhibition';
 let pins = [];
 let pinMode = false;
 let panelOverrides = {};
 let invalidItemIds = new Set();
 let frontSupportPositions = [];
+let suppressedDefaultPositions = [];
 
 function applyLightingPreset() {
   const root = document.documentElement;
@@ -594,6 +595,12 @@ function buildWall(name, p1, p2, numPanels, normal, options = {}) {
         designOpacity = Math.max(0.15, Math.min(1, parseFloat(override.designOpacity) || 1));
       }
     }
+    const graphicFit = override && override.graphicFit ? override.graphicFit : 'cover';
+    const graphicsOnPrimaryFace = name !== 'front';
+    const primaryBrandText = graphicsOnPrimaryFace ? brandText : null;
+    const primaryDesignImageUrl = graphicsOnPrimaryFace ? designImageUrl : null;
+    const reverseBrandText = graphicsOnPrimaryFace ? null : brandText;
+    const reverseDesignImageUrl = graphicsOnPrimaryFace ? null : designImageUrl;
     faces.push({
       pts: [
         [x1p - perp[0]*off, EX*0.5, z1p - perp[2]*off],
@@ -605,12 +612,12 @@ function buildWall(name, p1, p2, numPanels, normal, options = {}) {
       partId: partId,
       partLabel: 'Infill panel · ' + name + ' bay ' + (i+1),
       partMeta: Math.round(bayLen*1000-40) + ' × ' + Math.round((BH-EX)*1000) + ' mm · ' + (override && override.color ? 'custom color' : 'white laminate'),
-      brandText,
+      brandText: primaryBrandText,
       brandColor,
       brandScale,
-      designImageUrl,
+      designImageUrl: primaryDesignImageUrl,
       designOpacity,
-      graphicFit: override && override.graphicFit ? override.graphicFit : 'cover',
+      graphicFit,
     });
     faces.push({
       pts: [
@@ -624,12 +631,12 @@ function buildWall(name, p1, p2, numPanels, normal, options = {}) {
       partId: partId,
       partLabel: 'Infill panel · ' + name + ' bay ' + (i+1),
       partMeta: Math.round(bayLen*1000-40) + ' × ' + Math.round((BH-EX)*1000) + ' mm · reverse face',
-      brandText,
+      brandText: reverseBrandText,
       brandColor,
       brandScale,
-      designImageUrl,
+      designImageUrl: reverseDesignImageUrl,
       designOpacity,
-      graphicFit: override && override.graphicFit ? override.graphicFit : 'cover',
+      graphicFit,
     });
   }
 
@@ -733,13 +740,43 @@ function buildRooms() {
   for (const room of rooms) {
     const w = Math.max(0.5, Number(room.width) || 2);
     const d = Math.max(0.5, Number(room.depth) || 2);
-    const h = Math.max(1.2, Number(room.height) || 2.4);
-    const cx = -BW / 2 + Math.max(w / 2, Math.min(BW - w / 2, Number(room.x) || w / 2));
-    const cz = Math.max(d / 2, Math.min(BD - d / 2, Number(room.z) || d / 2));
+    const h = BH;
+    const cx = -BW / 2 + Math.max(w / 2, Math.min(BW - w / 2, (room.x != null && room.x !== '') ? Number(room.x) : w / 2));
+    const cz = Math.max(d / 2, Math.min(BD - d / 2, (room.z != null && room.z !== '') ? Number(room.z) : d / 2));
     const x0 = cx - w / 2, x1 = cx + w / 2, z0 = cz - d / 2, z1 = cz + d / 2;
+    const shellTol = 0.045;
+    const skipLeft = x0 <= -BW / 2 + shellTol;
+    const skipRight = x1 >= BW / 2 - shellTol;
+    const skipBack = z0 <= shellTol;
+    const skipFront = z1 >= BD - shellTol;
     const label = room.name || 'Room';
     const meta = `${w.toFixed(1)} x ${d.toFixed(1)} x ${h.toFixed(1)} m`;
-    const roomCommon = { roomId: room.id };
+    const roomCommon = { roomId: room.id, softEdge: true };
+    const wallFinish = ['frosted', 'glass', 'dark'].includes(room.wallFinish) ? room.wallFinish : 'white';
+    const wallFill = wallFinish === 'glass'
+      ? 'rgba(210,232,245,0.42)'
+      : wallFinish === 'frosted'
+        ? 'rgba(232,240,248,0.72)'
+        : wallFinish === 'dark'
+          ? 'rgba(38,43,51,0.88)'
+          : shadeColor(WALL_COLOR, -0.05);
+    const sideWallFill = wallFinish === 'glass'
+      ? 'rgba(190,222,238,0.38)'
+      : wallFinish === 'frosted'
+        ? 'rgba(226,235,244,0.68)'
+        : wallFinish === 'dark'
+          ? 'rgba(28,32,39,0.84)'
+          : shadeColor(WALL_COLOR, -0.08);
+    const wallInsetFill = wallFinish === 'glass'
+      ? 'rgba(185,220,238,0.28)'
+      : wallFinish === 'frosted'
+        ? 'rgba(235,242,250,0.52)'
+        : wallFinish === 'dark'
+          ? 'rgba(24,28,34,0.62)'
+          : shadeColor(WALL_COLOR, -0.02);
+    const floorFill = /^#[0-9a-f]{6}$/i.test(String(room.floorColor || '')) ? room.floorColor : 'rgba(29,78,216,0.16)';
+    const roomDesignImageUrl = typeof room.designImageUrl === 'string' ? room.designImageUrl : '';
+    const roomDesignOpacity = Math.max(0.15, Math.min(1, Number(room.designOpacity) || 1));
     const doorSlot = room.doorPosition === 'left' || room.doorPosition === 'right' ? room.doorPosition : 'center';
     const doorSide = 'front';
     const sectionCount = Math.max(1, Math.floor(w));
@@ -750,16 +787,16 @@ function buildRooms() {
     const doorH = Math.min(2.1, h * 0.88);
 
     pushBox([x0, 0.02, z0], [x1, 0.08, z1], {
-      fill: 'rgba(29,78,216,0.16)',
+      fill: floorFill,
       partId: room.id + '-floor',
       partLabel: label + ' floor',
       partMeta: meta,
       normal: [0, 1, 0],
       ...roomCommon
     });
-    if (room.hasDoor && doorSide === 'back') {
+    if (!skipBack && room.hasDoor && doorSide === 'back') {
       pushBox([x0, 0, z0], [cx - doorW/2, h, z0 + EX], {
-        fill: 'rgba(255,255,255,0.72)',
+        fill: wallFill,
         partId: room.id + '-back-left',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
@@ -767,7 +804,7 @@ function buildRooms() {
         ...roomCommon
       });
       pushBox([cx + doorW/2, 0, z0], [x1, h, z0 + EX], {
-        fill: 'rgba(255,255,255,0.72)',
+        fill: wallFill,
         partId: room.id + '-back-right',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
@@ -775,16 +812,16 @@ function buildRooms() {
         ...roomCommon
       });
       pushBox([cx - doorW/2, doorH, z0], [cx + doorW/2, h, z0 + EX], {
-        fill: 'rgba(255,255,255,0.72)',
+        fill: wallFill,
         partId: room.id + '-back-header',
         partLabel: label + ' door header',
         partMeta: meta,
         normal: [0, 0, 1],
         ...roomCommon
       });
-    } else {
+    } else if (!skipBack) {
     pushBox([x0, 0, z0], [x1, h, z0 + EX], {
-      fill: 'rgba(255,255,255,0.72)',
+      fill: wallFill,
       partId: room.id + '-back',
       partLabel: label + ' wall',
       partMeta: meta,
@@ -792,9 +829,9 @@ function buildRooms() {
       ...roomCommon
     });
     }
-    if (room.hasDoor && doorSide === 'front') {
+    if (!skipFront && room.hasDoor && doorSide === 'front') {
       pushBox([x0, 0, z1 - EX], [doorCenterX - doorW/2, h, z1], {
-        fill: 'rgba(255,255,255,0.70)',
+        fill: wallFill,
         partId: room.id + '-front-left',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
@@ -802,7 +839,7 @@ function buildRooms() {
         ...roomCommon
       });
       pushBox([doorCenterX + doorW/2, 0, z1 - EX], [x1, h, z1], {
-        fill: 'rgba(255,255,255,0.70)',
+        fill: wallFill,
         partId: room.id + '-front-right',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
@@ -810,16 +847,16 @@ function buildRooms() {
         ...roomCommon
       });
       pushBox([doorCenterX - doorW/2, doorH, z1 - EX], [doorCenterX + doorW/2, h, z1], {
-        fill: 'rgba(255,255,255,0.70)',
+        fill: wallFill,
         partId: room.id + '-front-header',
         partLabel: label + ' door header',
         partMeta: meta,
         normal: [0, 0, -1],
         ...roomCommon
       });
-    } else {
+    } else if (!skipFront) {
     pushBox([x0, 0, z1 - EX], [x1, h, z1], {
-      fill: 'rgba(255,255,255,0.70)',
+      fill: wallFill,
       partId: room.id + '-front',
       partLabel: label + ' wall',
       partMeta: room.hasDoor ? meta + ' · door' : meta,
@@ -827,9 +864,9 @@ function buildRooms() {
       ...roomCommon
     });
     }
-    if (room.hasDoor && doorSide === 'left') {
+    if (!skipLeft && room.hasDoor && doorSide === 'left') {
       pushBox([x0, 0, z0], [x0 + EX, h, cz - doorW/2], {
-        fill: 'rgba(238,241,246,0.74)',
+        fill: sideWallFill,
         partId: room.id + '-left-back',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
@@ -837,7 +874,7 @@ function buildRooms() {
         ...roomCommon
       });
       pushBox([x0, 0, cz + doorW/2], [x0 + EX, h, z1], {
-        fill: 'rgba(238,241,246,0.74)',
+        fill: sideWallFill,
         partId: room.id + '-left-front',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
@@ -845,16 +882,16 @@ function buildRooms() {
         ...roomCommon
       });
       pushBox([x0, doorH, cz - doorW/2], [x0 + EX, h, cz + doorW/2], {
-        fill: 'rgba(238,241,246,0.74)',
+        fill: sideWallFill,
         partId: room.id + '-left-header',
         partLabel: label + ' door header',
         partMeta: meta,
         normal: [1, 0, 0],
         ...roomCommon
       });
-    } else {
+    } else if (!skipLeft) {
     pushBox([x0, 0, z0], [x0 + EX, h, z1], {
-      fill: 'rgba(238,241,246,0.74)',
+      fill: sideWallFill,
       partId: room.id + '-left',
       partLabel: label + ' wall',
       partMeta: meta,
@@ -862,9 +899,9 @@ function buildRooms() {
       ...roomCommon
     });
     }
-    if (room.hasDoor && doorSide === 'right') {
+    if (!skipRight && room.hasDoor && doorSide === 'right') {
       pushBox([x1 - EX, 0, z0], [x1, h, cz - doorW/2], {
-        fill: 'rgba(238,241,246,0.74)',
+        fill: sideWallFill,
         partId: room.id + '-right-back',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
@@ -872,7 +909,7 @@ function buildRooms() {
         ...roomCommon
       });
       pushBox([x1 - EX, 0, cz + doorW/2], [x1, h, z1], {
-        fill: 'rgba(238,241,246,0.74)',
+        fill: sideWallFill,
         partId: room.id + '-right-front',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
@@ -880,16 +917,16 @@ function buildRooms() {
         ...roomCommon
       });
       pushBox([x1 - EX, doorH, cz - doorW/2], [x1, h, cz + doorW/2], {
-        fill: 'rgba(238,241,246,0.74)',
+        fill: sideWallFill,
         partId: room.id + '-right-header',
         partLabel: label + ' door header',
         partMeta: meta,
         normal: [-1, 0, 0],
         ...roomCommon
       });
-    } else {
+    } else if (!skipRight) {
     pushBox([x1 - EX, 0, z0], [x1, h, z1], {
-      fill: 'rgba(238,241,246,0.74)',
+      fill: sideWallFill,
       partId: room.id + '-right',
       partLabel: label + ' wall',
       partMeta: meta,
@@ -907,12 +944,33 @@ function buildRooms() {
         ...roomCommon
       });
     }
-    addRoomProfilesAndDoor(room, { x0, x1, z0, z1, h, doorCenterX, doorW, doorH, label, meta, roomCommon });
+    if (roomDesignImageUrl) {
+      faces.push({
+        pts: [
+          [x0 + 0.08, 0.16, z0 + EX + 0.014],
+          [x1 - 0.08, 0.16, z0 + EX + 0.014],
+          [x1 - 0.08, h - 0.12, z0 + EX + 0.014],
+          [x0 + 0.08, h - 0.12, z0 + EX + 0.014],
+        ],
+        normal: [0, 0, 1],
+        fill: 'transparent',
+        signOnly: true,
+        designImageUrl: roomDesignImageUrl,
+        designOpacity: roomDesignOpacity,
+        graphicFit: 'cover',
+        partId: room.id + '-wall-image',
+        partLabel: label + ' wall image',
+        partMeta: 'Uploaded room wall graphic',
+        roomId: room.id,
+        renderOrder: 0.81,
+      });
+    }
+    addRoomProfilesAndDoor(room, { x0, x1, z0, z1, h, doorCenterX, doorW, doorH, label, meta, roomCommon, wallInsetFill, skipLeft, skipRight, skipBack, skipFront });
   }
 }
 
 function addRoomProfilesAndDoor(room, geom) {
-  const { x0, x1, z0, z1, h, doorCenterX, doorW, doorH, label, meta, roomCommon } = geom;
+  const { x0, x1, z0, z1, h, doorCenterX, doorW, doorH, label, meta, roomCommon, wallInsetFill, skipLeft, skipRight, skipBack, skipFront } = geom;
   const rail = Math.max(EX * 1.25, 0.055);
   const half = rail / 2;
   const profileFill = 'url(#alu)';
@@ -968,7 +1026,7 @@ function addRoomProfilesAndDoor(room, geom) {
     faces.push({
       pts: [[fromX + margin, y0, zz], [toX - margin, y0, zz], [toX - margin, y1, zz], [fromX + margin, y1, zz]],
       normal,
-      fill: 'rgba(255,255,255,0.48)',
+      fill: wallInsetFill,
       partId: `${room.id}-panel-inset-${id}`,
       partLabel: `${label} framed infill panel`,
       partMeta: 'Room wall infill panel with reveal',
@@ -987,7 +1045,7 @@ function addRoomProfilesAndDoor(room, geom) {
     faces.push({
       pts: [[xx, y0, fromZ + margin], [xx, y0, toZ - margin], [xx, y1, toZ - margin], [xx, y1, fromZ + margin]],
       normal,
-      fill: 'rgba(255,255,255,0.44)',
+      fill: wallInsetFill,
       partId: `${room.id}-panel-inset-${id}`,
       partLabel: `${label} framed infill panel`,
       partMeta: 'Room wall infill panel with reveal',
@@ -1011,42 +1069,50 @@ function addRoomProfilesAndDoor(room, geom) {
   }
 
   for (const x of xStops) {
-    addPost(x, z0, `back-${x}`);
-    if (!room.hasDoor || x <= doorLeft + 0.001 || x >= doorRight - 0.001) addPost(x, z1, `front-${x}`);
+    if (!skipBack) addPost(x, z0, `back-${x}`);
+    if (!skipFront && (!room.hasDoor || x <= doorLeft + 0.001 || x >= doorRight - 0.001)) addPost(x, z1, `front-${x}`);
   }
   for (const z of zStops) {
-    addPost(x0, z, `left-${z}`);
-    addPost(x1, z, `right-${z}`);
+    if (!skipLeft) addPost(x0, z, `left-${z}`);
+    if (!skipRight) addPost(x1, z, `right-${z}`);
   }
 
   const sortedX = [...xStops].sort((a, b) => a - b);
   const sortedZ = [...zStops].sort((a, b) => a - b);
   for (let i = 0; i < sortedX.length - 1; i++) {
-    addInsetX(sortedX[i], sortedX[i + 1], z0 + EX + 0.006, [0, 0, 1], `back-${i}`);
+    if (!skipBack) addInsetX(sortedX[i], sortedX[i + 1], z0 + EX + 0.006, [0, 0, 1], `back-${i}`);
     const isDoorBay = room.hasDoor && sortedX[i] >= doorLeft - 0.001 && sortedX[i + 1] <= doorRight + 0.001;
-    addInsetX(sortedX[i], sortedX[i + 1], z1 - EX - 0.006, [0, 0, -1], `front-${i}`, isDoorBay);
+    if (!skipFront) addInsetX(sortedX[i], sortedX[i + 1], z1 - EX - 0.006, [0, 0, -1], `front-${i}`, isDoorBay);
   }
   for (let i = 0; i < sortedZ.length - 1; i++) {
-    addInsetZ(sortedZ[i], sortedZ[i + 1], x0 + EX + 0.006, [1, 0, 0], `left-${i}`);
-    addInsetZ(sortedZ[i], sortedZ[i + 1], x1 - EX - 0.006, [-1, 0, 0], `right-${i}`);
+    if (!skipLeft) addInsetZ(sortedZ[i], sortedZ[i + 1], x0 + EX + 0.006, [1, 0, 0], `left-${i}`);
+    if (!skipRight) addInsetZ(sortedZ[i], sortedZ[i + 1], x1 - EX - 0.006, [-1, 0, 0], `right-${i}`);
   }
 
-  addRailX(z0, h, 'back-top');
-  addRailX(z0, rail, 'back-bottom');
-  addRailX(z1, h, 'front-top');
-  if (room.hasDoor) {
+  if (!skipBack) {
+    addRailX(z0, h, 'back-top');
+    addRailX(z0, rail, 'back-bottom');
+  }
+  if (!skipFront) {
+    addRailX(z1, h, 'front-top');
+  }
+  if (!skipFront && room.hasDoor) {
     addRailX(z1, rail, 'front-bottom-left', x0, doorLeft);
     addRailX(z1, rail, 'front-bottom-right', doorRight, x1);
     addRailX(z1, doorH, 'front-door-header', doorLeft, doorRight);
-  } else {
+  } else if (!skipFront) {
     addRailX(z1, rail, 'front-bottom');
   }
-  addRailZ(x0, h, 'left-top');
-  addRailZ(x0, rail, 'left-bottom');
-  addRailZ(x1, h, 'right-top');
-  addRailZ(x1, rail, 'right-bottom');
+  if (!skipLeft) {
+    addRailZ(x0, h, 'left-top');
+    addRailZ(x0, rail, 'left-bottom');
+  }
+  if (!skipRight) {
+    addRailZ(x1, h, 'right-top');
+    addRailZ(x1, rail, 'right-bottom');
+  }
 
-  if (!room.hasDoor) return;
+  if (!room.hasDoor || skipFront) return;
   const doorThickness = Math.max(EX * 0.62, 0.026);
   const isRightHinge = doorSwing.startsWith('right');
   const opensIn = doorSwing.endsWith('in');
@@ -1569,7 +1635,7 @@ function buildFascia() {
     if (side !== 'front') return;
     faces.push({
       pts,
-      normal,
+      normal: null,
       fill: 'transparent',
       isFascia: side,
       signText: true,
@@ -1578,8 +1644,29 @@ function buildFascia() {
       partLabel: 'Fascia sign text face',
       partMeta: 'Company text on front fascia board',
       softEdge: true,
-      renderOrder: 0.62
+      renderOrder: 0.96
     });
+  }
+
+  function addFrontNamePlate(exteriorZ) {
+    const signW = Math.min(Math.max(BW * 0.38, 2.15), Math.max(2.15, BW - 1.55));
+    const signH = Math.min(Math.max(boardH * 0.52, 0.145), boardH - 0.115);
+    const x0 = -signW / 2;
+    const x1 = signW / 2;
+    const y0 = yB + (boardH - signH) * 0.50;
+    const y1 = y0 + signH;
+    const z0 = exteriorZ + 0.004;
+    const z1 = exteriorZ + 0.024;
+    pushBox([x0, y0, z0], [x1, y1, z1], {
+      fill: '#fbfcfd',
+      isFascia: 'front',
+      partId: 'fascia-front-name-plate',
+      partLabel: 'Front fascia company name plate',
+      partMeta: 'Thin banner-style company name fascia plate',
+      softEdge: true,
+      renderOrder: 0.64
+    });
+    addSignFace([[x0,y0,z1 + 0.004],[x1,y0,z1 + 0.004],[x1,y1,z1 + 0.004],[x0,y1,z1 + 0.004]], null, 'front');
   }
 
   function addFasciaLight(cx, cy, cz, axis, side) {
@@ -1615,7 +1702,7 @@ function buildFascia() {
     });
     const exteriorFace = [[-BW/2,yB,exteriorZ],[BW/2,yB,exteriorZ],[BW/2,yT,exteriorZ],[-BW/2,yT,exteriorZ]];
     addFasciaGraphicFace(exteriorFace, normal, side);
-    addSignFace(exteriorFace, normal, side);
+    if (side === 'front') addFrontNamePlate(exteriorZ);
     pushBox([-BW/2, yT, Math.min(z, exteriorZ) - rail/2], [BW/2, yT + railH, Math.max(z, exteriorZ) + rail/2], { fill:'url(#alu-cap)', isAlu:true, partId:`fascia-${side}-top-rail`, partLabel:'Fascia top rail', partMeta:'Aluminum rail carrier' });
     pushBox([-BW/2, yB - railH * 0.55, Math.min(z, exteriorZ) - rail/2], [BW/2, yB, Math.max(z, exteriorZ) + rail/2], { fill:'url(#alu-h)', isAlu:true, partId:`fascia-${side}-bottom-rail`, partLabel:'Fascia bottom rail', partMeta:'Slim aluminum lower rail' });
     pushBox([-BW/2 - rail/2, yB - railH, Math.min(z, exteriorZ) - rail/2], [-BW/2 + rail/2, yT + railH, Math.max(z, exteriorZ) + rail/2], { fill:'url(#alu)', isAlu:true, partId:`fascia-${side}-left-end`, partLabel:'Fascia end upright', partMeta:'Closed rail end cap' });
@@ -1995,50 +2082,96 @@ function renderBooth() {
 
     if (face.signText) {
       const mid = [
-        (face.pts[0][0] + face.pts[1][0] + face.pts[2][0] + face.pts[3][0]) / 4,
-        (face.pts[0][1] + face.pts[1][1] + face.pts[2][1] + face.pts[3][1]) / 4,
-        (face.pts[0][2] + face.pts[1][2] + face.pts[2][2] + face.pts[3][2]) / 4
+        (face.pts[0][0]+face.pts[1][0]+face.pts[2][0]+face.pts[3][0])/4,
+        (face.pts[0][1]+face.pts[1][1]+face.pts[2][1]+face.pts[3][1])/4,
+        (face.pts[0][2]+face.pts[1][2]+face.pts[2][2]+face.pts[3][2])/4,
       ];
       const pM = project(mid);
       if (pM) {
-        const screenW = Math.hypot(proj[1].x - proj[0].x, proj[1].y - proj[0].y);
-        const screenH = Math.hypot(proj[3].x - proj[0].x, proj[3].y - proj[0].y);
+        const screenW = Math.hypot(proj[1].x-proj[0].x, proj[1].y-proj[0].y);
+        const screenH = Math.hypot(proj[3].x-proj[0].x, proj[3].y-proj[0].y);
         const camDir = norm(sub(face.pts[0], cam));
         const facing = face.normal ? Math.abs(dot(face.normal, camDir)) : 1;
         if (screenW < 90 || screenH < 8 || facing < 0.18) continue;
-        const fontSize = Math.max(8, Math.min(20, screenH * 0.46, screenW / Math.max(8, COMPANY_NAME.length) * 1.05));
-        const blend3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+        const blend3 = (a, b, t) => [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
         const pointOnFace = (u, v) => {
-          const bottom = blend3(face.pts[0], face.pts[1], u);
+          const bot = blend3(face.pts[0], face.pts[1], u);
           const top = blend3(face.pts[3], face.pts[2], u);
-          return blend3(bottom, top, v);
+          return blend3(bot, top, v);
         };
-        const plaque3 = [
-          pointOnFace(0.32, 0.34),
-          pointOnFace(0.68, 0.34),
-          pointOnFace(0.68, 0.78),
-          pointOnFace(0.32, 0.78),
-        ];
-        const plaque2 = plaque3.map(project);
-        if (plaque2.some(p => !p)) continue;
-        const inset = document.createElementNS(SVG_NS, 'polygon');
-        inset.setAttribute('points', plaque2.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' '));
-        inset.setAttribute('fill', 'rgba(255,255,255,0.92)');
-        inset.setAttribute('stroke', 'rgba(115,121,130,0.38)');
-        inset.setAttribute('stroke-width', '0.75');
-        inset.setAttribute('pointer-events', 'none');
-        container.appendChild(inset);
-        const t = document.createElementNS(SVG_NS, 'text');
-        t.setAttribute('x', pM.x); t.setAttribute('y', pM.y + fontSize * 0.34);
-        t.setAttribute('text-anchor', 'middle');
-        t.setAttribute('fill', '#23262c');
-        t.setAttribute('font-family', 'SamsungOne, SamsungOne UI, SamsungOneKorean, Samsung Sharp Sans, system-ui, sans-serif');
-        t.setAttribute('font-size', fontSize.toFixed(1));
-        t.setAttribute('font-weight', '650');
-        t.setAttribute('letter-spacing', '0');
-        t.textContent = COMPANY_NAME;
-        t.setAttribute('pointer-events', 'none');
-        container.appendChild(t);
+        const uvP = (u, v) => project(pointOnFace(u, v));
+        const addPoly = (pts4, fill, opacity, stroke, sw) => {
+          if (pts4.some(p=>!p)) return;
+          const el = document.createElementNS(SVG_NS, 'polygon');
+          el.setAttribute('points', pts4.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' '));
+          el.setAttribute('fill', fill);
+          if (opacity != null) el.setAttribute('opacity', String(opacity));
+          if (stroke) { el.setAttribute('stroke', stroke); el.setAttribute('stroke-width', String(sw||1)); }
+          el.setAttribute('pointer-events', 'none');
+          container.appendChild(el);
+        };
+        const addBand = (u0, u1, v0, v1, col) =>
+          addPoly([uvP(u0,v0), uvP(u1,v0), uvP(u1,v1), uvP(u0,v1)], col||'#2d3038', 0.9);
+        const addText = (x, y, text, fs, col) => {
+          const t = document.createElementNS(SVG_NS, 'text');
+          t.setAttribute('x', x); t.setAttribute('y', y);
+          t.setAttribute('text-anchor', 'middle');
+          t.setAttribute('fill', col||'#23262c');
+          t.setAttribute('font-family', 'SamsungOne, SamsungOne UI, Samsung Sharp Sans, system-ui, sans-serif');
+          t.setAttribute('font-size', String(fs));
+          t.setAttribute('font-weight', '700');
+          t.setAttribute('letter-spacing', '0.04em');
+          t.textContent = text;
+          t.setAttribute('pointer-events', 'none');
+          container.appendChild(t);
+        };
+
+        const addCenteredNamePlate = (plateW, plateFill, plateStroke, textColor) => {
+          const faceWm = Math.hypot(face.pts[1][0] - face.pts[0][0], face.pts[1][2] - face.pts[0][2]);
+          addPoly([uvP(0.018,0.08), uvP(0.982,0.08), uvP(0.982,0.92), uvP(0.018,0.92)], 'rgba(255,255,255,0)', null, plateStroke || '#c7ccd4', 1.25);
+          addPoly([uvP(0.025,0.84), uvP(0.975,0.84), uvP(0.975,0.90), uvP(0.025,0.90)], 'rgba(255,255,255,0.42)', 0.8);
+          addPoly([uvP(0.025,0.10), uvP(0.975,0.10), uvP(0.975,0.15), uvP(0.025,0.15)], 'rgba(120,128,138,0.10)', 0.75);
+          const label = (COMPANY_NAME || 'Company Name').slice(0, 32);
+          const fs = Math.max(13, Math.min(28, screenH*0.72, screenW/Math.max(5,label.length)*1.65, faceWm * 16));
+          addText(pM.x, pM.y + fs*0.34, label, fs.toFixed(1), textColor || '#4b5563');
+        };
+
+        if (FASCIA_OPTION === 'classic') {
+          addCenteredNamePlate(Math.min(Math.max(BW * 0.38, 2.15), 3.4), '#fbfcfd', '#c7ccd4', '#4b5563');
+
+        } else if (FASCIA_OPTION === 'custom') {
+          // Custom: oval / stadium-shaped sign plate (Movetech-style)
+          const bH = face.pts[3][1] - face.pts[0][1];   // board height in metres
+          const ovW = Math.min(2.65, BW - 0.4);
+          const r_m = bH * 0.54;                          // radius ~slightly taller than half-board
+          const sx_m = Math.max(0, ovW - r_m * 2) / 2;
+          // Stadium outline: right arc (bot→top) + left arc (top→bot), straight parts implicit
+          const SEG = 18;
+          const ovalPts = [];
+          for (let i = 0; i <= SEG; i++) {
+            const a = -Math.PI/2 + (i/SEG)*Math.PI;
+            ovalPts.push(uvP(0.5+(sx_m+r_m*Math.cos(a))/BW, 0.5+r_m*Math.sin(a)/bH));
+          }
+          for (let i = 0; i <= SEG; i++) {
+            const a = Math.PI/2 + (i/SEG)*Math.PI;
+            ovalPts.push(uvP(0.5+(-sx_m+r_m*Math.cos(a))/BW, 0.5+r_m*Math.sin(a)/bH));
+          }
+          const validOval = ovalPts.filter(p=>p);
+          if (validOval.length > 6) {
+            const el = document.createElementNS(SVG_NS, 'polygon');
+            el.setAttribute('points', validOval.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' '));
+            el.setAttribute('fill', '#f6f7fb');
+            el.setAttribute('stroke', '#b0b6be');
+            el.setAttribute('stroke-width', '2');
+            el.setAttribute('pointer-events', 'none');
+            container.appendChild(el);
+          }
+          const fs = Math.max(8, Math.min(18, screenH*0.38, (screenW*ovW/BW)/Math.max(6,COMPANY_NAME.length)*0.95));
+          addText(pM.x, pM.y + fs*0.36, COMPANY_NAME, fs.toFixed(1), '#14213d');
+
+        } else {
+          addCenteredNamePlate(Math.min(Math.max(BW * 0.38, 2.15), 3.4), '#fbfcfd', '#c7ccd4', '#4b5563');
+        }
       }
     }
   }
@@ -2159,8 +2292,10 @@ function defaultFrontSupportPositions() {
 function activeFrontSupportPositions() {
   const defaults = defaultFrontSupportPositions();
   const custom = Array.isArray(frontSupportPositions) ? frontSupportPositions : [];
+  const suppressed = Array.isArray(suppressedDefaultPositions) ? suppressedDefaultPositions : [];
   const merged = [...custom];
   defaults.forEach(value => {
+    if (suppressed.some(s => Math.abs(s - value) < 0.12)) return;
     if (!merged.some(existing => Math.abs(Number(existing) - value) < 0.12)) merged.push(value);
   });
   return merged
@@ -2173,6 +2308,7 @@ function notifyFrontSupportMoved() {
   window.parent.postMessage({
     type: 'workspaceFrontSupportsMoved',
     positions: activeFrontSupportPositions(),
+    suppressedDefaultPositions: Array.isArray(suppressedDefaultPositions) ? suppressedDefaultPositions : [],
   }, '*');
 }
 
@@ -2284,6 +2420,7 @@ svgEl.addEventListener('pointerdown', (e) => {
         type: 'frontSupport',
         pointerId: e.pointerId,
         supportIndex,
+        originalX: currentX,
         offsetX: (-BW / 2 + currentX) - hit[0],
       };
       dragging = false;
@@ -2311,6 +2448,10 @@ svgEl.addEventListener('pointerdown', (e) => {
   }
   if (roomId) {
     const room = rooms.find(entry => String(entry.id) === String(roomId));
+    if (room && room.locked) {
+      e.preventDefault();
+      return;
+    }
     const hit = room ? screenToFloorPoint(e) : null;
     if (room && hit) {
       objectDrag = {
@@ -2359,21 +2500,43 @@ svgEl.addEventListener('pointermove', (e) => {
     } else if (hit && objectDrag.type === 'room') {
       const room = rooms.find(entry => String(entry.id) === String(objectDrag.roomId));
       if (!room) return;
+      if (room.locked) return;
       const w = Number(room.width) || 1;
       const d = Number(room.depth) || 1;
       const nextX = hit[0] + objectDrag.offsetX + BW / 2;
       const nextZ = hit[2] + objectDrag.offsetZ;
-      room.x = Math.max(w / 2, Math.min(BW - w / 2, Math.round(nextX * 2) / 2));
-      room.z = Math.max(d / 2, Math.min(BD - d / 2, Math.round(nextZ * 2) / 2));
+      const minX = w / 2;
+      const maxX = BW - w / 2;
+      const minZ = d / 2;
+      const maxZ = BD - d / 2;
+      let snappedX = Math.max(minX, Math.min(maxX, Math.round(nextX * 2) / 2));
+      let snappedZ = Math.max(minZ, Math.min(maxZ, Math.round(nextZ * 2) / 2));
+      const cornerSnap = 0.32;
+      if (Math.abs(nextX - minX) <= cornerSnap) snappedX = minX;
+      if (Math.abs(nextX - maxX) <= cornerSnap) snappedX = maxX;
+      if (Math.abs(nextZ - minZ) <= cornerSnap) snappedZ = minZ;
+      if (Math.abs(nextZ - maxZ) <= cornerSnap) snappedZ = maxZ;
+      room.x = snappedX;
+      room.z = snappedZ;
       didDrag = true;
       notifyRoomMoved(room);
       buildBoothGeometry();
       renderAll();
     } else if (hit && objectDrag.type === 'frontSupport') {
-      const positions = activeFrontSupportPositions();
-      const nextX = hit[0] + objectDrag.offsetX + BW / 2;
-      positions[objectDrag.supportIndex] = Math.max(0.45, Math.min(BW - 0.45, Math.round(nextX * 20) / 20));
-      frontSupportPositions = positions;
+      const nextX = Math.max(0.45, Math.min(BW - 0.45, Math.round((hit[0] + objectDrag.offsetX + BW / 2) * 20) / 20));
+      const defaults = defaultFrontSupportPositions();
+      // If dragging a default support, suppress that default so it doesn't re-appear
+      if (defaults.some(p => Math.abs(p - objectDrag.originalX) < 0.12)) {
+        if (!suppressedDefaultPositions.some(p => Math.abs(p - objectDrag.originalX) < 0.12)) {
+          suppressedDefaultPositions = [...suppressedDefaultPositions, objectDrag.originalX];
+        }
+      }
+      // Update custom positions: remove old, add new
+      const custom = Array.isArray(frontSupportPositions) ? frontSupportPositions : [];
+      const withoutOld = custom.filter(p => Math.abs(p - objectDrag.originalX) >= 0.12);
+      withoutOld.push(nextX);
+      frontSupportPositions = withoutOld;
+      objectDrag.originalX = nextX;
       didDrag = true;
       notifyFrontSupportMoved();
       buildBoothGeometry();
@@ -2685,6 +2848,7 @@ window.addEventListener('message', (e) => {
   }
   if (d.panelOverrides != null) panelOverrides = d.panelOverrides;
   if (d.frontSupportPositions != null) frontSupportPositions = Array.isArray(d.frontSupportPositions) ? d.frontSupportPositions : [];
+  if (d.suppressedDefaultPositions != null) suppressedDefaultPositions = Array.isArray(d.suppressedDefaultPositions) ? d.suppressedDefaultPositions : [];
   if (d.invalidItemIds != null) invalidItemIds = new Set(Array.isArray(d.invalidItemIds) ? d.invalidItemIds.map(String) : []);
   if (d.pins   != null) pins = d.pins;
   if (d.pinMode != null) pinMode = d.pinMode;
@@ -2856,6 +3020,16 @@ function rotationDeg(value) {
   return Number.isFinite(n) ? THREE.MathUtils.degToRad(n) : 0;
 }
 
+function groundModelNode(node, floorY = 0.018) {
+  node.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(node);
+  if (!Number.isFinite(box.min.y)) return;
+  const delta = floorY - box.min.y;
+  if (Math.abs(delta) < 0.0005) return;
+  node.position.y += delta;
+  node.updateMatrixWorld(true);
+}
+
 async function ensureModel(item, state) {
   const keyId = String(item.id || item.sku || item.modelUrl);
   if (modelNodes.has(keyId)) return modelNodes.get(keyId);
@@ -2929,6 +3103,7 @@ window.__updateGlbLayer = async function updateGlbLayer(state) {
       node.rotation.y = rotationDeg(item.rotationY ?? item.rotation);
       node.rotation.z = rotationDeg(item.rotationZ);
       node.visible = true;
+      groundModelNode(node, 0.018);
 
       let contact = contactShadows.get(id);
       if (!contact) {

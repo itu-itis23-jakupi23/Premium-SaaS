@@ -1,0 +1,15 @@
+project-excludes = [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.venv",
+    "**/venv",
+    "**/*.md",
+    "**/*.html",
+]
+python-platform = "win32"
+python-version = "3.12.7"
+site-package-path = []
+permissive-ignores = true
+check-unannotated-defs = true
+disable-type-errors-in-ide = true
+ignore-errors-in-generated-code = true

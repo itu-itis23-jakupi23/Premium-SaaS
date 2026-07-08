@@ -7,7 +7,6 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useDemoAccess } from '@/hooks/useDemoAccess';
 import {
   LayoutDashboard, Settings, Users, Eye, BarChart3,
   ChevronRight, Menu, X, Zap, Box, MessageSquare,
@@ -200,9 +199,8 @@ export default function TeamLanding() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [, navigate] = useLocation();
-  const { enterAs, pendingRole } = useDemoAccess();
   const { t } = useTranslation();
-  const isOpeningPortal = pendingRole !== null;
+  const isOpeningPortal = false;
 
   useEffect(() => {
     document.title = t('team.pageTitle');
@@ -314,11 +312,11 @@ export default function TeamLanding() {
             </motion.p>
 
             <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" onClick={() => void enterAs('chief', '/chief')} disabled={isOpeningPortal}
+              <Button size="lg" onClick={() => navigate('/login?returnTo=%2Fchief')} disabled={isOpeningPortal}
                 className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold gap-2 shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)]">
                 <LayoutDashboard className="w-5 h-5" /> {t('team.hero.cta1')} <ChevronRight className="w-4 h-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => void enterAs('pm', '/pm')} disabled={isOpeningPortal}
+              <Button size="lg" variant="outline" onClick={() => navigate('/login?returnTo=%2Fpm')} disabled={isOpeningPortal}
                 className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold gap-2 border-blue-500/40 text-blue-400 hover:bg-blue-500/5">
                 <Settings className="w-5 h-5" /> {t('team.hero.cta2')} <ChevronRight className="w-4 h-4" />
               </Button>
@@ -371,7 +369,7 @@ export default function TeamLanding() {
               viewport={{ once: true }}
               whileHover={{ y: -6 }}
               className="relative group rounded-3xl border border-primary/25 bg-primary/5 backdrop-blur-xl overflow-hidden p-8 cursor-pointer"
-              onClick={() => void enterAs('chief', '/chief')}
+              onClick={() => navigate('/login?returnTo=%2Fchief')}
             >
               <div className="absolute top-0 right-0 w-48 h-48 bg-primary/15 blur-3xl -z-10" />
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/10 blur-3xl -z-10" />
@@ -425,7 +423,7 @@ export default function TeamLanding() {
 
               <Button className="w-full mt-6 rounded-full gap-2 shadow-[0_0_15px_rgba(109,40,217,0.2)]"
                 disabled={isOpeningPortal}
-                onClick={(e: React.MouseEvent) => { e.stopPropagation(); void enterAs('chief', '/chief'); }}>
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate('/login?returnTo=%2Fchief'); }}>
                 <LayoutDashboard className="w-4 h-4" /> {t('team.roles.chiefEnter')}
               </Button>
             </motion.div>
@@ -437,7 +435,7 @@ export default function TeamLanding() {
               viewport={{ once: true }}
               whileHover={{ y: -6 }}
               className="relative group rounded-3xl border border-blue-500/25 bg-blue-500/5 backdrop-blur-xl overflow-hidden p-8 cursor-pointer"
-              onClick={() => void enterAs('pm', '/pm')}
+              onClick={() => navigate('/login?returnTo=%2Fpm')}
             >
               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/15 blur-3xl -z-10" />
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-cyan-500/10 blur-3xl -z-10" />
@@ -492,7 +490,7 @@ export default function TeamLanding() {
               <Button variant="outline"
                 className="w-full mt-6 rounded-full gap-2 border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
                 disabled={isOpeningPortal}
-                onClick={(e: React.MouseEvent) => { e.stopPropagation(); void enterAs('pm', '/pm'); }}>
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate('/login?returnTo=%2Fpm'); }}>
                 <Settings className="w-4 h-4" /> {t('team.roles.pmEnter')}
               </Button>
             </motion.div>
@@ -516,7 +514,7 @@ export default function TeamLanding() {
               ].map(({ label, path, clx }) => (
                 <button key={path}
                   disabled={isOpeningPortal}
-                  onClick={() => void enterAs(path.startsWith('/chief') ? 'chief' : 'pm', path)}
+                  onClick={() => navigate(`/login?returnTo=${encodeURIComponent(path)}`)}
                   className={`text-xs font-semibold px-4 py-1.5 rounded-full border transition-colors ${clx}`}>
                   {label}
                 </button>
@@ -739,14 +737,14 @@ export default function TeamLanding() {
               Enter Your Dashboard
             </motion.h2>
             <motion.p variants={FADE_UP} className="text-muted-foreground mb-10">
-              Sign in with your ENS account or jump directly into the demo environment.
+              Sign in with your ENS staff account to continue to the correct portal.
             </motion.p>
             <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" onClick={() => void enterAs('chief', '/chief')} disabled={isOpeningPortal}
+              <Button size="lg" onClick={() => navigate('/login?returnTo=%2Fchief')} disabled={isOpeningPortal}
                 className="w-full sm:w-auto rounded-full px-8 h-12 font-semibold gap-2">
                 <UserCog className="w-4 h-4" /> {t('team.roles.chiefTitle')}
               </Button>
-              <Button size="lg" variant="outline" onClick={() => void enterAs('pm', '/pm')} disabled={isOpeningPortal}
+              <Button size="lg" variant="outline" onClick={() => navigate('/login?returnTo=%2Fpm')} disabled={isOpeningPortal}
                 className="w-full sm:w-auto rounded-full px-8 h-12 font-semibold gap-2 border-blue-500/40 text-blue-400">
                 <Settings className="w-4 h-4" /> {t('team.roles.pmTitle')}
               </Button>
@@ -775,7 +773,7 @@ export default function TeamLanding() {
                 {[t('team.footer.chiefPortal'), t('team.footer.pmPortal')].map((label, i) => (
                   <button key={label}
                     disabled={isOpeningPortal}
-                    onClick={() => void enterAs(i === 0 ? 'chief' : 'pm', i === 0 ? '/chief' : '/pm')}
+                    onClick={() => navigate(i === 0 ? '/login?returnTo=%2Fchief' : '/login?returnTo=%2Fpm')}
                     className="text-xs font-semibold px-3 py-1.5 rounded-full border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors">
                     {label}
                   </button>
@@ -787,7 +785,7 @@ export default function TeamLanding() {
               <div className="text-[10px] font-bold uppercase tracking-widest text-primary/60 mb-4">{t('team.footer.chiefManager')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 {[t('team.footer.dashboard'), t('team.footer.wsMonitor'), t('team.footer.teamMgmt'), t('team.footer.clientPortfolio'), t('team.footer.reports'), t('team.footer.settings')].map(l => (
-                  <li key={l}><button onClick={() => void enterAs('chief', '/chief')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
+                  <li key={l}><button onClick={() => navigate('/login?returnTo=%2Fchief')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
                 ))}
               </ul>
             </div>
@@ -796,7 +794,7 @@ export default function TeamLanding() {
               <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400/60 mb-4">{t('team.footer.projectManager')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 {[t('team.footer.dashboard'), t('team.footer.workspace'), t('team.footer.projects'), t('team.footer.clients'), t('team.footer.tasks'), t('team.footer.messages')].map(l => (
-                  <li key={l}><button onClick={() => void enterAs('pm', '/pm')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
+                  <li key={l}><button onClick={() => navigate('/login?returnTo=%2Fpm')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
                 ))}
               </ul>
             </div>

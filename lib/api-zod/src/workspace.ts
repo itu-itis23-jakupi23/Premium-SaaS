@@ -47,6 +47,12 @@ export const workspaceRoomSchema = z.object({
   doorPosition: z.enum(["left", "center", "right"]),
   doorSwing: z.enum(["left-in", "right-in", "left-out", "right-out"]),
   doorOpen: z.boolean(),
+  wallFinish: z.enum(["white", "frosted", "glass", "dark"]).optional(),
+  floorColor: z.string().regex(/^#[0-9a-f]{6}$/i).optional(),
+  locked: z.boolean().optional(),
+  designImageUrl: z.string().regex(/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i).max(2_500_000).optional(),
+  designImageName: z.string().max(80).optional(),
+  designOpacity: z.number().min(0.15).max(1).optional(),
 });
 
 export const workspaceNoteSchema = z.object({

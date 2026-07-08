@@ -288,11 +288,14 @@ export default function ChiefDashboard() {
         </div>
 
         {!isLoading && overview.workflow && (
-          <Card className="border-primary/20 bg-card/70">
+          <Card className="workflow-panel-enter border-primary/20 bg-card/70">
             <CardHeader className="pb-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <CardTitle>Assignment control</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <span className="workflow-live-dot" aria-hidden="true" />
+                    Assignment control
+                  </CardTitle>
                   <CardDescription>New accounts and unassigned work that need Chief action.</CardDescription>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => navigate("/chief/managers")}>
@@ -650,7 +653,7 @@ function WorkflowQueueTile({
   return (
     <button
       type="button"
-      className="rounded-lg border bg-background/40 p-4 text-left transition-colors hover:bg-muted/60"
+      className="workflow-tile-motion rounded-lg border bg-background/40 p-4 text-left transition-colors hover:bg-muted/60"
       onClick={onOpen}
     >
       <div className="flex items-start justify-between gap-3">

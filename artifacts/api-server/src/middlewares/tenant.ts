@@ -46,35 +46,14 @@ export async function requireTenant(req: Request, res: Response, next: NextFunct
       return;
     }
 
-    const organizationId = headerValue(req, "x-organization-id");
-    const organizationSlug = headerValue(req, "x-organization-slug") ?? localDefaultSlug();
-
-    if (!organizationId && !organizationSlug) {
-      res.status(400).json({
-        error: {
-          code: "tenant_required",
-          message: "Organization context is required.",
-        },
-      });
-      return;
-    }
-
-    const tenant = organizationId
-      ? await findOrganizationById(organizationId)
-      : await findOrganizationBySlug(organizationSlug as string);
-
-    if (!tenant) {
-      res.status(404).json({
-        error: {
-          code: "tenant_not_found",
-          message: "Organization was not found.",
-        },
-      });
-      return;
-    }
-
-    req.tenant = tenant;
-    next();
+    // requireTenant is only used after requireAuth, so if req.auth is not set
+    // the auth middleware must have failed to block the request. Enforce here.
+    res.status(401).json({
+      error: {
+        code: "auth_required",
+        message: "Authentication is required.",
+      },
+    });
   } catch (error) {
     req.log?.error({ err: error }, "Tenant resolution failed");
     res.status(500).json({

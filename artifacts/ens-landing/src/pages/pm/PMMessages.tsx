@@ -197,8 +197,6 @@ export default function PMMessages() {
       .then((payload) => {
         if (!mounted) return;
         const all: Array<{ id: string; name: string; email: string; role: string }> = [
-          // Chief is always a potential recipient for PM
-          { id: "mock-chief", name: "Owner Chief", email: "owner@ens.test", role: "chief" },
           ...payload.clients.map((c) => ({
             id: c.id,
             name: c.contactName || c.company,

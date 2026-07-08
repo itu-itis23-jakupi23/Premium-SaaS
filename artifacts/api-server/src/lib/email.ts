@@ -129,3 +129,22 @@ export async function sendDesignApprovedEmail(opts: {
     `),
   );
 }
+
+export async function sendPasswordResetEmail(opts: { to: string; name: string; resetUrl: string }) {
+  await send(
+    opts.to,
+    "Reset your password — ENS Agency",
+    base(`
+      <h2>Reset your password</h2>
+      <p>Hi ${opts.name || "there"},</p>
+      <p>We received a request to reset the password for your ENS Agency account.
+      Click the button below to set a new password. This link expires in <strong>1 hour</strong>.</p>
+      <a href="${opts.resetUrl}" class="cta">Reset password</a>
+      <div class="box">${opts.resetUrl}</div>
+      <p style="margin-top:16px;font-size:13px;color:#9395a8">
+        If you did not request a password reset, you can safely ignore this email.
+        Your password will not change.
+      </p>
+    `),
+  );
+}

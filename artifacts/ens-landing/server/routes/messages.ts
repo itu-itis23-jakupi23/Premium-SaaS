@@ -21,6 +21,7 @@ interface CoreClient {
   contactName: string;
   contactEmail: string;
   pm: string;
+  managerId?: string | null;
   projectId?: string | null;
   agency?: string;
 }
@@ -30,6 +31,7 @@ interface CoreProject {
   name: string;
   client: string;
   pm: string;
+  managerId?: string | null;
   agency?: string;
 }
 
@@ -92,10 +94,9 @@ const sendMessageSchema = z.object({
 });
 
 const PEOPLE: Actor[] = [
-  { id: "mock-chief", name: "Owner Chief", email: "owner@ens.test", role: "chief" },
-  { id: "mock-pm", name: "Project Manager", email: "pm@ens.test", role: "pm" },
-  { id: "mock-client", name: "Client Reviewer", email: "client@ens.test", role: "client" },
-  { id: "c1", name: "TechCorp Industries", email: "client@ens.test", role: "client" },
+  { id: "demo-chief", name: "Agency Owner", email: "chief@example.com", role: "chief" },
+  { id: "demo-pm", name: "Project Manager", email: "pm@example.com", role: "pm" },
+  { id: "demo-client", name: "Demo Client", email: "demo.client@example.com", role: "client" },
 ];
 
 class AuthRequiredError extends Error {
@@ -103,15 +104,16 @@ class AuthRequiredError extends Error {
 }
 
 async function actorFromRequest(req: Request): Promise<Actor> {
+  const demoAccessEnabled = process.env.ENABLE_DEMO_ACCESS === "true" || process.env.VITE_ENABLE_DEMO_ACCESS === "true";
   const headerUserId = req.header("x-user-id");
-  if (process.env.NODE_ENV !== "production" && headerUserId) {
+  if (process.env.NODE_ENV !== "production" && demoAccessEnabled && headerUserId) {
     const rawRole = String(req.header("x-user-role") || "pm");
     const role = (rawRole === "chief" || rawRole === "client" ? rawRole : "pm") as Role;
     return {
       id: headerUserId,
       role,
       name: decodeURIComponent(String(req.header("x-user-name") || "ENS User")),
-      email: String(req.header("x-user-email") || "user@ens.test"),
+      email: String(req.header("x-user-email") || "user@example.com"),
       company: String(req.header("x-user-company") || "ENS Demo Agency"),
     };
   }
@@ -126,18 +128,18 @@ async function actorFromRequest(req: Request): Promise<Actor> {
       company: sessionUser.company,
     };
   }
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" || !demoAccessEnabled) {
     throw new AuthRequiredError("Authentication is required.");
   }
   const rawRole = String(req.header("x-user-role") || "pm");
   const role = (rawRole === "chief" || rawRole === "client" ? rawRole : "pm") as Role;
-  const id = String(req.header("x-user-id") || (role === "client" ? "mock-client" : role === "chief" ? "mock-chief" : "mock-pm"));
+  const id = String(req.header("x-user-id") || (role === "client" ? "demo-client" : role === "chief" ? "demo-chief" : "demo-pm"));
   const fallback = PEOPLE.find((person) => person.id === id) ?? PEOPLE.find((person) => person.role === role);
   return {
     id,
     role,
     name: decodeURIComponent(String(req.header("x-user-name") || fallback?.name || "ENS User")),
-    email: String(req.header("x-user-email") || fallback?.email || "user@ens.test"),
+    email: String(req.header("x-user-email") || fallback?.email || "user@example.com"),
     company: String(req.header("x-user-company") || "ENS Demo Agency"),
   };
 }
@@ -159,19 +161,21 @@ async function contactsFor(actor: Actor) {
 
   if (actor.role === "client") {
     const client = clientForActor(allClients, actor);
+    const clientAgency = normalizedCompany(client?.agency || actor.company);
+    const clientUsers = authStore.users.filter((user) => normalizedCompany(user.agency || user.company) === clientAgency);
     const assignedPm = client?.pm && client.pm !== "Unassigned"
-      ? users.find((user) => user.role === "pm" && user.name.trim().toLowerCase() === client.pm.trim().toLowerCase())
+      ? clientUsers.find((user) => (
+        user.role === "pm"
+        && (user.id === client.managerId || user.name.trim().toLowerCase() === client.pm.trim().toLowerCase())
+      ))
       : null;
-    const assignedPmFallback = client?.pm && client.pm !== "Unassigned" && !assignedPm
-      ? PEOPLE.find((person) => person.id === "mock-pm")
-      : null;
-    const chief = users.find((user) => user.role === "chief");
-    const fallbackPm = PEOPLE.find((person) => person.id === "mock-pm")!;
-    const realContacts = [assignedPm, assignedPmFallback, chief].filter(Boolean);
-    return (realContacts.length ? realContacts : [fallbackPm]).filter(uniqueContact).map(toContact);
+    const chief = clientUsers.find((user) => user.role === "chief");
+    return [assignedPm, chief].filter(Boolean).filter(uniqueContact).map(toContact);
   }
   if (actor.role === "pm") {
-    const assignedClients = clients.filter((client) => client.pm.trim().toLowerCase() === actor.name.trim().toLowerCase());
+    const assignedClients = clients.filter((client) => (
+      client.managerId === actor.id || client.pm.trim().toLowerCase() === actor.name.trim().toLowerCase()
+    ));
     const chief = users.find((user) => user.role === "chief");
     const realContacts = [
       ...assignedClients.map((client) => ({
@@ -200,7 +204,7 @@ function conversationIdFor(a: string, b: string, _projectId = "general") {
 }
 
 function canonicalPersonId(id: string) {
-  return id === "c1" ? "mock-client" : id;
+  return id;
 }
 
 function formatTime(createdAt: string) {
@@ -249,7 +253,23 @@ function clientMatchesProject(client: CoreClient | null | undefined, project: Co
     .some((value) => String(value).trim().toLowerCase() === projectClient);
 }
 
-function canAccessProjectThread(actor: Actor, contactId: string, projectId: string, coreStore: { clients: CoreClient[]; projects?: CoreProject[] }) {
+async function assignedPmMatchesContact(project: CoreProject, contactId: string, company: string) {
+  const assignedName = String(project.pm || "").trim().toLowerCase();
+  if (!assignedName || assignedName === "unassigned") return false;
+  if (project.managerId && project.managerId === contactId) return true;
+  if (managerIdFromName(project.pm) === canonicalPersonId(contactId)) return true;
+
+  const authStore = await readJsonStore<{ users: AuthUser[] }>("auth", { users: [] });
+  const companyKey = normalizedCompany(company);
+  return authStore.users.some((user) => (
+    user.role === "pm"
+    && user.id === contactId
+    && user.name.trim().toLowerCase() === assignedName
+    && normalizedCompany(user.company || user.agency) === companyKey
+  ));
+}
+
+async function canAccessProjectThread(actor: Actor, contactId: string, projectId: string, coreStore: { clients: CoreClient[]; projects?: CoreProject[] }) {
   if (!projectId || projectId === "general") return true;
 
   const project = coreStore.projects?.find((item) => item.id === projectId);
@@ -257,10 +277,13 @@ function canAccessProjectThread(actor: Actor, contactId: string, projectId: stri
 
   const actorCompany = normalizedCompany(actor.company);
   const projectAgency = normalizedCompany(project.agency);
-  if (projectAgency !== actorCompany) return false;
 
   const contactClient = coreStore.clients.find((client) => canonicalPersonId(client.id) === canonicalPersonId(contactId));
   const actorClient = actor.role === "client" ? clientForActor(coreStore.clients, actor) : null;
+  const actorClientAgency = normalizedCompany(actorClient?.agency);
+
+  if (actor.role !== "client" && projectAgency !== actorCompany) return false;
+  if (actor.role === "client" && actorClientAgency && projectAgency !== actorClientAgency) return false;
 
   if (actor.role === "chief") {
     return !contactClient || clientMatchesProject(contactClient, project) || isAssignedPm({ ...actor, role: "pm" }, project.pm);
@@ -271,7 +294,7 @@ function canAccessProjectThread(actor: Actor, contactId: string, projectId: stri
   }
 
   return clientMatchesProject(actorClient, project)
-    && (contactId === "mock-chief" || contactId === "mock-pm" || managerIdFromName(project.pm) === canonicalPersonId(contactId));
+    && await assignedPmMatchesContact(project, contactId, actorCompany);
 }
 
 async function readStore(): Promise<MessageStore> {
@@ -323,7 +346,10 @@ function normalizedCompany(value: string | null | undefined) {
 
 function clientForActor(clients: CoreClient[], actor: Actor) {
   const email = actor.email.trim().toLowerCase();
-  return clients.find((client) => client.contactEmail.trim().toLowerCase() === email)
+  const matches = clients.filter((client) => client.contactEmail.trim().toLowerCase() === email);
+  return matches.find((client) => Boolean(client.projectId))
+    ?? matches.find((client) => client.pm && client.pm !== "Unassigned")
+    ?? matches[0]
     ?? clients.find((client) => client.id === actor.id)
     ?? null;
 }
@@ -464,10 +490,13 @@ router.get("/:contactId", async (req, res) => {
     if (authErrorResponse(res, error)) return;
     throw error;
   }
-  if (!(await canMessage(actor, req.params.contactId))) return res.status(403).json({ error: "Forbidden." });
   const projectId = typeof req.query.projectId === "string" ? req.query.projectId : "general";
   const coreStore = await readCoreStore();
-  if (!canAccessProjectThread(actor, req.params.contactId, projectId, coreStore)) return res.status(403).json({ error: "Forbidden." });
+  if (projectId === "general") {
+    if (!(await canMessage(actor, req.params.contactId))) return res.status(403).json({ error: "Forbidden." });
+  } else if (!(await canAccessProjectThread(actor, req.params.contactId, projectId, coreStore))) {
+    return res.status(403).json({ error: "Forbidden." });
+  }
   const actorIdentity = contactIdentity(actor, coreStore.clients);
   const conversationId = conversationIdFor(actorIdentity, req.params.contactId, projectId);
   const store = await readStore();
@@ -491,7 +520,6 @@ router.post("/:contactId", async (req, res) => {
     if (authErrorResponse(res, error)) return;
     throw error;
   }
-  if (!(await canMessage(actor, req.params.contactId))) return res.status(403).json({ error: "Forbidden." });
   const parsed = sendMessageSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, parsed.error);
   const projectId = parsed.data.context.projectId ?? "general";
@@ -500,7 +528,11 @@ router.post("/:contactId", async (req, res) => {
   if (!body && !attachments.length) return res.status(400).json({ error: "Message text or attachment is required." });
 
   const coreStore = await readCoreStore();
-  if (!canAccessProjectThread(actor, req.params.contactId, projectId, coreStore)) return res.status(403).json({ error: "Forbidden." });
+  if (projectId === "general") {
+    if (!(await canMessage(actor, req.params.contactId))) return res.status(403).json({ error: "Forbidden." });
+  } else if (!(await canAccessProjectThread(actor, req.params.contactId, projectId, coreStore))) {
+    return res.status(403).json({ error: "Forbidden." });
+  }
   const actorIdentity = contactIdentity(actor, coreStore.clients);
   if (attachments.length) {
     const attachmentStore = await readAttachmentStore();

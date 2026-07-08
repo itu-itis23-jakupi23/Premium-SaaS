@@ -16,7 +16,7 @@ async function queryRows<T>(statement: SQL) {
   return (result as unknown as { rows: T[] }).rows;
 }
 
-router.get("/platform/workspace/current", async (req, res) => {
+router.get("/platform/workspace/current", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const auth = req.auth!;
 
   // Client who hasn't been approved yet gets a clear activation-required response
@@ -59,8 +59,8 @@ router.get("/platform/workspace/current", async (req, res) => {
   res.json(workspace);
 });
 
-router.get("/platform/projects/:projectId/workspace", async (req, res) => {
-  const workspace = await loadWorkspace(req.auth!, req.params.projectId);
+router.get("/platform/projects/:projectId/workspace", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
+  const workspace = await loadWorkspace(req.auth!, paramValue(req.params.projectId));
 
   if (!workspace) {
     res.status(404).json({
@@ -143,8 +143,8 @@ router.post(
 
 // ── Client comments, annotations and approvals ────────────────────────────────────────
 
-router.get("/platform/projects/:projectId/comments", async (req, res) => {
-  const projectId = req.params.projectId;
+router.get("/platform/projects/:projectId/comments", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
+  const projectId = paramValue(req.params.projectId);
   const auth = req.auth!;
 
   const access = await getProjectAccess(auth, projectId);
@@ -212,8 +212,8 @@ router.get("/platform/projects/:projectId/comments", async (req, res) => {
   res.json({ comments: commentsList });
 });
 
-router.post("/platform/projects/:projectId/comments", async (req, res) => {
-  const projectId = req.params.projectId;
+router.post("/platform/projects/:projectId/comments", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
+  const projectId = paramValue(req.params.projectId);
   const auth = req.auth!;
   const { body, pin, type } = req.body;
 
@@ -261,9 +261,9 @@ router.post("/platform/projects/:projectId/comments", async (req, res) => {
   });
 });
 
-router.put("/platform/projects/:projectId/comments/:commentId/status", async (req, res) => {
-  const projectId = req.params.projectId;
-  const commentId = req.params.commentId;
+router.put("/platform/projects/:projectId/comments/:commentId/status", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
+  const projectId = paramValue(req.params.projectId);
+  const commentId = paramValue(req.params.commentId);
   const auth = req.auth!;
   const { status } = req.body;
 
@@ -410,7 +410,7 @@ router.post("/platform/projects/:projectId/change-requests", requireRoles(["clie
 // Real checkout-session creation lives in routes/billing.ts (Stripe-backed, with
 // a simulation fallback for dev/staging). This route only serves the dev-mode
 // simulation landing page that billing.ts's fallback redirects to.
-router.get("/platform/workspace/billing/simulation", async (req, res) => {
+router.get("/platform/workspace/billing/simulation", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const { reference, plan, client_id, redirect } = req.query;
 
   if (!reference || !plan || !client_id) {
@@ -472,8 +472,8 @@ router.get("/platform/workspace/billing/simulation", async (req, res) => {
   `);
 });
 
-router.put("/platform/projects/:projectId/element-status", async (req, res) => {
-  const projectId = req.params.projectId;
+router.put("/platform/projects/:projectId/element-status", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
+  const projectId = paramValue(req.params.projectId);
   const auth = req.auth!;
   const { elementStatus } = req.body;
 

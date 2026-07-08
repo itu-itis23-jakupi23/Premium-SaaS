@@ -13,24 +13,13 @@ import fs from "fs";
 import authRouter, { accountRouter } from "./routes/auth.js";
 import messagesRouter from "./routes/messages.js";
 import platformCoreRouter from "./routes/platform-core.js";
+import { apiJsonLimit, productionConfigProblems } from "./config-readiness.js";
+import { workspaceAssetDir } from "./workspace-assets.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const IS_PROD   = process.env.NODE_ENV === "production";
 const PORT      = Number(process.env.PORT ?? 5000);
 const APP_URL   = (process.env.APP_URL ?? `http://localhost:${PORT}`).replace(/\/$/, "");
-
-function productionConfigProblems() {
-  const staffCode = process.env.STAFF_SIGNUP_KEY || process.env.CHIEF_BOOTSTRAP_KEY || process.env.STAFF_ACCESS_CODE || "";
-  return [
-    !process.env.DATABASE_URL ? "DATABASE_URL is required in production." : null,
-    !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === "your-resend-api-key-here" ? "RESEND_API_KEY is required in production." : null,
-    !process.env.RESEND_FROM ? "RESEND_FROM is required in production." : null,
-    !process.env.APP_URL || !/^https?:\/\//.test(process.env.APP_URL) ? "APP_URL must be an absolute URL in production." : null,
-    !staffCode || staffCode === "change-me-before-deploy" || staffCode === "ens-staff-local-dev"
-      ? "A non-placeholder server-side staff signup key is required in production."
-      : null,
-  ].filter(Boolean);
-}
 
 if (IS_PROD) {
   const problems = productionConfigProblems();
@@ -58,7 +47,11 @@ const allowedOrigins = IS_PROD
   : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"];
 
 app.use(cors({ origin: allowedOrigins, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: apiJsonLimit() }));
+app.use("/workspace-assets", express.static(workspaceAssetDir, {
+  maxAge: IS_PROD ? "7d" : "0",
+  index: false,
+}));
 
 // ── Health check ──────────────────────────────────────────────────────────────
 
@@ -72,6 +65,17 @@ app.use("/api/platform/messages", messagesRouter);
 app.use("/api/platform", platformCoreRouter);
 app.use("/api/platform/account", accountRouter);
 app.use("/api/auth", authRouter);
+
+app.use((err: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const error = err as { type?: string; status?: number; message?: string };
+  if (error?.type === "entity.too.large" || error?.status === 413) {
+    return res.status(413).json({
+      error: "Payload too large.",
+      detail: `The request exceeded the API JSON limit (${apiJsonLimit()}). Use smaller images or configure API_JSON_LIMIT for larger workspace uploads.`,
+    });
+  }
+  return next(err);
+});
 
 // ── Serve built frontend in production ───────────────────────────────────────
 // (In development, Vite own server handles the frontend.)

@@ -71,7 +71,6 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
     { icon: UserSquare2,     labelKey: "chief.nav.managers",   href: "/chief/managers" },
     { icon: Briefcase,       labelKey: "chief.nav.projects",   href: "/chief/projects" },
     { icon: CalendarDays,    labelKey: "chief.nav.calendar",   href: "/chief/calendar" },
-    { icon: Monitor,         labelKey: "chief.nav.monitor",    href: "/chief/workspace-monitor" },
     { icon: BarChart3,       labelKey: "chief.nav.reports",    href: "/chief/reports" },
     { icon: MessageSquare,   labelKey: "chief.nav.messages",   href: "/chief/messages" },
     { icon: Settings,        labelKey: "chief.nav.settings",   href: "/chief/settings" },

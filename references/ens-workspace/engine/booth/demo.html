@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Boothcraft — Professional Booth Demo</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #111316; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #e2e8f0; overflow: hidden; }
+
+#canvas-wrap { position: fixed; inset: 0; }
+
+/* ── Control panel ── */
+#controls {
+  position: fixed;
+  top: 18px; right: 18px;
+  width: 240px;
+  background: rgba(20,22,28,0.88);
+  border: 0.5px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  backdrop-filter: blur(20px);
+  padding: 18px;
+  z-index: 10;
+}
+#controls h3 { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; margin-bottom: 14px; }
+
+.ctrl-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.ctrl-row label { font-size: 11px; color: #94a3b8; font-weight: 500; }
+.ctrl-row select, .ctrl-row input[type=range] { width: 100%; background: rgba(255,255,255,0.07); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 7px; color: #e2e8f0; padding: 6px 8px; font-size: 12px; outline: none; cursor: pointer; }
+.ctrl-row input[type=range] { padding: 4px 0; }
+.val { font-size: 11px; color: #60a5fa; font-weight: 600; margin-left: 6px; }
+
+.ctrl-row input[type=color] { width: 38px; height: 28px; border: none; border-radius: 6px; cursor: pointer; padding: 1px 2px; background: none; }
+.color-row { display: flex; align-items: center; gap: 8px; }
+.color-row label { font-size: 11px; color: #94a3b8; flex: 1; }
+
+.btn { width: 100%; padding: 9px; border-radius: 9px; border: none; background: #2563eb; color: white; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 4px; letter-spacing: .04em; }
+.btn:hover { background: #1d4ed8; }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.toggle-row label { font-size: 11px; color: #94a3b8; }
+.toggle { width: 34px; height: 18px; background: rgba(255,255,255,0.12); border-radius: 9px; position: relative; cursor: pointer; transition: background .2s; }
+.toggle.on { background: #2563eb; }
+.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: white; border-radius: 50%; transition: left .18s; }
+.toggle.on::after { left: 18px; }
+
+#info { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.35); letter-spacing: .06em; }
+</style>
+</head>
+<body>
+
+<div id="canvas-wrap"></div>
+
+<div id="controls">
+  <h3>Booth Config</h3>
+
+  <div class="ctrl-row">
+    <label>Width <span class="val" id="wVal">6 m</span></label>
+    <input type="range" id="width" min="3" max="12" step="0.5" value="6">
+  </div>
+  <div class="ctrl-row">
+    <label>Depth <span class="val" id="dVal">3 m</span></label>
+    <input type="range" id="depth" min="2" max="8" step="0.5" value="3">
+  </div>
+  <div class="ctrl-row">
+    <label>Height <span class="val" id="hVal">2.5 m</span></label>
+    <input type="range" id="height" min="2.2" max="4" step="0.1" value="2.5">
+  </div>
+
+  <div class="ctrl-row">
+    <label>System</label>
+    <select id="style">
+      <option value="octanorm">Octanorm</option>
+      <option value="maxima">Maxima</option>
+    </select>
+  </div>
+
+  <div class="ctrl-row">
+    <label>Accent Wall</label>
+    <select id="accent">
+      <option value="back">Back</option>
+      <option value="left">Left</option>
+      <option value="right">Right</option>
+      <option value="">None</option>
+    </select>
+  </div>
+
+  <div class="ctrl-row">
+    <label>Floor</label>
+    <select id="floor">
+      <option value="carpet">Carpet</option>
+      <option value="wood">Wood</option>
+      <option value="concrete">Concrete</option>
+    </select>
+  </div>
+
+  <div class="color-row ctrl-row">
+    <label>Accent color</label>
+    <input type="color" id="accentColor" value="#1b2d4f">
+  </div>
+  <div class="color-row ctrl-row">
+    <label>Fascia color</label>
+    <input type="color" id="fasciaColor" value="#1b2d4f">
+  </div>
+
+  <div class="toggle-row">
+    <label>LED Screen</label>
+    <div class="toggle" id="tScreen"></div>
+  </div>
+  <div class="toggle-row">
+    <label>Spotlights</label>
+    <div class="toggle on" id="tLighting"></div>
+  </div>
+  <div class="toggle-row">
+    <label>Reception Desk</label>
+    <div class="toggle on" id="tDesk"></div>
+  </div>
+  <div class="toggle-row">
+    <label>Center Table</label>
+    <div class="toggle" id="tTable"></div>
+  </div>
+  <div class="toggle-row">
+    <label>Shelf Unit</label>
+    <div class="toggle" id="tShelf"></div>
+  </div>
+
+  <button class="btn" id="apply">Apply Changes</button>
+</div>
+
+<div id="info">Drag to orbit &nbsp;·&nbsp; Scroll to zoom &nbsp;·&nbsp; Right-drag to pan</div>
+
+<!-- Three.js vendors (same versions used by the engine) -->
+<script src="/static/vendor/three.min.js"></script>
+<script src="/static/vendor/OrbitControls.js"></script>
+<script src="/static/vendor/TransformControls.js"></script>
+
+<script type="module">
+import { createBooth } from '/static/workspace/engine/booth/index.js';
+
+// ── Scene setup ──────────────────────────────────────────────────────────────
+const container = document.getElementById('canvas-wrap');
+const renderer  = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+renderer.outputEncoding    = THREE.sRGBEncoding;
+renderer.toneMapping       = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.94;
+container.appendChild(renderer.domElement);
+
+const scene  = new THREE.Scene();
+scene.background = new THREE.Color(0x111316);
+scene.fog        = new THREE.Fog(0x111316, 22, 42);
+
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 200);
+camera.position.set(8, 5, 10);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(0, 1.1, 0);
+controls.update();
+
+// World floor (dark exhibition hall)
+const floorGeo = new THREE.PlaneGeometry(40, 40);
+const floorMat = new THREE.MeshStandardMaterial({ color: 0x111316, roughness: 0.62, metalness: 0.08 });
+const worldFloor = new THREE.Mesh(floorGeo, floorMat);
+worldFloor.rotation.x = -Math.PI / 2;
+worldFloor.receiveShadow = true;
+scene.add(worldFloor);
+
+// Grid overlay
+const grid = new THREE.GridHelper(30, 30, 0x252a32, 0x1e232c);
+grid.material.opacity = 0.7;
+grid.material.transparent = true;
+grid.position.y = 0.005;
+scene.add(grid);
+
+// Env map for PBR
+(async () => {
+  try {
+    const pmrem  = new THREE.PMREMGenerator(renderer);
+    const canvas = document.createElement('canvas');
+    canvas.width = 2048; canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    const g   = ctx.createLinearGradient(0, 0, 0, 1024);
+    g.addColorStop(0.0,  '#6a9ab8');
+    g.addColorStop(0.45, '#c8dce8');
+    g.addColorStop(0.60, '#e8e2d8');
+    g.addColorStop(1.0,  '#c8c0b4');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 2048, 1024);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    pmrem.compileEquirectangularShader();
+    const envRT = pmrem.fromEquirectangular(tex);
+    scene.environment = envRT.texture;
+    pmrem.dispose(); tex.dispose();
+  } catch (_) {}
+})();
+
+// ── Booth instance ───────────────────────────────────────────────────────────
+let boothInstance = null;
+
+function getConfig() {
+  const hexToInt = (hex) => parseInt(hex.replace('#', ''), 16);
+  const tog = (id) => document.getElementById(id).classList.contains('on');
+  return {
+    width:  parseFloat(document.getElementById('width').value),
+    depth:  parseFloat(document.getElementById('depth').value),
+    height: parseFloat(document.getElementById('height').value),
+    boothStyle:       document.getElementById('style').value,
+    accentWall:       document.getElementById('accent').value || null,
+    accentColor:      hexToInt(document.getElementById('accentColor').value),
+    fasciaColor:      hexToInt(document.getElementById('fasciaColor').value),
+    floorType:        document.getElementById('floor').value,
+    hasScreen:        tog('tScreen'),
+    hasLighting:      tog('tLighting'),
+    hasFurniture:     true,
+    hasReceptionDesk: tog('tDesk'),
+    hasCenterTable:   tog('tTable'),
+    hasShelfUnit:     tog('tShelf'),
+    brandingText:     'TECHNOVA',
+  };
+}
+
+function applyBooth() {
+  boothInstance?.destroy();
+  boothInstance = createBooth(scene, getConfig());
+  controls.target.set(0, boothInstance.config.height * 0.42, 0);
+  controls.update();
+}
+
+applyBooth();
+
+// ── UI wiring ────────────────────────────────────────────────────────────────
+document.getElementById('apply').addEventListener('click', applyBooth);
+
+['width', 'depth', 'height'].forEach((id) => {
+  const el  = document.getElementById(id);
+  const val = document.getElementById(id[0] + 'Val');
+  el.addEventListener('input', () => { val.textContent = el.value + ' m'; });
+});
+
+document.querySelectorAll('.toggle').forEach((t) => {
+  t.addEventListener('click', () => t.classList.toggle('on'));
+});
+
+// ── Render loop ──────────────────────────────────────────────────────────────
+(function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+})();
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

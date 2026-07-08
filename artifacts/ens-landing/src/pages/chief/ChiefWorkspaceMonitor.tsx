@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "wouter";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -135,9 +136,16 @@ function formatAge(
 
 export default function ChiefWorkspaceMonitor() {
   const { t } = useTranslation();
+  const [location, navigate] = useLocation();
+
+  const urlProjectId = useMemo(
+    () => new URLSearchParams(location.split("?")[1] ?? "").get("project"),
+    [location],
+  );
 
   const [projects, setProjects]             = useState<WProject[]>([]);
   const [managers, setManagers]             = useState<PlatformManager[]>([]);
+  const [highlightId, setHighlightId]       = useState<string | null>(urlProjectId);
   const [filter, setFilter]                 = useState<"all" | WStatus>("all");
   const [reassignDlg, setReassignDlg]       = useState<WProject | null>(null);
   const [newPM, setNewPM]                   = useState("");
@@ -183,6 +191,13 @@ export default function ChiefWorkspaceMonitor() {
     void loadWorkspaces();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Scroll the highlighted project into view once data loads
+  useEffect(() => {
+    if (!highlightId || projects.length === 0) return;
+    const el = document.getElementById(`monitor-project-${highlightId}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightId, projects]);
 
   // Live pulse tick + silent 30s refresh + "X seconds ago" counter
   useEffect(() => {
@@ -307,51 +322,85 @@ export default function ChiefWorkspaceMonitor() {
           </Card>
         )}
 
-        {/* Status stat tiles */}
-        {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Card key={i} className="bg-card/50 border-border">
-                <CardContent className="p-4 space-y-2">
-                  <Skeleton className="h-2.5 w-16" />
-                  <Skeleton className="h-8 w-12 mt-1" />
-                  <Skeleton className="h-2.5 w-20" />
-                </CardContent>
-              </Card>
-            ))}
+        {/* Compact status bar + filters + search */}
+        <div className="rounded-lg border bg-card/40 px-4 py-3 space-y-3">
+          {/* Status counts inline */}
+          {isLoading ? (
+            <div className="flex items-center gap-6">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-4 w-20" />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              {(["live", "review", "pending", "blocked"] as WStatus[]).map((s, i) => {
+                const colorMap: Record<WStatus, string> = {
+                  live: "text-green-500", review: "text-blue-500",
+                  pending: "text-orange-500", blocked: "text-red-500",
+                };
+                return (
+                  <div key={s} className="flex items-center gap-2">
+                    {i > 0 && <span className="hidden h-3 w-px bg-border sm:block" />}
+                    <span className={cn("h-2 w-2 rounded-full shrink-0", STATUS_CFG[s].dotClass)} />
+                    <span className="text-[11px] text-muted-foreground">{t(`chief.monitor.status.${s}`)}</span>
+                    <span className={cn("text-sm font-bold tabular-nums", colorMap[s])}>{counts[s]}</span>
+                  </div>
+                );
+              })}
+              <div className="ml-auto flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold tabular-nums text-foreground">{projects.length}</span>
+                <span className="text-[11px] text-muted-foreground/60">{t("chief.monitor.stat.total")}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="h-px bg-border/50" />
+
+          {/* Filter tabs + search in one row */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-1 rounded-lg border bg-muted/30 p-0.5">
+              {filterOptions.map(({ key, label, count }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setFilter(key)}
+                  aria-pressed={filter === key}
+                  className={cn(
+                    "rounded-md px-3 py-1 text-[11px] font-semibold transition-colors",
+                    filter === key
+                      ? "bg-card text-foreground shadow-sm border"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {label} · {count}
+                </button>
+              ))}
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t("chief.monitor.searchPlaceholder")}
+                  aria-label={t("chief.monitor.searchPlaceholder")}
+                  className="h-8 w-52 pl-8 text-xs"
+                />
+              </div>
+              <Select value={managerFilter} onValueChange={setManagerFilter}>
+                <SelectTrigger className="h-8 w-44 text-xs">
+                  <SelectValue placeholder={t("chief.monitor.pmPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("chief.monitor.allManagers")}</SelectItem>
+                  {managerOptions.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-            {(["live", "review", "pending", "blocked"] as WStatus[]).map((s) => (
-              <Card key={s} className="bg-card/50 border-border">
-                <CardContent className="p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    {t(`chief.monitor.status.${s}`)}
-                  </p>
-                  <p className={cn(
-                    "mt-1 text-2xl font-bold",
-                    s === "live"    && "text-green-500",
-                    s === "review"  && "text-blue-500",
-                    s === "pending" && "text-orange-500",
-                    s === "blocked" && "text-red-500",
-                  )}>
-                    {counts[s]}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">{statDescriptions[s]}</p>
-                </CardContent>
-              </Card>
-            ))}
-            <Card className="bg-card/50 border-border">
-              <CardContent className="p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  {t("chief.monitor.stat.total")}
-                </p>
-                <p className="mt-1 text-2xl font-bold">{projects.length}</p>
-                <p className="text-[10px] text-muted-foreground">{t("chief.monitor.stat.totalDesc")}</p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        </div>
 
         {/* Bottleneck alerts */}
         {bottlenecks.length > 0 && (
@@ -376,51 +425,6 @@ export default function ChiefWorkspaceMonitor() {
             </div>
           </div>
         )}
-
-        {/* Filter tabs */}
-        <div className="flex gap-1 rounded-lg border bg-muted/30 p-1 w-fit">
-          {filterOptions.map(({ key, label, count }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setFilter(key)}
-              aria-pressed={filter === key}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors",
-                filter === key
-                  ? "bg-card text-foreground shadow-sm border"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {label} · {count}
-            </button>
-          ))}
-        </div>
-
-        {/* Search + manager filter */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("chief.monitor.searchPlaceholder")}
-              aria-label={t("chief.monitor.searchPlaceholder")}
-              className="h-9 pl-9"
-            />
-          </div>
-          <Select value={managerFilter} onValueChange={setManagerFilter}>
-            <SelectTrigger className="h-9 w-full sm:w-56">
-              <SelectValue placeholder={t("chief.monitor.pmPlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("chief.monitor.allManagers")}</SelectItem>
-              {managerOptions.map((m) => (
-                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
 
         {/* Project card grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -459,7 +463,11 @@ export default function ChiefWorkspaceMonitor() {
             return (
               <Card
                 key={project.id}
-                className="overflow-hidden border-border bg-card/50 transition-colors hover:border-primary/40"
+                id={`monitor-project-${project.id}`}
+                className={cn(
+                  "overflow-hidden border-border bg-card/50 transition-colors hover:border-primary/40",
+                  highlightId === project.id && "ring-2 ring-primary border-primary/60",
+                )}
               >
                 {/* Booth preview */}
                 <div className="relative h-24 overflow-hidden bg-muted/20">
@@ -470,11 +478,11 @@ export default function ChiefWorkspaceMonitor() {
                     {project.version}
                   </span>
 
-                  {/* Expand button */}
+                  {/* Expand button — opens booth workspace */}
                   <button
                     type="button"
                     aria-label={t("chief.monitor.card.openPreview", { name: project.name })}
-                    onClick={() => showToast(t("chief.monitor.toast.openedPreview", { name: project.name }))}
+                    onClick={() => navigate(`/chief/workspace?projectId=${encodeURIComponent(project.id)}`)}
                     className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded border bg-card/90 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <Maximize2 className="h-3 w-3" aria-hidden="true" />

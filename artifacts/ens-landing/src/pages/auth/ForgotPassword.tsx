@@ -16,7 +16,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, ArrowLeft, MailOpen, RefreshCw } from 'lucide-react';
+import { CheckCircle2, ArrowLeft, MailOpen, RefreshCw, AlertCircle } from 'lucide-react';
+import { forgotPassword } from '@/lib/platform-api';
 
 const RESEND_COOLDOWN = 60;
 
@@ -26,6 +27,7 @@ export default function ForgotPassword() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [isResending, setIsResending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = t('auth.forgotPassword.pageTitle');
@@ -48,20 +50,32 @@ export default function ForgotPassword() {
     return () => clearInterval(id);
   }, [resendCooldown]);
 
-  async function onSubmit(_values: ForgotPasswordFormValues) {
+  async function onSubmit(values: ForgotPasswordFormValues) {
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    setResendCooldown(RESEND_COOLDOWN);
+    setError(null);
+    try {
+      await forgotPassword(values.email);
+      setIsSubmitted(true);
+      setResendCooldown(RESEND_COOLDOWN);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('auth.forgotPassword.errorGeneric'));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   async function handleResend() {
     if (resendCooldown > 0) return;
     setIsResending(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setIsResending(false);
-    setResendCooldown(RESEND_COOLDOWN);
+    setError(null);
+    try {
+      await forgotPassword(form.getValues('email'));
+      setResendCooldown(RESEND_COOLDOWN);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('auth.forgotPassword.errorGeneric'));
+    } finally {
+      setIsResending(false);
+    }
   }
 
   if (isSubmitted) {
@@ -160,6 +174,13 @@ export default function ForgotPassword() {
               </FormItem>
             )}
           />
+
+          {error && (
+            <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2" role="alert">
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {error}
+            </div>
+          )}
 
           <Button
             type="submit"

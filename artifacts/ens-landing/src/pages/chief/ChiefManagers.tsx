@@ -177,8 +177,8 @@ interface RebalancePreview {
 
 const AUDIT_PAGE_SIZE = 6;
 const ASSIGNMENT_PAGE_SIZE = 20;
-const PM_ACTIVE_PROJECT_CAPACITY = 3;
-const PM_CLIENT_CAPACITY = 8;
+const PM_ACTIVE_PROJECT_CAPACITY = 200;
+const PM_CLIENT_CAPACITY = 200;
 const EMPTY_ASSIGNMENT_PAGINATION: PlatformPagination = {
   total: 0,
   limit: ASSIGNMENT_PAGE_SIZE,
@@ -380,7 +380,7 @@ export default function ChiefManagers() {
     const filtered = summaries.filter((manager) => {
       const matchesSearch = !term || [
         manager.name,
-        manager.email,
+        managerEmailLabel(manager),
         manager.role,
         ...manager.clients.map((client) => client.name),
         ...manager.allProjects.map((project) => project.name),
@@ -1585,7 +1585,7 @@ function ManagerCard({
               <HighlightText text={manager.name} query={searchTerm} />
             </CardTitle>
             <p className="truncate text-xs text-muted-foreground">
-              <HighlightText text={manager.email} query={searchTerm} />
+              <HighlightText text={managerEmailLabel(manager)} query={searchTerm} />
             </p>
           </div>
         </button>
@@ -1727,7 +1727,7 @@ function ManagerTable({
                     <HighlightText text={manager.name} query={searchTerm} />
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    <HighlightText text={manager.email} query={searchTerm} />
+                    <HighlightText text={managerEmailLabel(manager)} query={searchTerm} />
                   </div>
                 </button>
               </TableCell>
@@ -2175,7 +2175,7 @@ function ManagerDetailsSheet({
           <div className="space-y-6">
             <SheetHeader>
               <SheetTitle>{manager.name}</SheetTitle>
-              <SheetDescription>{manager.role} / {manager.email}</SheetDescription>
+              <SheetDescription>{manager.role} / {managerEmailLabel(manager)}</SheetDescription>
             </SheetHeader>
 
             <div className="grid grid-cols-3 gap-3">
@@ -2597,17 +2597,23 @@ function summarizeManager(manager: Manager, clients: ManagedClient[], projects: 
 function computeWorkload(status: ManagerStatus, projects: ManagedProject[], clientCount: number) {
   if (status === "Pending") return 0;
 
-  const projectScore = projects.reduce((sum, project) => {
-    const days = daysUntil(project.deadline);
-    const statusWeight = project.status === "Delayed" ? 28 : project.status === "Active" ? 22 : 14;
-    const urgency = days < 0 ? 18 : days <= 7 ? 14 : days <= 14 ? 9 : 0;
-    return sum + statusWeight + urgency;
-  }, 0);
+  const total = Math.max(1, projects.length);
+  const delayedFraction = projects.filter(p => p.status === "Delayed").length / total;
+  const urgentFraction = projects.filter(p => {
+    const d = daysUntil(p.deadline);
+    return d >= 0 && d <= 14;
+  }).length / total;
+  const overdueBonus = projects.filter(p => daysUntil(p.deadline) < 0).length / total;
 
-  const capacityPressure =
-    Math.max(0, projects.length - PM_ACTIVE_PROJECT_CAPACITY) * 18 +
-    Math.max(0, clientCount - PM_CLIENT_CAPACITY) * 8;
-  const raw = projectScore + clientCount * 5 + capacityPressure;
+  // Base load: how full is this PM relative to capacity?
+  const projectLoad = Math.min(1, projects.length / PM_ACTIVE_PROJECT_CAPACITY);
+  const clientLoad  = Math.min(1, clientCount / PM_CLIENT_CAPACITY);
+  const baseLoad    = Math.max(projectLoad, clientLoad);
+
+  // Urgency pressure on top of base load
+  const urgencyBoost = delayedFraction * 0.25 + urgentFraction * 0.12 + overdueBonus * 0.18;
+
+  const raw = (baseLoad * 75 + urgencyBoost * 25) * 100;
   const adjusted = status === "On Leave" ? Math.min(raw, 35) : raw;
   return Math.max(0, Math.min(100, Math.round(adjusted)));
 }
@@ -2632,4 +2638,8 @@ function formatDate(date: string, locale = "en-US") {
 
 function initials(name: string) {
   return name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function managerEmailLabel(manager: { email?: string }) {
+  return manager.email?.trim() || "Account not linked";
 }

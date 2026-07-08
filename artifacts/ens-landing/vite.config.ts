@@ -67,6 +67,10 @@ export default defineConfig(async ({ mode }) => {
         target: `http://localhost:${process.env.API_PORT ?? 5000}`,
         changeOrigin: true,
       },
+      "/workspace-assets": {
+        target: `http://localhost:${process.env.API_PORT ?? 5000}`,
+        changeOrigin: true,
+      },
     },
   },
   preview: {

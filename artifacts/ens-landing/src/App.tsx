@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, type ComponentType } from "react";
+import { lazy, Suspense, useEffect, type ComponentType, type ReactElement } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,6 +14,12 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 
 const queryClient = new QueryClient();
 
+function RedirectTo({ href }: { href: string }): ReactElement | null {
+  const [, navigate] = useLocation();
+  useEffect(() => { navigate(href, { replace: true }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
 const lazyPage = (loader: () => Promise<{ default: ComponentType<Record<string, unknown>> }>) =>
   lazy(loader) as unknown as ComponentType<Record<string, unknown>>;
 
@@ -27,6 +33,9 @@ const ResetPassword = lazyPage(() => import("@/pages/auth/ResetPassword"));
 
 const INCLUDE_STAFF_ROUTES = import.meta.env.VITE_PORTAL !== "client";
 const INCLUDE_CLIENT_ROUTES = import.meta.env.VITE_PORTAL !== "staff";
+const ROUTER_BASE = import.meta.env.BASE_URL && import.meta.env.BASE_URL !== "/"
+  ? import.meta.env.BASE_URL.replace(/\/$/, "")
+  : undefined;
 
 function PortalRoot() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -122,9 +131,12 @@ function createStaffRoutes() {
           {(params) => <ProtectedRoute component={ChiefProjects} allowedRoles={["chief"]} params={params} />}
         </Route>
       </ErrorBoundary>
-      <ErrorBoundary label="Chief Workspace Monitor">
-        <Route path="/chief/workspace-monitor">
-          {(params) => <ProtectedRoute component={ChiefWorkspaceMonitor} allowedRoles={["chief"]} params={params} />}
+      <Route path="/chief/workspace-monitor">
+        {() => <RedirectTo href="/chief/projects" />}
+      </Route>
+      <ErrorBoundary label="Chief Booth Workspace">
+        <Route path="/chief/workspace">
+          {(params) => <ProtectedRoute component={PMWorkspace} allowedRoles={["chief", "pm"]} params={params} />}
         </Route>
       </ErrorBoundary>
       <ErrorBoundary label="Chief Reports">
@@ -271,6 +283,42 @@ function Router() {
   const showMarketing = PORTAL_MODE === "all";
   const showStaff = PORTAL_MODE === "all" || PORTAL_MODE === "staff";
   const showClient = PORTAL_MODE === "all" || PORTAL_MODE === "client";
+  const [location] = useLocation();
+  const pathname = typeof window === "undefined" ? location.split(/[?#]/)[0] : window.location.pathname;
+  const AuthComponent =
+    pathname === "/login" ? Login :
+    pathname === "/signup" ? Signup :
+    pathname === "/forgot-password" ? ForgotPassword :
+    pathname === "/reset-password" ? ResetPassword :
+    null;
+
+  if (AuthComponent) {
+    return (
+      <Suspense fallback={<LoadingScreen label="Loading page" />}>
+        <StaffGateway>
+          <AuthModalRoute component={AuthComponent} />
+        </StaffGateway>
+      </Suspense>
+    );
+  }
+
+  if (showStaff && (pathname === "/pm" || pathname.startsWith("/pm/") || pathname === "/chief" || pathname.startsWith("/chief/"))) {
+    return (
+      <Suspense fallback={<LoadingScreen label="Loading page" />}>
+        <StaffGateway>
+          <StaffRoutes />
+        </StaffGateway>
+      </Suspense>
+    );
+  }
+
+  if (showClient && (pathname === "/client" || pathname.startsWith("/client/"))) {
+    return (
+      <Suspense fallback={<LoadingScreen label="Loading page" />}>
+        <ClientRoutes />
+      </Suspense>
+    );
+  }
 
   return (
     <Suspense fallback={<LoadingScreen label="Loading page" />}>
@@ -283,39 +331,6 @@ function Router() {
       {/* PM invitation join — accessible without authentication */}
       {showStaff && <StaffPublicRoutes />}
 
-      {/* Auth routes — wrapped in StaffGateway when running the staff portal */}
-      <Route path="/login">
-        {() => (
-          <StaffGateway>
-            <AuthModalRoute component={Login} />
-          </StaffGateway>
-        )}
-      </Route>
-      <Route path="/signup">
-        {() => (
-          <StaffGateway>
-            <AuthModalRoute component={Signup} />
-          </StaffGateway>
-        )}
-      </Route>
-      <Route path="/forgot-password">
-        {() => (
-          <StaffGateway>
-            <AuthModalRoute component={ForgotPassword} />
-          </StaffGateway>
-        )}
-      </Route>
-      <Route path="/reset-password">
-        {() => (
-          <StaffGateway>
-            <AuthModalRoute component={ResetPassword} />
-          </StaffGateway>
-        )}
-      </Route>
-
-      {showStaff && <StaffGateway><StaffRoutes /></StaffGateway>}
-      {showClient && <ClientRoutes />}
-
       <Route>{() => <NotFound />}</Route>
     </Switch>
     </Suspense>
@@ -323,16 +338,20 @@ function Router() {
 }
 
 function App() {
+  const router = (
+    <>
+      <Router />
+      <RuntimeTextTranslator />
+      <Toaster />
+    </>
+  );
+
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" storageKey={THEME_STORAGE_KEY} enableSystem disableTransitionOnChange>
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            <WouterRouter base={import.meta.env.BASE_URL?.replace(/\/$/, "") || ""}>
-              <Router />
-            </WouterRouter>
-            <RuntimeTextTranslator />
-            <Toaster />
+            {ROUTER_BASE ? <WouterRouter base={ROUTER_BASE}>{router}</WouterRouter> : <WouterRouter>{router}</WouterRouter>}
           </TooltipProvider>
         </QueryClientProvider>
       </AuthProvider>

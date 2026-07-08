@@ -27,6 +27,7 @@ import {
   FileText,
   Layout,
   Lock,
+  Send,
   TrendingUp,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -75,6 +76,11 @@ export default function ClientDashboard() {
   void showToast; // reserved for future actions
 
   const activeProject = overview?.projects[0] ?? null;
+  const projectStatus = activeProject?.status.toLowerCase() ?? "";
+  const hasReviewReady =
+    projectStatus.includes("client review") ||
+    projectStatus.includes("revision") ||
+    projectStatus.includes("review");
   const clientName =
     overview?.clients[0]?.name ??
     overview?.organization?.name ??
@@ -179,6 +185,35 @@ export default function ClientDashboard() {
             <Button variant="outline" asChild>
               <Link href="/client/messages">Message team</Link>
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!isLoading && activeProject && hasReviewReady && (
+        <Card className="mt-6 overflow-hidden border-primary/40 bg-primary/10">
+          <CardContent className="grid gap-4 p-6 md:grid-cols-[auto_1fr_auto] md:items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-background text-primary shadow-sm">
+              <Send className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base font-semibold">Booth design ready for review</h2>
+                <Badge variant="outline" className="border-primary/30 bg-background/80 text-primary">
+                  {activeProject.status}
+                </Badge>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                The latest design for {activeProject.name} has been shared with you. Open the workspace to inspect it, approve it, or request changes.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row md:flex-col lg:flex-row">
+              <Button asChild>
+                <Link href="/client/workspace">Open Workspace</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/client/approvals">Review Approval</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

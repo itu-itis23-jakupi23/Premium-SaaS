@@ -13,7 +13,7 @@ const router = Router();
 
 router.use("/platform/messages", requireAuth, requireTenant);
 
-router.get("/platform/messages/contacts", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
+router.get("/platform/messages/contacts", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   await ensureMessageTables();
   const auth = req.auth!;
   const contacts = await getContacts(auth);
@@ -22,7 +22,7 @@ router.get("/platform/messages/contacts", requireRoles(["admin", "owner", "chief
 
 router.post(
   "/platform/messages/attachments",
-  requireRoles(["admin", "owner", "chief", "pm"]),
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
   express.raw({ type: "*/*", limit: "10mb" }),
   async (req, res) => {
     const auth = req.auth!;
@@ -41,7 +41,7 @@ router.post(
   },
 );
 
-router.get("/platform/messages/attachments/:attachmentId", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
+router.get("/platform/messages/attachments/:attachmentId", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   await ensureMessageTables();
   const auth = req.auth!;
   const attachmentId = paramValue(req.params.attachmentId);
@@ -70,7 +70,7 @@ router.get("/platform/messages/attachments/:attachmentId", requireRoles(["admin"
   }
 });
 
-router.get("/platform/messages/:contactId", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
+router.get("/platform/messages/:contactId", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   await ensureMessageTables();
   const auth = req.auth!;
   const contactId = paramValue(req.params.contactId);
@@ -92,7 +92,7 @@ router.get("/platform/messages/:contactId", requireRoles(["admin", "owner", "chi
   res.json({ conversationId, scope: scope.value, messages });
 });
 
-router.post("/platform/messages/:contactId", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
+router.post("/platform/messages/:contactId", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   await ensureMessageTables();
   const auth = req.auth!;
   const contactId = paramValue(req.params.contactId);

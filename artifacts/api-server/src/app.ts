@@ -37,8 +37,8 @@ app.use(cookieParser());
 // mounted before express.json() or the body will already be consumed.
 app.use(webhookRouter);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use("/api", router);
 

@@ -14,11 +14,13 @@ import {
 import {
   getAccountSessions,
   getAccountSettings,
+  getSystemReadiness,
   revokeAccountSession,
   saveAccountAvatar,
   saveAccountSettings,
   updateAccountPassword,
   type AccountSession,
+  type SystemReadiness,
 } from "@/lib/platform-api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -43,6 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  AlertCircle,
   Bell,
   Camera,
   CheckCircle2,
@@ -59,6 +62,7 @@ import {
   Save,
   Shield,
   Smartphone,
+  ServerCog,
   User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -106,7 +110,7 @@ interface ChiefSettingsProps {
 const FALLBACK_SETTINGS: StoredSettings = {
   profile: {
     name: "Account User",
-    email: "account@ens.test",
+    email: "",
     phone: "",
     role: "Account",
     avatarTone: "primary",
@@ -125,11 +129,7 @@ const FALLBACK_SETTINGS: StoredSettings = {
   },
   twoFactorEnabled: false,
   recoveryCodes: [],
-  sessions: [
-    { id: "s1", device: "Chrome on Windows", location: "Istanbul, TR", lastActive: "Now", current: true },
-    { id: "s2", device: "Safari on iPhone", location: "Istanbul, TR", lastActive: "Yesterday", current: false },
-    { id: "s3", device: "Edge on Windows", location: "Berlin, DE", lastActive: "May 19, 2026", current: false },
-  ],
+  sessions: [],
 };
 
 // Module-level tone classes (className only) — used by AvatarPreview sub-component
@@ -172,12 +172,14 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(() => readLocalSettings().twoFactorEnabled);
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>(() => readLocalSettings().recoveryCodes);
   const [sessions, setSessions] = useState<AccountSession[]>(() => readLocalSettings().sessions);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarDraft, setAvatarDraft] = useState<AvatarTone>(profile.avatarTone);
   const [twoFactorOpen, setTwoFactorOpen] = useState(false);
-  const [twoFactorCode, setTwoFactorCode] = useState("");
-  const [showDemoCode, setShowDemoCode] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
+  const [readiness, setReadiness] = useState<SystemReadiness | null>(null);
+  const [readinessLoading, setReadinessLoading] = useState(false);
+  const [readinessError, setReadinessError] = useState("");
 
   const profileDirty = JSON.stringify(profile) !== JSON.stringify(savedProfile);
   const notificationsDirty = JSON.stringify(notifications) !== JSON.stringify(savedNotifications);
@@ -204,6 +206,7 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
   useEffect(() => {
     let mounted = true;
 
+    setSessionsLoading(true);
     Promise.all([getAccountSettings(), getAccountSessions()])
       .then(([settings, sessionResponse]) => {
         if (!mounted) return;
@@ -235,6 +238,9 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
       })
       .catch((error: unknown) => {
         showToast(error instanceof Error ? error.message : t("chief.settings.profile.toast.loadError"));
+      })
+      .finally(() => {
+        if (mounted) setSessionsLoading(false);
       });
 
     return () => { mounted = false; };
@@ -264,14 +270,31 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
       appearance: savedAppearance,
       twoFactorEnabled,
       recoveryCodes,
-      sessions,
+      sessions: [],
     });
-  }, [recoveryCodes, savedAppearance, savedNotifications, savedProfile, sessions, storageKey, twoFactorEnabled]);
+  }, [recoveryCodes, savedAppearance, savedNotifications, savedProfile, storageKey, twoFactorEnabled]);
+
+  useEffect(() => {
+    if (role !== "chief") return;
+    void refreshReadiness();
+  }, [role]);
 
   function showToast(message: string) {
     setToastMsg(message);
     setToastVisible(true);
     window.setTimeout(() => setToastVisible(false), 2400);
+  }
+
+  async function refreshReadiness() {
+    setReadinessLoading(true);
+    setReadinessError("");
+    try {
+      setReadiness(await getSystemReadiness());
+    } catch (error) {
+      setReadinessError(error instanceof Error ? error.message : "Readiness check could not be loaded.");
+    } finally {
+      setReadinessLoading(false);
+    }
   }
 
   async function saveProfile() {
@@ -362,29 +385,6 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
       showToast(t("chief.settings.security.toast.passwordSaved"));
     } catch (error) {
       showToast(error instanceof Error ? error.message : t("chief.settings.security.toast.passwordError"));
-    }
-  }
-
-  function beginTwoFactorSetup() {
-    setTwoFactorCode("");
-    setShowDemoCode(false);
-    setTwoFactorOpen(true);
-  }
-
-  async function verifyTwoFactor() {
-    if (twoFactorCode.trim() !== "246810") {
-      showToast(t("chief.settings.security.toast.twoFactorWrongCode")); return;
-    }
-
-    const codes = makeRecoveryCodes();
-    try {
-      const settings = await saveAccountSettings({ security: { twoFactorEnabled: true, recoveryCodes: codes } });
-      setRecoveryCodes(settings.security.recoveryCodes);
-      setTwoFactorEnabled(settings.security.twoFactorEnabled);
-      setTwoFactorOpen(false);
-      showToast(t("chief.settings.security.toast.twoFactorEnabled"));
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : t("chief.settings.security.toast.twoFactorSetupError"));
     }
   }
 
@@ -497,7 +497,7 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
     setSavedAppearance(defaultSettings.appearance);
     setTwoFactorEnabled(defaultSettings.twoFactorEnabled);
     setRecoveryCodes(defaultSettings.recoveryCodes);
-    setSessions(defaultSettings.sessions);
+    setSessions([]);
     setSecurity({ current: "", next: "", confirm: "" });
     setAvatarDraft(defaultSettings.profile.avatarTone);
     setResetOpen(false);
@@ -551,7 +551,7 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
         </PageHeader>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="bg-card/50 backdrop-blur-sm border p-1 h-auto grid grid-cols-2 md:grid-cols-4 lg:w-[600px]">
+          <TabsList className={cn("bg-card/50 backdrop-blur-sm border p-1 h-auto grid grid-cols-2 md:grid-cols-4", role === "chief" ? "lg:w-[760px] lg:grid-cols-5" : "lg:w-[600px]")}>
             <TabsTrigger value="profile" className="data-[state=active]:bg-primary flex items-center gap-2 py-2">
               <User className="h-4 w-4" aria-hidden="true" /> {t("chief.settings.tabs.profile")}
             </TabsTrigger>
@@ -564,6 +564,11 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
             <TabsTrigger value="appearance" className="data-[state=active]:bg-primary flex items-center gap-2 py-2">
               <Palette className="h-4 w-4" aria-hidden="true" /> {t("chief.settings.tabs.appearance")}
             </TabsTrigger>
+            {role === "chief" && (
+              <TabsTrigger value="production" className="data-[state=active]:bg-primary flex items-center gap-2 py-2">
+                <ServerCog className="h-4 w-4" aria-hidden="true" /> Production
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Profile tab */}
@@ -708,16 +713,9 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
                     <p className="text-xs text-muted-foreground">{t("chief.settings.security.twoFactor.description")}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {twoFactorEnabled ? (
-                      <>
-                        <Button variant="outline" size="sm" onClick={regenerateRecoveryCodes}>
-                          <KeyRound className="mr-2 h-4 w-4" aria-hidden="true" /> {t("chief.settings.security.twoFactor.newCodes")}
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={disableTwoFactor}>{t("chief.settings.security.twoFactor.disable")}</Button>
-                      </>
-                    ) : (
-                      <Button variant="outline" size="sm" onClick={beginTwoFactorSetup}>{t("chief.settings.security.twoFactor.enable")}</Button>
-                    )}
+                    <Button variant="outline" size="sm" disabled>
+                      <Lock className="mr-2 h-4 w-4" aria-hidden="true" /> {t("chief.settings.security.twoFactor.enable")} — Coming Soon
+                    </Button>
                   </div>
                 </div>
 
@@ -746,12 +744,22 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
                       <p className="text-sm font-medium">{t("chief.settings.security.sessions.title")}</p>
                       <p className="text-xs text-muted-foreground">{t("chief.settings.security.sessions.description")}</p>
                     </div>
-                    <Button variant="outline" size="sm" onClick={endOtherSessions}>
+                    <Button variant="outline" size="sm" onClick={endOtherSessions} disabled={sessionsLoading || sessions.every((session) => session.current)}>
                       <LogOut className="mr-2 h-4 w-4" aria-hidden="true" /> {t("chief.settings.security.sessions.signOutOthers")}
                     </Button>
                   </div>
                   <div className="grid gap-3">
-                    {sessions.map((session) => (
+                    {sessionsLoading && (
+                      <div className="rounded-lg border bg-background/40 p-3 text-sm text-muted-foreground">
+                        Loading active sessions...
+                      </div>
+                    )}
+                    {!sessionsLoading && sessions.length === 0 && (
+                      <div className="rounded-lg border bg-background/40 p-3 text-sm text-muted-foreground">
+                        No active sessions were returned by the server.
+                      </div>
+                    )}
+                    {!sessionsLoading && sessions.map((session) => (
                       <div key={session.id} className="flex flex-col gap-3 rounded-lg border bg-background/40 p-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-start gap-3">
                           {session.device.includes("iPhone")
@@ -845,6 +853,17 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
               </CardContent>
             </Card>
           </TabsContent>
+
+          {role === "chief" && (
+            <TabsContent value="production" className="space-y-4">
+              <ProductionReadinessPanel
+                readiness={readiness}
+                loading={readinessLoading}
+                error={readinessError}
+                onRefresh={refreshReadiness}
+              />
+            </TabsContent>
+          )}
         </Tabs>
 
         {/* Avatar dialog */}
@@ -878,48 +897,20 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
           </DialogContent>
         </Dialog>
 
-        {/* 2FA setup dialog */}
+        {/* 2FA setup dialog — placeholder until TOTP is implemented */}
         <Dialog open={twoFactorOpen} onOpenChange={setTwoFactorOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{t("chief.settings.security.twoFactorDialog.title")}</DialogTitle>
-              <DialogDescription>{t("chief.settings.security.twoFactorDialog.description")}</DialogDescription>
+              <DialogTitle>Two-Factor Authentication</DialogTitle>
+              <DialogDescription>
+                TOTP-based two-factor authentication is planned for an upcoming release.
+              </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="rounded-lg border bg-muted/30 p-4 flex flex-col items-center gap-3">
-                <div className="h-24 w-24 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs text-center px-2">
-                  {t("chief.settings.security.twoFactorDialog.qrPlaceholder")}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowDemoCode((v) => !v)}
-                  className="text-xs text-primary underline underline-offset-2"
-                >
-                  {showDemoCode
-                    ? t("chief.settings.security.twoFactorDialog.hideCode")
-                    : t("chief.settings.security.twoFactorDialog.showCode")}
-                </button>
-                {showDemoCode && (
-                  <div className="text-center">
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">{t("chief.settings.security.twoFactorDialog.demoLabel")}</p>
-                    <p className="text-xl font-bold font-mono tracking-[0.3em]">246810</p>
-                  </div>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="two-factor-code">{t("chief.settings.security.twoFactorDialog.codeLabel")}</Label>
-                <Input
-                  id="two-factor-code"
-                  value={twoFactorCode}
-                  onChange={(event) => setTwoFactorCode(event.target.value)}
-                  placeholder={t("chief.settings.security.twoFactorDialog.codePlaceholder")}
-                  maxLength={6}
-                />
-              </div>
+            <div className="rounded-lg border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+              2FA setup is not yet available. We will notify you when this feature is ready.
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setTwoFactorOpen(false)}>{t("chief.settings.security.twoFactorDialog.cancel")}</Button>
-              <Button onClick={verifyTwoFactor} disabled={twoFactorCode.length < 6}>{t("chief.settings.security.twoFactorDialog.verify")}</Button>
+              <Button variant="outline" onClick={() => setTwoFactorOpen(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -958,6 +949,111 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────────
+
+function ProductionReadinessPanel({
+  readiness,
+  loading,
+  error,
+  onRefresh,
+}: {
+  readiness: SystemReadiness | null;
+  loading: boolean;
+  error: string;
+  onRefresh: () => void | Promise<void>;
+}) {
+  const checks = readiness?.checks ?? {};
+  const checkRows = [
+    ["databaseConfigured", "Hosted database", "DATABASE_URL is configured"],
+    ["emailConfigured", "Transactional email", "RESEND_API_KEY and RESEND_FROM are configured"],
+    ["appUrlConfigured", "Public app URL", "APP_URL is an absolute URL"],
+    ["staffAccessConfigured", "Staff access gate", "Staff/chief signup key is not a placeholder"],
+    ["authSecretConfigured", "Auth secret", "AUTH_SECRET is not a placeholder"],
+    ["assetStorageConfigured", "Workspace asset storage", "Uploaded logos and panel images use durable storage"],
+    ["productionMode", "Production mode", "NODE_ENV is production"],
+  ] as const;
+
+  return (
+    <Card className="bg-card/50 backdrop-blur-sm border-border">
+      <CardHeader>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle>Production readiness</CardTitle>
+            <CardDescription>
+              Real deployment checks for database, email, auth, app URL, and workspace asset storage.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            {readiness && (
+              <Badge variant={readiness.ready ? "default" : "destructive"}>
+                {readiness.ready ? "Ready" : "Not ready"}
+              </Badge>
+            )}
+            <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading}>
+              <RefreshCcw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} aria-hidden="true" />
+              Refresh
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {error && (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        <div className="grid gap-3 md:grid-cols-2">
+          {checkRows.map(([key, title, description]) => {
+            const passed = Boolean(checks[key]);
+            return (
+              <div key={key} className="flex items-start gap-3 rounded-lg border bg-background/40 p-4">
+                {passed ? (
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-500" aria-hidden="true" />
+                ) : (
+                  <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" aria-hidden="true" />
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{title}</p>
+                  <p className="text-xs text-muted-foreground">{description}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="grid gap-3 rounded-lg border bg-background/40 p-4 text-sm sm:grid-cols-3">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Mode</p>
+            <p className="font-medium">{readiness?.mode ?? "Unknown"}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">API JSON limit</p>
+            <p className="font-medium">{readiness?.limits?.apiJsonLimit ?? "Unknown"}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Asset storage</p>
+            <p className="font-medium">{readiness?.storage?.assetStorageProvider ?? "Unknown"}</p>
+          </div>
+        </div>
+
+        {readiness?.warnings?.length ? (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+            <p className="mb-2 text-sm font-medium text-amber-200">Blocking warnings</p>
+            <ul className="space-y-1 text-sm text-amber-100">
+              {readiness.warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-200">
+            No blocking production warnings reported by the backend.
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 function AvatarPreview({ name, tone, avatarUrl, size }: { name: string; tone: AvatarTone; avatarUrl: string; size: "sm" | "lg" }) {
   const toneClass = AVATAR_TONE_CLASSES[tone] ?? AVATAR_TONE_CLASSES.primary;
@@ -1029,7 +1125,7 @@ function readSettings(storageKey: string, defaults: StoredSettings): StoredSetti
       profile: { ...defaults.profile, ...parsed.profile },
       notifications: { ...defaults.notifications, ...parsed.notifications },
       appearance: { ...parsedAppearance, theme: readThemePreference(parsedAppearance.theme) },
-      sessions: parsed.sessions?.length ? parsed.sessions : defaults.sessions,
+      sessions: defaults.sessions,
       recoveryCodes: parsed.recoveryCodes ?? defaults.recoveryCodes,
     };
   } catch {
@@ -1110,9 +1206,7 @@ function defaultNameForRole(role: UserRole) {
 }
 
 function defaultEmailForRole(role: UserRole) {
-  if (role === "pm") return "pm@ens.test";
-  if (role === "client") return "client@ens.test";
-  return "owner@ens.test";
+  return "";
 }
 
 function getDashboardHref(role: UserRole) {

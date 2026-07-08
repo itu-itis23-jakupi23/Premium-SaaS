@@ -66,37 +66,43 @@ interface AuthResponse {
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api').replace(/\/+$/, '');
 const ORGANIZATION_SLUG = import.meta.env.VITE_ORGANIZATION_SLUG ?? 'ens-demo-agency';
 const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true';
+if (import.meta.env.PROD && USE_MOCK_API) {
+  throw new Error(
+    '[auth] VITE_USE_MOCK_API=true must not be set in production builds. ' +
+    'Remove this env var before deploying.'
+  );
+}
 const MOCK_AUTH_STORAGE_KEY = 'ens-mock-auth-user';
 // Dev-only: set VITE_MOCK_DEV_PASSWORD in .env.local to override the default demo password.
 // This only applies when VITE_USE_MOCK_API=true and never reaches production.
 const MOCK_PASSWORD = import.meta.env.VITE_MOCK_DEV_PASSWORD ?? 'EnsDev2026!';
 
 const MOCK_USERS: Record<string, AuthUser> = {
-  'owner@ens.test': {
-    id: 'mock-chief',
-    name: 'Owner Chief',
-    email: 'owner@ens.test',
-    company: 'ENS Demo Agency',
+  'chief@demo.example': {
+    id: 'demo-chief',
+    name: 'Agency Owner',
+    email: 'chief@demo.example',
+    company: 'Demo Agency',
     role: 'chief',
     systemRole: 'owner',
     avatarUrl: '',
     avatarTone: 'primary',
   },
-  'pm@ens.test': {
-    id: 'mock-pm',
+  'pm@demo.example': {
+    id: 'demo-pm',
     name: 'Project Manager',
-    email: 'pm@ens.test',
-    company: 'ENS Demo Agency',
+    email: 'pm@demo.example',
+    company: 'Demo Agency',
     role: 'pm',
     systemRole: 'pm',
     avatarUrl: '',
     avatarTone: 'blue',
   },
-  'client@ens.test': {
-    id: 'mock-client',
-    name: 'Client Reviewer',
-    email: 'client@ens.test',
-    company: 'ENS Demo Agency',
+  'client@demo.example': {
+    id: 'demo-client',
+    name: 'Demo Client',
+    email: 'client@demo.example',
+    company: 'Demo Agency',
     role: 'client',
     systemRole: 'client',
     avatarUrl: '',
