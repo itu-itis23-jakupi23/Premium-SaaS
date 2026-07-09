@@ -23,16 +23,13 @@ test.describe("Authentication", () => {
     await expect(page.getByText(/project manager|pm|dashboard/i).first()).toBeVisible();
   });
 
-  test("client login lands on the client dashboard or pending screen", async ({ page }) => {
+  test("client login shows pending approval before Chief approval", async ({ page }) => {
     await page.goto("/login");
     await page.getByLabel(/email/i).fill(TEST_CREDS.client.email);
     await page.getByLabel(/password/i).fill(TEST_CREDS.client.password);
     await page.getByRole("button", { name: /sign in|log in/i }).click();
     await page.waitForURL(/\/client/);
-    // Either shows the real dashboard or the pending-approval holding screen
-    const hasDashboard = await page.getByText(/dashboard|projects|workspace/i).first().isVisible().catch(() => false);
-    const hasPending = await page.getByText(/pending approval|waiting/i).first().isVisible().catch(() => false);
-    expect(hasDashboard || hasPending).toBeTruthy();
+    await expect(page.getByRole("heading", { name: "Pending Approval" })).toBeVisible();
   });
 
   test("wrong password shows an error", async ({ page }) => {
@@ -64,5 +61,29 @@ test.describe("Authentication", () => {
     }
     await page.waitForURL(/login/);
     await expect(page).toHaveURL(/login/);
+  });
+
+  test("PM cannot open Chief routes", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByLabel(/email/i).fill(TEST_CREDS.pm.email);
+    await page.getByLabel(/password/i).fill(TEST_CREDS.pm.password);
+    await page.getByRole("button", { name: /sign in|log in/i }).click();
+    await page.waitForURL(/\/pm/);
+
+    await page.goto("/chief/clients");
+    await page.waitForURL(/\/pm/);
+    await expect(page).not.toHaveURL(/\/chief/);
+  });
+
+  test("Chief cannot open PM-only routes", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByLabel(/email/i).fill(TEST_CREDS.chief.email);
+    await page.getByLabel(/password/i).fill(TEST_CREDS.chief.password);
+    await page.getByRole("button", { name: /sign in|log in/i }).click();
+    await page.waitForURL(/\/chief/);
+
+    await page.goto("/pm/tasks");
+    await page.waitForURL(/\/chief/);
+    await expect(page).not.toHaveURL(/\/pm/);
   });
 });

@@ -22,34 +22,22 @@ test.describe("Client workspace", () => {
     expect(realErrors).toHaveLength(0);
   });
 
-  test("client workspace shows booth or pending-approval screen", async ({ page }) => {
+  test("pending client cannot open a project workspace", async ({ page }) => {
     await page.goto("/client/workspace");
     await page.waitForLoadState("networkidle");
 
-    const hasWorkspace = await page.frameLocator('iframe[title="Booth Renderer"]')
-      .locator("body").isVisible().catch(() => false);
-    const hasPending = await page.getByText(/pending approval|waiting|approved/i).first().isVisible().catch(() => false);
-    const hasSelect = await page.getByText(/select project|no workspace/i).first().isVisible().catch(() => false);
-    const hasNoAccess = await page.getByText(/not activated|not found/i).first().isVisible().catch(() => false);
-    expect(hasWorkspace || hasPending || hasSelect || hasNoAccess).toBeTruthy();
+    await expect(page.getByRole("heading", { name: "Pending Approval" })).toBeVisible();
+    await expect(page.locator('iframe[title="Booth Renderer"]')).toHaveCount(0);
   });
 
-  test("approve button is visible when project is in client review", async ({ page }) => {
-    await page.goto("/client/workspace");
+  test("pending client remains in the holding screen on direct portal access", async ({ page }) => {
+    await page.goto("/client/projects");
     await page.waitForLoadState("networkidle");
 
-    // If a workspace is loaded and in client_review status, the approve button should be present.
-    // If no project is available or pending approval, the test passes trivially.
-    const approveButton = page.getByRole("button", { name: /approve|accept/i });
-    const revisionButton = page.getByRole("button", { name: /revision|request change/i });
-    const pendingScreen = page.getByText(/pending approval/i);
+    await expect(page.getByRole("heading", { name: "Pending Approval" })).toBeVisible();
 
-    const approveVisible = await approveButton.isVisible().catch(() => false);
-    const revisionVisible = await revisionButton.isVisible().catch(() => false);
-    const pendingVisible = await pendingScreen.isVisible().catch(() => false);
-
-    // At least one of these should be true depending on account state
-    expect(approveVisible || revisionVisible || pendingVisible || true).toBeTruthy();
+    // The workspace must be in exactly one of these defined states — never a blank page
+    await expect(page.getByRole("button", { name: /approve|accept/i })).toHaveCount(0);
   });
 });
 

@@ -25,12 +25,11 @@ test.describe("Chief approval queue", () => {
 
   test("chief client list renders intake data when client is pending", async ({ page }) => {
     await page.goto("/chief/clients");
-    // If there are pending clients, their exhibition intake data should be visible
-    // (e.g. exhibition name, booth size). This test passes if either:
-    // a) a pending client row is visible with intake data, or
-    // b) the list is empty (no pending clients right now) — both are valid states
-    const pendingVisible = await page.getByText(/pending/i).first().isVisible().catch(() => false);
-    const emptyState = await page.getByText(/no clients|empty/i).first().isVisible().catch(() => false);
-    expect(pendingVisible || emptyState || true).toBeTruthy(); // always passes, documents expected states
+    await page.waitForLoadState("networkidle");
+    // With a freshly seeded E2E database, the seeded client (client@demo.example) should
+    // appear in the list with "Pending" status until the chief approves them.
+    await expect(page.getByText("client@demo.example", { exact: true })).toBeVisible();
+    await expect(page.getByText("Pending Approval", { exact: true })).toBeVisible();
+    // One of these must be true — the list is never in an indeterminate state
   });
 });

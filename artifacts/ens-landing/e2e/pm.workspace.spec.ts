@@ -22,33 +22,30 @@ test.describe("PM workspace", () => {
     expect(realErrors).toHaveLength(0);
   });
 
-  test("PM projects page renders project cards or empty state", async ({ page }) => {
+  test("PM projects page shows the exact seeded empty state", async ({ page }) => {
     await page.goto("/pm/projects");
     await expect(page).toHaveURL(/\/pm\/projects/);
     await page.waitForLoadState("networkidle");
-    const hasProjects = await page.getByText(/project|exhibition|booth/i).first().isVisible().catch(() => false);
-    const hasEmpty = await page.getByText(/no projects|assign/i).first().isVisible().catch(() => false);
-    expect(hasProjects || hasEmpty).toBeTruthy();
+    await expect(page.getByText("No projects", { exact: true }).first()).toBeVisible();
   });
 
-  test("PM workspace page loads booth renderer iframe", async ({ page }) => {
+  test("PM workspace does not create a renderer without an assigned project", async ({ page }) => {
     // Navigate to workspace — if no project assigned, show selection screen
     await page.goto("/pm/workspace");
     await expect(page).toHaveURL(/\/pm\/workspace/);
     await page.waitForLoadState("networkidle");
 
     // Either shows the iframe booth renderer or a project-selection prompt
-    const hasIframe = await page.frameLocator('iframe[title="Booth Renderer"]').locator("body").isVisible().catch(() => false);
-    const hasSelector = await page.getByText(/select project|choose|workspace/i).first().isVisible().catch(() => false);
-    expect(hasIframe || hasSelector).toBeTruthy();
+    await expect(page.locator('iframe[title="Booth Renderer"]')).toHaveCount(0);
+    await expect(page.getByText(/no assigned projects|select.*project/i).first()).toBeVisible();
   });
 
   test("PM can view client messages list", async ({ page }) => {
     await page.goto("/pm/messages");
     await expect(page).toHaveURL(/\/pm\/messages/);
     await page.waitForLoadState("networkidle");
-    const hasContacts = await page.getByText(/message|contact|conversation/i).first().isVisible().catch(() => false);
-    const hasEmpty = await page.getByText(/no messages|start/i).first().isVisible().catch(() => false);
-    expect(hasContacts || hasEmpty).toBeTruthy();
+    await expect(
+      page.getByText("No assigned projects. Messages will use a general thread.", { exact: true }),
+    ).toBeVisible();
   });
 });
