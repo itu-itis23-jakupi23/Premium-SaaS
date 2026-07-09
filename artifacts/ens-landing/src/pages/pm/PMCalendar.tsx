@@ -37,6 +37,7 @@ import {
   Pencil,
   Trash2,
   Loader2,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -159,7 +160,10 @@ const EMPTY_FORM = {
 
 export default function PMCalendar() {
   const { t, i18n } = useTranslation();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  const urlParams = new URLSearchParams(location.split("?")[1] ?? "");
+  const clientFilterName = urlParams.get("clientName") ?? "";
+  const clientFilterId   = urlParams.get("clientId")   ?? "";
 
   const [exhibitions, setExhibitions] = useState<Exhibition[]>([]);
   const [isLoading, setIsLoading]     = useState(true);
@@ -214,14 +218,16 @@ export default function PMCalendar() {
   );
 
   const filteredExhibitions = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q  = search.trim().toLowerCase();
+    const cf = clientFilterName.toLowerCase();
     return thisMonthExhibitions.filter((ex) => {
       const matchesStatus = statusFilter === "all" || ex.status === statusFilter;
       const matchesSearch = !q || [ex.name, ex.client, ex.location, ex.standType]
         .some((v) => v.toLowerCase().includes(q));
-      return matchesStatus && matchesSearch;
+      const matchesClient = !cf || ex.client.toLowerCase().includes(cf);
+      return matchesStatus && matchesSearch && matchesClient;
     });
-  }, [thisMonthExhibitions, statusFilter, search]);
+  }, [thisMonthExhibitions, statusFilter, search, clientFilterName]);
 
   const selectedDayExhibitions = useMemo(() => {
     if (!selectedDay) return [];
@@ -348,6 +354,23 @@ export default function PMCalendar() {
         {error && (
           <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600">
             {error}
+          </div>
+        )}
+
+        {clientFilterName && (
+          <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5">
+            <CalendarDays className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+            <span className="text-sm font-medium">
+              Showing calendar for <strong>{clientFilterName}</strong>
+            </span>
+            <a
+              href="/pm/calendar"
+              className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Clear client filter"
+            >
+              <X className="h-3 w-3" aria-hidden="true" />
+              Clear filter
+            </a>
           </div>
         )}
 

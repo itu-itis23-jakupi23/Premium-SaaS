@@ -37,8 +37,6 @@ export default function ClientDashboard() {
   const [overview, setOverview] = useState<PlatformOverview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [toastMsg, setToastMsg] = useState("");
-  const [toastVisible, setToastVisible] = useState(false);
 
   useEffect(() => {
     document.title = t("client.dashboard.pageTitle");
@@ -67,13 +65,6 @@ export default function ClientDashboard() {
       isMounted = false;
     };
   }, [t]);
-
-  const showToast = (msg: string) => {
-    setToastMsg(msg);
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 3000);
-  };
-  void showToast; // reserved for future actions
 
   const activeProject = overview?.projects[0] ?? null;
   const projectStatus = activeProject?.status.toLowerCase() ?? "";
@@ -134,20 +125,6 @@ export default function ClientDashboard() {
 
   return (
     <DashboardLayout role="client">
-      {/* ARIA live region for toast notifications */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className={`fixed bottom-4 right-4 z-50 rounded-lg bg-foreground px-4 py-2 text-sm text-background shadow-lg transition-all duration-300 ${
-          toastVisible
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-2 pointer-events-none"
-        }`}
-      >
-        {toastMsg}
-      </div>
-
       <PageHeader
         title={t("client.dashboard.welcome", { name: clientName })}
         breadcrumbs={[
@@ -177,13 +154,11 @@ export default function ClientDashboard() {
               <Lock className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
-              <h2 className="text-base font-semibold">Waiting for Chief assignment</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Your account is in the system. The Chief Manager needs to assign a project manager and project before your workspace unlocks.
-              </p>
+              <h2 className="text-base font-semibold">{t("client.dashboard.waitingTitle")}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t("client.dashboard.waitingDesc")}</p>
             </div>
             <Button variant="outline" asChild>
-              <Link href="/client/messages">Message team</Link>
+              <Link href="/client/messages">{t("client.dashboard.messageTeamBtn")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -197,21 +172,21 @@ export default function ClientDashboard() {
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base font-semibold">Booth design ready for review</h2>
+                <h2 className="text-base font-semibold">{t("client.dashboard.reviewTitle")}</h2>
                 <Badge variant="outline" className="border-primary/30 bg-background/80 text-primary">
                   {activeProject.status}
                 </Badge>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                The latest design for {activeProject.name} has been shared with you. Open the workspace to inspect it, approve it, or request changes.
+                {t("client.dashboard.reviewDesc", { name: activeProject.name })}
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row md:flex-col lg:flex-row">
               <Button asChild>
-                <Link href="/client/workspace">Open Workspace</Link>
+                <Link href="/client/workspace">{t("client.dashboard.openWorkspaceBtn")}</Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/client/approvals">Review Approval</Link>
+                <Link href="/client/approvals">{t("client.dashboard.reviewApprovalBtn")}</Link>
               </Button>
             </div>
           </CardContent>
@@ -369,10 +344,8 @@ export default function ClientDashboard() {
               ) : (
                 <div className="rounded-lg border border-dashed border-yellow-500/30 bg-background/50 px-4 py-8 text-center">
                   <Lock className="mx-auto h-6 w-6 text-yellow-500" aria-hidden="true" />
-                  <p className="mt-3 text-sm font-medium">Workspace locked until assignment</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    You will be notified when your project manager is assigned.
-                  </p>
+                  <p className="mt-3 text-sm font-medium">{t("client.dashboard.workspaceLocked")}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t("client.dashboard.workspaceLockedDesc")}</p>
                 </div>
               )
             )}

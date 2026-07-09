@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { useTranslation } from 'react-i18next';
 import { useAuth, UserRole, getRoleDashboard } from '@/contexts/AuthContext';
 import { getPortalLoginPath, isRoleAllowedInPortal } from '@/lib/portal';
 import { LoadingScreen } from '@/components/LoadingScreen';
@@ -12,6 +13,7 @@ interface ProtectedRouteProps {
 }
 
 function ClientPendingScreen({ name }: { name: string }) {
+  const { t } = useTranslation();
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)' }}>
       <div style={{ maxWidth: 440, width: '100%', background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', padding: '48px 40px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', textAlign: 'center' }}>
@@ -19,15 +21,15 @@ function ClientPendingScreen({ name }: { name: string }) {
           <Clock size={26} style={{ color: '#a16207' }} />
         </div>
         <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 10px', color: '#0f172a' }}>
-          Pending Approval
+          {t('client.pendingApproval.title')}
         </h1>
         <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.6, margin: '0 0 24px' }}>
-          Hi {name.split(' ')[0]}, your account has been created and is waiting for your agency to review and approve it. You'll have full access once they do.
+          {t('client.pendingApproval.body', { firstName: name.split(' ')[0] })}
         </p>
         <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
           <Mail size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />
           <p style={{ fontSize: 13, color: '#475569', margin: 0, lineHeight: 1.5 }}>
-            You'll receive an email notification when your account is activated.
+            {t('client.pendingApproval.emailNote')}
           </p>
         </div>
       </div>

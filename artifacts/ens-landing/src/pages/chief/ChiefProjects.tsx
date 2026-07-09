@@ -62,10 +62,12 @@ import {
   Layers,
   List,
   Loader2,
+  Mail,
   Pencil,
   Plus,
   Search,
   User,
+  Users,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -201,6 +203,9 @@ export default function ChiefProjects() {
   const [exhibitionForm, setExhibitionForm] = useState({ name: "", venue: "", city: "", startDate: "", endDate: "" });
   const [exhibitionCreateError, setExhibitionCreateError] = useState("");
   const [isCreatingExhibition, setIsCreatingExhibition]   = useState(false);
+  // Exhibition detail
+  const [exhibitionDetail,     setExhibitionDetail]       = useState<PlatformExhibition | null>(null);
+  const [detailClientSearch,   setDetailClientSearch]     = useState("");
 
   useEffect(() => {
     document.title = t("chief.projects.title");
@@ -1067,7 +1072,12 @@ export default function ChiefProjects() {
                     ex.status === "Draft"  ? "text-gray-500 bg-gray-500/10 border-gray-400/30" :
                     "text-muted-foreground bg-muted/30 border-border";
                   return (
-                    <div key={ex.id} className="rounded-lg border bg-card p-4 space-y-2">
+                    <button
+                      type="button"
+                      key={ex.id}
+                      onClick={() => { setDetailClientSearch(""); setExhibitionDetail(ex); }}
+                      className="rounded-lg border bg-card p-4 space-y-2 w-full text-left hover:border-primary/40 hover:shadow-sm transition-all group"
+                    >
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-bold leading-tight">{ex.name}</p>
                         <span className={cn("shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide", statusColor)}>
@@ -1086,7 +1096,10 @@ export default function ChiefProjects() {
                       <p className="text-[10px] text-muted-foreground/60">
                         {projects.filter((p) => p.exhibition === ex.name).length} project(s) linked
                       </p>
-                    </div>
+                      <p className="mt-1 text-[10px] font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        Click to view PMs &amp; clients →
+                      </p>
+                    </button>
                   );
                 })}
               </div>
@@ -1570,6 +1583,170 @@ export default function ChiefProjects() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Exhibition detail sheet — PM + Client split view */}
+        <Sheet
+          open={!!exhibitionDetail}
+          onOpenChange={(open) => { if (!open) { setExhibitionDetail(null); setDetailClientSearch(""); } }}
+        >
+          <SheetContent side="right" className="flex w-full flex-col overflow-hidden p-0 sm:max-w-[min(92vw,1100px)]">
+            {exhibitionDetail && (() => {
+              const ex = exhibitionDetail;
+              const normalizeEx = (v: string) => v.trim().toLowerCase();
+              const exClients = managedClients.filter((c) =>
+                normalizeEx(cleanClientExhibition(c.exhibition) || c.name) === normalizeEx(ex.name)
+              );
+              const exManagerIds = [...new Set(exClients.map((c) => c.managerId).filter(Boolean))];
+              const exManagers = managers.filter((m) => exManagerIds.includes(m.id));
+              const q = detailClientSearch.trim().toLowerCase();
+              const searchedClients = q
+                ? exClients.filter((c) =>
+                    [c.name, c.contactName, c.contactEmail, c.exhibition, c.managerName, c.preferredSystem,
+                     String(c.boothWidthM ?? ""), String(c.boothDepthM ?? "")]
+                      .some((v) => (v ?? "").toLowerCase().includes(q))
+                  )
+                : exClients;
+
+              const statusColor =
+                ex.status === "Active" ? "text-green-500 border-green-500/40 bg-green-500/10" :
+                ex.status === "Draft"  ? "text-gray-400 border-gray-400/40 bg-gray-400/10"  :
+                "text-muted-foreground border-border bg-muted/20";
+
+              return (
+                <>
+                  <div className="border-b bg-card/60 px-6 py-4">
+                    <SheetHeader className="space-y-1 pr-8">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <SheetTitle className="text-xl">{ex.name}</SheetTitle>
+                        <span className={cn("shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide", statusColor)}>
+                          {ex.status}
+                        </span>
+                      </div>
+                      <SheetDescription>
+                        {[ex.venue, ex.city].filter(Boolean).join(" · ")}
+                        {ex.startDate && ` · ${new Date(ex.startDate).toLocaleDateString()} – ${ex.endDate ? new Date(ex.endDate).toLocaleDateString() : "?"}`}
+                      </SheetDescription>
+                    </SheetHeader>
+                  </div>
+
+                  <div className="grid min-h-0 flex-1 overflow-hidden md:grid-cols-[300px_minmax(0,1fr)]">
+                    {/* Left — Project Managers */}
+                    <aside className="flex min-h-0 flex-col border-r bg-background/40">
+                      <div className="border-b px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-primary" aria-hidden="true" />
+                          <p className="text-sm font-semibold">Project Managers</p>
+                          <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">{exManagers.length}</span>
+                        </div>
+                        <p className="mt-0.5 text-xs text-muted-foreground">Assigned to this exhibition</p>
+                      </div>
+                      <div className="flex-1 overflow-y-auto">
+                        {exManagers.length === 0 ? (
+                          <div className="m-4 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                            <Users className="mx-auto mb-2 h-6 w-6 text-muted-foreground/40" />
+                            No managers assigned yet
+                          </div>
+                        ) : (
+                          exManagers.map((m) => (
+                            <div key={m.id} className="flex items-center gap-3 border-b border-border/40 px-4 py-3">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary">
+                                {m.name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase()}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold">{m.name}</p>
+                                <p className="truncate text-[10px] text-muted-foreground">{m.email}</p>
+                              </div>
+                              <span className={cn(
+                                "shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase",
+                                m.status === "Active" ? "border-green-500/40 bg-green-500/10 text-green-500" : "border-border text-muted-foreground"
+                              )}>
+                                {m.status}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </aside>
+
+                    {/* Right — Clients */}
+                    <section className="flex min-h-0 flex-col">
+                      <div className="border-b px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-primary" aria-hidden="true" />
+                            <p className="text-sm font-semibold">Clients</p>
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">{exClients.length}</span>
+                          </div>
+                          <div className="relative ml-auto w-full max-w-xs">
+                            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                            <input
+                              value={detailClientSearch}
+                              onChange={(e) => setDetailClientSearch(e.target.value)}
+                              placeholder="Search by any detail…"
+                              className="h-8 w-full rounded-md border bg-background pl-8 pr-3 text-xs outline-none focus:border-primary"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto">
+                        {exClients.length === 0 ? (
+                          <div className="m-8 rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">
+                            No clients registered for this exhibition yet.
+                          </div>
+                        ) : searchedClients.length === 0 ? (
+                          <div className="m-8 py-8 text-center text-sm text-muted-foreground">
+                            No clients match your search.
+                          </div>
+                        ) : (
+                          <table className="w-full">
+                            <thead className="sticky top-0 z-10 border-b bg-muted/30">
+                              <tr>
+                                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Client</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Contact</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Booth</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">PM</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border/40">
+                              {searchedClients.map((c) => (
+                                <tr key={c.id} className="hover:bg-muted/20 transition-colors">
+                                  <td className="px-4 py-2.5">
+                                    <p className="text-[12px] font-semibold leading-tight">{c.name}</p>
+                                    {c.contactName && c.contactName !== c.name && (
+                                      <p className="text-[10px] text-muted-foreground">{c.contactName}</p>
+                                    )}
+                                  </td>
+                                  <td className="px-3 py-2.5">
+                                    <div className="flex items-center gap-1 text-[10.5px] text-muted-foreground">
+                                      <Mail className="h-3 w-3 shrink-0" aria-hidden="true" />
+                                      <span className="truncate max-w-[160px]">{c.contactEmail}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-2.5">
+                                    <p className="text-[10px] font-mono text-muted-foreground">
+                                      {c.boothWidthM && c.boothDepthM ? `${c.boothWidthM} × ${c.boothDepthM} m` : "—"}
+                                    </p>
+                                    {c.preferredSystem && (
+                                      <p className="text-[9px] uppercase tracking-wide text-muted-foreground/60">{c.preferredSystem}</p>
+                                    )}
+                                  </td>
+                                  <td className="px-3 py-2.5">
+                                    <p className="text-[11px] text-muted-foreground">{c.managerName || "—"}</p>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    </section>
+                  </div>
+                </>
+              );
+            })()}
+          </SheetContent>
+        </Sheet>
 
         {/* Always-rendered ARIA live toast — no mount/unmount flicker */}
         <div

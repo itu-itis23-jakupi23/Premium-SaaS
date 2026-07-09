@@ -113,7 +113,7 @@ export default function ClientDocuments() {
       { label: t("client.documents.stat.total"), value: docs.length, color: "text-foreground" },
       { label: t("client.documents.stat.final"), value: docs.filter((d) => d.approved).length, color: "text-green-600" },
       { label: t("client.documents.stat.inReview"), value: docs.filter((d) => !d.approved).length, color: "text-blue-600" },
-      { label: "Categories", value: categories.length, color: "text-muted-foreground" },
+      { label: t("client.documents.stat.categories"), value: categories.length, color: "text-muted-foreground" },
     ],
     [docs, categories.length, t],
   );
@@ -402,7 +402,7 @@ export default function ClientDocuments() {
                     : t("client.documents.status.review"),
                 },
                 { key: t("client.documents.preview.uploadedBy"), value: preview.uploadedBy },
-                { key: "Type", value: preview.mimeType },
+                { key: t("client.documents.preview.mimeType"), value: preview.mimeType },
               ].map(({ key, value }) => (
                 <div key={key} className="bg-muted/30 rounded p-2">
                   <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-0.5">

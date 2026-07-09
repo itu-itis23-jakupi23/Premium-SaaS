@@ -80,42 +80,17 @@ export default function ChiefDashboard() {
   }, [t]);
 
   function reloadData() {
+    let mounted = true;
     setIsLoading(true);
     setError(null);
     getPlatformOverview()
-      .then((data) => {
-        setOverview(data);
-        setError(null);
-      })
-      .catch((reason: unknown) => {
-        setError(reason instanceof Error ? reason.message : t("chief.dashboard.loadError"));
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+      .then((data) => { if (mounted) { setOverview(data); setError(null); } })
+      .catch((reason: unknown) => { if (mounted) setError(reason instanceof Error ? reason.message : t("chief.dashboard.loadError")); })
+      .finally(() => { if (mounted) setIsLoading(false); });
+    return () => { mounted = false; };
   }
 
-  useEffect(() => {
-    let mounted = true;
-
-    getPlatformOverview()
-      .then((data) => {
-        if (!mounted) return;
-        setOverview(data);
-        setError(null);
-      })
-      .catch((reason: unknown) => {
-        if (!mounted) return;
-        setError(reason instanceof Error ? reason.message : t("chief.dashboard.loadError"));
-      })
-      .finally(() => {
-        if (mounted) setIsLoading(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  useEffect(reloadData, []);
 
   const stats = useMemo(() => [
     { label: t("chief.dashboard.stats.totalClients"),    value: String(overview.metrics.clients),         icon: Users,       trend: t("chief.dashboard.stats.db"),       trendUp: true,                                         href: "/chief/clients" },
@@ -251,6 +226,9 @@ export default function ChiefDashboard() {
           title={t("chief.dashboard.title")}
           breadcrumbs={[{ label: t("chief.nav.chief"), href: "/chief" }, { label: t("chief.nav.dashboard") }]}
         >
+          <Button variant="outline" onClick={() => navigate("/chief/reports")}>
+            {t("chief.nav.reports")}
+          </Button>
           <Button onClick={exportReport} data-testid="button-export-reports">
             <Download className="mr-2 h-4 w-4" /> {t("chief.dashboard.exportReports")}
           </Button>
@@ -260,13 +238,14 @@ export default function ChiefDashboard() {
           <Card className="border-red-500/30 bg-red-500/5">
             <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm text-red-500">
               {error}
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={reloadData}
-                className="rounded-md border border-red-500/30 px-3 py-1 text-xs font-semibold hover:bg-red-500/10 transition-colors"
+                className="shrink-0 border-red-500/30 text-red-500 hover:bg-red-500/10"
               >
-                Retry
-              </button>
+                {t("chief.dashboard.retry")}
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -294,61 +273,61 @@ export default function ChiefDashboard() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <span className="workflow-live-dot" aria-hidden="true" />
-                    Assignment control
+                    {t("chief.dashboard.workflow.title")}
                   </CardTitle>
-                  <CardDescription>New accounts and unassigned work that need Chief action.</CardDescription>
+                  <CardDescription>{t("chief.dashboard.workflow.desc")}</CardDescription>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => navigate("/chief/managers")}>
-                  Open assignments <ArrowRight className="ml-2 h-4 w-4" />
+                  {t("chief.dashboard.workflow.openAssignments")} <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
                 <WorkflowQueueTile
-                  label="Pending accounts"
+                  label={t("chief.dashboard.workflow.pendingAccounts")}
                   value={overview.workflow.counts.pendingClientApprovals ?? 0}
-                  detail={overview.workflow.counts.pendingClientApprovals ? "Client accounts awaiting review" : "No accounts pending"}
+                  detail={overview.workflow.counts.pendingClientApprovals ? t("chief.dashboard.workflow.pendingAccountsDetail") : t("chief.dashboard.workflow.pendingAccountsClear")}
                   tone={overview.workflow.counts.pendingClientApprovals ? "danger" : "clear"}
                   icon={UserSquare2}
                   onOpen={() => navigate("/chief/clients")}
                 />
                 <WorkflowQueueTile
-                  label="New PMs"
+                  label={t("chief.dashboard.workflow.newPMs")}
                   value={overview.workflow.counts.newProjectManagers}
-                  detail={overview.workflow.newProjectManagers[0]?.name ?? "No PM accounts waiting"}
+                  detail={overview.workflow.newProjectManagers[0]?.name ?? t("chief.dashboard.workflow.newPMsClear")}
                   tone={overview.workflow.counts.newProjectManagers ? "info" : "clear"}
                   icon={UserPlus}
                   onOpen={() => navigate("/chief/managers")}
                 />
                 <WorkflowQueueTile
-                  label="Unassigned clients"
+                  label={t("chief.dashboard.workflow.unassignedClients")}
                   value={overview.workflow.counts.unassignedClients}
-                  detail={overview.workflow.unassignedClients[0]?.name ?? "All clients assigned"}
+                  detail={overview.workflow.unassignedClients[0]?.name ?? t("chief.dashboard.workflow.unassignedClientsClear")}
                   tone={overview.workflow.counts.unassignedClients ? "warning" : "clear"}
                   icon={Users}
                   onOpen={() => navigate("/chief/managers")}
                 />
                 <WorkflowQueueTile
-                  label="Unassigned projects"
+                  label={t("chief.dashboard.workflow.unassignedProjects")}
                   value={overview.workflow.counts.unassignedProjects}
-                  detail={overview.workflow.unassignedProjects[0]?.name ?? "All projects assigned"}
+                  detail={overview.workflow.unassignedProjects[0]?.name ?? t("chief.dashboard.workflow.unassignedProjectsClear")}
                   tone={overview.workflow.counts.unassignedProjects ? "warning" : "clear"}
                   icon={Briefcase}
                   onOpen={() => navigate("/chief/managers")}
                 />
                 <WorkflowQueueTile
-                  label="Stalled approvals"
+                  label={t("chief.dashboard.workflow.stalledApprovals")}
                   value={overview.workflow.counts.stalledApprovals}
-                  detail={overview.workflow.approvalAging[0] ? `${overview.workflow.approvalAging[0].name} · ${overview.workflow.approvalAging[0].waitingDays}d` : "No stale approvals"}
+                  detail={overview.workflow.approvalAging[0] ? `${overview.workflow.approvalAging[0].name} · ${overview.workflow.approvalAging[0].waitingDays}d` : t("chief.dashboard.workflow.stalledApprovalsClear")}
                   tone={overview.workflow.counts.stalledApprovals ? "danger" : "clear"}
                   icon={Clock}
                   onOpen={() => navigate("/chief/clients")}
                 />
                 <WorkflowQueueTile
-                  label="Overloaded PMs"
+                  label={t("chief.dashboard.workflow.overloadedPMs")}
                   value={overview.workflow.counts.overloadedManagers}
-                  detail={overview.workflow.workloadAlerts[0] ? `${overview.workflow.workloadAlerts[0].name} · ${overview.workflow.workloadAlerts[0].workload}%` : "Capacity looks stable"}
+                  detail={overview.workflow.workloadAlerts[0] ? `${overview.workflow.workloadAlerts[0].name} · ${overview.workflow.workloadAlerts[0].workload}%` : t("chief.dashboard.workflow.overloadedPMsClear")}
                   tone={overview.workflow.counts.overloadedManagers ? "danger" : "clear"}
                   icon={AlertCircle}
                   onOpen={() => navigate("/chief/managers")}
@@ -443,7 +422,7 @@ export default function ChiefDashboard() {
                           borderColor: "hsl(var(--border))",
                           borderRadius: "8px",
                         }}
-                        formatter={(value: number) => [`${value}%`, "Share"]}
+                        formatter={(value: number) => [`${value}%`, t("chief.dashboard.pieShare")]}
                       />
                     </PieChart>
                   </ResponsiveContainer>

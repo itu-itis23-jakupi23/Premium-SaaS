@@ -370,6 +370,26 @@
       "recentActivity": "Recent Activity",
       "noManagerAssignments": "No manager assignments found.",
       "loadError": "Unable to load dashboard data",
+      "retry": "Retry",
+      "pieShare": "Share",
+      "workflow": {
+        "title": "Assignment control",
+        "desc": "New accounts and unassigned work that need Chief action.",
+        "openAssignments": "Open assignments",
+        "pendingAccounts": "Pending accounts",
+        "pendingAccountsDetail": "Client accounts awaiting review",
+        "pendingAccountsClear": "No accounts pending",
+        "newPMs": "New PMs",
+        "newPMsClear": "No PM accounts waiting",
+        "unassignedClients": "Unassigned clients",
+        "unassignedClientsClear": "All clients assigned",
+        "unassignedProjects": "Unassigned projects",
+        "unassignedProjectsClear": "All projects assigned",
+        "stalledApprovals": "Stalled approvals",
+        "stalledApprovalsClear": "No stale approvals",
+        "overloadedPMs": "Overloaded PMs",
+        "overloadedPMsClear": "Capacity looks stable"
+      },
       "charts": {
         "projectActivity": "Project Activity",
         "projectActivityDesc": "Activity across all projects over the last 7 days",
@@ -447,9 +467,13 @@
         "desc": "Invited managers appear here until they accept. They cannot receive assignments yet.",
         "expires": "expires {{date}}",
         "moreInvites": "+{{count}} more",
+        "showMore": "Show {{count}} more",
+        "showLess": "Show less",
         "copyLink": "Copy invite link for {{email}}",
         "resend": "Resend invite to {{email}}",
-        "revoke": "Revoke invite for {{email}}"
+        "revoke": "Revoke invite for {{email}}",
+        "emailFailed": "Email not sent",
+        "emailProviderNotConfigured": "email provider is not configured"
       },
       "invite": {
         "title": "Invite Manager",
@@ -515,7 +539,8 @@
         "delayed": "delayed",
         "urgent": "urgent",
         "ratingNew": "New",
-        "ratingNA": "N/A"
+        "ratingNA": "N/A",
+        "capacityDetail": "Capacity: {{projects}}/{{maxProjects}} active projects · {{clients}}/{{maxClients}} clients"
       },
       "table": {
         "manager": "Manager",
@@ -637,6 +662,8 @@
       "toast": {
         "exported": "Excel report exported"
       },
+      "notConfigured": "Not configured",
+      "revenueNotice": "Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data.",
       "kpi": {
         "revenue": "Total Revenue",
         "revenueDetail": "+12.5% vs previous period",
@@ -1247,7 +1274,9 @@
           "description": "Review devices currently signed into this account.",
           "signOutOthers": "Sign Out Others",
           "signOut": "Sign Out",
-          "current": "current"
+          "current": "current",
+          "loading": "Loading active sessions...",
+          "empty": "No active sessions were returned by the server."
         },
         "toast": {
           "passwordSaved": "Password update saved",
@@ -1304,6 +1333,49 @@
         "exported": "Settings exported",
         "restored": "Settings restored to defaults",
         "restoredLocal": "Local settings restored to defaults"
+      },
+      "readiness": {
+        "title": "Production readiness",
+        "desc": "Real deployment checks for database, email, auth, app URL, and workspace asset storage.",
+        "ready": "Ready",
+        "notReady": "Not ready",
+        "refresh": "Refresh",
+        "mode": "Mode",
+        "apiJsonLimit": "API JSON limit",
+        "assetStorage": "Asset storage",
+        "unknown": "Unknown",
+        "blockingWarnings": "Blocking warnings",
+        "noWarnings": "No blocking production warnings reported by the backend.",
+        "checks": {
+          "databaseConfigured": {
+            "title": "Hosted database",
+            "desc": "DATABASE_URL is configured"
+          },
+          "emailConfigured": {
+            "title": "Transactional email",
+            "desc": "RESEND_API_KEY and RESEND_FROM are configured"
+          },
+          "appUrlConfigured": {
+            "title": "Public app URL",
+            "desc": "APP_URL is an absolute URL"
+          },
+          "staffAccessConfigured": {
+            "title": "Staff access gate",
+            "desc": "Staff/chief signup key is not a placeholder"
+          },
+          "authSecretConfigured": {
+            "title": "Auth secret",
+            "desc": "AUTH_SECRET is not a placeholder"
+          },
+          "assetStorageConfigured": {
+            "title": "Workspace asset storage",
+            "desc": "Uploaded logos and panel images use durable storage"
+          },
+          "productionMode": {
+            "title": "Production mode",
+            "desc": "NODE_ENV is production"
+          }
+        }
       }
     }
   },
@@ -1328,7 +1400,6 @@
       "myClients": "My Clients",
       "projects": "Projects",
       "calendar": "Calendar",
-      "workspace": "Workspace",
       "requests": "Requests",
       "messages": "Messages",
       "tasks": "Tasks",
@@ -1378,6 +1449,7 @@
       "title": "Project Manager Dashboard",
       "overview": "Overview",
       "loadError": "Could not load dashboard data.",
+      "retry": "Retry",
       "stats": {
         "assignedClients": "Assigned Clients",
         "activeProjects": "Active Projects",
@@ -1705,6 +1777,8 @@
       "chiefPortal": "Chief portal",
       "projectScope": "Project scope",
       "noProjectScopes": "No assigned projects. Messages will use a general thread.",
+      "allExhibitions": "All exhibitions",
+      "allContacts": "{{count}} contacts",
       "generalThread": "General thread",
       "scopedTo": "Scoped to {{project}}",
       "noMessages": "No messages yet. Send the first one!",
@@ -1854,6 +1928,63 @@
         "exported": "Excel report exported"
       }
     },
+    "join": {
+      "pageTitle": "Join the Team",
+      "pageSubtitle": "Complete your profile to activate your Project Manager account.",
+      "inviteConfirmed": "Invitation confirmed",
+      "joiningAs": "Joining as a <bold>Project Manager</bold> with email <email>{{email}}</email>",
+      "form": {
+        "fullName": "Full Name",
+        "fullNamePlaceholder": "Your full name",
+        "password": "Password",
+        "passwordPlaceholder": "At least 8 characters",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Re-enter your password",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "passwordMismatch": "Passwords do not match.",
+        "submit": "Create My Account",
+        "submitting": "Creating Account…"
+      },
+      "strength": {
+        "weak": "Weak",
+        "fair": "Fair",
+        "good": "Good",
+        "strong": "Strong"
+      },
+      "error": {
+        "title": "Invitation Not Valid",
+        "noToken": "No invitation token found in the URL. Please use the link from your invitation email.",
+        "invalidToken": "This invitation link is not valid.",
+        "contact": "If you believe this is a mistake, please contact your administrator to resend the invitation.",
+        "adminEmail": "admin@ens-agency.com",
+        "goToLogin": "Go to Login",
+        "nameRequired": "Please enter your full name.",
+        "passwordTooShort": "Password must be at least 8 characters.",
+        "passwordMismatch": "Passwords do not match.",
+        "generic": "Something went wrong. Please try again."
+      },
+      "success": {
+        "title": "Account Created!",
+        "body": "Welcome to the ENS team, {{name}}! Your account is ready. You'll be redirected to the login page in a moment.",
+        "goToLogin": "Go to Login Now"
+      }
+    },
+    "workspace": {
+      "furnitureCategory": {
+        "all": "All",
+        "chairs": "Chairs",
+        "stools": "Bar stools",
+        "seating": "Sofas & poufs",
+        "tables": "Tables",
+        "storage": "Storage",
+        "shelves": "Shelves",
+        "appliances": "Appliances",
+        "lighting": "Lights",
+        "decor": "Decor",
+        "parts": "Parts"
+      }
+    },
     "calendar": {
       "title": "Calendar",
       "breadcrumb": "Calendar",
@@ -1915,7 +2046,6 @@
       "projects": "Projects",
       "workspace": "Workspace",
       "messages": "Messages",
-      "approvals": "Approvals",
       "documents": "Documents",
       "profile": "Profile"
     },
@@ -1935,6 +2065,15 @@
       "overallProgress": "Overall Progress",
       "viewWorkspace": "VIEW WORKSPACE",
       "workspacePreview": "Workspace Preview",
+      "waitingTitle": "Waiting for Chief assignment",
+      "waitingDesc": "Your account is in the system. The Chief Manager needs to assign a project manager and project before your workspace unlocks.",
+      "messageTeamBtn": "Message team",
+      "reviewTitle": "Booth design ready for review",
+      "reviewDesc": "The latest design for {{name}} has been shared with you. Open the workspace to inspect it, approve it, or request changes.",
+      "openWorkspaceBtn": "Open Workspace",
+      "reviewApprovalBtn": "Review Approval",
+      "workspaceLocked": "Workspace locked until assignment",
+      "workspaceLockedDesc": "You will be notified when your project manager is assigned.",
       "recentActivity": "Recent Activity",
       "loadingActivity": "Loading activity...",
       "noActivity": "No activity has been recorded yet.",
@@ -2022,7 +2161,8 @@
         "total": "Total Files",
         "final": "Final",
         "inReview": "In Review",
-        "drafts": "Drafts"
+        "drafts": "Drafts",
+        "categories": "Categories"
       },
       "status": {
         "final": "Final",
@@ -2060,6 +2200,7 @@
         "category": "Category",
         "status": "Status",
         "uploadedBy": "Uploaded by",
+        "mimeType": "Type",
         "tags": "Tags",
         "downloadBtn": "Download File"
       }
@@ -2083,7 +2224,14 @@
         "more": "More options",
         "attach": "Attach file",
         "send": "Send message"
-      }
+      },
+      "error": {
+        "contacts": "Could not load message contacts.",
+        "messages": "Could not load messages.",
+        "attachmentTooLarge": "Attachment is too large. Maximum file size is 25 MB."
+      },
+      "noMessages": "No messages yet.",
+      "uploading": "Uploading attachment..."
     },
     "projects": {
       "pageTitle": "My Projects | ENS",
@@ -2110,12 +2258,18 @@
         "system": "System",
         "size": "Size",
         "pm": "PM",
-        "deadline": "Deadline"
+        "deadline": "Deadline",
+        "noDate": "No date"
       },
+      "loadError": "Could not load your assigned projects.",
+      "emptyTitle": "No assigned projects yet",
+      "emptyDesc": "Your exhibition registration is in the system. A Chief Manager or Project Manager needs to assign a project before it appears here.",
       "timeline": {
         "heading": "Project Timeline",
         "defaultLabel": "Project created — design in progress",
-        "defaultDate": "Recently"
+        "defaultDate": "Recently",
+        "movedFromTo": "Moved from {{from}} to {{to}}",
+        "movedTo": "Moved to {{to}}"
       },
       "action": {
         "viewDesign": "View Design",
@@ -2225,6 +2379,11 @@
         "deleteQueued": "Account deletion request queued"
       }
     },
+    "pendingApproval": {
+      "title": "Pending Approval",
+      "body": "Hi {{firstName}}, your account has been created and is waiting for your agency to review and approve it. You'll have full access once they do.",
+      "emailNote": "You'll receive an email notification when your account is activated."
+    },
     "workspace": {
       "pageTitle": "Design Workspace | ENS",
       "viewOnly": "VIEW ONLY",
@@ -2315,6 +2474,50 @@
       "confirmPin": "Confirm pin",
       "cancelPin": "Cancel pin",
       "errorLoad": "Failed to load workspace",
+      "unassigned": {
+        "title": "Workspace waiting for assignment",
+        "body": "Your account exists, but the Chief Manager has not assigned a project manager and booth project yet. You'll get access as soon as your account is set up.",
+        "backBtn": "Back to Dashboard"
+      },
+      "revisions": {
+        "counter": "Revisions: {{count}} / {{limit}}",
+        "upgradeBtn": "Upgrade Revisions",
+        "exhaustedTitle": "Revision limit reached",
+        "exhaustedBody": "You have used all included arrangement rounds. Upgrade your plan to unlock more revisions.",
+        "upgradeDialog": {
+          "title": "Upgrade Revisions Plan",
+          "subtitle": "Choose a plan to unlock more revision rounds.",
+          "starter": {
+            "name": "Starter",
+            "description": "Adds 3 extra client revision rounds",
+            "price": "$2.99"
+          },
+          "pro": {
+            "name": "Pro",
+            "description": "Adds 8 extra revision rounds",
+            "price": "$9.99"
+          },
+          "unlimited": {
+            "name": "Unlimited",
+            "description": "Unlimited revision rounds",
+            "price": "$11.99"
+          },
+          "cancelBtn": "Cancel",
+          "continueBtn": "Continue to checkout"
+        }
+      },
+      "feedbackFilter": {
+        "open": "Open",
+        "all": "All",
+        "resolved": "Resolved"
+      },
+      "pinStatus": {
+        "resolved": "Resolved",
+        "open": "Open",
+        "reopen": "Reopen",
+        "resolve": "Resolve"
+      },
+      "backToDashboard": "Back to Dashboard",
       "ctrl": {
         "reset": "Reset view",
         "zoomIn": "Zoom in",

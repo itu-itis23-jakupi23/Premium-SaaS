@@ -53,7 +53,7 @@ export default function ClientMessages() {
         setActiveId((current) => current && response.contacts.some((contact) => contact.id === current) ? current : response.contacts[0]?.id ?? null);
       })
       .catch((reason: unknown) => {
-        if (mounted) setError(reason instanceof Error ? reason.message : "Could not load message contacts.");
+        if (mounted) setError(reason instanceof Error ? reason.message : t("client.messages.error.contacts"));
       })
       .finally(() => {
         if (mounted) setIsLoading(false);
@@ -75,7 +75,7 @@ export default function ClientMessages() {
         setMessages(response.messages);
         setContacts((current) => current.map((contact) => contact.id === active!.id ? { ...contact, unread: 0 } : contact));
       } catch (reason) {
-        if (mounted) setError(reason instanceof Error ? reason.message : "Could not load messages.");
+        if (mounted) setError(reason instanceof Error ? reason.message : t("client.messages.error.messages"));
       }
     }
 
@@ -120,7 +120,7 @@ export default function ClientMessages() {
     event.target.value = "";
     if (!file) return;
     if (file.size > 25_000_000) {
-      setError("Attachment is too large. Maximum file size is 25 MB.");
+      setError(t("client.messages.error.attachmentTooLarge"));
       return;
     }
     setIsUploading(true);
@@ -269,7 +269,7 @@ export default function ClientMessages() {
                 </div>
               ))}
               {!messages.length && !isLoading && (
-                <div className="py-12 text-center text-sm text-muted-foreground">No messages yet.</div>
+                <div className="py-12 text-center text-sm text-muted-foreground">{t("client.messages.noMessages")}</div>
               )}
               <div ref={messagesEnd} />
             </div>
@@ -327,7 +327,7 @@ export default function ClientMessages() {
                 <Send className="h-5 w-5" aria-hidden="true" />
               </Button>
             </div>
-            {isUploading && <p className="mt-2 text-xs text-muted-foreground">Uploading attachment...</p>}
+            {isUploading && <p className="mt-2 text-xs text-muted-foreground">{t("client.messages.uploading")}</p>}
           </div>
         </Card>
       </div>

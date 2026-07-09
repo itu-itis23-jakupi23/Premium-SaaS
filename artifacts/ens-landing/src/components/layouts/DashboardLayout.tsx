@@ -11,7 +11,6 @@ import {
   Users,
   UserSquare2,
   Briefcase,
-  Monitor,
   FileText,
   MessageSquare,
   Settings,
@@ -20,10 +19,7 @@ import {
   ChevronRight,
   LogOut,
   Layers,
-  CheckCircle,
   FolderOpen,
-  ClipboardList,
-  BarChart3,
   Bell,
   CalendarDays,
   CheckCheck,
@@ -37,10 +33,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   ACCOUNT_SETTINGS_EVENT,
-  PM_REQUESTS_UPDATED_EVENT,
   getAccountSettings,
   getNotifications,
-  getPmRequests,
   markAllNotificationsRead,
   markNotificationRead,
   type PlatformNotification,
@@ -62,7 +56,6 @@ type CachedProfile = { name: string; email: string; avatarUrl: string };
 const cachedProfiles: Record<string, CachedProfile> = {};
 const cachedNotificationsByUser: Record<string, PlatformNotification[]> = {};
 const cachedUnreadNotificationsByUser: Record<string, number> = {};
-const cachedPendingRequestsCountByUser: Record<string, number> = {};
 
 const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
   chief: [
@@ -71,7 +64,6 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
     { icon: UserSquare2,     labelKey: "chief.nav.managers",   href: "/chief/managers" },
     { icon: Briefcase,       labelKey: "chief.nav.projects",   href: "/chief/projects" },
     { icon: CalendarDays,    labelKey: "chief.nav.calendar",   href: "/chief/calendar" },
-    { icon: BarChart3,       labelKey: "chief.nav.reports",    href: "/chief/reports" },
     { icon: MessageSquare,   labelKey: "chief.nav.messages",   href: "/chief/messages" },
     { icon: Settings,        labelKey: "chief.nav.settings",   href: "/chief/settings" },
   ],
@@ -80,10 +72,8 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
     { icon: Users,           labelKey: "pm.nav.myClients",  href: "/pm/clients" },
     { icon: Briefcase,       labelKey: "pm.nav.projects",   href: "/pm/projects" },
     { icon: CalendarDays,    labelKey: "pm.nav.calendar",   href: "/pm/calendar" },
-    { icon: ClipboardList,   labelKey: "pm.nav.requests",   href: "/pm/requests" },
     { icon: MessageSquare,   labelKey: "pm.nav.messages",   href: "/pm/messages" },
-    { icon: CheckCircle,     labelKey: "pm.nav.tasks",      href: "/pm/tasks" },
-    { icon: BarChart3,       labelKey: "pm.nav.reports",    href: "/pm/reports" },
+    { icon: Layers,          labelKey: "pm.nav.tasks",      href: "/pm/tasks" },
     { icon: Settings,        labelKey: "pm.nav.settings",   href: "/pm/settings" },
   ],
   client: [
@@ -91,7 +81,6 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
     { icon: FolderOpen,      labelKey: "client.nav.projects",   href: "/client/projects" },
     { icon: Layers,          labelKey: "client.nav.workspace",  href: "/client/workspace" },
     { icon: MessageSquare,   labelKey: "client.nav.messages",   href: "/client/messages" },
-    { icon: CheckCircle,     labelKey: "client.nav.approvals",  href: "/client/approvals" },
     { icon: FileText,        labelKey: "client.nav.documents",  href: "/client/documents" },
     { icon: User,            labelKey: "client.nav.profile",    href: "/client/profile" },
   ],
@@ -107,7 +96,6 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const [profile, setProfile] = useState<CachedProfile | null>(() => cachedProfiles[cacheKey] ?? null);
   const [notifications, setNotifications] = useState<PlatformNotification[]>(() => cachedNotificationsByUser[cacheKey] ?? []);
   const [unreadNotifications, setUnreadNotifications] = useState(() => cachedUnreadNotificationsByUser[cacheKey] ?? 0);
-  const [pendingRequestsCount, setPendingRequestsCount] = useState(() => cachedPendingRequestsCountByUser[cacheKey] ?? 0);
   const items = sidebarItems[role];
   const accountHref = role === "client" ? "/client/profile" : role === "pm" ? "/pm/settings" : "/chief/settings";
 
@@ -189,31 +177,6 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     };
   }, [cacheKey, user]);
 
-  useEffect(() => {
-    if (role !== "pm") return;
-    let mounted = true;
-
-    function loadPendingRequests() {
-      getPmRequests({ status: "Pending", limit: 99 })
-        .then((payload) => {
-          if (!mounted) return;
-          setPendingRequestsCount(payload.summary.pending);
-          cachedPendingRequestsCountByUser[cacheKey] = payload.summary.pending;
-        })
-        .catch(() => {/* silently ignore — badge is best-effort */});
-    }
-
-    setPendingRequestsCount(cachedPendingRequestsCountByUser[cacheKey] ?? 0);
-    loadPendingRequests();
-    const timer = window.setInterval(loadPendingRequests, 60_000);
-    window.addEventListener(PM_REQUESTS_UPDATED_EVENT, loadPendingRequests);
-
-    return () => {
-      mounted = false;
-      window.clearInterval(timer);
-      window.removeEventListener(PM_REQUESTS_UPDATED_EVENT, loadPendingRequests);
-    };
-  }, [cacheKey, role]);
 
   function handleLogout() {
     logout();
@@ -288,8 +251,6 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           <ul className="space-y-1">
             {items.map((item) => {
               const isActive = location.split("?")[0] === item.href;
-              const isPmRequests = role === "pm" && item.href === "/pm/requests";
-              const badge = isPmRequests && pendingRequestsCount > 0 ? pendingRequestsCount : 0;
 
               return (
                 <li key={item.href}>
@@ -311,22 +272,12 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                       )}
                       <div className="relative z-10 flex-shrink-0">
                         <item.icon aria-hidden="true" className="h-5 w-5" />
-                        {badge > 0 && isCollapsed && (
-                          <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white">
-                            {badge > 9 ? "9+" : badge}
-                          </span>
-                        )}
                       </div>
                       {isCollapsed
-                        ? <span className="sr-only">{t(item.labelKey)}{badge > 0 ? ` (${badge} pending)` : ""}</span>
+                        ? <span className="sr-only">{t(item.labelKey)}</span>
                         : (
-                          <span className="relative z-10 flex flex-1 items-center justify-between font-medium">
+                          <span className="relative z-10 flex flex-1 items-center font-medium">
                             {t(item.labelKey)}
-                            {badge > 0 && (
-                              <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                                {badge > 9 ? "9+" : badge}
-                              </span>
-                            )}
                           </span>
                         )
                       }

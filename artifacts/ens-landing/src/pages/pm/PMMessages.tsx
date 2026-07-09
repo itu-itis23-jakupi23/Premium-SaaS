@@ -63,9 +63,18 @@ export default function PMMessages() {
   const scopeName = activeProject?.exhibition ?? activeProject?.name ?? t("pm.messages.generalThread");
 
   const filteredContacts = useMemo(() => {
+    let list = contacts;
+    if (activeProject) {
+      const clientName = activeProject.client.toLowerCase();
+      const byProject = list.filter(
+        (c) => c.name.toLowerCase().includes(clientName) || clientName.includes(c.name.toLowerCase()),
+      );
+      if (byProject.length > 0) list = byProject;
+    }
     const q = search.toLowerCase();
-    return contacts.filter((c) => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
-  }, [contacts, search]);
+    if (q) list = list.filter((c) => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
+    return list;
+  }, [contacts, search, activeProject]);
 
   const filteredCandidates = useMemo(() => {
     const q = newChatSearch.toLowerCase();
@@ -106,10 +115,9 @@ export default function PMMessages() {
       .then((payload) => {
         if (!mounted) return;
         setProjects(payload.projects);
+        // Keep existing selection if valid; don't auto-select — user starts with "All"
         setActiveProjectId((current) =>
-          current && payload.projects.some((project) => project.id === current)
-            ? current
-            : payload.projects[0]?.id ?? null,
+          current && payload.projects.some((project) => project.id === current) ? current : null,
         );
       })
       .catch((reason: unknown) => {
@@ -146,6 +154,17 @@ export default function PMMessages() {
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, active?.id]);
+
+  // Auto-select first contact that matches the newly selected project scope
+  useEffect(() => {
+    if (!activeProject || !contacts.length) return;
+    const clientName = activeProject.client.toLowerCase();
+    const match = contacts.find(
+      (c) => c.name.toLowerCase().includes(clientName) || clientName.includes(c.name.toLowerCase()),
+    );
+    if (match) setActiveId(match.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProjectId]);
 
   // Handle ?contactId= deep-link (e.g. from PMClients "Message" button)
   useEffect(() => {
@@ -384,6 +403,17 @@ export default function PMMessages() {
                 {t("pm.messages.projectScope")}
               </div>
               <div className="max-h-40 space-y-1 overflow-y-auto pr-1">
+                <button
+                  onClick={() => setActiveProjectId(null)}
+                  aria-pressed={activeProjectId === null}
+                  className={cn(
+                    "w-full rounded-md border px-2.5 py-2 text-left transition-colors",
+                    activeProjectId === null ? "border-primary bg-primary/10 text-foreground" : "border-border bg-background/40 text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <span className="block truncate text-xs font-semibold">{t("pm.messages.allExhibitions")}</span>
+                  <span className="block truncate text-[10px] font-mono">{t("pm.messages.allContacts", { count: contacts.length })}</span>
+                </button>
                 {projects.map((project) => {
                   const selected = activeProject?.id === project.id;
                   return (
@@ -693,7 +723,7 @@ export default function PMMessages() {
                       onKeyDown={(event) => {
                         if (event.key === "Enter" && !event.shiftKey) {
                           event.preventDefault();
-                          sendMessage();
+                          void sendMessage();
                         }
                       }}
                       placeholder={t("pm.messages.inputPlaceholder")}

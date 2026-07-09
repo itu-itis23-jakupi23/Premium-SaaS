@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link, useLocation } from "wouter";
 import {
   AreaChart,
   Area,
@@ -43,6 +44,7 @@ import { Button } from "@/components/ui/button";
 
 export default function PMDashboard() {
   const { t } = useTranslation();
+  const [, navigate] = useLocation();
   const [overview, setOverview] = useState<PlatformOverview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,7 +99,7 @@ export default function PMDashboard() {
         ],
       },
     ]);
-    void recordReportExport({ report: "PM dashboard overview", format: "xls" });
+    void recordReportExport({ report: "PM dashboard overview", format: "xls", href: "/pm/reports" });
     showToast(t("pm.dashboard.exported"));
   }
 
@@ -240,6 +242,9 @@ export default function PMDashboard() {
           title={t("pm.dashboard.title")}
           breadcrumbs={[{ label: t("pm.nav.dashboard"), href: "/pm" }, { label: t("pm.dashboard.overview") }]}
         >
+          <Button variant="outline" size="sm" onClick={() => navigate("/pm/reports")}>
+            {t("pm.nav.reports")}
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -252,8 +257,11 @@ export default function PMDashboard() {
         </PageHeader>
 
         {error && (
-          <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600">
-            {error}
+          <div role="alert" className="flex items-center justify-between gap-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600">
+            <span>{error}</span>
+            <Button variant="outline" size="sm" className="shrink-0 border-red-500/40 text-red-600 hover:bg-red-500/10" onClick={() => { setError(null); setIsLoading(true); getPlatformOverview().then((d) => { setOverview(d); setError(null); }).catch((e: unknown) => setError(e instanceof Error ? e.message : t("pm.dashboard.loadError"))).finally(() => setIsLoading(false)); }}>
+              {t("pm.dashboard.retry")}
+            </Button>
           </div>
         )}
 
@@ -392,7 +400,7 @@ export default function PMDashboard() {
                 {t("pm.dashboard.activeWork.title")}
               </CardTitle>
               <Button variant="outline" size="sm" asChild>
-                <a href="/pm/projects">{t("pm.dashboard.activeWork.viewAll")}</a>
+                <Link href="/pm/projects">{t("pm.dashboard.activeWork.viewAll")}</Link>
               </Button>
             </CardHeader>
             <CardContent>
@@ -426,9 +434,9 @@ export default function PMDashboard() {
                           )}
                         />
                         <div>
-                          <a href={task.href} className="text-sm font-medium leading-none hover:text-primary">
+                          <Link href={task.href} className="text-sm font-medium leading-none hover:text-primary">
                             {task.title}
-                          </a>
+                          </Link>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Clock aria-hidden="true" className="h-3 w-3" /> {task.deadline}
@@ -448,12 +456,12 @@ export default function PMDashboard() {
                         </div>
                       </div>
                       <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <a
+                        <Link
                           href={task.href}
                           aria-label={t("pm.dashboard.activeWork.openProject", { name: task.project.name })}
                         >
                           <ArrowRight aria-hidden="true" className="h-4 w-4" />
-                        </a>
+                        </Link>
                       </Button>
                     </div>
                   ))}
@@ -510,10 +518,10 @@ export default function PMDashboard() {
                         className="h-7 w-full text-[11px]"
                         asChild
                       >
-                        <a href={card.href}>
+                        <Link href={card.href}>
                           {card.action}
                           <ArrowRight aria-hidden="true" className="ml-1.5 h-3 w-3" />
-                        </a>
+                        </Link>
                       </Button>
                     </CardContent>
                   </Card>

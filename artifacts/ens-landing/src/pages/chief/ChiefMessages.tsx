@@ -11,13 +11,14 @@ import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  AlertCircle, Briefcase, CalendarDays, ChevronRight, MessageSquare,
-  MoreVertical, Paperclip, Phone, Search, Send, Smile, Users, Video,
+  AlertCircle, Briefcase, Building2, CalendarDays, ChevronLeft,
+  ChevronRight, MessageSquare, MoreVertical, Paperclip, Phone,
+  Search, Send, Smile, Users, Video,
 } from "lucide-react";
 import {
   getConversationMessages, getManagerWorkspace, getMessageContacts,
   sendConversationMessage,
-  type DirectMessage, type ManagedProject, type MessageContact,
+  type DirectMessage, type ManagedClient, type ManagedProject, type MessageContact,
 } from "@/lib/platform-api";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +34,7 @@ interface ExhibitionScope {
   deadline: string | null;
   projects: ManagedProject[];
   managers: MessageContact[];
+  clientContacts: MessageContact[];
   unread: number;
   lastMessage: string;
   lastMessageAt: string | null;
@@ -43,9 +45,11 @@ export default function ChiefMessages() {
   const [location] = useLocation();
   const requestedManager = new URLSearchParams(location.split("?")[1] ?? "").get("manager");
   const [contacts,             setContacts]             = useState<MessageContact[]>([]);
+  const [allClients,           setAllClients]           = useState<ManagedClient[]>([]);
   const [projects,             setProjects]             = useState<ManagedProject[]>([]);
   const [selectedExhibitionId, setSelectedExhibitionId] = useState<string | null>(null);
   const [selectedId,           setSelectedId]           = useState<string | null>(requestedManager);
+  const [contactType,          setContactType]          = useState<"pm" | "client" | null>(null);
   const [drawerOpen,           setDrawerOpen]           = useState(false);
   const [messages,             setMessages]             = useState<DirectMessage[]>([]);
   const [message,              setMessage]              = useState("");
@@ -62,23 +66,30 @@ export default function ChiefMessages() {
 
   const noMessagesDefault = t("chief.messages.noMessagesDefault");
   const scopes = useMemo(
-    () => buildExhibitionScopes(projects, contacts, noMessagesDefault),
-    [contacts, projects, noMessagesDefault],
+    () => buildExhibitionScopes(projects, contacts, allClients, noMessagesDefault),
+    [contacts, projects, allClients, noMessagesDefault],
   );
 
   const filteredScopes = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return scopes;
     return scopes.filter((scope) =>
-      [scope.name, ...scope.clients, ...scope.systems, ...scope.managers.map((m) => m.name)].some(
+      [scope.name, ...scope.clients, ...scope.systems,
+       ...scope.managers.map((m) => m.name),
+       ...scope.clientContacts.map((c) => c.name)].some(
         (v) => v.toLowerCase().includes(q),
       ),
     );
   }, [scopes, search]);
 
-  const selectedScope   = scopes.find((scope) => scope.id === selectedExhibitionId) ?? null;
-  const scopedManagers  = selectedScope?.managers ?? [];
-  const selectedContact = scopedManagers.find((c) => c.id === selectedId) ?? scopedManagers[0] ?? null;
+  const selectedScope = scopes.find((scope) => scope.id === selectedExhibitionId) ?? null;
+
+  const scopedContacts = contactType === "client"
+    ? (selectedScope?.clientContacts ?? [])
+    : (selectedScope?.managers ?? []);
+
+  const selectedContact = scopedContacts.find((c) => c.id === selectedId) ?? scopedContacts[0] ?? null;
+
   const conversationContext = selectedScope
     ? { exhibitionId: selectedScope.id, exhibitionName: selectedScope.name, projectId: selectedScope.projects[0]?.id }
     : undefined;
@@ -102,7 +113,8 @@ export default function ChiefMessages() {
         getManagerWorkspace(),
       ]);
       if (!mounted) return;
-      setContacts(contactResponse.contacts.filter((c) => c.role === "pm" || c.role === "Project Manager"));
+      setContacts(contactResponse.contacts); // keep ALL contacts, PMs + clients
+      setAllClients(workspace.clients ?? []);
       setProjects(workspace.projects);
     }
 
@@ -117,24 +129,24 @@ export default function ChiefMessages() {
       return;
     }
 
-    const currentScope    = selectedExhibitionId ? scopes.find((s) => s.id === selectedExhibitionId) : null;
-    const requestedScope  = requestedManager ? scopes.find((s) => s.managers.some((m) => m.id === requestedManager)) : null;
-    const nextScope       = currentScope ?? requestedScope ?? scopes[0];
+    const currentScope   = selectedExhibitionId ? scopes.find((s) => s.id === selectedExhibitionId) : null;
+    const requestedScope = requestedManager ? scopes.find((s) => s.managers.some((m) => m.id === requestedManager)) : null;
+    const nextScope      = currentScope ?? requestedScope ?? scopes[0];
 
     if (selectedExhibitionId !== nextScope.id) setSelectedExhibitionId(nextScope.id);
 
-    const managerStillInScope       = nextScope.managers.some((m) => m.id === selectedId);
-    const requestedManagerInScope   = requestedManager && nextScope.managers.some((m) => m.id === requestedManager);
+    const managerStillInScope     = nextScope.managers.some((m) => m.id === selectedId);
+    const requestedManagerInScope = requestedManager && nextScope.managers.some((m) => m.id === requestedManager);
     if (!managerStillInScope) {
       setSelectedId(requestedManagerInScope ? requestedManager : nextScope.managers[0]?.id ?? null);
     }
 
-    if (requestedScope) setDrawerOpen(true);
+    if (requestedScope) { setContactType("pm"); setDrawerOpen(true); }
   }, [requestedManager, scopes, selectedExhibitionId, selectedId]);
 
   /* ── Message polling with exponential back-off ────────────────── */
   useEffect(() => {
-    if (!drawerOpen || !selectedContact || !conversationContext) {
+    if (!drawerOpen || !selectedContact || !conversationContext || !contactType) {
       setMessages([]);
       return;
     }
@@ -170,7 +182,7 @@ export default function ChiefMessages() {
     poll();
     return () => { mounted = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationContext?.exhibitionId, conversationContext?.projectId, drawerOpen, selectedContact?.id, t]);
+  }, [conversationContext?.exhibitionId, conversationContext?.projectId, drawerOpen, selectedContact?.id, contactType, t]);
 
   /* ── Scroll to bottom ─────────────────────────────────────────── */
   useEffect(() => {
@@ -184,9 +196,23 @@ export default function ChiefMessages() {
 
   function openScope(scope: ExhibitionScope) {
     setSelectedExhibitionId(scope.id);
-    setSelectedId(scope.managers[0]?.id ?? null);
+    setContactType(null); // reset to 2-button chooser
+    setSelectedId(null);
     setMessage("");
+    setMessages([]);
     setDrawerOpen(true);
+  }
+
+  function handleContactTypeChange(type: "pm" | "client" | null) {
+    setContactType(type);
+    setSelectedId(null);
+    setMessages([]);
+    setMessage("");
+    if (type === "pm") {
+      setSelectedId(selectedScope?.managers[0]?.id ?? null);
+    } else if (type === "client") {
+      setSelectedId(selectedScope?.clientContacts[0]?.id ?? null);
+    }
   }
 
   async function sendMessage() {
@@ -349,14 +375,19 @@ export default function ChiefMessages() {
         <MessageDrawer
           open={drawerOpen && !!selectedScope}
           scope={selectedScope}
-          managers={scopedManagers}
+          contactType={contactType}
+          contacts={scopedContacts}
           selectedContact={selectedContact}
           messages={messages}
           message={message}
           isSending={isSending}
           messagesEnd={messagesEnd}
-          onOpenChange={setDrawerOpen}
-          onSelectManager={setSelectedId}
+          onOpenChange={(open) => {
+            setDrawerOpen(open);
+            if (!open) { setContactType(null); setSelectedId(null); setMessages([]); }
+          }}
+          onContactTypeChange={handleContactTypeChange}
+          onSelectContact={setSelectedId}
           onMessageChange={(value) => setMessage(value.slice(0, MESSAGE_MAX_LENGTH))}
           onSend={sendMessage}
           onToast={showToast}
@@ -378,20 +409,22 @@ export default function ChiefMessages() {
 
 /* ── MessageDrawer sub-component ──────────────────────────────────────────── */
 function MessageDrawer({
-  open, scope, managers, selectedContact, messages, message,
-  isSending, messagesEnd, onOpenChange, onSelectManager,
+  open, scope, contactType, contacts, selectedContact, messages, message,
+  isSending, messagesEnd, onOpenChange, onContactTypeChange, onSelectContact,
   onMessageChange, onSend, onToast,
 }: {
   open: boolean;
   scope: ExhibitionScope | null;
-  managers: MessageContact[];
+  contactType: "pm" | "client" | null;
+  contacts: MessageContact[];
   selectedContact: MessageContact | null;
   messages: DirectMessage[];
   message: string;
   isSending: boolean;
   messagesEnd: React.RefObject<HTMLDivElement | null>;
   onOpenChange: (open: boolean) => void;
-  onSelectManager: (id: string) => void;
+  onContactTypeChange: (type: "pm" | "client" | null) => void;
+  onSelectContact: (id: string) => void;
   onMessageChange: (message: string) => void;
   onSend: () => void;
   onToast: (message: string) => void;
@@ -405,9 +438,20 @@ function MessageDrawer({
       <SheetContent className="flex w-full flex-col overflow-hidden p-0 sm:max-w-[min(92vw,1080px)]">
         {scope && (
           <>
+            {/* Header */}
             <div className="border-b bg-card/60 px-6 py-4">
               <SheetHeader className="space-y-2 pr-8">
                 <div className="flex flex-wrap items-center gap-2">
+                  {contactType && (
+                    <button
+                      type="button"
+                      onClick={() => onContactTypeChange(null)}
+                      className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      aria-label="Back"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                  )}
                   <SheetTitle className="truncate text-xl">{scope.name}</SheetTitle>
                   <Badge variant="outline" className={statusBadgeClass(scope.status)}>
                     {scope.status}
@@ -420,190 +464,224 @@ function MessageDrawer({
               </SheetHeader>
             </div>
 
-            <div className="grid min-h-0 flex-1 md:grid-cols-[270px_minmax(0,1fr)]">
-              {/* Manager sidebar */}
-              <aside className="flex min-h-0 flex-col border-r bg-background/40">
-                <div className="border-b px-4 py-3">
-                  <p className="text-sm font-semibold">{t("chief.messages.sidebar.title")}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {t("chief.messages.sidebar.assigned", { count: managers.length })}
+            {/* Body */}
+            {!contactType ? (
+              /* ── Type chooser — 2 big buttons ── */
+              <div className="flex flex-1 flex-col items-center justify-center gap-8 p-8">
+                <div className="text-center">
+                  <p className="text-lg font-semibold">Who do you want to message?</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Select a group to start a conversation within <strong>{scope.name}</strong>.
                   </p>
                 </div>
-                <ScrollArea className="flex-1">
-                  {managers.map((contact) => (
-                    <button
-                      key={contact.id}
-                      type="button"
-                      onClick={() => onSelectManager(contact.id)}
-                      aria-label={contact.name}
-                      className={cn(
-                        "flex w-full gap-3 border-b border-border/50 px-4 py-3 text-left transition-colors hover:bg-muted/40",
-                        selectedContact?.id === contact.id && "border-l-2 border-l-primary bg-primary/10 pl-[14px]",
-                      )}
-                    >
-                      <div className="relative">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary">
-                          {initials(contact.name)}
-                        </div>
-                        <span className={cn("absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card", contact.online ? "bg-green-500" : "bg-muted")} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <h4 className="truncate text-sm font-medium">{contact.name}</h4>
-                          <span className="whitespace-nowrap text-[10px] text-muted-foreground">{contact.time}</span>
-                        </div>
-                        <p className="truncate text-xs text-muted-foreground">{contact.email}</p>
-                        <p className="mt-1 truncate text-xs text-muted-foreground">{contact.lastMessage}</p>
-                      </div>
-                    </button>
-                  ))}
-                  {!managers.length && (
-                    <div className="m-4 rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                      <AlertCircle className="mb-2 h-4 w-4" />
-                      {t("chief.messages.sidebar.noManager")}
+                <div className="grid w-full max-w-md grid-cols-2 gap-5">
+                  <button
+                    type="button"
+                    onClick={() => onContactTypeChange("pm")}
+                    className="group flex flex-col items-center gap-4 rounded-2xl border-2 border-border bg-card/60 p-8 text-center transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
+                  >
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+                      <Users className="h-8 w-8 text-primary" />
                     </div>
-                  )}
-                </ScrollArea>
-              </aside>
+                    <div>
+                      <p className="text-base font-bold">Project Managers</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {scope.managers.length} assigned
+                      </p>
+                    </div>
+                  </button>
 
-              {/* Conversation pane */}
-              <section className="flex min-w-0 flex-col bg-background/20">
-                {selectedContact ? (
-                  <>
-                    {/* Contact header */}
-                    <div className="flex min-h-16 items-center justify-between gap-4 border-b bg-card/50 px-5 py-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 font-bold text-primary">
-                          {initials(selectedContact.name)}
+                  <button
+                    type="button"
+                    onClick={() => onContactTypeChange("client")}
+                    className="group flex flex-col items-center gap-4 rounded-2xl border-2 border-border bg-card/60 p-8 text-center transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
+                  >
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+                      <Building2 className="h-8 w-8 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-base font-bold">Clients</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {scope.clientContacts.length} in this exhibition
+                      </p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* ── Contact sidebar + conversation ── */
+              <div className="grid min-h-0 flex-1 md:grid-cols-[270px_minmax(0,1fr)]">
+                {/* Contact sidebar */}
+                <aside className="flex min-h-0 flex-col border-r bg-background/40">
+                  <div className="border-b px-4 py-3">
+                    <p className="text-sm font-semibold">
+                      {contactType === "pm" ? t("chief.messages.sidebar.title") : "Clients"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {contactType === "pm"
+                        ? t("chief.messages.sidebar.assigned", { count: contacts.length })
+                        : `${contacts.length} in this exhibition`}
+                    </p>
+                  </div>
+                  <ScrollArea className="flex-1">
+                    {contacts.map((contact) => (
+                      <button
+                        key={contact.id}
+                        type="button"
+                        onClick={() => onSelectContact(contact.id)}
+                        aria-label={contact.name}
+                        className={cn(
+                          "flex w-full gap-3 border-b border-border/50 px-4 py-3 text-left transition-colors hover:bg-muted/40",
+                          selectedContact?.id === contact.id && "border-l-2 border-l-primary bg-primary/10 pl-[14px]",
+                        )}
+                      >
+                        <div className="relative">
+                          <div className={cn(
+                            "flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold",
+                            contactType === "pm" ? "bg-primary/20 text-primary" : "bg-amber-500/20 text-amber-600",
+                          )}>
+                            {initials(contact.name)}
+                          </div>
+                          <span className={cn("absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card", contact.online ? "bg-green-500" : "bg-muted")} />
                         </div>
-                        <div className="min-w-0">
-                          <h3 className="truncate font-semibold">{selectedContact.name}</h3>
-                          <p className="truncate text-xs text-muted-foreground">{selectedContact.email}</p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="truncate text-sm font-medium">{contact.name}</h4>
+                            <span className="whitespace-nowrap text-[10px] text-muted-foreground">{contact.time}</span>
+                          </div>
+                          <p className="truncate text-xs text-muted-foreground">{contact.email}</p>
+                          <p className="mt-1 truncate text-xs text-muted-foreground">{contact.lastMessage}</p>
+                        </div>
+                      </button>
+                    ))}
+                    {!contacts.length && (
+                      <div className="m-4 rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                        <AlertCircle className="mb-2 h-4 w-4" />
+                        {contactType === "pm" ? t("chief.messages.sidebar.noManager") : "No clients in this exhibition yet."}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </aside>
+
+                {/* Conversation pane */}
+                <section className="flex min-w-0 flex-col bg-background/20">
+                  {selectedContact ? (
+                    <>
+                      {/* Contact header */}
+                      <div className="flex min-h-16 items-center justify-between gap-4 border-b bg-card/50 px-5 py-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className={cn(
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold",
+                            contactType === "pm" ? "bg-primary/20 text-primary" : "bg-amber-500/20 text-amber-600",
+                          )}>
+                            {initials(selectedContact.name)}
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="truncate font-semibold">{selectedContact.name}</h3>
+                            <p className="truncate text-xs text-muted-foreground">{selectedContact.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-label={t("chief.messages.actions.call")} onClick={() => onToast(t("chief.messages.toast.call", { name: selectedContact.name, exhibition: scope.name }))}>
+                            <Phone className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-label={t("chief.messages.actions.video")} onClick={() => onToast(t("chief.messages.toast.video", { exhibition: scope.name }))}>
+                            <Video className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-label={t("chief.messages.actions.options")} onClick={() => onToast(t("chief.messages.toast.options"))}>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost" size="icon"
-                          className="h-8 w-8 text-muted-foreground"
-                          aria-label={t("chief.messages.actions.call")}
-                          onClick={() => onToast(t("chief.messages.toast.call", { name: selectedContact.name, exhibition: scope.name }))}
-                        >
-                          <Phone className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost" size="icon"
-                          className="h-8 w-8 text-muted-foreground"
-                          aria-label={t("chief.messages.actions.video")}
-                          onClick={() => onToast(t("chief.messages.toast.video", { exhibition: scope.name }))}
-                        >
-                          <Video className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost" size="icon"
-                          className="h-8 w-8 text-muted-foreground"
-                          aria-label={t("chief.messages.actions.options")}
-                          onClick={() => onToast(t("chief.messages.toast.options"))}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
+
+                      <div className="border-b bg-muted/25 px-5 py-2 text-xs text-muted-foreground">
+                        {t("chief.messages.scopedTo")}{" "}
+                        <span className="font-medium text-foreground">{scope.name}</span>
+                        {" · "}
+                        <span className="capitalize">{contactType}</span>
                       </div>
-                    </div>
 
-                    <div className="border-b bg-muted/25 px-5 py-2 text-xs text-muted-foreground">
-                      {t("chief.messages.scopedTo")}{" "}
-                      <span className="font-medium text-foreground">{scope.name}</span>
-                    </div>
-
-                    {/* Messages */}
-                    <ScrollArea className="flex-1">
-                      <div className="mx-auto w-full max-w-3xl space-y-4 p-5">
-                        {messages.map((item) => (
-                          <div key={item.id} className={cn("flex", item.isMe ? "justify-end" : "justify-start")}>
-                            <div className={cn(
-                              "max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm",
-                              item.isMe
-                                ? "rounded-tr-sm bg-primary text-primary-foreground"
-                                : "rounded-tl-sm border border-border bg-card",
-                            )}>
-                              <p>{item.text}</p>
-                              <div className={cn("mt-1 text-[10px]", item.isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                                {item.time}
+                      {/* Messages */}
+                      <ScrollArea className="flex-1">
+                        <div className="mx-auto w-full max-w-3xl space-y-4 p-5">
+                          {messages.map((item) => (
+                            <div key={item.id} className={cn("flex", item.isMe ? "justify-end" : "justify-start")}>
+                              <div className={cn(
+                                "max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm",
+                                item.isMe
+                                  ? "rounded-tr-sm bg-primary text-primary-foreground"
+                                  : "rounded-tl-sm border border-border bg-card",
+                              )}>
+                                <p>{item.text}</p>
+                                <div className={cn("mt-1 text-[10px]", item.isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                  {item.time}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                        {!messages.length && (
-                          <div className="py-12 text-center text-sm text-muted-foreground">
-                            {t("chief.messages.noMessages", { name: scope.name })}
-                          </div>
-                        )}
-                        <div ref={messagesEnd} />
-                      </div>
-                    </ScrollArea>
-
-                    {/* Input area */}
-                    <div className="border-t bg-card/50 p-4">
-                      <div className="mx-auto w-full max-w-3xl flex flex-col gap-1">
-                        <div className="flex items-center gap-2 rounded-xl border bg-background/70 p-2">
-                          <Button
-                            variant="ghost" size="icon"
-                            className="h-10 w-10 shrink-0 text-muted-foreground"
-                            aria-label={t("chief.messages.actions.attach")}
-                            onClick={() => onToast(t("chief.messages.toast.attachment", { exhibition: scope.name }))}
-                          >
-                            <Paperclip className="h-4 w-4" />
-                          </Button>
-                          <div className="min-w-0 flex-1">
-                            <Input
-                              placeholder={t("chief.messages.inputPlaceholder", { manager: selectedContact.name, exhibition: scope.name })}
-                              aria-label={t("chief.messages.inputPlaceholder", { manager: selectedContact.name, exhibition: scope.name })}
-                              className="h-10 border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
-                              value={message}
-                              maxLength={MESSAGE_MAX_LENGTH}
-                              onChange={(event) => onMessageChange(event.target.value)}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" && !event.shiftKey) {
-                                  event.preventDefault();
-                                  onSend();
-                                }
-                              }}
-                              data-testid="input-message"
-                            />
-                          </div>
-                          <Button
-                            variant="ghost" size="icon"
-                            className="h-10 w-10 shrink-0 text-muted-foreground"
-                            aria-label={t("chief.messages.actions.emoji")}
-                            onClick={() => onMessageChange(`${message}😊`)}
-                          >
-                            <Smile className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            className="h-10 shrink-0 px-4"
-                            onClick={onSend}
-                            disabled={!message.trim() || isSending}
-                            aria-label={t("chief.messages.actions.send")}
-                            data-testid="button-send-message"
-                          >
-                            <Send className="mr-2 h-4 w-4" />
-                            {isSending ? t("chief.messages.sending") : t("chief.messages.send")}
-                          </Button>
+                          ))}
+                          {!messages.length && (
+                            <div className="py-12 text-center text-sm text-muted-foreground">
+                              {t("chief.messages.noMessages", { name: scope.name })}
+                            </div>
+                          )}
+                          <div ref={messagesEnd} />
                         </div>
-                        {charCount > 0 && (
-                          <p className={cn("text-right text-[10px] transition-colors", nearLimit ? "text-red-500 font-medium" : "text-muted-foreground")}>
-                            {charCount}/{MESSAGE_MAX_LENGTH}
-                          </p>
-                        )}
+                      </ScrollArea>
+
+                      {/* Input area */}
+                      <div className="border-t bg-card/50 p-4">
+                        <div className="mx-auto w-full max-w-3xl flex flex-col gap-1">
+                          <div className="flex items-center gap-2 rounded-xl border bg-background/70 p-2">
+                            <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-muted-foreground" aria-label={t("chief.messages.actions.attach")} onClick={() => onToast(t("chief.messages.toast.attachment", { exhibition: scope.name }))}>
+                              <Paperclip className="h-4 w-4" />
+                            </Button>
+                            <div className="min-w-0 flex-1">
+                              <Input
+                                placeholder={t("chief.messages.inputPlaceholder", { manager: selectedContact.name, exhibition: scope.name })}
+                                aria-label={t("chief.messages.inputPlaceholder", { manager: selectedContact.name, exhibition: scope.name })}
+                                className="h-10 border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
+                                value={message}
+                                maxLength={MESSAGE_MAX_LENGTH}
+                                onChange={(event) => onMessageChange(event.target.value)}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" && !event.shiftKey) {
+                                    event.preventDefault();
+                                    onSend();
+                                  }
+                                }}
+                                data-testid="input-message"
+                              />
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-muted-foreground" aria-label={t("chief.messages.actions.emoji")} onClick={() => onMessageChange(`${message}😊`)}>
+                              <Smile className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              className="h-10 shrink-0 px-4"
+                              onClick={onSend}
+                              disabled={!message.trim() || isSending}
+                              aria-label={t("chief.messages.actions.send")}
+                              data-testid="button-send-message"
+                            >
+                              <Send className="mr-2 h-4 w-4" />
+                              {isSending ? t("chief.messages.sending") : t("chief.messages.send")}
+                            </Button>
+                          </div>
+                          {charCount > 0 && (
+                            <p className={cn("text-right text-[10px] transition-colors", nearLimit ? "text-red-500 font-medium" : "text-muted-foreground")}>
+                              {charCount}/{MESSAGE_MAX_LENGTH}
+                            </p>
+                          )}
+                        </div>
                       </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-1 items-center justify-center p-6 text-center text-sm text-muted-foreground">
+                      {contactType === "pm" ? t("chief.messages.selectManager") : "Select a client to start messaging."}
                     </div>
-                  </>
-                ) : (
-                  <div className="flex flex-1 items-center justify-center p-6 text-center text-sm text-muted-foreground">
-                    {t("chief.messages.selectManager")}
-                  </div>
-                )}
-              </section>
-            </div>
+                  )}
+                </section>
+              </div>
+            )}
           </>
         )}
       </SheetContent>
@@ -615,15 +693,23 @@ function MessageDrawer({
 function buildExhibitionScopes(
   projects: ManagedProject[],
   contacts: MessageContact[],
+  managedClients: ManagedClient[],
   noMessagesText: string,
 ): ExhibitionScope[] {
-  const contactsById   = new Map(contacts.map((c) => [c.id, c]));
-  const contactsByName = new Map(contacts.map((c) => [normalize(c.name), c]));
-  const scopes         = new Map<string, ExhibitionScope>();
+  const pmContacts     = contacts.filter((c) => c.role === "pm" || c.role === "Project Manager");
+  const clientContacts = contacts.filter((c) => !pmContacts.includes(c));
+
+  const contactsById   = new Map(pmContacts.map((c) => [c.id, c]));
+  const contactsByName = new Map(pmContacts.map((c) => [normalize(c.name), c]));
+
+  const clientContactsByEmail = new Map(clientContacts.map((c) => [c.email.toLowerCase(), c]));
+  const clientContactsByName  = new Map(clientContacts.map((c) => [normalize(c.name), c]));
+
+  const scopes = new Map<string, ExhibitionScope>();
 
   for (const project of projects) {
-    const name    = project.exhibition || project.name;
-    const id      = scopeId(name);
+    const name     = project.exhibition || project.name;
+    const id       = scopeId(name);
     const existing = scopes.get(id);
     const manager  = project.managerId
       ? contactsById.get(project.managerId) ?? contactsByName.get(normalize(project.managerName))
@@ -632,7 +718,7 @@ function buildExhibitionScopes(
     const scope = existing ?? {
       id, name, clients: [], systems: [],
       status: project.status, deadline: project.deadline,
-      projects: [], managers: [], unread: 0,
+      projects: [], managers: [], clientContacts: [], unread: 0,
       lastMessage: noMessagesText, lastMessageAt: null,
     };
 
@@ -652,6 +738,24 @@ function buildExhibitionScopes(
     }
 
     scopes.set(id, scope);
+  }
+
+  // Match client contacts to each scope using managed clients' emails
+  for (const scope of scopes.values()) {
+    const exNorm    = normalize(scope.name);
+    const exClients = managedClients.filter((c) =>
+      normalize(c.exhibition?.trim() || c.name) === exNorm
+    );
+    const matched: MessageContact[] = [];
+    for (const mc of exClients) {
+      const contact =
+        clientContactsByEmail.get((mc.contactEmail ?? "").toLowerCase()) ??
+        clientContactsByName.get(normalize(mc.name ?? ""));
+      if (contact && !matched.some((m) => m.id === contact.id)) {
+        matched.push(contact);
+      }
+    }
+    scope.clientContacts = matched;
   }
 
   return Array.from(scopes.values()).sort((a, b) => {
@@ -694,7 +798,7 @@ function scopeId(name: string) {
 }
 
 function normalize(value: string) {
-  return value.trim().toLowerCase();
+  return (value ?? "").trim().toLowerCase();
 }
 
 function initials(name: string) {

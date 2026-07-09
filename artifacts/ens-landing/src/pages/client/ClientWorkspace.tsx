@@ -7,6 +7,7 @@ import {
   getWorkspaceComments,
   createWorkspaceComment,
   updateWorkspaceCommentStatus,
+  deleteWorkspaceComment,
   saveElementStatus,
   approveProjectWorkspace,
   createWorkspaceSubscriptionRequest,
@@ -24,6 +25,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Eye,
+  ChevronLeft,
   ChevronDown,
   Layers,
   RotateCcw,
@@ -101,30 +103,7 @@ interface PinAnnotation {
   status?: "open" | "resolved";
   partId?: string;
 }
-const INITIAL_COMMENTS: Comment[] = [
-  {
-    id: 1,
-    user: "Sarah M. (PM)",
-    initials: "PM",
-    text: "I've added the lighting fixtures as requested, and updated the fascia to show the new branding.",
-    time: "2h ago",
-  },
-  {
-    id: 2,
-    user: "You",
-    initials: "YO",
-    text: "Looks great! Can we move the reception counter slightly to the left?",
-    time: "1h ago",
-    type: "change",
-  },
-  {
-    id: 3,
-    user: "Sarah M. (PM)",
-    initials: "PM",
-    text: "Done — counter repositioned. Also added extra spotlights over the display area.",
-    time: "45m ago",
-  },
-];
+const INITIAL_COMMENTS: Comment[] = [];
 const VERSIONS = [
   { label: "v2.4 — Latest (Current)", value: "2.4" },
   { label: "v2.3 — May 12", value: "2.3" },
@@ -635,9 +614,9 @@ export default function ClientWorkspace() {
           >
             <Lock size={24} aria-hidden />
           </div>
-          <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Workspace waiting for assignment</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>{t("client.workspace.unassigned.title")}</h1>
           <p style={{ fontSize: 14, lineHeight: 1.6, color: C.muted, marginBottom: 20 }}>
-            Your account exists, but the Chief Manager has not assigned a project manager and booth project yet.
+            {t("client.workspace.unassigned.body")}
           </p>
           <button
             type="button"
@@ -654,7 +633,7 @@ export default function ClientWorkspace() {
               cursor: "pointer",
             }}
           >
-            Back to dashboard
+            {t("client.workspace.unassigned.backBtn")}
           </button>
         </div>
       </div>
@@ -728,6 +707,21 @@ export default function ClientWorkspace() {
             minWidth: 0,
           }}
         >
+          <a
+            href="/client"
+            aria-label={t("client.workspace.backToDashboard")}
+            title={t("client.workspace.backToDashboard")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              color: C.muted,
+              flexShrink: 0,
+              lineHeight: 0,
+              textDecoration: "none",
+            }}
+          >
+            <ChevronLeft size={16} aria-hidden />
+          </a>
           <Layers size={14} style={{ color: C.blue, flexShrink: 0 }} aria-hidden />
           <span
             style={{
@@ -940,7 +934,7 @@ export default function ClientWorkspace() {
             }}
             title="Number of change requests used"
           >
-            Revisions: {revisionCount} / {revisionLimit}
+            {t("client.workspace.revisions.counter", { count: revisionCount, limit: revisionLimit })}
           </span>
           {/* Request Changes */}
           <button
@@ -951,7 +945,7 @@ export default function ClientWorkspace() {
               }
               setShowChangeDlg(true);
             }}
-            aria-label={revisionsExhausted ? "Upgrade Revisions" : t("client.workspace.requestChangesBtn")}
+            aria-label={revisionsExhausted ? t("client.workspace.revisions.upgradeBtn") : t("client.workspace.requestChangesBtn")}
             title={revisionsExhausted ? "Choose a plan to request more revisions" : undefined}
             style={{
               background: "none",
@@ -969,7 +963,7 @@ export default function ClientWorkspace() {
             }}
           >
             <AlertCircle size={12} aria-hidden />{" "}
-            {revisionsExhausted ? "Upgrade Revisions" : t("client.workspace.requestChangesBtn")}
+            {revisionsExhausted ? t("client.workspace.revisions.upgradeBtn") : t("client.workspace.requestChangesBtn")}
           </button>
           {/* Approve */}
           {approved ? (
@@ -1049,7 +1043,7 @@ export default function ClientWorkspace() {
           }}
         >
           <AlertCircle size={15} style={{ color: "#db2777" }} />
-          <span>You have used all included arrangement rounds. Upgrade your plan to unlock more revisions.</span>
+          <span>{t("client.workspace.revisions.exhaustedBody")}</span>
           <button
             onClick={() => setShowSubscriptionDlg(true)}
             style={{
@@ -1064,7 +1058,7 @@ export default function ClientWorkspace() {
               fontWeight: 600,
             }}
           >
-            Upgrade Revisions
+            {t("client.workspace.revisions.upgradeBtn")}
           </button>
         </div>
       )}
@@ -1613,7 +1607,7 @@ export default function ClientWorkspace() {
                     marginLeft: "auto",
                   }}
                 >
-                  {openFeedbackCount} open
+                  {openFeedbackCount} {t("client.workspace.feedbackFilter.open")}
                 </span>
               </div>
               <div
@@ -1642,7 +1636,7 @@ export default function ClientWorkspace() {
                       textTransform: "uppercase",
                     }}
                   >
-                    {filter}
+                    {t(`client.workspace.feedbackFilter.${filter}`)}
                   </button>
                 ))}
               </div>
@@ -1742,7 +1736,7 @@ export default function ClientWorkspace() {
                             textTransform: "uppercase",
                           }}
                         >
-                          {isResolved ? "Resolved" : "Open"}
+                          {isResolved ? t("client.workspace.pinStatus.resolved") : t("client.workspace.pinStatus.open")}
                         </span>
                       </div>
                       <div
@@ -1796,7 +1790,7 @@ export default function ClientWorkspace() {
                           padding: "3px 7px",
                         }}
                       >
-                        {isResolved ? "Reopen" : "Resolve"}
+                        {isResolved ? t("client.workspace.pinStatus.reopen") : t("client.workspace.pinStatus.resolve")}
                       </button>
                     </div>
                   );
@@ -2239,7 +2233,7 @@ export default function ClientWorkspace() {
                           textTransform: "uppercase",
                         }}
                       >
-                        {isResolved ? "Resolved" : "Open"}
+                        {isResolved ? t("client.workspace.pinStatus.resolved") : t("client.workspace.pinStatus.open")}
                       </span>
                       {pin.partId && (
                         <span style={{ fontFamily: MONO, fontSize: 8, color: C.muted }}>
@@ -2280,13 +2274,15 @@ export default function ClientWorkspace() {
                         marginTop: 8,
                       }}
                     >
-                      {isResolved ? "Reopen" : "Resolve"}
+                      {isResolved ? t("client.workspace.pinStatus.reopen") : t("client.workspace.pinStatus.resolve")}
                     </button>
                   </div>
                   <button
-                    onClick={() =>
-                      setPins((p) => p.filter((pi) => pi.id !== pin.id))
-                    }
+                    onClick={() => {
+                      setPins((p) => p.filter((pi) => pi.id !== pin.id));
+                      const pid = workspaceRecord?.project.id;
+                      if (pid) void deleteWorkspaceComment(pid, String(pin.id));
+                    }}
                     aria-label={t("client.workspace.removePin", {
                       num: pin.num,
                     })}
@@ -2529,7 +2525,7 @@ export default function ClientWorkspace() {
                 color: C.blue,
               }}
             >
-              Upgrade Revisions Plan
+              {t("client.workspace.revisions.upgradeDialog.title")}
             </h3>
             <p
               style={{
@@ -2539,7 +2535,7 @@ export default function ClientWorkspace() {
                 lineHeight: 1.4,
               }}
             >
-              You have completed the 2 free revisions included with your stand. Choose a workspace revision plan below to continue working on your design.
+              {t("client.workspace.revisions.upgradeDialog.subtitle")}
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
@@ -2554,11 +2550,11 @@ export default function ClientWorkspace() {
                 background: C.bg
               }}>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>Starter Plan</h4>
-                  <p style={{ margin: "2px 0 0 0", fontSize: 11.5, color: C.muted }}>Adds 3 extra client revision rounds</p>
+                  <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>{t("client.workspace.revisions.upgradeDialog.starter.name")}</h4>
+                  <p style={{ margin: "2px 0 0 0", fontSize: 11.5, color: C.muted }}>{t("client.workspace.revisions.upgradeDialog.starter.description")}</p>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>$2.99</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{t("client.workspace.revisions.upgradeDialog.starter.price")}</div>
                   <button
                     onClick={() => handlePurchasePlan("starter")}
                     style={{
@@ -2589,11 +2585,11 @@ export default function ClientWorkspace() {
                 background: "#f0f9ff"
               }}>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.blue }}>Pro Plan (Recommended)</h4>
-                  <p style={{ margin: "2px 0 0 0", fontSize: 11.5, color: C.muted }}>Adds 8 extra client revision rounds</p>
+                  <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.blue }}>{t("client.workspace.revisions.upgradeDialog.pro.name")}</h4>
+                  <p style={{ margin: "2px 0 0 0", fontSize: 11.5, color: C.muted }}>{t("client.workspace.revisions.upgradeDialog.pro.description")}</p>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: C.blue }}>$9.99</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.blue }}>{t("client.workspace.revisions.upgradeDialog.pro.price")}</div>
                   <button
                     onClick={() => handlePurchasePlan("pro")}
                     style={{
@@ -2624,11 +2620,11 @@ export default function ClientWorkspace() {
                 background: C.bg
               }}>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>Unlimited Plan</h4>
-                  <p style={{ margin: "2px 0 0 0", fontSize: 11.5, color: C.muted }}>Unlocks unlimited workspace revision rounds</p>
+                  <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>{t("client.workspace.revisions.upgradeDialog.unlimited.name")}</h4>
+                  <p style={{ margin: "2px 0 0 0", fontSize: 11.5, color: C.muted }}>{t("client.workspace.revisions.upgradeDialog.unlimited.description")}</p>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>$11.99</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{t("client.workspace.revisions.upgradeDialog.unlimited.price")}</div>
                   <button
                     onClick={() => handlePurchasePlan("unlimited")}
                     style={{
@@ -2663,7 +2659,7 @@ export default function ClientWorkspace() {
                   color: C.ink,
                 }}
               >
-                Cancel
+                {t("client.workspace.revisions.upgradeDialog.cancelBtn")}
               </button>
             </div>
           </div>

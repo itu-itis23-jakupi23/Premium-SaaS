@@ -58,6 +58,20 @@ function localizeMonth(key: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(2024, idx, 1));
 }
 
+function periodDateRange(period: PeriodKey, locale: string): string {
+  const now = new Date();
+  const fmt = (d: Date) => d.toLocaleDateString(locale, { month: "short", day: "numeric" });
+  const monday = (d: Date) => { const day = d.getDay(); const diff = (day === 0 ? -6 : 1 - day); const m = new Date(d); m.setDate(d.getDate() + diff); return m; };
+  switch (period) {
+    case "this_week": { const s = monday(now); const e = new Date(s); e.setDate(s.getDate() + 6); return `${fmt(s)} – ${fmt(e)}`; }
+    case "last_week": { const s = monday(now); s.setDate(s.getDate() - 7); const e = new Date(s); e.setDate(s.getDate() + 6); return `${fmt(s)} – ${fmt(e)}`; }
+    case "this_month": { const s = new Date(now.getFullYear(), now.getMonth(), 1); const e = new Date(now.getFullYear(), now.getMonth() + 1, 0); return `${fmt(s)} – ${fmt(e)}`; }
+    case "last_month": { const s = new Date(now.getFullYear(), now.getMonth() - 1, 1); const e = new Date(now.getFullYear(), now.getMonth(), 0); return `${fmt(s)} – ${fmt(e)}`; }
+    case "this_quarter": { const q = Math.floor(now.getMonth() / 3); const s = new Date(now.getFullYear(), q * 3, 1); const e = new Date(now.getFullYear(), q * 3 + 3, 0); return `${fmt(s)} – ${fmt(e)}`; }
+    default: return "";
+  }
+}
+
 function signed(value: number, suffix: string): string {
   const rounded = Math.abs(value) >= 10 ? value.toFixed(0) : value.toFixed(1);
   return `${value >= 0 ? "+" : ""}${rounded}${suffix}`;
@@ -117,6 +131,7 @@ export default function PMReports() {
   }
 
   function exportReport() {
+    if (!report) return;
     const exportedAt = new Date().toLocaleString(i18n.language);
     const exportDate = new Date().toISOString().slice(0, 10);
 
@@ -167,7 +182,7 @@ export default function PMReports() {
         ],
       },
     ]);
-    void recordReportExport({ report: "PM performance report", range: period, format: "xls" });
+    void recordReportExport({ report: "PM performance report", range: period, format: "xls", href: "/pm/reports" });
     showToast(t("pm.reports.toast.exported"));
   }
 
@@ -251,10 +266,13 @@ export default function PMReports() {
                 </button>
               ))}
             </div>
+            <span className="text-[10px] font-mono text-muted-foreground px-1">
+              {periodDateRange(period, i18n.language)}
+            </span>
             {/* Export */}
             <button
               onClick={exportReport}
-              disabled={isLoading}
+              disabled={isLoading || !report}
               aria-label={t("pm.reports.export")}
               className="flex items-center gap-1.5 border rounded-md px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-colors disabled:opacity-50"
             >

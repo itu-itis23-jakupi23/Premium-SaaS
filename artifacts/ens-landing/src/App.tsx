@@ -91,7 +91,6 @@ function createStaffRoutes() {
   const ChiefClients = lazyPage(() => import("@/pages/chief/ChiefClients"));
   const ChiefManagers = lazyPage(() => import("@/pages/chief/ChiefManagers"));
   const ChiefProjects = lazyPage(() => import("@/pages/chief/ChiefProjects"));
-  const ChiefWorkspaceMonitor = lazyPage(() => import("@/pages/chief/ChiefWorkspaceMonitor"));
   const ChiefReports = lazyPage(() => import("@/pages/chief/ChiefReports"));
   const ChiefMessages = lazyPage(() => import("@/pages/chief/ChiefMessages"));
   const ChiefSettings = lazyPage(() => import("@/pages/chief/ChiefSettings"));
@@ -228,7 +227,6 @@ function createClientRoutes() {
   const ClientProjects = lazyPage(() => import("@/pages/client/ClientProjects"));
   const ClientWorkspace = lazyPage(() => import("@/pages/client/ClientWorkspace"));
   const ClientMessages = lazyPage(() => import("@/pages/client/ClientMessages"));
-  const ClientApprovals = lazyPage(() => import("@/pages/client/ClientApprovals"));
   const ClientDocuments = lazyPage(() => import("@/pages/client/ClientDocuments"));
   const ClientProfile = lazyPage(() => import("@/pages/client/ClientProfile"));
 
@@ -255,11 +253,9 @@ function createClientRoutes() {
           {(params) => <ProtectedRoute component={ClientMessages} allowedRoles={["client"]} params={params} />}
         </Route>
       </ErrorBoundary>
-      <ErrorBoundary label="Client Approvals">
-        <Route path="/client/approvals">
-          {(params) => <ProtectedRoute component={ClientApprovals} allowedRoles={["client"]} params={params} />}
-        </Route>
-      </ErrorBoundary>
+      <Route path="/client/approvals">
+        {() => <RedirectTo href="/client/workspace" />}
+      </Route>
       <ErrorBoundary label="Client Documents">
         <Route path="/client/documents">
           {(params) => <ProtectedRoute component={ClientDocuments} allowedRoles={["client"]} params={params} />}

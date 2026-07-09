@@ -398,7 +398,7 @@ export default function PMProjects() {
         ],
       },
     ]);
-    void recordReportExport({ report: "PM project portfolio", format: "xls" });
+    void recordReportExport({ report: "PM project portfolio", format: "xls", href: "/pm/reports" });
     showToast(t("pm.projects.toast.exported"));
   }
 

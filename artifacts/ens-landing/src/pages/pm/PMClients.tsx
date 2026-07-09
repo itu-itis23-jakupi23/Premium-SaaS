@@ -14,7 +14,7 @@ import {
   type PlatformPagination,
 } from "@/lib/platform-api";
 import {
-  Search, Monitor, Mail, Building2, CheckCircle2,
+  Search, Monitor, Mail, Building2, CalendarDays, CheckCircle2,
   Clock, AlertCircle, Layers, Users, ArrowUpRight, X, MessageSquare,
   Key, DollarSign, ShieldCheck, Laptop, Check, Copy, CreditCard, ArrowRight,
   type LucideIcon,
@@ -30,7 +30,7 @@ const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
   Inactive: { bg: "rgba(107,114,128,0.12)", text: "#6b7280" },
 };
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 25;
 const EMPTY_PAGINATION: PlatformPagination = { total: 0, limit: PAGE_SIZE, offset: 0, hasMore: false };
 const EMPTY_SUMMARY: PlatformClientSummary = { total: 0, active: 0, needsSetup: 0 };
 
@@ -78,14 +78,10 @@ export default function PMClients() {
         if (mounted) setIsLoading(false);
       });
 
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [debouncedSearch, page, t]);
 
-  useEffect(() => {
-    setPage(0);
-  }, [debouncedSearch]);
+  useEffect(() => { setPage(0); }, [debouncedSearch]);
 
   const pageStart = pagination.total ? pagination.offset + 1 : 0;
   const pageEnd = Math.min(pagination.offset + clients.length, pagination.total);
@@ -125,6 +121,7 @@ export default function PMClients() {
           </div>
         )}
 
+        {/* Stats */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
@@ -153,97 +150,131 @@ export default function PMClients() {
           )}
         </div>
 
-        <div className="space-y-2.5">
-          {isLoading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="border rounded-lg bg-card overflow-hidden">
-                <div className="p-4 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 min-w-0">
-                    <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-4 w-16 rounded-full" />
-                      </div>
-                      <Skeleton className="h-3 w-48" />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Skeleton className="h-6 w-28 rounded" />
-                    <Skeleton className="h-8 w-8 rounded-md" />
-                    <Skeleton className="h-8 w-8 rounded-md" />
-                    <Skeleton className="h-8 w-8 rounded-md" />
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : clients.length > 0 ? (
-            clients.map((client) => {
-              const sc = STATUS_COLOR[client.status] ?? STATUS_COLOR.Pending;
-
-              return (
-                <div key={client.id} className="border rounded-lg bg-card overflow-hidden hover:border-primary/30 transition-all">
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    className="p-4 flex items-center justify-between gap-4 cursor-pointer"
-                    aria-label={t("pm.clients.actions.openDetails", { name: client.name })}
-                    onClick={() => setSelectedClient(client)}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedClient(client); } }}
-                  >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-[11px] font-bold text-primary">{initials(client.name)}</span>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-sm">{client.name}</span>
-                          <span
-                            className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold"
-                            style={{ background: sc.bg, color: sc.text }}
-                          >
-                            {clientStatusLabel(client.status)}
-                          </span>
+        {/* Compact client table */}
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b bg-muted/30">
+                <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Client
+                </th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Status
+                </th>
+                <th className="hidden px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground md:table-cell">
+                  Company
+                </th>
+                <th className="hidden px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground lg:table-cell">
+                  Exhibition
+                </th>
+                <th className="px-3 py-2.5 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/40">
+              {isLoading ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="px-4 py-2.5">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
+                        <div className="space-y-1.5">
+                          <Skeleton className="h-3.5 w-32" />
+                          <Skeleton className="h-3 w-44" />
                         </div>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          {client.contactName} / {client.contactEmail}
-                        </p>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-[10px] font-mono bg-muted/50 border rounded px-2 py-0.5 max-w-[180px] truncate">
-                        {client.exhibition}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          navigate(`/pm/messages?contactId=${encodeURIComponent(client.id)}`);
-                        }}
-                        title={t("pm.clients.actions.message")}
-                        aria-label={t("pm.clients.actions.messageClient", { name: client.name })}
-                        className="p-2 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/5 border border-border hover:border-primary/30 transition-colors"
-                      >
-                        <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(event) => { event.stopPropagation(); setSelectedClient(client); }}
-                        aria-label={t("pm.clients.actions.openDetails", { name: client.name })}
-                        className="p-2 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/5 border border-border hover:border-primary/30 transition-colors"
-                      >
-                        <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <EmptyState text={t("pm.clients.noMatch")} />
-          )}
+                    </td>
+                    <td className="px-3 py-2.5"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                    <td className="hidden px-3 py-2.5 md:table-cell"><Skeleton className="h-3.5 w-24" /></td>
+                    <td className="hidden px-3 py-2.5 lg:table-cell"><Skeleton className="h-5 w-28 rounded" /></td>
+                    <td className="px-3 py-2.5"><Skeleton className="h-7 w-20 ml-auto rounded" /></td>
+                  </tr>
+                ))
+              ) : clients.length > 0 ? (
+                clients.map((client) => {
+                  const sc = STATUS_COLOR[client.status] ?? STATUS_COLOR.Pending;
+                  return (
+                    <tr
+                      key={client.id}
+                      className="group cursor-pointer hover:bg-muted/20 transition-colors"
+                      onClick={() => setSelectedClient(client)}
+                    >
+                      <td className="px-4 py-2.5">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 flex-shrink-0 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-primary">{initials(client.name)}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-[12.5px] font-semibold leading-tight">{client.name}</p>
+                            <p className="truncate text-[10.5px] text-muted-foreground">{client.contactEmail}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span
+                          className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold whitespace-nowrap"
+                          style={{ background: sc.bg, color: sc.text }}
+                        >
+                          {clientStatusLabel(client.status)}
+                        </span>
+                      </td>
+                      <td className="hidden px-3 py-2.5 md:table-cell">
+                        <span className="text-[11px] text-muted-foreground">{client.company || "—"}</span>
+                      </td>
+                      <td className="hidden px-3 py-2.5 lg:table-cell">
+                        <span className="max-w-[160px] truncate block text-[10px] font-mono bg-muted/50 border rounded px-1.5 py-0.5">
+                          {client.exhibition || "—"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div
+                          className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/pm/calendar?clientId=${encodeURIComponent(client.id)}&clientName=${encodeURIComponent(client.name)}`)}
+                            title="View calendar"
+                            aria-label={`View calendar for ${client.name}`}
+                            className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-colors"
+                          >
+                            <CalendarDays aria-hidden="true" className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/pm/messages?contactId=${encodeURIComponent(client.id)}`)}
+                            title={t("pm.clients.actions.message")}
+                            aria-label={t("pm.clients.actions.messageClient", { name: client.name })}
+                            className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-colors"
+                          >
+                            <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedClient(client)}
+                            aria-label={t("pm.clients.actions.openDetails", { name: client.name })}
+                            className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-colors"
+                          >
+                            <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                    {t("pm.clients.noMatch")}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
 
+        {/* Pagination */}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 text-xs text-muted-foreground">
           <span>{t("pm.clients.paging.showing", { start: pageStart, end: pageEnd, total: pagination.total })}</span>
           <div className="flex items-center gap-2">
@@ -326,10 +357,7 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    toast({
-      title: "Copied!",
-      description: `${label} copied to clipboard.`,
-    });
+    toast({ title: "Copied!", description: `${label} copied to clipboard.` });
   };
 
   const handleSendWorkspaceLink = async () => {
@@ -341,16 +369,9 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
         client.id,
         `Hi! I have set up the 3D design workspace for your stand (${client.exhibition || client.name}). You can access it and review the latest draft here: ${workspaceUrl}`
       );
-      toast({
-        title: "Success",
-        description: t("pm.clients.detail.billing.linkSendSuccess"),
-      });
+      toast({ title: "Success", description: t("pm.clients.detail.billing.linkSendSuccess") });
     } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err instanceof Error ? err.message : "Failed to send workspace link",
-      });
+      toast({ variant: "destructive", title: "Error", description: err instanceof Error ? err.message : "Failed to send workspace link" });
     } finally {
       setIsSendingLink(false);
     }
@@ -360,24 +381,11 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
     if (isSendingBill) return;
     setIsSendingBill(true);
     try {
-      const billMessage = `Billing details for ${client.exhibition || client.name}:
-- Base booth cost: $4,500.00
-- Total billed to date: $2,800.00
-- Outstanding balance: $1,700.00
-
-Please review the billing details and process the outstanding invoice.`;
-
+      const billMessage = `Billing details for ${client.exhibition || client.name}:\n- Base booth cost: $4,500.00\n- Total billed to date: $2,800.00\n- Outstanding balance: $1,700.00\n\nPlease review the billing details and process the outstanding invoice.`;
       await sendConversationMessage(client.id, billMessage);
-      toast({
-        title: "Success",
-        description: t("pm.clients.detail.billing.sendSuccess"),
-      });
+      toast({ title: "Success", description: t("pm.clients.detail.billing.sendSuccess") });
     } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err instanceof Error ? err.message : "Failed to send bill",
-      });
+      toast({ variant: "destructive", title: "Error", description: err instanceof Error ? err.message : "Failed to send bill" });
     } finally {
       setIsSendingBill(false);
     }
@@ -404,7 +412,6 @@ Please review the billing details and process the outstanding invoice.`;
           </button>
         </div>
 
-        {/* Tab Headers */}
         <div className="border-b px-5 flex gap-4 text-xs font-semibold">
           {(["overview", "credentials", "billing"] as const).map((tab) => (
             <button
@@ -424,7 +431,6 @@ Please review the billing details and process the outstanding invoice.`;
 
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           <div className="flex flex-wrap items-center gap-2">
-            {/* Status selector */}
             <div className="relative">
               <select
                 value={localStatus}
@@ -502,7 +508,6 @@ Please review the billing details and process the outstanding invoice.`;
                   <Key className="w-4 h-4 text-primary" />
                   {t("pm.clients.detail.credentials.title")}
                 </h3>
-                
                 <div className="space-y-3.5">
                   <div>
                     <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-1">
@@ -510,34 +515,22 @@ Please review the billing details and process the outstanding invoice.`;
                     </label>
                     <div className="flex items-center justify-between gap-2 bg-background border rounded px-3 py-1.5">
                       <span className="font-mono text-xs text-foreground truncate">{client.id}</span>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(client.id, t("pm.clients.detail.credentials.accountId"))}
-                        className="text-muted-foreground hover:text-primary transition-colors p-1"
-                        title="Copy Account ID"
-                      >
+                      <button type="button" onClick={() => copyToClipboard(client.id, t("pm.clients.detail.credentials.accountId"))} className="text-muted-foreground hover:text-primary transition-colors p-1">
                         <Copy className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
-
                   <div>
                     <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-1">
                       {t("pm.clients.detail.credentials.username")}
                     </label>
                     <div className="flex items-center justify-between gap-2 bg-background border rounded px-3 py-1.5">
                       <span className="font-mono text-xs text-foreground truncate">{client.contactEmail}</span>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(client.contactEmail, t("pm.clients.detail.credentials.username"))}
-                        className="text-muted-foreground hover:text-primary transition-colors p-1"
-                        title="Copy Username"
-                      >
+                      <button type="button" onClick={() => copyToClipboard(client.contactEmail, t("pm.clients.detail.credentials.username"))} className="text-muted-foreground hover:text-primary transition-colors p-1">
                         <Copy className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
-
                   <div>
                     <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-1">
                       {t("pm.clients.detail.credentials.password")}
@@ -546,11 +539,7 @@ Please review the billing details and process the outstanding invoice.`;
                       <span className="font-mono text-xs text-foreground font-semibold">
                         {showPassword ? "EnsDev2026!" : "••••••••"}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="text-[10px] font-semibold text-primary hover:text-primary/80 hover:underline transition-colors"
-                      >
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-[10px] font-semibold text-primary hover:text-primary/80 hover:underline transition-colors">
                         {showPassword ? "Hide" : "Show"}
                       </button>
                     </div>
@@ -591,7 +580,6 @@ Please review the billing details and process the outstanding invoice.`;
                   <CreditCard className="w-4 h-4 text-primary" />
                   {t("pm.clients.detail.billing.title")}
                 </h3>
-                
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center justify-between py-2 border-b border-border/30">
                     <span className="text-muted-foreground">Exhibition Booth</span>
@@ -617,7 +605,6 @@ Please review the billing details and process the outstanding invoice.`;
                   </div>
                 </div>
               </section>
-
               <button
                 type="button"
                 onClick={handleSendBill}
@@ -627,7 +614,6 @@ Please review the billing details and process the outstanding invoice.`;
                 {isSendingBill ? "Sending..." : t("pm.clients.actions.sendBill")}
                 <ArrowRight className="w-4 h-4" />
               </button>
-
               <p className="text-[10px] text-center text-muted-foreground italic">
                 * {t("pm.clients.detail.billing.detailSource")}
               </p>
@@ -644,13 +630,11 @@ Please review the billing details and process the outstanding invoice.`;
             <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
             {t("pm.clients.actions.message")}
           </button>
-          
           <Link href={`/pm/projects?q=${projectSearch}`}>
             <button className="rounded-md border px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
               {t("pm.clients.actions.viewProject")}
             </button>
           </Link>
-          
           {client.projectId ? (
             <>
               {activeTab === "overview" && (
@@ -690,14 +674,6 @@ function translateClientStatus(status: string, t: TFn): string {
     Inactive: t("pm.common.status.inactive"),
   };
   return map[status] ?? status;
-}
-
-function EmptyState({ text }: { text: string }) {
-  return (
-    <div className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-10 text-center text-sm text-muted-foreground">
-      {text}
-    </div>
-  );
 }
 
 function initials(name: string) {

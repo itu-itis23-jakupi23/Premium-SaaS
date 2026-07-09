@@ -1414,7 +1414,11 @@ function PendingInvitationsPanel({
   onRevoke: (invitationId: string) => void;
 }) {
   const { t, i18n } = useTranslation();
+  const [showAll, setShowAll] = useState(false);
   if (!invitations.length) return null;
+
+  const visibleInvitations = showAll ? invitations : invitations.slice(0, 4);
+  const hiddenCount = invitations.length - 4;
 
   return (
     <section className="rounded-lg border border-dashed bg-card/30 p-4">
@@ -1429,7 +1433,7 @@ function PendingInvitationsPanel({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {invitations.slice(0, 4).map((invitation) => (
+          {visibleInvitations.map((invitation) => (
             <div key={invitation.id} className="rounded-md border bg-background/50 p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -1447,7 +1451,7 @@ function PendingInvitationsPanel({
                   </p>
                   {invitation.emailStatus === "failed" && (
                     <p className="mt-1 max-w-[260px] text-[11px] text-amber-500">
-                      Email not sent: {invitation.emailWarning || "email provider is not configured"}
+                      {t("chief.managers.invitations.emailFailed")}: {invitation.emailWarning || t("chief.managers.invitations.emailProviderNotConfigured")}
                     </p>
                   )}
                 </div>
@@ -1479,10 +1483,14 @@ function PendingInvitationsPanel({
               </div>
             </div>
           ))}
-          {invitations.length > 4 && (
-            <Badge variant="secondary" className="self-center">
-              {t("chief.managers.invitations.moreInvites", { count: invitations.length - 4 })}
-            </Badge>
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              className="self-center rounded-md border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+              onClick={() => setShowAll((v) => !v)}
+            >
+              {showAll ? t("chief.managers.invitations.showLess") : t("chief.managers.invitations.showMore", { count: hiddenCount })}
+            </button>
           )}
         </div>
       </div>
@@ -1625,7 +1633,12 @@ function ManagerCard({
               ? "border-yellow-500/30 bg-yellow-500/5 text-yellow-600"
               : "border-green-500/30 bg-green-500/5 text-green-600",
         )}>
-          Capacity: {manager.activeProjects.length}/{PM_ACTIVE_PROJECT_CAPACITY} active projects · {manager.clients.length}/{PM_CLIENT_CAPACITY} clients
+          {t("chief.managers.card.capacityDetail", {
+            projects: manager.activeProjects.length,
+            maxProjects: PM_ACTIVE_PROJECT_CAPACITY,
+            clients: manager.clients.length,
+            maxClients: PM_CLIENT_CAPACITY,
+          })}
         </div>
 
         <div className="grid grid-cols-3 gap-3 py-2">
@@ -2613,7 +2626,7 @@ function computeWorkload(status: ManagerStatus, projects: ManagedProject[], clie
   // Urgency pressure on top of base load
   const urgencyBoost = delayedFraction * 0.25 + urgentFraction * 0.12 + overdueBonus * 0.18;
 
-  const raw = (baseLoad * 75 + urgencyBoost * 25) * 100;
+  const raw = baseLoad * 75 + urgencyBoost * 25;
   const adjusted = status === "On Leave" ? Math.min(raw, 35) : raw;
   return Math.max(0, Math.min(100, Math.round(adjusted)));
 }

@@ -10,7 +10,7 @@
     "db:push": "pnpm --filter @workspace/db run push",
     "db:studio": "pnpm --filter @workspace/db run studio",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"@workspace/*\" --if-present run typecheck"
   },
   "private": true,
   "devDependencies": {

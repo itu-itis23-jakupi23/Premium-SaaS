@@ -13,6 +13,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { ENSLogo } from "@/components/ENSLogo";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ function getTokenFromSearch(): string {
 }
 
 function PasswordStrength({ password }: { password: string }) {
+  const { t } = useTranslation();
   const length  = password.length >= 8;
   const upper   = /[A-Z]/.test(password);
   const number  = /[0-9]/.test(password);
@@ -51,7 +53,7 @@ function PasswordStrength({ password }: { password: string }) {
   const score   = [length, upper, number, special].filter(Boolean).length;
 
   const colours = ["bg-muted", "bg-destructive", "bg-amber-500", "bg-yellow-400", "bg-emerald-500"];
-  const labels  = ["", "Weak", "Fair", "Good", "Strong"];
+  const labels  = ["", t("pm.join.strength.weak"), t("pm.join.strength.fair"), t("pm.join.strength.good"), t("pm.join.strength.strong")];
 
   if (!password) return null;
   return (
@@ -78,6 +80,7 @@ function PasswordStrength({ password }: { password: string }) {
 type PageState = "loading" | "valid" | "error" | "submitting" | "done";
 
 export default function PMJoin() {
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
   const token = getTokenFromSearch();
 
@@ -96,7 +99,7 @@ export default function PMJoin() {
   // Validate token on mount
   useEffect(() => {
     if (!token) {
-      setTokenError("No invitation token found in the URL. Please use the link from your invitation email.");
+      setTokenError(t("pm.join.error.noToken"));
       setPageState("error");
       return;
     }
@@ -108,7 +111,7 @@ export default function PMJoin() {
         setPageState("valid");
       })
       .catch((err: unknown) => {
-        setTokenError(err instanceof Error ? err.message : "This invitation link is not valid.");
+        setTokenError(err instanceof Error ? err.message : t("pm.join.error.invalidToken"));
         setPageState("error");
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -117,9 +120,9 @@ export default function PMJoin() {
     e.preventDefault();
     setFormError("");
 
-    if (!name.trim()) { setFormError("Please enter your full name."); return; }
-    if (password.length < 8) { setFormError("Password must be at least 8 characters."); return; }
-    if (password !== confirmPwd) { setFormError("Passwords do not match."); return; }
+    if (!name.trim()) { setFormError(t("pm.join.error.nameRequired")); return; }
+    if (password.length < 8) { setFormError(t("pm.join.error.passwordTooShort")); return; }
+    if (password !== confirmPwd) { setFormError(t("pm.join.error.passwordMismatch")); return; }
 
     setPageState("submitting");
 
@@ -127,7 +130,7 @@ export default function PMJoin() {
       await acceptManagerInvitation(token, { name: name.trim(), password });
       setPageState("done");
     } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setFormError(err instanceof Error ? err.message : t("pm.join.error.generic"));
       setPageState("valid");
     }
   }
@@ -162,22 +165,21 @@ export default function PMJoin() {
           <ShieldX className="h-7 w-7 text-destructive" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold">Invitation Not Valid</h2>
+          <h2 className="text-lg font-semibold">{t("pm.join.error.title")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{tokenError}</p>
         </div>
         <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-          If you believe this is a mistake, please contact your administrator to
-          resend the invitation.
+          {t("pm.join.error.contact")}
           <br />
           <a
-            href="mailto:admin@ens-agency.com"
+            href={`mailto:${t("pm.join.error.adminEmail")}`}
             className="mt-1 inline-block font-medium text-primary hover:underline"
           >
-            admin@ens-agency.com
+            {t("pm.join.error.adminEmail")}
           </a>
         </div>
         <Button variant="outline" className="w-full" onClick={() => navigate("/login")}>
-          Go to Login
+          {t("pm.join.error.goToLogin")}
         </Button>
       </div>
     );
@@ -194,14 +196,13 @@ export default function PMJoin() {
           <CheckCircle className="h-8 w-8 text-emerald-500" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold">Account Created!</h2>
+          <h2 className="text-lg font-semibold">{t("pm.join.success.title")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Welcome to the ENS team, <strong>{name}</strong>! Your account is ready.
-            You&apos;ll be redirected to the login page in a moment.
+            {t("pm.join.success.body", { name })}
           </p>
         </div>
         <Button className="w-full" onClick={() => navigate("/login", { replace: true })}>
-          Go to Login Now
+          {t("pm.join.success.goToLogin")}
         </Button>
       </motion.div>
     );
@@ -214,23 +215,22 @@ export default function PMJoin() {
         <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
           <MailCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
           <div className="text-sm">
-            <p className="font-medium">Invitation confirmed</p>
+            <p className="font-medium">{t("pm.join.inviteConfirmed")}</p>
             <p className="text-muted-foreground">
-              Joining as a <span className="font-medium text-foreground">Project Manager</span> with email{" "}
-              <span className="font-medium text-foreground">{invitation?.email}</span>
+              {t("pm.join.joiningAs", { email: invitation?.email ?? "" })}
             </p>
           </div>
         </div>
 
         {/* Name */}
         <div className="space-y-1.5">
-          <Label htmlFor="full-name">Full Name <span className="text-destructive">*</span></Label>
+          <Label htmlFor="full-name">{t("pm.join.form.fullName")} <span className="text-destructive">*</span></Label>
           <Input
             id="full-name"
             type="text"
             value={name}
             onChange={(e) => { setName(e.target.value); setFormError(""); }}
-            placeholder="Your full name"
+            placeholder={t("pm.join.form.fullNamePlaceholder")}
             autoComplete="name"
             required
           />
@@ -238,14 +238,14 @@ export default function PMJoin() {
 
         {/* Password */}
         <div className="space-y-1.5">
-          <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
+          <Label htmlFor="password">{t("pm.join.form.password")} <span className="text-destructive">*</span></Label>
           <div className="relative">
             <Input
               id="password"
               type={showPwd ? "text" : "password"}
               value={password}
               onChange={(e) => { setPassword(e.target.value); setFormError(""); }}
-              placeholder="At least 8 characters"
+              placeholder={t("pm.join.form.passwordPlaceholder")}
               autoComplete="new-password"
               className="pr-10"
               required
@@ -255,7 +255,7 @@ export default function PMJoin() {
               tabIndex={-1}
               onClick={() => setShowPwd((v) => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label={showPwd ? "Hide password" : "Show password"}
+              aria-label={showPwd ? t("pm.join.form.hidePassword") : t("pm.join.form.showPassword")}
             >
               {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -265,14 +265,14 @@ export default function PMJoin() {
 
         {/* Confirm password */}
         <div className="space-y-1.5">
-          <Label htmlFor="confirm-password">Confirm Password <span className="text-destructive">*</span></Label>
+          <Label htmlFor="confirm-password">{t("pm.join.form.confirmPassword")} <span className="text-destructive">*</span></Label>
           <div className="relative">
             <Input
               id="confirm-password"
               type={showConfirm ? "text" : "password"}
               value={confirmPwd}
               onChange={(e) => { setConfirmPwd(e.target.value); setFormError(""); }}
-              placeholder="Re-enter your password"
+              placeholder={t("pm.join.form.confirmPasswordPlaceholder")}
               autoComplete="new-password"
               className="pr-10"
               required
@@ -282,13 +282,13 @@ export default function PMJoin() {
               tabIndex={-1}
               onClick={() => setShowConfirm((v) => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label={showConfirm ? "Hide password" : "Show password"}
+              aria-label={showConfirm ? t("pm.join.form.hidePassword") : t("pm.join.form.showPassword")}
             >
               {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
           {confirmPwd && password !== confirmPwd && (
-            <p className="text-[11px] text-destructive">Passwords do not match.</p>
+            <p className="text-[11px] text-destructive">{t("pm.join.form.passwordMismatch")}</p>
           )}
         </div>
 
@@ -309,8 +309,8 @@ export default function PMJoin() {
 
         <Button type="submit" className="w-full" disabled={pageState === "submitting"}>
           {pageState === "submitting"
-            ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating Account…</>
-            : <><UserPlus className="mr-2 h-4 w-4" /> Create My Account</>
+            ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("pm.join.form.submitting")}</>
+            : <><UserPlus className="mr-2 h-4 w-4" /> {t("pm.join.form.submit")}</>
           }
         </Button>
       </form>
@@ -338,9 +338,9 @@ export default function PMJoin() {
           {/* Page title — only shown during form states */}
           {(pageState === "valid" || pageState === "submitting") && (
             <div className="mb-6 text-center">
-              <h1 className="text-xl font-bold tracking-tight">Join the Team</h1>
+              <h1 className="text-xl font-bold tracking-tight">{t("pm.join.pageTitle")}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Complete your profile to activate your Project Manager account.
+                {t("pm.join.pageSubtitle")}
               </p>
             </div>
           )}

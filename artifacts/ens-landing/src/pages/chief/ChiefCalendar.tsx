@@ -175,9 +175,11 @@ const EMPTY_FORM = {
 function ExhibitionForm({
   form,
   onChange,
+  managerOptions = [],
 }: {
   form: typeof EMPTY_FORM;
   onChange: (field: string, value: string) => void;
+  managerOptions?: string[];
 }) {
   const { t } = useTranslation();
 
@@ -204,12 +206,25 @@ function ExhibitionForm({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="ev-pm">{t("chief.calendar.form.pmLabel")}</Label>
-          <Input
-            id="ev-pm"
-            placeholder={t("chief.calendar.form.pmPlaceholder")}
-            value={form.pm}
-            onChange={(e) => onChange("pm", e.target.value)}
-          />
+          {managerOptions.length > 0 ? (
+            <Select value={form.pm} onValueChange={(v) => onChange("pm", v)}>
+              <SelectTrigger id="ev-pm">
+                <SelectValue placeholder={t("chief.calendar.form.pmPlaceholder")} />
+              </SelectTrigger>
+              <SelectContent>
+                {managerOptions.map((name) => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              id="ev-pm"
+              placeholder={t("chief.calendar.form.pmPlaceholder")}
+              value={form.pm}
+              onChange={(e) => onChange("pm", e.target.value)}
+            />
+          )}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="ev-start">{t("chief.calendar.form.startLabel")}</Label>
@@ -727,11 +742,13 @@ function AddEventDialog({
   onClose,
   onSave,
   saving,
+  managerOptions = [],
 }: {
   prefillDate?: string;
   onClose: () => void;
   onSave: (ex: Omit<Exhibition, "id">) => void | Promise<void>;
   saving?: boolean;
+  managerOptions?: string[];
 }) {
   const { t } = useTranslation();
   const [form, setForm] = useState({
@@ -767,7 +784,7 @@ function AddEventDialog({
           <DialogTitle>{t("chief.calendar.add.title")}</DialogTitle>
           <DialogDescription>{t("chief.calendar.add.description")}</DialogDescription>
         </DialogHeader>
-        <ExhibitionForm form={form} onChange={handleChange} />
+        <ExhibitionForm form={form} onChange={handleChange} managerOptions={managerOptions} />
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>
             {t("chief.calendar.add.cancel")}
@@ -790,11 +807,13 @@ function EditEventDialog({
   onClose,
   onSave,
   saving,
+  managerOptions = [],
 }: {
   exhibition: Exhibition;
   onClose: () => void;
   onSave: (ex: Exhibition) => void | Promise<void>;
   saving?: boolean;
+  managerOptions?: string[];
 }) {
   const { t } = useTranslation();
   const [form, setForm] = useState<typeof EMPTY_FORM>({
@@ -836,7 +855,7 @@ function EditEventDialog({
           <DialogTitle>{t("chief.calendar.edit.title")}</DialogTitle>
           <DialogDescription>{t("chief.calendar.edit.description")}</DialogDescription>
         </DialogHeader>
-        <ExhibitionForm form={form} onChange={handleChange} />
+        <ExhibitionForm form={form} onChange={handleChange} managerOptions={managerOptions} />
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>
             {t("chief.calendar.edit.cancel")}
@@ -857,7 +876,9 @@ function EditEventDialog({
 export default function ChiefCalendar() {
   const { t } = useTranslation();
   const [location] = useLocation();
-  const requestedPm = new URLSearchParams(location.split("?")[1] ?? "").get("pm") ?? "all";
+  const params = new URLSearchParams(location.split("?")[1] ?? "");
+  const requestedPm     = params.get("pm")     ?? "all";
+  const requestedSearch = params.get("search") ?? "";
   const now = new Date();
 
   const [year, setYear]               = useState(now.getFullYear());
@@ -868,9 +889,17 @@ export default function ChiefCalendar() {
   const [detailEx, setDetailEx]       = useState<Exhibition | null>(null);
   const [editEx, setEditEx]           = useState<Exhibition | null>(null);
   const [pmFilter, setPmFilter]       = useState(requestedPm);
+
+  useEffect(() => {
+    setPmFilter(requestedPm);
+  }, [requestedPm]);
+
+  useEffect(() => {
+    if (requestedSearch) setSearch(requestedSearch);
+  }, [requestedSearch]);
   const [clientFilter, setClientFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<CalendarStatusFilter>("all");
-  const [search, setSearch]           = useState("");
+  const [search, setSearch]           = useState(requestedSearch);
   const [isLoading, setIsLoading]     = useState(true);
   const [isSaving, setIsSaving]       = useState(false);
   const [error, setError]             = useState("");
@@ -1093,6 +1122,7 @@ export default function ChiefCalendar() {
           onClose={() => setAddOpen(false)}
           onSave={handleSave}
           saving={isSaving}
+          managerOptions={managerOptions}
         />
       )}
 
@@ -1112,6 +1142,7 @@ export default function ChiefCalendar() {
           onClose={() => setEditEx(null)}
           onSave={handleUpdate}
           saving={isSaving}
+          managerOptions={managerOptions}
         />
       )}
     </DashboardLayout>

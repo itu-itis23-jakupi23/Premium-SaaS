@@ -6,7 +6,6 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { getPlatformProjects, type PlatformProject } from "@/lib/platform-api";
 import {
   Layers,
-  Clock,
   CheckCircle2,
   AlertCircle,
   ChevronDown,
@@ -15,9 +14,6 @@ import {
   History,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// Silence unused import — keep Clock available for future use
-void Clock;
 
 const STATUS_CFG: Record<string, { bg: string; text: string; border: string }> =
   {
@@ -67,45 +63,31 @@ function ProgressBar({ value }: { value: number }) {
   );
 }
 
-// Build per-project timeline events; fallback strings passed from component
 function getTimeline(
   p: PlatformProject,
   fallbackLabel: string,
   fallbackDate: string,
   fallbackBadge: string,
+  formatMove: (fromStage: string | null | undefined, toStage: string) => string,
 ) {
-  const events: {
-    icon: React.ElementType;
-    color: string;
-    label: string;
-    date: string;
-    badge: string;
-  }[] = [];
+  const events: { icon: React.ElementType; color: string; label: string; date: string; badge: string }[] = [];
   if (p.lifecycleHistory?.length) {
     events.push(...p.lifecycleHistory.slice(-5).reverse().map((item) => ({
       icon: History,
       color: "#7c3aed",
-      label: item.fromStage ? `Moved from ${item.fromStage} to ${item.toStage}` : `Moved to ${item.toStage}`,
+      label: formatMove(item.fromStage, item.toStage),
       date: item.time || item.createdAt,
       badge: item.toStatus || item.toStage,
     })));
   }
   if (events.length === 0) {
-    events.push({
-      icon: Layers,
-      color: "#1d4ed8",
-      label: fallbackLabel,
-      date: fallbackDate,
-      badge: fallbackBadge,
-    });
+    events.push({ icon: Layers, color: "#1d4ed8", label: fallbackLabel, date: fallbackDate, badge: fallbackBadge });
   }
   return events.slice(0, 5);
 }
 
-const ACTION_PROJECTS = new Set(["0", "1"]);
-
-function formatProjectDate(date: string | null, locale: string) {
-  if (!date) return "No date";
+function formatProjectDate(date: string | null, locale: string, noDate: string) {
+  if (!date) return noDate;
   const parsed = new Date(`${date}T12:00:00`);
   if (Number.isNaN(parsed.getTime())) return date;
   return parsed.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "2-digit" });
@@ -136,7 +118,7 @@ export default function ClientProjects() {
         if (!mounted) return;
         setProjects([]);
         setExpanded(null);
-        setError(reason instanceof Error ? reason.message : "Could not load your assigned projects.");
+        setError(reason instanceof Error ? reason.message : t("client.projects.loadError"));
       })
       .finally(() => {
         if (mounted) setIsLoading(false);
@@ -185,7 +167,7 @@ export default function ClientProjects() {
         />
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {stats.map((s) => (
             <div key={s.l} className="border rounded-lg p-4 bg-card">
               <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
@@ -221,22 +203,23 @@ export default function ClientProjects() {
 
           {!isLoading && !error && projects.length === 0 && (
             <div className="rounded-lg border border-dashed bg-card p-8 text-center">
-              <p className="text-sm font-semibold">No assigned projects yet</p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Your exhibition registration is in the system. A Chief Manager or Project Manager needs to assign a project before it appears here.
-              </p>
+              <p className="text-sm font-semibold">{t("client.projects.emptyTitle")}</p>
+              <p className="mt-2 text-xs text-muted-foreground">{t("client.projects.emptyDesc")}</p>
             </div>
           )}
 
           {projects.map((project, idx) => {
             const sc = STATUS_CFG[project.status] ?? STATUS_CFG.Active;
             const isExp = expanded === project.id;
-            const hasAction = project.status === "Pending" || project.status === "Client Review" || ACTION_PROJECTS.has(String(idx));
+            const hasAction = project.status === "Pending" || project.status === "Client Review";
             const timeline = getTimeline(
               project,
               t("client.projects.timeline.defaultLabel"),
               t("client.projects.timeline.defaultDate"),
               t("client.projects.status.Active"),
+              (from, to) => from
+                ? t("client.projects.timeline.movedFromTo", { from, to })
+                : t("client.projects.timeline.movedTo", { to }),
             );
 
             const metaItems = [
@@ -251,7 +234,7 @@ export default function ClientProjects() {
               { label: t("client.projects.meta.pm"), value: project.pm },
               {
                 label: t("client.projects.meta.deadline"),
-                value: formatProjectDate(project.deadline, i18n.language),
+                value: formatProjectDate(project.deadline, i18n.language, t("client.projects.meta.noDate")),
               },
             ];
 

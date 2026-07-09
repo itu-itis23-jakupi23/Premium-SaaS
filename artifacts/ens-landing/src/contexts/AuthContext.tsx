@@ -191,6 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         systemRole: role === 'chief' ? 'owner' : role,
         avatarUrl: '',
         avatarTone: role === 'chief' ? 'primary' : role === 'pm' ? 'blue' : 'green',
+        clientStatus: role === 'client' ? 'Pending' : undefined,
       };
       localStorage.setItem(MOCK_AUTH_STORAGE_KEY, JSON.stringify(nextUser));
       setUser(nextUser);

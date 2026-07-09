@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "wouter";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid,
   Cell, Legend, Pie, PieChart, ResponsiveContainer,
@@ -10,7 +11,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { downloadExcelWorkbook } from "@/lib/excel-export";
 import { getChiefReport, recordReportExport, type ChiefReportPayload } from "@/lib/platform-api";
-import { BarChart3, Briefcase, Download, Star, TrendingUp, Users } from "lucide-react";
+import { ArrowUpDown, BarChart3, Briefcase, ChevronUp, ChevronDown, Download, ExternalLink, Star, TrendingUp, Users } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Range = "3M" | "6M" | "12M";
@@ -27,9 +28,14 @@ function averageSatisfaction(rows: Array<{ satisfaction: number }>) {
   return rows.reduce((sum, row) => sum + row.satisfaction, 0) / rows.length;
 }
 
+type LeaderboardSortField = "projects" | "onTime" | "satisfaction" | "revenue";
+type SortDir = "asc" | "desc";
+
 export default function ChiefReports() {
   const { t } = useTranslation();
+  const [, navigate] = useLocation();
   const [range, setRange] = useState<Range>("6M");
+  const [leaderboardSort, setLeaderboardSort] = useState<{ field: LeaderboardSortField; dir: SortDir }>({ field: "satisfaction", dir: "desc" });
   const [report, setReport] = useState<ChiefReportPayload | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -67,6 +73,22 @@ export default function ChiefReports() {
   const totalRevenue   = revenueData.reduce((sum, item) => sum + item.revenue, 0);
   const totalTarget    = revenueData.reduce((sum, item) => sum + item.target, 0);
   const totalProjects  = revenueData.reduce((sum, item) => sum + item.projects, 0);
+
+  const sortedPmPerformance = useMemo(() => {
+    const { field, dir } = leaderboardSort;
+    return [...pmPerformance].sort((a, b) => {
+      const diff = a[field] - b[field];
+      return dir === "desc" ? -diff : diff;
+    });
+  }, [pmPerformance, leaderboardSort]);
+
+  function toggleSort(field: LeaderboardSortField) {
+    setLeaderboardSort((current) =>
+      current.field === field
+        ? { field, dir: current.dir === "desc" ? "asc" : "desc" }
+        : { field, dir: "desc" },
+    );
+  }
 
   function showToast(message: string) {
     setToast(message);
@@ -158,7 +180,7 @@ export default function ChiefReports() {
         {!isLoading && !error && totalRevenue === 0 && (
           <Card role="status" className="border-blue-500/30 bg-blue-500/5">
             <CardContent className="p-4 text-sm text-blue-500">
-              Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data.
+              {t("chief.reports.revenueNotice")}
             </CardContent>
           </Card>
         )}
@@ -178,10 +200,10 @@ export default function ChiefReports() {
             ))
           ) : (
             <>
-              <KpiTile label={t("chief.reports.kpi.revenue")} value={totalRevenue ? `$${(totalRevenue / 1000).toFixed(0)}K` : "Not configured"} detail={t("chief.reports.kpi.revenueDetail")} icon={TrendingUp} />
+              <KpiTile label={t("chief.reports.kpi.revenue")} value={totalRevenue ? `$${(totalRevenue / 1000).toFixed(0)}K` : t("chief.reports.notConfigured")} detail={t("chief.reports.kpi.revenueDetail")} icon={TrendingUp} />
               <KpiTile label={t("chief.reports.kpi.projects")} value={String(totalProjects)} detail={t("chief.reports.kpi.projectsDetail", { range })} icon={Briefcase} />
               <KpiTile label={t("chief.reports.kpi.pms")} value={`${pmPerformance.length}`} detail={t("chief.reports.kpi.pmsDetail")} icon={Users} />
-              <KpiTile label={t("chief.reports.kpi.satisfaction")} value={averageSatisfaction(pmPerformance) ? `${averageSatisfaction(pmPerformance).toFixed(1)}/5` : "Not configured"} detail={t("chief.reports.kpi.satisfactionDetail")} icon={Star} />
+              <KpiTile label={t("chief.reports.kpi.satisfaction")} value={averageSatisfaction(pmPerformance) ? `${averageSatisfaction(pmPerformance).toFixed(1)}/5` : t("chief.reports.notConfigured")} detail={t("chief.reports.kpi.satisfactionDetail")} icon={Star} />
             </>
           )}
         </div>
@@ -302,15 +324,23 @@ export default function ChiefReports() {
                       {t("chief.reports.bottlenecks")}
                     </p>
                     {bottleneckData.map((item) => (
-                      <div key={item.name} className="flex items-center justify-between border-b border-border/40 py-1.5 last:border-0">
-                        <div className="min-w-0">
-                          <p className="truncate text-[10.5px] font-medium">{item.name}</p>
+                      <button
+                        key={item.name}
+                        type="button"
+                        onClick={() => navigate(`/chief/calendar?search=${encodeURIComponent(item.name)}`)}
+                        className="flex w-full items-center justify-between border-b border-border/40 py-1.5 last:border-0 text-left hover:bg-muted/10 rounded transition-colors group"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[10.5px] font-medium group-hover:text-primary transition-colors">{item.name}</p>
                           <p className="text-[9px] text-muted-foreground">{item.stage}</p>
                         </div>
-                        <span className={`ml-2 shrink-0 rounded px-1.5 py-0.5 text-[9.5px] font-bold ${item.waitDays >= 5 ? "bg-red-500/10 text-red-500" : "bg-orange-500/10 text-orange-500"}`}>
-                          {item.waitDays}d
-                        </span>
-                      </div>
+                        <div className="ml-2 flex shrink-0 items-center gap-1">
+                          <span className={`rounded px-1.5 py-0.5 text-[9.5px] font-bold ${item.waitDays >= 5 ? "bg-red-500/10 text-red-500" : "bg-orange-500/10 text-orange-500"}`}>
+                            {item.waitDays}d
+                          </span>
+                          <ExternalLink className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </button>
                     ))}
                   </div>
                 </>
@@ -331,18 +361,32 @@ export default function ChiefReports() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  {[
-                    t("chief.reports.table.rank"),
-                    t("chief.reports.table.pm"),
-                    t("chief.reports.table.projects"),
-                    t("chief.reports.table.onTime"),
-                    t("chief.reports.table.satisfaction"),
-                    t("chief.reports.table.revenue"),
-                  ].map((header) => (
-                    <th key={header} className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      {header}
-                    </th>
-                  ))}
+                  <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    {t("chief.reports.table.rank")}
+                  </th>
+                  <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    {t("chief.reports.table.pm")}
+                  </th>
+                  {(["projects", "onTime", "satisfaction", "revenue"] as LeaderboardSortField[]).map((field) => {
+                    const isSorted = leaderboardSort.field === field;
+                    return (
+                      <th key={field} className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        <button
+                          type="button"
+                          onClick={() => toggleSort(field)}
+                          className="flex items-center gap-1 hover:text-foreground transition-colors"
+                          aria-label={`Sort by ${field}`}
+                        >
+                          {t(`chief.reports.table.${field}`)}
+                          {isSorted
+                            ? leaderboardSort.dir === "desc"
+                              ? <ChevronDown className="h-3 w-3" />
+                              : <ChevronUp className="h-3 w-3" />
+                            : <ArrowUpDown className="h-3 w-3 opacity-40" />}
+                        </button>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
@@ -354,7 +398,7 @@ export default function ChiefReports() {
                         ))}
                       </tr>
                     ))
-                  : [...pmPerformance].sort((a, b) => b.satisfaction - a.satisfaction).map((pm, index) => (
+                  : sortedPmPerformance.map((pm, index) => (
                   <tr key={pm.name} className="border-b last:border-0 hover:bg-muted/10">
                     <td className="px-3 py-2.5 font-bold text-muted-foreground">#{index + 1}</td>
                     <td className="px-3 py-2.5 text-xs font-semibold">{pm.name}</td>

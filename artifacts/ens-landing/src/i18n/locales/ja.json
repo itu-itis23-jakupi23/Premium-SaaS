@@ -1,4 +1,4 @@
-﻿{
+{
   "common": {
     "startDesigning": "デザインを始める",
     "watchDemo": "デモを見る",
@@ -141,7 +141,33 @@
       "cookies": "Cookieポリシー",
       "gdpr": "GDPR"
     },
-    "pageTitle": "ENS — 展示会・ブースデザインプラットフォーム"
+    "pageTitle": "ENS — 展示会・ブースデザインプラットフォーム",
+    "chiefFeatures": {
+      "workspaceMonitor": {
+        "title": "Workspace Monitor",
+        "desc": "Live oversight of every active design session across all projects."
+      },
+      "teamManagement": {
+        "title": "Team Management",
+        "desc": "Assign project managers, track workloads, and manage access levels."
+      },
+      "clientPortfolio": {
+        "title": "Client Portfolio",
+        "desc": "Full view of all client accounts, contacts, and active contracts."
+      },
+      "analytics": {
+        "title": "Analytics & Reports",
+        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
+      },
+      "approvalGateway": {
+        "title": "Approval Gateway",
+        "desc": "Final structural and design sign-off before production release."
+      },
+      "commsHub": {
+        "title": "Communications Hub",
+        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
+      }
+    }
   },
   "team": {
     "hero": {
@@ -385,7 +411,27 @@
         "assignManagers": "マネージャーを割り当て",
         "openQueue": "キューを開く"
       },
-      "pageTitle": "ダッシュボード | ENS"
+      "pageTitle": "ダッシュボード | ENS",
+      "retry": "Retry",
+      "pieShare": "Share",
+      "workflow": {
+        "title": "Assignment control",
+        "desc": "New accounts and unassigned work that need Chief action.",
+        "openAssignments": "Open assignments",
+        "pendingAccounts": "Pending accounts",
+        "pendingAccountsDetail": "Client accounts awaiting review",
+        "pendingAccountsClear": "No accounts pending",
+        "newPMs": "New PMs",
+        "newPMsClear": "No PM accounts waiting",
+        "unassignedClients": "Unassigned clients",
+        "unassignedClientsClear": "All clients assigned",
+        "unassignedProjects": "Unassigned projects",
+        "unassignedProjectsClear": "All projects assigned",
+        "stalledApprovals": "Stalled approvals",
+        "stalledApprovalsClear": "No stale approvals",
+        "overloadedPMs": "Overloaded PMs",
+        "overloadedPMsClear": "Capacity looks stable"
+      }
     },
     "managers": {
       "title": "マネージャー管理",
@@ -423,7 +469,11 @@
         "moreInvites": "あと{{count}}件",
         "copyLink": "{{email}} への招待リンクをコピー",
         "resend": "{{email}} に招待を再送信",
-        "revoke": "{{email}} の招待を取り消す"
+        "revoke": "{{email}} の招待を取り消す",
+        "showMore": "Show {{count}} more",
+        "showLess": "Show less",
+        "emailFailed": "Email not sent",
+        "emailProviderNotConfigured": "email provider is not configured"
       },
       "invite": {
         "title": "マネージャーを招待",
@@ -471,7 +521,14 @@
         "clients": "クライアント",
         "projects": "プロジェクト",
         "saved": "割り当てが更新されました",
-        "selectRow": "{{name}} を選択"
+        "selectRow": "{{name}} を選択",
+        "searchClients": "Search clients...",
+        "searchProjects": "Search projects...",
+        "loading": "Loading assignments...",
+        "showing": "{{total}} total / showing {{start}}-{{end}}",
+        "previous": "Previous",
+        "next": "Next",
+        "page": "Page {{page}}"
       },
       "discard": {
         "title": "割り当て変更を破棄しますか？",
@@ -482,7 +539,8 @@
         "delayed": "遅延",
         "urgent": "緊急",
         "ratingNew": "新規",
-        "ratingNA": "なし"
+        "ratingNA": "なし",
+        "capacityDetail": "Capacity: {{projects}}/{{maxProjects}} active projects · {{clients}}/{{maxClients}} clients"
       },
       "table": {
         "manager": "マネージャー",
@@ -533,16 +591,21 @@
           "access": "アクセス",
           "assignment": "アサイン",
           "rebalance": "再調整",
-          "reminder": "リマインダー"
+          "reminder": "リマインダー",
+          "ratingUpdated": "Rating updated"
         },
         "detail": {
           "invited": "{{name}} への招待をキューに追加しました。",
           "statusChanged": "{{name}} を {{status}} にマークしました。",
           "assignmentsSaved": "アサインの変更を保存しました。",
           "rebalanced": "{{project}} を {{from}} から {{to}} に移動しました。",
-          "reminded": "{{name}} へのアプリ内リマインダーをキューに追加しました — 優先項目 {{count}} 件。"
+          "reminded": "{{name}} へのアプリ内リマインダーをキューに追加しました — 優先項目 {{count}} 件。",
+          "ratingUpdated": "Rating set to {{rating}}"
         },
-        "justNow": "たった今"
+        "justNow": "たった今",
+        "exportExcel": "Export as Excel",
+        "collapse": "Collapse",
+        "expand": "Expand"
       },
       "actions": {
         "openDetails": "詳細を開く",
@@ -581,7 +644,12 @@
         "rebalanceError": "ワークロードを再分配できませんでした",
         "rebalanceDone": "ワークロードを再分配しました",
         "reminderSent": "{{name}} へのリマインダーがキューに追加されました — 通知が作成されました",
-        "reminderError": "リマインダーを送信できませんでした"
+        "reminderError": "リマインダーを送信できませんでした",
+        "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
+        "ratingUpdated": "Rating updated to {{rating}}"
+      },
+      "error": {
+        "rating": "Failed to update rating"
       }
     },
     "reports": {
@@ -645,7 +713,9 @@
         "colWaitDays": "待ち日数",
         "colStage": "ステージ",
         "rowTotals": "合計"
-      }
+      },
+      "notConfigured": "Not configured",
+      "revenueNotice": "Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data."
     },
     "messages": {
       "title": "メッセージ",
@@ -905,11 +975,22 @@
       "toast": {
         "updated": "{{name}} を更新しました",
         "openMonitor": "{{name}} のモニターを開いています",
-        "moved": "{{name}} を {{stage}} に移動しました"
+        "moved": "{{name}} を {{stage}} に移動しました",
+        "created": "Project \"{{name}}\" created.",
+        "exported": "Projects exported to Excel."
       },
       "validate": {
         "required": "プロジェクト名とクライアントは必須です。",
         "dimensions": "幅と奥行きは 1〜100 メートルの間で入力してください。"
+      },
+      "exportTooltip": "Export project list to Excel",
+      "export": "Export",
+      "newProject": "New Project",
+      "create": {
+        "title": "New Project",
+        "description": "Fill in the details below to create a new exhibition project.",
+        "creating": "Creating…",
+        "confirm": "Create Project"
       }
     },
     "calendar": {
@@ -1056,7 +1137,10 @@
         "openedPreview": "{{name}} のプレビューを開きました",
         "joinedSession": "{{name}} のモニターセッションに参加しました",
         "reassigned": "{{name}} を {{pm}} に再割当しました"
-      }
+      },
+      "refreshedJustNow": "Refreshed just now",
+      "refreshedSecondsAgo": "{{s}}s ago",
+      "refreshedMinutesAgo": "{{m}}m ago"
     },
     "settings": {
       "pageTitle": "設定 | ENS",
@@ -1190,7 +1274,9 @@
           "description": "このアカウントにサインインしているデバイスを確認する。",
           "signOutOthers": "他のセッションをサインアウト",
           "signOut": "サインアウト",
-          "current": "現在"
+          "current": "現在",
+          "loading": "Loading active sessions...",
+          "empty": "No active sessions were returned by the server."
         },
         "toast": {
           "passwordSaved": "パスワードを更新しました",
@@ -1247,6 +1333,49 @@
         "exported": "設定をエクスポートしました",
         "restored": "設定をデフォルトに戻しました",
         "restoredLocal": "ローカル設定を復元しました"
+      },
+      "readiness": {
+        "title": "Production readiness",
+        "desc": "Real deployment checks for database, email, auth, app URL, and workspace asset storage.",
+        "ready": "Ready",
+        "notReady": "Not ready",
+        "refresh": "Refresh",
+        "mode": "Mode",
+        "apiJsonLimit": "API JSON limit",
+        "assetStorage": "Asset storage",
+        "unknown": "Unknown",
+        "blockingWarnings": "Blocking warnings",
+        "noWarnings": "No blocking production warnings reported by the backend.",
+        "checks": {
+          "databaseConfigured": {
+            "title": "Hosted database",
+            "desc": "DATABASE_URL is configured"
+          },
+          "emailConfigured": {
+            "title": "Transactional email",
+            "desc": "RESEND_API_KEY and RESEND_FROM are configured"
+          },
+          "appUrlConfigured": {
+            "title": "Public app URL",
+            "desc": "APP_URL is an absolute URL"
+          },
+          "staffAccessConfigured": {
+            "title": "Staff access gate",
+            "desc": "Staff/chief signup key is not a placeholder"
+          },
+          "authSecretConfigured": {
+            "title": "Auth secret",
+            "desc": "AUTH_SECRET is not a placeholder"
+          },
+          "assetStorageConfigured": {
+            "title": "Workspace asset storage",
+            "desc": "Uploaded logos and panel images use durable storage"
+          },
+          "productionMode": {
+            "title": "Production mode",
+            "desc": "NODE_ENV is production"
+          }
+        }
       }
     }
   },
@@ -1312,7 +1441,10 @@
         "inProgress": "進行中",
         "resolved": "解決済み",
         "declined": "却下"
-      }
+      },
+      "close": "Close",
+      "previous": "Previous",
+      "next": "Next"
     },
     "dashboard": {
       "title": "プロジェクトマネージャーダッシュボード",
@@ -1323,7 +1455,13 @@
         "activeProjects": "アクティブプロジェクト",
         "pendingReviews": "審査待ち",
         "completed": "完了",
-        "workspaceFiles": "ワークスペースファイル"
+        "workspaceFiles": "ワークスペースファイル",
+        "managedTrend": "Managed clients",
+        "liveTrend": "Live & In Progress",
+        "needsAttention": "Needs attention",
+        "allClear": "All clear",
+        "deliveredTrend": "Successfully delivered",
+        "workspacesOpenTrend": "Workspaces open"
       },
       "activeWork": {
         "title": "アクティブプロジェクト作業",
@@ -1346,13 +1484,27 @@
         "reviewRisk": "リスクを確認",
         "activeWorkspaces": "{{count}} 件のアクティブワークスペース",
         "activeWorkspacesDesc": "ブースデザインが編集可能です。",
-        "openWorkspace": "ワークスペースを開く"
+        "openWorkspace": "ワークスペースを開く",
+        "noDelays": "No projects are currently delayed",
+        "noPending": "Approval queue is empty",
+        "completedProjects": "Completed Projects",
+        "completedProjectsDesc": "Projects successfully delivered to clients",
+        "viewCompleted": "View completed"
       },
       "recentActivity": {
         "title": "最近のアクティビティ",
         "loading": "アクティビティを読み込み中...",
         "empty": "まだアクティビティイベントは記録されていません。"
-      }
+      },
+      "exported": "Dashboard exported to Excel.",
+      "export": "Export",
+      "charts": {
+        "activity": "Project Activity",
+        "activityDesc": "Daily project updates over the last 7 days",
+        "status": "Project Status",
+        "statusDesc": "{{count}} projects tracked"
+      },
+      "retry": "Retry"
     },
     "projects": {
       "title": "マイプロジェクト",
@@ -1372,7 +1524,8 @@
       },
       "view": {
         "list": "リスト表示",
-        "grid": "グリッド表示"
+        "grid": "グリッド表示",
+        "kanban": "Kanban view"
       },
       "table": {
         "project": "プロジェクト",
@@ -1393,7 +1546,10 @@
       "actions": {
         "open": "開く",
         "details": "詳細",
-        "openWorkspace": "ワークスペースを開く"
+        "openWorkspace": "ワークスペースを開く",
+        "advance": "Advance",
+        "delete": "Delete",
+        "edit": "Edit"
       },
       "modal": {
         "title": "新規プロジェクト作成",
@@ -1404,11 +1560,66 @@
         "systemCustom": "カスタム",
         "width": "幅 (m)",
         "depth": "奥行 (m)",
-        "submit": "プロジェクトを作成"
+        "submit": "プロジェクトを作成",
+        "dimensionsInvalid": "Width and depth must be between 1 and 100 meters.",
+        "deadlineInvalid": "Deadline must be today or later.",
+        "nameClientRequired": "Name and client are required."
       },
       "toast": {
         "created": "プロジェクト「{{name}}」を保存しました。",
-        "createError": "プロジェクトを作成できませんでした。"
+        "createError": "プロジェクトを作成できませんでした。",
+        "stageUpdated": "{{name}} moved to {{stage}}.",
+        "stageError": "Project stage could not be saved.",
+        "edited": "\"{{name}}\" updated.",
+        "editError": "Could not save changes.",
+        "deleted": "\"{{name}}\" deleted.",
+        "deleteError": "Could not delete project.",
+        "exported": "Projects exported to Excel."
+      },
+      "stage": {
+        "intake": "Intake",
+        "design": "Design",
+        "review": "Review",
+        "production": "Production",
+        "closed": "Closed"
+      },
+      "detail": {
+        "stage": "Stage: {{stage}}",
+        "description": "Description",
+        "noDescription": "No project description has been saved yet.",
+        "lifecycle": "Lifecycle",
+        "history": "Stage history",
+        "historyMeta": "{{from}} → {{to}}",
+        "historyActor": "{{actor}} / {{time}}",
+        "noHistory": "No stage changes have been recorded yet."
+      },
+      "paging": {
+        "showing": "Showing {{start}}-{{end}} of {{total}} projects"
+      },
+      "exportTooltip": "Export to Excel",
+      "export": "Export",
+      "sortBy": "Sort by",
+      "delete": {
+        "title": "Delete project?",
+        "warning": "This project and all associated data will be permanently removed.",
+        "confirm": "Delete"
+      },
+      "kanban": {
+        "empty": "No projects",
+        "planning": "Planning",
+        "progress": "In Progress",
+        "delayed": "Delayed",
+        "completed": "Completed"
+      },
+      "edit": {
+        "title": "Edit Project",
+        "submit": "Save Changes"
+      },
+      "sort": {
+        "name": "Name",
+        "deadline": "Deadline",
+        "progress": "Progress",
+        "status": "Status"
       }
     },
     "clients": {
@@ -1427,14 +1638,58 @@
         "emailClient": "{{name}} にメール",
         "openWorkspace": "ワークスペースを開く",
         "openWorkspaceFor": "{{name}} のワークスペースを開く",
-        "toggleExpand": "{{name}} の詳細を展開/折りたたむ"
+        "toggleExpand": "{{name}} の詳細を展開/折りたたむ",
+        "noWorkspace": "No project workspace is available",
+        "openDetails": "Open details for {{name}}",
+        "viewProject": "View project",
+        "message": "Message",
+        "messageClient": "Message {{name}}",
+        "sendWorkspace": "Send Workspace Link",
+        "sendBill": "Send Bill of Everything"
       },
       "detail": {
         "clientDetails": "クライアント詳細",
         "operationalStatus": "運用ステータス",
         "assignedPm": "担当PM：{{name}}",
         "lastActivity": "最終活動：{{time}}",
-        "dataSource": "PostgreSQLレコードから読み込み"
+        "dataSource": "PostgreSQLレコードから読み込み",
+        "contact": "Contact",
+        "linkedProject": "Linked Project",
+        "noLinkedProject": "No linked project",
+        "workspaceReady": "Project workspace link is available.",
+        "workspaceMissing": "No project workspace is linked to this client yet.",
+        "changeStatus": "Change client status",
+        "tabs": {
+          "overview": "Overview",
+          "credentials": "Credentials",
+          "billing": "Billing"
+        },
+        "credentials": {
+          "title": "Account & Security",
+          "accountId": "Account ID",
+          "role": "Portal Access Role",
+          "username": "Username/Email",
+          "password": "Password",
+          "showPassword": "Show Password",
+          "mfa": "MFA Security Status",
+          "mfaDisabled": "MFA Disabled",
+          "session": "Active Session info",
+          "webSession": "Web Browser (Chrome/Windows)"
+        },
+        "billing": {
+          "title": "Project Billing",
+          "contractValue": "Contract Value",
+          "billed": "Total Billed",
+          "outstanding": "Outstanding",
+          "status": "Invoice Status",
+          "statusPartial": "Partial Payment",
+          "sendSuccess": "Bill successfully sent to client!",
+          "linkSendSuccess": "Workspace link successfully sent to client!",
+          "detailSource": "Project finance module & contracts"
+        }
+      },
+      "paging": {
+        "showing": "Showing {{start}}-{{end}} of {{total}} clients"
       }
     },
     "tasks": {
@@ -1449,13 +1704,18 @@
         "todo": "未着手",
         "inprogress": "進行中",
         "review": "レビュー中",
-        "done": "完了"
+        "done": "完了",
+        "in_progress": "In Progress",
+        "blocked": "Blocked"
       },
       "actions": {
         "moveLeft": "左に移動",
         "moveRight": "右に移動",
         "delete": "削除",
-        "deleteTask": "「{{title}}」を削除"
+        "deleteTask": "「{{title}}」を削除",
+        "retry": "Retry",
+        "edit": "Edit",
+        "editTask": "Edit {{title}}"
       },
       "addToCol": "{{col}} にタスクを追加",
       "stats": {
@@ -1464,7 +1724,19 @@
       },
       "toast": {
         "moved": "「{{title}}」→ {{col}}",
-        "created": "タスクを作成：「{{title}}」"
+        "created": "タスクを作成：「{{title}}」",
+        "movedClean": "\"{{title}}\" moved to {{col}}",
+        "loadError": "Could not load tasks.",
+        "deleted": "Task deleted: \"{{title}}\"",
+        "createError": "Could not create task.",
+        "updateError": "Could not update task.",
+        "deleteError": "Could not delete task.",
+        "deadlineInvalid": "Choose a valid deadline.",
+        "deadlinePast": "Deadline cannot be in the past.",
+        "notesTooLong": "Task notes must be under 4000 characters.",
+        "titleRequired": "Task title is required.",
+        "projectRequired": "A project is required.",
+        "updated": "Task updated."
       },
       "modal": {
         "title": "タスクを作成",
@@ -1476,7 +1748,20 @@
         "deadline": "期限",
         "initialCol": "初期列",
         "submit": "タスクを作成",
-        "select": "選択…"
+        "select": "選択…",
+        "notes": "Notes",
+        "notesPlaceholder": "Add context, blockers, or reminder details..."
+      },
+      "noProjects": "No assigned projects are available for task creation.",
+      "reminder": {
+        "dueSoon": "Due in {{count}}d"
+      },
+      "edit": {
+        "title": "Edit task"
+      },
+      "confirmDelete": {
+        "title": "Delete task?",
+        "body": "This task will be permanently removed and cannot be recovered."
       }
     },
     "messages": {
@@ -1498,15 +1783,40 @@
         "callStarted": "{{name}} との通話を開始中…",
         "videoReady": "{{name}} とのビデオを開始中…",
         "optionsOpened": "オプションメニューを開きました。",
-        "attachmentOpened": "添付ファイル選択を開きました。"
+        "attachmentOpened": "添付ファイル選択を開きました。",
+        "callRequestOpened": "Call request opened for {{name}}.",
+        "videoRequestOpened": "Video request opened for {{name}}.",
+        "attachmentSelected": "{{name}} attached as a message reference.",
+        "attachmentTooLarge": "Choose a file under 10 MB.",
+        "contextCopied": "Thread context copied.",
+        "contextCopyError": "Thread context could not be copied.",
+        "attachmentUploadError": "Attachment could not be uploaded."
       },
       "actions": {
         "call": "音声通話を開始",
         "video": "ビデオ通話を開始",
         "more": "その他のオプション",
         "attach": "ファイルを添付",
-        "send": "メッセージを送信"
-      }
+        "send": "メッセージを送信",
+        "email": "Email contact",
+        "copyContext": "Copy thread context",
+        "clearAttachment": "Remove attachment reference"
+      },
+      "loadProjectsError": "Could not load project scopes.",
+      "projectScope": "Project scope",
+      "noProjectScopes": "No assigned projects. Messages will use a general thread.",
+      "allExhibitions": "All exhibitions",
+      "allContacts": "{{count}} contacts",
+      "generalThread": "General thread",
+      "scopedTo": "Scoped to {{project}}",
+      "attachmentDraft": "Attachment reference: {{name}}",
+      "attachmentFallback": "Attachment",
+      "newConversation": "New conversation",
+      "newChatSearchPlaceholder": "Find a contact…",
+      "newChatHint": "Select a contact to start a new thread",
+      "newChatNoMatch": "No contacts match your search.",
+      "newChatAllAdded": "All contacts are already in your conversations.",
+      "uploadingAttachment": "Uploading attachment..."
     },
     "requests": {
       "title": "修正依頼",
@@ -1537,7 +1847,8 @@
         "reply": "返信",
         "sendReply": "返信を送信",
         "expand": "返信を表示",
-        "collapse": "返信を非表示"
+        "collapse": "返信を非表示",
+        "details": "Details"
       },
       "toast": {
         "started": "依頼を開始しました",
@@ -1545,6 +1856,27 @@
         "resolved": "依頼を解決しました",
         "pending": "依頼を保留に設定しました",
         "replySent": "返信を送信しました"
+      },
+      "loadError": "Revision requests could not be loaded.",
+      "statusError": "Request status could not be saved.",
+      "replyError": "Reply could not be saved.",
+      "searchPlaceholder": "Search requests...",
+      "history": {
+        "title": "Request history",
+        "meta": "{{actor}} / {{time}}",
+        "empty": "No request history has been recorded yet."
+      },
+      "detail": {
+        "request": "Request",
+        "replies": "Replies",
+        "noReplies": "No replies yet."
+      },
+      "confirmDecline": {
+        "title": "Decline this request?",
+        "body": "The client will see this request marked as Declined. This action cannot be undone."
+      },
+      "paging": {
+        "showing": "Showing {{start}}-{{end}} of {{total}} requests"
       }
     },
     "reports": {
@@ -1554,7 +1886,10 @@
       "total": "合計：{{count}} 件のプロジェクト",
       "period": {
         "this_week": "今週",
-        "last_week": "先週"
+        "last_week": "先週",
+        "this_month": "This Month",
+        "last_month": "Last Month",
+        "this_quarter": "This Quarter"
       },
       "stats": {
         "completionRate": "完了率",
@@ -1587,7 +1922,122 @@
         "delayed": "遅延"
       },
       "toast": {
-        "exporting": "エクスポートを開始しました…"
+        "exporting": "エクスポートを開始しました…",
+        "exported": "Excel report exported"
+      },
+      "loadError": "Report data could not be loaded.",
+      "loading": "Loading report data...",
+      "empty": "No report data has been recorded for this period."
+    },
+    "join": {
+      "pageTitle": "Join the Team",
+      "pageSubtitle": "Complete your profile to activate your Project Manager account.",
+      "inviteConfirmed": "Invitation confirmed",
+      "joiningAs": "Joining as a <bold>Project Manager</bold> with email <email>{{email}}</email>",
+      "form": {
+        "fullName": "Full Name",
+        "fullNamePlaceholder": "Your full name",
+        "password": "Password",
+        "passwordPlaceholder": "At least 8 characters",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Re-enter your password",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "passwordMismatch": "Passwords do not match.",
+        "submit": "Create My Account",
+        "submitting": "Creating Account…"
+      },
+      "strength": {
+        "weak": "Weak",
+        "fair": "Fair",
+        "good": "Good",
+        "strong": "Strong"
+      },
+      "error": {
+        "title": "Invitation Not Valid",
+        "noToken": "No invitation token found in the URL. Please use the link from your invitation email.",
+        "invalidToken": "This invitation link is not valid.",
+        "contact": "If you believe this is a mistake, please contact your administrator to resend the invitation.",
+        "adminEmail": "admin@ens-agency.com",
+        "goToLogin": "Go to Login",
+        "nameRequired": "Please enter your full name.",
+        "passwordTooShort": "Password must be at least 8 characters.",
+        "passwordMismatch": "Passwords do not match.",
+        "generic": "Something went wrong. Please try again."
+      },
+      "success": {
+        "title": "Account Created!",
+        "body": "Welcome to the ENS team, {{name}}! Your account is ready. You'll be redirected to the login page in a moment.",
+        "goToLogin": "Go to Login Now"
+      }
+    },
+    "workspace": {
+      "furnitureCategory": {
+        "all": "All",
+        "chairs": "Chairs",
+        "stools": "Bar stools",
+        "seating": "Sofas & poufs",
+        "tables": "Tables",
+        "storage": "Storage",
+        "shelves": "Shelves",
+        "appliances": "Appliances",
+        "lighting": "Lights",
+        "decor": "Decor",
+        "parts": "Parts"
+      }
+    },
+    "calendar": {
+      "title": "Calendar",
+      "breadcrumb": "Calendar",
+      "addEvent": "Add Event",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "searchPlaceholder": "Search events…",
+      "today": "Today",
+      "eventsThisMonth": "events this month",
+      "addToDay": "Add",
+      "noEventsDay": "No events scheduled for this day.",
+      "upcomingThisMonth": "Events This Month",
+      "noEvents": "No events match the current filters.",
+      "error": {
+        "load": "Failed to load calendar",
+        "nameRequired": "Name is required",
+        "startRequired": "Start date is required",
+        "endRequired": "End date is required",
+        "endBeforeStart": "End date must be on or after start date",
+        "save": "Failed to save",
+        "delete": "Failed to delete"
+      },
+      "filter": {
+        "all": "All",
+        "active": "Active",
+        "pending": "Pending",
+        "delayed": "Delayed",
+        "completed": "Completed"
+      },
+      "create": {
+        "title": "Add Event",
+        "description": "Add an exhibition or deadline to your calendar.",
+        "confirm": "Create Event"
+      },
+      "edit": {
+        "title": "Edit Event",
+        "description": "Update event details.",
+        "confirm": "Save Changes"
+      },
+      "delete": {
+        "title": "Delete Event",
+        "description": "Remove \"{{name}}\" from the calendar?",
+        "confirm": "Delete"
+      },
+      "form": {
+        "name": "Event Name",
+        "client": "Client",
+        "location": "Location",
+        "start": "Start Date",
+        "end": "End Date",
+        "standType": "Stand Type",
+        "status": "Status"
       }
     }
   },
@@ -1642,7 +2092,16 @@
         "review": "クライアントレビュー",
         "reviewRequired": "レビュー必要",
         "noReview": "保留中のレビューなし"
-      }
+      },
+      "waitingTitle": "Waiting for Chief assignment",
+      "waitingDesc": "Your account is in the system. The Chief Manager needs to assign a project manager and project before your workspace unlocks.",
+      "messageTeamBtn": "Message team",
+      "reviewTitle": "Booth design ready for review",
+      "reviewDesc": "The latest design for {{name}} has been shared with you. Open the workspace to inspect it, approve it, or request changes.",
+      "openWorkspaceBtn": "Open Workspace",
+      "reviewApprovalBtn": "Review Approval",
+      "workspaceLocked": "Workspace locked until assignment",
+      "workspaceLockedDesc": "You will be notified when your project manager is assigned."
     },
     "approvals": {
       "pageTitle": "承認 | ENS",
@@ -1705,7 +2164,8 @@
         "total": "ファイル総数",
         "final": "確定版",
         "inReview": "レビュー中",
-        "drafts": "下書き"
+        "drafts": "下書き",
+        "categories": "Categories"
       },
       "status": {
         "final": "確定版",
@@ -1744,7 +2204,8 @@
         "status": "ステータス",
         "uploadedBy": "アップロード者",
         "tags": "タグ",
-        "downloadBtn": "ファイルをダウンロード"
+        "downloadBtn": "ファイルをダウンロード",
+        "mimeType": "Type"
       }
     },
     "messages": {
@@ -1766,7 +2227,14 @@
         "more": "その他のオプション",
         "attach": "ファイルを添付",
         "send": "メッセージを送信"
-      }
+      },
+      "error": {
+        "contacts": "Could not load message contacts.",
+        "messages": "Could not load messages.",
+        "attachmentTooLarge": "Attachment is too large. Maximum file size is 25 MB."
+      },
+      "noMessages": "No messages yet.",
+      "uploading": "Uploading attachment..."
     },
     "projects": {
       "pageTitle": "マイプロジェクト | ENS",
@@ -1793,12 +2261,15 @@
         "system": "システム",
         "size": "サイズ",
         "pm": "PM",
-        "deadline": "締切"
+        "deadline": "締切",
+        "noDate": "No date"
       },
       "timeline": {
         "heading": "プロジェクトタイムライン",
         "defaultLabel": "プロジェクト作成済み — デザイン進行中",
-        "defaultDate": "最近"
+        "defaultDate": "最近",
+        "movedFromTo": "Moved from {{from}} to {{to}}",
+        "movedTo": "Moved to {{to}}"
       },
       "action": {
         "viewDesign": "デザインを見る",
@@ -1806,7 +2277,10 @@
         "approvals": "承認",
         "documents": "ドキュメント",
         "messagePm": "PMに連絡"
-      }
+      },
+      "loadError": "Could not load your assigned projects.",
+      "emptyTitle": "No assigned projects yet",
+      "emptyDesc": "Your exhibition registration is in the system. A Chief Manager or Project Manager needs to assign a project before it appears here."
     },
     "profile": {
       "pageTitle": "プロフィール設定 | ENS",
@@ -2003,7 +2477,56 @@
         "zoomIn": "ズームイン",
         "zoomOut": "ズームアウト",
         "fullscreen": "全画面"
-      }
+      },
+      "unassigned": {
+        "title": "Workspace waiting for assignment",
+        "body": "Your account exists, but the Chief Manager has not assigned a project manager and booth project yet. You'll get access as soon as your account is set up.",
+        "backBtn": "Back to Dashboard"
+      },
+      "revisions": {
+        "counter": "Revisions: {{count}} / {{limit}}",
+        "upgradeBtn": "Upgrade Revisions",
+        "exhaustedTitle": "Revision limit reached",
+        "exhaustedBody": "You have used all included arrangement rounds. Upgrade your plan to unlock more revisions.",
+        "upgradeDialog": {
+          "title": "Upgrade Revisions Plan",
+          "subtitle": "Choose a plan to unlock more revision rounds.",
+          "starter": {
+            "name": "Starter",
+            "description": "Adds 3 extra client revision rounds",
+            "price": "$2.99"
+          },
+          "pro": {
+            "name": "Pro",
+            "description": "Adds 8 extra revision rounds",
+            "price": "$9.99"
+          },
+          "unlimited": {
+            "name": "Unlimited",
+            "description": "Unlimited revision rounds",
+            "price": "$11.99"
+          },
+          "cancelBtn": "Cancel",
+          "continueBtn": "Continue to checkout"
+        }
+      },
+      "feedbackFilter": {
+        "open": "Open",
+        "all": "All",
+        "resolved": "Resolved"
+      },
+      "pinStatus": {
+        "resolved": "Resolved",
+        "open": "Open",
+        "reopen": "Reopen",
+        "resolve": "Resolve"
+      },
+      "backToDashboard": "Back to Dashboard"
+    },
+    "pendingApproval": {
+      "title": "Pending Approval",
+      "body": "Hi {{firstName}}, your account has been created and is waiting for your agency to review and approve it. You'll have full access once they do.",
+      "emailNote": "You'll receive an email notification when your account is activated."
     }
   },
   "notFound": {

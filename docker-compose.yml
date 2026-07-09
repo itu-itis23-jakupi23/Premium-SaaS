@@ -36,6 +36,7 @@ services:
       STAFF_SIGNUP_KEY: ${STAFF_SIGNUP_KEY:?STAFF_SIGNUP_KEY must be set to gate staff/chief signup}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_FROM: ${RESEND_FROM:-ENS Agency <noreply@ens.example.com>}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
     ports:
       - "5000:5000"
     healthcheck:

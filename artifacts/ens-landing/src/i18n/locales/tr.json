@@ -1,4 +1,4 @@
-﻿{
+{
   "common": {
     "startDesigning": "Tasarlamaya Başla",
     "watchDemo": "Demo İzle",
@@ -141,7 +141,33 @@
       "cookies": "Çerez Politikası",
       "gdpr": "KVKK / GDPR"
     },
-    "pageTitle": "ENS — Fuar ve Stand Tasarım Platformu"
+    "pageTitle": "ENS — Fuar ve Stand Tasarım Platformu",
+    "chiefFeatures": {
+      "workspaceMonitor": {
+        "title": "Workspace Monitor",
+        "desc": "Live oversight of every active design session across all projects."
+      },
+      "teamManagement": {
+        "title": "Team Management",
+        "desc": "Assign project managers, track workloads, and manage access levels."
+      },
+      "clientPortfolio": {
+        "title": "Client Portfolio",
+        "desc": "Full view of all client accounts, contacts, and active contracts."
+      },
+      "analytics": {
+        "title": "Analytics & Reports",
+        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
+      },
+      "approvalGateway": {
+        "title": "Approval Gateway",
+        "desc": "Final structural and design sign-off before production release."
+      },
+      "commsHub": {
+        "title": "Communications Hub",
+        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
+      }
+    }
   },
   "team": {
     "hero": {
@@ -385,7 +411,27 @@
         "assignManagers": "Yönetici Ata",
         "openQueue": "Kuyruğu Aç"
       },
-      "pageTitle": "Gösterge Paneli | ENS"
+      "pageTitle": "Gösterge Paneli | ENS",
+      "retry": "Retry",
+      "pieShare": "Share",
+      "workflow": {
+        "title": "Assignment control",
+        "desc": "New accounts and unassigned work that need Chief action.",
+        "openAssignments": "Open assignments",
+        "pendingAccounts": "Pending accounts",
+        "pendingAccountsDetail": "Client accounts awaiting review",
+        "pendingAccountsClear": "No accounts pending",
+        "newPMs": "New PMs",
+        "newPMsClear": "No PM accounts waiting",
+        "unassignedClients": "Unassigned clients",
+        "unassignedClientsClear": "All clients assigned",
+        "unassignedProjects": "Unassigned projects",
+        "unassignedProjectsClear": "All projects assigned",
+        "stalledApprovals": "Stalled approvals",
+        "stalledApprovalsClear": "No stale approvals",
+        "overloadedPMs": "Overloaded PMs",
+        "overloadedPMsClear": "Capacity looks stable"
+      }
     },
     "managers": {
       "title": "Yönetici Yönetimi",
@@ -423,7 +469,11 @@
         "moreInvites": "+{{count}} daha",
         "copyLink": "{{email}} için davet linkini kopyala",
         "resend": "{{email}} adresine daveti yeniden gönder",
-        "revoke": "{{email}} için daveti iptal et"
+        "revoke": "{{email}} için daveti iptal et",
+        "showMore": "Show {{count}} more",
+        "showLess": "Show less",
+        "emailFailed": "Email not sent",
+        "emailProviderNotConfigured": "email provider is not configured"
       },
       "invite": {
         "title": "Yönetici Davet Et",
@@ -471,7 +521,14 @@
         "clients": "Müşteriler",
         "projects": "Projeler",
         "saved": "Atamalar güncellendi",
-        "selectRow": "{{name}} seç"
+        "selectRow": "{{name}} seç",
+        "searchClients": "Search clients...",
+        "searchProjects": "Search projects...",
+        "loading": "Loading assignments...",
+        "showing": "{{total}} total / showing {{start}}-{{end}}",
+        "previous": "Previous",
+        "next": "Next",
+        "page": "Page {{page}}"
       },
       "discard": {
         "title": "Atama değişiklikleri silinsin mi?",
@@ -482,7 +539,8 @@
         "delayed": "gecikmiş",
         "urgent": "acil",
         "ratingNew": "Yeni",
-        "ratingNA": "Yok"
+        "ratingNA": "Yok",
+        "capacityDetail": "Capacity: {{projects}}/{{maxProjects}} active projects · {{clients}}/{{maxClients}} clients"
       },
       "table": {
         "manager": "Yönetici",
@@ -533,16 +591,21 @@
           "access": "Erişim",
           "assignment": "Atama",
           "rebalance": "Yeniden Dengeleme",
-          "reminder": "Hatırlatıcı"
+          "reminder": "Hatırlatıcı",
+          "ratingUpdated": "Rating updated"
         },
         "detail": {
           "invited": "{{name}} için davet kuyruğa alındı.",
           "statusChanged": "{{name}} {{status}} olarak işaretlendi.",
           "assignmentsSaved": "Atama değişiklikleri kaydedildi.",
           "rebalanced": "{{project}}, {{from}}'dan {{to}}'ya taşındı.",
-          "reminded": "{{name}} için uygulama içi hatırlatıcı kuyruğa alındı — {{count}} öncelikli öğe."
+          "reminded": "{{name}} için uygulama içi hatırlatıcı kuyruğa alındı — {{count}} öncelikli öğe.",
+          "ratingUpdated": "Rating set to {{rating}}"
         },
-        "justNow": "Az önce"
+        "justNow": "Az önce",
+        "exportExcel": "Export as Excel",
+        "collapse": "Collapse",
+        "expand": "Expand"
       },
       "actions": {
         "openDetails": "Detayları Aç",
@@ -581,7 +644,12 @@
         "rebalanceError": "İş yükü yeniden dengelenemedi",
         "rebalanceDone": "İş yükü yeniden dengelendi",
         "reminderSent": "{{name}} için hatırlatıcı kuyruğa alındı — bildirim oluşturuldu",
-        "reminderError": "Hatırlatıcı gönderilemedi"
+        "reminderError": "Hatırlatıcı gönderilemedi",
+        "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
+        "ratingUpdated": "Rating updated to {{rating}}"
+      },
+      "error": {
+        "rating": "Failed to update rating"
       }
     },
     "reports": {
@@ -645,7 +713,9 @@
         "colWaitDays": "Bekleme Günleri",
         "colStage": "Aşama",
         "rowTotals": "Toplamlar"
-      }
+      },
+      "notConfigured": "Not configured",
+      "revenueNotice": "Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data."
     },
     "messages": {
       "title": "Mesajlar",
@@ -905,11 +975,22 @@
       "toast": {
         "updated": "{{name}} güncellendi",
         "openMonitor": "{{name}} için monitör açılıyor",
-        "moved": "{{name}}, {{stage}} aşamasına taşındı"
+        "moved": "{{name}}, {{stage}} aşamasına taşındı",
+        "created": "Project \"{{name}}\" created.",
+        "exported": "Projects exported to Excel."
       },
       "validate": {
         "required": "Proje adı ve müşteri zorunludur.",
         "dimensions": "Genişlik ve derinlik 1 ile 100 metre arasında olmalıdır."
+      },
+      "exportTooltip": "Export project list to Excel",
+      "export": "Export",
+      "newProject": "New Project",
+      "create": {
+        "title": "New Project",
+        "description": "Fill in the details below to create a new exhibition project.",
+        "creating": "Creating…",
+        "confirm": "Create Project"
       }
     },
     "calendar": {
@@ -1056,7 +1137,10 @@
         "openedPreview": "{{name}} önizlemesi açıldı",
         "joinedSession": "{{name}} izleme oturumuna katıldı",
         "reassigned": "{{name}}, {{pm}} kişisine yeniden atandı"
-      }
+      },
+      "refreshedJustNow": "Refreshed just now",
+      "refreshedSecondsAgo": "{{s}}s ago",
+      "refreshedMinutesAgo": "{{m}}m ago"
     },
     "settings": {
       "pageTitle": "Ayarlar | ENS",
@@ -1190,7 +1274,9 @@
           "description": "Bu hesapta oturum açık olan cihazları inceleyin.",
           "signOutOthers": "Diğerlerini çıkış yap",
           "signOut": "Çıkış yap",
-          "current": "mevcut"
+          "current": "mevcut",
+          "loading": "Loading active sessions...",
+          "empty": "No active sessions were returned by the server."
         },
         "toast": {
           "passwordSaved": "Şifre güncellendi",
@@ -1247,6 +1333,49 @@
         "exported": "Ayarlar dışa aktarıldı",
         "restored": "Ayarlar varsayılanlara geri yüklendi",
         "restoredLocal": "Yerel ayarlar geri yüklendi"
+      },
+      "readiness": {
+        "title": "Production readiness",
+        "desc": "Real deployment checks for database, email, auth, app URL, and workspace asset storage.",
+        "ready": "Ready",
+        "notReady": "Not ready",
+        "refresh": "Refresh",
+        "mode": "Mode",
+        "apiJsonLimit": "API JSON limit",
+        "assetStorage": "Asset storage",
+        "unknown": "Unknown",
+        "blockingWarnings": "Blocking warnings",
+        "noWarnings": "No blocking production warnings reported by the backend.",
+        "checks": {
+          "databaseConfigured": {
+            "title": "Hosted database",
+            "desc": "DATABASE_URL is configured"
+          },
+          "emailConfigured": {
+            "title": "Transactional email",
+            "desc": "RESEND_API_KEY and RESEND_FROM are configured"
+          },
+          "appUrlConfigured": {
+            "title": "Public app URL",
+            "desc": "APP_URL is an absolute URL"
+          },
+          "staffAccessConfigured": {
+            "title": "Staff access gate",
+            "desc": "Staff/chief signup key is not a placeholder"
+          },
+          "authSecretConfigured": {
+            "title": "Auth secret",
+            "desc": "AUTH_SECRET is not a placeholder"
+          },
+          "assetStorageConfigured": {
+            "title": "Workspace asset storage",
+            "desc": "Uploaded logos and panel images use durable storage"
+          },
+          "productionMode": {
+            "title": "Production mode",
+            "desc": "NODE_ENV is production"
+          }
+        }
       }
     }
   },
@@ -1312,7 +1441,10 @@
         "inProgress": "Devam Ediyor",
         "resolved": "Çözüldü",
         "declined": "Reddedildi"
-      }
+      },
+      "close": "Close",
+      "previous": "Previous",
+      "next": "Next"
     },
     "dashboard": {
       "title": "Proje Yöneticisi Panosu",
@@ -1323,7 +1455,13 @@
         "activeProjects": "Aktif Projeler",
         "pendingReviews": "Bekleyen İncelemeler",
         "completed": "Tamamlandı",
-        "workspaceFiles": "Çalışma Alanı Dosyaları"
+        "workspaceFiles": "Çalışma Alanı Dosyaları",
+        "managedTrend": "Managed clients",
+        "liveTrend": "Live & In Progress",
+        "needsAttention": "Needs attention",
+        "allClear": "All clear",
+        "deliveredTrend": "Successfully delivered",
+        "workspacesOpenTrend": "Workspaces open"
       },
       "activeWork": {
         "title": "Aktif Proje Çalışması",
@@ -1346,13 +1484,27 @@
         "reviewRisk": "Riski incele",
         "activeWorkspaces": "{{count}} aktif çalışma alanı",
         "activeWorkspacesDesc": "Fuar tasarımları düzenleme için hazır.",
-        "openWorkspace": "Çalışma alanını aç"
+        "openWorkspace": "Çalışma alanını aç",
+        "noDelays": "No projects are currently delayed",
+        "noPending": "Approval queue is empty",
+        "completedProjects": "Completed Projects",
+        "completedProjectsDesc": "Projects successfully delivered to clients",
+        "viewCompleted": "View completed"
       },
       "recentActivity": {
         "title": "Son Aktivite",
         "loading": "Aktivite yükleniyor...",
         "empty": "Henüz hiçbir aktivite olayı kaydedilmedi."
-      }
+      },
+      "exported": "Dashboard exported to Excel.",
+      "export": "Export",
+      "charts": {
+        "activity": "Project Activity",
+        "activityDesc": "Daily project updates over the last 7 days",
+        "status": "Project Status",
+        "statusDesc": "{{count}} projects tracked"
+      },
+      "retry": "Retry"
     },
     "projects": {
       "title": "Projelerim",
@@ -1372,7 +1524,8 @@
       },
       "view": {
         "list": "Liste görünümü",
-        "grid": "Izgara görünümü"
+        "grid": "Izgara görünümü",
+        "kanban": "Kanban view"
       },
       "table": {
         "project": "Proje",
@@ -1393,7 +1546,10 @@
       "actions": {
         "open": "Aç",
         "details": "Detaylar",
-        "openWorkspace": "Çalışma alanını aç"
+        "openWorkspace": "Çalışma alanını aç",
+        "advance": "Advance",
+        "delete": "Delete",
+        "edit": "Edit"
       },
       "modal": {
         "title": "Yeni proje oluştur",
@@ -1404,11 +1560,66 @@
         "systemCustom": "Özel",
         "width": "Genişlik (m)",
         "depth": "Derinlik (m)",
-        "submit": "Proje oluştur"
+        "submit": "Proje oluştur",
+        "dimensionsInvalid": "Width and depth must be between 1 and 100 meters.",
+        "deadlineInvalid": "Deadline must be today or later.",
+        "nameClientRequired": "Name and client are required."
       },
       "toast": {
         "created": "\"{{name}}\" projesi kaydedildi.",
-        "createError": "Proje oluşturulamadı."
+        "createError": "Proje oluşturulamadı.",
+        "stageUpdated": "{{name}} moved to {{stage}}.",
+        "stageError": "Project stage could not be saved.",
+        "edited": "\"{{name}}\" updated.",
+        "editError": "Could not save changes.",
+        "deleted": "\"{{name}}\" deleted.",
+        "deleteError": "Could not delete project.",
+        "exported": "Projects exported to Excel."
+      },
+      "stage": {
+        "intake": "Intake",
+        "design": "Design",
+        "review": "Review",
+        "production": "Production",
+        "closed": "Closed"
+      },
+      "detail": {
+        "stage": "Stage: {{stage}}",
+        "description": "Description",
+        "noDescription": "No project description has been saved yet.",
+        "lifecycle": "Lifecycle",
+        "history": "Stage history",
+        "historyMeta": "{{from}} → {{to}}",
+        "historyActor": "{{actor}} / {{time}}",
+        "noHistory": "No stage changes have been recorded yet."
+      },
+      "paging": {
+        "showing": "Showing {{start}}-{{end}} of {{total}} projects"
+      },
+      "exportTooltip": "Export to Excel",
+      "export": "Export",
+      "sortBy": "Sort by",
+      "delete": {
+        "title": "Delete project?",
+        "warning": "This project and all associated data will be permanently removed.",
+        "confirm": "Delete"
+      },
+      "kanban": {
+        "empty": "No projects",
+        "planning": "Planning",
+        "progress": "In Progress",
+        "delayed": "Delayed",
+        "completed": "Completed"
+      },
+      "edit": {
+        "title": "Edit Project",
+        "submit": "Save Changes"
+      },
+      "sort": {
+        "name": "Name",
+        "deadline": "Deadline",
+        "progress": "Progress",
+        "status": "Status"
       }
     },
     "clients": {
@@ -1427,14 +1638,58 @@
         "emailClient": "{{name}} kişisine e-posta",
         "openWorkspace": "Çalışma alanını aç",
         "openWorkspaceFor": "{{name}} için çalışma alanını aç",
-        "toggleExpand": "{{name}} ayrıntılarını aç/kapat"
+        "toggleExpand": "{{name}} ayrıntılarını aç/kapat",
+        "noWorkspace": "No project workspace is available",
+        "openDetails": "Open details for {{name}}",
+        "viewProject": "View project",
+        "message": "Message",
+        "messageClient": "Message {{name}}",
+        "sendWorkspace": "Send Workspace Link",
+        "sendBill": "Send Bill of Everything"
       },
       "detail": {
         "clientDetails": "Müşteri Detayları",
         "operationalStatus": "Operasyonel Durum",
         "assignedPm": "Atanmış PM: {{name}}",
         "lastActivity": "Son aktivite: {{time}}",
-        "dataSource": "PostgreSQL kayıtlarından yüklendi"
+        "dataSource": "PostgreSQL kayıtlarından yüklendi",
+        "contact": "Contact",
+        "linkedProject": "Linked Project",
+        "noLinkedProject": "No linked project",
+        "workspaceReady": "Project workspace link is available.",
+        "workspaceMissing": "No project workspace is linked to this client yet.",
+        "changeStatus": "Change client status",
+        "tabs": {
+          "overview": "Overview",
+          "credentials": "Credentials",
+          "billing": "Billing"
+        },
+        "credentials": {
+          "title": "Account & Security",
+          "accountId": "Account ID",
+          "role": "Portal Access Role",
+          "username": "Username/Email",
+          "password": "Password",
+          "showPassword": "Show Password",
+          "mfa": "MFA Security Status",
+          "mfaDisabled": "MFA Disabled",
+          "session": "Active Session info",
+          "webSession": "Web Browser (Chrome/Windows)"
+        },
+        "billing": {
+          "title": "Project Billing",
+          "contractValue": "Contract Value",
+          "billed": "Total Billed",
+          "outstanding": "Outstanding",
+          "status": "Invoice Status",
+          "statusPartial": "Partial Payment",
+          "sendSuccess": "Bill successfully sent to client!",
+          "linkSendSuccess": "Workspace link successfully sent to client!",
+          "detailSource": "Project finance module & contracts"
+        }
+      },
+      "paging": {
+        "showing": "Showing {{start}}-{{end}} of {{total}} clients"
       }
     },
     "tasks": {
@@ -1449,13 +1704,18 @@
         "todo": "Yapılacak",
         "inprogress": "Devam Ediyor",
         "review": "İncelemede",
-        "done": "Tamamlandı"
+        "done": "Tamamlandı",
+        "in_progress": "In Progress",
+        "blocked": "Blocked"
       },
       "actions": {
         "moveLeft": "Sola taşı",
         "moveRight": "Sağa taşı",
         "delete": "Sil",
-        "deleteTask": "\"{{title}}\" sil"
+        "deleteTask": "\"{{title}}\" sil",
+        "retry": "Retry",
+        "edit": "Edit",
+        "editTask": "Edit {{title}}"
       },
       "addToCol": "{{col}} listesine görev ekle",
       "stats": {
@@ -1464,7 +1724,19 @@
       },
       "toast": {
         "moved": "\"{{title}}\" → {{col}}",
-        "created": "Görev oluşturuldu: \"{{title}}\""
+        "created": "Görev oluşturuldu: \"{{title}}\"",
+        "movedClean": "\"{{title}}\" moved to {{col}}",
+        "loadError": "Could not load tasks.",
+        "deleted": "Task deleted: \"{{title}}\"",
+        "createError": "Could not create task.",
+        "updateError": "Could not update task.",
+        "deleteError": "Could not delete task.",
+        "deadlineInvalid": "Choose a valid deadline.",
+        "deadlinePast": "Deadline cannot be in the past.",
+        "notesTooLong": "Task notes must be under 4000 characters.",
+        "titleRequired": "Task title is required.",
+        "projectRequired": "A project is required.",
+        "updated": "Task updated."
       },
       "modal": {
         "title": "Görev oluştur",
@@ -1476,7 +1748,20 @@
         "deadline": "Son tarih",
         "initialCol": "Başlangıç sütunu",
         "submit": "Görev oluştur",
-        "select": "Seç…"
+        "select": "Seç…",
+        "notes": "Notes",
+        "notesPlaceholder": "Add context, blockers, or reminder details..."
+      },
+      "noProjects": "No assigned projects are available for task creation.",
+      "reminder": {
+        "dueSoon": "Due in {{count}}d"
+      },
+      "edit": {
+        "title": "Edit task"
+      },
+      "confirmDelete": {
+        "title": "Delete task?",
+        "body": "This task will be permanently removed and cannot be recovered."
       }
     },
     "messages": {
@@ -1498,15 +1783,40 @@
         "callStarted": "{{name}} ile arama başlatılıyor…",
         "videoReady": "{{name}} ile video açılıyor…",
         "optionsOpened": "Seçenekler menüsü açıldı.",
-        "attachmentOpened": "Dosya seçici açıldı."
+        "attachmentOpened": "Dosya seçici açıldı.",
+        "callRequestOpened": "Call request opened for {{name}}.",
+        "videoRequestOpened": "Video request opened for {{name}}.",
+        "attachmentSelected": "{{name}} attached as a message reference.",
+        "attachmentTooLarge": "Choose a file under 10 MB.",
+        "contextCopied": "Thread context copied.",
+        "contextCopyError": "Thread context could not be copied.",
+        "attachmentUploadError": "Attachment could not be uploaded."
       },
       "actions": {
         "call": "Sesli arama başlat",
         "video": "Görüntülü arama başlat",
         "more": "Daha fazla seçenek",
         "attach": "Dosya ekle",
-        "send": "Mesaj gönder"
-      }
+        "send": "Mesaj gönder",
+        "email": "Email contact",
+        "copyContext": "Copy thread context",
+        "clearAttachment": "Remove attachment reference"
+      },
+      "loadProjectsError": "Could not load project scopes.",
+      "projectScope": "Project scope",
+      "noProjectScopes": "No assigned projects. Messages will use a general thread.",
+      "allExhibitions": "All exhibitions",
+      "allContacts": "{{count}} contacts",
+      "generalThread": "General thread",
+      "scopedTo": "Scoped to {{project}}",
+      "attachmentDraft": "Attachment reference: {{name}}",
+      "attachmentFallback": "Attachment",
+      "newConversation": "New conversation",
+      "newChatSearchPlaceholder": "Find a contact…",
+      "newChatHint": "Select a contact to start a new thread",
+      "newChatNoMatch": "No contacts match your search.",
+      "newChatAllAdded": "All contacts are already in your conversations.",
+      "uploadingAttachment": "Uploading attachment..."
     },
     "requests": {
       "title": "Revizyon Talepleri",
@@ -1537,7 +1847,8 @@
         "reply": "Yanıtla",
         "sendReply": "Yanıt gönder",
         "expand": "Yanıtları göster",
-        "collapse": "Yanıtları gizle"
+        "collapse": "Yanıtları gizle",
+        "details": "Details"
       },
       "toast": {
         "started": "Talep başlatıldı",
@@ -1545,6 +1856,27 @@
         "resolved": "Talep çözüldü",
         "pending": "Talep beklemede ayarlandı",
         "replySent": "Yanıt gönderildi"
+      },
+      "loadError": "Revision requests could not be loaded.",
+      "statusError": "Request status could not be saved.",
+      "replyError": "Reply could not be saved.",
+      "searchPlaceholder": "Search requests...",
+      "history": {
+        "title": "Request history",
+        "meta": "{{actor}} / {{time}}",
+        "empty": "No request history has been recorded yet."
+      },
+      "detail": {
+        "request": "Request",
+        "replies": "Replies",
+        "noReplies": "No replies yet."
+      },
+      "confirmDecline": {
+        "title": "Decline this request?",
+        "body": "The client will see this request marked as Declined. This action cannot be undone."
+      },
+      "paging": {
+        "showing": "Showing {{start}}-{{end}} of {{total}} requests"
       }
     },
     "reports": {
@@ -1554,7 +1886,10 @@
       "total": "Toplam: {{count}} proje",
       "period": {
         "this_week": "Bu Hafta",
-        "last_week": "Geçen Hafta"
+        "last_week": "Geçen Hafta",
+        "this_month": "This Month",
+        "last_month": "Last Month",
+        "this_quarter": "This Quarter"
       },
       "stats": {
         "completionRate": "Tamamlanma Oranı",
@@ -1587,7 +1922,122 @@
         "delayed": "Gecikmiş"
       },
       "toast": {
-        "exporting": "Dışa aktarma başlatıldı…"
+        "exporting": "Dışa aktarma başlatıldı…",
+        "exported": "Excel report exported"
+      },
+      "loadError": "Report data could not be loaded.",
+      "loading": "Loading report data...",
+      "empty": "No report data has been recorded for this period."
+    },
+    "join": {
+      "pageTitle": "Join the Team",
+      "pageSubtitle": "Complete your profile to activate your Project Manager account.",
+      "inviteConfirmed": "Invitation confirmed",
+      "joiningAs": "Joining as a <bold>Project Manager</bold> with email <email>{{email}}</email>",
+      "form": {
+        "fullName": "Full Name",
+        "fullNamePlaceholder": "Your full name",
+        "password": "Password",
+        "passwordPlaceholder": "At least 8 characters",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Re-enter your password",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "passwordMismatch": "Passwords do not match.",
+        "submit": "Create My Account",
+        "submitting": "Creating Account…"
+      },
+      "strength": {
+        "weak": "Weak",
+        "fair": "Fair",
+        "good": "Good",
+        "strong": "Strong"
+      },
+      "error": {
+        "title": "Invitation Not Valid",
+        "noToken": "No invitation token found in the URL. Please use the link from your invitation email.",
+        "invalidToken": "This invitation link is not valid.",
+        "contact": "If you believe this is a mistake, please contact your administrator to resend the invitation.",
+        "adminEmail": "admin@ens-agency.com",
+        "goToLogin": "Go to Login",
+        "nameRequired": "Please enter your full name.",
+        "passwordTooShort": "Password must be at least 8 characters.",
+        "passwordMismatch": "Passwords do not match.",
+        "generic": "Something went wrong. Please try again."
+      },
+      "success": {
+        "title": "Account Created!",
+        "body": "Welcome to the ENS team, {{name}}! Your account is ready. You'll be redirected to the login page in a moment.",
+        "goToLogin": "Go to Login Now"
+      }
+    },
+    "workspace": {
+      "furnitureCategory": {
+        "all": "All",
+        "chairs": "Chairs",
+        "stools": "Bar stools",
+        "seating": "Sofas & poufs",
+        "tables": "Tables",
+        "storage": "Storage",
+        "shelves": "Shelves",
+        "appliances": "Appliances",
+        "lighting": "Lights",
+        "decor": "Decor",
+        "parts": "Parts"
+      }
+    },
+    "calendar": {
+      "title": "Calendar",
+      "breadcrumb": "Calendar",
+      "addEvent": "Add Event",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "searchPlaceholder": "Search events…",
+      "today": "Today",
+      "eventsThisMonth": "events this month",
+      "addToDay": "Add",
+      "noEventsDay": "No events scheduled for this day.",
+      "upcomingThisMonth": "Events This Month",
+      "noEvents": "No events match the current filters.",
+      "error": {
+        "load": "Failed to load calendar",
+        "nameRequired": "Name is required",
+        "startRequired": "Start date is required",
+        "endRequired": "End date is required",
+        "endBeforeStart": "End date must be on or after start date",
+        "save": "Failed to save",
+        "delete": "Failed to delete"
+      },
+      "filter": {
+        "all": "All",
+        "active": "Active",
+        "pending": "Pending",
+        "delayed": "Delayed",
+        "completed": "Completed"
+      },
+      "create": {
+        "title": "Add Event",
+        "description": "Add an exhibition or deadline to your calendar.",
+        "confirm": "Create Event"
+      },
+      "edit": {
+        "title": "Edit Event",
+        "description": "Update event details.",
+        "confirm": "Save Changes"
+      },
+      "delete": {
+        "title": "Delete Event",
+        "description": "Remove \"{{name}}\" from the calendar?",
+        "confirm": "Delete"
+      },
+      "form": {
+        "name": "Event Name",
+        "client": "Client",
+        "location": "Location",
+        "start": "Start Date",
+        "end": "End Date",
+        "standType": "Stand Type",
+        "status": "Status"
       }
     }
   },
@@ -1642,7 +2092,16 @@
         "review": "Müşteri İncelemesi",
         "reviewRequired": "İnceleme gerekli",
         "noReview": "Bekleyen inceleme yok"
-      }
+      },
+      "waitingTitle": "Waiting for Chief assignment",
+      "waitingDesc": "Your account is in the system. The Chief Manager needs to assign a project manager and project before your workspace unlocks.",
+      "messageTeamBtn": "Message team",
+      "reviewTitle": "Booth design ready for review",
+      "reviewDesc": "The latest design for {{name}} has been shared with you. Open the workspace to inspect it, approve it, or request changes.",
+      "openWorkspaceBtn": "Open Workspace",
+      "reviewApprovalBtn": "Review Approval",
+      "workspaceLocked": "Workspace locked until assignment",
+      "workspaceLockedDesc": "You will be notified when your project manager is assigned."
     },
     "approvals": {
       "pageTitle": "Onaylar | ENS",
@@ -1705,7 +2164,8 @@
         "total": "Toplam Dosya",
         "final": "Son Hali",
         "inReview": "İncelemede",
-        "drafts": "Taslaklar"
+        "drafts": "Taslaklar",
+        "categories": "Categories"
       },
       "status": {
         "final": "Son Hali",
@@ -1744,7 +2204,8 @@
         "status": "Durum",
         "uploadedBy": "Yükleyen",
         "tags": "Etiketler",
-        "downloadBtn": "Dosyayı İndir"
+        "downloadBtn": "Dosyayı İndir",
+        "mimeType": "Type"
       }
     },
     "messages": {
@@ -1766,7 +2227,14 @@
         "more": "Daha fazla seçenek",
         "attach": "Dosya ekle",
         "send": "Mesaj gönder"
-      }
+      },
+      "error": {
+        "contacts": "Could not load message contacts.",
+        "messages": "Could not load messages.",
+        "attachmentTooLarge": "Attachment is too large. Maximum file size is 25 MB."
+      },
+      "noMessages": "No messages yet.",
+      "uploading": "Uploading attachment..."
     },
     "projects": {
       "pageTitle": "Projelerim | ENS",
@@ -1793,12 +2261,15 @@
         "system": "Sistem",
         "size": "Boyut",
         "pm": "PM",
-        "deadline": "Son Tarih"
+        "deadline": "Son Tarih",
+        "noDate": "No date"
       },
       "timeline": {
         "heading": "Proje Zaman Çizelgesi",
         "defaultLabel": "Proje oluşturuldu — tasarım devam ediyor",
-        "defaultDate": "Son zamanlarda"
+        "defaultDate": "Son zamanlarda",
+        "movedFromTo": "Moved from {{from}} to {{to}}",
+        "movedTo": "Moved to {{to}}"
       },
       "action": {
         "viewDesign": "Tasarımı Gör",
@@ -1806,7 +2277,10 @@
         "approvals": "Onaylar",
         "documents": "Belgeler",
         "messagePm": "PM'e Mesaj Gönder"
-      }
+      },
+      "loadError": "Could not load your assigned projects.",
+      "emptyTitle": "No assigned projects yet",
+      "emptyDesc": "Your exhibition registration is in the system. A Chief Manager or Project Manager needs to assign a project before it appears here."
     },
     "profile": {
       "pageTitle": "Profil Ayarları | ENS",
@@ -2003,7 +2477,56 @@
         "zoomIn": "Yaklaştır",
         "zoomOut": "Uzaklaştır",
         "fullscreen": "Tam ekran"
-      }
+      },
+      "unassigned": {
+        "title": "Workspace waiting for assignment",
+        "body": "Your account exists, but the Chief Manager has not assigned a project manager and booth project yet. You'll get access as soon as your account is set up.",
+        "backBtn": "Back to Dashboard"
+      },
+      "revisions": {
+        "counter": "Revisions: {{count}} / {{limit}}",
+        "upgradeBtn": "Upgrade Revisions",
+        "exhaustedTitle": "Revision limit reached",
+        "exhaustedBody": "You have used all included arrangement rounds. Upgrade your plan to unlock more revisions.",
+        "upgradeDialog": {
+          "title": "Upgrade Revisions Plan",
+          "subtitle": "Choose a plan to unlock more revision rounds.",
+          "starter": {
+            "name": "Starter",
+            "description": "Adds 3 extra client revision rounds",
+            "price": "$2.99"
+          },
+          "pro": {
+            "name": "Pro",
+            "description": "Adds 8 extra revision rounds",
+            "price": "$9.99"
+          },
+          "unlimited": {
+            "name": "Unlimited",
+            "description": "Unlimited revision rounds",
+            "price": "$11.99"
+          },
+          "cancelBtn": "Cancel",
+          "continueBtn": "Continue to checkout"
+        }
+      },
+      "feedbackFilter": {
+        "open": "Open",
+        "all": "All",
+        "resolved": "Resolved"
+      },
+      "pinStatus": {
+        "resolved": "Resolved",
+        "open": "Open",
+        "reopen": "Reopen",
+        "resolve": "Resolve"
+      },
+      "backToDashboard": "Back to Dashboard"
+    },
+    "pendingApproval": {
+      "title": "Pending Approval",
+      "body": "Hi {{firstName}}, your account has been created and is waiting for your agency to review and approve it. You'll have full access once they do.",
+      "emailNote": "You'll receive an email notification when your account is activated."
     }
   },
   "notFound": {

@@ -497,21 +497,26 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
     setSavedAppearance(defaultSettings.appearance);
     setTwoFactorEnabled(defaultSettings.twoFactorEnabled);
     setRecoveryCodes(defaultSettings.recoveryCodes);
-    setSessions([]);
     setSecurity({ current: "", next: "", confirm: "" });
     setAvatarDraft(defaultSettings.profile.avatarTone);
     setResetOpen(false);
     void setLanguagePreference(defaultSettings.appearance.language);
     localStorage.removeItem(storageKey);
+    const otherSessions = sessions.filter((s) => !s.current);
     try {
-      await saveAccountSettings({
-        profile: defaultSettings.profile,
-        notifications: defaultSettings.notifications,
-        appearance: defaultSettings.appearance,
-        security: { twoFactorEnabled: false, recoveryCodes: [] },
-      });
+      await Promise.all([
+        saveAccountSettings({
+          profile: defaultSettings.profile,
+          notifications: defaultSettings.notifications,
+          appearance: defaultSettings.appearance,
+          security: { twoFactorEnabled: false, recoveryCodes: [] },
+        }),
+        ...otherSessions.map((s) => revokeAccountSession(s.id)),
+      ]);
+      setSessions((current) => current.filter((s) => s.current));
       showToast(t("chief.settings.toast.restored"));
     } catch {
+      setSessions([]);
       showToast(t("chief.settings.toast.restoredLocal"));
     }
   }
@@ -751,12 +756,12 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
                   <div className="grid gap-3">
                     {sessionsLoading && (
                       <div className="rounded-lg border bg-background/40 p-3 text-sm text-muted-foreground">
-                        Loading active sessions...
+                        {t("chief.settings.security.sessions.loading")}
                       </div>
                     )}
                     {!sessionsLoading && sessions.length === 0 && (
                       <div className="rounded-lg border bg-background/40 p-3 text-sm text-muted-foreground">
-                        No active sessions were returned by the server.
+                        {t("chief.settings.security.sessions.empty")}
                       </div>
                     )}
                     {!sessionsLoading && sessions.map((session) => (
@@ -961,15 +966,16 @@ function ProductionReadinessPanel({
   error: string;
   onRefresh: () => void | Promise<void>;
 }) {
+  const { t } = useTranslation();
   const checks = readiness?.checks ?? {};
   const checkRows = [
-    ["databaseConfigured", "Hosted database", "DATABASE_URL is configured"],
-    ["emailConfigured", "Transactional email", "RESEND_API_KEY and RESEND_FROM are configured"],
-    ["appUrlConfigured", "Public app URL", "APP_URL is an absolute URL"],
-    ["staffAccessConfigured", "Staff access gate", "Staff/chief signup key is not a placeholder"],
-    ["authSecretConfigured", "Auth secret", "AUTH_SECRET is not a placeholder"],
-    ["assetStorageConfigured", "Workspace asset storage", "Uploaded logos and panel images use durable storage"],
-    ["productionMode", "Production mode", "NODE_ENV is production"],
+    "databaseConfigured",
+    "emailConfigured",
+    "appUrlConfigured",
+    "staffAccessConfigured",
+    "authSecretConfigured",
+    "assetStorageConfigured",
+    "productionMode",
   ] as const;
 
   return (
@@ -977,20 +983,20 @@ function ProductionReadinessPanel({
       <CardHeader>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <CardTitle>Production readiness</CardTitle>
+            <CardTitle>{t("chief.settings.readiness.title")}</CardTitle>
             <CardDescription>
-              Real deployment checks for database, email, auth, app URL, and workspace asset storage.
+              {t("chief.settings.readiness.desc")}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
             {readiness && (
               <Badge variant={readiness.ready ? "default" : "destructive"}>
-                {readiness.ready ? "Ready" : "Not ready"}
+                {readiness.ready ? t("chief.settings.readiness.ready") : t("chief.settings.readiness.notReady")}
               </Badge>
             )}
             <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading}>
               <RefreshCcw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} aria-hidden="true" />
-              Refresh
+              {t("chief.settings.readiness.refresh")}
             </Button>
           </div>
         </div>
@@ -1003,7 +1009,7 @@ function ProductionReadinessPanel({
         )}
 
         <div className="grid gap-3 md:grid-cols-2">
-          {checkRows.map(([key, title, description]) => {
+          {checkRows.map((key) => {
             const passed = Boolean(checks[key]);
             return (
               <div key={key} className="flex items-start gap-3 rounded-lg border bg-background/40 p-4">
@@ -1013,8 +1019,8 @@ function ProductionReadinessPanel({
                   <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" aria-hidden="true" />
                 )}
                 <div className="min-w-0">
-                  <p className="text-sm font-medium">{title}</p>
-                  <p className="text-xs text-muted-foreground">{description}</p>
+                  <p className="text-sm font-medium">{t(`chief.settings.readiness.checks.${key}.title`)}</p>
+                  <p className="text-xs text-muted-foreground">{t(`chief.settings.readiness.checks.${key}.desc`)}</p>
                 </div>
               </div>
             );
@@ -1023,22 +1029,22 @@ function ProductionReadinessPanel({
 
         <div className="grid gap-3 rounded-lg border bg-background/40 p-4 text-sm sm:grid-cols-3">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Mode</p>
-            <p className="font-medium">{readiness?.mode ?? "Unknown"}</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("chief.settings.readiness.mode")}</p>
+            <p className="font-medium">{readiness?.mode ?? t("chief.settings.readiness.unknown")}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">API JSON limit</p>
-            <p className="font-medium">{readiness?.limits?.apiJsonLimit ?? "Unknown"}</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("chief.settings.readiness.apiJsonLimit")}</p>
+            <p className="font-medium">{readiness?.limits?.apiJsonLimit ?? t("chief.settings.readiness.unknown")}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Asset storage</p>
-            <p className="font-medium">{readiness?.storage?.assetStorageProvider ?? "Unknown"}</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("chief.settings.readiness.assetStorage")}</p>
+            <p className="font-medium">{readiness?.storage?.assetStorageProvider ?? t("chief.settings.readiness.unknown")}</p>
           </div>
         </div>
 
         {readiness?.warnings?.length ? (
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
-            <p className="mb-2 text-sm font-medium text-amber-200">Blocking warnings</p>
+            <p className="mb-2 text-sm font-medium text-amber-200">{t("chief.settings.readiness.blockingWarnings")}</p>
             <ul className="space-y-1 text-sm text-amber-100">
               {readiness.warnings.map((warning) => (
                 <li key={warning}>{warning}</li>
@@ -1047,7 +1053,7 @@ function ProductionReadinessPanel({
           </div>
         ) : (
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-200">
-            No blocking production warnings reported by the backend.
+            {t("chief.settings.readiness.noWarnings")}
           </div>
         )}
       </CardContent>
