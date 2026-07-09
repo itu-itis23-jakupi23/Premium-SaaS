@@ -74,20 +74,38 @@ const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_LOCK_MS = 10 * 60 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
 
+// Accept both frontend field names and production api-server field names so that
+// smoke tests and Playwright tests run identically against both backends.
 const signupSchema = z.object({
   name: z.string().trim().min(2).max(120),
   company: z.string().trim().min(2).max(160),
-  exhibition: z.string().trim().min(2).max(160),
+  // Canonical name (api-server)
+  exhibitionName: z.string().trim().min(2).max(160).optional(),
+  // Legacy name (frontend / dev-backend)
+  exhibition: z.string().trim().min(2).max(160).optional(),
+  boothSizeSqm: z.number().finite().min(1).max(2500).optional(),
   boothWidthM: z.number().finite().min(1).max(50).optional(),
   boothDepthM: z.number().finite().min(1).max(50).optional(),
   preferredSystem: z.string().trim().max(80).optional(),
+  city: z.string().trim().max(160).optional(),
   venueCity: z.string().trim().max(160).optional(),
+  deadline: z.string().trim().max(40).optional(),
   targetDate: z.string().trim().max(40).optional(),
+  notes: z.string().trim().max(1000).optional(),
   intakeNotes: z.string().trim().max(1000).optional(),
   email: z.string().trim().email().max(254),
   password: z.string().min(8).max(200).regex(/[A-Z]/).regex(/[0-9]/),
   organizationSlug: z.string().trim().max(120).optional(),
-});
+}).transform((data) => ({
+  ...data,
+  // Normalize to internal field names, preferring legacy then canonical
+  exhibition: data.exhibition ?? data.exhibitionName ?? "",
+  venueCity: data.venueCity ?? data.city ?? "",
+  targetDate: data.targetDate ?? data.deadline ?? "",
+  intakeNotes: data.intakeNotes ?? data.notes ?? "",
+  boothWidthM: data.boothWidthM ?? (data.boothSizeSqm ? Math.round(Math.sqrt(data.boothSizeSqm) * 10) / 10 : undefined),
+  boothDepthM: data.boothDepthM ?? (data.boothSizeSqm ? Math.round(Math.sqrt(data.boothSizeSqm) * 10) / 10 : undefined),
+})).refine((data) => data.exhibition.length >= 2, { message: "Exhibition name is required", path: ["exhibition"] });
 
 const chiefBootstrapSchema = z.object({
   name: z.string().trim().min(2).max(120),

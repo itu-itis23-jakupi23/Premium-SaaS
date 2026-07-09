@@ -169,8 +169,7 @@ async function contactsFor(actor: Actor) {
         && (user.id === client.managerId || user.name.trim().toLowerCase() === client.pm.trim().toLowerCase())
       ))
       : null;
-    const chief = clientUsers.find((user) => user.role === "chief");
-    return [assignedPm, chief].filter(Boolean).filter(uniqueContact).map(toContact);
+    return [assignedPm].filter(Boolean).filter(uniqueContact).map(toContact);
   }
   if (actor.role === "pm") {
     const assignedClients = clients.filter((client) => (
