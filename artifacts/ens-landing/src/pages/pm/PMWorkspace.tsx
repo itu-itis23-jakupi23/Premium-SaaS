@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import { Booth3D } from "@/components/workspace/Booth3D";
 import type { BoothSystem } from "@/components/workspace/BoothCanvas";
@@ -454,7 +455,7 @@ function normalizePanelOverrides(raw:unknown): Record<string,PanelOverride> {
 
 function isWorkspaceImageUrl(value:string) {
   return (
-    (/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i.test(value) && value.length < 2_500_000)
+    (/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i.test(value) && value.length < 512_000)
     || (/^\/workspace-assets\/[a-z0-9%._/-]+$/i.test(value) && value.length < 1000)
   );
 }
@@ -659,6 +660,7 @@ function workspaceSnapshots(record: ProjectWorkspace): Snapshot[] {
 
 // ── Main ──────────────────────────────────────────────────────────
 export default function PMWorkspace() {
+  const { t } = useTranslation();
   const [ws,    setWS]    = useState<WSData>(INITIAL_WS);
   const histStackRef      = useRef<WSData[]>([INITIAL_WS]);
   const histIdxRef        = useRef(0);
@@ -1056,8 +1058,8 @@ export default function PMWorkspace() {
       setToast('Please choose an image file');
       return;
     }
-    if(file.size > 5_000_000) {
-      setToast('Image must be under 5 MB');
+    if(file.size > 384_000) {
+      setToast('Image must be under 375 KB');
       return;
     }
     const reader = new FileReader();
@@ -1163,8 +1165,8 @@ export default function PMWorkspace() {
       setToast('Please choose an image file');
       return;
     }
-    if(file.size > 5_000_000) {
-      setToast('Image must be under 5 MB');
+    if(file.size > 384_000) {
+      setToast('Image must be under 375 KB');
       return;
     }
     const reader = new FileReader();
@@ -1683,7 +1685,7 @@ export default function PMWorkspace() {
                             return (
                               <button key={category} type="button" onClick={()=>setActiveFurnitureCategory(category)}
                                 style={{height:24,whiteSpace:'nowrap',border:`1px solid ${active?C.blue:C.hair}`,borderRadius:4,background:active?`${C.blue}12`:C.bg,color:active?C.blue:C.muted,cursor:'pointer',fontFamily:MONO,fontSize:8.5,fontWeight:active?700:600,padding:'0 7px',display:'flex',alignItems:'center',gap:5,flexShrink:0}}>
-                                <span>{FURNITURE_CATEGORY_LABELS[category]}</span>
+                                <span>{t(`pm.workspace.furnitureCategory.${category}`)}</span>
                                 <span style={{opacity:0.75}}>{furnitureCategoryCounts.get(category)}</span>
                               </button>
                             );

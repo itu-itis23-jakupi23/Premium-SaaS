@@ -10,6 +10,12 @@ if (import.meta.env.PROD && USE_MOCK_API) {
   );
 }
 const USE_REAL_MESSAGES = envFlag(import.meta.env.VITE_USE_REAL_MESSAGES, !USE_MOCK_API);
+if (import.meta.env.PROD && !USE_MOCK_API && !USE_REAL_MESSAGES) {
+  throw new Error(
+    "[platform-api] VITE_USE_REAL_MESSAGES=false must not be set in production builds when the real API is enabled. " +
+    "This flag must only be false in local development or explicit demo builds."
+  );
+}
 const USE_REAL_CORE = envFlag(import.meta.env.VITE_USE_REAL_CORE, !USE_MOCK_API);
 const MOCK_AUTH_STORAGE_KEY = "ens-mock-auth-user";
 const MOCK_ACCOUNT_SETTINGS_PREFIX = "ens-mock-account-settings";
@@ -1283,6 +1289,11 @@ export async function updateWorkspaceCommentStatus(
   return apiJsonWithMethod("PUT", `/platform/projects/${projectId}/comments/${commentId}/status`, { status });
 }
 
+export async function deleteWorkspaceComment(projectId: string, commentId: string): Promise<{ ok: boolean }> {
+  if (USE_MOCK_API) return { ok: true };
+  return apiJsonWithMethod("DELETE", `/platform/projects/${projectId}/comments/${commentId}`, undefined);
+}
+
 export async function saveElementStatus(
   projectId: string,
   elementStatus: Record<string, string>
@@ -1378,12 +1389,12 @@ export async function submitClientChangeRequest(
 }
 
 export async function getMessageContacts() {
-  if (USE_MOCK_API && !USE_REAL_MESSAGES) return { contacts: mockMessageContacts() };
+  if (USE_MOCK_API || !USE_REAL_MESSAGES) return { contacts: mockMessageContacts() };
   return apiGet<{ contacts: MessageContact[] }>("/platform/messages/contacts");
 }
 
 export async function getConversationMessages(contactId: string, context?: MessageContext) {
-  if (USE_MOCK_API && !USE_REAL_MESSAGES) return { conversationId: mockConversationId(contactId, context), messages: mockConversationMessages(contactId, context) };
+  if (USE_MOCK_API || !USE_REAL_MESSAGES) return { conversationId: mockConversationId(contactId, context), messages: mockConversationMessages(contactId, context) };
   const params = messageContextSearchParams(context);
   return apiGet<{ conversationId: string; messages: DirectMessage[] }>(`/platform/messages/${contactId}${params}`);
 }
@@ -1394,7 +1405,7 @@ export async function sendConversationMessage(
   context?: MessageContext,
   attachments: DirectMessageAttachment[] = [],
 ) {
-  if (USE_MOCK_API && !USE_REAL_MESSAGES) {
+  if (USE_MOCK_API || !USE_REAL_MESSAGES) {
     const current = mockConversationMessages(contactId, context);
     const message = {
       id: `mock-message-${Date.now()}`,
@@ -1417,7 +1428,7 @@ export async function sendConversationMessage(
 }
 
 export async function uploadConversationAttachment(file: File) {
-  if (USE_MOCK_API && !USE_REAL_MESSAGES) {
+  if (USE_MOCK_API || !USE_REAL_MESSAGES) {
     return {
       attachment: {
         id: `mock-attachment-${Date.now()}`,
@@ -1713,7 +1724,7 @@ export async function markAllNotificationsRead() {
   return apiPatch<{ updated: number } & NotificationCenterPayload>("/platform/notifications/read-all", {});
 }
 
-export async function recordReportExport(input: { report: string; range?: string; format: string }) {
+export async function recordReportExport(input: { report: string; range?: string; format: string; href?: string }) {
   if (USE_MOCK_API) {
     const current = mockNotifications().notifications;
     saveMockNotifications([
@@ -1721,7 +1732,7 @@ export async function recordReportExport(input: { report: string; range?: string
         id: `mock-report-export-${Date.now()}`,
         title: "Report exported",
         body: `${input.report} was exported as ${input.format.toUpperCase()}.`,
-        href: "/chief/reports",
+        href: input.href ?? "/chief/reports",
         readAt: null,
         read: false,
         createdAt: new Date().toISOString(),
@@ -1891,7 +1902,7 @@ async function apiJson<T>(path: string, body: unknown): Promise<T> {
   return apiJsonWithMethod<T>("POST", path, body);
 }
 
-async function apiJsonWithMethod<T>(method: "POST" | "PUT", path: string, body: unknown): Promise<T> {
+async function apiJsonWithMethod<T>(method: "POST" | "PUT" | "DELETE", path: string, body: unknown): Promise<T> {
   const response = await apiFetch(path, {
     method,
     credentials: "include",
@@ -2585,7 +2596,7 @@ function mockNotifications(): NotificationCenterPayload {
           id: "mock-notification-1",
           title: "Chief manager reminder",
           body: "Review delayed and due-soon project items.",
-          href: "/pm/projects",
+          href: "/chief/projects",
           readAt: null,
           read: false,
           createdAt: new Date().toISOString(),

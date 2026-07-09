@@ -86,12 +86,16 @@ function buildSrc(cfg: RequiredIframeConfig): string {
   return `/booth-render.html?${params.toString()}`;
 }
 
+const RENDERER_TIMEOUT_MS = 12_000;
+
 export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
   const cfg: RequiredIframeConfig = { ...DEFAULTS, ...config };
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
+  const [rendererError, setRendererError] = useState<string | null>(null);
   const configRef = useRef<IframeBoothConfig | undefined>(config);
   const latestPayloadRef = useRef<Record<string, unknown> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const src = useMemo(() => buildSrc(cfg), [
     cfg.width,
@@ -112,6 +116,13 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
 
   useEffect(() => {
     setReady(false);
+    setRendererError(null);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      if (!ready) setRendererError("Renderer did not respond in time. Try refreshing the page.");
+    }, RENDERER_TIMEOUT_MS);
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src]);
 
   useEffect(() => {
@@ -171,8 +182,15 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
       if (!event.data) return;
       const bridgeConfig = configRef.current;
       if (event.data.type === 'boothRendererReady') {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
         setReady(true);
+        setRendererError(null);
         setTimeout(sendUpdate, 0);
+        return;
+      }
+      if (event.data.type === 'boothRendererError') {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        setRendererError(typeof event.data.message === 'string' ? event.data.message : 'The 3D renderer encountered an error.');
         return;
       }
       if (event.data.type === 'boothUpdateAck') {
@@ -228,14 +246,41 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
     };
   }, [sendUpdate]);
 
+  if (rendererError) {
+    return (
+      <div style={{
+        width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: '12px',
+        background: 'var(--surface, #f8f8f8)', color: 'var(--muted, #666)',
+        fontSize: '14px', textAlign: 'center', padding: '24px',
+      }}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+          <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+        <span>{rendererError}</span>
+        <button
+          onClick={() => { setRendererError(null); setReady(false); }}
+          style={{
+            padding: '6px 16px', borderRadius: '6px', border: '1px solid currentColor',
+            background: 'transparent', color: 'inherit', cursor: 'pointer', fontSize: '13px',
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <iframe
       key={src}
       ref={iframeRef}
       src={src}
       title="Booth Renderer"
+      data-renderer-ready={ready ? "true" : "false"}
       style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-      onLoad={() => { setReady(true); setTimeout(sendUpdate, 50); }}
+      onLoad={() => { setTimeout(sendUpdate, 50); }}
+      onError={() => setRendererError('Failed to load the booth renderer. Check your network connection.')}
     />
   );
 }
