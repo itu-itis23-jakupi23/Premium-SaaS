@@ -708,7 +708,7 @@ accountRouter.put("/password", async (req, res) => {
   const auth = await currentAuth(req);
   if (!auth) return res.status(401).json(errorBody("Not signed in."));
   if (!(await verifyPassword(currentParsed.data.currentPassword, auth.user.passwordHash))) {
-    return res.status(403).json(errorBody("Current password is incorrect."));
+    return res.status(400).json(errorBody("Current password is incorrect."));
   }
   const parsed = passwordUpdateSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, parsed.error);
