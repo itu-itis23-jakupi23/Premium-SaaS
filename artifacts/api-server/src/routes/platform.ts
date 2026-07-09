@@ -32,11 +32,166 @@ function zParse<T>(
 
 const router: IRouter = Router();
 
+// ── Public invitation routes — registered BEFORE requireAuth so they're accessible without a session ──
+
+router.get("/platform/managers/invitations/validate", async (req, res) => {
+  const token = typeof req.query.token === "string" ? req.query.token.trim() : null;
+  if (!token) {
+    res.status(400).json({ error: { code: "token_required", message: "Invitation token is required." } });
+    return;
+  }
+
+  const rows = await queryInvRows(token);
+  const invitation = rows[0];
+
+  if (!invitation) {
+    res.status(404).json({ error: { code: "invitation_not_found", message: "This invitation link is invalid. Please ask your administrator for a new one." } });
+    return;
+  }
+  if (invitation.revokedAt) {
+    res.status(410).json({ error: { code: "invitation_revoked", message: "This invitation has been revoked." } });
+    return;
+  }
+  if (invitation.acceptedAt) {
+    res.status(409).json({ error: { code: "invitation_used", message: "This invitation has already been used. Please log in with your credentials." } });
+    return;
+  }
+  if (new Date(invitation.expiresAt) < new Date()) {
+    res.status(410).json({ error: { code: "invitation_expired", message: "This invitation link has expired. Please ask your administrator to resend the invitation." } });
+    return;
+  }
+
+  res.json({ valid: true, email: invitation.email, name: null, expiresAt: invitation.expiresAt, role: invitation.role });
+});
+
+router.post("/platform/managers/invitations/accept", async (req, res) => {
+  const body = req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {};
+  const token = typeof body.token === "string" ? body.token.trim() : null;
+  const name = typeof body.name === "string" ? body.name.trim() : null;
+  const password = typeof body.password === "string" ? body.password : null;
+
+  if (!token || !name || !password) {
+    res.status(400).json({ error: { code: "missing_fields", message: "token, name and password are required." } });
+    return;
+  }
+  if (password.length < 8) {
+    res.status(400).json({ error: { code: "password_too_short", message: "Password must be at least 8 characters." } });
+    return;
+  }
+
+  const passwordHash = hashPassword(password);
+  const result = await db.transaction(async (tx) => {
+    const invitationResult = await tx.execute(sql`
+      select
+        i.id::text,
+        i.email,
+        i.role::text,
+        i.expires_at::text as "expiresAt",
+        i.accepted_at::text as "acceptedAt",
+        i.revoked_at::text as "revokedAt",
+        i.organization_id::text as "organizationId",
+        o.slug as "organizationSlug"
+      from invitations i
+      join organizations o on o.id = i.organization_id
+      where i.token_hash = ${hashToken(token)}
+        and o.deleted_at is null
+      limit 1
+      for update of i
+    `);
+    const inv = (invitationResult as unknown as { rows: Array<{
+      id: string;
+      email: string;
+      role: string;
+      expiresAt: string;
+      acceptedAt: string | null;
+      revokedAt: string | null;
+      organizationId: string;
+      organizationSlug: string;
+    }> }).rows[0];
+
+    if (!inv) return { status: "not_found" as const };
+    if (inv.revokedAt || inv.acceptedAt || new Date(inv.expiresAt) < new Date()) {
+      return { status: "unavailable" as const };
+    }
+
+    const userResult = await tx.execute(sql`
+      insert into users (email, name, role, password_hash, email_verified_at, metadata)
+      values (${inv.email}, ${name}, ${inv.role}, ${passwordHash}, now(), '{}'::jsonb)
+      on conflict do nothing
+      returning id::text
+    `);
+    const userId = (userResult as unknown as { rows: Array<{ id: string }> }).rows[0]?.id;
+    if (!userId) return { status: "email_exists" as const };
+
+    await tx.execute(sql`
+      insert into memberships (organization_id, user_id, role, status, joined_at)
+      values (${inv.organizationId}::uuid, ${userId}::uuid, ${inv.role}, 'active', now())
+    `);
+
+    const acceptedResult = await tx.execute(sql`
+      update invitations
+      set accepted_at = now()
+      where id = ${inv.id}::uuid
+        and accepted_at is null
+        and revoked_at is null
+      returning id::text
+    `);
+    const accepted = (acceptedResult as unknown as { rows: Array<{ id: string }> }).rows[0];
+    if (!accepted) throw new Error("Invitation changed while it was being accepted");
+
+    return {
+      status: "accepted" as const,
+      user: { id: userId, email: inv.email, name, role: inv.role },
+      organizationSlug: inv.organizationSlug,
+    };
+  });
+
+  if (result.status === "not_found") {
+    res.status(404).json({ error: { code: "invitation_not_found", message: "This invitation link is invalid." } });
+    return;
+  }
+  if (result.status === "unavailable") {
+    res.status(409).json({ error: { code: "invitation_unavailable", message: "This invitation is no longer valid." } });
+    return;
+  }
+  if (result.status === "email_exists") {
+    res.status(409).json({ error: { code: "email_exists", message: "An account with this email already exists. Please log in." } });
+    return;
+  }
+
+  res.status(201).json({ ok: true, user: result.user, organizationSlug: result.organizationSlug });
+});
+
 router.use("/platform", requireAuth, requireTenant);
 
 async function queryRows<T>(statement: SQL) {
   const result = await db.execute(statement);
   return (result as unknown as { rows: T[] }).rows;
+}
+
+async function queryInvRows(token: string) {
+  return queryRows<{
+    id: string; email: string; role: string; expiresAt: string;
+    acceptedAt: string | null; revokedAt: string | null;
+    organizationId: string; organizationName: string; organizationSlug: string; organizationPlan: string;
+  }>(sql`
+    select
+      i.id::text,
+      i.email,
+      i.role::text,
+      i.expires_at::text as "expiresAt",
+      i.accepted_at::text as "acceptedAt",
+      i.revoked_at::text as "revokedAt",
+      o.id::text as "organizationId",
+      o.name as "organizationName",
+      o.slug as "organizationSlug",
+      o.plan as "organizationPlan"
+    from invitations i
+    join organizations o on o.id = i.organization_id
+    where i.token_hash = ${hashToken(token)}
+      and o.deleted_at is null
+    limit 1
+  `);
 }
 
 router.get("/platform/overview", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
@@ -535,6 +690,10 @@ router.put("/platform/account/settings", requireRoles(["admin", "owner", "chief"
   }
 
   const settings = await updateAccountSettings(req.auth!, input.value);
+  if ("error" in settings) {
+    res.status(409).json({ error: settings.error });
+    return;
+  }
   await auditEvent(req.tenant!.id, req.auth!.user.id, "account_settings_updated", "updated account settings", {});
   res.json(settings);
 });
@@ -639,7 +798,7 @@ router.post("/platform/managers/invitations/:invitationId/resend", requireRoles(
 
   await sendManagerInvitationEmail({
     to: invitation.email,
-    name: invitation.email,
+    name: invitation.name ?? "",
     inviteUrl: invitation.inviteUrl,
     expiresAt: invitation.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   });
@@ -1037,7 +1196,20 @@ async function updateAccountSettings(
   };
 
   const profileName = stringValue(input.profile?.name);
-  const profileEmail = stringValue(input.profile?.email);
+  const profileEmail = stringValue(input.profile?.email)?.toLowerCase() ?? null;
+
+  if (profileEmail) {
+    const conflict = await queryRows<{ id: string }>(sql`
+      select id::text from users
+      where lower(email) = ${profileEmail}
+        and id <> ${auth.user.id}::uuid
+        and deleted_at is null
+      limit 1
+    `);
+    if (conflict[0]) {
+      return { error: "That email address is already in use." } as never;
+    }
+  }
 
   await db.execute(sql`
     update users
@@ -1123,16 +1295,17 @@ async function getAccountSessions(auth: AuthContext) {
 async function revokeAccountSession(auth: AuthContext, sessionId: string) {
   if (sessionId === auth.sessionId) return 0;
 
-  await db.execute(sql`
+  const rows = await queryRows<{ id: string }>(sql`
     update sessions
     set revoked_at = now()
     where id = ${sessionId}::uuid
       and user_id = ${auth.user.id}::uuid
       and organization_id = ${auth.organization.id}::uuid
       and revoked_at is null
+    returning id::text
   `);
 
-  return 1;
+  return rows.length;
 }
 
 async function getNotifications(auth: AuthContext, limit: number) {
@@ -1651,6 +1824,7 @@ async function inviteManager(
     insert into invitations (
       organization_id,
       email,
+      name,
       role,
       token_hash,
       invited_by_user_id,
@@ -1659,12 +1833,13 @@ async function inviteManager(
     values (
       ${organizationId}::uuid,
       ${input.email},
+      ${input.name},
       'pm',
       ${tokenHash},
       ${actorUserId}::uuid,
       ${expiresAt}
     )
-    returning id::text, email, role::text, expires_at::text as "expiresAt", created_at::text as "createdAt"
+    returning id::text, email, name, role::text, expires_at::text as "expiresAt", created_at::text as "createdAt"
   `);
 
   return {
@@ -1684,6 +1859,7 @@ async function resendManagerInvitation(organizationId: string, actorUserId: stri
   const rows = await queryRows<{
     id: string;
     email: string;
+    name: string | null;
     role: string;
     expiresAt: string;
     createdAt: string;
@@ -1696,7 +1872,7 @@ async function resendManagerInvitation(organizationId: string, actorUserId: stri
       and organization_id = ${organizationId}::uuid
       and role::text = 'pm'
       and accepted_at is null
-    returning id::text, email, role::text, expires_at::text as "expiresAt", created_at::text as "createdAt"
+    returning id::text, email, name, role::text, expires_at::text as "expiresAt", created_at::text as "createdAt"
   `);
 
   const invitation = rows[0];
