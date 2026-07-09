@@ -42,6 +42,19 @@ app.use(webhookRouter);
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
+app.get("/.well-known/appspecific/com.chrome.devtools.json", (_req, res) => {
+  res.status(204).end();
+});
+
+app.get("/api", (_req, res) => {
+  res.json({
+    ok: true,
+    service: "ENS Premium SaaS API",
+    health: "/api/health",
+    readiness: "/api/healthz/ready",
+  });
+});
+
 app.use("/api", router);
 
 // Global error handler: always returns JSON so test assertions can read the

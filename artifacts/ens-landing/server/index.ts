@@ -53,7 +53,20 @@ app.use("/workspace-assets", express.static(workspaceAssetDir, {
   index: false,
 }));
 
+app.get("/.well-known/appspecific/com.chrome.devtools.json", (_req, res) => {
+  res.status(204).end();
+});
+
 // ── Health check ──────────────────────────────────────────────────────────────
+
+app.get("/api", (_req, res) => {
+  res.json({
+    ok: true,
+    service: "ENS Premium SaaS local API",
+    health: "/api/health",
+    readiness: "/api/platform/system/readiness",
+  });
+});
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", ts: new Date().toISOString() });
