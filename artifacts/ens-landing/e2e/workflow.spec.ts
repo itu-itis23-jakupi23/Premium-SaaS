@@ -333,6 +333,9 @@ test.describe("Three-role workflow", () => {
     await page.goto(`/pm/workspace?projectId=${projectId}`);
     await page.waitForLoadState("networkidle");
 
+    // No renderer error fallback visible
+    await expect(page.getByText(/renderer did not respond/i)).not.toBeVisible({ timeout: 15_000 });
+
     const iframe = page.locator('iframe[title="Booth Renderer"]');
     await expect(iframe).toHaveAttribute("data-renderer-ready", "true", { timeout: 15_000 });
     const canvas = page.frameLocator('iframe[title="Booth Renderer"]').locator("canvas").first();
@@ -345,9 +348,38 @@ test.describe("Three-role workflow", () => {
         imageLength: target.toDataURL("image/png").length,
       };
     });
-    expect(canvasState.width).toBeGreaterThan(100);
-    expect(canvasState.height).toBeGreaterThan(100);
-    expect(canvasState.imageLength).toBeGreaterThan(1_000);
+    expect(canvasState.width, "canvas width must be > 100px").toBeGreaterThan(100);
+    expect(canvasState.height, "canvas height must be > 100px").toBeGreaterThan(100);
+    // A blank canvas (solid color) produces a very short data URL; a rendered booth has geometry
+    expect(canvasState.imageLength, "booth canvas must not be blank").toBeGreaterThan(5_000);
+  });
+
+  test("renderer re-initializes after navigation away and back", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByLabel(/email/i).fill(PM_EMAIL);
+    await page.getByLabel(/password/i).fill(PM_PASSWORD);
+    await page.getByRole("button", { name: /sign in|log in/i }).click();
+    await page.waitForURL(/\/pm/);
+
+    // First load
+    await page.goto(`/pm/workspace?projectId=${projectId}`);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator('iframe[title="Booth Renderer"]')).toHaveAttribute(
+      "data-renderer-ready", "true", { timeout: 15_000 }
+    );
+
+    // Navigate away
+    await page.goto("/pm/projects");
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator('iframe[title="Booth Renderer"]')).toHaveCount(0);
+
+    // Navigate back — renderer must re-initialize without error
+    await page.goto(`/pm/workspace?projectId=${projectId}`);
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByText(/renderer did not respond/i)).not.toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('iframe[title="Booth Renderer"]')).toHaveAttribute(
+      "data-renderer-ready", "true", { timeout: 15_000 }
+    );
   });
 
   test("workspace state persists across reload: booth dimensions and company name", async ({ request }) => {

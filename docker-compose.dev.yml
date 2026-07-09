@@ -1,0 +1,32 @@
+# Development-only compose: starts only Postgres so you can run the production
+# api-server and Vite dev server natively on your machine (hot reload, debugger).
+#
+# Usage:
+#   docker-compose -f docker-compose.dev.yml up -d
+#   pnpm --filter @workspace/db run migrate
+#   pnpm --filter @workspace/api-server run dev:watch   # production backend
+#   pnpm --filter @workspace/ens-landing run dev        # Vite dev server
+#
+# Then set VITE_API_BASE_URL=http://localhost:5000/api in your .env.local
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ens-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ens_dev
+      POSTGRES_USER: ens_app
+      POSTGRES_PASSWORD: ens_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ens_postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ens_app -d ens_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  ens_postgres_dev_data:
