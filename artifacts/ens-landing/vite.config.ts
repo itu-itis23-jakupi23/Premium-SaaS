@@ -44,6 +44,13 @@ export default defineConfig(async ({ mode }) => {
     outDir: path.resolve(import.meta.dirname, outDir),
     emptyOutDir: true,
     rollupOptions: {
+      // Radix UI packages ship without source maps. Suppress the cascade of
+      // SOURCEMAP_ERROR warnings that Rollup emits when it tries to link
+      // shadcn/ui component imports back to Radix internals.
+      onwarn(warning, defaultHandler) {
+        if (warning.code === "SOURCEMAP_ERROR") return;
+        defaultHandler(warning);
+      },
       output: {
         manualChunks: splitVendorChunks,
       },
