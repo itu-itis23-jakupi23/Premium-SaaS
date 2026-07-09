@@ -409,7 +409,10 @@ async function getContacts(auth: AuthContext) {
 }
 
 async function canContact(auth: AuthContext, contactId: string) {
-  const contactRoles = auth.user.role === "pm" ? ["chief", "owner", "admin"] : ["pm"];
+  const contactRoles =
+    auth.user.role === "pm" ? ["chief", "owner", "admin"] :
+    auth.user.role === "client" ? ["pm"] :
+    ["pm", "client"]; // chief/owner/admin can reach both PMs and clients
   const roleFilter = sql.join(contactRoles.map((role) => sql`${role}`), sql`, `);
   const rows = await queryRows<{ id: string }>(sql`
     select u.id::text
