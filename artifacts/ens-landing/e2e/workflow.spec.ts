@@ -350,6 +350,19 @@ test.describe("Three-role workflow", () => {
     expect(canvasState.imageLength).toBeGreaterThan(1_000);
   });
 
+  test("workspace state persists across reload: booth dimensions and company name", async ({ request }) => {
+    const res = await apiGet(request, `/platform/projects/${projectId}/workspace`, pmCookie);
+    expect(res.ok(), `workspace load failed: ${await res.text()}`).toBeTruthy();
+    const body = await res.json();
+    // The beforeAll revised and resubmitted with companyName:"Workflow Co Revised"
+    expect(body.workspace?.booth?.width, "booth width should be 6m").toBe(6);
+    expect(body.workspace?.booth?.depth, "booth depth should be 3m").toBe(3);
+    expect(body.workspace?.booth?.companyName, "company name should match revised submission").toBe("Workflow Co Revised");
+    expect(body.workspace?.booth?.system, "booth system should be octanorm").toBe("octanorm");
+    // Project should now be in approved state after client approved it
+    expect(body.project?.status, "project status after approval").toMatch(/approved/i);
+  });
+
   test("client sees workspace after approval (project is approved)", async ({ page }) => {
     await page.goto("/login");
     await page.getByLabel(/email/i).fill(clientEmail);
