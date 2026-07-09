@@ -320,6 +320,11 @@ export const clients = pgTable(
   (table) => ({
     orgCompanyIdx: index("clients_org_company_idx").on(table.organizationId, table.companyName),
     orgEmailIdx: index("clients_org_email_idx").on(table.organizationId, table.contactEmail),
+    // Partial unique index: within one org, no two active clients may share a contact_email.
+    // Uses lower() expression and WHERE deleted_at IS NULL — defined in migration 0009.
+    orgEmailUniqueIdx: uniqueIndex("clients_org_email_unique")
+      .on(table.organizationId, sql`lower(${table.contactEmail})`)
+      .where(sql`${table.deletedAt} IS NULL`),
     assignedPmIdx: index("clients_assigned_pm_idx").on(table.assignedPmUserId),
     orgAssignedPmUpdatedIdx: index("clients_org_assigned_pm_updated_idx").on(table.organizationId, table.assignedPmUserId, table.updatedAt),
     orgStatusUpdatedIdx: index("clients_org_status_updated_idx").on(table.organizationId, table.status, table.updatedAt),
