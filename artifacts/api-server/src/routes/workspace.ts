@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { sql, type SQL } from "drizzle-orm";
 import { Router, type IRouter } from "express";
 import { workspaceInputSchema } from "@workspace/api-zod";
@@ -6,6 +7,7 @@ import { requireAuth, requireRoles, type AuthContext } from "../middlewares/sess
 import { requireTenant } from "../middlewares/tenant";
 import { deliverNotification } from "../lib/notifications";
 import { sendDesignApprovedEmail, sendRevisionRequestedEmail } from "../lib/email";
+import { getStorageProvider } from "../lib/storage";
 
 const router: IRouter = Router();
 
@@ -73,6 +75,30 @@ router.get("/platform/projects/:projectId/workspace", requireRoles(["admin", "ow
   }
 
   res.json(workspace);
+});
+
+// Called by the client once after viewing a submitted design — transitions booth version to under_review.
+// Kept separate from GET to preserve HTTP GET idempotency.
+router.post("/platform/projects/:projectId/workspace/viewed", requireRoles(["client"]), async (req, res) => {
+  const auth = req.auth!;
+  const projectId = paramValue(req.params.projectId);
+  const access = projectId ? await getProjectAccess(auth, projectId) : null;
+  if (!access) {
+    res.status(404).json({ error: { code: "workspace_not_found", message: "Workspace was not found." } });
+    return;
+  }
+  const versions = await getVersions(access.designId);
+  const currentVersion = versions[0];
+  if (currentVersion?.status === "submitted") {
+    await db.execute(sql`
+      update booth_versions
+      set status = 'under_review'::booth_version_status
+      where id = ${currentVersion.id}::uuid
+        and organization_id = ${auth.organization.id}::uuid
+    `);
+    await auditWorkspaceEvent(auth, access.projectId, "workspace_viewed", `Client viewed booth workspace v${currentVersion.versionNumber}`);
+  }
+  res.json({ ok: true });
 });
 
 router.put(
@@ -332,7 +358,7 @@ router.post("/platform/projects/:projectId/change-requests", requireRoles(["clie
     select count(*)::int as count
     from approvals
     where project_id = ${projectId}::uuid
-      and status::text <> 'cancelled'
+      and status::text = 'revision_requested'
   `);
   const revisionCount = countResult[0]?.count ?? 0;
   const revisionLimit = 2;
@@ -411,6 +437,11 @@ router.post("/platform/projects/:projectId/change-requests", requireRoles(["clie
 // a simulation fallback for dev/staging). This route only serves the dev-mode
 // simulation landing page that billing.ts's fallback redirects to.
 router.get("/platform/workspace/billing/simulation", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
   const { reference, plan, client_id, redirect } = req.query;
 
   if (!reference || !plan || !client_id) {
@@ -599,17 +630,26 @@ function relativeTime(isoString: string) {
 
 async function getCurrentProject(auth: AuthContext) {
   const canSeeAll = canManageOrganization(auth);
+  const isClient = auth.user.role === "client";
   const rows = await queryRows<{ id: string }>(sql`
     select p.id::text as id
     from projects p
+    left join clients cli on cli.id = p.client_id
     where p.organization_id = ${auth.organization.id}::uuid
       and p.deleted_at is null
-      and (${canSeeAll}::boolean or exists (
-        select 1
-        from project_members pm
-        where pm.project_id = p.id
-          and pm.user_id = ${auth.user.id}::uuid
-      ))
+      and (${canSeeAll}::boolean
+        or exists (
+          select 1
+          from project_members pm
+          where pm.project_id = p.id
+            and pm.user_id = ${auth.user.id}::uuid
+        )
+        or (${isClient}::boolean
+          and cli.deleted_at is null
+          and lower(cli.contact_email) = lower(${auth.user.email})
+          and cli.status::text = 'active'
+        )
+      )
     order by p.updated_at desc
     limit 1
   `);
@@ -624,25 +664,14 @@ async function loadWorkspace(auth: AuthContext, projectId: string | undefined) {
   if (!access) return null;
 
   const versions = await getVersions(access.designId);
-  let currentVersion = versions[0] ?? null;
-  if (auth.user.role === "client" && currentVersion?.status === "submitted") {
-    await db.execute(sql`
-      update booth_versions
-      set status = 'under_review'::booth_version_status
-      where id = ${currentVersion.id}::uuid
-        and organization_id = ${auth.organization.id}::uuid
-    `);
-    currentVersion = { ...currentVersion, status: "under_review" };
-    versions[0] = currentVersion;
-    await auditWorkspaceEvent(auth, access.projectId, "workspace_viewed", `Client viewed booth workspace v${currentVersion.versionNumber}`);
-  }
+  const currentVersion = versions[0] ?? null;
   const workspace = normalizeWorkspace(currentVersion?.layoutJson, access);
 
   const countResult = await queryRows<{ count: number }>(sql`
     select count(*)::int as count
     from approvals
     where project_id = ${access.projectId}::uuid
-      and status::text <> 'cancelled'
+      and status::text = 'revision_requested'
   `);
   const revisionCount = countResult[0]?.count ?? 0;
 
@@ -891,12 +920,18 @@ async function getProjectAccess(auth: AuthContext, projectId: string) {
     where p.id = ${projectId}::uuid
       and p.organization_id = ${auth.organization.id}::uuid
       and p.deleted_at is null
-      and (${canSeeAll}::boolean or exists (
-        select 1
-        from project_members pm
-        where pm.project_id = p.id
-          and pm.user_id = ${auth.user.id}::uuid
-      ))
+      and (${canSeeAll}::boolean
+        or exists (
+          select 1
+          from project_members pm
+          where pm.project_id = p.id
+            and pm.user_id = ${auth.user.id}::uuid
+        )
+        or (${auth.user.role === "client"}::boolean
+          and c.deleted_at is null
+          and lower(c.contact_email) = lower(${auth.user.email})
+        )
+      )
     order by bd.updated_at desc
     limit 1
   `);
@@ -954,7 +989,17 @@ async function getLatestVersion(designId: string) {
   return rows[0] ?? null;
 }
 
+const WORKSPACE_JSON_MAX_BYTES = 1_500_000; // 1.5 MB — images belong in /documents/upload
+
 function parseWorkspaceInput(body: unknown) {
+  const jsonSize = Buffer.byteLength(JSON.stringify(body ?? null), "utf8");
+  if (jsonSize > WORKSPACE_JSON_MAX_BYTES) {
+    return {
+      ok: false as const,
+      error: `Workspace payload is too large (${Math.round(jsonSize / 1024)} KB). Upload images via the document API instead of embedding them in the workspace.`,
+    };
+  }
+
   const parsed = workspaceInputSchema.safeParse(body);
   if (!parsed.success) {
     return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Invalid workspace payload" };
@@ -1289,5 +1334,85 @@ interface WorkspaceNote {
   color: string;
   createdAt: string;
 }
+
+// ── Workspace asset upload ────────────────────────────────────────────────────
+// Accepts a base64 data URL, validates it, stores the decoded bytes via the
+// configured StorageProvider, and returns the validated data URL. The booth
+// renderer (THREE.js inside an iframe) loads textures from data URLs directly,
+// so we return the data URL rather than an authenticated download URL.
+// Max decoded size: 384 KB (matches the 512 KB base64 limit in the Zod schema).
+
+const WORKSPACE_ASSET_MAX_BYTES = 384_000;
+
+router.post(
+  "/platform/projects/:projectId/workspace/assets",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const auth = req.auth!;
+    const projectId = paramValue(req.params.projectId);
+    const access = projectId ? await getProjectAccess(auth, projectId) : null;
+    if (!access) {
+      res.status(404).json({ error: { code: "project_not_found", message: "Project was not found." } });
+      return;
+    }
+
+    const body = req.body as Record<string, unknown>;
+    const dataUrl = typeof body?.dataUrl === "string" ? body.dataUrl : null;
+    const rawName = typeof body?.name === "string" ? body.name.trim().slice(0, 80) : "workspace-image";
+
+    if (!dataUrl) {
+      res.status(400).json({ error: { code: "invalid_asset", message: "dataUrl is required." } });
+      return;
+    }
+
+    const headerMatch = dataUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/);
+    if (!headerMatch) {
+      res.status(400).json({ error: { code: "invalid_asset", message: "dataUrl must be a valid base64-encoded image." } });
+      return;
+    }
+
+    const mimeType = headerMatch[1];
+    const bytes = Buffer.from(dataUrl.slice(headerMatch[0].length), "base64");
+
+    if (bytes.byteLength > WORKSPACE_ASSET_MAX_BYTES) {
+      res.status(400).json({
+        error: {
+          code: "asset_too_large",
+          message: `Image must be under 375 KB (got ${Math.round(bytes.byteLength / 1024)} KB). Compress the image before uploading.`,
+        },
+      });
+      return;
+    }
+
+    const ext = mimeType.split("/")[1]?.replace("jpeg", "jpg") ?? "png";
+    const fileName = rawName.match(/\.[a-zA-Z0-9]+$/) ? rawName : `${rawName}.${ext}`;
+    const documentId = randomUUID();
+    const storage = getStorageProvider();
+    const stored = await storage.store({ bytes, organizationId: auth.organization.id, documentId, fileName, mimeType });
+
+    await db.execute(sql`
+      insert into documents (
+        id, organization_id, project_id, uploaded_by_user_id,
+        kind, visibility, file_name, mime_type, size_bytes,
+        storage_bucket, storage_key, checksum_sha256
+      ) values (
+        ${documentId}::uuid, ${auth.organization.id}::uuid, ${access.projectId}::uuid, ${auth.user.id}::uuid,
+        'asset'::document_kind, 'internal'::file_visibility,
+        ${fileName}, ${mimeType}, ${stored.sizeBytes},
+        ${stored.bucket}, ${stored.key}, ${stored.checksumSha256}
+      )
+    `);
+
+    res.status(201).json({
+      asset: {
+        id: documentId,
+        url: dataUrl,
+        mimeType,
+        size: stored.sizeBytes,
+        originalName: fileName,
+      },
+    });
+  },
+);
 
 export default router;

@@ -50,7 +50,8 @@ export const workspaceRoomSchema = z.object({
   wallFinish: z.enum(["white", "frosted", "glass", "dark"]).optional(),
   floorColor: z.string().regex(/^#[0-9a-f]{6}$/i).optional(),
   locked: z.boolean().optional(),
-  designImageUrl: z.string().regex(/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i).max(2_500_000).optional(),
+  // 512 KB max per room — keep workspace JSON small; large images belong in /documents/upload
+  designImageUrl: z.string().regex(/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i).max(512_000).optional(),
   designImageName: z.string().max(80).optional(),
   designOpacity: z.number().min(0.15).max(1).optional(),
 });

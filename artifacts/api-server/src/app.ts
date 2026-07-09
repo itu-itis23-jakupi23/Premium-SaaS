@@ -37,8 +37,10 @@ app.use(cookieParser());
 // mounted before express.json() or the body will already be consumed.
 app.use(webhookRouter);
 
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+// 2 MB is generous for structured JSON. File uploads use express.raw() on specific
+// routes (/documents/upload, /messages/attachments) which set their own limits.
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
 app.use("/api", router);
 
