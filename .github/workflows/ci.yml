@@ -72,7 +72,7 @@ jobs:
         run: pnpm run build:client
 
   playwright:
-    name: Playwright browser tests
+    name: Playwright browser tests (production backend)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: verify
@@ -87,7 +87,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U ens_e2e"
+          --health-cmd "pg_isready -U ens_e2e -d ens_e2e"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -96,14 +96,12 @@ jobs:
       DATABASE_URL: postgres://ens_e2e:ens_e2e_pass@localhost:5432/ens_e2e
       NODE_ENV: development
       PORT: 5000
-      AUTH_SECRET: e2e-test-secret-ci
+      AUTH_SECRET: e2e-test-secret-not-for-production
       STAFF_SIGNUP_KEY: e2e-test-staff-key
-      DEFAULT_ORGANIZATION_SLUG: ens-demo-agency
+      CORS_ORIGIN: http://localhost:5173
       VITE_ORGANIZATION_SLUG: ens-demo-agency
       VITE_API_BASE_URL: http://localhost:5000/api
       VITE_USE_MOCK_API: "false"
-      VITE_USE_REAL_CORE: "true"
-      VITE_USE_REAL_MESSAGES: "true"
 
     steps:
       - uses: actions/checkout@v4
@@ -128,23 +126,56 @@ jobs:
         working-directory: lib/db
         run: pnpm run migrate
 
-      - name: Seed demo org + staff accounts via signup-staff
+      - name: Build and start production api-server
+        working-directory: artifacts/api-server
         run: |
-          node -e "
-            const r = require('node:child_process');
-            const base='http://localhost:5000/api';
-            // Staff signup creates the demo org automatically
-            const chief = JSON.stringify({name:'E2E Chief',company:'ENS Demo Agency',email:'owner@ens.test',password:'EnsDev2026!',role:'chief',setupKey:'e2e-test-staff-key'});
-            const pm = JSON.stringify({name:'E2E PM',company:'ENS Demo Agency',email:'pm@ens.test',password:'EnsDev2026!',role:'pm',setupKey:'e2e-test-staff-key'});
-            // Start server, seed, then exit
-          "
-          # Start backend
-          pnpm --filter @workspace/ens-landing run server > /tmp/e2e-server.log 2>&1 &
-          sleep 5
-          # Seed chief (creates org)
+          pnpm run build
+          node --enable-source-maps dist/index.mjs > /tmp/e2e-api.out.log 2> /tmp/e2e-api.err.log &
+          for i in {1..30}; do
+            if curl -fsS http://localhost:5000/api/healthz/ready > /dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          curl -fsS http://localhost:5000/api/healthz/ready || (cat /tmp/e2e-api.err.log; exit 1)
+
+      - name: Seed E2E accounts
+        run: |
+          set -euo pipefail
+
+          # Step 1: Chief signs up — creates the org; slugify("ENS Demo Agency") = "ens-demo-agency"
           curl -fsS -X POST http://localhost:5000/api/auth/signup-staff \
             -H 'content-type: application/json' \
-            -d '{"name":"E2E Chief","company":"ENS Demo Agency","email":"owner@ens.test","password":"EnsDev2026!","role":"chief","setupKey":"e2e-test-staff-key"}' | jq .user.role || cat /tmp/e2e-server.log
+            -d '{"name":"E2E Chief","company":"ENS Demo Agency","email":"chief@demo.example","password":"EnsDev2026!","role":"chief","setupKey":"e2e-test-staff-key"}' \
+            | jq -e '.user.role' || { echo "chief signup failed"; cat /tmp/e2e-api.err.log; exit 1; }
+
+          # Step 2: Chief logs in — capture the session cookie from the response headers
+          curl -fsS -D /tmp/chief-login-hdrs.txt \
+            -X POST http://localhost:5000/api/auth/login \
+            -H 'content-type: application/json' \
+            -d '{"email":"chief@demo.example","password":"EnsDev2026!","organizationSlug":"ens-demo-agency"}' \
+            > /tmp/chief-login-body.json
+          CHIEF_COOKIE=$(grep -i 'ens_access' /tmp/chief-login-hdrs.txt | head -1 | sed 's/.*set-cookie: //i' | cut -d';' -f1 | tr -d '\r\n')
+          [ -n "$CHIEF_COOKIE" ] || { echo "chief login cookie missing"; cat /tmp/e2e-api.err.log; exit 1; }
+
+          # Step 3: Chief sends PM invitation — PM joins the same org via token
+          INV_TOKEN=$(curl -fsS \
+            -X POST http://localhost:5000/api/platform/managers/invitations \
+            -H 'content-type: application/json' \
+            -H "cookie: $CHIEF_COOKIE" \
+            -d '{"name":"E2E PM","email":"pm@demo.example"}' \
+            | jq -re '.invitation.token')
+          [ -n "$INV_TOKEN" ] || { echo "PM invitation token missing"; cat /tmp/e2e-api.err.log; exit 1; }
+
+          # Step 4: PM accepts invitation — creates account in the chief's org
+          curl -fsS -X POST http://localhost:5000/api/platform/managers/invitations/accept \
+            -H 'content-type: application/json' \
+            -d "{\"token\":\"$INV_TOKEN\",\"name\":\"E2E PM\",\"password\":\"EnsDev2026!\"}" \
+            | jq -e '.ok' || { echo "PM invitation acceptance failed"; cat /tmp/e2e-api.err.log; exit 1; }
+
+          # Step 5: Client signs up (must succeed — failure is a real error)
+          curl -fsS -X POST http://localhost:5000/api/auth/signup \
+            -H 'content-type: application/json' \
+            -d '{"name":"E2E Client","company":"E2E Client Co","exhibitionName":"E2E Expo 2026","boothSizeSqm":18,"preferredSystem":"Octanorm","city":"Istanbul","deadline":"2026-09-01","notes":"E2E test account","email":"client@demo.example","password":"EnsDev2026!","organizationSlug":"ens-demo-agency"}' \
+            | jq -e '.user.role' || { echo "client signup failed"; cat /tmp/e2e-api.err.log; exit 1; }
 
       - name: Build and start Vite dev server
         working-directory: artifacts/ens-landing
@@ -161,6 +192,13 @@ jobs:
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:5173
           API_URL: http://localhost:5000
+          TEST_ORG_SLUG: ens-demo-agency
+          TEST_CHIEF_EMAIL: chief@demo.example
+          TEST_CHIEF_PASSWORD: EnsDev2026!
+          TEST_PM_EMAIL: pm@demo.example
+          TEST_PM_PASSWORD: EnsDev2026!
+          TEST_CLIENT_EMAIL: client@demo.example
+          TEST_CLIENT_PASSWORD: EnsDev2026!
         run: pnpm run e2e
 
       - name: Upload Playwright report on failure
@@ -253,3 +291,17 @@ jobs:
           echo "--- stdout ---"; cat api-server-ci.out.log
           echo "--- stderr ---"; cat api-server-ci.err.log
           exit 1
+
+      - name: Smoke workflow against production api-server
+        working-directory: artifacts/ens-landing
+        env:
+          API_BASE_URL: http://localhost:5000/api
+          STAFF_SIGNUP_KEY: ci-test-staff-key
+        run: |
+          node scripts/smoke-workflow.mjs
+          EXIT=$?
+          if [ $EXIT -ne 0 ]; then
+            echo "--- api-server stdout ---"; cat ../api-server/api-server-ci.out.log
+            echo "--- api-server stderr ---"; cat ../api-server/api-server-ci.err.log
+          fi
+          exit $EXIT

@@ -5,8 +5,12 @@ import { HealthCheckResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-// Shallow health: responds instantly, used by load-balancer liveness probes.
+// Shallow health: responds instantly. /health is an alias for smoke-test compatibility.
 router.get("/healthz", (_req, res) => {
+  res.json(HealthCheckResponse.parse({ status: "ok" }));
+});
+
+router.get("/health", (_req, res) => {
   res.json(HealthCheckResponse.parse({ status: "ok" }));
 });
 

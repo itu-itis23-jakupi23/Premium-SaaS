@@ -5,6 +5,7 @@
  */
 
 const API_BASE_URL = (process.env.API_BASE_URL ?? "http://localhost:5000/api").replace(/\/+$/, "");
+const SETUP_KEY = process.env.STAFF_SIGNUP_KEY ?? process.env.SETUP_KEY ?? "";
 
 const results = [];
 const RUN_ID = Date.now();
@@ -14,24 +15,28 @@ async function main() {
 
   // ── PHASE 1: Bootstrap real sessions ──────────────────────────────────────
 
-  // Chief account (creates the org)
+  // Chief account (creates the org).
+  // Uses /auth/signup-staff so this smoke script works against both the dev
+  // backend (artifacts/ens-landing/server) and the production backend
+  // (artifacts/api-server). Pass STAFF_SIGNUP_KEY env var in CI.
   const chiefEmail    = `smoke.chief.${RUN_ID}@example.com`;
   const chiefPassword = "ChiefSmoke2026!";
-  const chiefOrgSlug  = `smoke-agency-${RUN_ID}`;
   const chiefJar      = {};
 
-  const chiefSignup = await check("chief bootstrap", () => request("/auth/bootstrap-chief", {
+  const chiefSignup = await check("chief bootstrap", () => request("/auth/signup-staff", {
     method: "POST", jar: chiefJar,
-    body: { name: "Smoke Chief", company: "Smoke Agency", email: chiefEmail, password: chiefPassword, organizationSlug: chiefOrgSlug },
+    body: { name: "Smoke Chief", company: `Smoke Agency ${RUN_ID}`, email: chiefEmail, password: chiefPassword, role: "chief", setupKey: SETUP_KEY },
   }));
   assert(chiefSignup.user.role === "chief", "bootstrap should create chief");
   const chiefUserId = chiefSignup.user.id;
+  const chiefOrgSlug = chiefSignup.organization?.slug ?? chiefSignup.user?.organizationSlug;
+  assert(chiefOrgSlug, "bootstrap should return organization slug");
 
   // Separate org for cross-org isolation checks
   const otherChiefJar = {};
-  await check("other-org chief bootstrap", () => request("/auth/bootstrap-chief", {
+  await check("other-org chief bootstrap", () => request("/auth/signup-staff", {
     method: "POST", jar: otherChiefJar,
-    body: { name: "Other Chief", company: "Other Agency", email: `smoke.other.${RUN_ID}@example.com`, password: chiefPassword, organizationSlug: `smoke-other-${RUN_ID}` },
+    body: { name: "Other Chief", company: `Other Agency ${RUN_ID}`, email: `smoke.other.${RUN_ID}@example.com`, password: chiefPassword, role: "chief", setupKey: SETUP_KEY },
   }));
 
   // Chief invites PM → PM accepts → PM logs in
@@ -76,9 +81,9 @@ async function main() {
   const clientSignup = await check("client signs up", () => request("/auth/signup", {
     method: "POST", jar: clientJar,
     body: {
-      name: "Smoke Client", company: "Smoke Client Co", exhibition: "Smoke Expo 2026",
-      boothWidthM: 6, boothDepthM: 3, preferredSystem: "Octanorm",
-      venueCity: "Istanbul", targetDate: "2026-09-01", intakeNotes: "Smoke client registration",
+      name: "Smoke Client", company: "Smoke Client Co", exhibitionName: "Smoke Expo 2026",
+      boothSizeSqm: 18, preferredSystem: "Octanorm",
+      city: "Istanbul", deadline: "2026-09-01", notes: "Smoke client registration",
       email: clientEmail, password: clientPassword, organizationSlug: chiefOrgSlug,
     },
   }));
@@ -117,7 +122,7 @@ async function main() {
       method: "PUT", jar: clientJar,
       body: { currentPassword: "WrongPassword2026", newPassword: "ShouldNotChange" },
     });
-    assert(r.status === 403, `expected 403, got ${r.status}`);
+    assert(r.status === 400, `expected 400, got ${r.status}`);
   });
 
   const sessions = await check("sessions list includes current", () => request("/platform/account/sessions", { jar: pmJar }));
