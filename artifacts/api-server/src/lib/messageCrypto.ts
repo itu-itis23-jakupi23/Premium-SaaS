@@ -62,7 +62,8 @@ function messageEncryptionKey() {
     throw new Error("MESSAGE_ENCRYPTION_KEY environment variable is required in production.");
   }
 
-  const source = configured ?? process.env.AUTH_SECRET ?? "ens-local-message-encryption-key";
+  // Never fall back to AUTH_SECRET — rotating that key would silently corrupt all messages.
+  const source = configured ?? "ens-local-message-encryption-key";
 
   if (source.startsWith("base64:")) {
     const key = Buffer.from(source.slice("base64:".length), "base64");

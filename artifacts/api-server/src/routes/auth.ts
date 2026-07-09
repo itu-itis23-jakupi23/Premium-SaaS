@@ -20,33 +20,41 @@ async function queryRows<T>(statement: SQL) {
   return (result as unknown as { rows: T[] }).rows;
 }
 
-// ── Login rate limiting (in-memory, per-process) ─────────────────────────────
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+// ── Login rate limiting (DB-backed, works across processes/replicas) ──────────
 const LOGIN_RATE_WINDOW_MS = 15 * 60 * 1000;
-const LOGIN_RATE_MAX = 10;
+const LOGIN_RATE_MAX = 5;
 
-function checkLoginRateLimit(key: string): { blocked: boolean; retryAfterSeconds: number } {
-  const now = Date.now();
-  const entry = loginAttempts.get(key);
-  if (!entry || now > entry.resetAt) return { blocked: false, retryAfterSeconds: 0 };
-  if (entry.count >= LOGIN_RATE_MAX) {
-    return { blocked: true, retryAfterSeconds: Math.ceil((entry.resetAt - now) / 1000) };
-  }
-  return { blocked: false, retryAfterSeconds: 0 };
+async function checkLoginRateLimit(key: string): Promise<{ blocked: boolean; retryAfterSeconds: number }> {
+  const rows = await queryRows<{ attempts: number; windowStart: string }>(sql`
+    select attempts, window_start::text as "windowStart"
+    from login_rate_limits
+    where key = ${key}
+      and window_start > now() - interval '15 minutes'
+  `);
+  if (!rows[0] || rows[0].attempts < LOGIN_RATE_MAX) return { blocked: false, retryAfterSeconds: 0 };
+  const resetAt = new Date(rows[0].windowStart).getTime() + LOGIN_RATE_WINDOW_MS;
+  return { blocked: true, retryAfterSeconds: Math.max(0, Math.ceil((resetAt - Date.now()) / 1000)) };
 }
 
-function recordFailedLogin(key: string) {
-  const now = Date.now();
-  const entry = loginAttempts.get(key);
-  if (!entry || now > entry.resetAt) {
-    loginAttempts.set(key, { count: 1, resetAt: now + LOGIN_RATE_WINDOW_MS });
-  } else {
-    entry.count++;
-  }
+async function recordFailedLogin(key: string) {
+  await db.execute(sql`
+    insert into login_rate_limits (key, attempts, window_start)
+    values (${key}, 1, now())
+    on conflict (key) do update
+    set
+      attempts = case
+        when login_rate_limits.window_start < now() - interval '15 minutes' then 1
+        else login_rate_limits.attempts + 1
+      end,
+      window_start = case
+        when login_rate_limits.window_start < now() - interval '15 minutes' then now()
+        else login_rate_limits.window_start
+      end
+  `);
 }
 
-function clearLoginAttempts(key: string) {
-  loginAttempts.delete(key);
+async function clearLoginAttempts(key: string) {
+  await db.execute(sql`delete from login_rate_limits where key = ${key}`);
 }
 
 router.get("/auth/me", async (req, res) => {
@@ -85,7 +93,9 @@ router.post("/auth/login", async (req, res) => {
   }
 
   const rateLimitKey = `${input.value.email}:${req.ip ?? "unknown"}`;
-  const rl = checkLoginRateLimit(rateLimitKey);
+  // Opportunistically purge stale rate-limit rows (fire-and-forget)
+  db.execute(sql`delete from login_rate_limits where window_start < now() - interval '1 hour'`).catch(() => undefined);
+  const rl = await checkLoginRateLimit(rateLimitKey);
   if (rl.blocked) {
     res.set("Retry-After", String(rl.retryAfterSeconds));
     res.status(429).json({
@@ -97,7 +107,7 @@ router.post("/auth/login", async (req, res) => {
   const account = await findLoginAccount(input.value.email, input.value.organizationSlug);
 
   if (!account || !account.passwordHash || !verifyPassword(input.value.password, account.passwordHash)) {
-    recordFailedLogin(rateLimitKey);
+    await recordFailedLogin(rateLimitKey);
     res.status(401).json({
       error: {
         code: "invalid_credentials",
@@ -131,7 +141,7 @@ router.post("/auth/login", async (req, res) => {
   `);
 
   await auditAuthEvent(account.organizationId, account.userId, "auth_login", "signed in");
-  clearLoginAttempts(rateLimitKey);
+  await clearLoginAttempts(rateLimitKey);
   res.json(authResponse(auth.context));
 });
 
@@ -226,6 +236,22 @@ router.post("/auth/signup", async (req, res) => {
       ${input.value.notes},
       '{}'::jsonb
     )
+    on conflict (organization_id, lower(contact_email))
+    where deleted_at is null
+    do update set
+      company_name            = excluded.company_name,
+      contact_name            = excluded.contact_name,
+      intake_exhibition_name  = excluded.intake_exhibition_name,
+      intake_booth_size_sqm   = excluded.intake_booth_size_sqm,
+      intake_city             = excluded.intake_city,
+      intake_deadline_at      = excluded.intake_deadline_at,
+      intake_preferred_system = excluded.intake_preferred_system,
+      intake_notes            = excluded.intake_notes,
+      status = case
+        when clients.status = 'lead' then 'pending_approval'::client_status
+        else clients.status
+      end,
+      updated_at = now()
   `);
 
   const auth = await createSession({
@@ -261,9 +287,8 @@ router.post("/auth/signup-staff", async (req, res) => {
     return;
   }
 
-  const isDev = process.env.NODE_ENV !== "production";
   const requiredKey = process.env.STAFF_SIGNUP_KEY || process.env.CHIEF_BOOTSTRAP_KEY || process.env.STAFF_ACCESS_CODE;
-  if (!isDev && (!requiredKey || input.value.setupKey !== requiredKey)) {
+  if (requiredKey && input.value.setupKey !== requiredKey) {
     res.status(403).json({
       error: {
         code: "setup_key_required",
@@ -326,8 +351,9 @@ router.post("/auth/signup-staff", async (req, res) => {
     values (${org.id}::uuid, ${userId}::uuid, ${input.value.role}, 'active', now())
   `);
 
-  // Instantly seed/fill the organization with active demo data
-  await seedStaffOrganizationData(org.id, userId, input.value.role, input.value.name, passwordHash);
+  if (process.env.SEED_DEMO_DATA === "true") {
+    await seedStaffOrganizationData(org.id, userId, input.value.role, input.value.name, passwordHash);
+  }
 
   const auth = await createSession({
     userId,
@@ -723,23 +749,32 @@ function parseSignupInput(body: unknown) {
   const password = stringValue(data.password);
   const organizationSlug = stringValue(data.organizationSlug);
 
-  const exhibitionName = stringValue(data.exhibitionName);
-  const boothSizeSqmRaw = stringValue(String(data.boothSizeSqm ?? ""));
-  const boothSizeSqm = boothSizeSqmRaw ? Number(boothSizeSqmRaw) : null;
-  const city = stringValue(data.city);
-  const deadline = stringValue(data.deadline);
+  // Accept both api-server field names and the frontend/local-dev field names
+  const exhibitionName = stringValue(data.exhibitionName) ?? stringValue(data.exhibition);
+  const city = stringValue(data.city) ?? stringValue(data.venueCity);
+  const deadline = stringValue(data.deadline) ?? stringValue(data.targetDate);
+  const notes = stringValue(data.notes) ?? stringValue(data.intakeNotes);
+  // boothSizeSqm can come directly or be derived from separate width × depth fields
+  let boothSizeSqm: number | null = null;
+  if (data.boothSizeSqm != null) {
+    const raw = Number(data.boothSizeSqm);
+    if (Number.isFinite(raw) && raw > 0) boothSizeSqm = raw;
+  } else if (data.boothWidthM != null && data.boothDepthM != null) {
+    const w = Number(data.boothWidthM);
+    const d = Number(data.boothDepthM);
+    if (Number.isFinite(w) && Number.isFinite(d) && w > 0 && d > 0) boothSizeSqm = w * d;
+  }
   const preferredSystemRaw = stringValue(data.preferredSystem);
   const preferredSystem = preferredSystemRaw && (INTAKE_BOOTH_SYSTEMS as readonly string[]).includes(preferredSystemRaw)
     ? (preferredSystemRaw as (typeof INTAKE_BOOTH_SYSTEMS)[number])
     : null;
-  const notes = stringValue(data.notes);
 
   if (!name || name.length < 2) return { ok: false as const, error: "Name is required" };
   if (!company || company.length < 2) return { ok: false as const, error: "Company is required" };
   if (!email || !email.includes("@")) return { ok: false as const, error: "Valid email is required" };
   if (!password || password.length < 8) return { ok: false as const, error: "Password must be at least 8 characters" };
   if (!exhibitionName || exhibitionName.length < 2) return { ok: false as const, error: "Exhibition name is required" };
-  if (!boothSizeSqm || !Number.isFinite(boothSizeSqm) || boothSizeSqm <= 0) return { ok: false as const, error: "A valid booth size (sqm) is required" };
+  if (!boothSizeSqm) return { ok: false as const, error: "A valid booth size (sqm) is required" };
   if (!city) return { ok: false as const, error: "City is required" };
   if (!deadline || !isIsoDate(deadline)) return { ok: false as const, error: "A valid deadline (YYYY-MM-DD) is required" };
 
@@ -1061,6 +1096,9 @@ router.post("/auth/forgot-password", async (req, res) => {
     return;
   }
 
+  // Opportunistically purge old tokens to keep the table bounded (fire-and-forget)
+  db.execute(sql`delete from password_reset_tokens where expires_at < now() - interval '7 days'`).catch(() => undefined);
+
   // Find user — but always return 200 to avoid leaking which emails are registered
   const user = await findUserByEmailForReset(email);
 
@@ -1128,6 +1166,14 @@ router.post("/auth/reset-password", async (req, res) => {
     update password_reset_tokens
     set used_at = now()
     where id = ${tokenId}::uuid
+  `);
+
+  // Invalidate all active sessions so a stolen reset link can't persist access
+  await db.execute(sql`
+    update sessions
+    set revoked_at = now()
+    where user_id = ${userId}::uuid
+      and revoked_at is null
   `);
 
   res.json({ ok: true });
