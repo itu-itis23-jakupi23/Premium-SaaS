@@ -251,7 +251,7 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
       <div style={{
         width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center', gap: '12px',
-        background: 'var(--surface, #f8f8f8)', color: 'var(--muted, #666)',
+        background: 'var(--workspace-bg, #f3f1ec)', color: 'var(--workspace-muted, #6b6560)',
         fontSize: '14px', textAlign: 'center', padding: '24px',
       }}>
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -272,15 +272,43 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
   }
 
   return (
-    <iframe
-      key={src}
-      ref={iframeRef}
-      src={src}
-      title="Booth Renderer"
-      data-renderer-ready={ready ? "true" : "false"}
-      style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-      onLoad={() => { setTimeout(sendUpdate, 50); }}
-      onError={() => setRendererError('Failed to load the booth renderer. Check your network connection.')}
-    />
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <style>{`@keyframes __booth_spin{to{transform:rotate(360deg)}}`}</style>
+      {!ready && (
+        <div
+          aria-label="Loading 3D renderer"
+          style={{
+            position: 'absolute', inset: 0, zIndex: 1,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14,
+            background: 'var(--workspace-bg, #f3f1ec)',
+          }}
+        >
+          <div style={{
+            width: 32, height: 32, borderRadius: '50%',
+            border: '2.5px solid var(--workspace-hair, #d8d3c9)',
+            borderTopColor: 'var(--workspace-blue, #1d4ed8)',
+            animation: '__booth_spin 0.75s linear infinite',
+          }} />
+          <span style={{
+            fontSize: 11.5,
+            fontFamily: 'var(--app-font-samsung)',
+            color: 'var(--workspace-muted, #6b6560)',
+            letterSpacing: '0.04em',
+          }}>
+            Loading 3D renderer…
+          </span>
+        </div>
+      )}
+      <iframe
+        key={src}
+        ref={iframeRef}
+        src={src}
+        title="Booth Renderer"
+        data-renderer-ready={ready ? "true" : "false"}
+        style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+        onLoad={() => { setTimeout(sendUpdate, 50); }}
+        onError={() => setRendererError('Failed to load the booth renderer. Check your network connection.')}
+      />
+    </div>
   );
 }
