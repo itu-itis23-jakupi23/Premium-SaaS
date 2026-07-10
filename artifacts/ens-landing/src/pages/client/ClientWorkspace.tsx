@@ -35,11 +35,7 @@ import {
   X,
   GitCompare,
   CheckSquare,
-  Square,
 } from "lucide-react";
-
-// Silence unused import
-void Square;
 
 const C = {
   bg:    'var(--workspace-bg, #f3f1ec)',
@@ -54,22 +50,7 @@ const C = {
 const MONO = 'var(--app-font-mono)';
 const UI   = 'var(--app-font-samsung)';
 
-const CATALOG = [
-  {
-    name: "Structure",
-    items: ["Solid Wall", "Glass Wall", "Corner Post", "Fascia"],
-  },
-  {
-    name: "Furniture",
-    items: [
-      "Reception Counter",
-      "Bar Stool",
-      "Meeting Table",
-      "Design Chair",
-    ],
-  },
-  { name: "Lighting", items: ["Spotlight", "LED Strip", "Arm Light"] },
-];
+const CATALOG_GROUP_ORDER = ["Structure", "Furniture", "Lighting", "Fascia"] as const;
 const THEME_COLORS = ["#3b3e44", "#dde0e4", "#7a4a2a", "#1a2640"];
 const WALL_COLORS = ["#f8fafc", "#dfe4ea", "#f3eadc", "#9aa1aa"];
 const FRAME_COLORS = ["#b8bdc3", "#3d4249", "#c7b99a", "#e4e7eb"];
@@ -253,6 +234,24 @@ export default function ClientWorkspace() {
     pinMode: false,
   }), [comparedWorkspace]);
   const selectedBooth = selectedWorkspace?.booth;
+
+  const clientCatalog = useMemo(() => {
+    const items = selectedWorkspace?.placedItems ?? [];
+    const byGroup = new Map<string, Set<string>>();
+    for (const item of items) {
+      const group =
+        item.kind === "structure" ? "Structure"
+        : item.kind === "fascia"  ? "Fascia"
+        : item.kind === "light"   ? "Lighting"
+        : "Furniture";
+      if (!byGroup.has(group)) byGroup.set(group, new Set());
+      byGroup.get(group)!.add(item.name);
+    }
+    return CATALOG_GROUP_ORDER
+      .filter((g) => byGroup.has(g))
+      .map((g) => ({ name: g, items: Array.from(byGroup.get(g)!) }));
+  }, [selectedWorkspace]);
+
   const projectTitle =
     workspaceRecord?.project.name ?? t("client.workspace.loadingWorkspace");
   const approvalStage = workspaceApprovalStage(workspaceRecord);
@@ -1101,7 +1100,12 @@ export default function ClientWorkspace() {
             </span>
           </div>
           <div style={{ flex: 1, overflowY: "auto" }}>
-            {CATALOG.map((cat) => (
+            {clientCatalog.length === 0 && (
+              <div style={{ padding: "24px 14px", color: C.muted, fontSize: 11, textAlign: "center", fontFamily: MONO }}>
+                No items placed yet
+              </div>
+            )}
+            {clientCatalog.map((cat) => (
               <div key={cat.name} style={{ borderBottom: `1px solid ${C.hair}` }}>
                 <div style={{ padding: "7px 14px" }}>
                   <span
