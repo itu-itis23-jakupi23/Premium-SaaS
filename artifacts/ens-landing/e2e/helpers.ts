@@ -2,11 +2,13 @@ import type { Page, APIRequestContext } from "@playwright/test";
 import { API_URL } from "../playwright.config";
 
 const ORG_SLUG = process.env.TEST_ORG_SLUG ?? "ens-demo-agency";
-const CHIEF_EMAIL = process.env.TEST_CHIEF_EMAIL ?? "chief@demo.example";
+const CLIENT_BASE_URL = process.env.PLAYWRIGHT_CLIENT_BASE_URL ?? "http://localhost:5175";
+const TEST_RUN_ID = process.env.TEST_RUN_ID ?? `local-${Date.now()}`;
+const CHIEF_EMAIL = process.env.TEST_CHIEF_EMAIL ?? `chief.${TEST_RUN_ID}@e2e.test`;
 const CHIEF_PASSWORD = process.env.TEST_CHIEF_PASSWORD ?? "EnsDev2026!";
-const PM_EMAIL = process.env.TEST_PM_EMAIL ?? "pm@demo.example";
+const PM_EMAIL = process.env.TEST_PM_EMAIL ?? `pm.${TEST_RUN_ID}@e2e.test`;
 const PM_PASSWORD = process.env.TEST_PM_PASSWORD ?? "EnsDev2026!";
-const CLIENT_EMAIL = process.env.TEST_CLIENT_EMAIL ?? "client@demo.example";
+const CLIENT_EMAIL = process.env.TEST_CLIENT_EMAIL ?? `client.${TEST_RUN_ID}@e2e.test`;
 const CLIENT_PASSWORD = process.env.TEST_CLIENT_PASSWORD ?? "EnsDev2026!";
 
 export const TEST_CREDS = {
@@ -16,14 +18,67 @@ export const TEST_CREDS = {
   orgSlug: ORG_SLUG,
 };
 
+export function clientUrl(path: string) {
+  return new URL(path, CLIENT_BASE_URL).toString();
+}
+
+export async function grantStaffAccess(page: Page) {
+  await page.addInitScript(() => {
+    window.sessionStorage.setItem("ens-staff-access-granted", "1");
+  });
+}
+
+async function postAllowExisting(page: Page, path: string, data: Record<string, unknown>) {
+  const response = await page.request.post(`${API_URL}/api${path}`, { data });
+  if (response.ok() || response.status() === 409) return;
+  throw new Error(`${path} failed: ${response.status()} ${await response.text()}`);
+}
+
+export async function seedE2EAccounts(page: Page) {
+  await postAllowExisting(page, "/auth/signup-staff", {
+    name: "E2E Chief",
+    company: "ENS Demo Agency",
+    email: TEST_CREDS.chief.email,
+    password: TEST_CREDS.chief.password,
+    role: "chief",
+    organizationSlug: ORG_SLUG,
+  });
+  await postAllowExisting(page, "/auth/signup-staff", {
+    name: "E2E PM",
+    company: "ENS Demo Agency",
+    email: TEST_CREDS.pm.email,
+    password: TEST_CREDS.pm.password,
+    role: "pm",
+    organizationSlug: ORG_SLUG,
+  });
+  await postAllowExisting(page, "/auth/signup", {
+    name: "E2E Client",
+    company: "E2E Client Co",
+    email: TEST_CREDS.client.email,
+    password: TEST_CREDS.client.password,
+    organizationSlug: ORG_SLUG,
+    exhibition: "E2E Expo",
+    boothWidthM: 6,
+    boothDepthM: 3,
+    preferredSystem: "Octanorm",
+    venueCity: "Istanbul",
+    targetDate: "2026-07-20",
+    intakeNotes: "Seeded by Playwright E2E",
+  });
+}
+
 export async function loginAs(page: Page, role: "chief" | "pm" | "client") {
   const creds = TEST_CREDS[role];
-  await page.goto("/login");
-  await page.getByLabel(/email/i).fill(creds.email);
-  await page.getByLabel(/password/i).fill(creds.password);
-  await page.getByRole("button", { name: /sign in|log in/i }).click();
+  await seedE2EAccounts(page);
+  if (role === "chief" || role === "pm") {
+    await grantStaffAccess(page);
+  }
+  await page.goto(role === "client" ? clientUrl("/login") : "/login");
+  await page.getByTestId("input-email").fill(creds.email);
+  await page.getByTestId("input-password").fill(creds.password);
+  await page.getByTestId("button-login").click();
   // Wait for redirect to the role's dashboard
-  await page.waitForURL(/\/(chief|pm|client)\//);
+  await page.waitForURL(/\/(chief|pm|client)(\/|$)/);
 }
 
 export async function apiLogin(request: APIRequestContext, role: "chief" | "pm" | "client") {

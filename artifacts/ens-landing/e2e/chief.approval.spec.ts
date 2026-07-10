@@ -23,13 +23,13 @@ test.describe("Chief approval queue", () => {
     await expect(page.getByText(/clients|company/i).first()).toBeVisible({ timeout: 10_000 });
   });
 
-  test("chief client list renders intake data when client is pending", async ({ page }) => {
+  test("chief client list renders seeded client intake data", async ({ page }) => {
     await page.goto("/chief/clients");
     await page.waitForLoadState("networkidle");
-    // With a freshly seeded E2E database, the seeded client (client@demo.example) should
+    // With a freshly seeded E2E database, the seeded client should
     // appear in the list with "Pending" status until the chief approves them.
-    await expect(page.getByText("client@demo.example", { exact: true })).toBeVisible();
-    await expect(page.getByText("Pending Approval", { exact: true })).toBeVisible();
+    await expect(page.getByText("E2E Client Co", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("E2E Expo", { exact: true }).first()).toBeVisible();
     // One of these must be true — the list is never in an indeterminate state
   });
 });

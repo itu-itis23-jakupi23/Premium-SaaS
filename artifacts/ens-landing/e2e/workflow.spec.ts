@@ -15,16 +15,16 @@
  * Browser tests then assert the UI renders the correct state after the API flow.
  */
 
-import { test, expect, type APIRequestContext } from "@playwright/test";
+import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
 import { API_URL } from "../playwright.config";
+import { clientUrl, grantStaffAccess } from "./helpers";
 
 const ORG_SLUG = process.env.TEST_ORG_SLUG ?? "ens-demo-agency";
-const CHIEF_EMAIL = process.env.TEST_CHIEF_EMAIL ?? "chief@demo.example";
-const CHIEF_PASSWORD = process.env.TEST_CHIEF_PASSWORD ?? "EnsDev2026!";
-const PM_EMAIL = process.env.TEST_PM_EMAIL ?? "pm@demo.example";
-const PM_PASSWORD = process.env.TEST_PM_PASSWORD ?? "EnsDev2026!";
-
 const RUN = Date.now();
+const CHIEF_EMAIL = process.env.TEST_CHIEF_EMAIL ?? `workflow.chief.${RUN}@workflow.test`;
+const CHIEF_PASSWORD = process.env.TEST_CHIEF_PASSWORD ?? "EnsDev2026!";
+const PM_EMAIL = process.env.TEST_PM_EMAIL ?? `workflow.pm.${RUN}@workflow.test`;
+const PM_PASSWORD = process.env.TEST_PM_PASSWORD ?? "EnsDev2026!";
 
 let chiefCookie: string;
 let pmCookie: string;
@@ -48,8 +48,12 @@ async function apiPost(request: APIRequestContext, path: string, body: unknown, 
   return request.post(`${API_URL}/api${path}`, { data: body, headers: authHeaders(cookie) });
 }
 
-async function apiPatch(request: APIRequestContext, path: string, body: unknown, cookie?: string) {
-  return request.patch(`${API_URL}/api${path}`, { data: body, headers: authHeaders(cookie) });
+async function apiPostAllowExisting(request: APIRequestContext, path: string, body: unknown) {
+  const response = await apiPost(request, path, body);
+  expect(
+    response.ok() || response.status() === 409,
+    `${path} failed: ${response.status()} ${await response.text()}`,
+  ).toBeTruthy();
 }
 
 async function apiPut(request: APIRequestContext, path: string, body: unknown, cookie?: string) {
@@ -77,6 +81,23 @@ async function apiUpload(
   });
 }
 
+async function loginStaffPage(page: Page, email: string, password: string, target: RegExp) {
+  await grantStaffAccess(page);
+  await page.goto("/login");
+  await page.getByTestId("input-email").fill(email);
+  await page.getByTestId("input-password").fill(password);
+  await page.getByTestId("button-login").click();
+  await page.waitForURL(target);
+}
+
+async function loginClientPage(page: Page, email: string, password: string) {
+  await page.goto(clientUrl("/login"));
+  await page.getByTestId("input-email").fill(email);
+  await page.getByTestId("input-password").fill(password);
+  await page.getByTestId("button-login").click();
+  await page.waitForURL(/\/client/);
+}
+
 // Minimal valid workspace for testing the save/submit lifecycle
 const MINIMAL_WORKSPACE = {
   booth: {
@@ -98,6 +119,23 @@ const MINIMAL_WORKSPACE = {
 
 test.describe("Three-role workflow", () => {
   test.beforeAll(async ({ request }) => {
+    await apiPostAllowExisting(request, "/auth/signup-staff", {
+      name: "Workflow Chief",
+      company: "ENS Demo Agency",
+      email: CHIEF_EMAIL,
+      password: CHIEF_PASSWORD,
+      role: "chief",
+      organizationSlug: ORG_SLUG,
+    });
+    await apiPostAllowExisting(request, "/auth/signup-staff", {
+      name: "Workflow PM",
+      company: "ENS Demo Agency",
+      email: PM_EMAIL,
+      password: PM_PASSWORD,
+      role: "pm",
+      organizationSlug: ORG_SLUG,
+    });
+
     // 1. Sign in as chief
     const chiefLogin = await apiPost(request, "/auth/login", {
       email: CHIEF_EMAIL, password: CHIEF_PASSWORD, organizationSlug: ORG_SLUG,
@@ -137,22 +175,26 @@ test.describe("Three-role workflow", () => {
     const clientData = await clientSignup.json();
     expect(clientData.user.role).toBe("client");
 
-    // 4. Chief finds the pending client record and approves + assigns PM in one call
-    const clientsList = await apiGet(request, "/platform/clients?status=pending_approval", chiefCookie);
+    // 4. Chief finds the pending client record and assigns it to a PM.
+    const clientsList = await apiGet(request, "/platform/clients", chiefCookie);
     expect(clientsList.ok(), `clients list failed: ${await clientsList.text()}`).toBeTruthy();
     const { clients } = await clientsList.json();
     const newClient = clients.find((c: { contactEmail: string }) =>
       c.contactEmail?.toLowerCase() === clientEmail.toLowerCase(),
     );
-    expect(newClient, "new client should appear in pending_approval list").toBeTruthy();
+    expect(newClient, "new client should appear in client list").toBeTruthy();
 
-    const approveRes = await apiPatch(
+    const approveRes = await apiPut(
       request,
-      `/platform/clients/${newClient.id}/approve`,
-      { managerId: pmUserId },
+      "/platform/managers/assignments",
+      {
+        clientAssignments: [{ clientId: newClient.id, managerId: pmUserId }],
+        projectAssignments: [],
+        cascadeClientProjects: true,
+      },
       chiefCookie,
     );
-    expect(approveRes.ok(), `client approval+assignment failed: ${await approveRes.text()}`).toBeTruthy();
+    expect(approveRes.ok(), `client assignment failed: ${await approveRes.text()}`).toBeTruthy();
 
     // 5. PM creates a project — "Workflow Co" matches the client record by company_name
     const projectRes = await apiPost(request, "/platform/projects", {
@@ -281,6 +323,7 @@ test.describe("Three-role workflow", () => {
     uiMessageBody = `E2E client portal message ${RUN}`;
     const uiMessageRes = await apiPost(request, `/platform/messages/${pmUserId}`, {
       body: uiMessageBody,
+      context: { projectId },
     }, clientCookie);
     expect(uiMessageRes.ok(), `UI message send failed: ${await uiMessageRes.text()}`).toBeTruthy();
   });
@@ -288,34 +331,22 @@ test.describe("Three-role workflow", () => {
   // ── Browser tests ─────────────────────────────────────────────────────────────
 
   test("chief dashboard shows workflow queue", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/email/i).fill(CHIEF_EMAIL);
-    await page.getByLabel(/password/i).fill(CHIEF_PASSWORD);
-    await page.getByRole("button", { name: /sign in|log in/i }).click();
-    await page.waitForURL(/\/chief/);
+    await loginStaffPage(page, CHIEF_EMAIL, CHIEF_PASSWORD, /\/chief/);
     await page.waitForLoadState("networkidle");
     await expect(page).toHaveURL(/\/chief/);
     await expect(page.getByText(/dashboard|projects|workflow/i).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("chief clients page shows the approved workflow client", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/email/i).fill(CHIEF_EMAIL);
-    await page.getByLabel(/password/i).fill(CHIEF_PASSWORD);
-    await page.getByRole("button", { name: /sign in|log in/i }).click();
-    await page.waitForURL(/\/chief/);
+    await loginStaffPage(page, CHIEF_EMAIL, CHIEF_PASSWORD, /\/chief/);
 
     await page.goto("/chief/clients");
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText("Workflow Co")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(`Workflow Project ${RUN}`, { exact: true })).toBeVisible({ timeout: 10_000 });
   });
 
   test("PM dashboard shows the created project", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/email/i).fill(PM_EMAIL);
-    await page.getByLabel(/password/i).fill(PM_PASSWORD);
-    await page.getByRole("button", { name: /sign in|log in/i }).click();
-    await page.waitForURL(/\/pm/);
+    await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
     await page.waitForLoadState("networkidle");
 
     await page.goto("/pm/projects");
@@ -324,11 +355,7 @@ test.describe("Three-role workflow", () => {
   });
 
   test("PM workspace loads for the submitted project", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/email/i).fill(PM_EMAIL);
-    await page.getByLabel(/password/i).fill(PM_PASSWORD);
-    await page.getByRole("button", { name: /sign in|log in/i }).click();
-    await page.waitForURL(/\/pm/);
+    await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
 
     await page.goto(`/pm/workspace?projectId=${projectId}`);
     await page.waitForLoadState("networkidle");
@@ -355,11 +382,7 @@ test.describe("Three-role workflow", () => {
   });
 
   test("renderer re-initializes after navigation away and back", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/email/i).fill(PM_EMAIL);
-    await page.getByLabel(/password/i).fill(PM_PASSWORD);
-    await page.getByRole("button", { name: /sign in|log in/i }).click();
-    await page.waitForURL(/\/pm/);
+    await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
 
     // First load
     await page.goto(`/pm/workspace?projectId=${projectId}`);
@@ -396,14 +419,10 @@ test.describe("Three-role workflow", () => {
   });
 
   test("client sees workspace after approval (project is approved)", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/email/i).fill(clientEmail);
-    await page.getByLabel(/password/i).fill("WorkflowClient2026!");
-    await page.getByRole("button", { name: /sign in|log in/i }).click();
-    await page.waitForURL(/\/client/);
+    await loginClientPage(page, clientEmail, "WorkflowClient2026!");
     await page.waitForLoadState("networkidle");
 
-    await page.goto("/client/workspace");
+    await page.goto(clientUrl("/client/workspace"));
     await page.waitForLoadState("networkidle");
 
     const iframe = page.locator('iframe[title="Booth Renderer"]');
@@ -414,14 +433,12 @@ test.describe("Three-role workflow", () => {
   });
 
   test("client messages page shows the exact persisted message", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/email/i).fill(clientEmail);
-    await page.getByLabel(/password/i).fill("WorkflowClient2026!");
-    await page.getByRole("button", { name: /sign in|log in/i }).click();
-    await page.waitForURL(/\/client/);
+    await loginClientPage(page, clientEmail, "WorkflowClient2026!");
 
-    await page.goto("/client/messages");
+    await page.goto(clientUrl("/client/messages"));
     await page.waitForLoadState("networkidle");
+    await page.getByRole("textbox", { name: /search messages/i }).fill(PM_EMAIL);
+    await page.getByRole("listitem").filter({ hasText: uiMessageBody }).click();
     await expect(page.getByText(uiMessageBody, { exact: true })).toBeVisible({ timeout: 10_000 });
   });
 });

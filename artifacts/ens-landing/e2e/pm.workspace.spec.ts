@@ -22,11 +22,11 @@ test.describe("PM workspace", () => {
     expect(realErrors).toHaveLength(0);
   });
 
-  test("PM projects page shows the exact seeded empty state", async ({ page }) => {
+  test("PM projects page shows the exact empty state", async ({ page }) => {
     await page.goto("/pm/projects");
     await expect(page).toHaveURL(/\/pm\/projects/);
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText("No projects", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("No projects match your filter.", { exact: true }).first()).toBeVisible();
   });
 
   test("PM workspace does not create a renderer without an assigned project", async ({ page }) => {
