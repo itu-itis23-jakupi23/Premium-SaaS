@@ -469,6 +469,7 @@ router.post("/signup", async (req, res) => {
   const parsed = signupSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, parsed.error);
   const store = await readStore();
+  const isDev = process.env.NODE_ENV !== "production";
   const email = parsed.data.email.toLowerCase();
   const agency = resolveAgencyForSignup(store.users, parsed.data.organizationSlug);
   const existingUser = store.users.find((user) => user.email.toLowerCase() === email);

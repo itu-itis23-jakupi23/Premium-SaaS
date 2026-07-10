@@ -163,13 +163,22 @@ async function contactsFor(actor: Actor) {
     const client = clientForActor(allClients, actor);
     const clientAgency = normalizedCompany(client?.agency || actor.company);
     const clientUsers = authStore.users.filter((user) => normalizedCompany(user.agency || user.company) === clientAgency);
+    const clientIdentity = canonicalPersonId(client?.id ?? actor.id);
+    const messageStore = await readStore();
+    const threadPmContacts = messageStore.messages.flatMap((message) => {
+      const [, first, second] = message.conversationId.split(":");
+      if (first !== clientIdentity && second !== clientIdentity) return [];
+      const otherId = first === clientIdentity ? second : first;
+      const user = clientUsers.find((item) => item.id === otherId && item.role === "pm");
+      return user ? [user] : [];
+    });
     const assignedPm = client?.pm && client.pm !== "Unassigned"
       ? clientUsers.find((user) => (
         user.role === "pm"
         && (user.id === client.managerId || user.name.trim().toLowerCase() === client.pm.trim().toLowerCase())
       ))
       : null;
-    return [assignedPm].filter(Boolean).filter(uniqueContact).map(toContact);
+    return [assignedPm, ...threadPmContacts].filter(Boolean).filter(uniqueContact).map(toContact);
   }
   if (actor.role === "pm") {
     const assignedClients = clients.filter((client) => (
