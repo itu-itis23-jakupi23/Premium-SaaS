@@ -31,8 +31,6 @@ import {
   CheckCircle2,
   FileText,
   DollarSign,
-  Star,
-  Quote
 } from 'lucide-react';
 
 const FADE_UP: Variants = {
@@ -501,20 +499,50 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Why teams choose ENS */}
       <section className="py-24">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Trusted by Industry Leaders</h2>
-            <p className="text-muted-foreground">See how ENS is transforming exhibition delivery for top design firms.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Built for the Whole Team</h2>
+            <p className="text-muted-foreground">Every role gets a dedicated experience. No shared spreadsheets, no lost emails.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { name: "Sarah Chen", role: "Creative Director", company: "Global Exhibits Inc.", quote: "ENS cut our design-to-approval time by 60%. The real-time 3D collaboration is a game changer for our international clients.", ref: "CES 2024", gradient: "from-primary to-blue-500" },
-              { name: "Marcus Weber", role: "Head of Design", company: "Exhibito Group", quote: "Finally, a tool that understands Octanorm structural logic. We no longer worry about impossibilities during the design phase.", ref: "Hannover Messe", gradient: "from-blue-500 to-cyan-500" },
-              { name: "Elena Rossi", role: "Studio Principal", company: "Milano Design Studio", quote: "The Maxima support is incredible. We build complex architectural stands that look premium and are technically accurate.", ref: "Salone del Mobile", gradient: "from-purple-500 to-pink-500" }
-            ].map((testimonial, i) => (
+              {
+                role: "Chief Manager",
+                gradient: "from-violet-600 to-indigo-600",
+                headline: "Full visibility across every project.",
+                points: [
+                  "Live workspace monitor for all active stands",
+                  "PM performance leaderboard and revenue tracking",
+                  "One-click manager assignment and reassignment",
+                  "Exportable reports — Excel or PDF, any date range",
+                ],
+              },
+              {
+                role: "Project Manager",
+                gradient: "from-blue-600 to-cyan-500",
+                headline: "Design the stand, manage the client.",
+                points: [
+                  "Drag-and-drop 3D editor with 30+ real GLB furniture models",
+                  "Octanorm & Maxima structural systems with wall snapping",
+                  "Version history and one-click snapshot capture",
+                  "Integrated task board (To Do / In Progress / Blocked / Done)",
+                ],
+              },
+              {
+                role: "Client",
+                gradient: "from-emerald-600 to-teal-500",
+                headline: "Review and approve with full context.",
+                points: [
+                  "Read-only 3D view of every design version",
+                  "Pin comments directly on the booth canvas",
+                  "Approve or request revision with a single action",
+                  "Document hub for all uploaded files and contracts",
+                ],
+              },
+            ].map((item, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
@@ -523,21 +551,18 @@ export default function Home() {
                 transition={{ delay: i * 0.1 }}
                 className="p-8 rounded-3xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-all flex flex-col group"
               >
-                <div className="flex gap-1 mb-5">
-                  {[1,2,3,4,5].map(s => (
-                    <Star key={s} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <div className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full bg-gradient-to-r ${item.gradient} text-white mb-5 self-start`}>
+                  {item.role}
+                </div>
+                <p className="text-lg font-semibold mb-5 leading-snug">{item.headline}</p>
+                <ul className="space-y-3 flex-1">
+                  {item.points.map((point, j) => (
+                    <li key={j} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                      <CheckCircle2 className="w-4 h-4 text-primary/60 flex-shrink-0 mt-0.5" />
+                      {point}
+                    </li>
                   ))}
-                </div>
-                <Quote className="w-8 h-8 text-primary/20 mb-4" />
-                <p className="text-base mb-8 text-muted-foreground leading-relaxed flex-1">"{testimonial.quote}"</p>
-                <div className="flex items-center gap-4">
-                  <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${testimonial.gradient} flex-shrink-0`} />
-                  <div>
-                    <div className="font-bold text-sm">{testimonial.name}</div>
-                    <div className="text-xs text-muted-foreground">{testimonial.role} · {testimonial.company}</div>
-                    <div className="text-[10px] text-primary mt-0.5 font-mono tracking-wide">{testimonial.ref}</div>
-                  </div>
-                </div>
+                </ul>
               </motion.div>
             ))}
           </div>
