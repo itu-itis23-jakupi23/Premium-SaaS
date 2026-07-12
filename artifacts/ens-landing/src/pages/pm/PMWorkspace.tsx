@@ -632,9 +632,9 @@ function normalizeRoom(raw: unknown, index: number, booth: BoothState): Workspac
     name: String(room.name || `Room ${index + 1}`),
     width,
     depth,
-    height: wallHeight,
-    x: clampNumber(snapNumber(Number(room.x) || booth.width / 2, 1), width / 2, Math.max(width / 2, booth.width - width / 2)),
-    z: clampNumber(snapNumber(Number(room.z) || booth.depth / 2, 1), depth / 2, Math.max(depth / 2, booth.depth - depth / 2)),
+    height: room.height != null ? clampNumber(Number(room.height) || wallHeight, 1.8, booth.height) : wallHeight,
+    x: clampNumber(snapNumber(Number(room.x) || booth.width / 2, 0.5), width / 2, Math.max(width / 2, booth.width - width / 2)),
+    z: clampNumber(snapNumber(Number(room.z) || booth.depth / 2, 0.5), depth / 2, Math.max(depth / 2, booth.depth - depth / 2)),
     hasDoor: room.hasDoor !== false,
     hasCeiling: Boolean(room.hasCeiling),
     doorPosition: normalizeDoorPosition(room.doorPosition),
@@ -1135,8 +1135,8 @@ export default function PMWorkspace() {
       width,
       depth,
       height:wallHeight,
-      x:width / 2,
-      z:depth / 2,
+      x:prev.booth.width / 2,
+      z:prev.booth.depth / 2,
       hasDoor:true,
       hasCeiling:false,
       doorPosition:'center',
@@ -2086,11 +2086,11 @@ export default function PMWorkspace() {
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
                         <DimInput label="W" value={room.width} min={1} max={booth.width} step={1} onChange={v=>updateRoom(room.id,{width:v})}/>
                         <DimInput label="D" value={room.depth} min={1} max={booth.depth} step={1} onChange={v=>updateRoom(room.id,{depth:v})}/>
-                        <DimInput label="Wall H" value={room.height} min={room.height} max={room.height} step={0.1} disabled onChange={()=>{}}/>
+                        <DimInput label="Wall H" value={room.height} min={1.8} max={booth.height} step={0.1} onChange={v=>updateRoom(room.id,{height:v})}/>
                       </div>
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginTop:6}}>
-                        <DimInput label="X" value={room.x} min={room.width/2} max={Math.max(room.width/2,booth.width-room.width/2)} step={1} onChange={v=>updateRoom(room.id,{x:v})}/>
-                        <DimInput label="Z" value={room.z} min={room.depth/2} max={Math.max(room.depth/2,booth.depth-room.depth/2)} step={1} onChange={v=>updateRoom(room.id,{z:v})}/>
+                        <DimInput label="X" value={room.x} min={room.width/2} max={Math.max(room.width/2,booth.width-room.width/2)} step={0.5} onChange={v=>updateRoom(room.id,{x:v})}/>
+                        <DimInput label="Z" value={room.z} min={room.depth/2} max={Math.max(room.depth/2,booth.depth-room.depth/2)} step={0.5} onChange={v=>updateRoom(room.id,{z:v})}/>
                       </div>
                       <div style={{display:'grid',gridTemplateColumns:'1fr 42px',gap:6,marginTop:7}}>
                         <label style={{display:'flex',flexDirection:'column',gap:4}}>
@@ -2161,7 +2161,7 @@ export default function PMWorkspace() {
                           {(['left','center','right'] as DoorPosition[]).map(position=>(
                             <button key={position} onClick={()=>updateRoom(room.id,{doorPosition:position,hasDoor:true})}
                               style={{height:24,border:`1px solid ${room.doorPosition===position&&room.hasDoor?C.orange:C.hair}`,borderRadius:4,background:room.doorPosition===position&&room.hasDoor?`${C.orange}12`:C.panel,color:room.doorPosition===position&&room.hasDoor?C.orange:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:8.5,textTransform:'uppercase'}}>
-                              {position.slice(0,1)}
+                              {position === 'center' ? 'Ctr' : position === 'left' ? 'L' : 'R'}
                             </button>
                           ))}
                         </div>

@@ -227,9 +227,18 @@ async function main() {
   assert(typeof readiness.ready === "boolean", "readiness should include ready boolean");
   assert(readiness.checks && typeof readiness.checks === "object", "readiness should include checks object");
   assert("authSecretConfigured" in readiness.checks, "readiness should report auth secret status");
+  assert("messageEncryptionConfigured" in readiness.checks, "readiness should report message encryption status");
+  assert("cookieSecureCompatible" in readiness.checks, "readiness should report cookie security compatibility");
+  assert("documentStorageConfigured" in readiness.checks, "readiness should report document storage status");
+  assert("messageAttachmentStorageConfigured" in readiness.checks, "readiness should report message attachment storage status");
+  assert("stripeWebhookConfigured" in readiness.checks, "readiness should report Stripe webhook status");
   assert("assetStorageConfigured" in readiness.checks, "readiness should report workspace asset storage status");
   assert(readiness.limits?.apiJsonLimit, "readiness should report API JSON limit");
   assert(readiness.storage?.assetStorageProvider, "readiness should report asset storage provider");
+  assert(readiness.operational && typeof readiness.operational === "object", "readiness should include operational snapshot");
+  assert(typeof readiness.operational.pendingClients === "number", "readiness should report pending client count");
+  assert(typeof readiness.operational.unassignedProjects === "number", "readiness should report unassigned project count");
+  assert(Array.isArray(readiness.recentActivity), "readiness should include recent audit activity");
 
   // ── PHASE 4: CRUD — projects, clients, tasks ───────────────────────────────
 
@@ -393,7 +402,7 @@ async function main() {
       method: "POST", jar: clientJar,
       body: { body: "client should not reach chief directly" },
     });
-    assert(r.status === 403, `expected 403, got ${r.status}`);
+    assert(r.status === 404, `expected 404, got ${r.status}`);
   });
 
   const messageText = `Smoke project message ${RUN_ID}`;
@@ -417,7 +426,7 @@ async function main() {
       method: "POST", jar: pmJar,
       body: { body: "wrong project scope should fail", context: { projectId: createdProject.project.id } },
     });
-    assert(r.status === 403, `expected 403, got ${r.status}`);
+    assert(r.status === 404, `expected 404, got ${r.status}`);
   });
 
   const baseConversation = await check("PM reads base project conversation", () => request(`/platform/messages/${messageClientId}?projectId=${encodeURIComponent(baseProjectId)}`, { jar: pmJar }));
@@ -434,7 +443,7 @@ async function main() {
 
   await check("other-org chief cannot download private attachment", async () => {
     const r = await rawRequest(`/platform/messages/attachments/${uploadedAttachment.attachment.id}`, { jar: otherChiefJar });
-    assert(r.status === 403, `expected 403, got ${r.status}`);
+    assert(r.status === 404, `expected 404, got ${r.status}`);
   });
 
   const clientAttachment = await check("client uploads reply attachment", () => uploadAttachment({
@@ -461,7 +470,7 @@ async function main() {
 
   await check("block access to unknown project conversation", async () => {
     const r = await rawRequest(`/platform/messages/${messageClientId}?projectId=p2`, { jar: pmJar });
-    assert(r.status === 403, `expected 403, got ${r.status}`);
+    assert(r.status === 404, `expected 404, got ${r.status}`);
   });
 
   // ── PHASE 7: Ownership isolation ─────────────────────────────────────────

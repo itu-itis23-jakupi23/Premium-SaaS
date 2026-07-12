@@ -17,7 +17,7 @@
 
 import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
 import { API_URL } from "../playwright.config";
-import { clientUrl, grantStaffAccess } from "./helpers";
+import { clientUrl, grantStaffAccess, monitorPageFailures } from "./helpers";
 
 const ORG_SLUG = process.env.TEST_ORG_SLUG ?? "ens-demo-agency";
 const RUN = Date.now();
@@ -33,6 +33,7 @@ let clientEmail: string;
 let projectId: string;
 let pmUserId: string;
 let uiMessageBody: string;
+const pageFailureAssertions = new WeakMap<Page, () => Promise<void>>();
 
 function extractCookie(res: Awaited<ReturnType<APIRequestContext["post"]>>) {
   return res.headers()["set-cookie"]?.split(";")[0] ?? "";
@@ -98,6 +99,43 @@ async function loginClientPage(page: Page, email: string, password: string) {
   await page.waitForURL(/\/client/);
 }
 
+async function expectBoothRendererHealthy(page: Page, label: string) {
+  await expect(page.getByText(/renderer did not respond|3d renderer encountered an error/i)).toHaveCount(0);
+
+  const iframe = page.locator('iframe[title="Booth Renderer"]');
+  await expect(iframe, `${label}: iframe should become ready`).toHaveAttribute(
+    "data-renderer-ready",
+    "true",
+    { timeout: 15_000 },
+  );
+
+  const frame = page.frameLocator('iframe[title="Booth Renderer"]');
+  await expect(frame.locator("svg.scene"), `${label}: SVG scene should be visible`).toBeVisible({ timeout: 15_000 });
+  await expect(frame.locator("canvas").first(), `${label}: GLB canvas should be visible`).toBeVisible({ timeout: 15_000 });
+
+  const rendererState = await frame.locator("body").evaluate(() => {
+    const svg = document.querySelector("svg.scene") as SVGSVGElement | null;
+    const booth = document.getElementById("boothGroup");
+    const floor = document.getElementById("floorGroup");
+    const canvas = document.getElementById("glbCanvas") as HTMLCanvasElement | null;
+    return {
+      svgWidth: svg?.clientWidth ?? 0,
+      svgHeight: svg?.clientHeight ?? 0,
+      boothElements: booth?.querySelectorAll("path,polygon,line,rect,text").length ?? 0,
+      floorElements: floor?.querySelectorAll("path,polygon,line,rect").length ?? 0,
+      canvasWidth: canvas?.width ?? 0,
+      canvasHeight: canvas?.height ?? 0,
+    };
+  });
+
+  expect(rendererState.svgWidth, `${label}: SVG width must be > 100px`).toBeGreaterThan(100);
+  expect(rendererState.svgHeight, `${label}: SVG height must be > 100px`).toBeGreaterThan(100);
+  expect(rendererState.boothElements, `${label}: booth shell geometry must render`).toBeGreaterThan(20);
+  expect(rendererState.floorElements, `${label}: floor/carpet geometry must render`).toBeGreaterThan(0);
+  expect(rendererState.canvasWidth, `${label}: GLB canvas width must be > 100px`).toBeGreaterThan(100);
+  expect(rendererState.canvasHeight, `${label}: GLB canvas height must be > 100px`).toBeGreaterThan(100);
+}
+
 // Minimal valid workspace for testing the save/submit lifecycle
 const MINIMAL_WORKSPACE = {
   booth: {
@@ -118,6 +156,15 @@ const MINIMAL_WORKSPACE = {
 };
 
 test.describe("Three-role workflow", () => {
+  test.beforeEach(async ({ page }) => {
+    pageFailureAssertions.set(page, monitorPageFailures(page));
+  });
+
+  test.afterEach(async ({ page }) => {
+    await pageFailureAssertions.get(page)?.();
+    pageFailureAssertions.delete(page);
+  });
+
   test.beforeAll(async ({ request }) => {
     await apiPostAllowExisting(request, "/auth/signup-staff", {
       name: "Workflow Chief",
@@ -359,26 +406,7 @@ test.describe("Three-role workflow", () => {
 
     await page.goto(`/pm/workspace?projectId=${projectId}`);
     await page.waitForLoadState("networkidle");
-
-    // No renderer error fallback visible
-    await expect(page.getByText(/renderer did not respond/i)).not.toBeVisible({ timeout: 15_000 });
-
-    const iframe = page.locator('iframe[title="Booth Renderer"]');
-    await expect(iframe).toHaveAttribute("data-renderer-ready", "true", { timeout: 15_000 });
-    const canvas = page.frameLocator('iframe[title="Booth Renderer"]').locator("canvas").first();
-    await expect(canvas).toBeVisible({ timeout: 15_000 });
-    const canvasState = await canvas.evaluate((element) => {
-      const target = element as HTMLCanvasElement;
-      return {
-        width: target.width,
-        height: target.height,
-        imageLength: target.toDataURL("image/png").length,
-      };
-    });
-    expect(canvasState.width, "canvas width must be > 100px").toBeGreaterThan(100);
-    expect(canvasState.height, "canvas height must be > 100px").toBeGreaterThan(100);
-    // A blank canvas (solid color) produces a very short data URL; a rendered booth has geometry
-    expect(canvasState.imageLength, "booth canvas must not be blank").toBeGreaterThan(5_000);
+    await expectBoothRendererHealthy(page, "PM workspace");
   });
 
   test("renderer re-initializes after navigation away and back", async ({ page }) => {
@@ -387,9 +415,7 @@ test.describe("Three-role workflow", () => {
     // First load
     await page.goto(`/pm/workspace?projectId=${projectId}`);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator('iframe[title="Booth Renderer"]')).toHaveAttribute(
-      "data-renderer-ready", "true", { timeout: 15_000 }
-    );
+    await expectBoothRendererHealthy(page, "PM workspace first load");
 
     // Navigate away
     await page.goto("/pm/projects");
@@ -399,10 +425,7 @@ test.describe("Three-role workflow", () => {
     // Navigate back — renderer must re-initialize without error
     await page.goto(`/pm/workspace?projectId=${projectId}`);
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText(/renderer did not respond/i)).not.toBeVisible({ timeout: 15_000 });
-    await expect(page.locator('iframe[title="Booth Renderer"]')).toHaveAttribute(
-      "data-renderer-ready", "true", { timeout: 15_000 }
-    );
+    await expectBoothRendererHealthy(page, "PM workspace reload");
   });
 
   test("workspace state persists across reload: booth dimensions and company name", async ({ request }) => {
@@ -424,12 +447,7 @@ test.describe("Three-role workflow", () => {
 
     await page.goto(clientUrl("/client/workspace"));
     await page.waitForLoadState("networkidle");
-
-    const iframe = page.locator('iframe[title="Booth Renderer"]');
-    await expect(iframe).toHaveAttribute("data-renderer-ready", "true", { timeout: 15_000 });
-    await expect(
-      page.frameLocator('iframe[title="Booth Renderer"]').locator("canvas").first(),
-    ).toBeVisible({ timeout: 15_000 });
+    await expectBoothRendererHealthy(page, "Client workspace");
   });
 
   test("client messages page shows the exact persisted message", async ({ page }) => {

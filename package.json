@@ -8,7 +8,10 @@
     "db:generate": "pnpm --filter @workspace/db run generate",
     "db:migrate": "pnpm --filter @workspace/db run migrate",
     "db:push": "pnpm --filter @workspace/db run push",
+    "db:repair:critical": "node scripts/repair-critical-schema.mjs",
     "db:studio": "pnpm --filter @workspace/db run studio",
+    "e2e": "pnpm --filter @workspace/ens-landing run e2e",
+    "release:check": "node scripts/release-check.mjs",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"@workspace/*\" --if-present run typecheck"
   },

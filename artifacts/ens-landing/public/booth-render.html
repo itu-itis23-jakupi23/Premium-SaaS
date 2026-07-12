@@ -32,7 +32,7 @@
   }
   .stage { position: fixed; inset: 0; }
   svg.scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; }
-  #glbCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; z-index: 12; transform: translateY(6%); transform-origin: center center; }
+  #glbCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; z-index: 12; transform-origin: center center; }
 
   @keyframes sceneIn { from { opacity: 0; } to { opacity: 1; } }
   svg.scene { animation: sceneIn .9s ease-out; }
@@ -191,11 +191,15 @@
       <filter id="blur-soft" x="-5%" y="-5%" width="110%" height="110%">
         <feGaussianBlur stdDeviation="2.2"/>
       </filter>
+      <clipPath id="carpet-clip">
+        <polygon id="carpet-clip-poly" points="0,0"/>
+      </clipPath>
     </defs>
 
     <rect x="0" y="0" width="1600" height="1000" fill="url(#sky)"/>
     <g id="floorGroup"></g>
     <g id="boothGroup"></g>
+    <g id="gridGroup" clip-path="url(#carpet-clip)"></g>
     <rect x="0" y="0" width="1600" height="1000" fill="url(#vignette)" pointer-events="none"/>
   </svg>
   <canvas id="glbCanvas"></canvas>
@@ -300,6 +304,19 @@ let panelOverrides = {};
 let invalidItemIds = new Set();
 let frontSupportPositions = [];
 let suppressedDefaultPositions = [];
+
+function notifyRendererError(error) {
+  const message = error && error.message ? String(error.message) : String(error || 'Renderer failed');
+  window.parent.postMessage({ type: 'boothRendererError', message }, '*');
+}
+
+window.addEventListener('error', (event) => {
+  notifyRendererError(event.error || event.message);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  notifyRendererError(event.reason || 'Unhandled renderer promise rejection');
+});
 
 function applyLightingPreset() {
   const root = document.documentElement;
@@ -740,18 +757,19 @@ function buildRooms() {
   for (const room of rooms) {
     const w = Math.max(0.5, Number(room.width) || 2);
     const d = Math.max(0.5, Number(room.depth) || 2);
-    const h = BH;
+    const h = Math.min(BH, Math.max(1.8, Number(room.height) || BH));
     const cx = -BW / 2 + Math.max(w / 2, Math.min(BW - w / 2, (room.x != null && room.x !== '') ? Number(room.x) : w / 2));
     const cz = Math.max(d / 2, Math.min(BD - d / 2, (room.z != null && room.z !== '') ? Number(room.z) : d / 2));
     const x0 = cx - w / 2, x1 = cx + w / 2, z0 = cz - d / 2, z1 = cz + d / 2;
-    const shellTol = 0.045;
+    const shellTol = 0.012;
     const skipLeft = x0 <= -BW / 2 + shellTol;
     const skipRight = x1 >= BW / 2 - shellTol;
     const skipBack = z0 <= shellTol;
     const skipFront = z1 >= BD - shellTol;
     const label = room.name || 'Room';
     const meta = `${w.toFixed(1)} x ${d.toFixed(1)} x ${h.toFixed(1)} m`;
-    const roomCommon = { roomId: room.id, softEdge: true };
+    const roomCommon = { roomId: room.id, softEdge: true, renderOrder: 0.00005 };
+    const wallBoxCommon = { roomId: room.id, renderOrder: 0.00005 };
     const wallFinish = ['frosted', 'glass', 'dark'].includes(room.wallFinish) ? room.wallFinish : 'white';
     const wallFill = wallFinish === 'glass'
       ? 'rgba(210,232,245,0.42)'
@@ -759,21 +777,21 @@ function buildRooms() {
         ? 'rgba(232,240,248,0.72)'
         : wallFinish === 'dark'
           ? 'rgba(38,43,51,0.88)'
-          : shadeColor(WALL_COLOR, -0.05);
+          : shadeColor(WALL_COLOR, -0.14);
     const sideWallFill = wallFinish === 'glass'
       ? 'rgba(190,222,238,0.38)'
       : wallFinish === 'frosted'
         ? 'rgba(226,235,244,0.68)'
         : wallFinish === 'dark'
           ? 'rgba(28,32,39,0.84)'
-          : shadeColor(WALL_COLOR, -0.08);
+          : shadeColor(WALL_COLOR, -0.18);
     const wallInsetFill = wallFinish === 'glass'
       ? 'rgba(185,220,238,0.28)'
       : wallFinish === 'frosted'
         ? 'rgba(235,242,250,0.52)'
         : wallFinish === 'dark'
           ? 'rgba(24,28,34,0.62)'
-          : shadeColor(WALL_COLOR, -0.02);
+          : shadeColor(WALL_COLOR, -0.08);
     const floorFill = /^#[0-9a-f]{6}$/i.test(String(room.floorColor || '')) ? room.floorColor : 'rgba(29,78,216,0.16)';
     const roomDesignImageUrl = typeof room.designImageUrl === 'string' ? room.designImageUrl : '';
     const roomDesignOpacity = Math.max(0.15, Math.min(1, Number(room.designOpacity) || 1));
@@ -801,7 +819,7 @@ function buildRooms() {
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
         normal: [0, 0, 1],
-        ...roomCommon
+        ...wallBoxCommon
       });
       pushBox([cx + doorW/2, 0, z0], [x1, h, z0 + EX], {
         fill: wallFill,
@@ -809,7 +827,7 @@ function buildRooms() {
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
         normal: [0, 0, 1],
-        ...roomCommon
+        ...wallBoxCommon
       });
       pushBox([cx - doorW/2, doorH, z0], [cx + doorW/2, h, z0 + EX], {
         fill: wallFill,
@@ -817,7 +835,7 @@ function buildRooms() {
         partLabel: label + ' door header',
         partMeta: meta,
         normal: [0, 0, 1],
-        ...roomCommon
+        ...wallBoxCommon
       });
     } else if (!skipBack) {
     pushBox([x0, 0, z0], [x1, h, z0 + EX], {
@@ -826,7 +844,7 @@ function buildRooms() {
       partLabel: label + ' wall',
       partMeta: meta,
       normal: [0, 0, 1],
-      ...roomCommon
+      ...wallBoxCommon
     });
     }
     if (!skipFront && room.hasDoor && doorSide === 'front') {
@@ -836,7 +854,7 @@ function buildRooms() {
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
         normal: [0, 0, -1],
-        ...roomCommon
+        ...wallBoxCommon
       });
       pushBox([doorCenterX + doorW/2, 0, z1 - EX], [x1, h, z1], {
         fill: wallFill,
@@ -844,7 +862,7 @@ function buildRooms() {
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
         normal: [0, 0, -1],
-        ...roomCommon
+        ...wallBoxCommon
       });
       pushBox([doorCenterX - doorW/2, doorH, z1 - EX], [doorCenterX + doorW/2, h, z1], {
         fill: wallFill,
@@ -852,7 +870,7 @@ function buildRooms() {
         partLabel: label + ' door header',
         partMeta: meta,
         normal: [0, 0, -1],
-        ...roomCommon
+        ...wallBoxCommon
       });
     } else if (!skipFront) {
     pushBox([x0, 0, z1 - EX], [x1, h, z1], {
@@ -861,7 +879,7 @@ function buildRooms() {
       partLabel: label + ' wall',
       partMeta: room.hasDoor ? meta + ' · door' : meta,
       normal: [0, 0, -1],
-      ...roomCommon
+      ...wallBoxCommon
     });
     }
     if (!skipLeft && room.hasDoor && doorSide === 'left') {
@@ -871,7 +889,7 @@ function buildRooms() {
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
         normal: [1, 0, 0],
-        ...roomCommon
+        ...wallBoxCommon
       });
       pushBox([x0, 0, cz + doorW/2], [x0 + EX, h, z1], {
         fill: sideWallFill,
@@ -879,7 +897,7 @@ function buildRooms() {
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
         normal: [1, 0, 0],
-        ...roomCommon
+        ...wallBoxCommon
       });
       pushBox([x0, doorH, cz - doorW/2], [x0 + EX, h, cz + doorW/2], {
         fill: sideWallFill,
@@ -887,7 +905,7 @@ function buildRooms() {
         partLabel: label + ' door header',
         partMeta: meta,
         normal: [1, 0, 0],
-        ...roomCommon
+        ...wallBoxCommon
       });
     } else if (!skipLeft) {
     pushBox([x0, 0, z0], [x0 + EX, h, z1], {
@@ -896,7 +914,7 @@ function buildRooms() {
       partLabel: label + ' wall',
       partMeta: meta,
       normal: [1, 0, 0],
-      ...roomCommon
+      ...wallBoxCommon
     });
     }
     if (!skipRight && room.hasDoor && doorSide === 'right') {
@@ -906,7 +924,7 @@ function buildRooms() {
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
         normal: [-1, 0, 0],
-        ...roomCommon
+        ...wallBoxCommon
       });
       pushBox([x1 - EX, 0, cz + doorW/2], [x1, h, z1], {
         fill: sideWallFill,
@@ -914,7 +932,7 @@ function buildRooms() {
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
         normal: [-1, 0, 0],
-        ...roomCommon
+        ...wallBoxCommon
       });
       pushBox([x1 - EX, doorH, cz - doorW/2], [x1, h, cz + doorW/2], {
         fill: sideWallFill,
@@ -922,7 +940,7 @@ function buildRooms() {
         partLabel: label + ' door header',
         partMeta: meta,
         normal: [-1, 0, 0],
-        ...roomCommon
+        ...wallBoxCommon
       });
     } else if (!skipRight) {
     pushBox([x1 - EX, 0, z0], [x1, h, z1], {
@@ -931,7 +949,7 @@ function buildRooms() {
       partLabel: label + ' wall',
       partMeta: meta,
       normal: [-1, 0, 0],
-      ...roomCommon
+      ...wallBoxCommon
     });
     }
     if (room.hasCeiling) {
@@ -962,7 +980,7 @@ function buildRooms() {
         partLabel: label + ' wall image',
         partMeta: 'Uploaded room wall graphic',
         roomId: room.id,
-        renderOrder: 0.81,
+        renderOrder: 0.00006,
       });
     }
     addRoomProfilesAndDoor(room, { x0, x1, z0, z1, h, doorCenterX, doorW, doorH, label, meta, roomCommon, wallInsetFill, skipLeft, skipRight, skipBack, skipFront });
@@ -980,7 +998,7 @@ function addRoomProfilesAndDoor(room, geom) {
     ...roomCommon,
     isAlu: true,
     softEdge: true,
-    renderOrder: 0.82,
+    renderOrder: 0.00007,
   };
   const doorOpen = room.doorOpen === true;
   const doorSwing = ['right-in', 'left-out', 'right-out'].includes(room.doorSwing) ? room.doorSwing : 'left-in';
@@ -1032,7 +1050,7 @@ function addRoomProfilesAndDoor(room, geom) {
       partMeta: 'Room wall infill panel with reveal',
       roomId: room.id,
       softEdge: true,
-      renderOrder: 0.78,
+      renderOrder: 0.00006,
     });
   }
 
@@ -1051,7 +1069,7 @@ function addRoomProfilesAndDoor(room, geom) {
       partMeta: 'Room wall infill panel with reveal',
       roomId: room.id,
       softEdge: true,
-      renderOrder: 0.78,
+      renderOrder: 0.00006,
     });
   }
 
@@ -1073,8 +1091,12 @@ function addRoomProfilesAndDoor(room, geom) {
     if (!skipFront && (!room.hasDoor || x <= doorLeft + 0.001 || x >= doorRight - 0.001)) addPost(x, z1, `front-${x}`);
   }
   for (const z of zStops) {
-    if (!skipLeft) addPost(x0, z, `left-${z}`);
-    if (!skipRight) addPost(x1, z, `right-${z}`);
+    const atBack = Math.abs(z - z0) < 0.001;
+    const atFront = Math.abs(z - z1) < 0.001;
+    // Skip corners already added by the xStops loop to avoid double-posting
+    const alreadyHandled = (atBack && !skipBack) || (atFront && !skipFront);
+    if (!skipLeft && !alreadyHandled) addPost(x0, z, `left-${z}`);
+    if (!skipRight && !alreadyHandled) addPost(x1, z, `right-${z}`);
   }
 
   const sortedX = [...xStops].sort((a, b) => a - b);
@@ -1134,7 +1156,7 @@ function addRoomProfilesAndDoor(room, geom) {
     partMeta: `${meta} - hinged room door`,
     softEdge: true,
     roomDoorToggle: true,
-    renderOrder: 0.92,
+    renderOrder: 0.06,
   });
   const panelWidth = Math.max(0.4, closedMaxX - closedMinX);
   const handleX = isRightHinge ? closedMinX + Math.min(0.16, panelWidth * 0.2) : closedMaxX - Math.min(0.16, panelWidth * 0.2);
@@ -1148,7 +1170,7 @@ function addRoomProfilesAndDoor(room, geom) {
     partMeta: 'Metal handle plate',
     softEdge: true,
     roomDoorToggle: true,
-    renderOrder: 1.02,
+    renderOrder: 0.08,
   });
   pushBox([handleX - 0.09, handleY - 0.015, z1 + 0.038], [handleX + 0.09, handleY + 0.015, z1 + 0.06], {
     ...roomCommon,
@@ -1159,7 +1181,7 @@ function addRoomProfilesAndDoor(room, geom) {
     partMeta: 'Metal pull handle',
     softEdge: true,
     roomDoorToggle: true,
-    renderOrder: 1.04,
+    renderOrder: 0.10,
   });
 }
 
@@ -1806,6 +1828,55 @@ function buildFloor() {
   }
 }
 
+// ── Booth grid ────────────────────────────────────────────────────────────────
+function buildGrid() {
+  const g = document.getElementById('gridGroup');
+  if (!g) return;
+  g.innerHTML = '';
+
+  const GX0 = -BW / 2, GX1 = BW / 2, GZ0 = 0, GZ1 = BD;
+
+  // Update clip path to booth footprint
+  const clipPoly = document.getElementById('carpet-clip-poly');
+  if (clipPoly) {
+    const corners = [[GX0,0,GZ0],[GX1,0,GZ0],[GX1,0,GZ1],[GX0,0,GZ1]]
+      .map(project).filter(Boolean);
+    if (corners.length === 4)
+      clipPoly.setAttribute('points', corners.map(p => p.x + ',' + p.y).join(' '));
+  }
+
+  function gridSet(step, stroke, width) {
+    const nX = Math.round((GX1 - GX0) / step);
+    for (let i = 0; i <= nX; i++) {
+      const x = GX0 + i * step;
+      const a = project([x, 0, GZ0]), b = project([x, 0, GZ1]);
+      if (!a || !b) continue;
+      const ln = document.createElementNS(SVG_NS, 'line');
+      ln.setAttribute('x1', a.x); ln.setAttribute('y1', a.y);
+      ln.setAttribute('x2', b.x); ln.setAttribute('y2', b.y);
+      ln.setAttribute('stroke', stroke); ln.setAttribute('stroke-width', width);
+      g.appendChild(ln);
+    }
+    const nZ = Math.round((GZ1 - GZ0) / step);
+    for (let i = 0; i <= nZ; i++) {
+      const z = GZ0 + i * step;
+      const a = project([GX0, 0, z]), b = project([GX1, 0, z]);
+      if (!a || !b) continue;
+      const ln = document.createElementNS(SVG_NS, 'line');
+      ln.setAttribute('x1', a.x); ln.setAttribute('y1', a.y);
+      ln.setAttribute('x2', b.x); ln.setAttribute('y2', b.y);
+      ln.setAttribute('stroke', stroke); ln.setAttribute('stroke-width', width);
+      g.appendChild(ln);
+    }
+  }
+
+  // Draw finest first → major on top, so major lines are never dimmed by fine ones.
+  // White semi-transparent lines — visible on dark and light carpets alike.
+  gridSet(0.1, 'rgba(255,255,255,0.08)', '0.35');
+  gridSet(0.5, 'rgba(255,255,255,0.18)', '0.6');
+  gridSet(1.0, 'rgba(255,255,255,0.38)', '1.0');
+}
+
 // ── Shading ───────────────────────────────────────────────────────────────────
 function faceIntensity(face) {
   let n = face.normal;
@@ -2206,8 +2277,10 @@ function renderBooth() {
 function renderAll() {
   document.getElementById('floorGroup').innerHTML = '';
   document.getElementById('boothGroup').innerHTML = '';
+  document.getElementById('gridGroup').innerHTML = '';
   buildFloor();
   renderBooth();
+  buildGrid();
   placeAnnotations();
   updateHud();
   window.__pendingGlbState = {
@@ -3020,7 +3093,7 @@ function rotationDeg(value) {
   return Number.isFinite(n) ? THREE.MathUtils.degToRad(n) : 0;
 }
 
-function groundModelNode(node, floorY = 0.018) {
+function groundModelNode(node, floorY = 0) {
   node.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(node);
   if (!Number.isFinite(box.min.y)) return;
@@ -3066,6 +3139,17 @@ function removeMissingModels(activeIds) {
 
 function renderScene(state) {
   ensureSize();
+
+  // Dynamically match the SVG's fixed +90-unit Y offset (VH=1000, xMidYMid slice).
+  // SVG scale = max(W/1600, H/1000); with YMid centering, cropY pixels are hidden
+  // above/below. Net downward shift in display pixels = 90*scale - cropY.
+  const W = window.innerWidth || 1;
+  const H = window.innerHeight || 1;
+  const svgScale = Math.max(W / 1600, H / 1000);
+  const cropY = Math.max(0, (svgScale * 1000 - H) / 2);
+  const shiftPct = ((90 * svgScale - cropY) / H * 100).toFixed(2);
+  canvas.style.transform = `translateY(${shiftPct}%)`;
+
   if (Array.isArray(state.cam)) camera.position.set(state.cam[0], state.cam[1], state.cam[2]);
   const target = Array.isArray(state.target) ? state.target : [0, 1.5, 1.5];
   camera.fov = Number(state.fov) || 30;
@@ -3097,13 +3181,13 @@ window.__updateGlbLayer = async function updateGlbLayer(state) {
       const clamped = typeof clampPlacedItemToBooth === 'function'
         ? clampPlacedItemToBooth(x, z, Number(item.w) || 0.6, Number(item.d) || 0.6)
         : { x, z };
-      node.position.set(clamped.x, 0.018, clamped.z);
+      node.position.set(clamped.x, 0, clamped.z);
       node.rotation.order = 'XYZ';
       node.rotation.x = rotationDeg(item.rotationX);
       node.rotation.y = rotationDeg(item.rotationY ?? item.rotation);
       node.rotation.z = rotationDeg(item.rotationZ);
       node.visible = true;
-      groundModelNode(node, 0.018);
+      groundModelNode(node, 0);
 
       let contact = contactShadows.get(id);
       if (!contact) {

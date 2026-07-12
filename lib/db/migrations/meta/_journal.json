@@ -85,6 +85,20 @@
       "when": 1783710000000,
       "tag": "0011_invitation_name",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1783720000000,
+      "tag": "0012_production_reliability_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1783730000000,
+      "tag": "0013_invitation_email_delivery",
+      "breakpoints": true
     }
   ]
 }

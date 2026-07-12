@@ -1,4 +1,4 @@
-import type { Page, APIRequestContext } from "@playwright/test";
+import { expect, type Page, type APIRequestContext } from "@playwright/test";
 import { API_URL } from "../playwright.config";
 
 const ORG_SLUG = process.env.TEST_ORG_SLUG ?? "ens-demo-agency";
@@ -87,4 +87,37 @@ export async function apiLogin(request: APIRequestContext, role: "chief" | "pm" 
     data: { email: creds.email, password: creds.password, organizationSlug: ORG_SLUG },
   });
   return res.ok();
+}
+
+export function monitorPageFailures(page: Page) {
+  const failures: string[] = [];
+
+  page.on("pageerror", (error) => {
+    failures.push(`pageerror: ${error.message}`);
+  });
+
+  page.on("console", (message) => {
+    if (message.type() !== "error") return;
+    const text = message.text();
+    if (/ResizeObserver|React DevTools|well-known\/appspecific/i.test(text)) return;
+    failures.push(`console error: ${text}`);
+  });
+
+  page.on("requestfailed", (request) => {
+    const url = request.url();
+    if (/\.well-known\/appspecific/i.test(url)) return;
+    failures.push(`request failed: ${request.method()} ${url} ${request.failure()?.errorText ?? ""}`.trim());
+  });
+
+  page.on("response", (response) => {
+    const url = response.url();
+    if (!url.includes("/api/")) return;
+    if (response.status() < 400) return;
+    if (response.status() === 401 && /\/api\/auth\/(me|refresh)(?:$|\?)/.test(url)) return;
+    failures.push(`api ${response.status()}: ${response.request().method()} ${url}`);
+  });
+
+  return async () => {
+    expect(failures, failures.join("\n")).toEqual([]);
+  };
 }

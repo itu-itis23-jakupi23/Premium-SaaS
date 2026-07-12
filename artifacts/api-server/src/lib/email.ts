@@ -5,6 +5,10 @@ const APP_URL = (process.env.APP_URL ?? "http://localhost:5173").replace(/\/$/, 
 
 let _resend: Resend | null = null;
 
+export type EmailDeliveryResult =
+  | { ok: true; status: "sent" }
+  | { ok: false; status: "skipped" | "failed"; error: string };
+
 function getResend(): Resend | null {
   if (_resend) return _resend;
   const key = process.env.RESEND_API_KEY;
@@ -34,28 +38,35 @@ function base(body: string): string {
 </body></html>`;
 }
 
-async function send(to: string, subject: string, html: string) {
+async function send(to: string, subject: string, html: string): Promise<EmailDeliveryResult> {
   const resend = getResend();
   if (!resend) {
-    // Log but don't throw — email is non-critical infrastructure.
-    // The action (approval, invitation) has already succeeded server-side.
-    console.info(`[email] RESEND_API_KEY not set — skipping email to ${to}: "${subject}"`);
-    return;
+    console.info(`[email] RESEND_API_KEY not set - skipping email to ${to}: "${subject}"`);
+    return { ok: false, status: "skipped", error: "RESEND_API_KEY is not configured" };
   }
+
   try {
     await resend.emails.send({ from: FROM, to, subject, html });
+    return { ok: true, status: "sent" };
   } catch (err) {
     console.error(`[email] Failed to send to ${to}:`, err);
+    return { ok: false, status: "failed", error: safeErrorMessage(err) };
   }
 }
 
-// ── Email templates ───────────────────────────────────────────────────────────
+function safeErrorMessage(error: unknown) {
+  const raw = error instanceof Error ? error.message : String(error);
+  return raw
+    .replace(/re_[A-Za-z0-9_\-=]+/g, "[redacted]")
+    .replace(/sk_[A-Za-z0-9_\-=]+/g, "[redacted]")
+    .slice(0, 500);
+}
 
 export async function sendClientApprovedEmail(opts: { to: string; name: string }) {
   const loginUrl = `${APP_URL}/login`;
-  await send(
+  return send(
     opts.to,
-    "Your account has been approved — ENS Agency",
+    "Your account has been approved - ENS Agency",
     base(`
       <h2>You're in!</h2>
       <p>Hi ${opts.name || "there"},</p>
@@ -77,7 +88,7 @@ export async function sendManagerInvitationEmail(opts: {
   const expiry = new Date(opts.expiresAt).toLocaleDateString("en-GB", {
     day: "numeric", month: "long", year: "numeric",
   });
-  await send(
+  return send(
     opts.to,
     "You have been invited to ENS Agency Portal",
     base(`
@@ -98,7 +109,7 @@ export async function sendRevisionRequestedEmail(opts: {
   projectName: string;
   workspaceUrl: string;
 }) {
-  await send(
+  return send(
     opts.to,
     `Revision requested on "${opts.projectName}"`,
     base(`
@@ -117,13 +128,13 @@ export async function sendDesignApprovedEmail(opts: {
   projectName: string;
   workspaceUrl: string;
 }) {
-  await send(
+  return send(
     opts.to,
     `Design approved: "${opts.projectName}"`,
     base(`
       <h2>Design approved!</h2>
       <p>Hi ${opts.pmName},</p>
-      <p>Great news — your client has approved the final booth design for
+      <p>Great news - your client has approved the final booth design for
       <strong>${opts.projectName}</strong>. The workspace is now locked.</p>
       <a href="${opts.workspaceUrl}" class="cta">View workspace</a>
     `),
@@ -131,9 +142,9 @@ export async function sendDesignApprovedEmail(opts: {
 }
 
 export async function sendPasswordResetEmail(opts: { to: string; name: string; resetUrl: string }) {
-  await send(
+  return send(
     opts.to,
-    "Reset your password — ENS Agency",
+    "Reset your password - ENS Agency",
     base(`
       <h2>Reset your password</h2>
       <p>Hi ${opts.name || "there"},</p>

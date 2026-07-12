@@ -204,3 +204,72 @@ describe("POST /api/platform/projects/:projectId/change-requests", () => {
     }
   });
 });
+
+describe("PUT /api/platform/projects/:projectId/workspace", () => {
+  let org: TestOrg;
+  let pmUser: TestUser;
+  let pmCookies: string[];
+  let project: TestProject;
+
+  beforeAll(async () => {
+    org = await createTestOrg();
+    pmUser = await createTestUser(org.id, "pm");
+    pmCookies = await loginAs(app, org.slug, pmUser);
+
+    const client = await createTestClient(org.id, { status: "active", assignedPmUserId: pmUser.id });
+    project = await createTestProject(org.id, client.id, { status: "planning", assignedPmUserId: pmUser.id });
+    await addProjectMember(project.id, pmUser.id, "pm");
+  });
+
+  afterAll(async () => {
+    await cleanupTestOrg(org.id);
+  });
+
+  it("normalizes furniture dimensions and coordinates inside the booth footprint", async () => {
+    const response = await request(app)
+      .put(`/api/platform/projects/${project.id}/workspace`)
+      .set("Cookie", pmCookies)
+      .send({
+        title: "Out of bounds furniture normalization",
+        workspace: {
+          booth: {
+            width: 6,
+            depth: 3,
+            height: 2.5,
+            system: "octanorm",
+            companyName: "Bounds Test",
+            openFront: true,
+            openBack: false,
+            openLeft: false,
+            openRight: false,
+          },
+          themeIdx: 0,
+          carpetIdx: 0,
+          placedItems: [{
+            id: "chair-1",
+            catalogId: "149",
+            name: "Plastic Chair",
+            sku: "149",
+            qty: 1,
+            w: 99,
+            d: 99,
+            h: 1,
+            color: "#ffffff",
+            weight: 5,
+            x: -500,
+            z: 500,
+            rotation: 0,
+            kind: "furniture",
+          }],
+          notes: [],
+        },
+      });
+
+    expect(response.status).toBe(200);
+    const item = response.body.workspace.placedItems[0];
+    expect(item.w).toBe(6);
+    expect(item.d).toBe(3);
+    expect(item.x).toBe(3);
+    expect(item.z).toBe(1.5);
+  });
+});

@@ -175,11 +175,20 @@ webhookRouter.post(
       return;
     }
 
+    const claim = await claimStripeWebhookEvent(event);
+    if (!claim.claimed) {
+      res.json({ received: true, duplicate: true });
+      return;
+    }
+
     try {
       await handleStripeEvent(event);
+      await markStripeWebhookEventProcessed(event.id);
     } catch (err) {
-      // Log but always return 200 so Stripe doesn't retry indefinitely.
+      await markStripeWebhookEventFailed(event.id, err);
       console.error("[billing/webhook] handler error", event.type, err);
+      res.status(500).json({ error: "Webhook handler failed. Stripe should retry this event." });
+      return;
     }
 
     res.json({ received: true });
@@ -242,6 +251,43 @@ async function activateWorkspaceSubscription(session: Stripe.Checkout.Session) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+async function claimStripeWebhookEvent(event: Stripe.Event) {
+  const rows = await queryRows<{ eventId: string }>(sql`
+    insert into stripe_webhook_events (event_id, event_type, status, attempts, last_error, received_at, updated_at)
+    values (${event.id}, ${event.type}, 'processing', 1, null, now(), now())
+    on conflict (event_id) do update
+      set status = 'processing',
+          attempts = stripe_webhook_events.attempts + 1,
+          last_error = null,
+          updated_at = now()
+      where stripe_webhook_events.status = 'failed'
+         or (
+           stripe_webhook_events.status = 'processing'
+           and stripe_webhook_events.updated_at < now() - interval '15 minutes'
+         )
+    returning event_id as "eventId"
+  `);
+
+  return { claimed: rows.length > 0 };
+}
+
+async function markStripeWebhookEventProcessed(eventId: string) {
+  await db.execute(sql`
+    update stripe_webhook_events
+    set status = 'processed', processed_at = now(), updated_at = now(), last_error = null
+    where event_id = ${eventId}
+  `);
+}
+
+async function markStripeWebhookEventFailed(eventId: string, error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  await db.execute(sql`
+    update stripe_webhook_events
+    set status = 'failed', last_error = ${message.slice(0, 2000)}, updated_at = now()
+    where event_id = ${eventId}
+  `);
+}
 
 async function queryRows<T>(statement: ReturnType<typeof sql>) {
   const result = await db.execute(statement);

@@ -88,7 +88,7 @@ export default function ChiefMessages() {
     ? (selectedScope?.clientContacts ?? [])
     : (selectedScope?.managers ?? []);
 
-  const selectedContact = scopedContacts.find((c) => c.id === selectedId) ?? scopedContacts[0] ?? null;
+  const selectedContact = selectedId ? scopedContacts.find((c) => c.id === selectedId) ?? null : null;
 
   const conversationContext = selectedScope
     ? { exhibitionId: selectedScope.id, exhibitionName: selectedScope.name, projectId: selectedScope.projects[0]?.id }
@@ -173,7 +173,16 @@ export default function ChiefMessages() {
         scheduleNext();
       } catch (reason) {
         if (!mounted) return;
-        setError(reason instanceof Error ? reason.message : t("chief.messages.conversationError"));
+        const message = reason instanceof Error ? reason.message : t("chief.messages.conversationError");
+        setError(message);
+        if (isConversationAccessError(message)) {
+          setSelectedId(null);
+          setContactType(null);
+          setMessages([]);
+          setDrawerOpen(false);
+          mounted = false;
+          return;
+        }
         errorCount++;
         scheduleNext();
       }
@@ -772,6 +781,15 @@ function appendUnique(values: string[], value: string) {
 function mergeStatus(current: string, next: string) {
   const rank: Record<string, number> = { Delayed: 4, Active: 3, Pending: 2, Completed: 1 };
   return (rank[next] ?? 0) > (rank[current] ?? 0) ? next : current;
+}
+
+function isConversationAccessError(message: string) {
+  const normalized = message.toLowerCase();
+  return normalized.includes("not assigned") ||
+    normalized.includes("forbidden") ||
+    normalized.includes("contact was not found") ||
+    normalized.includes("conversation is not available") ||
+    normalized.includes("not accessible");
 }
 
 function earliestDate(current: string | null, next: string | null) {

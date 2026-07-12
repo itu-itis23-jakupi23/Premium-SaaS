@@ -1049,13 +1049,13 @@ function normalizeWorkspace(value: unknown, access: ProjectAccess | null): Works
     fasciaFinishIdx: integerValue(data.fasciaFinishIdx, 0, 0, 3),
     carpetIdx: integerValue(data.carpetIdx, 0, 0, 5),
     lightingPreset: normalizeLightingPreset(data.lightingPreset),
-    placedItems: Array.isArray(data.placedItems) ? data.placedItems.map(normalizePlacedItem).filter(Boolean) as WorkspacePlacedItem[] : [],
+    placedItems: Array.isArray(data.placedItems) ? data.placedItems.map((item) => normalizePlacedItem(item, width, depth)).filter(Boolean) as WorkspacePlacedItem[] : [],
     rooms: Array.isArray(data.rooms) ? data.rooms.map((room) => normalizeRoom(room, width, depth, height)).filter(Boolean) as WorkspaceRoom[] : [],
     notes: Array.isArray(data.notes) ? data.notes.map(normalizeNote).filter(Boolean) as WorkspaceNote[] : [],
   };
 }
 
-function normalizePlacedItem(value: unknown): WorkspacePlacedItem | null {
+function normalizePlacedItem(value: unknown, boothWidth: number, boothDepth: number): WorkspacePlacedItem | null {
   if (!value || typeof value !== "object") return null;
   const item = value as Record<string, unknown>;
   const id = stringValue(item.id);
@@ -1064,19 +1064,26 @@ function normalizePlacedItem(value: unknown): WorkspacePlacedItem | null {
   const sku = stringValue(item.sku);
   if (!id || !catalogId || !name || !sku) return null;
 
+  const w = clamp(numberValue(item.w) ?? 1, 0.05, Math.max(0.05, boothWidth));
+  const d = clamp(numberValue(item.d) ?? 1, 0.05, Math.max(0.05, boothDepth));
+  const minX = w / 2;
+  const maxX = Math.max(minX, boothWidth - w / 2);
+  const minZ = d / 2;
+  const maxZ = Math.max(minZ, boothDepth - d / 2);
+
   return {
     id,
     catalogId,
     name,
     sku,
     qty: Math.max(1, Math.min(999, integerValue(item.qty, 1, 1, 999))),
-    w: numberValue(item.w) ?? 1,
-    d: numberValue(item.d) ?? 1,
-    h: numberValue(item.h) ?? 1,
+    w,
+    d,
+    h: clamp(numberValue(item.h) ?? 1, 0.05, 12),
     color: stringValue(item.color) ?? "#888888",
     weight: numberValue(item.weight) ?? 0,
-    x: numberValue(item.x) ?? 0.5,
-    z: numberValue(item.z) ?? 0.5,
+    x: clamp(numberValue(item.x) ?? boothWidth / 2, minX, maxX),
+    z: clamp(numberValue(item.z) ?? boothDepth / 2, minZ, maxZ),
     rotation: numberValue(item.rotation) ?? 0,
     kind: normalizeItemKind(item.kind),
     shape: stringValue(item.shape) ?? undefined,

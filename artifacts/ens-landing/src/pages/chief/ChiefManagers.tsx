@@ -1445,11 +1445,24 @@ function PendingInvitationsPanel({
                        invitation.status === "Expired"  ? t("chief.common.status.expired")  :
                        invitation.status}
                     </Badge>
+                    {invitation.emailStatus && invitation.emailStatus !== "pending" && (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-[10px]",
+                          invitation.emailStatus === "sent"
+                            ? "border-green-500/40 bg-green-500/5 text-green-500"
+                            : "border-amber-500/40 bg-amber-500/5 text-amber-500",
+                        )}
+                      >
+                        {invitation.emailStatus}
+                      </Badge>
+                    )}
                   </div>
                   <p className="mt-1 max-w-[260px] truncate text-[11px] text-muted-foreground">
                     {invitation.email} / {t("chief.managers.invitations.expires", { date: formatDate(invitation.expiresAt, i18n.language) })}
                   </p>
-                  {invitation.emailStatus === "failed" && (
+                  {(invitation.emailStatus === "failed" || invitation.emailStatus === "skipped") && (
                     <p className="mt-1 max-w-[260px] text-[11px] text-amber-500">
                       {t("chief.managers.invitations.emailFailed")}: {invitation.emailWarning || t("chief.managers.invitations.emailProviderNotConfigured")}
                     </p>

@@ -244,18 +244,44 @@ export default function ChiefClients() {
     }
     try {
       setIsAssigning(true);
-      await updateManagerAssignments({
-        clientAssignments:  [{ clientId: assignClientId, managerId: manager?.id ?? null }],
-        projectAssignments: [],
-        cascadeClientProjects: true,
-      });
-      const [, workspace] = await Promise.all([reloadClients(), getManagerWorkspace()]);
-      setManagers(workspace.managers);
-      setAssignClientId(null);
-      setAssignPm("");
-      showToast(t("chief.clients.toast.assigned", { client: target?.name ?? t("chief.clients.toast.defaultClient"), manager: manager?.name ?? t("chief.clients.toast.unassigned") }));
+      const applyAssignment = async (confirmOverCapacity = false) => {
+        await updateManagerAssignments({
+          clientAssignments:  [{ clientId: assignClientId, managerId: manager?.id ?? null }],
+          projectAssignments: [],
+          cascadeClientProjects: true,
+          confirmOverCapacity,
+          overrideReason: confirmOverCapacity ? "Chief confirmed over-capacity assignment from client list" : null,
+        });
+        const [, workspace] = await Promise.all([reloadClients(), getManagerWorkspace()]);
+        setManagers(workspace.managers);
+        setAssignClientId(null);
+        setAssignPm("");
+        showToast(t("chief.clients.toast.assigned", { client: target?.name ?? t("chief.clients.toast.defaultClient"), manager: manager?.name ?? t("chief.clients.toast.unassigned") }));
+      };
+
+      await applyAssignment(false);
     } catch (reason) {
-      showToast(reason instanceof Error ? reason.message : t("chief.clients.toast.assignError"));
+      const message = reason instanceof Error ? reason.message : t("chief.clients.toast.assignError");
+      if (/capacity|overload/i.test(message) && window.confirm(`${message}\n\nAssign anyway?`)) {
+        try {
+          await updateManagerAssignments({
+            clientAssignments:  [{ clientId: assignClientId, managerId: manager?.id ?? null }],
+            projectAssignments: [],
+            cascadeClientProjects: true,
+            confirmOverCapacity: true,
+            overrideReason: "Chief confirmed over-capacity assignment from client list",
+          });
+          const [, workspace] = await Promise.all([reloadClients(), getManagerWorkspace()]);
+          setManagers(workspace.managers);
+          setAssignClientId(null);
+          setAssignPm("");
+          showToast(t("chief.clients.toast.assigned", { client: target?.name ?? t("chief.clients.toast.defaultClient"), manager: manager?.name ?? t("chief.clients.toast.unassigned") }));
+        } catch (retryReason) {
+          showToast(retryReason instanceof Error ? retryReason.message : t("chief.clients.toast.assignError"));
+        }
+        return;
+      }
+      showToast(message);
     } finally {
       setIsAssigning(false);
     }

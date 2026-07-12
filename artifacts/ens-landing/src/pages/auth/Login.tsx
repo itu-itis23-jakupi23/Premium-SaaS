@@ -201,9 +201,10 @@ export default function Login() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('auth.login.emailLabel')}</FormLabel>
+                <FormLabel htmlFor="login-email">{t('auth.login.emailLabel')}</FormLabel>
                 <FormControl>
                   <Input
+                    id="login-email"
                     placeholder={t('auth.login.emailPlaceholder')}
                     autoComplete="email"
                     {...field}

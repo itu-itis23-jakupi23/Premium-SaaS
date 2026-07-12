@@ -1882,7 +1882,28 @@ router.get("/overview", async (req, res) => {
 });
 
 router.get("/system/readiness", async (_req, res) => {
-  res.json(configReadiness());
+  const store = await readStore();
+  const activeProjects = store.projects.filter((project) => statusParam(project.status) !== "completed");
+  const operational = {
+    pendingClients: store.clients.filter((client) => ["pending", "pending_approval", "pending approval"].includes(statusParam(client.status))).length,
+    unassignedProjects: activeProjects.filter((project) => !project.managerId && (!project.pm || project.pm === "Unassigned")).length,
+    failedInvitations: (store.invitations ?? []).filter((invitation) => invitation.status !== "Revoked" && invitation.status !== "Accepted" && invitation.emailStatus === "failed").length,
+    stalledReviews: store.projects.filter((project) => {
+      const inReview = project.status === "Client Review" || project.status === "Revision";
+      const updatedAt = Date.parse(project.lastUpdate);
+      return inReview && Number.isFinite(updatedAt) && updatedAt < Date.now() - 3 * 86400000;
+    }).length,
+    overloadedPMs: (await buildManagersForCompany(store, "ENS Demo Agency")).filter((manager) => manager.capacity?.overloaded).length,
+  };
+  const recentActivity = store.activity.slice(0, 12).map((event) => ({
+    id: event.id,
+    eventType: event.type,
+    message: event.action,
+    actorName: event.user,
+    projectName: event.project,
+    createdAt: event.time === "Just now" ? new Date().toISOString() : event.time,
+  }));
+  res.json({ ...configReadiness(), operational, recentActivity });
 });
 
 router.get("/exhibitions", async (req, res) => {

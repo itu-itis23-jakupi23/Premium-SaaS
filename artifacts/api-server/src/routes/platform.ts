@@ -17,7 +17,7 @@ import { requireAuth, requireRoles, type AuthContext } from "../middlewares/sess
 import { requireTenant } from "../middlewares/tenant";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { createRefreshToken, hashToken } from "../lib/tokens";
-import { sendClientApprovedEmail, sendManagerInvitationEmail } from "../lib/email";
+import { sendClientApprovedEmail, sendManagerInvitationEmail, type EmailDeliveryResult } from "../lib/email";
 
 function zParse<T>(
   schema: { safeParse: (v: unknown) => { success: true; data: T } | { success: false; error: { issues: Array<{ message?: string }> } } },
@@ -193,6 +193,158 @@ async function queryInvRows(token: string) {
     limit 1
   `);
 }
+
+const PLACEHOLDER_CONFIG_VALUES = new Set([
+  "",
+  "change-me-before-deploy",
+  "ens-staff-local-dev",
+  "replace-with-a-long-random-secret",
+  "replace-with-a-separate-long-random-secret",
+  "your-resend-api-key-here",
+  "your-stripe-secret-key-here",
+  "your-stripe-webhook-secret-here",
+]);
+
+function hasConfiguredValue(value: string | undefined | null) {
+  return Boolean(value && !PLACEHOLDER_CONFIG_VALUES.has(value.trim()));
+}
+
+function isAbsoluteUrl(value: string | undefined | null) {
+  return Boolean(value && /^https?:\/\//.test(value));
+}
+
+router.get("/platform/system/readiness", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
+  const organization = req.tenant!;
+  const isProd = process.env.NODE_ENV === "production";
+  const appUrl = process.env.APP_URL;
+  const cookieSecure = process.env.COOKIE_SECURE?.trim().toLowerCase();
+  const stripeConfigured = hasConfiguredValue(process.env.STRIPE_SECRET_KEY);
+  const recentActivity = await queryRows<{
+    id: string;
+    eventType: string;
+    message: string;
+    actorName: string | null;
+    projectName: string | null;
+    createdAt: string;
+  }>(sql`
+    select
+      ae.id::text,
+      ae.event_type as "eventType",
+      ae.message,
+      u.name as "actorName",
+      p.name as "projectName",
+      ae.created_at::text as "createdAt"
+    from activity_events ae
+    left join users u on u.id = ae.actor_user_id
+    left join projects p on p.id = ae.project_id
+    where ae.organization_id = ${organization.id}::uuid
+    order by ae.created_at desc
+    limit 12
+  `);
+  const operationalRows = await queryRows<{
+    pendingClients: number;
+    unassignedProjects: number;
+    failedInvitations: number;
+    stalledReviews: number;
+    overloadedPMs: number;
+  }>(sql`
+    select
+      (select count(*)::int
+       from clients c
+       where c.organization_id = ${organization.id}::uuid
+         and c.deleted_at is null
+         and c.status::text = 'pending_approval') as "pendingClients",
+      (select count(*)::int
+       from projects p
+       where p.organization_id = ${organization.id}::uuid
+         and p.deleted_at is null
+         and p.assigned_pm_user_id is null
+         and p.status::text not in ('completed', 'archived', 'cancelled')) as "unassignedProjects",
+      (select count(*)::int
+       from invitations i
+       where i.organization_id = ${organization.id}::uuid
+         and i.revoked_at is null
+         and i.accepted_at is null
+         and i.email_status::text = 'failed') as "failedInvitations",
+      (select count(*)::int
+       from projects p
+       where p.organization_id = ${organization.id}::uuid
+         and p.deleted_at is null
+         and p.status::text = 'client_review'
+         and p.updated_at < now() - interval '3 days') as "stalledReviews",
+      (select count(*)::int
+       from users u
+       join memberships m on m.user_id = u.id and m.organization_id = ${organization.id}::uuid
+       where u.deleted_at is null
+         and m.role::text = 'pm'
+         and m.status::text = 'active'
+         and u.pm_capacity_limit is not null
+         and u.pm_capacity_limit > 0
+         and (
+           select count(*)::float
+           from projects p
+           where p.organization_id = ${organization.id}::uuid
+             and p.assigned_pm_user_id = u.id
+             and p.deleted_at is null
+             and p.status::text not in ('completed', 'archived', 'cancelled')
+         ) / u.pm_capacity_limit >= 1.0) as "overloadedPMs"
+  `);
+  const operational = operationalRows[0] ?? {
+    pendingClients: 0,
+    unassignedProjects: 0,
+    failedInvitations: 0,
+    stalledReviews: 0,
+    overloadedPMs: 0,
+  };
+  const checks = {
+    databaseConfigured: hasConfiguredValue(process.env.DATABASE_URL),
+    emailConfigured: hasConfiguredValue(process.env.RESEND_API_KEY) && hasConfiguredValue(process.env.RESEND_FROM),
+    appUrlConfigured: isAbsoluteUrl(appUrl),
+    staffAccessConfigured: hasConfiguredValue(process.env.STAFF_SIGNUP_KEY),
+    authSecretConfigured: hasConfiguredValue(process.env.AUTH_SECRET),
+    messageEncryptionConfigured: hasConfiguredValue(process.env.MESSAGE_ENCRYPTION_KEY),
+    cookieSecureCompatible: !isProd || cookieSecure === "false" || appUrl?.startsWith("https://") === true,
+    documentStorageConfigured: !isProd || hasConfiguredValue(process.env.DOCUMENT_STORAGE_DIR),
+    messageAttachmentStorageConfigured: !isProd || hasConfiguredValue(process.env.MESSAGE_ATTACHMENT_DIR),
+    stripeWebhookConfigured: !stripeConfigured || hasConfiguredValue(process.env.STRIPE_WEBHOOK_SECRET),
+    assetStorageConfigured: !isProd || (hasConfiguredValue(process.env.DOCUMENT_STORAGE_DIR) && hasConfiguredValue(process.env.MESSAGE_ATTACHMENT_DIR)),
+    productionMode: isProd,
+  };
+  const warnings = [
+    !checks.databaseConfigured ? "DATABASE_URL is missing or still a placeholder." : null,
+    !checks.emailConfigured ? "RESEND_API_KEY and RESEND_FROM are not fully configured." : null,
+    !checks.appUrlConfigured ? "APP_URL must be an absolute URL." : null,
+    !checks.staffAccessConfigured ? "STAFF_SIGNUP_KEY is missing or still a placeholder." : null,
+    !checks.authSecretConfigured ? "AUTH_SECRET is missing or still a placeholder." : null,
+    !checks.messageEncryptionConfigured ? "MESSAGE_ENCRYPTION_KEY is missing or still a placeholder." : null,
+    !checks.cookieSecureCompatible ? "COOKIE_SECURE is incompatible with the configured APP_URL. Use COOKIE_SECURE=false for HTTP or deploy behind HTTPS." : null,
+    !checks.documentStorageConfigured ? "DOCUMENT_STORAGE_DIR must point at durable storage in production." : null,
+    !checks.messageAttachmentStorageConfigured ? "MESSAGE_ATTACHMENT_DIR must point at durable storage in production." : null,
+    !checks.stripeWebhookConfigured ? "STRIPE_WEBHOOK_SECRET is required when STRIPE_SECRET_KEY is configured." : null,
+  ].filter(Boolean);
+
+  res.json({
+    ready: warnings.length === 0,
+    mode: isProd ? "production" : "development",
+    checks,
+    limits: {
+      apiJsonLimit: process.env.API_JSON_LIMIT || "75mb",
+    },
+    storage: {
+      assetStorageProvider: process.env.STORAGE_PROVIDER || "local",
+      documentStorageDirConfigured: hasConfiguredValue(process.env.DOCUMENT_STORAGE_DIR),
+      messageAttachmentDirConfigured: hasConfiguredValue(process.env.MESSAGE_ATTACHMENT_DIR),
+      workspaceAssetDirConfigured: hasConfiguredValue(process.env.WORKSPACE_ASSET_DIR),
+    },
+    billing: {
+      stripeConfigured,
+      stripeWebhookConfigured: checks.stripeWebhookConfigured,
+    },
+    operational,
+    recentActivity,
+    warnings,
+  });
+});
 
 router.get("/platform/overview", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const organization = req.tenant!;
@@ -433,14 +585,45 @@ router.patch("/platform/clients/:clientId/approve", requireRoles(["admin", "owne
   const managerIdRaw = stringValue(data.managerId);
   const managerId = managerIdRaw === "unassigned" ? null : managerIdRaw ?? null;
   const note = stringValue(data.note);
+  const confirmOverCapacity = data.confirmOverCapacity === true;
+  const overrideReason = stringValue(data.overrideReason);
 
   if (managerId && !isUuid(managerId)) {
     res.status(400).json({ error: "A valid manager id is required" });
     return;
   }
 
-  const clientRows = await queryRows<{ id: string; companyName: string; contactEmail: string; status: string }>(sql`
-    select id::text, company_name as "companyName", contact_email as "contactEmail", status::text
+  if (managerId) {
+    const managerName = await getAssignmentTargetName(organization.id, managerId);
+    if (!managerName) {
+      res.status(400).json({ error: "Manager must be an active PM in this organization" });
+      return;
+    }
+  }
+
+  const clientRows = await queryRows<{
+    id: string;
+    companyName: string;
+    contactName: string | null;
+    contactEmail: string;
+    status: string;
+    intakeExhibitionName: string | null;
+    intakeBoothSizeSqm: string | null;
+    intakeCity: string | null;
+    intakeDeadlineAt: string | null;
+    intakePreferredSystem: "octanorm" | "maxima" | "custom" | null;
+  }>(sql`
+    select
+      id::text,
+      company_name as "companyName",
+      contact_name as "contactName",
+      contact_email as "contactEmail",
+      status::text,
+      intake_exhibition_name as "intakeExhibitionName",
+      intake_booth_size_sqm::text as "intakeBoothSizeSqm",
+      intake_city as "intakeCity",
+      intake_deadline_at::text as "intakeDeadlineAt",
+      intake_preferred_system::text as "intakePreferredSystem"
     from clients
     where id = ${clientId}::uuid
       and organization_id = ${organization.id}::uuid
@@ -455,6 +638,45 @@ router.patch("/platform/clients/:clientId/approve", requireRoles(["admin", "owne
   if (client.status !== "pending_approval") {
     res.status(409).json({ error: "Client is not in pending_approval state", currentStatus: client.status });
     return;
+  }
+
+  if (managerId) {
+    const capacity = await getPmCapacityInfo(organization.id, managerId);
+    if (capacity.limit !== null) {
+      const projectLoadRows = await queryRows<{ alreadyAssignedToManager: number }>(sql`
+        select count(*) filter (where assigned_pm_user_id = ${managerId}::uuid)::int as "alreadyAssignedToManager"
+        from projects
+        where organization_id = ${organization.id}::uuid
+          and client_id = ${clientId}::uuid
+          and deleted_at is null
+          and status::text not in ('completed', 'archived', 'cancelled')
+      `);
+      const additionalProjectLoad = (projectLoadRows[0]?.alreadyAssignedToManager ?? 0) > 0 ? 0 : 1;
+      const projectedCount = capacity.count + additionalProjectLoad;
+      const projectedRatio = projectedCount / capacity.limit;
+
+      if (projectedRatio >= PM_EXTREME_THRESHOLD && !overrideReason) {
+        res.status(409).json({
+          error: "extreme_overload",
+          managerId,
+          count: projectedCount,
+          limit: capacity.limit,
+          message: `PM would reach ${Math.round(projectedRatio * 100)}% capacity. An override reason is required.`,
+        });
+        return;
+      }
+
+      if (projectedRatio >= PM_BLOCK_THRESHOLD && !confirmOverCapacity && !overrideReason) {
+        res.status(409).json({
+          error: "over_capacity",
+          managerId,
+          count: projectedCount,
+          limit: capacity.limit,
+          message: `PM would be at ${Math.round(projectedRatio * 100)}% capacity. Confirm to proceed.`,
+        });
+        return;
+      }
+    }
   }
 
   await db.execute(sql`
@@ -478,6 +700,8 @@ router.patch("/platform/clients/:clientId/approve", requireRoles(["admin", "owne
       newManagerId: managerId,
       reason: note ?? "Assigned at client approval",
     });
+
+    await ensureClientIntakeProject(organization.id, actorUserId, client, managerId);
   }
 
   await auditEvent(organization.id, actorUserId, "client_approved", `approved client ${client.companyName}`, {
@@ -510,7 +734,13 @@ router.patch("/platform/clients/:clientId/approve", requireRoles(["admin", "owne
   }
 
   // Send email to the newly-activated client (non-blocking — failure is logged, never thrown)
-  await sendClientApprovedEmail({ to: client.contactEmail, name: client.companyName });
+  const approvalEmailDelivery = await sendClientApprovedEmail({ to: client.contactEmail, name: client.companyName });
+  await recordEmailDeliveryIncident(organization.id, actorUserId, approvalEmailDelivery, {
+    kind: "client_approval",
+    to: client.contactEmail,
+    clientId,
+    clientName: client.companyName,
+  });
 
   res.json({ ok: true, clients: (await getClients(organization.id, 100, req.auth!)).clients });
 });
@@ -772,13 +1002,19 @@ router.post("/platform/managers/invitations", requireRoles(["admin", "owner", "c
 
   const invitation = await inviteManager(organization.id, req.auth!.user.id, input.value);
   await auditEvent(organization.id, req.auth!.user.id, "manager_invited", `invited ${input.value.email}`, { email: input.value.email });
-  await sendManagerInvitationEmail({
+  const delivery = await sendManagerInvitationEmail({
     to: input.value.email,
     name: input.value.name,
     inviteUrl: invitation.inviteUrl,
     expiresAt: invitation.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   });
-  res.status(201).json({ invitation });
+  await updateInvitationEmailDelivery(organization.id, invitation.id, delivery);
+  await recordEmailDeliveryIncident(organization.id, req.auth!.user.id, delivery, {
+    kind: "manager_invitation",
+    to: input.value.email,
+    invitationId: invitation.id,
+  });
+  res.status(201).json({ invitation: invitationWithEmailDelivery(invitation, delivery) });
 });
 
 router.post("/platform/managers/invitations/:invitationId/resend", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
@@ -796,13 +1032,19 @@ router.post("/platform/managers/invitations/:invitationId/resend", requireRoles(
     return;
   }
 
-  await sendManagerInvitationEmail({
+  const delivery = await sendManagerInvitationEmail({
     to: invitation.email,
     name: invitation.name ?? "",
     inviteUrl: invitation.inviteUrl,
     expiresAt: invitation.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   });
-  res.json({ invitation });
+  await updateInvitationEmailDelivery(organization.id, invitation.id, delivery);
+  await recordEmailDeliveryIncident(organization.id, req.auth!.user.id, delivery, {
+    kind: "manager_invitation_resend",
+    to: invitation.email,
+    invitationId: invitation.id,
+  });
+  res.json({ invitation: invitationWithEmailDelivery(invitation, delivery) });
 });
 
 router.delete("/platform/managers/invitations/:invitationId", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
@@ -1111,6 +1353,7 @@ router.delete("/platform/calendar/events/:eventId", requireRoles(["admin", "owne
 async function getAccountSettings(auth: AuthContext) {
   const rows = await queryRows<{
     id: string;
+    userId: string | null;
     name: string;
     email: string;
     metadata: Record<string, unknown>;
@@ -1472,6 +1715,7 @@ async function getManagers(organizationId: string) {
 async function getManagedClients(organizationId: string) {
   const rows = await queryRows<{
     id: string;
+    userId: string | null;
     name: string;
     contactName: string;
     contactEmail: string;
@@ -1782,6 +2026,9 @@ async function getManagerInvitations(organizationId: string) {
     expiresAt: string;
     acceptedAt: string | null;
     revokedAt: string | null;
+    emailStatus: "pending" | "sent" | "failed" | "skipped";
+    emailLastError: string | null;
+    emailLastAttemptAt: string | null;
     createdAt: string;
   }>(sql`
     select
@@ -1791,6 +2038,9 @@ async function getManagerInvitations(organizationId: string) {
       expires_at::text as "expiresAt",
       accepted_at::text as "acceptedAt",
       revoked_at::text as "revokedAt",
+      email_status::text as "emailStatus",
+      email_last_error as "emailLastError",
+      email_last_attempt_at::text as "emailLastAttemptAt",
       created_at::text as "createdAt"
     from invitations
     where organization_id = ${organizationId}::uuid
@@ -1802,6 +2052,9 @@ async function getManagerInvitations(organizationId: string) {
   return rows.map((invite) => ({
     ...invite,
     status: invite.revokedAt ? "Revoked" : invite.acceptedAt ? "Accepted" : new Date(invite.expiresAt) < new Date() ? "Expired" : "Pending",
+    emailWarning: invite.emailStatus === "failed" || invite.emailStatus === "skipped"
+      ? invite.emailLastError ?? "Invitation email was not delivered"
+      : null,
   }));
 }
 
@@ -1889,6 +2142,48 @@ async function resendManagerInvitation(organizationId: string, actorUserId: stri
     inviteUrl: `/signup?invite=${encodeURIComponent(token)}`,
     status: "Pending",
   };
+}
+
+async function updateInvitationEmailDelivery(organizationId: string, invitationId: string, delivery: EmailDeliveryResult) {
+  const error = delivery.ok ? null : delivery.error;
+  await db.execute(sql`
+    update invitations
+    set email_status = ${delivery.status},
+        email_last_error = ${error},
+        email_last_attempt_at = now()
+    where id = ${invitationId}::uuid
+      and organization_id = ${organizationId}::uuid
+  `);
+}
+
+function invitationWithEmailDelivery<T extends Record<string, unknown>>(invitation: T, delivery: EmailDeliveryResult) {
+  return {
+    ...invitation,
+    emailStatus: delivery.status,
+    emailWarning: delivery.ok ? null : delivery.error,
+  };
+}
+
+async function recordEmailDeliveryIncident(
+  organizationId: string,
+  actorUserId: string,
+  delivery: EmailDeliveryResult,
+  context: Record<string, unknown> & { kind: string; to: string },
+) {
+  if (delivery.ok) return;
+
+  const type = delivery.status === "failed" ? "email_delivery_failed" : "email_delivery_skipped";
+  await auditEvent(
+    organizationId,
+    actorUserId,
+    type,
+    `${context.kind} email ${delivery.status} for ${context.to}`,
+    {
+      ...context,
+      emailStatus: delivery.status,
+      error: delivery.error,
+    },
+  );
 }
 
 async function revokeManagerInvitation(organizationId: string, actorUserId: string, invitationId: string) {
@@ -3467,6 +3762,7 @@ async function getClients(organizationId: string, input: number | ClientListQuer
   const whereSql = sql.join(conditions, sql` and `);
   const rows = await queryRows<{
     id: string;
+    userId: string | null;
     name: string;
     contactName: string;
     contactEmail: string;
@@ -3484,6 +3780,7 @@ async function getClients(organizationId: string, input: number | ClientListQuer
   }>(sql`
     select
       c.id::text,
+      client_user.id::text as "userId",
       coalesce(c.company_name, 'Client') as name,
       c.contact_name as "contactName",
       c.contact_email as "contactEmail",
@@ -3499,6 +3796,17 @@ async function getClients(organizationId: string, input: number | ClientListQuer
       c.intake_preferred_system::text as "intakePreferredSystem",
       c.intake_notes as "intakeNotes"
     from clients c
+    left join users client_user on lower(client_user.email) = lower(c.contact_email)
+      and client_user.deleted_at is null
+      and client_user.disabled_at is null
+      and exists (
+        select 1
+        from memberships client_membership
+        where client_membership.organization_id = c.organization_id
+          and client_membership.user_id = client_user.id
+          and client_membership.status::text = 'active'
+          and client_membership.role::text = 'client'
+      )
     left join users assigned_pm on assigned_pm.id = c.assigned_pm_user_id
     left join projects p on p.client_id = c.id and p.deleted_at is null
     left join lateral (
@@ -3511,7 +3819,7 @@ async function getClients(organizationId: string, input: number | ClientListQuer
       limit 1
     ) member_pm on true
     where ${whereSql}
-    group by c.id, assigned_pm.name, member_pm.name
+    group by c.id, client_user.id, assigned_pm.name, member_pm.name
     order by "lastActivity" desc
     limit ${options.limit}
     offset ${options.offset}
@@ -3542,6 +3850,7 @@ async function getClients(organizationId: string, input: number | ClientListQuer
   return {
     clients: rows.map((client) => ({
       id: client.id,
+      userId: client.userId,
       name: client.name,
       company: client.name,
       contactName: client.contactName,
@@ -4446,6 +4755,181 @@ async function createProject(
   const project = await getProjectById(organizationId, projectId);
   if (!project) throw new Error("Project was created but could not be read back");
   return project;
+}
+
+async function ensureClientIntakeProject(
+  organizationId: string,
+  actorUserId: string,
+  client: {
+    id: string;
+    companyName: string;
+    contactEmail: string;
+    intakeExhibitionName: string | null;
+    intakeBoothSizeSqm: string | null;
+    intakeCity: string | null;
+    intakeDeadlineAt: string | null;
+    intakePreferredSystem: "octanorm" | "maxima" | "custom" | null;
+  },
+  managerId: string,
+) {
+  const existing = await queryRows<{ id: string }>(sql`
+    select id::text
+    from projects
+    where organization_id = ${organizationId}::uuid
+      and client_id = ${client.id}::uuid
+      and deleted_at is null
+    limit 1
+  `);
+  if (existing[0]?.id) {
+    await reassignProjectManager(organizationId, actorUserId, existing[0].id, managerId, "Assigned at client approval");
+    return existing[0].id;
+  }
+
+  const sqm = Number(client.intakeBoothSizeSqm);
+  const safeSqm = Number.isFinite(sqm) && sqm > 0 ? sqm : 18;
+  const widthM = Math.max(3, Math.round(Math.sqrt(safeSqm * 2)));
+  const depthM = Math.max(2, Number((safeSqm / widthM).toFixed(1)));
+  const widthMm = Math.round(widthM * 1000);
+  const depthMm = Math.round(depthM * 1000);
+  const system = client.intakePreferredSystem ?? "octanorm";
+  const heightMm = system === "maxima" ? 4000 : 2500;
+  const exhibitionName = client.intakeExhibitionName ?? `${client.companyName} Exhibition`;
+  const projectName = `${client.companyName} Project`;
+
+  const projectRows = await queryRows<{ id: string }>(sql`
+    insert into projects (
+      organization_id,
+      client_id,
+      assigned_pm_user_id,
+      created_by_user_id,
+      name,
+      exhibition_name,
+      city,
+      status,
+      health,
+      budget_cents,
+      currency,
+      deadline_at,
+      metadata
+    )
+    values (
+      ${organizationId}::uuid,
+      ${client.id}::uuid,
+      ${managerId}::uuid,
+      ${actorUserId}::uuid,
+      ${projectName},
+      ${exhibitionName},
+      ${client.intakeCity},
+      'planning',
+      'on_track',
+      0,
+      'EUR',
+      ${client.intakeDeadlineAt}::timestamptz,
+      ${JSON.stringify({ pipelineStage: "intake", source: "client_signup_approval", boothSizeSqm: safeSqm })}::jsonb
+    )
+    returning id::text
+  `);
+  const projectId = projectRows[0]?.id;
+  if (!projectId) throw new Error("Client intake project insert did not return an id");
+
+  await db.execute(sql`
+    insert into project_members (project_id, user_id, role)
+    values (${projectId}::uuid, ${managerId}::uuid, 'pm')
+    on conflict (project_id, user_id) do nothing
+  `);
+
+  const clientUserRows = await queryRows<{ id: string }>(sql`
+    select u.id::text
+    from users u
+    join memberships m on m.user_id = u.id
+      and m.organization_id = ${organizationId}::uuid
+      and m.role::text = 'client'
+    where lower(u.email) = lower(${client.contactEmail})
+      and u.deleted_at is null
+    limit 1
+  `);
+  if (clientUserRows[0]?.id) {
+    await db.execute(sql`
+      insert into project_members (project_id, user_id, role)
+      values (${projectId}::uuid, ${clientUserRows[0].id}::uuid, 'client')
+      on conflict (project_id, user_id) do nothing
+    `);
+  }
+
+  const designRows = await queryRows<{ id: string }>(sql`
+    insert into booth_designs (
+      organization_id,
+      project_id,
+      name,
+      booth_system,
+      booth_type,
+      width_mm,
+      depth_mm,
+      height_mm,
+      grid_size_mm,
+      units,
+      current_version_number,
+      created_by_user_id
+    )
+    values (
+      ${organizationId}::uuid,
+      ${projectId}::uuid,
+      ${`${client.companyName} booth design`},
+      ${system}::booth_system,
+      'inline',
+      ${widthMm},
+      ${depthMm},
+      ${heightMm},
+      1000,
+      'metric',
+      1,
+      ${actorUserId}::uuid
+    )
+    returning id::text
+  `);
+  const designId = designRows[0]?.id;
+  if (!designId) throw new Error("Client intake booth design insert did not return an id");
+
+  await db.execute(sql`
+    insert into booth_versions (
+      organization_id,
+      design_id,
+      project_id,
+      version_number,
+      status,
+      title,
+      layout_json,
+      asset_summary,
+      cost_estimate_cents,
+      created_by_user_id
+    )
+    values (
+      ${organizationId}::uuid,
+      ${designId}::uuid,
+      ${projectId}::uuid,
+      1,
+      'draft',
+      'Initial intake layout',
+      ${JSON.stringify({
+        gridMm: 1000,
+        boothSystem: system,
+        dimensions: { widthMm, depthMm, heightMm },
+        objects: [],
+      })}::jsonb,
+      '{}'::jsonb,
+      0,
+      ${actorUserId}::uuid
+    )
+  `);
+
+  await auditEvent(organizationId, actorUserId, "project_created_from_client_intake", `created project for ${client.companyName}`, {
+    clientId: client.id,
+    projectId,
+    managerId,
+    exhibitionName,
+  });
+
+  return projectId;
 }
 
 async function getProjectById(organizationId: string, projectId: string) {

@@ -243,10 +243,14 @@ export default function PMClients() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => navigate(`/pm/messages?contactId=${encodeURIComponent(client.id)}`)}
-                            title={t("pm.clients.actions.message")}
+                            onClick={() => {
+                              const contactId = clientMessageContactId(client);
+                              if (contactId) navigate(`/pm/messages?contactId=${encodeURIComponent(contactId)}`);
+                            }}
+                            disabled={!clientMessageContactId(client)}
+                            title={clientMessageContactId(client) ? t("pm.clients.actions.message") : "Client account is not linked yet"}
                             aria-label={t("pm.clients.actions.messageClient", { name: client.name })}
-                            className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-colors"
+                            className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-muted-foreground"
                           >
                             <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
                           </button>
@@ -302,7 +306,10 @@ export default function PMClients() {
         <ClientDetailDrawer
           client={selectedClient}
           onClose={() => setSelectedClient(null)}
-          onMessage={() => navigate(`/pm/messages?contactId=${encodeURIComponent(selectedClient.id)}`)}
+          onMessage={() => {
+            const contactId = clientMessageContactId(selectedClient);
+            if (contactId) navigate(`/pm/messages?contactId=${encodeURIComponent(contactId)}`);
+          }}
           onStatusChange={(newStatus) => {
             setSelectedClient((prev) => prev ? { ...prev, status: newStatus } : null);
             setClients((prev) => prev.map((c) => c.id === selectedClient.id ? { ...c, status: newStatus } : c));
@@ -325,6 +332,10 @@ function DetailRow({ icon: Icon, value }: { icon: LucideIcon; value: string }) {
   );
 }
 
+function clientMessageContactId(client: PlatformClient) {
+  return client.userId ?? null;
+}
+
 const CLIENT_STATUS_OPTIONS = ["Active", "Lead", "Pending", "Inactive"] as const;
 
 function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: { client: PlatformClient; onClose: () => void; onMessage: () => void; onStatusChange: (newStatus: string) => void; t: TFn }) {
@@ -334,6 +345,7 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
   const [showPassword, setShowPassword] = useState(false);
   const [isSendingLink, setIsSendingLink] = useState(false);
   const [isSendingBill, setIsSendingBill] = useState(false);
+  const canMessageClient = !!clientMessageContactId(client);
   const { toast } = useToast();
 
   const statusCfg = STATUS_COLOR[localStatus] ?? STATUS_COLOR.Pending;
@@ -361,12 +373,18 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
   };
 
   const handleSendWorkspaceLink = async () => {
-    if (!client.projectId || isSendingLink) return;
+    const contactId = clientMessageContactId(client);
+    if (!client.projectId || isSendingLink || !contactId) {
+      if (!contactId) {
+        toast({ variant: "destructive", title: "Client account not linked", description: "This client needs a real portal account before messages can be sent." });
+      }
+      return;
+    }
     setIsSendingLink(true);
     try {
       const workspaceUrl = `${window.location.origin}/client/workspace?projectId=${client.projectId}`;
       await sendConversationMessage(
-        client.id,
+        contactId,
         `Hi! I have set up the 3D design workspace for your stand (${client.exhibition || client.name}). You can access it and review the latest draft here: ${workspaceUrl}`
       );
       toast({ title: "Success", description: t("pm.clients.detail.billing.linkSendSuccess") });
@@ -378,11 +396,17 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
   };
 
   const handleSendBill = async () => {
-    if (isSendingBill) return;
+    const contactId = clientMessageContactId(client);
+    if (isSendingBill || !contactId) {
+      if (!contactId) {
+        toast({ variant: "destructive", title: "Client account not linked", description: "This client needs a real portal account before messages can be sent." });
+      }
+      return;
+    }
     setIsSendingBill(true);
     try {
       const billMessage = `Billing details for ${client.exhibition || client.name}:\n- Base booth cost: $4,500.00\n- Total billed to date: $2,800.00\n- Outstanding balance: $1,700.00\n\nPlease review the billing details and process the outstanding invoice.`;
-      await sendConversationMessage(client.id, billMessage);
+      await sendConversationMessage(contactId, billMessage);
       toast({ title: "Success", description: t("pm.clients.detail.billing.sendSuccess") });
     } catch (err) {
       toast({ variant: "destructive", title: "Error", description: err instanceof Error ? err.message : "Failed to send bill" });
@@ -608,7 +632,8 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
               <button
                 type="button"
                 onClick={handleSendBill}
-                disabled={isSendingBill}
+                disabled={isSendingBill || !canMessageClient}
+                title={canMessageClient ? undefined : "Client account is not linked yet"}
                 className="w-full flex items-center justify-center gap-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold h-11 text-sm shadow-md transition-colors disabled:opacity-50"
               >
                 {isSendingBill ? "Sending..." : t("pm.clients.actions.sendBill")}
@@ -625,7 +650,9 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
           <button
             type="button"
             onClick={onMessage}
-            className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+            disabled={!canMessageClient}
+            title={canMessageClient ? undefined : "Client account is not linked yet"}
+            className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-muted-foreground"
           >
             <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
             {t("pm.clients.actions.message")}
@@ -641,7 +668,8 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
                 <button
                   type="button"
                   onClick={handleSendWorkspaceLink}
-                  disabled={isSendingLink}
+                  disabled={isSendingLink || !canMessageClient}
+                  title={canMessageClient ? undefined : "Client account is not linked yet"}
                   className="rounded-md border border-primary/30 bg-primary/5 hover:bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition-colors disabled:opacity-50"
                 >
                   {isSendingLink ? "Sending..." : t("pm.clients.actions.sendWorkspace")}

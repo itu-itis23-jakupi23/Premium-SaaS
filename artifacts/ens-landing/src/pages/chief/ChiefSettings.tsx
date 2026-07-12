@@ -968,6 +968,13 @@ function ProductionReadinessPanel({
 }) {
   const { t } = useTranslation();
   const checks = readiness?.checks ?? {};
+  const operationalRows = [
+    { label: "Pending clients", value: readiness?.operational?.pendingClients ?? 0, desc: "Need Chief approval" },
+    { label: "Unassigned projects", value: readiness?.operational?.unassignedProjects ?? 0, desc: "Need PM ownership" },
+    { label: "Failed invites", value: readiness?.operational?.failedInvitations ?? 0, desc: "Email delivery failed" },
+    { label: "Stalled reviews", value: readiness?.operational?.stalledReviews ?? 0, desc: "Client review > 3 days" },
+    { label: "Overloaded PMs", value: readiness?.operational?.overloadedPMs ?? 0, desc: "At or above capacity" },
+  ];
   const checkRows = [
     "databaseConfigured",
     "emailConfigured",
@@ -1042,6 +1049,33 @@ function ProductionReadinessPanel({
           </div>
         </div>
 
+        {readiness && (
+          <div className="rounded-lg border bg-background/40 p-4">
+            <div className="mb-3">
+              <p className="text-sm font-semibold">Operational snapshot</p>
+              <p className="text-xs text-muted-foreground">Live workflow counts that need Chief attention.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {operationalRows.map((item) => {
+                const needsAttention = item.value > 0;
+                return (
+                  <div
+                    key={item.label}
+                    className={cn(
+                      "rounded-md border p-3",
+                      needsAttention ? "border-amber-500/30 bg-amber-500/10" : "border-emerald-500/20 bg-emerald-500/5",
+                    )}
+                  >
+                    <p className="text-2xl font-bold">{item.value}</p>
+                    <p className="text-sm font-medium">{item.label}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{item.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {readiness?.warnings?.length ? (
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
             <p className="mb-2 text-sm font-medium text-amber-200">{t("chief.settings.readiness.blockingWarnings")}</p>
@@ -1056,9 +1090,53 @@ function ProductionReadinessPanel({
             {t("chief.settings.readiness.noWarnings")}
           </div>
         )}
+
+        {readiness && (
+          <div className="rounded-lg border bg-background/40 p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold">Recent system activity</p>
+                <p className="text-xs text-muted-foreground">Latest audited workflow events for this organization.</p>
+              </div>
+              <Badge variant="secondary">{readiness.recentActivity?.length ?? 0}</Badge>
+            </div>
+            {readiness.recentActivity?.length ? (
+              <div className="divide-y divide-border/70">
+                {readiness.recentActivity.map((event) => (
+                  <div key={event.id} className="grid gap-2 py-3 text-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{event.message}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {event.eventType.replace(/_/g, " ")}
+                        {event.actorName ? ` / ${event.actorName}` : ""}
+                        {event.projectName ? ` / ${event.projectName}` : ""}
+                      </p>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{formatReadinessDate(event.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                No audited activity has been recorded yet.
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
+}
+
+function formatReadinessDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function AvatarPreview({ name, tone, avatarUrl, size }: { name: string; tone: AvatarTone; avatarUrl: string; size: "sm" | "lg" }) {

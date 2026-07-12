@@ -75,7 +75,16 @@ export default function ClientMessages() {
         setMessages(response.messages);
         setContacts((current) => current.map((contact) => contact.id === active!.id ? { ...contact, unread: 0 } : contact));
       } catch (reason) {
-        if (mounted) setError(reason instanceof Error ? reason.message : t("client.messages.error.messages"));
+        if (!mounted) return;
+        const message = reason instanceof Error ? reason.message : t("client.messages.error.messages");
+        if (isConversationAccessError(message)) {
+          setContacts((current) => current.filter((contact) => contact.id !== active!.id));
+          setMessages([]);
+          setActiveId(null);
+          mounted = false;
+          return;
+        }
+        setError(message);
       }
     }
 
@@ -339,4 +348,12 @@ function formatFileSize(size: number) {
   if (!Number.isFinite(size) || size <= 0) return "0 KB";
   if (size >= 1_000_000) return `${(size / 1_000_000).toFixed(1)} MB`;
   return `${Math.max(1, Math.round(size / 1000))} KB`;
+}
+
+function isConversationAccessError(message: string) {
+  const normalized = message.toLowerCase();
+  return normalized.includes("forbidden") ||
+    normalized.includes("contact was not found") ||
+    normalized.includes("conversation is not available") ||
+    normalized.includes("not accessible");
 }

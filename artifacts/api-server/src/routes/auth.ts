@@ -717,12 +717,30 @@ function clearAuthCookies(res: Response) {
 }
 
 function cookieOptions(): CookieOptions {
+  const cookieSecure = cookieSecureEnabled();
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: cookieSecure,
     sameSite: "lax",
     path: "/",
   };
+}
+
+function cookieSecureEnabled() {
+  const configured = process.env.COOKIE_SECURE?.trim().toLowerCase();
+  if (configured === "true") return true;
+  if (configured === "false") return false;
+
+  const appUrl = process.env.APP_URL;
+  if (appUrl) {
+    try {
+      return new URL(appUrl).protocol === "https:";
+    } catch {
+      // Fall back to the safest production default below.
+    }
+  }
+
+  return process.env.NODE_ENV === "production";
 }
 
 function parseLoginInput(body: unknown) {

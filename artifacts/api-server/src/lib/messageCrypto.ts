@@ -2,6 +2,11 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:
 
 const PREFIX = "enc:v1:";
 const BINARY_MAGIC = Buffer.from("ensmsgbin1", "utf8");
+let cachedKey: Buffer | null = null;
+
+export function validateMessageEncryptionConfig() {
+  messageEncryptionKey();
+}
 
 export function encryptMessageBody(body: string) {
   const iv = randomBytes(12);
@@ -56,6 +61,7 @@ export function decryptMessageBytes(bytes: Buffer) {
 }
 
 function messageEncryptionKey() {
+  if (cachedKey) return cachedKey;
   const configured = process.env.MESSAGE_ENCRYPTION_KEY;
 
   if (!configured && process.env.NODE_ENV === "production") {
@@ -70,8 +76,10 @@ function messageEncryptionKey() {
     if (key.length !== 32) {
       throw new Error("MESSAGE_ENCRYPTION_KEY base64 value must decode to 32 bytes.");
     }
-    return key;
+    cachedKey = key;
+    return cachedKey;
   }
 
-  return createHash("sha256").update(source).digest();
+  cachedKey = createHash("sha256").update(source).digest();
+  return cachedKey;
 }

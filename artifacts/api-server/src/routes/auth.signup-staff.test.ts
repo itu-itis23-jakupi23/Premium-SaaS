@@ -1,4 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { sql } from "drizzle-orm";
+import { db } from "@workspace/db";
 import request from "supertest";
 import app from "../app";
 import { cleanupTestOrg, createTestOrg, type TestOrg } from "../test/helpers";
@@ -11,6 +13,7 @@ describe("POST /api/auth/signup-staff", () => {
   let createdOrgId: string | null = null;
   const originalEnv = process.env.NODE_ENV;
   const originalKey = process.env.STAFF_SIGNUP_KEY;
+  const originalSeedDemoData = process.env.SEED_DEMO_DATA;
 
   beforeAll(async () => {
     org = await createTestOrg();
@@ -23,6 +26,7 @@ describe("POST /api/auth/signup-staff", () => {
     if (createdOrgId) await cleanupTestOrg(createdOrgId);
     process.env.NODE_ENV = originalEnv;
     process.env.STAFF_SIGNUP_KEY = originalKey;
+    process.env.SEED_DEMO_DATA = originalSeedDemoData;
   });
 
   it("rejects a request with no setupKey when NODE_ENV=production", async () => {
@@ -65,6 +69,7 @@ describe("POST /api/auth/signup-staff", () => {
     process.env.NODE_ENV = "production";
     process.env.STAFF_SIGNUP_KEY = "the-real-key";
     process.env.AUTH_SECRET = "ci-test-auth-secret-do-not-use-in-production";
+    process.env.SEED_DEMO_DATA = "false";
 
     const response = await request(app).post("/api/auth/signup-staff").send({
       name: "Legit Chief",
@@ -81,6 +86,16 @@ describe("POST /api/auth/signup-staff", () => {
     expect(response.status).toBe(201);
     expect(response.body.user.role).toBe("chief");
     createdOrgId = response.body.organization?.id ?? null;
+    expect(createdOrgId).toBeTruthy();
+
+    const counts = await db.execute(sql`
+      select
+        (select count(*)::int from clients where organization_id = ${createdOrgId}::uuid and deleted_at is null) as clients,
+        (select count(*)::int from projects where organization_id = ${createdOrgId}::uuid and deleted_at is null) as projects,
+        (select count(*)::int from memberships where organization_id = ${createdOrgId}::uuid) as memberships
+    `);
+    const row = (counts as unknown as { rows: Array<{ clients: number; projects: number; memberships: number }> }).rows[0];
+    expect(row).toEqual({ clients: 0, projects: 0, memberships: 1 });
   });
 
   it("rejects a password under 8 characters regardless of setup key", async () => {

@@ -50,6 +50,7 @@ export interface PlatformMetrics {
 
 export interface PlatformProject {
   id: string;
+  clientId?: string | null;
   name: string;
   client: string;
   pm: string;
@@ -104,6 +105,7 @@ export interface PlatformProjectUpdateInput {
 
 export interface PlatformClient {
   id: string;
+  userId?: string | null;
   name: string;
   company: string;
   contactName: string;
@@ -566,6 +568,21 @@ export interface SystemReadiness {
     assetStorageProvider?: string;
     workspaceAssetDirConfigured?: boolean;
   };
+  operational?: {
+    pendingClients: number;
+    unassignedProjects: number;
+    failedInvitations: number;
+    stalledReviews: number;
+    overloadedPMs: number;
+  };
+  recentActivity?: Array<{
+    id: string;
+    eventType: string;
+    message: string;
+    actorName: string | null;
+    projectName: string | null;
+    createdAt: string;
+  }>;
   warnings: string[];
 }
 
@@ -649,7 +666,7 @@ export interface ManagerInvitation {
   name?: string;
   role: string;
   status: string;
-  emailStatus?: "pending" | "sent" | "failed";
+  emailStatus?: "pending" | "sent" | "failed" | "skipped";
   emailWarning?: string | null;
   token?: string;
   inviteUrl?: string;
@@ -1585,13 +1602,21 @@ export async function getSystemReadiness() {
       },
       limits: { apiJsonLimit: "mock" },
       storage: { assetStorageProvider: "mock", workspaceAssetDirConfigured: false },
+      operational: {
+        pendingClients: 0,
+        unassignedProjects: 0,
+        failedInvitations: 0,
+        stalledReviews: 0,
+        overloadedPMs: 0,
+      },
+      recentActivity: [],
       warnings: ["Mock mode is active. This is not production-ready."],
     } satisfies SystemReadiness;
   }
   return apiGet<SystemReadiness>("/platform/system/readiness");
 }
 
-export async function invitePlatformManager(input: { name: string; email: string }) {
+export async function invitePlatformManager(input: { name: string; email: string }): Promise<{ invitation: ManagerInvitation }> {
   if (USE_MOCK_API) {
     const workspace = mockManagerWorkspace();
     const invitation: ManagerInvitation = {
@@ -1600,6 +1625,8 @@ export async function invitePlatformManager(input: { name: string; email: string
       email: input.email,
       role: "pm",
       status: "Pending",
+      emailStatus: "sent",
+      emailWarning: null,
       token: `mock-token-${Date.now()}`,
       inviteUrl: `/pm/join?token=mock-token-${Date.now()}`,
       expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
@@ -1611,14 +1638,16 @@ export async function invitePlatformManager(input: { name: string; email: string
   return apiJson<{ invitation: ManagerInvitation }>("/platform/managers/invitations", input);
 }
 
-export async function resendManagerInvitation(invitationId: string) {
+export async function resendManagerInvitation(invitationId: string): Promise<{ invitation: ManagerInvitation }> {
   if (USE_MOCK_API) {
     const workspace = mockManagerWorkspace();
-    const invitations = workspace.invitations.map((invitation) => (
+    const invitations: ManagerInvitation[] = workspace.invitations.map((invitation) => (
       invitation.id === invitationId
         ? {
             ...invitation,
             status: "Pending",
+            emailStatus: "sent",
+            emailWarning: null,
             token: `mock-token-${Date.now()}`,
             inviteUrl: `/pm/join?token=mock-token-${Date.now()}`,
             expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
@@ -1649,6 +1678,8 @@ export async function updateManagerAssignments(input: {
   clientAssignments: Array<{ clientId: string; managerId: string | null }>;
   projectAssignments: Array<{ projectId: string; managerId: string | null }>;
   cascadeClientProjects: boolean;
+  confirmOverCapacity?: boolean;
+  overrideReason?: string | null;
 }) {
   if (USE_MOCK_API) {
     const workspace = mockManagerWorkspace();

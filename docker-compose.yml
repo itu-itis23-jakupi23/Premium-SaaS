@@ -4,15 +4,15 @@ services:
     container_name: ens-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ens
-      POSTGRES_USER: ens_app
-      POSTGRES_PASSWORD: ens_dev_password
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
     ports:
       - "5432:5432"
     volumes:
       - ens_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ens_app -d ens"]
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,14 +29,20 @@ services:
     environment:
       NODE_ENV: production
       PORT: "5000"
-      DATABASE_URL: postgres://ens_app:ens_dev_password@postgres:5432/ens
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set, for example postgres://user:password@postgres:5432/db}
       APP_URL: http://localhost
       CORS_ORIGIN: http://localhost
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET must be set — generate with: openssl rand -base64 64}
+      MESSAGE_ENCRYPTION_KEY: ${MESSAGE_ENCRYPTION_KEY:?MESSAGE_ENCRYPTION_KEY must be set and kept stable}
       STAFF_SIGNUP_KEY: ${STAFF_SIGNUP_KEY:?STAFF_SIGNUP_KEY must be set to gate staff/chief signup}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_FROM: ${RESEND_FROM:-ENS Agency <noreply@ens.example.com>}
       SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
+      DOCUMENT_STORAGE_DIR: /app/data/documents
+      MESSAGE_ATTACHMENT_DIR: /app/data/message-attachments
+    volumes:
+      - ens_api_data:/app/data
     ports:
       - "5000:5000"
     healthcheck:
@@ -68,3 +74,4 @@ services:
 
 volumes:
   ens_postgres_data:
+  ens_api_data:

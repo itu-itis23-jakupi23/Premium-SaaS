@@ -482,7 +482,7 @@ router.get("/attachments/:attachmentId", async (req, res) => {
   const store = await readAttachmentStore();
   const attachment = store.attachments.find((item) => item.id === req.params.attachmentId);
   if (!attachment) return res.status(404).json({ error: "Attachment not found." });
-  if (!(await canDownloadAttachment(actor, attachment.id))) return res.status(403).json({ error: "Forbidden." });
+  if (!(await canDownloadAttachment(actor, attachment.id))) return res.status(404).json({ error: "Attachment not found." });
   const buffer = Buffer.from(attachment.dataBase64, "base64");
   res.setHeader("content-type", attachment.type || "application/octet-stream");
   res.setHeader("content-length", String(buffer.length));
@@ -501,9 +501,9 @@ router.get("/:contactId", async (req, res) => {
   const projectId = typeof req.query.projectId === "string" ? req.query.projectId : "general";
   const coreStore = await readCoreStore();
   if (projectId === "general") {
-    if (!(await canMessage(actor, req.params.contactId))) return res.status(403).json({ error: "Forbidden." });
+    if (!(await canMessage(actor, req.params.contactId))) return res.status(404).json({ error: "Contact was not found." });
   } else if (!(await canAccessProjectThread(actor, req.params.contactId, projectId, coreStore))) {
-    return res.status(403).json({ error: "Forbidden." });
+    return res.status(404).json({ error: "This conversation is not available for the selected project." });
   }
   const actorIdentity = contactIdentity(actor, coreStore.clients);
   const conversationId = conversationIdFor(actorIdentity, req.params.contactId, projectId);
@@ -537,9 +537,9 @@ router.post("/:contactId", async (req, res) => {
 
   const coreStore = await readCoreStore();
   if (projectId === "general") {
-    if (!(await canMessage(actor, req.params.contactId))) return res.status(403).json({ error: "Forbidden." });
+    if (!(await canMessage(actor, req.params.contactId))) return res.status(404).json({ error: "Contact was not found." });
   } else if (!(await canAccessProjectThread(actor, req.params.contactId, projectId, coreStore))) {
-    return res.status(403).json({ error: "Forbidden." });
+    return res.status(404).json({ error: "This conversation is not available for the selected project." });
   }
   const actorIdentity = contactIdentity(actor, coreStore.clients);
   if (attachments.length) {

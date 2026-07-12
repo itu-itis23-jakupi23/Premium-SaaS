@@ -93,6 +93,7 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
   const [rendererError, setRendererError] = useState<string | null>(null);
+  const [reloadNonce, setReloadNonce] = useState(0);
   const configRef = useRef<IframeBoothConfig | undefined>(config);
   const latestPayloadRef = useRef<Record<string, unknown> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -123,7 +124,7 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
     }, RENDERER_TIMEOUT_MS);
     return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src]);
+  }, [src, reloadNonce]);
 
   useEffect(() => {
     configRef.current = config;
@@ -172,6 +173,19 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
     buildPayload,
   ]);
 
+  const markRendererReady = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setReady(true);
+    setRendererError(null);
+  }, []);
+
+  const reloadRenderer = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setRendererError(null);
+    setReady(false);
+    setReloadNonce(value => value + 1);
+  }, []);
+
   useEffect(() => {
     if (ready) sendUpdate();
   }, [ready, sendUpdate]);
@@ -182,9 +196,7 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
       if (!event.data) return;
       const bridgeConfig = configRef.current;
       if (event.data.type === 'boothRendererReady') {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        setReady(true);
-        setRendererError(null);
+        markRendererReady();
         setTimeout(sendUpdate, 0);
         return;
       }
@@ -194,6 +206,7 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
         return;
       }
       if (event.data.type === 'boothUpdateAck') {
+        markRendererReady();
         return;
       }
       if (event.data.type === 'workspaceItemSelected') {
@@ -244,7 +257,7 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
     return () => {
       window.removeEventListener('message', handler);
     };
-  }, [sendUpdate]);
+  }, [markRendererReady, sendUpdate]);
 
   if (rendererError) {
     return (
@@ -259,7 +272,7 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
         </svg>
         <span>{rendererError}</span>
         <button
-          onClick={() => { setRendererError(null); setReady(false); }}
+          onClick={reloadRenderer}
           style={{
             padding: '6px 16px', borderRadius: '6px', border: '1px solid currentColor',
             background: 'transparent', color: 'inherit', cursor: 'pointer', fontSize: '13px',
@@ -300,9 +313,9 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
         </div>
       )}
       <iframe
-        key={src}
+        key={`${src}:${reloadNonce}`}
         ref={iframeRef}
-        src={src}
+        src={`${src}&reload=${reloadNonce}`}
         title="Booth Renderer"
         data-renderer-ready={ready ? "true" : "false"}
         style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
