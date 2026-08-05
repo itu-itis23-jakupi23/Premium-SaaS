@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { CurrencySwitcher, formatMoneyUSD, useCurrency } from "@/lib/currency";
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import { Booth3D } from "@/components/workspace/Booth3D";
@@ -22,7 +23,7 @@ import {
   ChevronLeft, Undo2, Redo2, Save, Camera, History, Send,
   ZoomIn, ZoomOut, Maximize2, Search, Plus, ChevronDown, Trash2, Download,
   Square, LayoutTemplate, Lightbulb, Monitor, Layers, Map, Box, PanelLeft, X,
-  CheckCircle2, Package, StickyNote, Settings2, Home, Copy, MessageSquare, ImagePlus,
+  CheckCircle2, Package, StickyNote, Settings2, Home, Copy, MessageSquare, ImagePlus, Lock, Unlock,
 } from "lucide-react";
 
 // ── Palette ────────────────────────────────────────────────────────
@@ -45,11 +46,20 @@ const UI   = 'var(--app-font-samsung)';
 type FasciaOption = 'classic' | 'full' | 'custom';
 type LightingPreset = 'neutral' | 'exhibition' | 'accent' | 'spotlight' | 'ambient';
 type DoorPosition = 'left' | 'center' | 'right';
+type DoorSide = 'front' | 'back' | 'left' | 'right';
 type DoorSwing = 'left-in' | 'right-in' | 'left-out' | 'right-out';
 type RoomWallFinish = 'white' | 'frosted' | 'glass' | 'dark';
+type RoomGraphicFit = 'cover' | 'contain' | 'stretch';
+type RoomTemplateKey = 'storage' | 'meeting' | 'utility';
+const ROOM_SIDE_OPTIONS:{value:DoorSide;label:string}[] = [
+  {value:'front',label:'Front wall'},
+  {value:'back',label:'Back wall'},
+  {value:'left',label:'Left wall'},
+  {value:'right',label:'Right wall'},
+];
 interface BoothState { width:number; depth:number; height:number; system:BoothSystem; companyName:string; openFront:boolean; openBack:boolean; openLeft:boolean; openRight:boolean; fasciaEnabled:boolean; fasciaOption:FasciaOption; }
-interface WorkspacePlacedItem { id:string; catalogId:string; name:string; sku:string; qty:number; w:number; d:number; h:number; color:string; weight:number; x:number; z:number; rotation:number; rotationX?:number; rotationY?:number; rotationZ?:number; kind:'furniture'|'light'|'structure'|'fascia'|'asset'; shape?:CatItem['shape']; modelUrl?:string; source?:string; }
-interface WorkspaceRoom { id:string; name:string; width:number; depth:number; height:number; x:number; z:number; hasDoor:boolean; hasCeiling:boolean; doorPosition:DoorPosition; doorSwing:DoorSwing; doorOpen:boolean; wallFinish:RoomWallFinish; floorColor:string; locked:boolean; designImageUrl?:string; designImageName?:string; designOpacity?:number; }
+interface WorkspacePlacedItem { id:string; catalogId:string; name:string; sku:string; qty:number; w:number; d:number; h:number; color:string; weight:number; x:number; z:number; rotation:number; rotationX?:number; rotationY?:number; rotationZ?:number; locked?:boolean; kind:'furniture'|'light'|'structure'|'fascia'|'asset'; shape?:CatItem['shape']; modelUrl?:string; source?:string; }
+interface WorkspaceRoom { id:string; name:string; width:number; depth:number; height:number; x:number; z:number; hasDoor:boolean; hasCeiling:boolean; doorSide:DoorSide; doorWidth:number; doorPosition:DoorPosition; doorSwing:DoorSwing; doorOpen:boolean; wallFinish:RoomWallFinish; floorColor:string; locked:boolean; designImageUrl?:string; designImageName?:string; designOpacity?:number; designWall:DoorSide; designFit:RoomGraphicFit; }
 interface PanelOverride { color?:string; brandText?:string; brandColor?:string; brandScale?:number; designImageUrl?:string; designImageName?:string; designOpacity?:number; }
 interface Note { id:string; text:string; color:string; createdAt:string; }
 interface Snapshot { id:string; name:string; data:WSData; createdAt:string; }
@@ -157,6 +167,21 @@ const ITEM_PROPS: Record<string,{w:number;d:number;h:number;color:string;weight:
   ...SEDEF_ITEM_PROPS,
 };
 
+function catalogItemProps(item:CatItem) {
+  const registered = ITEM_PROPS[item.id];
+  if (registered) return registered;
+  const dimensions = (item.dim.match(/\d+(?:\.\d+)?/g) ?? [])
+    .map(value => Number.parseFloat(value))
+    .filter(Number.isFinite);
+  return {
+    w: Math.max(0.06, dimensions[0] || 0.5),
+    d: Math.max(0.06, dimensions[1] || 0.5),
+    h: Math.max(0.06, dimensions[2] || 0.8),
+    color: '#888888',
+    weight: 10,
+  };
+}
+
 const ENS_MODEL_URLS: Record<string,string> = {};
 const KNOWN_CATALOG_IDS = new Set(Object.values(CATALOG).flat().map(item => item.id));
 
@@ -180,6 +205,12 @@ const LIGHTING_PRESETS: {value:LightingPreset; label:string}[] = [
   {value:'ambient', label:'Ambient'},
 ];
 const STRUCT_UNIT_PRICE: Record<string,number> = { post:95, rail:42, panel:85, fascia:120, foot:28 };
+const ROOM_UNIT_PRICE = { profile:42, panel:85, door:240, floor:35, ceiling:55, graphic:45 } as const;
+const ROOM_TEMPLATES:{value:RoomTemplateKey;label:string;name:string;width:number;depth:number;hasCeiling:boolean}[] = [
+  {value:'storage',label:'Storage 2 x 1 m',name:'Storage room',width:2,depth:1,hasCeiling:false},
+  {value:'meeting',label:'Meeting 3 x 2 m',name:'Meeting room',width:3,depth:2,hasCeiling:true},
+  {value:'utility',label:'Utility 1 x 1 m',name:'Utility room',width:1,depth:1,hasCeiling:true},
+];
 
 // ── Sub-components ─────────────────────────────────────────────────
 function Hairline({margin=16}:{margin?:number}) { return <div style={{height:1,background:C.hair,margin:`0 -${margin}px`}}/>; }
@@ -190,7 +221,9 @@ function PropBlock({label,right,children}:{label:string;right?:React.ReactNode;c
   return <div style={{padding:'12px 0'}}><MonoLabel right={right}>{label}</MonoLabel>{children}</div>;
 }
 function formatUsd(value:number) {
-  return `USD ${Math.max(0, Math.round(value)).toLocaleString()}`;
+  // Values are USD internally; rendering converts to the selected display
+  // currency (components consuming useCurrency re-render on switch).
+  return formatMoneyUSD(value);
 }
 function DimInput({label,value,min,max,step,onChange,disabled=false}:{label:string;value:number;min:number;max:number;step:number;onChange:(v:number)=>void;disabled?:boolean}) {
   return (<div>
@@ -227,7 +260,7 @@ function CatalogImagePreview({item,active}:{item:CatItem;active:boolean}) {
   );
 }
 function CatalogPreview({item,active}:{item:CatItem;active:boolean}) {
-  const props = ITEM_PROPS[item.id] ?? {w:0.6,d:0.6,h:0.8,color:'#d8d3c9',weight:1};
+  const props = catalogItemProps(item);
   const color = props.color;
   const stroke = active ? C.ink : '#9ca3af';
   const shape = item.shape ?? 'box';
@@ -338,12 +371,28 @@ function itemPositionBounds(w:number, d:number, booth:BoothState) {
 type PlacementIssue = { itemId:string; message:string };
 type Rect2D = { x0:number; x1:number; z0:number; z1:number };
 
-function itemRect(item:WorkspacePlacedItem, pad = 0.03): Rect2D {
+function rotatedItemFootprint(item:WorkspacePlacedItem) {
+  const radians = ((Number(item.rotationY ?? item.rotation) || 0) * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(radians));
+  const sin = Math.abs(Math.sin(radians));
   return {
-    x0: item.x - item.w / 2 - pad,
-    x1: item.x + item.w / 2 + pad,
-    z0: item.z - item.d / 2 - pad,
-    z1: item.z + item.d / 2 + pad,
+    width: item.w * cos + item.d * sin,
+    depth: item.w * sin + item.d * cos,
+  };
+}
+
+function positionBoundsForItem(item:WorkspacePlacedItem, booth:BoothState) {
+  const footprint = rotatedItemFootprint(item);
+  return itemPositionBounds(footprint.width, footprint.depth, booth);
+}
+
+function itemRect(item:WorkspacePlacedItem, pad = 0.03): Rect2D {
+  const footprint = rotatedItemFootprint(item);
+  return {
+    x0: item.x - footprint.width / 2 - pad,
+    x1: item.x + footprint.width / 2 + pad,
+    z0: item.z - footprint.depth / 2 - pad,
+    z1: item.z + footprint.depth / 2 + pad,
   };
 }
 
@@ -360,11 +409,90 @@ function rectsOverlap(a:Rect2D, b:Rect2D) {
   return a.x0 < b.x1 && a.x1 > b.x0 && a.z0 < b.z1 && a.z1 > b.z0;
 }
 
+function rectInside(inner:Rect2D, outer:Rect2D, tolerance = 0.001) {
+  return inner.x0 >= outer.x0 - tolerance
+    && inner.x1 <= outer.x1 + tolerance
+    && inner.z0 >= outer.z0 - tolerance
+    && inner.z1 <= outer.z1 + tolerance;
+}
+
+function roomInteriorRect(room:WorkspaceRoom):Rect2D {
+  const clearance = 0.12;
+  const outer = roomRect(room, 0);
+  return {
+    x0: Math.min(room.x, outer.x0 + clearance),
+    x1: Math.max(room.x, outer.x1 - clearance),
+    z0: Math.min(room.z, outer.z0 + clearance),
+    z1: Math.max(room.z, outer.z1 - clearance),
+  };
+}
+
+function roomDoorAxisCenter(room:WorkspaceRoom) {
+  const usesDepth = room.doorSide === 'left' || room.doorSide === 'right';
+  const span = usesDepth ? room.depth : room.width;
+  const start = usesDepth ? room.z - room.depth / 2 : room.x - room.width / 2;
+  const sectionCount = Math.max(1, Math.floor(span));
+  const sectionWidth = span / sectionCount;
+  const index = room.doorPosition === 'left' ? 0 : room.doorPosition === 'right' ? sectionCount - 1 : Math.round((sectionCount - 1) / 2);
+  return start + sectionWidth * (index + 0.5);
+}
+
+function roomDoorClearanceRect(room:WorkspaceRoom):Rect2D|null {
+  if(!room.hasDoor) return null;
+  const center = roomDoorAxisCenter(room);
+  const halfOpening = room.doorWidth / 2 + 0.08;
+  const swingDepth = Math.max(0.75, room.doorWidth + 0.12);
+  const outer = roomRect(room, 0);
+  if(room.doorSide === 'back') return {x0:center-halfOpening,x1:center+halfOpening,z0:outer.z0-0.06,z1:outer.z0+swingDepth};
+  if(room.doorSide === 'left') return {x0:outer.x0-0.06,x1:outer.x0+swingDepth,z0:center-halfOpening,z1:center+halfOpening};
+  if(room.doorSide === 'right') return {x0:outer.x1-swingDepth,x1:outer.x1+0.06,z0:center-halfOpening,z1:center+halfOpening};
+  return {x0:center-halfOpening,x1:center+halfOpening,z0:outer.z1-swingDepth,z1:outer.z1+0.06};
+}
+
+function roomItemConflict(itemBounds:Rect2D, room:WorkspaceRoom):'wall'|'door'|null {
+  if(!rectsOverlap(itemBounds, roomRect(room, 0))) return null;
+  if(!rectInside(itemBounds, roomInteriorRect(room))) return 'wall';
+  const doorClearance = roomDoorClearanceRect(room);
+  return doorClearance && rectsOverlap(itemBounds, doorClearance) ? 'door' : null;
+}
+
+function roomPlacementIssue(candidate:WorkspaceRoom, allRooms:WorkspaceRoom[], items:WorkspacePlacedItem[]) {
+  for(const other of allRooms) {
+    if(other.id === candidate.id) continue;
+    if(rectsOverlap(roomRect(candidate, 0.04), roomRect(other, 0.04))) return `Overlaps ${other.name}`;
+  }
+  for(const item of items.filter(isFloorPlacedItem)) {
+    const conflict = roomItemConflict(itemRect(item), candidate);
+    if(conflict === 'wall') return `${item.name} crosses a room wall`;
+    if(conflict === 'door') return `${item.name} blocks the door clearance`;
+  }
+  return '';
+}
+
+function findAvailableRoomPlacement(room:WorkspaceRoom, rooms:WorkspaceRoom[], items:WorkspacePlacedItem[], booth:BoothState) {
+  const minX = room.width / 2;
+  const maxX = Math.max(minX, booth.width - room.width / 2);
+  const minZ = room.depth / 2;
+  const maxZ = Math.max(minZ, booth.depth - room.depth / 2);
+  const candidates:{x:number;z:number}[] = [
+    {x:minX,z:minZ}, {x:maxX,z:minZ}, {x:minX,z:maxZ}, {x:maxX,z:maxZ},
+    {x:booth.width/2,z:booth.depth/2},
+  ];
+  for(let z=minZ;z<=maxZ+0.001;z+=0.5) {
+    for(let x=minX;x<=maxX+0.001;x+=0.5) candidates.push({x:snapNumber(x),z:snapNumber(z)});
+  }
+  for(const position of candidates) {
+    const candidate = {...room,...position};
+    if(!roomPlacementIssue(candidate, rooms, items)) return candidate;
+  }
+  return null;
+}
+
 function isFloorPlacedItem(item:WorkspacePlacedItem) {
   return (item.kind === 'furniture' || item.kind === 'asset') && item.shape !== 'wall_shelf' && item.shape !== 'light' && item.shape !== 'rail_light';
 }
 
-function placementIssuesFor(items:WorkspacePlacedItem[], rooms:WorkspaceRoom[]): PlacementIssue[] {
+function placementIssuesFor(items:WorkspacePlacedItem[], rooms:WorkspaceRoom[], booth:BoothState, frontSupports:number[]): PlacementIssue[] {
   const issues: PlacementIssue[] = [];
   const floorItems = items.filter(isFloorPlacedItem);
   const seen = new Set<string>();
@@ -385,8 +513,22 @@ function placementIssuesFor(items:WorkspacePlacedItem[], rooms:WorkspaceRoom[]):
       addIssue(b.id, `Overlaps ${a.name}`);
     }
     for (const room of rooms) {
-      if (!rectsOverlap(aRect, roomRect(room))) continue;
-      addIssue(a.id, `Overlaps ${room.name}`);
+      const conflict = roomItemConflict(aRect, room);
+      if (conflict === 'wall') addIssue(a.id, `Crosses ${room.name} wall`);
+      if (conflict === 'door') addIssue(a.id, `Blocks ${room.name} door clearance`);
+    }
+    const bounds = itemPositionBounds(rotatedItemFootprint(a).width, rotatedItemFootprint(a).depth, booth);
+    if (a.x < bounds.minX || a.x > bounds.maxX || a.z < bounds.minZ || a.z > bounds.maxZ) {
+      addIssue(a.id, 'Outside the usable booth floor');
+    }
+    for (const supportX of frontSupports) {
+      const supportLane: Rect2D = {
+        x0: supportX - 0.12,
+        x1: supportX + 0.12,
+        z0: 0,
+        z1: booth.depth,
+      };
+      if (rectsOverlap(aRect, supportLane)) addIssue(a.id, 'Blocks a structural support rail');
     }
   }
   return issues;
@@ -394,6 +536,10 @@ function placementIssuesFor(items:WorkspacePlacedItem[], rooms:WorkspaceRoom[]):
 
 function normalizeDoorPosition(value:unknown): DoorPosition {
   return value === 'left' || value === 'right' ? value : 'center';
+}
+
+function normalizeDoorSide(value:unknown): DoorSide {
+  return value === 'back' || value === 'left' || value === 'right' ? value : 'front';
 }
 
 function normalizeDoorSwing(value:unknown): DoorSwing {
@@ -404,16 +550,34 @@ function normalizeRoomWallFinish(value:unknown): RoomWallFinish {
   return value === 'frosted' || value === 'glass' || value === 'dark' ? value : 'white';
 }
 
+function availableRoomWallSides(width:number,depth:number,x:number,z:number,booth:BoothState):DoorSide[] {
+  const tolerance = 0.02;
+  return ROOM_SIDE_OPTIONS.map(option=>option.value).filter(side=>{
+    if(side==='back') return z-depth/2 > tolerance;
+    if(side==='front') return z+depth/2 < booth.depth-tolerance;
+    if(side==='left') return x-width/2 > tolerance;
+    return x+width/2 < booth.width-tolerance;
+  });
+}
+
+function normalizeRoomGraphicFit(value:unknown): RoomGraphicFit {
+  return value === 'contain' || value === 'stretch' ? value : 'cover';
+}
+
+function roomGraphicWall(value:unknown, hasDoor:boolean, doorSide:DoorSide): DoorSide {
+  const requested = value === 'front' || value === 'left' || value === 'right' ? value : 'back';
+  if (!hasDoor || requested !== doorSide) return requested;
+  return (['back','front','left','right'] as DoorSide[]).find(side=>side!==doorSide) || 'back';
+}
+
 function normalizeHexColor(value:unknown, fallback:string) {
   const raw = String(value || '').trim();
   return /^#[0-9a-f]{6}$/i.test(raw) ? raw : fallback;
 }
 
-function roomDoorCenterX(room:WorkspaceRoom) {
-  const sectionCount = Math.max(1, Math.floor(room.width));
-  const sectionWidth = room.width / sectionCount;
-  const index = room.doorPosition === 'left' ? 0 : room.doorPosition === 'right' ? sectionCount - 1 : Math.round((sectionCount - 1) / 2);
-  return room.x - room.width / 2 + sectionWidth * (index + 0.5);
+function roomDoorMaxWidth(room:WorkspaceRoom) {
+  const span = room.doorSide === 'left' || room.doorSide === 'right' ? room.depth : room.width;
+  return Math.max(0.55, Math.min(1.4, span - 0.16));
 }
 
 type RoomSnapTarget = 'front'|'back'|'left'|'right'|'center'|'back-left'|'back-right'|'front-left'|'front-right';
@@ -598,7 +762,10 @@ function normalizePlacedItem(raw: unknown, index: number, booth: BoothState): Wo
   const kind = item.kind || (String(item.name || '').toLowerCase().includes('light') || String(item.catalogId || '').startsWith('4') ? 'light' : 'furniture');
   const w = Number(item.w ?? props.w) || props.w;
   const d = Number(item.d ?? props.d) || props.d;
-  const bounds = itemPositionBounds(w, d, booth);
+  const rotation = Number(item.rotation) || 0;
+  const rotationY = Number(item.rotationY ?? item.rotation) || 0;
+  const footprint = rotatedItemFootprint({w,d,rotation,rotationY} as WorkspacePlacedItem);
+  const bounds = itemPositionBounds(footprint.width, footprint.depth, booth);
   return {
     id: String(item.id || `item-${index + 1}`),
     catalogId: String(item.catalogId || item.id || `custom-${index + 1}`),
@@ -611,10 +778,11 @@ function normalizePlacedItem(raw: unknown, index: number, booth: BoothState): Wo
     weight: Number(item.weight ?? props.weight) || props.weight,
     x: clampNumber(Number(item.x) || booth.width / 2, bounds.minX, bounds.maxX),
     z: clampNumber(Number(item.z) || booth.depth / 2, bounds.minZ, bounds.maxZ),
-    rotation: Number(item.rotation) || 0,
+    rotation,
     rotationX: Number(item.rotationX) || 0,
-    rotationY: Number(item.rotationY ?? item.rotation) || 0,
+    rotationY,
     rotationZ: Number(item.rotationZ) || 0,
+    locked: Boolean(item.locked),
     kind: kind === 'light' || kind === 'structure' || kind === 'fascia' || kind === 'asset' ? kind : 'furniture',
     shape: item.shape,
     modelUrl: typeof item.modelUrl === 'string' ? item.modelUrl : undefined,
@@ -626,17 +794,27 @@ function normalizeRoom(raw: unknown, index: number, booth: BoothState): Workspac
   const room = raw && typeof raw === 'object' ? raw as Partial<WorkspaceRoom> : {};
   const width = clampNumber(snapNumber(Number(room.width) || 3, 1), 1, Math.max(1, booth.width));
   const depth = clampNumber(snapNumber(Number(room.depth) || 3, 1), 1, Math.max(1, booth.depth));
-  const wallHeight = Math.max(1.8, booth.height - 0.3);
+  const wallHeight = Math.max(1.8, booth.height);
+  const hasDoor = room.hasDoor !== false;
+  const x = clampNumber(snapNumber(Number(room.x) || booth.width / 2, 0.5), width / 2, Math.max(width / 2, booth.width - width / 2));
+  const z = clampNumber(snapNumber(Number(room.z) || booth.depth / 2, 0.5), depth / 2, Math.max(depth / 2, booth.depth - depth / 2));
+  const requestedDoorSide = normalizeDoorSide(room.doorSide);
+  const availableDoorSides = availableRoomWallSides(width,depth,x,z,booth);
+  const doorSide = availableDoorSides.includes(requestedDoorSide) ? requestedDoorSide : availableDoorSides[0] || requestedDoorSide;
+  const doorSpan = doorSide === 'left' || doorSide === 'right' ? depth : width;
+  const maxDoorWidth = Math.max(0.55, Math.min(1.4, doorSpan - 0.16));
   return {
     id: String(room.id || `room-${index + 1}`),
     name: String(room.name || `Room ${index + 1}`),
     width,
     depth,
     height: room.height != null ? clampNumber(Number(room.height) || wallHeight, 1.8, booth.height) : wallHeight,
-    x: clampNumber(snapNumber(Number(room.x) || booth.width / 2, 0.5), width / 2, Math.max(width / 2, booth.width - width / 2)),
-    z: clampNumber(snapNumber(Number(room.z) || booth.depth / 2, 0.5), depth / 2, Math.max(depth / 2, booth.depth - depth / 2)),
-    hasDoor: room.hasDoor !== false,
+    x,
+    z,
+    hasDoor,
     hasCeiling: Boolean(room.hasCeiling),
+    doorSide,
+    doorWidth: clampNumber(Number(room.doorWidth) || 0.85, 0.55, maxDoorWidth),
     doorPosition: normalizeDoorPosition(room.doorPosition),
     doorSwing: normalizeDoorSwing(room.doorSwing),
     doorOpen: Boolean(room.doorOpen),
@@ -646,6 +824,8 @@ function normalizeRoom(raw: unknown, index: number, booth: BoothState): Workspac
     designImageUrl: typeof room.designImageUrl === 'string' && isWorkspaceImageUrl(room.designImageUrl) ? room.designImageUrl : undefined,
     designImageName: typeof room.designImageName === 'string' ? room.designImageName.slice(0, 80) : undefined,
     designOpacity: room.designOpacity != null ? clampNumber(Number(room.designOpacity) || 1, 0.15, 1) : undefined,
+    designWall: roomGraphicWall(room.designWall,hasDoor,doorSide),
+    designFit: normalizeRoomGraphicFit(room.designFit),
   };
 }
 
@@ -661,9 +841,16 @@ function workspaceSnapshots(record: ProjectWorkspace): Snapshot[] {
 // ── Main ──────────────────────────────────────────────────────────
 export default function PMWorkspace() {
   const { t } = useTranslation();
+  useCurrency(); // subscribe so money renders update when display currency changes
   const [ws,    setWS]    = useState<WSData>(INITIAL_WS);
   const histStackRef      = useRef<WSData[]>([INITIAL_WS]);
   const histIdxRef        = useRef(0);
+  const workspaceRevisionRef = useRef(0);
+  const saveInFlightRef = useRef(false);
+  // Mirrors the render-scope BOM quote so persistWorkspace (defined earlier
+  // in the component) can attach it to every save payload.
+  const quoteTotalCentsRef = useRef(0);
+  const activeProjectIdRef = useRef<string | null>(null);
   const [histIdx, setHistIdx] = useState(0);
   const [histLen, setHistLen] = useState(1);
 
@@ -677,6 +864,9 @@ export default function PMWorkspace() {
   const [activeId,   setActiveId]   = useState('');
   const [activePlacedId,setActivePlacedId] = useState('');
   const [activeRoomId,setActiveRoomId] = useState('');
+  const [roomTemplate,setRoomTemplate] = useState<RoomTemplateKey>('storage');
+  const [draggedCatalogItem, setDraggedCatalogItem] = useState<CatItem | null>(null);
+  const catalogDragWasActiveRef = useRef(false);
 
   const [showSendDlg,   setShowSendDlg]   = useState(false);
   const [showSnapDlg,   setShowSnapDlg]   = useState(false);
@@ -700,6 +890,12 @@ export default function PMWorkspace() {
   const [feedbackFilter, setFeedbackFilter] = useState<FeedbackFilter>('open');
   const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
 
+  const markWorkspaceDirty = useCallback(()=>{
+    workspaceRevisionRef.current += 1;
+    setHasUnsavedChanges(true);
+    setSaveStatus('dirty');
+  },[]);
+
   // ── Project picker ────────────────────────────────────────────
   const urlProjectId = useMemo(() => new URLSearchParams(window.location.search).get("projectId"), []);
   const [showProjectPicker, setShowProjectPicker] = useState(!urlProjectId);
@@ -710,6 +906,7 @@ export default function PMWorkspace() {
   // ── History helpers ───────────────────────────────────────────
   const resetWorkspace = useCallback((data:WSData)=>{
     const normalized = normalizeWorkspaceData(data);
+    workspaceRevisionRef.current += 1;
     setWS(normalized);
     histStackRef.current = [normalized];
     histIdxRef.current = 0;
@@ -720,8 +917,7 @@ export default function PMWorkspace() {
   },[]);
 
   const commit = useCallback((updater:(prev:WSData)=>WSData)=>{
-    setHasUnsavedChanges(true);
-    setSaveStatus('dirty');
+    markWorkspaceDirty();
     setWS(prev=>{
       const next = updater(prev);
       const stack = histStackRef.current.slice(0, histIdxRef.current+1);
@@ -733,23 +929,21 @@ export default function PMWorkspace() {
       setHistLen(stack.length);
       return next;
     });
-  },[]);
+  },[markWorkspaceDirty]);
 
   const undo = () => {
     if(histIdxRef.current<=0) return;
     histIdxRef.current--;
     setHistIdx(histIdxRef.current);
     setWS(histStackRef.current[histIdxRef.current]);
-    setHasUnsavedChanges(true);
-    setSaveStatus('dirty');
+    markWorkspaceDirty();
   };
   const redo = () => {
     if(histIdxRef.current>=histStackRef.current.length-1) return;
     histIdxRef.current++;
     setHistIdx(histIdxRef.current);
     setWS(histStackRef.current[histIdxRef.current]);
-    setHasUnsavedChanges(true);
-    setSaveStatus('dirty');
+    markWorkspaceDirty();
   };
   const canUndo = histIdx>0;
   const canRedo = histIdx<histLen-1;
@@ -768,30 +962,62 @@ export default function PMWorkspace() {
     setToast(`${preset.charAt(0).toUpperCase() + preset.slice(1)} side preset applied`);
   };
 
+  const persistWorkspace = useCallback(async (
+    projectId:string,
+    workspace:WSData,
+    revision:number,
+    title:string,
+  ) => {
+    if(saveInFlightRef.current) return false;
+    saveInFlightRef.current = true;
+    setLastSaved('Saving...');
+    setSaveStatus('saving');
+    try {
+      const payload = { ...workspace, quoteTotalCents: quoteTotalCentsRef.current || undefined };
+      const saved = await saveProjectWorkspace(projectId, payload, title);
+      if(activeProjectIdRef.current !== projectId) return false;
+      setWorkspaceRecord(saved);
+      setSnapshots(workspaceSnapshots(saved));
+      setWorkspaceError('');
+      if(workspaceRevisionRef.current === revision) {
+        setLastSaved('Just now');
+        setHasUnsavedChanges(false);
+        setSaveStatus('saved');
+      } else {
+        setLastSaved('New changes waiting');
+        setHasUnsavedChanges(true);
+        setSaveStatus('dirty');
+      }
+      return true;
+    } catch (err) {
+      if(activeProjectIdRef.current !== projectId) return false;
+      setLastSaved('Save failed');
+      setSaveStatus('error');
+      setWorkspaceError(err instanceof Error ? err.message : 'Could not save workspace');
+      return false;
+    } finally {
+      saveInFlightRef.current = false;
+    }
+  },[]);
+
   const save = async () => {
     if(!workspaceRecord) {
       setToast('Workspace is still loading');
       return;
     }
-
-    setLastSaved('Saving...');
-    setSaveStatus('saving');
-    try {
-      const saved = await saveProjectWorkspace(workspaceRecord.project.id, ws, 'Manual save');
-      setWorkspaceRecord(saved);
-      setSnapshots(workspaceSnapshots(saved));
-      setLastSaved('Just now');
-      setHasUnsavedChanges(false);
-      setSaveStatus('saved');
-      setWorkspaceError('');
-      setToast('Design saved to PostgreSQL');
-    } catch (err) {
-      setLastSaved('Save failed');
-      setSaveStatus('error');
-      setWorkspaceError(err instanceof Error ? err.message : 'Could not save workspace');
-      setToast('Save failed');
-    }
+    if(saveInFlightRef.current) return;
+    const saved = await persistWorkspace(
+      workspaceRecord.project.id,
+      ws,
+      workspaceRevisionRef.current,
+      'Manual save',
+    );
+    setToast(saved ? 'Design saved' : 'Save failed');
   };
+
+  useEffect(()=>{
+    activeProjectIdRef.current = workspaceRecord?.project.id ?? null;
+  },[workspaceRecord?.project.id]);
 
   // Load project list for picker when picker is visible
   useEffect(()=>{
@@ -897,28 +1123,29 @@ export default function PMWorkspace() {
       });
   };
 
-  // Auto-save every 30s
+  // Save shortly after editing stops. Revision checks prevent an older request
+  // from marking newer local changes as saved.
   useEffect(()=>{
     if(!workspaceRecord || isWorkspaceLoading || !hasUnsavedChanges) return;
-    const t=setInterval(()=>{
-      setSaveStatus('saving');
-      saveProjectWorkspace(workspaceRecord.project.id, ws, 'Autosave')
-        .then(saved => {
-          setWorkspaceRecord(saved);
-          setSnapshots(workspaceSnapshots(saved));
-          setLastSaved(new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
-          setHasUnsavedChanges(false);
-          setSaveStatus('saved');
-          setWorkspaceError('');
-        })
-        .catch(err => {
-          setLastSaved('Autosave failed');
-          setSaveStatus('error');
-          setWorkspaceError(err instanceof Error ? err.message : 'Autosave failed');
-        });
-    },30000);
-    return()=>clearInterval(t);
-  },[hasUnsavedChanges, isWorkspaceLoading, workspaceRecord?.project.id, ws]);
+    if(saveStatus === 'saving' || saveStatus === 'error') return;
+    const projectId = workspaceRecord.project.id;
+    const revision = workspaceRevisionRef.current;
+    const workspace = ws;
+    const timer = window.setTimeout(()=>{
+      void persistWorkspace(projectId, workspace, revision, 'Autosave');
+    },3000);
+    return()=>window.clearTimeout(timer);
+  },[hasUnsavedChanges, isWorkspaceLoading, persistWorkspace, saveStatus, workspaceRecord, ws]);
+
+  useEffect(()=>{
+    if(!hasUnsavedChanges) return;
+    const warnBeforeUnload = (event:BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warnBeforeUnload);
+    return()=>window.removeEventListener('beforeunload', warnBeforeUnload);
+  },[hasUnsavedChanges]);
 
   const createSnapshot = async () => {
     if(!snapName.trim() || !workspaceRecord) return;
@@ -942,8 +1169,7 @@ export default function PMWorkspace() {
   };
   const restoreSnapshot = (snap:Snapshot) => {
     resetWorkspace(snap.data);
-    setHasUnsavedChanges(true);
-    setSaveStatus('dirty');
+    markWorkspaceDirty();
     setShowHistPanel(false);
     setToast(`Restored locally: ${snap.name}`);
   };
@@ -986,42 +1212,82 @@ export default function PMWorkspace() {
     };
   };
 
-  const addItem = (item:CatItem) => {
+  const addItem = (item:CatItem, requestedPosition?:{x:number;z:number}) => {
     const placedCount = ws.placedItems.filter(p=>p.catalogId===item.id).reduce((sum,p)=>sum+p.qty,0);
     if(item.stock != null && placedCount >= item.stock) {
       setActiveId(item.id);
       setToast(`${item.name} is out of stock`);
       return;
     }
-    const props = ITEM_PROPS[item.id] ?? {w:0.5,d:0.5,h:1,color:'#888',weight:10};
-    let nextId = '';
-    commit(prev=>{
-      const position = nextItemPosition(prev, props);
-      const modelUrl = item.modelUrl ?? ENS_MODEL_URLS[item.id];
-      const newItem:WorkspacePlacedItem = {
-        id:`${item.id}-${Date.now()}-${Math.random().toString(16).slice(2,6)}`,
-        catalogId:item.id,
-        name:item.name,
-        sku:item.sku,
-        qty:1,
-        ...props,
-        ...position,
-        rotation:0,
-        rotationX:0,
-        rotationY:0,
-        rotationZ:0,
-        kind:Object.values(CATALOG.Lighting).some(light => light.id === item.id) ? 'light' : (Object.values(CATALOG.Fascia).some(fascia => fascia.id === item.id) ? 'fascia' : (Object.values(CATALOG.Structure).some(struct => struct.id === item.id) ? 'structure' : 'furniture')),
-        shape:item.shape,
-        modelUrl,
-        source:modelUrl ? 'ENS asset library' : undefined,
-      };
-      nextId = newItem.id;
-      return {...prev,placedItems:[...prev.placedItems,newItem]};
-    });
+    const props = catalogItemProps(item);
+    const bounds = itemPositionBounds(props.w, props.d, ws.booth);
+    const position = requestedPosition
+      ? {
+          x: clampNumber(snapNumber(requestedPosition.x, 0.05), bounds.minX, bounds.maxX),
+          z: clampNumber(snapNumber(requestedPosition.z, 0.05), bounds.minZ, bounds.maxZ),
+        }
+      : nextItemPosition(ws, props);
+    const modelUrl = item.modelUrl ?? ENS_MODEL_URLS[item.id];
+    const newItem:WorkspacePlacedItem = {
+      id:`${item.id}-${Date.now()}-${Math.random().toString(16).slice(2,6)}`,
+      catalogId:item.id,
+      name:item.name,
+      sku:item.sku,
+      qty:1,
+      ...props,
+      ...position,
+      rotation:0,
+      rotationX:0,
+      rotationY:0,
+      rotationZ:0,
+      kind:Object.values(CATALOG.Lighting).some(light => light.id === item.id) ? 'light' : (Object.values(CATALOG.Fascia).some(fascia => fascia.id === item.id) ? 'fascia' : (Object.values(CATALOG.Structure).some(struct => struct.id === item.id) ? 'structure' : 'furniture')),
+      shape:item.shape,
+      modelUrl,
+      source:modelUrl ? 'ENS asset library' : undefined,
+    };
+
+    if(requestedPosition) {
+      const candidate = normalizeWorkspaceData({...ws,placedItems:[...ws.placedItems,newItem]});
+      const supports = activeFrontSupportPositionsFor(
+        candidate.booth.width,
+        candidate.frontSupportPositions,
+        candidate.suppressedDefaultPositions,
+      );
+      const issue = placementIssuesFor(candidate.placedItems, candidate.rooms, candidate.booth, supports)
+        .find(entry => entry.itemId === newItem.id);
+      if(issue) {
+        setActiveId(item.id);
+        setToast(`Placement blocked: ${issue.message}`);
+        return;
+      }
+    }
+
+    commit(prev=>({...prev,placedItems:[...prev.placedItems,newItem]}));
     setActiveId(item.id);
-    setActivePlacedId(nextId);
+    setActivePlacedId(newItem.id);
     setActiveRoomId('');
-    setToast(`${item.name} added to workspace`);
+    setToast(`${item.name} ${requestedPosition ? 'placed in' : 'added to'} workspace`);
+  };
+  const beginCatalogDrag = (event:React.DragEvent<HTMLDivElement>, item:CatItem) => {
+    catalogDragWasActiveRef.current = true;
+    setDraggedCatalogItem(item);
+    setActiveId(item.id);
+    event.dataTransfer.effectAllowed = 'copy';
+    event.dataTransfer.setData('application/x-ens-catalog-item', item.id);
+    event.dataTransfer.setData('text/plain', item.name);
+  };
+  const endCatalogDrag = () => {
+    setDraggedCatalogItem(null);
+    window.setTimeout(() => { catalogDragWasActiveRef.current = false; }, 0);
+  };
+  const placeCatalogItemAt = (catalogId:string, position:{x:number;z:number}) => {
+    const item = Object.values(CATALOG).flat().find(entry => entry.id === catalogId);
+    setDraggedCatalogItem(null);
+    if(!item) {
+      setToast('This catalogue item is no longer available');
+      return;
+    }
+    addItem(item, position);
   };
   const removeCatalogItem = (catalogId:string) => {
     const latest = [...placedItems].reverse().find(item => item.catalogId === catalogId);
@@ -1029,13 +1295,40 @@ export default function PMWorkspace() {
     removeItem(latest.id);
   };
   const removeItem = (id:string) => {
-    if(activePlacedId===id) setActivePlacedId('');
+    if(activePlacedId===id) {
+      setActivePlacedId('');
+      setSelectionAnchor(null);
+    }
     commit(prev=>({...prev,placedItems:prev.placedItems.filter(p=>p.id!==id)}));
   };
   const updateItem = (id:string, patch:Partial<WorkspacePlacedItem>) => commit(prev=>normalizeWorkspaceData({
     ...prev,
     placedItems: prev.placedItems.map(item => item.id === id ? {...item, ...patch} : item),
   }));
+  const updateItemTransform = (id:string, patch:Partial<WorkspacePlacedItem>) => {
+    const current = ws.placedItems.find(item => item.id === id);
+    if(!current) return;
+    if(current.locked) {
+      setToast('Unlock this item before moving or rotating it');
+      return;
+    }
+    const candidate = normalizeWorkspaceData({
+      ...ws,
+      placedItems: ws.placedItems.map(item => item.id === id ? {...item, ...patch} : item),
+    });
+    const supports = activeFrontSupportPositionsFor(
+      candidate.booth.width,
+      candidate.frontSupportPositions,
+      candidate.suppressedDefaultPositions,
+    );
+    const issue = placementIssuesFor(candidate.placedItems, candidate.rooms, candidate.booth, supports)
+      .find(entry => entry.itemId === id);
+    if(issue) {
+      setToast(`Placement blocked: ${issue.message}`);
+      return;
+    }
+    updateItem(id, patch);
+  };
   const updatePanelOverride = (id:string, patch:PanelOverride) => commit(prev=>{
     const current = prev.panelOverrides[id] || {};
     const next: PanelOverride = {...current, ...patch};
@@ -1093,17 +1386,18 @@ export default function PMWorkspace() {
     const item = placedItems.find(entry => entry.id === id);
     if(!item) return;
     const next = ((Number(item.rotationY ?? item.rotation) + delta) % 360 + 360) % 360;
-    updateItem(id,{rotation:next, rotationY:next});
+    updateItemTransform(id,{rotation:next, rotationY:next});
   };
   const duplicateItem = (id:string) => {
     let nextId = '';
     commit(prev=>{
       const source = prev.placedItems.find(item => item.id === id);
       if(!source) return prev;
-      const bounds = itemPositionBounds(source.w, source.d, prev.booth);
+      const bounds = positionBoundsForItem(source, prev.booth);
       const next:WorkspacePlacedItem = {
         ...source,
         id:`${source.catalogId}-${Date.now()}-${Math.random().toString(16).slice(2,6)}`,
+        locked:false,
         x:clampNumber(snapNumber(source.x + 0.35,0.05), bounds.minX, bounds.maxX),
         z:clampNumber(snapNumber(source.z + 0.35,0.05), bounds.minZ, bounds.maxZ),
       };
@@ -1117,28 +1411,30 @@ export default function PMWorkspace() {
     }
   };
   const moveItemLive = useCallback((id:string, patch:{x:number;z:number}) => {
-    setHasUnsavedChanges(true);
-    setSaveStatus('dirty');
+    markWorkspaceDirty();
     setWS(prev=>normalizeWorkspaceData({
       ...prev,
-      placedItems: prev.placedItems.map(item => item.id === id ? {...item, ...patch} : item),
+      placedItems: prev.placedItems.map(item => item.id === id && !item.locked ? {...item, ...patch} : item),
     }));
-  },[]);
+  },[markWorkspaceDirty]);
 
-  const addRoom = () => commit(prev=>{
-    const width = Math.min(3, Math.max(1, prev.booth.width - 0.5));
-    const depth = Math.min(2, Math.max(1, prev.booth.depth - 0.5));
-    const wallHeight = Math.max(1.8, prev.booth.height - 0.3);
+  const addRoom = (templateKey:RoomTemplateKey) => commit(prev=>{
+    const template = ROOM_TEMPLATES.find(option=>option.value===templateKey) || ROOM_TEMPLATES[0];
+    const width = Math.min(template.width, Math.max(1, prev.booth.width - 0.5));
+    const depth = Math.min(template.depth, Math.max(1, prev.booth.depth - 0.5));
+    const wallHeight = Math.max(1.8, prev.booth.height);
     const room: WorkspaceRoom = normalizeRoom({
       id:`room-${Date.now()}`,
-      name:`Room ${prev.rooms.length + 1}`,
+      name:`${template.name} ${prev.rooms.length + 1}`,
       width,
       depth,
       height:wallHeight,
       x:prev.booth.width / 2,
       z:prev.booth.depth / 2,
       hasDoor:true,
-      hasCeiling:false,
+      hasCeiling:template.hasCeiling,
+      doorSide:'front',
+      doorWidth:0.85,
       doorPosition:'center',
       doorSwing:'left-in',
       doorOpen:false,
@@ -1146,15 +1442,36 @@ export default function PMWorkspace() {
       floorColor:'#1f2937',
       locked:false,
     }, prev.rooms.length, prev.booth);
-    setToast(`${room.name} created`);
-    setActiveRoomId(room.id);
+    const placedRoom = findAvailableRoomPlacement(room, prev.rooms, prev.placedItems, prev.booth);
+    if(!placedRoom) {
+      setToast('No clear floor area is available for this room');
+      return prev;
+    }
+    setToast(`${placedRoom.name} created from ${template.label}`);
+    setActiveRoomId(placedRoom.id);
     setActivePlacedId('');
-    return {...prev,rooms:[...prev.rooms,room]};
+    return {...prev,rooms:[...prev.rooms,placedRoom]};
   });
-  const updateRoom = (id:string, patch:Partial<WorkspaceRoom>) => commit(prev=>normalizeWorkspaceData({
-    ...prev,
-    rooms: prev.rooms.map(room => room.id === id ? {...room, ...patch} : room),
-  }));
+  const updateRoom = (id:string, patch:Partial<WorkspaceRoom>) => {
+    const placementFields:(keyof WorkspaceRoom)[] = ['x','z','width','depth','hasDoor','doorSide','doorWidth','doorPosition','doorSwing','doorOpen'];
+    const validatesPlacement = placementFields.some(field=>Object.prototype.hasOwnProperty.call(patch,field));
+    if(validatesPlacement) {
+      const candidateData = normalizeWorkspaceData({
+        ...ws,
+        rooms: ws.rooms.map(room => room.id === id ? {...room,...patch} : room),
+      });
+      const candidate = candidateData.rooms.find(room=>room.id===id);
+      const issue = candidate ? roomPlacementIssue(candidate,candidateData.rooms,candidateData.placedItems) : '';
+      if(issue) {
+        setToast(`Room change blocked: ${issue}`);
+        return;
+      }
+    }
+    commit(prev=>normalizeWorkspaceData({
+      ...prev,
+      rooms: prev.rooms.map(room => room.id === id ? {...room, ...patch} : room),
+    }));
+  };
   const uploadRoomDesign = (id:string, file?:File|null) => {
     if(!file) return;
     if(!workspaceRecord?.project.id) {
@@ -1192,22 +1509,24 @@ export default function PMWorkspace() {
     reader.readAsDataURL(file);
   };
   const moveRoomLive = useCallback((id:string, patch:Partial<WorkspaceRoom>) => {
-    setHasUnsavedChanges(true);
-    setSaveStatus('dirty');
-    setWS(prev=>normalizeWorkspaceData({
-      ...prev,
-      rooms: prev.rooms.map(room => room.id === id ? {...room, ...patch} : room),
-    }));
-  },[]);
+    markWorkspaceDirty();
+    setWS(prev=>{
+      const next = normalizeWorkspaceData({
+        ...prev,
+        rooms: prev.rooms.map(room => room.id === id ? {...room, ...patch} : room),
+      });
+      const candidate = next.rooms.find(room=>room.id===id);
+      return candidate && roomPlacementIssue(candidate,next.rooms,next.placedItems) ? prev : next;
+    });
+  },[markWorkspaceDirty]);
   const moveFrontSupportsLive = useCallback((positions:number[], suppressed:number[]=[]) => {
-    setHasUnsavedChanges(true);
-    setSaveStatus('dirty');
+    markWorkspaceDirty();
     setWS(prev=>normalizeWorkspaceData({
       ...prev,
       frontSupportPositions: positions,
       suppressedDefaultPositions: suppressed,
     }));
-  },[]);
+  },[markWorkspaceDirty]);
   const updateFrontSupportPosition = (index:number, value:number) => commit(prev=>{
     const suppressed = Array.isArray(prev.suppressedDefaultPositions) ? prev.suppressedDefaultPositions : [];
     const active = activeFrontSupportPositionsFor(prev.booth.width, prev.frontSupportPositions, suppressed);
@@ -1244,7 +1563,10 @@ export default function PMWorkspace() {
     setActiveShellPartId('');
   };
   const removeRoom = (id:string) => {
-    if(activeRoomId===id) setActiveRoomId('');
+    if(activeRoomId===id) {
+      setActiveRoomId('');
+      setSelectionAnchor(null);
+    }
     commit(prev=>({...prev,rooms:prev.rooms.filter(room=>room.id!==id)}));
   };
 
@@ -1258,13 +1580,17 @@ export default function PMWorkspace() {
 
   const { booth, themeIdx, wallFinishIdx, frameFinishIdx, fasciaFinishIdx, carpetIdx, lightingPreset, placedItems, rooms, notes, panelOverrides, frontSupportPositions, suppressedDefaultPositions } = ws;
   const activePlacedItem = placedItems.find(item => item.id === activePlacedId) || null;
+  const activeRoom = rooms.find(room => room.id === activeRoomId) || null;
   const activePanel = activeShellPartId ? panelDetails(activeShellPartId, booth) : null;
   const activeShellPart = activeShellPartId ? shellPartDetails(activeShellPartId, booth) : null;
   const activePanelOverride = activePanel ? (panelOverrides[activePanel.id] || {}) : {};
   const activeFasciaId = activeShellPart?.type === 'fascia' ? canonicalShellPartId(activeShellPartId) : '';
   const activeFasciaOverride = activeFasciaId ? (panelOverrides[activeFasciaId] || {}) : {};
   const activeFrontSupportIndex = Number(activeShellPartId.match(/^post-front-support-(\d+)$/)?.[1] ?? -1);
-  const activeFrontSupportPositions = activeFrontSupportPositionsFor(booth.width, frontSupportPositions, suppressedDefaultPositions ?? []);
+  const activeFrontSupportPositions = useMemo(
+    () => activeFrontSupportPositionsFor(booth.width, frontSupportPositions, suppressedDefaultPositions ?? []),
+    [booth.width, frontSupportPositions, suppressedDefaultPositions],
+  );
   const projectLabel = workspaceRecord?.project.name ?? 'Workspace';
   const clientLabel = workspaceRecord?.project.client ?? booth.companyName;
   const exhibitionLabel = workspaceRecord?.project.exhibition ?? 'Client review';
@@ -1295,7 +1621,10 @@ export default function PMWorkspace() {
   const boothType = openCount >= 4 ? 'Island' : openCount === 3 ? 'Peninsula' : openCount === 2 ? 'Corner' : openCount === 1 ? 'Inline' : 'Enclosed';
   const totalWeight  = placedItems.reduce((a,p)=>a+p.weight*p.qty,0);
   const totalParts   = placedItems.reduce((a,p)=>a+p.qty,0);
-  const placementIssues = useMemo(() => placementIssuesFor(placedItems, rooms), [placedItems, rooms]);
+  const placementIssues = useMemo(
+    () => placementIssuesFor(placedItems, rooms, booth, activeFrontSupportPositions),
+    [placedItems, rooms, booth, activeFrontSupportPositions],
+  );
   const invalidItemIds = useMemo(() => Array.from(new Set(placementIssues.map(issue => issue.itemId))), [placementIssues]);
   const placementIssueByItem = useMemo(() => {
     const map = new globalThis.Map<string, PlacementIssue[]>();
@@ -1345,15 +1674,43 @@ export default function PMWorkspace() {
     {name:'Fascia Board',   sku:`FAS-${booth.fasciaOption.toUpperCase()}-01`, qty:fasciaBoardQty,     unit:'ea',weight:1.4,unitPrice:STRUCT_UNIT_PRICE.fascia},
     {name:'Base Foot',      sku:`${isMax?'MAX':'OCT'}-BF-01`, qty:cols*rows,                          unit:'ea',weight:1.2,unitPrice:STRUCT_UNIT_PRICE.foot},
   ];
+  const roomItems = rooms.flatMap(room=>{
+    const wallSides = availableRoomWallSides(room.width,room.depth,room.x,room.z,booth);
+    const wallLengths = wallSides.map(side=>({side,length:side==='front'||side==='back'?room.width:room.depth}));
+    const doorIsBuilt = room.hasDoor && wallSides.includes(room.doorSide);
+    const panelQty = wallLengths.reduce((total,wall)=>{
+      const opening = doorIsBuilt&&wall.side===room.doorSide ? room.doorWidth : 0;
+      return total + Math.ceil(Math.max(0,wall.length-opening));
+    },0);
+    const totalWallLength = wallLengths.reduce((total,wall)=>total+wall.length,0);
+    const verticalCount = wallLengths.reduce((total,wall)=>total+Math.ceil(wall.length)+1,0);
+    const doorHeight = Math.min(2.1,room.height*0.88);
+    const profileLength = Math.round((totalWallLength*2 + verticalCount*room.height + (doorIsBuilt?doorHeight*2+room.doorWidth:0))*10)/10;
+    const floorArea = Math.round(room.width*room.depth*10)/10;
+    const graphicSpan = room.designWall==='front'||room.designWall==='back' ? room.width : room.depth;
+    const graphicArea = Math.round(Math.max(0,graphicSpan-0.16)*Math.max(0,room.height-0.28)*10)/10;
+    const finishMultiplier = room.wallFinish==='glass'?1.5:room.wallFinish==='frosted'?1.35:room.wallFinish==='dark'?1.1:1;
+    return [
+      {roomId:room.id,roomName:room.name,name:'Room Frame Profile',sku:'ROOM-PROFILE-01',qty:profileLength,unit:'lm',weight:0.95,unitPrice:ROOM_UNIT_PRICE.profile,notes:`${wallSides.join(', ')||'shared shell'} walls`},
+      {roomId:room.id,roomName:room.name,name:`${room.wallFinish} Room Wall Panel`,sku:`ROOM-WALL-${room.wallFinish.toUpperCase()}`,qty:panelQty,unit:'ea',weight:3.8,unitPrice:Math.round(ROOM_UNIT_PRICE.panel*finishMultiplier),notes:`${room.height.toFixed(1)} m high`},
+      ...(doorIsBuilt?[{roomId:room.id,roomName:room.name,name:'Room Door Kit',sku:'ROOM-DOOR-01',qty:1,unit:'kit',weight:18,unitPrice:ROOM_UNIT_PRICE.door,notes:`${room.doorSide} / ${room.doorWidth.toFixed(2)} m / ${room.doorSwing}`}]:[]),
+      {roomId:room.id,roomName:room.name,name:'Room Floor Finish',sku:'ROOM-FLOOR-01',qty:floorArea,unit:'m2',weight:1.5,unitPrice:ROOM_UNIT_PRICE.floor,notes:room.floorColor},
+      ...(room.hasCeiling?[{roomId:room.id,roomName:room.name,name:'Room Ceiling Panel',sku:'ROOM-CEILING-01',qty:floorArea,unit:'m2',weight:4.5,unitPrice:ROOM_UNIT_PRICE.ceiling,notes:`${room.width} x ${room.depth} m`}]:[]),
+      ...(room.designImageUrl?[{roomId:room.id,roomName:room.name,name:'Printed Room Wall Graphic',sku:'ROOM-GRAPHIC-01',qty:graphicArea,unit:'m2',weight:0.2,unitPrice:ROOM_UNIT_PRICE.graphic,notes:`${room.designWall} wall / ${room.designFit}`}]:[]),
+    ].filter(item=>item.qty>0);
+  });
   const structWeight = structItems.reduce((a,s)=>a+s.qty*s.weight,0);
   const structSubtotal = structItems.reduce((a,s)=>a+s.qty*s.unitPrice,0);
+  const roomWeight = roomItems.reduce((a,s)=>a+s.qty*s.weight,0);
+  const roomSubtotal = roomItems.reduce((a,s)=>a+s.qty*s.unitPrice,0);
   const catalogItemFor = (catalogId:string) => Object.values(CATALOG).reduce<CatItem | undefined>((found, items) => found || items.find(item => item.id === catalogId), undefined);
   const placedSubtotal = placedItems.reduce((sum,item)=>sum+(catalogItemFor(item.catalogId)?.price || 0)*item.qty,0);
   const unpricedItems = placedItems.filter(item => !catalogItemFor(item.catalogId)?.price).length;
   const fasciaSubtotal = booth.fasciaEnabled ? fasciaMeta.price : 0;
-  const quoteSubtotal = structSubtotal + placedSubtotal + fasciaSubtotal;
+  const quoteSubtotal = structSubtotal + roomSubtotal + placedSubtotal + fasciaSubtotal;
   const quoteAllowance = quoteSubtotal * 0.1;
   const quoteTotal = quoteSubtotal + quoteAllowance;
+  quoteTotalCentsRef.current = Math.round(quoteTotal * 100);
   const csvCell = (value:string|number) => `"${String(value).replace(/"/g,'""')}"`;
   const exportBomCsv = () => {
     const rows = [
@@ -1369,6 +1726,18 @@ export default function PMWorkspace() {
         item.unitPrice,
         item.qty * item.unitPrice,
         '',
+      ]),
+      ...roomItems.map(item => [
+        'Room Material',
+        `${item.roomName} - ${item.name}`,
+        item.sku,
+        item.qty,
+        item.unit,
+        item.weight,
+        (item.qty * item.weight).toFixed(2),
+        item.unitPrice,
+        Math.round(item.qty * item.unitPrice),
+        item.notes,
       ]),
       ...placedItems.map(item => {
         const catalogItem = catalogItemFor(item.catalogId);
@@ -1389,7 +1758,7 @@ export default function PMWorkspace() {
       ['Summary','Fascia Option',booth.fasciaEnabled ? fasciaMeta.label : 'Disabled',1,'lot','','',fasciaSubtotal,fasciaSubtotal,booth.fasciaEnabled ? booth.fasciaOption : 'off'],
       ['Summary','Quote Allowance','CONTINGENCY',1,'lot','','',quoteAllowance,quoteAllowance,'10 percent allowance'],
       ['Summary','Quote Total','TOTAL',1,'lot','','',quoteTotal,quoteTotal,`${booth.width}x${booth.depth}x${booth.height}m / ${boothType}`],
-      ['Summary','Total Weight','WEIGHT',1,'lot','',(structWeight + totalWeight).toFixed(2),'','','kg'],
+      ['Summary','Total Weight','WEIGHT',1,'lot','',(structWeight + roomWeight + totalWeight).toFixed(2),'','','kg'],
     ];
     const csv = rows.map(row => row.map(csvCell).join(',')).join('\r\n');
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
@@ -1440,12 +1809,13 @@ export default function PMWorkspace() {
       `- Carpet: ${CARPETS[carpetIdx].label}`,
       '',
       'Rooms',
-      ...(rooms.length ? rooms.map(room => `- ${room.name}: ${room.width} x ${room.depth} x ${room.height} m, door ${room.hasDoor ? room.doorPosition : 'none'}, ceiling ${room.hasCeiling ? 'yes' : 'no'}`) : ['- None']),
+      ...(rooms.length ? rooms.map(room => `- ${room.name}: ${room.width} x ${room.depth} x ${room.height} m, door ${room.hasDoor ? `${room.doorSide} ${room.doorPosition} (${room.doorWidth.toFixed(2)} m)` : 'none'}, ceiling ${room.hasCeiling ? 'yes' : 'no'}`) : ['- None']),
       '',
       'BOM',
       `- Structural parts: ${structItems.reduce((a,s)=>a+s.qty,0)}`,
+      `- Room material lines: ${roomItems.length}`,
       `- Placed items: ${totalParts}`,
-      `- Total weight: ${(structWeight + totalWeight).toFixed(0)} kg`,
+      `- Total weight: ${(structWeight + roomWeight + totalWeight).toFixed(0)} kg`,
       `- Quote estimate: ${formatUsd(quoteTotal)}`,
       '',
       'Open Feedback',
@@ -1631,6 +2001,7 @@ export default function PMWorkspace() {
           <button onClick={()=>setShowGrid(value=>!value)} title="Toggle grid" style={{background:showGrid?`${C.blue}10`:'none',border:`1px solid ${showGrid?C.blue:C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:showGrid?C.blue:C.ink}}>
             <Map size={12}/> Grid
           </button>
+          <CurrencySwitcher variant="toolbar" />
           <button onClick={()=>setPreviewMode(value=>!value)} title="Preview workspace" style={{background:previewMode?`${C.orange}12`:'none',border:`1px solid ${previewMode?C.orange:C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:previewMode?C.orange:C.ink}}>
             <Maximize2 size={12}/> Preview
           </button>
@@ -1694,6 +2065,8 @@ export default function PMWorkspace() {
                       )}
                       {items.map(item=>{
                         const isActive = activeId===item.id;
+                        const isDragging = draggedCatalogItem?.id===item.id;
+                        const canDragToFloor = cat === 'Furniture';
                         const placedCount = placedItems.filter(p=>p.catalogId===item.id).reduce((sum,p)=>sum+p.qty,0);
                         const placed   = placedCount > 0;
                         const hasCount = item.inStand>0;
@@ -1703,8 +2076,18 @@ export default function PMWorkspace() {
                         const isLow = remaining != null && remaining > 0 && remaining <= (item.lowStockAt ?? 2);
                         const availability = remaining == null ? 'Available' : isOut ? 'Out of stock' : isLow ? `${remaining} left` : `${remaining} available`;
                         return (
-                          <div key={item.id} onClick={()=>!isOut&&addItem(item)}
-                            style={{position:'relative',opacity:isOut?0.58:1,background:isActive?'#f0ecff':placed?`${C.blue}08`:C.bg,border:`1px ${isActive?'solid':hasCount?'solid':'dashed'} ${isActive?C.ink:placed?C.blue:C.hair}`,borderRadius:5,padding:7,cursor:isOut?'not-allowed':'pointer',display:'grid',gridTemplateColumns:'72px 1fr',gap:8,textAlign:'left',transition:'all 0.1s',alignItems:'center'}}>
+                          <div key={item.id}
+                            data-catalog-item-id={item.id}
+                            data-catalog-draggable={canDragToFloor&&!isOut?'true':'false'}
+                            draggable={canDragToFloor&&!isOut}
+                            onDragStart={(event)=>beginCatalogDrag(event,item)}
+                            onDragEnd={endCatalogDrag}
+                            onClick={()=>{
+                              if(isOut||catalogDragWasActiveRef.current) return;
+                              addItem(item);
+                            }}
+                            title={canDragToFloor&&!isOut?'Drag onto the booth floor or click to add':undefined}
+                            style={{position:'relative',opacity:isOut?0.58:1,background:isDragging?`${C.green}12`:isActive?'#f0ecff':placed?`${C.blue}08`:C.bg,border:`1px ${isActive||isDragging?'solid':hasCount?'solid':'dashed'} ${isDragging?C.green:isActive?C.ink:placed?C.blue:C.hair}`,borderRadius:5,padding:7,cursor:isOut?'not-allowed':canDragToFloor?'grab':'pointer',display:'grid',gridTemplateColumns:'72px 1fr',gap:8,textAlign:'left',transition:'all 0.1s',alignItems:'center'}}>
                             {placed&&(
                               <div style={{position:'absolute',top:3,right:3,background:C.blue,borderRadius:2,padding:'1px 4px'}}>
                                 <span style={{fontFamily:MONO,fontSize:8,color:'#fff',fontWeight:700}}>x{placedCount}</span>
@@ -1736,9 +2119,6 @@ export default function PMWorkspace() {
                           </div>
                         );
                       })}
-                      <button style={{background:'none',border:`1px dashed ${C.hair}`,borderRadius:5,padding:'10px 8px',display:'flex',alignItems:'center',justifyContent:'center',gap:6,cursor:'pointer',color:C.muted}}>
-                        <Plus size={13}/><span style={{fontFamily:MONO,fontSize:9}}>Custom asset</span>
-                      </button>
                     </div>
                   )}
                 </div>
@@ -1758,7 +2138,14 @@ export default function PMWorkspace() {
                   <span style={{fontFamily:MONO,fontSize:9,flex:1,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
                   {issues.length>0&&<span title={issues.map(issue=>issue.message).join(', ')} style={{fontFamily:MONO,fontSize:8,color:C.orange,border:`1px solid ${C.orange}40`,borderRadius:3,padding:'1px 4px',background:`${C.orange}10`}}>CHECK</span>}
                   <span style={{fontFamily:MONO,fontSize:9,color:C.muted}}>×{p.qty}</span>
-                  <button onClick={()=>removeItem(p.id)} style={{background:'none',border:'none',cursor:'pointer',padding:2,color:C.muted,display:'flex'}}>
+                  <button
+                    type="button"
+                    title={`Remove ${p.name}`}
+                    aria-label={`Remove ${p.name}`}
+                    data-workspace-remove-item={p.id}
+                    onClick={()=>removeItem(p.id)}
+                    style={{background:'none',border:'none',cursor:'pointer',padding:2,color:C.muted,display:'flex'}}
+                  >
                     <Trash2 size={10}/>
                   </button>
                 </div>
@@ -1792,8 +2179,23 @@ export default function PMWorkspace() {
               fasciaOption: booth.fasciaOption,
               lightingPreset,
               invalidItemIds,
+              catalogDragItem: draggedCatalogItem ? {
+                catalogId: draggedCatalogItem.id,
+                name: draggedCatalogItem.name,
+                ...catalogItemProps(draggedCatalogItem),
+                rotationY: 0,
+              } : null,
               onItemMove: moveItemLive,
-              onItemSelect: (id:string|null, partId?:string|null, detail?:{xPct?:number|null;yPct?:number|null;label?:string|null;partType?:string|null})=>{
+              onItemSelect: (id:string|null, partId?:string|null, detail?:{xPct?:number|null;yPct?:number|null;label?:string|null;partType?:string|null;roomId?:string|null})=>{
+                const roomId = detail?.roomId ? String(detail.roomId) : '';
+                if (roomId && rooms.some(room => room.id === roomId)) {
+                  setActiveRoomId(roomId);
+                  setSelectionAnchor(anchorFromSelection(detail, 'Room', 'room'));
+                  setActivePlacedId('');
+                  setActiveShellPartId('');
+                  setActiveTab('props');
+                  return;
+                }
                 const shellId = canonicalShellPartId(partId);
                 const panelId = shellId.match(/panel-(front|back|left|right)-\d+/)?.[0];
                 if (panelId) {
@@ -1813,6 +2215,7 @@ export default function PMWorkspace() {
                   return;
                 }
                 setActiveShellPartId('');
+                setActiveRoomId('');
                 setSelectionAnchor(null);
                 if (id) {
                   setActivePlacedId(id);
@@ -1824,7 +2227,12 @@ export default function PMWorkspace() {
               onRoomMove: moveRoomLive,
               onFrontSupportMove: moveFrontSupportsLive,
               onItemDelete: (id: string) => removeItem(id),
-              onItemRotate: (id: string, patch: { rotationY: number }) => updateItem(id, { rotationY: patch.rotationY }),
+              onItemRotate: (id: string, patch: { rotationY: number }) => updateItemTransform(id, { rotation: patch.rotationY, rotationY: patch.rotationY }),
+              onCatalogItemDrop: placeCatalogItemAt,
+              onCatalogItemDropRejected: (_catalogId: string, reason: string) => {
+                setDraggedCatalogItem(null);
+                setToast(`Placement blocked: ${reason}`);
+              },
             }}/>
           </div>
 
@@ -1862,16 +2270,112 @@ export default function PMWorkspace() {
                   <X size={12}/>
                 </button>
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(5, 1fr)',gap:5}}>
-                <button title="Rotate left" onClick={()=>rotateItem(activePlacedItem.id,-15)} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:10,fontWeight:800}}>Y-</button>
-                <button title="Rotate right" onClick={()=>rotateItem(activePlacedItem.id,15)} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:10,fontWeight:800}}>Y+</button>
-                <button title="Tilt X" onClick={()=>updateItem(activePlacedItem.id,{rotationX:((Number(activePlacedItem.rotationX)||0)+15)})} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:10,fontWeight:800}}>X+</button>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(6, 1fr)',gap:5}}>
+                <button disabled={activePlacedItem.locked} title="Rotate left" onClick={()=>rotateItem(activePlacedItem.id,-15)} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:activePlacedItem.locked?'not-allowed':'pointer',opacity:activePlacedItem.locked?0.45:1,fontFamily:MONO,fontSize:10,fontWeight:800}}>Y-</button>
+                <button disabled={activePlacedItem.locked} title="Rotate right" onClick={()=>rotateItem(activePlacedItem.id,15)} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:activePlacedItem.locked?'not-allowed':'pointer',opacity:activePlacedItem.locked?0.45:1,fontFamily:MONO,fontSize:10,fontWeight:800}}>Y+</button>
+                <button disabled={activePlacedItem.locked} title="Tilt X" onClick={()=>updateItemTransform(activePlacedItem.id,{rotationX:((Number(activePlacedItem.rotationX)||0)+15)})} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:activePlacedItem.locked?'not-allowed':'pointer',opacity:activePlacedItem.locked?0.45:1,fontFamily:MONO,fontSize:10,fontWeight:800}}>X+</button>
+                <button title={activePlacedItem.locked?'Unlock item':'Lock item'} onClick={()=>updateItem(activePlacedItem.id,{locked:!activePlacedItem.locked})} style={{height:30,border:`1px solid ${activePlacedItem.locked?C.blue:C.hair}`,borderRadius:4,background:activePlacedItem.locked?`${C.blue}12`:C.bg,color:activePlacedItem.locked?C.blue:C.muted,cursor:'pointer',display:'grid',placeItems:'center'}}>{activePlacedItem.locked?<Lock size={12}/>:<Unlock size={12}/>}</button>
                 <button title="Duplicate" onClick={()=>duplicateItem(activePlacedItem.id)} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center'}}><Copy size={12}/></button>
                 <button title="Delete" onClick={()=>{removeItem(activePlacedItem.id);setSelectionAnchor(null);}} style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:`${C.orange}12`,color:C.orange,cursor:'pointer',display:'grid',placeItems:'center'}}><Trash2 size={12}/></button>
               </div>
+              {(()=>{
+                const bounds = positionBoundsForItem(activePlacedItem, booth);
+                return <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginTop:7}}>
+                  <DimInput label="X" value={activePlacedItem.x} min={bounds.minX} max={bounds.maxX} step={0.05} onChange={value=>updateItemTransform(activePlacedItem.id,{x:value})}/>
+                  <DimInput label="Z" value={activePlacedItem.z} min={bounds.minZ} max={bounds.maxZ} step={0.05} onChange={value=>updateItemTransform(activePlacedItem.id,{z:value})}/>
+                  <DimInput label="Yaw" value={Number(activePlacedItem.rotationY ?? activePlacedItem.rotation)} min={0} max={345} step={15} onChange={value=>updateItemTransform(activePlacedItem.id,{rotation:value,rotationY:value})}/>
+                </div>;
+              })()}
               <div style={{display:'flex',justifyContent:'space-between',marginTop:6,fontFamily:MONO,fontSize:8.5,color:C.muted}}>
                 <span>{activePlacedItem.sku}</span>
                 <span>{activePlacedItem.w.toFixed(2)} x {activePlacedItem.d.toFixed(2)} x {activePlacedItem.h.toFixed(2)} m</span>
+              </div>
+            </div>
+          )}
+
+          {selectionAnchor&&activeRoom&&(
+            <div data-workspace-room-inspector={activeRoom.id} style={{
+              position:'absolute',
+              left:`clamp(16px, ${selectionAnchor.x}%, calc(100% - 292px))`,
+              top:`clamp(16px, calc(${selectionAnchor.y}% - 174px), calc(100% - 250px))`,
+              width:276,
+              zIndex:22,
+              background:C.panel,
+              border:`1px solid ${C.hair}`,
+              borderRadius:6,
+              boxShadow:'0 14px 42px rgba(0,0,0,0.18)',
+              padding:10,
+            }}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                <div style={{width:9,height:9,borderRadius:2,background:activeRoom.wallFinish==='dark'?'#343942':activeRoom.wallFinish==='glass'?'#c7dfeb':'#e9edf2',border:`1px solid ${C.hair}`,flexShrink:0}}/>
+                <div style={{minWidth:0,flex:1}}>
+                  <div style={{fontFamily:MONO,fontSize:8.5,color:C.muted,textTransform:'uppercase',letterSpacing:'0.08em'}}>Room selection</div>
+                  <div style={{fontSize:12,fontWeight:800,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{activeRoom.name}</div>
+                </div>
+                <button type="button" onClick={()=>{setSelectionAnchor(null);setActiveRoomId('');}} title="Close room inspector" aria-label="Close room inspector" style={{width:24,height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center'}}>
+                  <X size={12}/>
+                </button>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+                <DimInput label="W" value={activeRoom.width} min={1} max={booth.width} step={1} onChange={value=>updateRoom(activeRoom.id,{width:value})}/>
+                <DimInput label="D" value={activeRoom.depth} min={1} max={booth.depth} step={1} onChange={value=>updateRoom(activeRoom.id,{depth:value})}/>
+                <DimInput label="H" value={activeRoom.height} min={1.8} max={booth.height} step={0.1} onChange={value=>updateRoom(activeRoom.id,{height:value})}/>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginTop:7}}>
+                <DimInput label="X" value={activeRoom.x} min={activeRoom.width/2} max={Math.max(activeRoom.width/2,booth.width-activeRoom.width/2)} step={0.5} onChange={value=>updateRoom(activeRoom.id,{x:value})}/>
+                <DimInput label="Z" value={activeRoom.z} min={activeRoom.depth/2} max={Math.max(activeRoom.depth/2,booth.depth-activeRoom.depth/2)} step={0.5} onChange={value=>updateRoom(activeRoom.id,{z:value})}/>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 36px',gap:6,marginTop:7}}>
+                <select aria-label="Room wall finish" value={activeRoom.wallFinish} onChange={event=>updateRoom(activeRoom.id,{wallFinish:event.target.value as RoomWallFinish})}
+                  style={{height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,fontFamily:UI,fontSize:10.5,fontWeight:700,paddingLeft:7,outline:'none'}}>
+                  <option value="white">White panel</option>
+                  <option value="frosted">Frosted glass</option>
+                  <option value="glass">Clear glass</option>
+                  <option value="dark">Dark wall</option>
+                </select>
+                <input aria-label="Room floor color" title="Room floor color" type="color" value={activeRoom.floorColor} onChange={event=>updateRoom(activeRoom.id,{floorColor:event.target.value})}
+                  style={{width:36,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,padding:2,cursor:'pointer'}}/>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 30px',gap:6,marginTop:7}}>
+                <label style={{height:29,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,fontFamily:MONO,fontSize:8.5,fontWeight:800,padding:'0 7px',overflow:'hidden'}}>
+                  <ImagePlus size={11}/>
+                  <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{activeRoom.designImageName || 'Add wall image'}</span>
+                  <input aria-label="Upload selected room wall image" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" onChange={event=>{uploadRoomDesign(activeRoom.id,event.target.files?.[0]);event.currentTarget.value='';}} style={{display:'none'}}/>
+                </label>
+                <button type="button" disabled={!activeRoom.designImageUrl} onClick={()=>updateRoom(activeRoom.id,{designImageUrl:undefined,designImageName:undefined,designOpacity:undefined})} title="Remove room image" aria-label="Remove room image" style={{height:29,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.orange,cursor:activeRoom.designImageUrl?'pointer':'not-allowed',opacity:activeRoom.designImageUrl?1:0.35,display:'grid',placeItems:'center'}}><Trash2 size={11}/></button>
+              </div>
+              {activeRoom.designImageUrl&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginTop:7}}>
+                <select aria-label="Selected room graphic wall" value={activeRoom.designWall} onChange={event=>updateRoom(activeRoom.id,{designWall:event.target.value as DoorSide})}
+                  style={{height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,fontFamily:UI,fontSize:10,fontWeight:700,paddingLeft:6,outline:'none'}}>
+                  {ROOM_SIDE_OPTIONS.map(option=><option key={option.value} value={option.value} disabled={activeRoom.hasDoor&&activeRoom.doorSide===option.value}>{option.label}{activeRoom.hasDoor&&activeRoom.doorSide===option.value?' (door)':''}</option>)}
+                </select>
+                <select aria-label="Selected room graphic fit" value={activeRoom.designFit} onChange={event=>updateRoom(activeRoom.id,{designFit:event.target.value as RoomGraphicFit})}
+                  style={{height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,fontFamily:UI,fontSize:10,fontWeight:700,paddingLeft:6,outline:'none'}}>
+                  <option value="cover">Fill wall</option>
+                  <option value="contain">Show full image</option>
+                  <option value="stretch">Stretch</option>
+                </select>
+              </div>}
+              {activeRoom.hasDoor&&<div style={{display:'grid',gridTemplateColumns:'1fr 82px',gap:6,marginTop:7}}>
+                <select aria-label="Room door wall" value={activeRoom.doorSide} onChange={event=>updateRoom(activeRoom.id,{doorSide:event.target.value as DoorSide})}
+                  style={{height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,fontFamily:UI,fontSize:10.5,fontWeight:700,paddingLeft:7,outline:'none'}}>
+                  <option value="front">Front door</option>
+                  <option value="back">Back door</option>
+                  <option value="left">Left door</option>
+                  <option value="right">Right door</option>
+                </select>
+                <div style={{position:'relative'}}>
+                  <input aria-label="Room door width" name={`room-door-width-${activeRoom.id}`} type="number" min={0.55} max={roomDoorMaxWidth(activeRoom)} step={0.05} value={activeRoom.doorWidth}
+                    onChange={event=>{const value=Number(event.target.value);if(Number.isFinite(value))updateRoom(activeRoom.id,{doorWidth:clampNumber(value,0.55,roomDoorMaxWidth(activeRoom))});}}
+                    style={{width:'100%',height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,fontFamily:MONO,fontSize:10.5,fontWeight:700,padding:'0 20px 0 7px',boxSizing:'border-box',outline:'none'}}/>
+                  <span style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',fontFamily:MONO,fontSize:8,color:C.muted}}>m</span>
+                </div>
+              </div>}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 34px 34px',gap:5,marginTop:7}}>
+                <button type="button" onClick={()=>updateRoom(activeRoom.id,{hasDoor:!activeRoom.hasDoor})} style={{height:29,border:`1px solid ${activeRoom.hasDoor?C.blue:C.hair}`,borderRadius:4,background:activeRoom.hasDoor?`${C.blue}12`:C.bg,color:activeRoom.hasDoor?C.blue:C.muted,cursor:'pointer',fontFamily:MONO,fontSize:8.5,fontWeight:800}}>Door</button>
+                <button type="button" onClick={()=>updateRoom(activeRoom.id,{hasCeiling:!activeRoom.hasCeiling})} style={{height:29,border:`1px solid ${activeRoom.hasCeiling?C.blue:C.hair}`,borderRadius:4,background:activeRoom.hasCeiling?`${C.blue}12`:C.bg,color:activeRoom.hasCeiling?C.blue:C.muted,cursor:'pointer',fontFamily:MONO,fontSize:8.5,fontWeight:800}}>Ceiling</button>
+                <button type="button" onClick={()=>updateRoom(activeRoom.id,{locked:!activeRoom.locked})} title={activeRoom.locked?'Unlock room':'Lock room'} aria-label={activeRoom.locked?'Unlock room':'Lock room'} style={{height:29,border:`1px solid ${activeRoom.locked?C.blue:C.hair}`,borderRadius:4,background:activeRoom.locked?`${C.blue}12`:C.bg,color:activeRoom.locked?C.blue:C.muted,cursor:'pointer',display:'grid',placeItems:'center'}}>{activeRoom.locked?<Lock size={12}/>:<Unlock size={12}/>}</button>
+                <button type="button" onClick={()=>removeRoom(activeRoom.id)} title="Delete room" aria-label="Delete room" style={{height:29,border:`1px solid ${C.hair}`,borderRadius:4,background:`${C.orange}12`,color:C.orange,cursor:'pointer',display:'grid',placeItems:'center'}}><Trash2 size={12}/></button>
               </div>
             </div>
           )}
@@ -2069,13 +2573,19 @@ export default function PMWorkspace() {
               </PropBlock>
               <Hairline/>
               <PropBlock label="Rooms" right={`${rooms.length} placed`}>
-                <button onClick={addRoom}
-                  style={{width:'100%',height:32,border:`1px solid ${C.blue}`,borderRadius:4,background:`${C.blue}12`,color:C.blue,cursor:'pointer',fontFamily:UI,fontSize:12,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginBottom:8}}>
-                  <Plus size={13}/> Create Room
-                </button>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 34px',gap:6,marginBottom:8}}>
+                  <select aria-label="Room template" value={roomTemplate} onChange={event=>setRoomTemplate(event.target.value as RoomTemplateKey)}
+                    style={{height:32,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,fontFamily:UI,fontSize:11,fontWeight:700,paddingLeft:8,outline:'none'}}>
+                    {ROOM_TEMPLATES.map(template=><option key={template.value} value={template.value}>{template.label}</option>)}
+                  </select>
+                  <button type="button" onClick={()=>addRoom(roomTemplate)} title="Create room from template" aria-label="Create room from template"
+                    style={{height:32,border:`1px solid ${C.blue}`,borderRadius:4,background:`${C.blue}12`,color:C.blue,cursor:'pointer',display:'grid',placeItems:'center'}}>
+                    <Plus size={13}/>
+                  </button>
+                </div>
                 <div style={{display:'flex',flexDirection:'column',gap:8}}>
                   {rooms.map((room,index)=>(
-                    <div key={room.id} style={{border:`1px solid ${C.hair}`,borderRadius:5,background:C.bg,padding:9}}>
+                    <div key={room.id} data-workspace-room-editor={room.id} onClick={()=>setActiveRoomId(room.id)} style={{border:`1px solid ${activeRoomId===room.id?C.blue:C.hair}`,borderRadius:5,background:activeRoomId===room.id?`${C.blue}08`:C.bg,padding:9}}>
                       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
                         <input value={room.name} onChange={e=>updateRoom(room.id,{name:e.target.value})}
                           style={{flex:1,minWidth:0,height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,fontFamily:UI,fontSize:12,fontWeight:700,color:C.ink,paddingLeft:7,outline:'none'}}/>
@@ -2117,6 +2627,24 @@ export default function PMWorkspace() {
                           <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" onChange={e=>{uploadRoomDesign(room.id,e.target.files?.[0]); e.currentTarget.value='';}} style={{display:'none'}}/>
                         </label>
                         {room.designImageUrl&&<>
+                          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginTop:7}}>
+                            <label style={{display:'flex',flexDirection:'column',gap:4}}>
+                              <span style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Graphic wall</span>
+                              <select aria-label={`${room.name} graphic wall`} value={room.designWall} onChange={e=>updateRoom(room.id,{designWall:e.target.value as DoorSide})}
+                                style={{height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.ink,fontFamily:UI,fontSize:10.5,fontWeight:700,paddingLeft:7,outline:'none'}}>
+                                {ROOM_SIDE_OPTIONS.map(option=><option key={option.value} value={option.value} disabled={room.hasDoor&&room.doorSide===option.value}>{option.label}{room.hasDoor&&room.doorSide===option.value?' (door)':''}</option>)}
+                              </select>
+                            </label>
+                            <label style={{display:'flex',flexDirection:'column',gap:4}}>
+                              <span style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Image fit</span>
+                              <select aria-label={`${room.name} graphic fit`} value={room.designFit} onChange={e=>updateRoom(room.id,{designFit:e.target.value as RoomGraphicFit})}
+                                style={{height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.ink,fontFamily:UI,fontSize:10.5,fontWeight:700,paddingLeft:7,outline:'none'}}>
+                                <option value="cover">Fill wall</option>
+                                <option value="contain">Show full image</option>
+                                <option value="stretch">Stretch to wall</option>
+                              </select>
+                            </label>
+                          </div>
                           <div style={{height:54,marginTop:7,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
                             <img src={room.designImageUrl} alt="" style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
                           </div>
@@ -2153,6 +2681,23 @@ export default function PMWorkspace() {
                               </button>
                             );
                           })}
+                        </div>
+                      </div>
+                      <div style={{marginTop:7}}>
+                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Door wall & width</label>
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr) 76px',gap:4}}>
+                          {(['front','back','left','right'] as DoorSide[]).map(side=>(
+                            <button key={side} onClick={()=>updateRoom(room.id,{doorSide:side,hasDoor:true})}
+                              style={{height:26,border:`1px solid ${room.doorSide===side&&room.hasDoor?C.orange:C.hair}`,borderRadius:4,background:room.doorSide===side&&room.hasDoor?`${C.orange}12`:C.panel,color:room.doorSide===side&&room.hasDoor?C.orange:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:7.5,textTransform:'uppercase'}}>
+                              {side.slice(0,1)}
+                            </button>
+                          ))}
+                          <div style={{position:'relative'}}>
+                            <input aria-label={`${room.name} door width`} name={`room-door-width-editor-${room.id}`} type="number" min={0.55} max={roomDoorMaxWidth(room)} step={0.05} value={room.doorWidth}
+                              onChange={event=>{const value=Number(event.target.value);if(Number.isFinite(value))updateRoom(room.id,{doorWidth:clampNumber(value,0.55,roomDoorMaxWidth(room)),hasDoor:true});}}
+                              style={{width:'100%',height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,fontFamily:MONO,fontSize:9,padding:'0 18px 0 5px',boxSizing:'border-box',outline:'none'}}/>
+                            <span style={{position:'absolute',right:4,top:'50%',transform:'translateY(-50%)',fontFamily:MONO,fontSize:7.5,color:C.muted}}>m</span>
+                          </div>
                         </div>
                       </div>
                       <div style={{marginTop:7}}>
@@ -2408,7 +2953,7 @@ export default function PMWorkspace() {
               <div style={{padding:'10px 0',borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
                 <div>
                   <div style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:'0.08em'}}>BOM Export</div>
-                  <div style={{fontFamily:MONO,fontSize:8.5,color:C.muted,marginTop:2}}>{structItems.reduce((a,s)=>a+s.qty,0) + totalParts} parts / {formatUsd(quoteTotal)}</div>
+                  <div style={{fontFamily:MONO,fontSize:8.5,color:C.muted,marginTop:2}}>{structItems.reduce((a,s)=>a+s.qty,0) + totalParts} parts / {roomItems.length} room lines / {formatUsd(quoteTotal)}</div>
                 </div>
                 <div style={{display:'flex',gap:6,flexShrink:0}}>
                   <button onClick={exportBomCsv}
@@ -2436,6 +2981,24 @@ export default function PMWorkspace() {
                   </div>
                 ))}
               </div>
+              {roomItems.length>0&&(
+                <div style={{padding:'12px 0',borderBottom:`1px solid ${C.hair}`}}>
+                  <MonoLabel right={`${roomWeight.toFixed(0)} kg`}>Room Materials</MonoLabel>
+                  {roomItems.map((item,index)=>(
+                    <button key={`${item.roomId}-${item.sku}-${index}`} type="button" onClick={()=>{setActiveRoomId(item.roomId);setActivePlacedId('');setActiveTab('props');}}
+                      style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:'5px 0',border:0,borderBottom:`1px solid ${C.hair}28`,background:'transparent',cursor:'pointer',textAlign:'left'}}>
+                      <div style={{minWidth:0}}>
+                        <div style={{fontSize:11,fontWeight:600,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.roomName} - {item.name}</div>
+                        <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{item.sku} / {item.notes}</div>
+                      </div>
+                      <div style={{textAlign:'right',flexShrink:0}}>
+                        <div style={{fontFamily:MONO,fontSize:10,fontWeight:700,color:C.ink}}>{item.qty} {item.unit}</div>
+                        <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{formatUsd(item.qty*item.unitPrice)}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
               {placedItems.length>0&&(
                 <div style={{padding:'12px 0',borderBottom:`1px solid ${C.hair}`}}>
                   <MonoLabel right={`${totalWeight.toFixed(0)} kg`}>§ Placed Items</MonoLabel>
@@ -2450,6 +3013,8 @@ export default function PMWorkspace() {
                           <div style={{fontFamily:MONO,fontSize:8,color:issues.length?C.orange:C.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{issues.length ? issues.map(issue=>issue.message).join(' / ') : `${p.sku} / ${p.kind} / ${catalogItemFor(p.catalogId)?.price ? formatUsd(catalogItemFor(p.catalogId)?.price || 0) : 'Unpriced'}${p.modelUrl ? ` / ${p.modelUrl}` : ''}`}</div>
                         </div>
                         <div style={{fontFamily:MONO,fontSize:9,fontWeight:700,color:C.ink,whiteSpace:'nowrap'}}>{catalogItemFor(p.catalogId)?.price ? formatUsd((catalogItemFor(p.catalogId)?.price || 0)*p.qty) : 'TBD'}</div>
+                        <button onClick={(event)=>{event.stopPropagation();updateItem(p.id,{locked:!p.locked});}} title={p.locked?'Unlock item':'Lock item'} style={{width:24,height:24,border:`1px solid ${p.locked?C.blue:C.hair}`,borderRadius:4,background:p.locked?`${C.blue}12`:C.bg,color:p.locked?C.blue:C.muted,cursor:'pointer',display:'grid',placeItems:'center',flexShrink:0}}>
+                          {p.locked?<Lock size={10}/>:<Unlock size={10}/>}</button>
                         <button onClick={(event)=>{event.stopPropagation();duplicateItem(p.id);}} title="Duplicate item" style={{width:24,height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center',flexShrink:0}}>
                           <Copy size={10}/>
                         </button>
@@ -2458,8 +3023,8 @@ export default function PMWorkspace() {
                         </button>
                       </div>
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:5,marginTop:6}}>
-                        <DimInput label="X" value={p.x} min={itemPositionBounds(p.w,p.d,booth).minX} max={itemPositionBounds(p.w,p.d,booth).maxX} step={0.25} onChange={v=>updateItem(p.id,{x:v})}/>
-                        <DimInput label="Z" value={p.z} min={itemPositionBounds(p.w,p.d,booth).minZ} max={itemPositionBounds(p.w,p.d,booth).maxZ} step={0.25} onChange={v=>updateItem(p.id,{z:v})}/>
+                        <DimInput label="X" value={p.x} min={positionBoundsForItem(p,booth).minX} max={positionBoundsForItem(p,booth).maxX} step={0.05} onChange={v=>updateItemTransform(p.id,{x:v})}/>
+                        <DimInput label="Z" value={p.z} min={positionBoundsForItem(p,booth).minZ} max={positionBoundsForItem(p,booth).maxZ} step={0.05} onChange={v=>updateItemTransform(p.id,{z:v})}/>
                         <div>
                           <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:3}}>Yaw</label>
                           <button onClick={(event)=>{event.stopPropagation();rotateItem(p.id,90);}}
@@ -2469,9 +3034,9 @@ export default function PMWorkspace() {
                         </div>
                       </div>
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:5,marginTop:5}}>
-                        <DimInput label="Rot X" value={Number(p.rotationX) || 0} min={-180} max={180} step={15} onChange={v=>updateItem(p.id,{rotationX:v})}/>
-                        <DimInput label="Rot Y" value={Number(p.rotationY ?? p.rotation) || 0} min={0} max={360} step={15} onChange={v=>updateItem(p.id,{rotation:v,rotationY:v})}/>
-                        <DimInput label="Rot Z" value={Number(p.rotationZ) || 0} min={-180} max={180} step={15} onChange={v=>updateItem(p.id,{rotationZ:v})}/>
+                        <DimInput label="Rot X" value={Number(p.rotationX) || 0} min={-180} max={180} step={15} onChange={v=>updateItemTransform(p.id,{rotationX:v})}/>
+                        <DimInput label="Rot Y" value={Number(p.rotationY ?? p.rotation) || 0} min={0} max={345} step={15} onChange={v=>updateItemTransform(p.id,{rotation:v,rotationY:v})}/>
+                        <DimInput label="Rot Z" value={Number(p.rotationZ) || 0} min={-180} max={180} step={15} onChange={v=>updateItemTransform(p.id,{rotationZ:v})}/>
                       </div>
                     </div>
                   );})}
@@ -2481,13 +3046,15 @@ export default function PMWorkspace() {
                 <MonoLabel>§ Totals</MonoLabel>
                 {[
                   {label:'Structural Parts', value:`${structItems.reduce((a,s)=>a+s.qty,0)}`},
+                  {label:'Room Material Lines',value:`${roomItems.length}`},
                   {label:'Placed Items',      value:`${totalParts}`},
                   {label:'Structure Estimate',value:formatUsd(structSubtotal)},
+                  {label:'Room Estimate',     value:formatUsd(roomSubtotal)},
                   {label:'Placed Estimate',   value:unpricedItems?`${formatUsd(placedSubtotal)} + ${unpricedItems} TBD`:formatUsd(placedSubtotal)},
                   {label:'Fascia Option',     value:booth.fasciaEnabled?formatUsd(fasciaSubtotal):'Off'},
                   {label:'Quote Allowance',   value:formatUsd(quoteAllowance)},
                   {label:'Quote Total',       value:formatUsd(quoteTotal)},
-                  {label:'Total Weight',      value:`${(structWeight+totalWeight).toFixed(0)} kg`},
+                  {label:'Total Weight',      value:`${(structWeight+roomWeight+totalWeight).toFixed(0)} kg`},
                   {label:'Floor Area',        value:`${floorArea} m²`},
                   {label:'System',            value:booth.system==='maxima'?'Maxima (2 m)':'Octanorm (1 m)'},
                 ].map(row=>(
@@ -2497,7 +3064,7 @@ export default function PMWorkspace() {
                   </div>
                 ))}
               </div>
-              {placedItems.length===0&&(
+              {placedItems.length===0&&rooms.length===0&&(
                 <div style={{padding:'20px 0',textAlign:'center',color:C.muted,fontFamily:MONO,fontSize:9.5}}>
                   Click catalog items to add<br/>them to your Bill of Materials
                 </div>

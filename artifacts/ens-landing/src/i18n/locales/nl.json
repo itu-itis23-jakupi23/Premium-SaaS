@@ -29,7 +29,7 @@
       "titlePart2": "Real-Time 3D",
       "subtitle": "Bouw, pas aan en beheer Octanorm- en Maxima-stands direct in uw browser. Professionele tools voor serieuze tentoonstellingsontwerpers."
     },
-    "trustedBy": "Vertrouwd door",
+    "trustedBy": "Gebouwd voor echte standproductie",
     "stats": {
       "projectProgress": "Projectvoortgang",
       "boothDimensions": "Standafmetingen",
@@ -167,6 +167,22 @@
         "title": "Communications Hub",
         "desc": "Centralised messaging across clients, PMs, and sub-contractors."
       }
+    },
+    "capabilityItems": {
+      "octanorm": "Octanorm-systeem",
+      "maxima": "Maxima-systeem",
+      "live3d": "Live 3D-werkruimte",
+      "bom": "BOM- & offerte-export",
+      "approvals": "Klantgoedkeuringen",
+      "languages": "11 talen"
+    },
+    "agency": {
+      "kicker": "Voor beursbureaus",
+      "title": "Draai uw hele bureau op ENS",
+      "desc": "Lease het platform en geef uw team één systeem voor de hele standcyclus — van klantintake en 3D-ontwerp tot goedkeuringen, productietaken en facturatie.",
+      "bullet1": "Drie portalen: leiding, projectmanagers en klanten",
+      "bullet2": "Uw eigen meubelcatalogus en prijzen",
+      "bullet3": "Goedkeuringen, revisies en facturen automatisch gevolgd"
     }
   },
   "team": {
@@ -387,7 +403,7 @@
         "pendingApprovals": "Openstaande goedkeuringen",
         "activeWorkspaces": "Actieve werkruimtes",
         "saved": "Opgeslagen",
-        "db": "DB",
+        "db": "Live gegevens",
         "live": "Live",
         "assigned": "Toegewezen",
         "open": "Open",
@@ -715,7 +731,16 @@
         "rowTotals": "Totalen"
       },
       "notConfigured": "Not configured",
-      "revenueNotice": "Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data."
+      "revenueNotice": "Omzet- en tevredenheidsrapportage wordt actief zodra facturatie en klantbeoordelingen in gebruik zijn. Alle project- en levercijfers hieronder zijn live.",
+      "pipelineFlow": {
+        "title": "Pipeline-doorloop",
+        "desc": "Gemiddelde tijd van projecten per fase",
+        "avgDays": "gem. {{days}} d",
+        "noData": "—",
+        "slowestTitle": "Langst in huidige fase",
+        "empty": "Geen actieve projecten.",
+        "inStageDays": "{{days}} d"
+      }
     },
     "messages": {
       "title": "Berichten",
@@ -819,11 +844,11 @@
         "updated": "{{name}} bijgewerkt.",
         "updateError": "Klant kon niet worden bijgewerkt.",
         "noManagers": "Geen actieve projectmanagers beschikbaar.",
-        "assigned": "{{client}} toegewezen aan {{manager}}.",
+        "assigned": "{{client}} toegewezen aan {{manager}}. Beurs en standproject staan klaar onder Projecten.",
         "assignError": "Klanttoewijzing kon niet worden opgeslagen.",
         "archived": "{{name}} gearchiveerd.",
         "archiveError": "Klant kon niet worden verwijderd.",
-        "openingWorkspace": "{{name}} openen in Chief-monitor.",
+        "openingWorkspace": "Standwerkruimte voor {{name}} wordt geopend.",
         "defaultClient": "Klant",
         "unassigned": "Niet toegewezen"
       },
@@ -897,7 +922,11 @@
       },
       "kanban": {
         "loading": "Laden",
-        "empty": "Leeg"
+        "empty": "Leeg",
+        "emptyBoardTitle": "Nog geen projecten",
+        "emptyBoardBody": "Wijs een manager toe aan een klant en de beurs en het standproject worden automatisch aangemaakt. U kunt ook eerst een beurs toevoegen.",
+        "emptyBoardClientsCta": "Naar klanten",
+        "emptyBoardExhibitionCta": "Beurs toevoegen"
       },
       "list": {
         "loading": "Projecten laden...",
@@ -974,7 +1003,7 @@
       },
       "toast": {
         "updated": "{{name}} bijgewerkt",
-        "openMonitor": "Monitor openen voor {{name}}",
+        "openMonitor": "Standwerkruimte voor {{name}} wordt geopend",
         "moved": "{{name}} verplaatst naar {{stage}}",
         "created": "Project \"{{name}}\" created.",
         "exported": "Projects exported to Excel."
@@ -1476,13 +1505,13 @@
         "empty": "Geen urgente acties voor deze organisatie."
       },
       "actions": {
-        "pendingApprovals": "{{count}} openstaande goedkeuringen",
+        "pendingApprovals": "Openstaande goedkeuringen",
         "pendingApprovalsDesc": "Klantbeoordelingen wachten op een beslissing.",
         "openApprovals": "Goedkeuringen openen",
-        "delayedProjects": "{{count}} vertraagde projecten",
+        "delayedProjects": "Vertraagde projecten",
         "delayedProjectsDesc": "Projecten hebben PM-aandacht nodig.",
         "reviewRisk": "Risico beoordelen",
-        "activeWorkspaces": "{{count}} actieve werkruimten",
+        "activeWorkspaces": "Actieve werkruimten",
         "activeWorkspacesDesc": "Standontwerpen zijn beschikbaar voor bewerking.",
         "openWorkspace": "Werkruimte openen",
         "noDelays": "No projects are currently delayed",
@@ -1652,7 +1681,7 @@
         "operationalStatus": "Operationele status",
         "assignedPm": "Toegewezen PM: {{name}}",
         "lastActivity": "Laatste activiteit: {{time}}",
-        "dataSource": "Geladen uit PostgreSQL-records",
+        "dataSource": "Live klant- en projectgegevens",
         "contact": "Contact",
         "linkedProject": "Linked Project",
         "noLinkedProject": "No linked project",
@@ -2060,7 +2089,7 @@
       "defaultClientName": "Klant",
       "loadingProject": "Project laden...",
       "noActiveProject": "Geen actief project",
-      "projectSubtitle": "Projectgegevens worden geladen uit PostgreSQL",
+      "projectSubtitle": "Live overzicht van uw standproject",
       "loadingActiveProject": "Actief project laden...",
       "noProjectAssigned": "Er is nog geen actief project toegewezen.",
       "pmLabel": "Projectmanager",

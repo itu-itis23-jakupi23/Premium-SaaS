@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ENSLogo } from '@/components/ENSLogo';
-import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ExhibitionCursorField } from '@/components/ExhibitionCursorField';
 import { Button } from '@/components/ui/button';
 import { PORTAL_MODE } from '@/lib/portal';
 import { 
@@ -56,8 +57,6 @@ const STAGGER = {
 };
 
 export default function Home() {
-  const { scrollYProgress } = useScroll();
-  const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [billingAnnual, setBillingAnnual] = useState(false);
@@ -79,7 +78,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden font-sans">
+    <div className="ens-platform-landing ens-platform-client min-h-screen bg-background text-foreground overflow-x-hidden font-sans">
       {/* Navigation */}
       <header 
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -185,12 +184,12 @@ export default function Home() {
       </AnimatePresence>
 
       {/* Hero Section */}
-      <section className="relative pt-40 pb-0 md:pt-52 overflow-hidden">
+      <section className="ens-landing-hero ens-landing-hero-client relative pt-40 pb-0 md:pt-52 overflow-hidden">
+        <ExhibitionCursorField variant="client" />
         <div className="absolute inset-0 grid-pattern opacity-[0.04] dark:opacity-[0.12] -z-10" />
-        {/* Multi-layer ambient glows */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[600px] bg-primary/20 blur-[140px] rounded-full pointer-events-none -z-10" />
-        <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan-500/8 blur-[100px] rounded-full pointer-events-none -z-10" />
+        <div className="ens-landing-dimension absolute left-6 right-6 top-32 hidden md:flex" aria-hidden="true">
+          <span>ENS / EXHIBITOR PLATFORM</span><i /><span>01</span>
+        </div>
         
         <div className="container mx-auto px-6 relative">
           <div className="max-w-4xl mx-auto text-center">
@@ -199,16 +198,16 @@ export default function Home() {
               animate="visible"
               variants={STAGGER}
             >
-              <motion.div variants={FADE_UP} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
+              <motion.div variants={FADE_UP} className="ens-landing-hero-badge inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
                 <Sparkles className="w-4 h-4" />
                 <span>{t('home.hero.badge')}</span>
               </motion.div>
               
-              <motion.h1 variants={FADE_UP} className="text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-[1.1]">
+              <motion.h1 variants={FADE_UP} className="ens-landing-hero-title text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-[1.1]">
                 {t('home.hero.titlePart1')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500 glow-text">{t('home.hero.titlePart2')}</span>
               </motion.h1>
               
-              <motion.p variants={FADE_UP} className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+              <motion.p variants={FADE_UP} className="ens-landing-hero-copy text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
                 {t('home.hero.subtitle')}
               </motion.p>
               
@@ -230,9 +229,9 @@ export default function Home() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: t('home.stats.projectProgress'), value: "84%", icon: TrendingUp, color: "text-blue-500" },
-            { label: t('home.stats.boothDimensions'), value: "6m x 9m", icon: BoxSelect, color: "text-purple-500" },
+            { label: t('home.stats.boothDimensions'), value: "6m x 9m", icon: BoxSelect, color: "text-primary" },
             { label: t('home.stats.approvalStatus'), value: t('home.stats.pending'), icon: CheckCircle2, color: "text-yellow-500" },
-            { label: t('home.stats.furnitureCount'), value: "18 items", icon: Package, color: "text-cyan-500" }
+            { label: t('home.stats.furnitureCount'), value: "18 items", icon: Package, color: "text-emerald-600 dark:text-emerald-400" }
           ].map((stat, i) => (
             <motion.div
               key={i}
@@ -254,14 +253,21 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Trusted By Strip ──────────────────────────────────── */}
+      {/* ── Capabilities Strip ─────────────────────────────────── */}
       <div className="container mx-auto px-6 mb-8 relative z-20">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 py-6 border-y border-border/30">
           <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 flex-shrink-0">
             {t('home.trustedBy')}
           </span>
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
-            {['Global Exhibits Inc.', 'Exhibito Group', 'Milano Design Studio', 'ExpoVision GmbH', 'ShowCraft Asia', 'NordExpo'].map((name) => (
+            {[
+              t('home.capabilityItems.octanorm'),
+              t('home.capabilityItems.maxima'),
+              t('home.capabilityItems.live3d'),
+              t('home.capabilityItems.bom'),
+              t('home.capabilityItems.approvals'),
+              t('home.capabilityItems.languages'),
+            ].map((name) => (
               <span key={name} className="text-sm font-bold text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors tracking-wide whitespace-nowrap">
                 {name}
               </span>
@@ -269,6 +275,38 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* ── For Agencies / White-label ─────────────────────────── */}
+      <section className="container mx-auto px-6 mb-12 relative z-20">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mx-auto max-w-5xl rounded-3xl border border-primary/20 bg-primary/5 backdrop-blur-xl p-8 md:p-10"
+        >
+          <div className="grid gap-8 md:grid-cols-[1.2fr_1fr] md:items-center">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary">
+                {t('home.agency.kicker')}
+              </p>
+              <h2 className="mb-3 text-2xl md:text-3xl font-bold tracking-tight">
+                {t('home.agency.title')}
+              </h2>
+              <p className="text-sm md:text-base text-muted-foreground">
+                {t('home.agency.desc')}
+              </p>
+            </div>
+            <ul className="space-y-3">
+              {[t('home.agency.bullet1'), t('home.agency.bullet2'), t('home.agency.bullet3')].map((bullet) => (
+                <li key={bullet} className="flex items-start gap-3 text-sm text-foreground/90">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  {bullet}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </motion.div>
+      </section>
 
 
       {/* Features */}

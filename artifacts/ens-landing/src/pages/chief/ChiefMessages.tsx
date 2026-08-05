@@ -12,13 +12,13 @@ import {
 } from "@/components/ui/sheet";
 import {
   AlertCircle, Briefcase, Building2, CalendarDays, ChevronLeft,
-  ChevronRight, MessageSquare, MoreVertical, Paperclip, Phone,
-  Search, Send, Smile, Users, Video,
+  ChevronRight, MessageSquare, Paperclip, Search, Send, Smile, Users, X,
 } from "lucide-react";
 import {
   getConversationMessages, getManagerWorkspace, getMessageContacts,
-  sendConversationMessage,
-  type DirectMessage, type ManagedClient, type ManagedProject, type MessageContact,
+  messageAttachmentHref, sendConversationMessage, uploadConversationAttachment,
+  type DirectMessage, type DirectMessageAttachment, type ManagedClient,
+  type ManagedProject, type MessageContact,
 } from "@/lib/platform-api";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,10 +53,12 @@ export default function ChiefMessages() {
   const [drawerOpen,           setDrawerOpen]           = useState(false);
   const [messages,             setMessages]             = useState<DirectMessage[]>([]);
   const [message,              setMessage]              = useState("");
+  const [attachment,           setAttachment]           = useState<DirectMessageAttachment | null>(null);
   const [search,               setSearch]               = useState("");
   const [toast,                setToast]                = useState("");
   const [isLoading,            setIsLoading]            = useState(true);
   const [isSending,            setIsSending]            = useState(false);
+  const [isUploading,          setIsUploading]          = useState(false);
   const [error,                setError]                = useState("");
   const messagesEnd = useRef<HTMLDivElement>(null);
 
@@ -65,9 +67,10 @@ export default function ChiefMessages() {
   }, [t]);
 
   const noMessagesDefault = t("chief.messages.noMessagesDefault");
+  const teamScopeName = `${t("chief.nav.managers")} / ${t("chief.nav.messages")}`;
   const scopes = useMemo(
-    () => buildExhibitionScopes(projects, contacts, allClients, noMessagesDefault),
-    [contacts, projects, allClients, noMessagesDefault],
+    () => buildExhibitionScopes(projects, contacts, allClients, noMessagesDefault, teamScopeName),
+    [contacts, projects, allClients, noMessagesDefault, teamScopeName],
   );
 
   const filteredScopes = useMemo(() => {
@@ -90,7 +93,7 @@ export default function ChiefMessages() {
 
   const selectedContact = selectedId ? scopedContacts.find((c) => c.id === selectedId) ?? null : null;
 
-  const conversationContext = selectedScope
+  const conversationContext = selectedScope && contactType !== "pm"
     ? { exhibitionId: selectedScope.id, exhibitionName: selectedScope.name, projectId: selectedScope.projects[0]?.id }
     : undefined;
   const totalUnread = scopes.reduce((sum, scope) => sum + scope.unread, 0);
@@ -146,13 +149,13 @@ export default function ChiefMessages() {
 
   /* ── Message polling with exponential back-off ────────────────── */
   useEffect(() => {
-    if (!drawerOpen || !selectedContact || !conversationContext || !contactType) {
+    if (!drawerOpen || !selectedContact || !contactType) {
       setMessages([]);
       return;
     }
 
     const contact = selectedContact;
-    const ctx     = conversationContext;
+    const ctx     = contactType === "pm" ? undefined : conversationContext;
     let mounted   = true;
     let errorCount = 0;
 
@@ -208,6 +211,7 @@ export default function ChiefMessages() {
     setContactType(null); // reset to 2-button chooser
     setSelectedId(null);
     setMessage("");
+    setAttachment(null);
     setMessages([]);
     setDrawerOpen(true);
   }
@@ -217,6 +221,7 @@ export default function ChiefMessages() {
     setSelectedId(null);
     setMessages([]);
     setMessage("");
+    setAttachment(null);
     if (type === "pm") {
       setSelectedId(selectedScope?.managers[0]?.id ?? null);
     } else if (type === "client") {
@@ -224,28 +229,62 @@ export default function ChiefMessages() {
     }
   }
 
+  function selectContact(id: string) {
+    setSelectedId(id);
+    setMessages([]);
+    setMessage("");
+    setAttachment(null);
+  }
+
   async function sendMessage() {
-    if (!selectedContact || !conversationContext || isSending) return;
+    if (!selectedContact || isSending || isUploading) return;
     const text = message.trim();
-    if (!text) return;
+    if (!text && !attachment) return;
+    const attachments = attachment ? [attachment] : [];
+    const preview = text || attachment?.name || t("pm.messages.attachmentFallback");
 
     setIsSending(true);
     setError("");
     try {
-      const response = await sendConversationMessage(selectedContact.id, text, conversationContext);
+      const response = await sendConversationMessage(
+        selectedContact.id,
+        text,
+        contactType === "pm" ? undefined : conversationContext,
+        attachments,
+      );
       setMessages((current) => [...current, response.message]);
       setContacts((current) =>
         current.map((c) =>
           c.id === selectedContact.id
-            ? { ...c, lastMessage: text, time: t("chief.messages.justNow"), lastMessageAt: response.message.createdAt }
+            ? { ...c, lastMessage: preview, time: t("chief.messages.justNow"), lastMessageAt: response.message.createdAt }
             : c,
         ),
       );
       setMessage("");
+      setAttachment(null);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : t("chief.messages.sendError"));
     } finally {
       setIsSending(false);
+    }
+  }
+
+  async function selectAttachment(file: File | null) {
+    if (!file) return;
+    if (file.size > 10_000_000) {
+      showToast(t("pm.messages.toast.attachmentTooLarge"));
+      return;
+    }
+    setIsUploading(true);
+    setError("");
+    try {
+      const response = await uploadConversationAttachment(file);
+      setAttachment(response.attachment);
+      showToast(t("pm.messages.toast.attachmentSelected", { name: file.name }));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : t("pm.messages.toast.attachmentUploadError"));
+    } finally {
+      setIsUploading(false);
     }
   }
 
@@ -306,6 +345,7 @@ export default function ChiefMessages() {
                 type="button"
                 onClick={() => openScope(scope)}
                 aria-label={scope.name}
+                data-testid={`message-scope-${scope.id}`}
                 className={cn(
                   "group flex min-h-[178px] flex-col rounded-lg border bg-background/45 p-4 text-left transition-colors hover:border-primary/60 hover:bg-primary/5",
                   selectedScope?.id === scope.id && drawerOpen && "border-primary/70 bg-primary/10",
@@ -389,17 +429,26 @@ export default function ChiefMessages() {
           selectedContact={selectedContact}
           messages={messages}
           message={message}
+          attachment={attachment}
           isSending={isSending}
+          isUploading={isUploading}
           messagesEnd={messagesEnd}
           onOpenChange={(open) => {
             setDrawerOpen(open);
-            if (!open) { setContactType(null); setSelectedId(null); setMessages([]); }
+            if (!open) {
+              setContactType(null);
+              setSelectedId(null);
+              setMessages([]);
+              setMessage("");
+              setAttachment(null);
+            }
           }}
           onContactTypeChange={handleContactTypeChange}
-          onSelectContact={setSelectedId}
+          onSelectContact={selectContact}
           onMessageChange={(value) => setMessage(value.slice(0, MESSAGE_MAX_LENGTH))}
+          onSelectAttachment={selectAttachment}
+          onClearAttachment={() => setAttachment(null)}
           onSend={sendMessage}
-          onToast={showToast}
         />
 
         {/* Always-rendered ARIA live toast */}
@@ -419,8 +468,9 @@ export default function ChiefMessages() {
 /* ── MessageDrawer sub-component ──────────────────────────────────────────── */
 function MessageDrawer({
   open, scope, contactType, contacts, selectedContact, messages, message,
-  isSending, messagesEnd, onOpenChange, onContactTypeChange, onSelectContact,
-  onMessageChange, onSend, onToast,
+  attachment, isSending, isUploading, messagesEnd, onOpenChange,
+  onContactTypeChange, onSelectContact, onMessageChange, onSelectAttachment,
+  onClearAttachment, onSend,
 }: {
   open: boolean;
   scope: ExhibitionScope | null;
@@ -429,16 +479,20 @@ function MessageDrawer({
   selectedContact: MessageContact | null;
   messages: DirectMessage[];
   message: string;
+  attachment: DirectMessageAttachment | null;
   isSending: boolean;
+  isUploading: boolean;
   messagesEnd: React.RefObject<HTMLDivElement | null>;
   onOpenChange: (open: boolean) => void;
   onContactTypeChange: (type: "pm" | "client" | null) => void;
   onSelectContact: (id: string) => void;
   onMessageChange: (message: string) => void;
+  onSelectAttachment: (file: File | null) => Promise<void>;
+  onClearAttachment: () => void;
   onSend: () => void;
-  onToast: (message: string) => void;
 }) {
   const { t } = useTranslation();
+  const fileInput = useRef<HTMLInputElement>(null);
   const charCount = message.length;
   const nearLimit = charCount >= MESSAGE_MAX_LENGTH * 0.9;
 
@@ -483,38 +537,45 @@ function MessageDrawer({
                     Select a group to start a conversation within <strong>{scope.name}</strong>.
                   </p>
                 </div>
-                <div className="grid w-full max-w-md grid-cols-2 gap-5">
-                  <button
-                    type="button"
-                    onClick={() => onContactTypeChange("pm")}
-                    className="group flex flex-col items-center gap-4 rounded-2xl border-2 border-border bg-card/60 p-8 text-center transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
-                  >
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
-                      <Users className="h-8 w-8 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-base font-bold">Project Managers</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {scope.managers.length} assigned
-                      </p>
-                    </div>
-                  </button>
+                <div className={cn(
+                  "grid w-full max-w-md gap-5",
+                  scope.managers.length > 0 && scope.clientContacts.length > 0 ? "grid-cols-2" : "grid-cols-1",
+                )}>
+                  {scope.managers.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => onContactTypeChange("pm")}
+                      className="group flex flex-col items-center gap-4 rounded-2xl border-2 border-border bg-card/60 p-8 text-center transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
+                    >
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+                        <Users className="h-8 w-8 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-base font-bold">Project Managers</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {scope.managers.length} assigned
+                        </p>
+                      </div>
+                    </button>
+                  )}
 
-                  <button
-                    type="button"
-                    onClick={() => onContactTypeChange("client")}
-                    className="group flex flex-col items-center gap-4 rounded-2xl border-2 border-border bg-card/60 p-8 text-center transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
-                  >
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
-                      <Building2 className="h-8 w-8 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-base font-bold">Clients</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {scope.clientContacts.length} in this exhibition
-                      </p>
-                    </div>
-                  </button>
+                  {scope.clientContacts.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => onContactTypeChange("client")}
+                      className="group flex flex-col items-center gap-4 rounded-2xl border-2 border-border bg-card/60 p-8 text-center transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
+                    >
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+                        <Building2 className="h-8 w-8 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-base font-bold">Clients</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {scope.clientContacts.length} in this exhibition
+                        </p>
+                      </div>
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -551,7 +612,7 @@ function MessageDrawer({
                           )}>
                             {initials(contact.name)}
                           </div>
-                          <span className={cn("absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card", contact.online ? "bg-green-500" : "bg-muted")} />
+                          <span className={cn("absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card shadow-sm", contact.online ? "bg-emerald-500 animate-pulse ring-2 ring-emerald-500/20" : "bg-muted")} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-2">
@@ -573,11 +634,13 @@ function MessageDrawer({
                 </aside>
 
                 {/* Conversation pane */}
-                <section className="flex min-w-0 flex-col bg-background/20">
+                <section className="relative flex min-w-0 flex-col bg-background/20 bg-dot-pattern">
+                  {/* Subtle Top Ambient Glow */}
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-primary/5 to-transparent" aria-hidden="true" />
                   {selectedContact ? (
                     <>
                       {/* Contact header */}
-                      <div className="flex min-h-16 items-center justify-between gap-4 border-b bg-card/50 px-5 py-3">
+                      <div className="relative z-10 flex min-h-16 items-center justify-between gap-4 border-b bg-card/70 px-5 py-3 backdrop-blur-md">
                         <div className="flex min-w-0 items-center gap-3">
                           <div className={cn(
                             "flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold",
@@ -590,17 +653,9 @@ function MessageDrawer({
                             <p className="truncate text-xs text-muted-foreground">{selectedContact.email}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-label={t("chief.messages.actions.call")} onClick={() => onToast(t("chief.messages.toast.call", { name: selectedContact.name, exhibition: scope.name }))}>
-                            <Phone className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-label={t("chief.messages.actions.video")} onClick={() => onToast(t("chief.messages.toast.video", { exhibition: scope.name }))}>
-                            <Video className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-label={t("chief.messages.actions.options")} onClick={() => onToast(t("chief.messages.toast.options"))}>
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Badge variant="outline" className="shrink-0 capitalize">
+                          {contactType}
+                        </Badge>
                       </div>
 
                       <div className="border-b bg-muted/25 px-5 py-2 text-xs text-muted-foreground">
@@ -611,7 +666,12 @@ function MessageDrawer({
                       </div>
 
                       {/* Messages */}
-                      <ScrollArea className="flex-1">
+                      <ScrollArea
+                        className="flex-1"
+                        role="log"
+                        aria-label="Message thread"
+                        aria-live="polite"
+                      >
                         <div className="mx-auto w-full max-w-3xl space-y-4 p-5">
                           {messages.map((item) => (
                             <div key={item.id} className={cn("flex", item.isMe ? "justify-end" : "justify-start")}>
@@ -621,7 +681,37 @@ function MessageDrawer({
                                   ? "rounded-tr-sm bg-primary text-primary-foreground"
                                   : "rounded-tl-sm border border-border bg-card",
                               )}>
-                                <p>{item.text}</p>
+                                {item.text && !(item.text === "[Attachment]" && item.attachments?.length) && (
+                                  <p className="whitespace-pre-wrap">{item.text}</p>
+                                )}
+                                {Boolean(item.attachments?.length) && (
+                                  <div className={cn("space-y-1.5", item.text && item.text !== "[Attachment]" ? "mt-2" : "")}>
+                                    {item.attachments?.map((file) => (
+                                      <a
+                                        key={file.id}
+                                        href={messageAttachmentHref(file)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        download={file.name}
+                                        className={cn(
+                                          "flex max-w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-xs",
+                                          item.isMe
+                                            ? "border-white/25 bg-white/10 text-primary-foreground"
+                                            : "border-border bg-muted/40 text-foreground",
+                                        )}
+                                      >
+                                        <Paperclip aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                                        <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                                        <span className={cn(
+                                          "shrink-0 font-mono text-[10px]",
+                                          item.isMe ? "text-primary-foreground/70" : "text-muted-foreground",
+                                        )}>
+                                          {formatFileSize(file.size)}
+                                        </span>
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
                                 <div className={cn("mt-1 text-[10px]", item.isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>
                                   {item.time}
                                 </div>
@@ -640,8 +730,47 @@ function MessageDrawer({
                       {/* Input area */}
                       <div className="border-t bg-card/50 p-4">
                         <div className="mx-auto w-full max-w-3xl flex flex-col gap-1">
+                          {isUploading && (
+                            <div className="mb-2 flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                              <Paperclip aria-hidden="true" className="h-3.5 w-3.5" />
+                              {t("pm.messages.uploadingAttachment")}
+                            </div>
+                          )}
+                          {attachment && (
+                            <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-xs text-muted-foreground">
+                              <span className="flex min-w-0 items-center gap-2">
+                                <Paperclip aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate">{t("pm.messages.attachmentDraft", { name: attachment.name })}</span>
+                                <span className="shrink-0 font-mono text-[10px]">{formatFileSize(attachment.size)}</span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={onClearAttachment}
+                                aria-label={t("pm.messages.actions.clearAttachment")}
+                                className="rounded p-1 text-muted-foreground hover:bg-background hover:text-foreground"
+                              >
+                                <X aria-hidden="true" className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          )}
                           <div className="flex items-center gap-2 rounded-xl border bg-background/70 p-2">
-                            <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-muted-foreground" aria-label={t("chief.messages.actions.attach")} onClick={() => onToast(t("chief.messages.toast.attachment", { exhibition: scope.name }))}>
+                            <input
+                              ref={fileInput}
+                              type="file"
+                              className="hidden"
+                              onChange={(event) => {
+                                void onSelectAttachment(event.target.files?.[0] ?? null);
+                                event.currentTarget.value = "";
+                              }}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-10 w-10 shrink-0 text-muted-foreground"
+                              aria-label={t("chief.messages.actions.attach")}
+                              disabled={isUploading}
+                              onClick={() => fileInput.current?.click()}
+                            >
                               <Paperclip className="h-4 w-4" />
                             </Button>
                             <div className="min-w-0 flex-1">
@@ -667,7 +796,7 @@ function MessageDrawer({
                             <Button
                               className="h-10 shrink-0 px-4"
                               onClick={onSend}
-                              disabled={!message.trim() || isSending}
+                              disabled={(!message.trim() && !attachment) || isSending || isUploading}
                               aria-label={t("chief.messages.actions.send")}
                               data-testid="button-send-message"
                             >
@@ -704,6 +833,7 @@ function buildExhibitionScopes(
   contacts: MessageContact[],
   managedClients: ManagedClient[],
   noMessagesText: string,
+  teamScopeName: string,
 ): ExhibitionScope[] {
   const pmContacts     = contacts.filter((c) => c.role === "pm" || c.role === "Project Manager");
   const clientContacts = contacts.filter((c) => !pmContacts.includes(c));
@@ -749,6 +879,56 @@ function buildExhibitionScopes(
     scopes.set(id, scope);
   }
 
+  // Client intake exists before project creation. Build its exhibition inbox
+  // immediately so a Chief can reach the client during approval and assignment.
+  for (const client of managedClients) {
+    const name = client.exhibition?.trim() || client.name;
+    if (!name) continue;
+    const id = scopeId(name);
+    const manager = client.managerId
+      ? contactsById.get(client.managerId) ?? contactsByName.get(normalize(client.managerName))
+      : contactsByName.get(normalize(client.managerName));
+    const clientContact =
+      clientContactsByEmail.get((client.contactEmail ?? "").toLowerCase()) ??
+      clientContactsByName.get(normalize(client.name ?? ""));
+    const existing = scopes.get(id);
+    const scope = existing ?? {
+      id,
+      name,
+      clients: [],
+      systems: [],
+      status: clientScopeStatus(client.status),
+      deadline: client.targetDate ?? null,
+      projects: [],
+      managers: [],
+      clientContacts: [],
+      unread: 0,
+      lastMessage: noMessagesText,
+      lastMessageAt: null,
+    };
+
+    scope.clients = appendUnique(scope.clients, client.name);
+    scope.status = mergeStatus(scope.status, clientScopeStatus(client.status));
+    scope.deadline = earliestDate(scope.deadline, client.targetDate ?? null);
+    if (manager && !scope.managers.some((item) => item.id === manager.id)) {
+      scope.managers.push(manager);
+      scope.unread += manager.unread;
+      if (!scope.lastMessageAt || (manager.lastMessageAt && manager.lastMessageAt > scope.lastMessageAt)) {
+        scope.lastMessage = manager.lastMessage;
+        scope.lastMessageAt = manager.lastMessageAt;
+      }
+    }
+    if (clientContact && !scope.clientContacts.some((item) => item.id === clientContact.id)) {
+      scope.clientContacts.push(clientContact);
+      scope.unread += clientContact.unread;
+      if (!scope.lastMessageAt || (clientContact.lastMessageAt && clientContact.lastMessageAt > scope.lastMessageAt)) {
+        scope.lastMessage = clientContact.lastMessage;
+        scope.lastMessageAt = clientContact.lastMessageAt;
+      }
+    }
+    scopes.set(id, scope);
+  }
+
   // Match client contacts to each scope using managed clients' emails
   for (const scope of scopes.values()) {
     const exNorm    = normalize(scope.name);
@@ -767,7 +947,33 @@ function buildExhibitionScopes(
     scope.clientContacts = matched;
   }
 
+  const representedManagerIds = new Set(
+    Array.from(scopes.values()).flatMap((scope) => scope.managers.map((manager) => manager.id)),
+  );
+  const unassignedManagers = pmContacts.filter((manager) => !representedManagerIds.has(manager.id));
+  if (unassignedManagers.length > 0) {
+    const latest = [...unassignedManagers]
+      .filter((manager) => manager.lastMessageAt)
+      .sort((a, b) => (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? ""))[0];
+    scopes.set("team-operations", {
+      id: "team-operations",
+      name: teamScopeName,
+      clients: [],
+      systems: [],
+      status: "Active",
+      deadline: null,
+      projects: [],
+      managers: unassignedManagers,
+      clientContacts: [],
+      unread: unassignedManagers.reduce((sum, manager) => sum + manager.unread, 0),
+      lastMessage: latest?.lastMessage || noMessagesText,
+      lastMessageAt: latest?.lastMessageAt ?? null,
+    });
+  }
+
   return Array.from(scopes.values()).sort((a, b) => {
+    if (a.id === "team-operations") return -1;
+    if (b.id === "team-operations") return 1;
     const aDate = a.deadline ?? "9999-12-31";
     const bDate = b.deadline ?? "9999-12-31";
     return aDate.localeCompare(bDate) || a.name.localeCompare(b.name);
@@ -781,6 +987,13 @@ function appendUnique(values: string[], value: string) {
 function mergeStatus(current: string, next: string) {
   const rank: Record<string, number> = { Delayed: 4, Active: 3, Pending: 2, Completed: 1 };
   return (rank[next] ?? 0) > (rank[current] ?? 0) ? next : current;
+}
+
+function clientScopeStatus(status: string) {
+  const normalized = normalize(status);
+  if (normalized === "active") return "Active";
+  if (normalized === "archived" || normalized === "inactive") return "Completed";
+  return "Pending";
 }
 
 function isConversationAccessError(message: string) {
@@ -821,4 +1034,10 @@ function normalize(value: string) {
 
 function initials(name: string) {
   return name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function formatFileSize(size: number) {
+  if (!Number.isFinite(size) || size <= 0) return "0 KB";
+  if (size >= 1_000_000) return `${(size / 1_000_000).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(size / 1000))} KB`;
 }

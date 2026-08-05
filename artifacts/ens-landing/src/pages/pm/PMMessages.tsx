@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -86,8 +87,7 @@ export default function PMMessages() {
   const [inputText, setInputText] = useState("");
   const [attachment, setAttachment] = useState<DirectMessageAttachment | null>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [toastMsg, setToastMsg] = useState("");
-  const [toastVisible, setToastVisible] = useState(false);
+  const { toast } = useToast();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
@@ -100,8 +100,24 @@ export default function PMMessages() {
   // ── Derived ──────────────────────────────────────────────────────────────────
 
   const scopes = useMemo(() => buildPmExhibitionScopes(projects, clients, contacts), [projects, clients, contacts]);
+  const generalChiefContact = useMemo(
+    () => contacts.find((c) => c.role === "chief") ?? contacts.find((c) => c.role === "owner" || c.role === "admin") ?? null,
+    [contacts],
+  );
+  const visibleScopes = useMemo(() => {
+    if (scopes.length || !generalChiefContact) return scopes;
+    return [{
+      exhibitionName: "General",
+      projectId: "general",
+      status: "active",
+      deadline: null,
+      chiefContact: generalChiefContact,
+      clientContact: null,
+      unread: generalChiefContact.unread ?? 0,
+    }];
+  }, [generalChiefContact, scopes]);
 
-  const activeScope = scopes.find((s) => s.exhibitionName === activeExhibitionName) ?? null;
+  const activeScope = visibleScopes.find((s) => s.exhibitionName === activeExhibitionName) ?? null;
 
   const activeContact: MessageContact | null = useMemo(() => {
     if (!activeScope || !contactType) return null;
@@ -113,7 +129,9 @@ export default function PMMessages() {
     [projects, activeExhibitionName],
   );
 
-  const messageContext = activeScope && activeProject
+  const messageContext = contactType === "chief"
+    ? undefined
+    : activeScope && activeProject
     ? { projectId: activeProject.id, exhibitionName: activeScope.exhibitionName }
     : undefined;
 
@@ -182,11 +200,11 @@ export default function PMMessages() {
 
   // Deep-link: ?contactId= → find the exhibition and contact type
   useEffect(() => {
-    if (!deepLinkContactId || deepLinkHandled.current || isLoading || !scopes.length) return;
+    if (!deepLinkContactId || deepLinkHandled.current || isLoading || !visibleScopes.length) return;
     deepLinkHandled.current = true;
     navigate("/pm/messages", { replace: true });
 
-    for (const scope of scopes) {
+    for (const scope of visibleScopes) {
       if (scope.chiefContact?.id === deepLinkContactId) {
         setActiveExhibitionName(scope.exhibitionName);
         setContactType("chief");
@@ -209,21 +227,19 @@ export default function PMMessages() {
         lastMessage: "", lastMessageAt: null, time: "", unread: 0, online: false,
       };
       setContacts((prev) => prev.some((c) => c.id === newContact.id) ? prev : [newContact, ...prev]);
-      const scope = scopes.find((item) => item.clientContact?.id === newContact.id);
+      const scope = visibleScopes.find((item) => item.clientContact?.id === newContact.id);
       if (scope) {
         setActiveExhibitionName(scope.exhibitionName);
         setContactType("client");
       }
     }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deepLinkContactId, isLoading, scopes.length]);
+  }, [deepLinkContactId, isLoading, visibleScopes.length]);
 
   // ── Actions ──────────────────────────────────────────────────────────────────
 
   function showToast(message: string) {
-    setToastMsg(message);
-    setToastVisible(true);
-    window.setTimeout(() => setToastVisible(false), 2400);
+    toast({ title: message });
   }
 
   async function sendMessage() {
@@ -323,20 +339,20 @@ export default function PMMessages() {
               <p className="text-xs text-muted-foreground">{t("pm.messages.selectExhibitionHint", { defaultValue: "Select an exhibition to message" })}</p>
             </div>
             <ScrollArea className="flex-1">
-              {isLoading && !scopes.length
+              {isLoading && !visibleScopes.length
                 ? Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="px-4 py-3 border-b border-border/40 space-y-1.5">
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-3 w-20" />
                   </div>
                 ))
-                : scopes.length === 0
+                : visibleScopes.length === 0
                 ? (
                   <div className="p-6 text-center text-sm text-muted-foreground">
                     {t("pm.messages.noProjectScopes")}
                   </div>
                 )
-                : scopes.map((scope) => {
+                : visibleScopes.map((scope) => {
                   const active = scope.exhibitionName === activeExhibitionName;
                   return (
                     <button
@@ -533,7 +549,12 @@ export default function PMMessages() {
                   </div>
                 </div>
 
-                <ScrollArea className="flex-1 p-5">
+                <ScrollArea
+                  className="flex-1 p-5"
+                  role="log"
+                  aria-label="Message thread"
+                  aria-live="polite"
+                >
                   <div className="space-y-4">
                     {messages.map((msg) => (
                       <div key={msg.id} className={cn("flex flex-col", msg.isMe ? "items-end" : "items-start")}>
@@ -648,15 +669,6 @@ export default function PMMessages() {
           </div>
         </div>
 
-        {/* Toast */}
-        <div
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          className={`fixed bottom-5 right-5 z-50 rounded-lg border border-primary/30 bg-card px-4 py-3 text-sm shadow-xl transition-all duration-300 ${toastVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"}`}
-        >
-          {toastMsg}
-        </div>
       </div>
     </DashboardLayout>
   );

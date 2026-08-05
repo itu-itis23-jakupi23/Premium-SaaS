@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import {
@@ -46,8 +47,7 @@ export default function ClientProfile() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarTone, setAvatarTone] = useState("green");
-  const [toastMsg, setToastMsg] = useState("");
-  const [toastVisible, setToastVisible] = useState(false);
+  const { toast } = useToast();
   const [notifications, setNotifications] = useState({
     assignments: true,
     milestones: true,
@@ -136,9 +136,7 @@ export default function ClientProfile() {
   }, []);
 
   function showToast(message: string) {
-    setToastMsg(message);
-    setToastVisible(true);
-    window.setTimeout(() => setToastVisible(false), 2400);
+    toast({ title: message });
   }
 
   async function saveProfile(values: z.infer<typeof profileSchema>) {
@@ -291,20 +289,6 @@ export default function ClientProfile() {
 
   return (
     <DashboardLayout role="client">
-      {/* ARIA live region for toast notifications */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className={`fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-lg border border-primary/30 bg-card px-4 py-3 text-sm shadow-xl transition-all duration-300 ${
-          toastVisible
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-2 pointer-events-none"
-        }`}
-      >
-        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" aria-hidden="true" />
-        {toastMsg}
-      </div>
 
       <PageHeader
         title={t("client.profile.title")}

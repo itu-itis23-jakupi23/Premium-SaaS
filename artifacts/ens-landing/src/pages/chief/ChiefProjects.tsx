@@ -51,6 +51,7 @@ import {
 } from "@/lib/platform-api";
 import { downloadExcelWorkbook } from "@/lib/excel-export";
 import { cn } from "@/lib/utils";
+import { preloadPortalRoute } from "@/lib/route-preload";
 import {
   Activity,
   AlertCircle,
@@ -152,7 +153,7 @@ const STAGE_STYLES: Record<Stage, { dot: string; text: string; bg: string; borde
   intake:     { dot: "bg-gray-500",   text: "text-gray-500",   bg: "bg-gray-500/10",   border: "border-l-gray-500",   borderTop: "border-t-gray-500",   bar: "bg-gray-500" },
   design:     { dot: "bg-blue-700",   text: "text-blue-700",   bg: "bg-blue-700/10",   border: "border-l-blue-700",   borderTop: "border-t-blue-700",   bar: "bg-blue-700" },
   review:     { dot: "bg-amber-600",  text: "text-amber-600",  bg: "bg-amber-600/10",  border: "border-l-amber-600",  borderTop: "border-t-amber-600",  bar: "bg-amber-600" },
-  production: { dot: "bg-violet-600", text: "text-violet-600", bg: "bg-violet-600/10", border: "border-l-violet-600", borderTop: "border-t-violet-600", bar: "bg-violet-600" },
+  production: { dot: "bg-blue-600", text: "text-blue-600", bg: "bg-blue-600/10", border: "border-l-blue-600", borderTop: "border-t-blue-600", bar: "bg-blue-600" },
   closed:     { dot: "bg-green-700",  text: "text-green-700",  bg: "bg-green-700/10",  border: "border-l-green-700",  borderTop: "border-t-green-700",  bar: "bg-green-700" },
 };
 
@@ -501,7 +502,7 @@ export default function ChiefProjects() {
 
   function openMonitor(projectId: string, projectName: string) {
     showToast(t("chief.projects.toast.openMonitor", { name: projectName }));
-    window.setTimeout(() => navigate(`/chief/workspace-monitor?project=${encodeURIComponent(projectId)}`), 500);
+    navigate(`/chief/workspace?projectId=${encodeURIComponent(projectId)}`);
   }
 
   async function createProject() {
@@ -794,7 +795,21 @@ export default function ChiefProjects() {
         </div>
 
         {/* Kanban board */}
-        {view === "kanban" && (
+        {view === "kanban" && !isLoading && projects.length === 0 && (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border/40 px-6 py-16 text-center" style={{ minHeight: 420 }}>
+            <p className="text-sm font-semibold text-foreground">{t("chief.projects.kanban.emptyBoardTitle")}</p>
+            <p className="max-w-md text-xs text-muted-foreground">{t("chief.projects.kanban.emptyBoardBody")}</p>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+              <Button size="sm" onClick={() => navigate("/chief/clients")}>
+                {t("chief.projects.kanban.emptyBoardClientsCta")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setActiveTab("exhibitions")}>
+                {t("chief.projects.kanban.emptyBoardExhibitionCta")}
+              </Button>
+            </div>
+          </div>
+        )}
+        {view === "kanban" && (isLoading || projects.length > 0) && (
           <div className="grid grid-cols-5 gap-3" style={{ minHeight: 420 }}>
             {stages.map((stage) => {
               const styles = STAGE_STYLES[stage.id];
@@ -977,6 +992,8 @@ export default function ChiefProjects() {
                       </button>
                       <button
                         onClick={() => navigate(`/chief/workspace?projectId=${encodeURIComponent(project.id)}`)}
+                        onPointerEnter={() => { void preloadPortalRoute("/chief/workspace")?.catch(() => undefined); }}
+                        onFocus={() => { void preloadPortalRoute("/chief/workspace")?.catch(() => undefined); }}
                         className="flex items-center gap-1 rounded border border-primary/40 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary hover:bg-primary/20 transition-colors"
                         aria-label={`Open workspace for ${project.name}`}
                       >
@@ -1828,7 +1845,19 @@ function ProjectCard({
   const styles     = STAGE_STYLES[stage];
 
   return (
-    <div className={cn("group rounded-lg border border-l-[3px] bg-card p-3 transition-all hover:border-primary/40 hover:shadow-sm", styles.border)}>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(project.id, project.name)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen(project.id, project.name);
+        }
+      }}
+      aria-label={t("chief.projects.card.openMonitor")}
+      className={cn("group cursor-pointer rounded-lg border border-l-[3px] bg-card p-3 transition-all hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50", styles.border)}
+    >
       <div className="mb-2 flex items-start justify-between gap-1">
         <p className="min-w-0 flex-1 truncate text-[11.5px] font-bold leading-tight transition-colors group-hover:text-primary">
           {project.name}
@@ -1880,7 +1909,7 @@ function ProjectCard({
           {stageIndex > 0 && (
             <button
               disabled={isMoving}
-              onClick={() => onMove(project.id, "prev")}
+              onClick={(e) => { e.stopPropagation(); onMove(project.id, "prev"); }}
               aria-label={t("chief.projects.card.movePrev")}
               className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-wait disabled:opacity-50"
             >
@@ -1890,7 +1919,7 @@ function ProjectCard({
           {stageIndex < STAGE_IDS.length - 1 && (
             <button
               disabled={isMoving}
-              onClick={() => onMove(project.id, "next")}
+              onClick={(e) => { e.stopPropagation(); onMove(project.id, "next"); }}
               aria-label={t("chief.projects.card.moveNext")}
               className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-wait disabled:opacity-50"
             >
@@ -1898,14 +1927,14 @@ function ProjectCard({
             </button>
           )}
           <button
-            onClick={() => onOpen(project.id, project.name)}
+            onClick={(e) => { e.stopPropagation(); onOpen(project.id, project.name); }}
             aria-label={t("chief.projects.card.openMonitor")}
             className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <Layers className="h-3 w-3" />
           </button>
           <button
-            onClick={() => onEdit(project)}
+            onClick={(e) => { e.stopPropagation(); onEdit(project); }}
             aria-label={t("chief.projects.card.editProject")}
             className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
           >

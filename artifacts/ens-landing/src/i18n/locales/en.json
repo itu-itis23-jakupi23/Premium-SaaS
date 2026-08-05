@@ -29,7 +29,7 @@
       "titlePart2": "Real-Time 3D",
       "subtitle": "Build, customize, and manage Octanorm and Maxima stands directly in your browser. Professional tools for serious exhibition designers."
     },
-    "trustedBy": "Trusted by",
+    "trustedBy": "Built for real stand production",
     "stats": {
       "projectProgress": "Project Progress",
       "boothDimensions": "Booth Dimensions",
@@ -167,6 +167,22 @@
         "title": "Communications Hub",
         "desc": "Centralised messaging across clients, PMs, and sub-contractors."
       }
+    },
+    "capabilityItems": {
+      "octanorm": "Octanorm System",
+      "maxima": "Maxima System",
+      "live3d": "Live 3D Workspace",
+      "bom": "BOM & Quote Export",
+      "approvals": "Client Approvals",
+      "languages": "11 Languages"
+    },
+    "agency": {
+      "kicker": "For exhibition agencies",
+      "title": "Run your whole agency on ENS",
+      "desc": "Lease the platform and give your team one system for the entire booth lifecycle — from client intake and 3D design to approvals, production tasks, and invoicing.",
+      "bullet1": "Three portals: chief, project managers, and clients",
+      "bullet2": "Your own furniture catalog and pricing",
+      "bullet3": "Approvals, revisions, and invoices tracked automatically"
     }
   },
   "team": {
@@ -407,7 +423,7 @@
         "pendingApprovals": "Pending Approvals",
         "activeWorkspaces": "Active Workspaces",
         "saved": "Saved",
-        "db": "DB",
+        "db": "Live data",
         "live": "Live",
         "assigned": "Assigned",
         "open": "Open",
@@ -469,6 +485,9 @@
         "moreInvites": "+{{count}} more",
         "showMore": "Show {{count}} more",
         "showLess": "Show less",
+        "code": "Code",
+        "link": "Link",
+        "copyCode": "Copy invitation code for {{email}}",
         "copyLink": "Copy invite link for {{email}}",
         "resend": "Resend invite to {{email}}",
         "revoke": "Revoke invite for {{email}}",
@@ -477,7 +496,7 @@
       },
       "invite": {
         "title": "Invite Manager",
-        "desc": "Add a project manager to the chief workspace.",
+        "desc": "Send a secure link or code. When accepted, the Project Manager is automatically added to your company.",
         "namePlaceholder": "Sarah Mitchell",
         "emailPlaceholder": "manager@company.com",
         "sendInvite": "Send Invite",
@@ -633,6 +652,8 @@
         "inviteCopyFirst": "Resend this invite first to generate a fresh copyable link",
         "inviteCopied": "Invite link copied",
         "inviteCopyError": "Could not copy invite link",
+        "inviteCodeCopied": "Invitation code copied",
+        "inviteCodeCopyError": "Could not copy invitation code",
         "statusUpdated": "Manager status updated",
         "statusError": "Manager status could not be updated",
         "assignNoChange": "No assignment changes for {{name}}",
@@ -663,7 +684,7 @@
         "exported": "Excel report exported"
       },
       "notConfigured": "Not configured",
-      "revenueNotice": "Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data.",
+      "revenueNotice": "Revenue and satisfaction reporting activates once invoicing and client ratings are in use. All project and delivery figures below are live.",
       "kpi": {
         "revenue": "Total Revenue",
         "revenueDetail": "+12.5% vs previous period",
@@ -715,6 +736,15 @@
         "colWaitDays": "Wait Days",
         "colStage": "Stage",
         "rowTotals": "Totals"
+      },
+      "pipelineFlow": {
+        "title": "Pipeline Flow",
+        "desc": "Average time projects spend in each stage",
+        "avgDays": "{{days}}d avg",
+        "noData": "—",
+        "slowestTitle": "Longest in current stage",
+        "empty": "No active projects.",
+        "inStageDays": "{{days}}d"
       }
     },
     "messages": {
@@ -808,6 +838,8 @@
       },
       "menu": {
         "assignManager": "Assign Manager",
+        "reviewAndAssign": "Review and assign",
+        "rejectRequest": "Reject request",
         "openWorkspace": "Open Workspace",
         "editClient": "Edit Client",
         "viewDetails": "View Client Details",
@@ -819,11 +851,14 @@
         "updated": "{{name}} updated.",
         "updateError": "Client could not be updated.",
         "noManagers": "No active project managers are available.",
-        "assigned": "{{client}} assigned to {{manager}}.",
+        "assigned": "{{client}} assigned to {{manager}}. Their exhibition and booth project are ready under Projects.",
+        "approved": "{{client}} approved and assigned to {{manager}}. The intake project is ready.",
+        "rejected": "{{client}} registration was rejected.",
+        "rejectError": "Client registration could not be rejected.",
         "assignError": "Client assignment could not be saved.",
         "archived": "{{name}} archived.",
         "archiveError": "Client could not be removed.",
-        "openingWorkspace": "Opening {{name}} in Chief monitor.",
+        "openingWorkspace": "Opening booth workspace for {{name}}.",
         "defaultClient": "Client",
         "unassigned": "Unassigned"
       },
@@ -841,6 +876,19 @@
         "desc": "Select a manager for {{name}}.",
         "placeholder": "Select a manager",
         "submit": "Assign"
+      },
+      "approveDialog": {
+        "title": "Approve and assign client",
+        "desc": "Review {{name}} and select the Project Manager who will own the account.",
+        "result": "Approval creates the client project, booth workspace, and PM/client access in one step.",
+        "submit": "Approve and create project"
+      },
+      "rejectDialog": {
+        "title": "Reject client request",
+        "desc": "Reject {{name}} and record a reason for the decision.",
+        "reason": "Reason",
+        "placeholder": "Explain what must be corrected before the client registers again.",
+        "submit": "Reject request"
       },
       "editDialog": {
         "title": "Edit Client",
@@ -897,7 +945,11 @@
       },
       "kanban": {
         "loading": "Loading",
-        "empty": "Empty"
+        "empty": "Empty",
+        "emptyBoardTitle": "No projects yet",
+        "emptyBoardBody": "Assign a manager to a client and their exhibition and booth project are created automatically. You can also start by adding an exhibition.",
+        "emptyBoardClientsCta": "Go to Clients",
+        "emptyBoardExhibitionCta": "Add Exhibition"
       },
       "list": {
         "loading": "Loading projects...",
@@ -974,7 +1026,7 @@
       },
       "toast": {
         "updated": "{{name}} updated",
-        "openMonitor": "Opening monitor for {{name}}",
+        "openMonitor": "Opening booth workspace for {{name}}",
         "moved": "{{name}} moved to {{stage}}",
         "created": "Project \"{{name}}\" created.",
         "exported": "Projects exported to Excel."
@@ -1476,13 +1528,13 @@
         "empty": "No urgent actions for this organisation."
       },
       "actions": {
-        "pendingApprovals": "{{count}} pending approvals",
+        "pendingApprovals": "Pending approvals",
         "pendingApprovalsDesc": "Client review work is waiting for a decision or revision request.",
         "openApprovals": "Open approvals",
-        "delayedProjects": "{{count}} delayed projects",
+        "delayedProjects": "Delayed projects",
         "delayedProjectsDesc": "Projects need PM attention before deadlines are missed.",
         "reviewRisk": "Review risk",
-        "activeWorkspaces": "{{count}} active workspaces",
+        "activeWorkspaces": "Active workspaces",
         "activeWorkspacesDesc": "Booth designs are available for editing, review, or submission.",
         "openWorkspace": "Open workspace",
         "noDelays": "No projects are currently delayed",
@@ -1657,7 +1709,7 @@
         "operationalStatus": "Operational Status",
         "assignedPm": "Assigned PM: {{name}}",
         "lastActivity": "Last activity: {{time}}",
-        "dataSource": "Loaded from PostgreSQL client and project records",
+        "dataSource": "Live client and project records",
         "workspaceReady": "Project workspace link is available.",
         "workspaceMissing": "No project workspace is linked to this client yet.",
         "changeStatus": "Change client status",
@@ -2057,7 +2109,7 @@
       "defaultClientName": "Client",
       "loadingProject": "Loading project...",
       "noActiveProject": "No active project",
-      "projectSubtitle": "Project data is loaded from PostgreSQL",
+      "projectSubtitle": "Live overview of your booth project",
       "loadingActiveProject": "Loading active project...",
       "noProjectAssigned": "No active project has been assigned yet.",
       "pmLabel": "Project Manager",

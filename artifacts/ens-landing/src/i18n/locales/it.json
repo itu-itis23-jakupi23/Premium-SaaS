@@ -29,7 +29,7 @@
       "titlePart2": "3D in tempo reale",
       "subtitle": "Costruisci, personalizza e gestisci stand Octanorm e Maxima direttamente nel browser. Strumenti professionali per i designer fieristici seri."
     },
-    "trustedBy": "Si fidano di noi",
+    "trustedBy": "Progettato per la produzione reale di stand",
     "stats": {
       "projectProgress": "Avanzamento progetto",
       "boothDimensions": "Dimensioni stand",
@@ -167,6 +167,22 @@
         "title": "Communications Hub",
         "desc": "Centralised messaging across clients, PMs, and sub-contractors."
       }
+    },
+    "capabilityItems": {
+      "octanorm": "Sistema Octanorm",
+      "maxima": "Sistema Maxima",
+      "live3d": "Area 3D dal vivo",
+      "bom": "Export BOM e preventivo",
+      "approvals": "Approvazioni clienti",
+      "languages": "11 lingue"
+    },
+    "agency": {
+      "kicker": "Per agenzie fieristiche",
+      "title": "Gestisci tutta la tua agenzia su ENS",
+      "desc": "Noleggia la piattaforma e dai al tuo team un unico sistema per l'intero ciclo dello stand — dall'acquisizione del cliente al design 3D, fino ad approvazioni, attività di produzione e fatturazione.",
+      "bullet1": "Tre portali: direzione, project manager e clienti",
+      "bullet2": "Il tuo catalogo arredi e i tuoi prezzi",
+      "bullet3": "Approvazioni, revisioni e fatture tracciate automaticamente"
     }
   },
   "team": {
@@ -387,7 +403,7 @@
         "pendingApprovals": "Approvazioni in attesa",
         "activeWorkspaces": "Spazi di lavoro attivi",
         "saved": "Salvato",
-        "db": "DB",
+        "db": "Dati live",
         "live": "Live",
         "assigned": "Assegnato",
         "open": "Aperto",
@@ -715,7 +731,16 @@
         "rowTotals": "Totali"
       },
       "notConfigured": "Not configured",
-      "revenueNotice": "Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data."
+      "revenueNotice": "I report su ricavi e soddisfazione si attiveranno quando fatturazione e valutazioni dei clienti saranno in uso. I dati su progetti e consegne qui sotto sono in tempo reale.",
+      "pipelineFlow": {
+        "title": "Flusso pipeline",
+        "desc": "Tempo medio dei progetti in ogni fase",
+        "avgDays": "{{days}} g in media",
+        "noData": "—",
+        "slowestTitle": "Più a lungo nella fase attuale",
+        "empty": "Nessun progetto attivo.",
+        "inStageDays": "{{days}} g"
+      }
     },
     "messages": {
       "title": "Messaggi",
@@ -819,11 +844,11 @@
         "updated": "{{name}} aggiornato.",
         "updateError": "Impossibile aggiornare il cliente.",
         "noManagers": "Nessun project manager attivo disponibile.",
-        "assigned": "{{client}} assegnato a {{manager}}.",
+        "assigned": "{{client}} assegnato a {{manager}}. Fiera e progetto stand sono pronti in Progetti.",
         "assignError": "Impossibile salvare l'assegnazione.",
         "archived": "{{name}} archiviato.",
         "archiveError": "Impossibile rimuovere il cliente.",
-        "openingWorkspace": "Apertura di {{name}} nel monitor.",
+        "openingWorkspace": "Apertura dell'area stand per {{name}}.",
         "defaultClient": "Cliente",
         "unassigned": "Non assegnato"
       },
@@ -897,7 +922,11 @@
       },
       "kanban": {
         "loading": "Caricamento",
-        "empty": "Vuoto"
+        "empty": "Vuoto",
+        "emptyBoardTitle": "Ancora nessun progetto",
+        "emptyBoardBody": "Assegna un manager a un cliente: fiera e progetto stand vengono creati automaticamente. Puoi anche iniziare aggiungendo una fiera.",
+        "emptyBoardClientsCta": "Vai ai clienti",
+        "emptyBoardExhibitionCta": "Aggiungi fiera"
       },
       "list": {
         "loading": "Caricamento progetti...",
@@ -974,7 +1003,7 @@
       },
       "toast": {
         "updated": "{{name}} aggiornato",
-        "openMonitor": "Apertura monitor per {{name}}",
+        "openMonitor": "Apertura dell'area stand per {{name}}",
         "moved": "{{name}} spostato in {{stage}}",
         "created": "Project \"{{name}}\" created.",
         "exported": "Projects exported to Excel."
@@ -1476,13 +1505,13 @@
         "empty": "Nessuna azione urgente per questa organizzazione."
       },
       "actions": {
-        "pendingApprovals": "{{count}} approvazioni in sospeso",
+        "pendingApprovals": "Approvazioni in sospeso",
         "pendingApprovalsDesc": "Le revisioni client attendono una decisione.",
         "openApprovals": "Apri approvazioni",
-        "delayedProjects": "{{count}} progetti in ritardo",
+        "delayedProjects": "Progetti in ritardo",
         "delayedProjectsDesc": "I progetti richiedono attenzione del PM.",
         "reviewRisk": "Esamina il rischio",
-        "activeWorkspaces": "{{count}} aree di lavoro attive",
+        "activeWorkspaces": "Aree di lavoro attive",
         "activeWorkspacesDesc": "I design degli stand sono disponibili per la modifica.",
         "openWorkspace": "Apri area di lavoro",
         "noDelays": "No projects are currently delayed",
@@ -1652,7 +1681,7 @@
         "operationalStatus": "Stato operativo",
         "assignedPm": "PM assegnato: {{name}}",
         "lastActivity": "Ultima attività: {{time}}",
-        "dataSource": "Caricato dai record PostgreSQL",
+        "dataSource": "Dati clienti e progetti in tempo reale",
         "contact": "Contact",
         "linkedProject": "Linked Project",
         "noLinkedProject": "No linked project",
@@ -2060,7 +2089,7 @@
       "defaultClientName": "Cliente",
       "loadingProject": "Caricamento progetto...",
       "noActiveProject": "Nessun progetto attivo",
-      "projectSubtitle": "I dati del progetto vengono caricati da PostgreSQL",
+      "projectSubtitle": "Panoramica in tempo reale del tuo progetto stand",
       "loadingActiveProject": "Caricamento progetto attivo...",
       "noProjectAssigned": "Nessun progetto attivo è stato ancora assegnato.",
       "pmLabel": "Project Manager",

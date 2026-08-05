@@ -1,5 +1,20 @@
-import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import type { BoothSystem } from './BoothCanvas';
+
+export interface CatalogDragItem {
+  catalogId: string;
+  name: string;
+  w: number;
+  d: number;
+  h: number;
+  color?: string;
+  rotationY?: number;
+}
+
+interface CatalogDropState {
+  valid: boolean;
+  reason: string;
+}
 
 // ── Minimal config interface — only what the iframe renderer needs ──
 interface IframeBoothConfig {
@@ -28,6 +43,7 @@ interface IframeBoothConfig {
   pins?: any[];
   pinMode?: boolean;
   invalidItemIds?: string[];
+  catalogDragItem?: CatalogDragItem | null;
   onItemMove?: (id: string, patch: { x: number; z: number }) => void;
   onItemSelect?: (id: string | null, partId?: string, detail?: any) => void;
   onItemDelete?: (id: string) => void;
@@ -35,11 +51,20 @@ interface IframeBoothConfig {
   onRoomMove?: (id: string, patch: any) => void;
   onFrontSupportMove?: (positions: number[], suppressedDefaultPositions: number[]) => void;
   onPinRequest?: (partId: string, detail: any) => void;
+  onCatalogItemDrop?: (catalogId: string, position: { x: number; z: number }) => void;
+  onCatalogItemDropRejected?: (catalogId: string, reason: string) => void;
 }
 
-type RequiredIframeConfig = Required<Omit<IframeBoothConfig, 'placedItems' | 'rooms' | 'panelOverrides' | 'frontSupportPositions' | 'suppressedDefaultPositions' | 'fasciaEnabled' | 'fasciaOption' | 'lightingPreset' | 'pins' | 'pinMode' | 'invalidItemIds' | 'onItemMove' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove' | 'onFrontSupportMove' | 'onPinRequest'>> & Pick<IframeBoothConfig, 'placedItems' | 'rooms' | 'panelOverrides' | 'frontSupportPositions' | 'suppressedDefaultPositions' | 'fasciaEnabled' | 'fasciaOption' | 'lightingPreset' | 'pins' | 'pinMode' | 'invalidItemIds' | 'onItemMove' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove' | 'onFrontSupportMove' | 'onPinRequest'>;
+type OptionalIframeConfigKey =
+  | 'placedItems' | 'rooms' | 'panelOverrides' | 'frontSupportPositions' | 'suppressedDefaultPositions'
+  | 'fasciaOption' | 'lightingPreset' | 'pins' | 'pinMode' | 'invalidItemIds'
+  | 'catalogDragItem'
+  | 'onItemMove' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove'
+  | 'onFrontSupportMove' | 'onPinRequest' | 'onCatalogItemDrop' | 'onCatalogItemDropRejected';
 
-const DEFAULTS: Required<Omit<IframeBoothConfig, 'placedItems' | 'rooms' | 'panelOverrides' | 'frontSupportPositions' | 'suppressedDefaultPositions' | 'fasciaOption' | 'lightingPreset' | 'pins' | 'pinMode' | 'invalidItemIds' | 'onItemMove' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove' | 'onFrontSupportMove' | 'onPinRequest'>> = {
+type RequiredIframeConfig = Required<Omit<IframeBoothConfig, OptionalIframeConfigKey>> & Pick<IframeBoothConfig, OptionalIframeConfigKey>;
+
+const DEFAULTS: Required<Omit<IframeBoothConfig, OptionalIframeConfigKey>> = {
   width:        6,
   depth:        3,
   height:       2.5,
@@ -56,6 +81,8 @@ const DEFAULTS: Required<Omit<IframeBoothConfig, 'placedItems' | 'rooms' | 'pane
   openBack:     false,
   fasciaEnabled: true,
 };
+
+const RENDERER_ASSET_VERSION = 'stable-glb-alignment-v2';
 
 function buildOpenParam(cfg: RequiredIframeConfig): string {
   const open = [
@@ -82,6 +109,7 @@ function buildSrc(cfg: RequiredIframeConfig): string {
     carpet: cfg.carpetColor ?? '#3b3e44',
     fascia: cfg.fasciaEnabled === false ? '0' : '1',
     renderer: 'glb-real-v5',
+    assetVersion: RENDERER_ASSET_VERSION,
   });
   return `/booth-render.html?${params.toString()}`;
 }
@@ -93,27 +121,15 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
   const [rendererError, setRendererError] = useState<string | null>(null);
+  const [catalogDropState, setCatalogDropState] = useState<CatalogDropState | null>(null);
   const [reloadNonce, setReloadNonce] = useState(0);
   const configRef = useRef<IframeBoothConfig | undefined>(config);
   const latestPayloadRef = useRef<Record<string, unknown> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const src = useMemo(() => buildSrc(cfg), [
-    cfg.width,
-    cfg.depth,
-    cfg.height,
-    cfg.system,
-    cfg.companyName,
-    cfg.wallColor,
-    cfg.frameColor,
-    cfg.fasciaColor,
-    cfg.carpetColor,
-    cfg.openFront,
-    cfg.openBack,
-    cfg.openLeft,
-    cfg.openRight,
-    cfg.fasciaEnabled,
-  ]);
+  // Keep one renderer instance alive for the lifetime of the workspace. All
+  // design changes are synchronized through boothUpdate; rebuilding the iframe
+  // here would discard loaded GLBs and allow stale async model loads to reappear.
+  const [src] = useState(() => buildSrc(cfg));
 
   useEffect(() => {
     setReady(false);
@@ -173,6 +189,26 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
     buildPayload,
   ]);
 
+  const sendCatalogDrag = useCallback((type: 'catalogDragPreview' | 'catalogDragCommit' | 'catalogDragCancel', clientX?: number, clientY?: number) => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return;
+    if (type === 'catalogDragCancel') {
+      win.postMessage({ type }, location.origin);
+      return;
+    }
+    const item = configRef.current?.catalogDragItem;
+    const host = iframeRef.current?.parentElement;
+    if (!item || !host || clientX == null || clientY == null) return;
+    const rect = host.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    win.postMessage({
+      type,
+      xPct: Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)),
+      yPct: Math.max(0, Math.min(1, (clientY - rect.top) / rect.height)),
+      item,
+    }, location.origin);
+  }, []);
+
   const markRendererReady = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setReady(true);
@@ -209,6 +245,30 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
         markRendererReady();
         return;
       }
+      if (event.data.type === 'catalogDropPreview') {
+        setCatalogDropState({
+          valid: Boolean(event.data.valid),
+          reason: typeof event.data.reason === 'string' ? event.data.reason : '',
+        });
+        return;
+      }
+      if (event.data.type === 'catalogDropCommitted') {
+        const catalogId = String(event.data.catalogId || '');
+        if (!catalogId) return;
+        if (event.data.valid) {
+          bridgeConfig?.onCatalogItemDrop?.(catalogId, {
+            x: Number(event.data.x),
+            z: Number(event.data.z),
+          });
+        } else {
+          bridgeConfig?.onCatalogItemDropRejected?.(
+            catalogId,
+            typeof event.data.reason === 'string' ? event.data.reason : 'This position is blocked.',
+          );
+        }
+        setCatalogDropState(null);
+        return;
+      }
       if (event.data.type === 'workspaceItemSelected') {
         bridgeConfig?.onItemSelect?.(event.data.id == null ? null : String(event.data.id), event.data.partId == null ? undefined : String(event.data.partId), event.data);
         return;
@@ -241,7 +301,13 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
         return;
       }
       if (event.data.type === 'workspaceItemDeleteRequested') {
-        if (event.data.id != null) bridgeConfig?.onItemDelete?.(String(event.data.id));
+        if (event.data.id != null) {
+          const id = String(event.data.id);
+          // Remove the model in the renderer immediately. React state remains
+          // authoritative and the following config update confirms deletion.
+          iframeRef.current?.contentWindow?.postMessage({ type: 'workspaceItemRemove', id }, location.origin);
+          bridgeConfig?.onItemDelete?.(id);
+        }
         return;
       }
       if (event.data.type === 'workspaceItemRotated') {
@@ -258,6 +324,12 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
       window.removeEventListener('message', handler);
     };
   }, [markRendererReady, sendUpdate]);
+
+  useEffect(() => {
+    if (cfg.catalogDragItem) return;
+    setCatalogDropState(null);
+    sendCatalogDrag('catalogDragCancel');
+  }, [cfg.catalogDragItem, sendCatalogDrag]);
 
   if (rendererError) {
     return (
@@ -322,6 +394,52 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
         onLoad={() => { setTimeout(sendUpdate, 50); }}
         onError={() => setRendererError('Failed to load the booth renderer. Check your network connection.')}
       />
+      {ready && cfg.catalogDragItem && (
+        <div
+          data-catalog-drop-zone="true"
+          aria-label={`Place ${cfg.catalogDragItem.name} in booth`}
+          onDragEnter={(event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+            sendCatalogDrag('catalogDragPreview', event.clientX, event.clientY);
+          }}
+          onDragLeave={(event) => {
+            if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+            setCatalogDropState(null);
+            sendCatalogDrag('catalogDragCancel');
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            sendCatalogDrag('catalogDragCommit', event.clientX, event.clientY);
+          }}
+          style={{
+            position: 'absolute', inset: 0, zIndex: 3,
+            cursor: catalogDropState?.valid === false ? 'not-allowed' : 'copy',
+          }}
+        >
+          <div style={{
+            position: 'absolute', top: 18, left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', alignItems: 'center', gap: 8, maxWidth: 'calc(100% - 32px)',
+            padding: '7px 11px', borderRadius: 6,
+            border: `1px solid ${catalogDropState?.valid === false ? '#c2410c' : catalogDropState?.valid ? '#2f7d3a' : 'var(--workspace-hair, #d8d3c9)'}`,
+            background: 'rgba(255,255,255,0.94)',
+            boxShadow: '0 6px 20px rgba(20,22,26,0.12)',
+            color: catalogDropState?.valid === false ? '#9a3412' : catalogDropState?.valid ? '#166534' : 'var(--workspace-ink, #181613)',
+            pointerEvents: 'none', fontSize: 11.5, fontWeight: 650,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: 'currentColor' }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {catalogDropState?.reason || `Place ${cfg.catalogDragItem.name} on the booth floor`}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

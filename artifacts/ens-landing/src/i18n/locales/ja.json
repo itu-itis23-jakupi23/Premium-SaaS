@@ -29,7 +29,7 @@
       "titlePart2": "展示ブースをデザイン",
       "subtitle": "OctanormとMaximaのスタンドをブラウザで直接構築、カスタマイズ、管理できます。本格的な展示デザイナーのためのプロフェッショナルツール。"
     },
-    "trustedBy": "導入実績",
+    "trustedBy": "実際のブース製作のために設計",
     "stats": {
       "projectProgress": "プロジェクト進捗",
       "boothDimensions": "ブース寸法",
@@ -167,6 +167,22 @@
         "title": "Communications Hub",
         "desc": "Centralised messaging across clients, PMs, and sub-contractors."
       }
+    },
+    "capabilityItems": {
+      "octanorm": "Octanormシステム",
+      "maxima": "Maximaシステム",
+      "live3d": "ライブ3Dワークスペース",
+      "bom": "BOM・見積エクスポート",
+      "approvals": "クライアント承認",
+      "languages": "11言語対応"
+    },
+    "agency": {
+      "kicker": "展示会エージェンシー向け",
+      "title": "エージェンシー業務をENSひとつで",
+      "desc": "プラットフォームをリースして、クライアント登録から3Dデザイン、承認、製作タスク、請求までブースのライフサイクル全体をひとつのシステムで管理できます。",
+      "bullet1": "3つのポータル：責任者・プロジェクトマネージャー・クライアント",
+      "bullet2": "独自の家具カタログと価格設定",
+      "bullet3": "承認・修正・請求書を自動で追跡"
     }
   },
   "team": {
@@ -387,7 +403,7 @@
         "pendingApprovals": "承認待ち",
         "activeWorkspaces": "アクティブワークスペース",
         "saved": "保存済み",
-        "db": "DB",
+        "db": "ライブデータ",
         "live": "ライブ",
         "assigned": "割り当て済み",
         "open": "未処理",
@@ -715,7 +731,16 @@
         "rowTotals": "合計"
       },
       "notConfigured": "Not configured",
-      "revenueNotice": "Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data."
+      "revenueNotice": "売上と満足度のレポートは、請求と顧客評価の運用開始後に有効になります。以下のプロジェクトと納品の数値はリアルタイムです。",
+      "pipelineFlow": {
+        "title": "パイプラインフロー",
+        "desc": "各ステージでのプロジェクト平均滞留時間",
+        "avgDays": "平均 {{days}} 日",
+        "noData": "—",
+        "slowestTitle": "現在のステージに最も長く滞留",
+        "empty": "アクティブなプロジェクトはありません。",
+        "inStageDays": "{{days}} 日"
+      }
     },
     "messages": {
       "title": "メッセージ",
@@ -819,11 +844,11 @@
         "updated": "{{name}} を更新しました。",
         "updateError": "クライアントを更新できませんでした。",
         "noManagers": "利用可能なアクティブなプロジェクトマネージャーがいません。",
-        "assigned": "{{client}} を {{manager}} に割り当てました。",
+        "assigned": "{{client}}を{{manager}}に割り当てました。展示会とブースプロジェクトは「プロジェクト」に用意されています。",
         "assignError": "割り当てを保存できませんでした。",
         "archived": "{{name}} をアーカイブしました。",
         "archiveError": "クライアントを削除できませんでした。",
-        "openingWorkspace": "チーフモニターで {{name}} を開いています。",
+        "openingWorkspace": "{{name}}のブースワークスペースを開いています。",
         "defaultClient": "クライアント",
         "unassigned": "未割り当て"
       },
@@ -897,7 +922,11 @@
       },
       "kanban": {
         "loading": "読込中",
-        "empty": "空"
+        "empty": "空",
+        "emptyBoardTitle": "プロジェクトはまだありません",
+        "emptyBoardBody": "クライアントにマネージャーを割り当てると、展示会とブースプロジェクトが自動的に作成されます。先に展示会を追加することもできます。",
+        "emptyBoardClientsCta": "クライアントへ",
+        "emptyBoardExhibitionCta": "展示会を追加"
       },
       "list": {
         "loading": "プロジェクト読込中...",
@@ -974,7 +1003,7 @@
       },
       "toast": {
         "updated": "{{name}} を更新しました",
-        "openMonitor": "{{name}} のモニターを開いています",
+        "openMonitor": "{{name}}のブースワークスペースを開いています",
         "moved": "{{name}} を {{stage}} に移動しました",
         "created": "Project \"{{name}}\" created.",
         "exported": "Projects exported to Excel."
@@ -1476,13 +1505,13 @@
         "empty": "この組織に緊急アクションはありません。"
       },
       "actions": {
-        "pendingApprovals": "{{count}} 件の承認待ち",
+        "pendingApprovals": "承認待ち",
         "pendingApprovalsDesc": "クライアントレビューが決定を待っています。",
         "openApprovals": "承認を開く",
-        "delayedProjects": "{{count}} 件の遅延プロジェクト",
+        "delayedProjects": "遅延中のプロジェクト",
         "delayedProjectsDesc": "プロジェクトにはPMの注意が必要です。",
         "reviewRisk": "リスクを確認",
-        "activeWorkspaces": "{{count}} 件のアクティブワークスペース",
+        "activeWorkspaces": "アクティブなワークスペース",
         "activeWorkspacesDesc": "ブースデザインが編集可能です。",
         "openWorkspace": "ワークスペースを開く",
         "noDelays": "No projects are currently delayed",
@@ -1652,7 +1681,7 @@
         "operationalStatus": "運用ステータス",
         "assignedPm": "担当PM：{{name}}",
         "lastActivity": "最終活動：{{time}}",
-        "dataSource": "PostgreSQLレコードから読み込み",
+        "dataSource": "クライアントとプロジェクトのライブデータ",
         "contact": "Contact",
         "linkedProject": "Linked Project",
         "noLinkedProject": "No linked project",
@@ -2060,7 +2089,7 @@
       "defaultClientName": "クライアント",
       "loadingProject": "プロジェクトを読み込み中...",
       "noActiveProject": "アクティブなプロジェクトなし",
-      "projectSubtitle": "プロジェクトデータはPostgreSQLから読み込まれます",
+      "projectSubtitle": "ブースプロジェクトのライブ概要",
       "loadingActiveProject": "アクティブなプロジェクトを読み込み中...",
       "noProjectAssigned": "まだアクティブなプロジェクトが割り当てられていません。",
       "pmLabel": "プロジェクトマネージャー",

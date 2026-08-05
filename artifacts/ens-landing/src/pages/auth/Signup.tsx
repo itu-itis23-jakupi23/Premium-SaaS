@@ -17,9 +17,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Spinner } from '@/components/ui/spinner';
-import { Eye, EyeOff, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, CheckCircle2, AlertTriangle, KeyRound, ShieldCheck } from 'lucide-react';
 import { useAuth, getRoleDashboard, type UserRole } from '@/contexts/AuthContext';
-import { PORTAL_MODE } from '@/lib/portal';
+import { PORTAL_MODE, getRequestPortal } from '@/lib/portal';
+import { invitationTokenFromInput } from '@/lib/platform-api';
 
 function PasswordStrength({ password }: { password: string }) {
   const { t } = useTranslation();
@@ -65,12 +66,32 @@ export default function Signup() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const isStaffPortal = PORTAL_MODE === 'staff';
-  const [selectedRole, setSelectedRole] = useState<UserRole>(isStaffPortal ? 'pm' : 'client');
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const roleQuery = searchParams.get('role') as UserRole | null;
+  const organizationQuery = searchParams.get('organization') ?? searchParams.get('agency') ?? '';
+  const activePortal = getRequestPortal();
+  const isStaffPortal = activePortal === 'staff';
+
+  const initialRole: UserRole = roleQuery && (isStaffPortal ? (roleQuery === 'pm' || roleQuery === 'chief') : roleQuery === 'client')
+    ? roleQuery
+    : (isStaffPortal ? 'pm' : 'client');
+  const [selectedRole, setSelectedRole] = useState<UserRole>(initialRole);
+  const [inviteInput, setInviteInput] = useState('');
+  const [inviteInputError, setInviteInputError] = useState('');
 
   useEffect(() => {
     document.title = t('auth.signup.pageTitle');
   }, [t]);
+
+  useEffect(() => {
+    if (!isStaffPortal) return;
+    const params = new URLSearchParams(window.location.search);
+    const legacyInvite = params.get('invite') ?? params.get('token');
+    if (!legacyInvite) return;
+
+    const token = invitationTokenFromInput(legacyInvite);
+    if (token) navigate(`/pm/join?token=${encodeURIComponent(token)}`, { replace: true });
+  }, [isStaffPortal, navigate]);
 
   // Schema defined inside component so t() is available for validation messages
   const needsCompany = selectedRole !== 'pm';
@@ -79,6 +100,9 @@ export default function Signup() {
       name: z.string().min(2, t('auth.signup.validation.nameMin')),
       company: needsCompany
         ? z.string().min(2, t('auth.signup.validation.companyMin'))
+        : z.string().default(''),
+      organizationSlug: selectedRole === 'client'
+        ? z.string().trim().min(2, 'Enter the agency code supplied by your Chief Manager.')
         : z.string().default(''),
       exhibition: selectedRole === 'client'
         ? z.string().min(2, 'Exhibition is required')
@@ -93,6 +117,9 @@ export default function Signup() {
       venueCity: z.string().default(''),
       targetDate: z.string().default(''),
       intakeNotes: z.string().max(1000).default(''),
+      setupKey: selectedRole === 'chief'
+        ? z.string().min(8, 'Enter the organization setup code provided by ENS.')
+        : z.string().default(''),
       email: z.string().email(t('auth.signup.validation.email')),
       password: z
         .string()
@@ -116,6 +143,7 @@ export default function Signup() {
     defaultValues: {
       name: '',
       company: '',
+      organizationSlug: organizationQuery,
       exhibition: '',
       boothWidthM: 6,
       boothDepthM: 3,
@@ -123,6 +151,7 @@ export default function Signup() {
       venueCity: '',
       targetDate: '',
       intakeNotes: '',
+      setupKey: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -140,6 +169,7 @@ export default function Signup() {
       const createdUser = await auth.signup({
         name: values.name,
         company: values.company,
+        organizationSlug: values.organizationSlug.trim().toLowerCase(),
         exhibition: values.exhibition,
         boothWidthM: values.boothWidthM,
         boothDepthM: values.boothDepthM,
@@ -147,6 +177,7 @@ export default function Signup() {
         venueCity: values.venueCity,
         targetDate: values.targetDate,
         intakeNotes: values.intakeNotes,
+        setupKey: values.setupKey,
         email: values.email,
         password: values.password,
         role: selectedRole,
@@ -159,10 +190,116 @@ export default function Signup() {
     }
   }
 
+  function continueWithInvitation(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const token = invitationTokenFromInput(inviteInput);
+    if (!token) {
+      setInviteInputError('Enter the invitation code or paste the invitation link sent by your Chief Manager.');
+      return;
+    }
+
+    setInviteInputError('');
+    navigate(`/pm/join?token=${encodeURIComponent(token)}`);
+  }
+
+  if (isStaffPortal && selectedRole === 'pm') {
+    return (
+      <AuthLayout
+        title="Join as a Project Manager"
+        description="Use the invitation from your Chief Manager. Your company and access are assigned automatically."
+      >
+        <div className="mb-5">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Account path
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              className="rounded-lg border border-primary bg-primary/10 p-3 text-left text-foreground"
+              data-testid="button-role-pm"
+            >
+              <span className="block text-sm font-semibold">Project Manager</span>
+              <span className="mt-1 block text-[11px] text-muted-foreground">Join an existing company</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedRole('chief');
+                setInviteInputError('');
+              }}
+              className="rounded-lg border border-border bg-background/40 p-3 text-left text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+              data-testid="button-role-chief"
+            >
+              <span className="block text-sm font-semibold">Chief Manager</span>
+              <span className="mt-1 block text-[11px]">Create a new company</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-5 flex items-start gap-3 border-l-2 border-primary bg-primary/5 px-4 py-3">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-semibold text-foreground">Invitation-only team access</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              The invitation identifies your company, work email, and Project Manager role. You cannot be assigned to the wrong organization by typing a company name.
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={continueWithInvitation} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="manager-invitation" className="text-sm font-medium">
+              Invitation link or code
+            </label>
+            <div className="relative">
+              <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Input
+                id="manager-invitation"
+                name="managerInvitation"
+                value={inviteInput}
+                onChange={(event) => {
+                  setInviteInput(event.target.value);
+                  setInviteInputError('');
+                }}
+                placeholder="Paste the link or invitation code"
+                autoComplete="one-time-code"
+                autoFocus
+                className="pl-10"
+                aria-describedby="manager-invitation-help"
+                aria-invalid={Boolean(inviteInputError)}
+                data-testid="input-manager-invitation"
+              />
+            </div>
+            <p id="manager-invitation-help" className="text-xs leading-relaxed text-muted-foreground">
+              You can paste the complete email link or only the code copied by your Chief Manager.
+            </p>
+            {inviteInputError && (
+              <p role="alert" className="text-xs text-red-400" data-testid="manager-invitation-error">
+                {inviteInputError}
+              </p>
+            )}
+          </div>
+
+          <Button type="submit" className="h-11 w-full rounded-full font-semibold" data-testid="button-continue-invitation">
+            Verify invitation
+            <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+          </Button>
+        </form>
+
+        <p className="mt-5 text-center text-sm text-muted-foreground">
+          Already activated your account?{' '}
+          <Link href="/login" className="font-medium text-primary hover:underline" data-testid="link-login">
+            Sign in
+          </Link>
+        </p>
+      </AuthLayout>
+    );
+  }
+
   return (
     <AuthLayout
-      title={isStaffPortal ? 'Create staff account' : t('auth.signup.title')}
-      description={isStaffPortal ? 'Create a real PM or Chief Manager login for this staff portal.' : t('auth.signup.description')}
+      title={selectedRole === 'chief' ? 'Create Chief Manager account' : selectedRole === 'pm' ? 'Join as Project Manager' : t('auth.signup.title')}
+      description={selectedRole === 'chief' ? 'Create a new agency workspace and become its Chief Manager.' : selectedRole === 'pm' ? 'Join an existing agency team using an invitation code.' : t('auth.signup.description')}
     >
       {error && (
         <div
@@ -177,8 +314,10 @@ export default function Signup() {
       <div className="mb-4 flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
         <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" aria-hidden="true" />
         <p className="text-sm text-muted-foreground">
-          {isStaffPortal
-            ? 'Staff signup creates a real account with access to the PM or Chief Manager portal.'
+          {selectedRole === 'chief'
+            ? 'Chief signup creates a new agency organization workspace.'
+            : selectedRole === 'pm'
+            ? 'Project Managers join an existing agency organization via a Chief invitation code.'
             : t('auth.signup.clientOnlyNote')}
         </p>
       </div>
@@ -188,26 +327,26 @@ export default function Signup() {
           {isStaffPortal && (
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                Account role
+                Staff Account Role
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {([
-                  ['pm', 'Project Manager', 'Workspace, clients, tasks'],
-                  ['chief', 'Chief Manager', 'Full team oversight'],
+                  ['pm', 'Project Manager', 'Join with invitation code'],
+                  ['chief', 'Chief Manager', 'Create agency workspace'],
                 ] as const).map(([role, label, description]) => (
                   <button
                     key={role}
                     type="button"
-                    onClick={() => setSelectedRole(role)}
-                    className={`rounded-lg border p-3 text-left transition-colors ${
+                    onClick={() => setSelectedRole(role as UserRole)}
+                    className={`rounded-lg border p-2.5 text-left transition-colors ${
                       selectedRole === role
-                        ? 'border-primary bg-primary/10 text-foreground'
+                        ? 'border-primary bg-primary/10 text-foreground ring-1 ring-primary'
                         : 'border-border bg-background/40 text-muted-foreground hover:border-primary/50'
                     }`}
                     data-testid={`button-role-${role}`}
                   >
-                    <span className="block text-sm font-semibold">{label}</span>
-                    <span className="mt-1 block text-[11px]">{description}</span>
+                    <span className="block text-xs font-semibold">{label}</span>
+                    <span className="mt-0.5 block text-[10px] leading-tight text-muted-foreground">{description}</span>
                   </button>
                 ))}
               </div>
@@ -257,12 +396,66 @@ export default function Signup() {
             )}
           </div>
 
+          {isStaffPortal && selectedRole === 'chief' && (
+            <FormField
+              control={form.control}
+              name="setupKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Organization setup code</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                      <Input
+                        type="text"
+                        placeholder="Enter 12345678"
+                        autoComplete="one-time-code"
+                        className="pl-10"
+                        {...field}
+                        data-testid="input-setup-key"
+                      />
+                    </div>
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    This code authorizes creation of a new company. Dev code: <code className="font-mono text-primary font-semibold">12345678</code>
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
           {selectedRole === 'client' && (
             <div className="space-y-3 rounded-xl border border-border/70 bg-background/35 p-3">
               <div>
                 <p className="text-sm font-semibold">Exhibition request</p>
-                <p className="text-xs text-muted-foreground">This helps Chief assign the right project manager.</p>
+                <p className="text-xs text-muted-foreground">Your agency code routes this request to the correct Chief Manager.</p>
               </div>
+              <FormField
+                control={form.control}
+                name="organizationSlug"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Agency code</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                        <Input
+                          placeholder="Code from your Chief Manager"
+                          autoComplete="organization"
+                          className="pl-10"
+                          {...field}
+                          data-testid="input-organization-code"
+                        />
+                      </div>
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      Use the registration link sent by your agency, or enter its code here.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="exhibition"
@@ -507,7 +700,7 @@ export default function Signup() {
 
           <Button
             type="submit"
-            className="w-full rounded-full h-11 font-semibold shadow-[0_0_15px_rgba(109,40,217,0.2)]"
+            className="w-full rounded-full h-11 font-semibold shadow-[0_0_15px_rgba(37,99,235,0.2)]"
             disabled={isSubmitting}
             data-testid="button-signup"
           >
@@ -517,7 +710,7 @@ export default function Signup() {
                 {t('auth.signup.submitting')}
               </span>
             ) : (
-              isStaffPortal ? `Create ${selectedRole === 'chief' ? 'Chief Manager' : 'PM'} Account` : t('auth.signup.submit')
+              isStaffPortal ? 'Create Chief Manager Account' : t('auth.signup.submit')
             )}
           </Button>
         </form>

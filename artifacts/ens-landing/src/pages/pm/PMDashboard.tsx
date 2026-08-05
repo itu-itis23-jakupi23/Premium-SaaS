@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import {
   AreaChart,
@@ -14,9 +15,10 @@ import {
   Cell,
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { preloadPortalRoute } from "@/lib/route-preload";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { StatCard } from "@/components/dashboard/StatCard";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   getPlatformOverview,
@@ -39,6 +41,7 @@ import {
   Monitor,
   Download,
   TrendingUp,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -48,8 +51,7 @@ export default function PMDashboard() {
   const [overview, setOverview] = useState<PlatformOverview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [toastMsg, setToastMsg] = useState("");
-  const [toastVisible, setToastVisible] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     document.title = t("pm.dashboard.title");
@@ -76,9 +78,7 @@ export default function PMDashboard() {
   }, [t]);
 
   function showToast(msg: string) {
-    setToastMsg(msg);
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 2400);
+    toast({ title: msg });
   }
 
   function exportDashboard() {
@@ -161,6 +161,20 @@ export default function PMDashboard() {
     }));
   }, [overview, t]);
 
+  const nextWorkspaceProject = useMemo(() => {
+    return (overview?.projects ?? []).find((project) => {
+      const normalized = `${project.status} ${project.health}`.toLowerCase();
+      return !normalized.includes("approved") && !normalized.includes("completed");
+    }) ?? overview?.projects?.[0] ?? null;
+  }, [overview]);
+
+  const nextReviewProject = useMemo(() => {
+    return (overview?.projects ?? []).find((project) => {
+      const normalized = `${project.status} ${project.health}`.toLowerCase();
+      return normalized.includes("review") || normalized.includes("revision") || normalized.includes("pending");
+    }) ?? null;
+  }, [overview]);
+
   const actionItems = useMemo(() => {
     if (!overview) return [];
     const items: Array<{
@@ -235,14 +249,28 @@ export default function PMDashboard() {
     return items;
   }, [overview, t]);
 
+  if (isLoading) {
+    return (
+      <DashboardLayout role="pm">
+        <DashboardSkeleton />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout role="pm">
-      <div className="space-y-8">
+      <div className="space-y-5">
         <PageHeader
           title={t("pm.dashboard.title")}
           breadcrumbs={[{ label: t("pm.nav.dashboard"), href: "/pm" }, { label: t("pm.dashboard.overview") }]}
         >
-          <Button variant="outline" size="sm" onClick={() => navigate("/pm/reports")}>
+          <Button
+            variant="outline"
+            size="sm"
+            onPointerEnter={() => { void preloadPortalRoute("/pm/reports")?.catch(() => undefined); }}
+            onFocus={() => { void preloadPortalRoute("/pm/reports")?.catch(() => undefined); }}
+            onClick={() => navigate("/pm/reports")}
+          >
             {t("pm.nav.reports")}
           </Button>
           <Button
@@ -265,18 +293,64 @@ export default function PMDashboard() {
           </div>
         )}
 
-        {/* Stat cards */}
-        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+        <div className="grid gap-3 xl:grid-cols-3">
+          <QuickActionCard
+            title="Next client workspace"
+            value={nextWorkspaceProject?.name ?? "None yet"}
+            description={nextWorkspaceProject?.client ?? "Assigned client projects will appear here after Chief approval."}
+            icon={Monitor}
+            href={nextWorkspaceProject ? `/pm/workspace?projectId=${encodeURIComponent(nextWorkspaceProject.id)}` : "/pm/projects"}
+            action={nextWorkspaceProject ? "Open workspace" : "View assigned projects"}
+          />
+          <QuickActionCard
+            title="Client handoff"
+            value={nextReviewProject?.name ?? "Nothing waiting"}
+            description={nextReviewProject ? "Review feedback, resubmit, or follow the client approval state." : "No revision or review work needs attention."}
+            icon={ClipboardCheck}
+            href={nextReviewProject ? `/pm/workspace?projectId=${encodeURIComponent(nextReviewProject.id)}` : "/pm/requests"}
+            action={nextReviewProject ? "Continue handoff" : "Open requests"}
+          />
+          <QuickActionCard
+            title="Assigned exhibitions"
+            value={`${metrics?.projects ?? 0} active project${(metrics?.projects ?? 0) === 1 ? "" : "s"}`}
+            description="Calendar shows only exhibitions and work assigned to you by Chief."
+            icon={Clock}
+            href="/pm/calendar"
+            action="Open calendar"
+          />
+        </div>
+
+        {/* Compact PM status */}
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {isLoading
             ? Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="rounded-xl border bg-card p-5 space-y-3">
+                <div key={i} className="rounded-lg border bg-card/60 p-4 space-y-2">
                   <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-7 w-16" />
                   <Skeleton className="h-3 w-20" />
                 </div>
               ))
             : stats.map((stat) => (
-                <StatCard key={stat.label} {...stat} />
+                <Link
+                  key={stat.label}
+                  href={stat.href}
+                  className="group rounded-lg border bg-card/60 p-4 transition-colors hover:border-primary/50 hover:bg-primary/5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {stat.label}
+                      </p>
+                      <p className="mt-2 text-3xl font-bold leading-none">{stat.value}</p>
+                    </div>
+                    <span className="rounded-lg bg-primary/10 p-2 text-primary transition-transform group-hover:scale-105">
+                      <stat.icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                  </div>
+                  <p className={cn("mt-3 text-xs font-semibold", stat.trendUp ? "text-green-500" : "text-red-500")}>
+                    {stat.trend}
+                  </p>
+                </Link>
               ))
           }
         </div>
@@ -579,18 +653,6 @@ export default function PMDashboard() {
         </Card>
       </div>
 
-      {/* ARIA live toast */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className={cn(
-          "fixed bottom-5 right-5 z-50 rounded-lg border border-primary/30 bg-card px-4 py-3 text-sm shadow-xl transition-all duration-300",
-          toastVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none",
-        )}
-      >
-        {toastMsg}
-      </div>
     </DashboardLayout>
   );
 }
@@ -600,6 +662,49 @@ function EmptyPanel({ text }: { text: string }) {
     <div className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
       {text}
     </div>
+  );
+}
+
+function QuickActionCard({
+  title,
+  value,
+  description,
+  icon: Icon,
+  href,
+  action,
+}: {
+  title: string;
+  value: string;
+  description: string;
+  icon: LucideIcon;
+  href: string;
+  action: string;
+}) {
+  return (
+    <Card className="border-primary/20 bg-primary/5">
+      <CardContent className="flex h-full items-center justify-between gap-4 p-4">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">{title}</p>
+          <p className="mt-1 truncate text-base font-bold">{value}</p>
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{description}</p>
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-3">
+          <span className="rounded-lg bg-background/70 p-2 text-primary">
+            <Icon className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <Button size="sm" className="h-8 text-xs" asChild>
+            <Link
+              href={href}
+              onPointerEnter={() => { void preloadPortalRoute(href)?.catch(() => undefined); }}
+              onFocus={() => { void preloadPortalRoute(href)?.catch(() => undefined); }}
+            >
+              {action}
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -631,4 +736,3 @@ function activityIcon(type: string) {
   if (normalized.includes("delay") || normalized.includes("risk")) return AlertCircle;
   return Clock;
 }
-

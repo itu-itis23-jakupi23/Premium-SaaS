@@ -29,7 +29,7 @@
       "titlePart2": "展览展位",
       "subtitle": "直接在浏览器中构建、定制和管理Octanorm和Maxima展位。专业展览设计师的专业工具。"
     },
-    "trustedBy": "受到以下机构信任",
+    "trustedBy": "为真实展位搭建而生",
     "stats": {
       "projectProgress": "项目进度",
       "boothDimensions": "展位尺寸",
@@ -167,6 +167,22 @@
         "title": "Communications Hub",
         "desc": "Centralised messaging across clients, PMs, and sub-contractors."
       }
+    },
+    "capabilityItems": {
+      "octanorm": "Octanorm 系统",
+      "maxima": "Maxima 系统",
+      "live3d": "实时 3D 工作区",
+      "bom": "BOM 与报价导出",
+      "approvals": "客户审批",
+      "languages": "支持 11 种语言"
+    },
+    "agency": {
+      "kicker": "面向展会代理公司",
+      "title": "用 ENS 运营整个代理公司",
+      "desc": "租用平台，让团队在一个系统中完成展位全生命周期——从客户接入、3D 设计到审批、生产任务和开票。",
+      "bullet1": "三大门户：负责人、项目经理与客户",
+      "bullet2": "使用您自己的家具目录与定价",
+      "bullet3": "审批、修改与发票自动跟踪"
     }
   },
   "team": {
@@ -387,7 +403,7 @@
         "pendingApprovals": "待审批",
         "activeWorkspaces": "活跃工作区",
         "saved": "已保存",
-        "db": "数据库",
+        "db": "实时数据",
         "live": "实时",
         "assigned": "已分配",
         "open": "待处理",
@@ -715,7 +731,16 @@
         "rowTotals": "合计"
       },
       "notConfigured": "Not configured",
-      "revenueNotice": "Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data."
+      "revenueNotice": "启用开票和客户评分后，收入与满意度报告将自动生效。下方的项目与交付数据均为实时数据。",
+      "pipelineFlow": {
+        "title": "流程分析",
+        "desc": "项目在各阶段的平均停留时间",
+        "avgDays": "平均 {{days}} 天",
+        "noData": "—",
+        "slowestTitle": "当前阶段停留最久",
+        "empty": "暂无进行中的项目。",
+        "inStageDays": "{{days}} 天"
+      }
     },
     "messages": {
       "title": "消息",
@@ -819,11 +844,11 @@
         "updated": "{{name}} 已更新。",
         "updateError": "无法更新客户。",
         "noManagers": "没有可用的活跃项目经理。",
-        "assigned": "{{client}} 已分配给 {{manager}}。",
+        "assigned": "已将 {{client}} 分配给 {{manager}}。展会和展位项目已在“项目”中就绪。",
         "assignError": "无法保存客户分配。",
         "archived": "{{name}} 已归档。",
         "archiveError": "无法删除客户。",
-        "openingWorkspace": "正在打开 {{name}} 的工作区监控。",
+        "openingWorkspace": "正在打开 {{name}} 的展位工作区。",
         "defaultClient": "客户",
         "unassigned": "未分配"
       },
@@ -897,7 +922,11 @@
       },
       "kanban": {
         "loading": "加载中",
-        "empty": "空"
+        "empty": "空",
+        "emptyBoardTitle": "暂无项目",
+        "emptyBoardBody": "为客户分配经理后，展会和展位项目会自动创建。您也可以先添加一个展会。",
+        "emptyBoardClientsCta": "前往客户",
+        "emptyBoardExhibitionCta": "添加展会"
       },
       "list": {
         "loading": "加载项目中...",
@@ -974,7 +1003,7 @@
       },
       "toast": {
         "updated": "{{name}} 已更新",
-        "openMonitor": "正在打开 {{name}} 的监控",
+        "openMonitor": "正在打开 {{name}} 的展位工作区",
         "moved": "{{name}} 已移至 {{stage}}",
         "created": "Project \"{{name}}\" created.",
         "exported": "Projects exported to Excel."
@@ -1476,13 +1505,13 @@
         "empty": "该组织目前没有紧急操作。"
       },
       "actions": {
-        "pendingApprovals": "{{count}} 个待处理审批",
+        "pendingApprovals": "待审批",
         "pendingApprovalsDesc": "客户审核工作正在等待决定。",
         "openApprovals": "打开审批",
-        "delayedProjects": "{{count}} 个延迟项目",
+        "delayedProjects": "延期项目",
         "delayedProjectsDesc": "项目需要 PM 关注。",
         "reviewRisk": "查看风险",
-        "activeWorkspaces": "{{count}} 个活跃工作区",
+        "activeWorkspaces": "活跃工作区",
         "activeWorkspacesDesc": "展台设计可供编辑。",
         "openWorkspace": "打开工作区",
         "noDelays": "No projects are currently delayed",
@@ -1652,7 +1681,7 @@
         "operationalStatus": "运营状态",
         "assignedPm": "负责PM：{{name}}",
         "lastActivity": "最近活动：{{time}}",
-        "dataSource": "从 PostgreSQL 记录加载",
+        "dataSource": "实时客户与项目记录",
         "contact": "Contact",
         "linkedProject": "Linked Project",
         "noLinkedProject": "No linked project",
@@ -2060,7 +2089,7 @@
       "defaultClientName": "客户",
       "loadingProject": "加载项目中...",
       "noActiveProject": "无活跃项目",
-      "projectSubtitle": "项目数据从 PostgreSQL 加载",
+      "projectSubtitle": "展位项目实时概览",
       "loadingActiveProject": "加载活跃项目中...",
       "noProjectAssigned": "尚未分配活跃项目。",
       "pmLabel": "项目经理",

@@ -13,15 +13,13 @@ interface ENSLogoProps {
 type SquareDef = { delay: number; isLast: boolean };
 
 const squareVariants: Variants = {
-  rest: (sq: SquareDef) => ({
+  rest: () => ({
     scale: 1,
-    opacity: sq.isLast ? 0.15 : 1,
-    backgroundColor: 'currentColor',
+    opacity: 1,
   }),
   hover: (sq: SquareDef) => ({
     scale: 1.2,
     opacity: 1,
-    backgroundColor: sq.isLast ? 'rgb(109,40,217)' : 'currentColor',
     transition: { delay: sq.delay, duration: 0.18, ease: 'easeOut' },
   }),
 };
@@ -70,7 +68,12 @@ export function ENSLogo({
               key={i}
               custom={sqDef}
               variants={squareVariants}
-              style={{ width: sq, height: sq, borderRadius: rx }}
+              style={{
+                width: sq,
+                height: sq,
+                borderRadius: rx,
+                backgroundColor: sqDef.isLast ? 'hsl(var(--primary))' : 'currentColor',
+              }}
               className="text-foreground"
             />
           ))}

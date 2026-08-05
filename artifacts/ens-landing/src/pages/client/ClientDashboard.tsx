@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import {
   getPlatformOverview,
   type PlatformOverview,
@@ -34,6 +36,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function ClientDashboard() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [overview, setOverview] = useState<PlatformOverview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +76,8 @@ export default function ClientDashboard() {
     projectStatus.includes("revision") ||
     projectStatus.includes("review");
   const clientName =
+    user?.name ??
+    overview?.clients[0]?.contactName ??
     overview?.clients[0]?.name ??
     overview?.organization?.name ??
     t("client.dashboard.defaultClientName");
@@ -122,6 +127,14 @@ export default function ClientDashboard() {
             : "pending",
     }));
   }, [activeProject, t]);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout role="client">
+        <DashboardSkeleton />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="client">

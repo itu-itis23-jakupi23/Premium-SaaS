@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,47 @@ export function StatCard({ label, value, icon: Icon, trend, trendUp, className, 
   const [, navigate] = useLocation();
   const { t } = useTranslation();
 
+  // Animated Counter Effect for numeric values
+  const numericMatch = value.match(/^([^\d]*)([\d,.]+)(.*)$/);
+  const prefix = numericMatch ? numericMatch[1] : "";
+  const numVal = numericMatch ? parseFloat(numericMatch[2].replace(/,/g, "")) : NaN;
+  const suffix = numericMatch ? numericMatch[3] : "";
+
+  const [displayCount, setDisplayCount] = useState(() => (Number.isNaN(numVal) ? value : 0));
+
+  useEffect(() => {
+    if (Number.isNaN(numVal)) {
+      setDisplayCount(value);
+      return;
+    }
+
+    let start = 0;
+    const duration = 600; // ms
+    const startTime = performance.now();
+
+    function step(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.floor(eased * numVal);
+
+      setDisplayCount(current);
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        setDisplayCount(numVal);
+      }
+    }
+
+    requestAnimationFrame(step);
+  }, [numVal, value]);
+
+  const formattedValue = Number.isNaN(numVal)
+    ? value
+    : `${prefix}${displayCount.toLocaleString()}${suffix}`;
+
   const cardProps = href
     ? {
         role: "button" as const,
@@ -31,32 +73,36 @@ export function StatCard({ label, value, icon: Icon, trend, trendUp, className, 
   return (
     <Card
       className={cn(
-        "overflow-hidden border-border bg-card/50 backdrop-blur-sm",
-        href && "cursor-pointer transition-colors hover:border-primary/40 hover:shadow-md",
+        "overflow-hidden border-border bg-card/50 backdrop-blur-sm transition-all hover:shadow-lg",
+        href && "cursor-pointer hover:border-primary/40 hover:scale-[1.01]",
         className,
       )}
       {...cardProps}
     >
-      <CardContent className="p-6">
+      <CardContent className="p-3.5 sm:p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">{label}</p>
-            <h3 className="mt-1 text-3xl font-bold tracking-tight">{value}</h3>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+            <h3 className="mt-1 text-2xl font-bold tracking-tight text-foreground transition-all">
+              {formattedValue}
+            </h3>
           </div>
-          <div className="rounded-full bg-primary/10 p-3 text-primary">
-            <Icon aria-hidden="true" className="h-6 w-6" />
+          <div className="rounded-full bg-primary/10 p-2.5 text-primary">
+            <Icon aria-hidden="true" className="h-5 w-5" />
           </div>
         </div>
         {trend && (
-          <div className="mt-4 flex items-center gap-2">
-            <span className={cn("text-xs font-medium", trendUp ? "text-green-500" : "text-red-500")}>
+          <div className="mt-2 flex items-center gap-1.5">
+            <span className={cn("text-[11px] font-semibold", trendUp ? "text-emerald-500" : "text-rose-500")}>
               {trend}
             </span>
-            <span className="text-xs text-muted-foreground">{t("common.vsLastMonth")}</span>
+            {/^[+-]/.test(trend) && (
+              <span className="text-[11px] text-muted-foreground/80">{t("common.vsLastMonth")}</span>
+            )}
           </div>
         )}
         {href && (
-          <p className="mt-2 text-[10px] text-muted-foreground/60">{t("common.clickToView")}</p>
+          <p className="mt-1 text-[10px] font-medium text-muted-foreground/60">{t("common.clickToView")}</p>
         )}
       </CardContent>
     </Card>

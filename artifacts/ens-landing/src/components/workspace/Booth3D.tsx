@@ -1,4 +1,4 @@
-import { BoothIframe } from './BoothIframe';
+import { BoothIframe, type CatalogDragItem } from './BoothIframe';
 
 // ─────────────────────────────────────────────────────────────────
 // Types — kept compatible with existing callers
@@ -31,6 +31,7 @@ export interface BoothConfig3D {
   pins?: any[];
   pinMode?: boolean;
   invalidItemIds?: string[];
+  catalogDragItem?: CatalogDragItem | null;
   onItemMove?: (id: string, patch: { x: number; z: number }) => void;
   onItemSelect?: (id: string | null, partId?: string | null, detail?: any) => void;
   onItemDelete?: (id: string) => void;
@@ -38,6 +39,8 @@ export interface BoothConfig3D {
   onRoomMove?: (id: string, patch: any) => void;
   onFrontSupportMove?: (positions: number[], suppressedDefaultPositions: number[]) => void;
   onPinRequest?: (partId: string, detail: any) => void;
+  onCatalogItemDrop?: (catalogId: string, position: { x: number; z: number }) => void;
+  onCatalogItemDropRejected?: (catalogId: string, reason: string) => void;
 }
 
 const DEFAULT: BoothConfig3D = {
@@ -91,6 +94,7 @@ export function Booth3D({ config }: { config?: Partial<BoothConfig3D> }) {
       pins:        cfg.pins,
       pinMode:     cfg.pinMode,
       invalidItemIds: cfg.invalidItemIds,
+      catalogDragItem: cfg.catalogDragItem,
       onItemMove:  cfg.onItemMove,
       onItemSelect: cfg.onItemSelect,
       onItemDelete: cfg.onItemDelete,
@@ -98,6 +102,8 @@ export function Booth3D({ config }: { config?: Partial<BoothConfig3D> }) {
       onRoomMove:  cfg.onRoomMove,
       onFrontSupportMove: cfg.onFrontSupportMove,
       onPinRequest: cfg.onPinRequest,
+      onCatalogItemDrop: cfg.onCatalogItemDrop,
+      onCatalogItemDropRejected: cfg.onCatalogItemDropRejected,
     }} />
   );
 }

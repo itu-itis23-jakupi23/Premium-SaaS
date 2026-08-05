@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   CheckCircle,
+  Building2,
   Eye,
   EyeOff,
   Loader2,
@@ -209,16 +210,30 @@ export default function PMJoin() {
   }
 
   function renderForm() {
+    const organizationName = invitation?.organization?.name || "Your ENS organization";
+    const expiresAt = invitation?.expiresAt
+      ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(invitation.expiresAt))
+      : "";
+
     return (
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         {/* Welcome banner */}
-        <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
-          <MailCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
-          <div className="text-sm">
-            <p className="font-medium">{t("pm.join.inviteConfirmed")}</p>
-            <p className="text-muted-foreground">
-              {t("pm.join.joiningAs", { email: invitation?.email ?? "" })}
-            </p>
+        <div className="border-l-2 border-primary bg-primary/5 px-4 py-3">
+          <div className="flex items-start gap-3">
+            <MailCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
+            <div className="min-w-0 text-sm">
+              <p className="font-medium">{t("pm.join.inviteConfirmed")}</p>
+              <div className="mt-2 flex items-center gap-2 text-foreground">
+                <Building2 className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                <p className="truncate font-semibold" data-testid="invitation-organization">{organizationName}</p>
+              </div>
+              <p className="mt-1 truncate text-xs text-muted-foreground" data-testid="invitation-email">
+                {invitation?.email ?? ""} / Project Manager
+              </p>
+              {expiresAt && (
+                <p className="mt-1 text-[11px] text-muted-foreground">Invitation expires {expiresAt}</p>
+              )}
+            </div>
           </div>
         </div>
 

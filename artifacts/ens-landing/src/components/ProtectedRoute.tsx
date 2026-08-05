@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useAuth, UserRole, getRoleDashboard } from '@/contexts/AuthContext';
 import { getPortalLoginPath, isRoleAllowedInPortal } from '@/lib/portal';
 import { LoadingScreen } from '@/components/LoadingScreen';
-import { Clock, Mail } from 'lucide-react';
+import { Clock, Mail, RefreshCw } from 'lucide-react';
 
 interface ProtectedRouteProps {
   component: React.ComponentType<Record<string, unknown>>;
@@ -12,7 +12,15 @@ interface ProtectedRouteProps {
   params?: Record<string, unknown>;
 }
 
-function ClientPendingScreen({ name }: { name: string }) {
+function ClientPendingScreen({
+  name,
+  isRefreshing,
+  onRefresh,
+}: {
+  name: string;
+  isRefreshing: boolean;
+  onRefresh: () => Promise<void>;
+}) {
   const { t } = useTranslation();
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)' }}>
@@ -32,14 +40,54 @@ function ClientPendingScreen({ name }: { name: string }) {
             {t('client.pendingApproval.emailNote')}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => { void onRefresh(); }}
+          disabled={isRefreshing}
+          style={{
+            width: '100%',
+            marginTop: 16,
+            minHeight: 44,
+            border: '1px solid #cbd5e1',
+            borderRadius: 8,
+            background: '#0f172a',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            cursor: isRefreshing ? 'wait' : 'pointer',
+            opacity: isRefreshing ? 0.65 : 1,
+          }}
+          data-testid="button-refresh-client-approval"
+        >
+          <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+          {t('pm.dashboard.retry')}
+        </button>
       </div>
     </div>
   );
 }
 
 export function ProtectedRoute({ component: Component, allowedRoles, params = {} }: ProtectedRouteProps) {
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, refresh, logout } = useAuth();
   const [, navigate] = useLocation();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const clientIsPending = user?.role === 'client' && !!user.clientStatus && user.clientStatus !== 'active';
+
+  async function refreshClientStatus() {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await refresh();
+    } catch {
+      // Keep the current authenticated session visible when a status recheck
+      // is temporarily unavailable; the automatic poll will retry.
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
 
   useEffect(() => {
     if (isLoading) return;
@@ -56,6 +104,14 @@ export function ProtectedRoute({ component: Component, allowedRoles, params = {}
     }
   }, [isAuthenticated, isLoading, user, allowedRoles, navigate, logout]);
 
+  useEffect(() => {
+    if (!clientIsPending) return;
+    const intervalId = window.setInterval(() => {
+      void refresh().catch(() => undefined);
+    }, 15_000);
+    return () => window.clearInterval(intervalId);
+  }, [clientIsPending, refresh]);
+
   if (isLoading) return <LoadingScreen label="Checking access" />;
   if (!isAuthenticated) return null;
   if (user && !isRoleAllowedInPortal(user.role)) return null;
@@ -63,8 +119,8 @@ export function ProtectedRoute({ component: Component, allowedRoles, params = {}
 
   // Client accounts that haven't been approved yet see a holding screen
   // rather than empty dashboards or confusing 403 errors.
-  if (user?.role === 'client' && user.clientStatus && user.clientStatus !== 'active') {
-    return <ClientPendingScreen name={user.name} />;
+  if (clientIsPending && user) {
+    return <ClientPendingScreen name={user.name} isRefreshing={isRefreshing} onRefresh={refreshClientStatus} />;
   }
 
   return <Component {...params} />;

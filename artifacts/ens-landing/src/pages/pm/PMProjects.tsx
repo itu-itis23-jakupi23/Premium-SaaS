@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
+import { preloadPortalRoute } from "@/lib/route-preload";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import {
-  createPlatformProject,
   deletePlatformProject,
   getPlatformProjects,
   recordReportExport,
@@ -34,7 +35,6 @@ import {
   List,
   Loader2,
   Pencil,
-  Plus,
   Ruler,
   Search,
   Trash2,
@@ -59,26 +59,6 @@ function initialStatusFilter(): FilterStatus {
 
 function initialSearchQuery() {
   return new URLSearchParams(window.location.search).get("q") ?? "";
-}
-
-function todayInputValue() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function isValidDate(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  return Number.isFinite(new Date(`${value}T00:00:00`).getTime());
-}
-
-function isPastDate(value: string) {
-  if (!value || !isValidDate(value)) return false;
-  const date = new Date(`${value}T00:00:00`);
-  const today = new Date(`${todayInputValue()}T00:00:00`);
-  return date < today;
 }
 
 const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
@@ -127,21 +107,14 @@ export default function PMProjects() {
   const [showFilter, setShowFilter] = useState(false);
   const [sortBy, setSortBy] = useState<SortField>("deadline");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [showCreate, setShowCreate] = useState(false);
-  const [newProject, setNewProject] = useState({
-    name: "", client: "", system: "octanorm", width: "6", depth: "3", deadline: "",
-  });
-  const [createError, setCreateError] = useState("");
   const [projects, setProjects] = useState<PlatformProject[]>([]);
   const [pagination, setPagination] = useState<PlatformPagination>(EMPTY_PAGINATION);
   const [summary, setSummary] = useState<PlatformProjectSummary>(EMPTY_SUMMARY);
   const [selectedProject, setSelectedProject] = useState<PlatformProject | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [stageBusy, setStageBusy] = useState("");
   const [loadError, setLoadError] = useState("");
-  const [toastMsg,     setToastMsg]     = useState("");
-  const [toastVisible, setToastVisible] = useState(false);
+  const { toast } = useToast();
   // Edit project
   const [editTarget, setEditTarget] = useState<PlatformProject | null>(null);
   const [editForm, setEditForm] = useState({ name: "", client: "", system: "octanorm", width: "6", depth: "3", deadline: "", description: "" });
@@ -218,40 +191,6 @@ export default function PMProjects() {
 
   const pageStart = pagination.total ? pagination.offset + 1 : 0;
   const pageEnd = Math.min(pagination.offset + projects.length, pagination.total);
-
-  async function createProject() {
-    if (!newProject.name.trim() || isSaving) return;
-    const width = Number(newProject.width);
-    const depth = Number(newProject.depth);
-    if (!Number.isFinite(width) || width < 1 || width > 100 || !Number.isFinite(depth) || depth < 1 || depth > 100) {
-      setCreateError(t("pm.projects.modal.dimensionsInvalid"));
-      return;
-    }
-    if (newProject.deadline && (!isValidDate(newProject.deadline) || isPastDate(newProject.deadline))) {
-      setCreateError(t("pm.projects.modal.deadlineInvalid"));
-      return;
-    }
-
-    setIsSaving(true);
-    setCreateError("");
-    try {
-      const created = await createPlatformProject(newProject);
-      const latest = await getPlatformProjects({ limit: PAGE_SIZE, offset: 0 });
-      setSearch("");
-      setFilter("All");
-      setPage(0);
-      setProjects(latest.projects);
-      setPagination(latest.pagination);
-      setSummary(latest.summary ?? EMPTY_SUMMARY);
-      setShowCreate(false);
-      setNewProject({ name: "", client: "", system: "octanorm", width: "6", depth: "3", deadline: "" });
-      showToast(t("pm.projects.toast.created", { name: created.project.name }));
-    } catch (reason) {
-      setCreateError(reason instanceof Error ? reason.message : t("pm.projects.toast.createError"));
-    } finally {
-      setIsSaving(false);
-    }
-  }
 
   async function refreshProjects() {
     const latest = await getPlatformProjects({
@@ -352,9 +291,7 @@ export default function PMProjects() {
   }
 
   function showToast(message: string) {
-    setToastMsg(message);
-    setToastVisible(true);
-    window.setTimeout(() => setToastVisible(false), 3500);
+    toast({ title: message });
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -449,13 +386,6 @@ export default function PMProjects() {
               <Download aria-hidden="true" className="h-3 w-3" />
               {t("pm.projects.export")}
             </button>
-            <button
-              onClick={() => { setCreateError(""); setShowCreate(true); }}
-              data-testid="button-create-project"
-              className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <Plus aria-hidden="true" className="h-3.5 w-3.5" /> {t("pm.projects.newProject")}
-            </button>
           </div>
         </PageHeader>
 
@@ -464,6 +394,10 @@ export default function PMProjects() {
             {loadError}
           </div>
         )}
+
+        <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+          Assigned client projects appear here after Chief approval. Use the project workspace to submit designs to the client.
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[
@@ -600,18 +534,6 @@ export default function PMProjects() {
         />
       </div>
 
-      {showCreate && (
-        <CreateProjectModal
-          value={newProject}
-          error={createError}
-          isSaving={isSaving}
-          onChange={(value) => { setCreateError(""); setNewProject(value); }}
-          onCancel={() => { setCreateError(""); setShowCreate(false); }}
-          onSubmit={createProject}
-          t={t}
-        />
-      )}
-
       {selectedProject && (
         <ProjectDetailDrawer
           project={selectedProject}
@@ -677,19 +599,6 @@ export default function PMProjects() {
         </>
       )}
 
-      {/* Always-rendered ARIA live region for toasts */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className={cn(
-          "fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background shadow-xl",
-          "transition-all duration-300",
-          toastVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none",
-        )}
-      >
-        <CheckCircle2 aria-hidden="true" className="h-4 w-4 text-green-400" /> {toastMsg}
-      </div>
     </DashboardLayout>
   );
 }
@@ -768,7 +677,11 @@ function ProjectTable({ projects, isLoading, locale, stageBusy, onDetails, onSta
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                    <Link href={`/pm/workspace?projectId=${encodeURIComponent(project.id)}`}>
+                    <Link
+                      href={`/pm/workspace?projectId=${encodeURIComponent(project.id)}`}
+                      onPointerEnter={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }}
+                      onFocus={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }}
+                    >
                       <button className="flex items-center gap-1 whitespace-nowrap rounded border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary hover:text-white">
                         <Layers aria-hidden="true" className="h-2.5 w-2.5" /> {t("pm.projects.actions.open")}
                       </button>
@@ -919,7 +832,11 @@ function ProjectGrid({ projects, isLoading, locale, stageBusy, onDetails, onStag
                   <CheckCircle2 aria-hidden="true" className="h-3 w-3" /> {t("pm.projects.actions.advance")}
                 </button>
               </div>
-              <Link href={`/pm/workspace?projectId=${encodeURIComponent(project.id)}`}>
+              <Link
+                href={`/pm/workspace?projectId=${encodeURIComponent(project.id)}`}
+                onPointerEnter={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }}
+                onFocus={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }}
+              >
                 <button className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-primary/20 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-white">
                   <Layers aria-hidden="true" className="h-3 w-3" /> {t("pm.projects.actions.openWorkspace")}
                 </button>
@@ -1104,118 +1021,6 @@ function PaginationBar({
         </button>
       </div>
     </div>
-  );
-}
-
-function CreateProjectModal({
-  value, error, isSaving, onChange, onCancel, onSubmit, t,
-}: {
-  value: { name: string; client: string; system: string; width: string; depth: string; deadline: string };
-  error: string;
-  isSaving: boolean;
-  onChange: (value: { name: string; client: string; system: string; width: string; depth: string; deadline: string }) => void;
-  onCancel: () => void;
-  onSubmit: () => void;
-  t: TFn;
-}) {
-  const dialogRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(dialogRef, true, onCancel);
-  return (
-    <>
-      <div aria-hidden="true" className="fixed inset-0 z-50 bg-black/40" onClick={onCancel} />
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="create-project-title"
-        className="fixed left-1/2 top-1/2 z-50 w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-background p-6 shadow-2xl"
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 id="create-project-title" className="text-base font-bold">{t("pm.projects.modal.title")}</h2>
-          <button onClick={onCancel} className="text-muted-foreground hover:text-foreground" aria-label={t("pm.common.cancel")}>
-            <X aria-hidden="true" className="h-4 w-4" />
-          </button>
-        </div>
-
-        {error && (
-          <div role="alert" className="mb-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-500">
-            {error}
-          </div>
-        )}
-
-        <div className="space-y-3">
-          {([
-            [t("pm.projects.modal.projectName"), "name"],
-            [t("pm.projects.modal.client"),      "client"],
-          ] as const).map(([label, key]) => (
-            <div key={key}>
-              <label className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{label}</label>
-              <input
-                value={value[key]}
-                onChange={(event) => onChange({ ...value, [key]: event.target.value })}
-                placeholder={label}
-                className="h-9 w-full rounded-md border bg-muted/30 px-3 text-sm outline-none focus:border-primary"
-              />
-            </div>
-          ))}
-
-          <div>
-            <label className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{t("pm.projects.modal.deadline")}</label>
-            <input
-              type="date"
-              min={todayInputValue()}
-              value={value.deadline}
-              onChange={(event) => onChange({ ...value, deadline: event.target.value })}
-              className="h-9 w-full rounded-md border bg-muted/30 px-3 text-sm outline-none focus:border-primary"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{t("pm.projects.modal.system")}</label>
-            <select
-              value={value.system}
-              onChange={(event) => onChange({ ...value, system: event.target.value })}
-              className="h-9 w-full rounded-md border bg-muted/30 px-3 text-sm outline-none focus:border-primary"
-            >
-              <option value="octanorm">Octanorm</option>
-              <option value="maxima">Maxima</option>
-              <option value="custom">{t("pm.projects.modal.systemCustom")}</option>
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {([
-              [t("pm.projects.modal.width"), "width"],
-              [t("pm.projects.modal.depth"), "depth"],
-            ] as const).map(([label, key]) => (
-              <div key={key}>
-                <label className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{label}</label>
-                <input
-                  type="number" min="1" max="100" step="0.5"
-                  value={value[key]}
-                  onChange={(event) => onChange({ ...value, [key]: event.target.value })}
-                  className="h-9 w-full rounded-md border bg-muted/30 px-3 text-sm outline-none focus:border-primary"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-5 flex justify-end gap-2">
-          <button onClick={onCancel} className="rounded-md border px-4 py-2 text-sm text-muted-foreground hover:text-foreground">
-            {t("pm.common.cancel")}
-          </button>
-          <button
-            onClick={onSubmit}
-            disabled={!value.name.trim() || isSaving}
-            className="flex items-center gap-2 rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
-          >
-            {isSaving && <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />}
-            {isSaving ? t("pm.common.saving") : t("pm.projects.modal.submit")}
-          </button>
-        </div>
-      </div>
-    </>
   );
 }
 
@@ -1499,25 +1304,20 @@ function ProjectDetailDrawer({
         </div>
 
         <div className="flex items-center justify-between gap-2 border-t p-4">
-          <button
-            type="button"
-            onClick={() => onDelete(project)}
-            className="flex items-center gap-1.5 rounded-md border border-red-500/30 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 hover:border-red-500/60 transition-colors"
-            aria-label={t("pm.projects.delete.title")}
-          >
-            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-            {t("pm.projects.actions.delete")}
-          </button>
+          <p className="max-w-[260px] text-xs leading-relaxed text-muted-foreground">
+            Project ownership, client assignment, and deletion are controlled by Chief Manager.
+          </p>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onEdit(project)}
-              className="flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            <Link href={`/pm/calendar?clientName=${encodeURIComponent(project.client)}`}>
+              <button className="rounded-md border px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                {t("pm.nav.calendar")}
+              </button>
+            </Link>
+            <Link
+              href={`/pm/workspace?projectId=${encodeURIComponent(project.id)}`}
+              onPointerEnter={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }}
+              onFocus={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }}
             >
-              <Pencil aria-hidden="true" className="h-3.5 w-3.5" />
-              {t("pm.projects.actions.edit")}
-            </button>
-            <Link href={`/pm/workspace?projectId=${encodeURIComponent(project.id)}`}>
               <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
                 {t("pm.projects.actions.openWorkspace")}
               </button>

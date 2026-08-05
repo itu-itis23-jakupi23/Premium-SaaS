@@ -270,6 +270,11 @@ router.get("/validate", async (req: Request, res: Response) => {
       name:      row.name || null,
       expiresAt: toApiShape(row).expiresAt,
       role:      row.role,
+      organization: {
+        id: "local-organization",
+        name: fallbackAgencyName(),
+        slug: process.env.DEFAULT_ORGANIZATION_SLUG || slugifyOrganization(fallbackAgencyName()),
+      },
     });
   } catch (err) {
     console.error("[GET /invitations/validate]", err);

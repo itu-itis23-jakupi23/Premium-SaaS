@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
@@ -67,8 +68,7 @@ export default function PMRequests() {
   const [page, setPage] = useState(0);
   const [pagination, setPagination] = useState<PlatformPagination>(EMPTY_PAGINATION);
   const [summary, setSummary] = useState<PmRequestSummary>(EMPTY_SUMMARY);
-  const [toastMsg,     setToastMsg]     = useState("");
-  const [toastVisible, setToastVisible] = useState(false);
+  const { toast } = useToast();
   const [error,     setError]     = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [busyAction, setBusyAction] = useState("");
@@ -142,9 +142,7 @@ export default function PMRequests() {
   }
 
   function showToast(msg: string) {
-    setToastMsg(msg);
-    setToastVisible(true);
-    window.setTimeout(() => setToastVisible(false), 3000);
+    toast({ title: msg });
   }
 
   async function changeStatus(id: string, status: Status) {
@@ -685,16 +683,6 @@ export default function PMRequests() {
         </>
       )}
 
-      {/* Always-rendered ARIA live toast */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 bg-foreground text-background px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-xl z-50 transition-all duration-300 ${toastVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"}`}
-      >
-        <CheckCircle2 aria-hidden="true" className="h-4 w-4 text-green-400" />
-        {toastMsg}
-      </div>
     </DashboardLayout>
   );
 }

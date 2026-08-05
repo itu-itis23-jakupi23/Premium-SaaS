@@ -10,7 +10,7 @@ import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { downloadExcelWorkbook } from "@/lib/excel-export";
-import { getChiefReport, recordReportExport, type ChiefReportPayload } from "@/lib/platform-api";
+import { getChiefReport, getPipelineFlowReport, recordReportExport, type ChiefReportPayload, type PipelineFlowReport } from "@/lib/platform-api";
 import { ArrowUpDown, BarChart3, Briefcase, ChevronUp, ChevronDown, Download, ExternalLink, Star, TrendingUp, Users } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -64,6 +64,15 @@ export default function ChiefReports() {
       });
     return () => { mounted = false; };
   }, [range, t]);
+
+  const [pipelineFlow, setPipelineFlow] = useState<PipelineFlowReport | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    getPipelineFlowReport()
+      .then((data) => { if (mounted) setPipelineFlow(data); })
+      .catch(() => { if (mounted) setPipelineFlow(null); });
+    return () => { mounted = false; };
+  }, []);
 
   const revenueData    = report?.revenueData    ?? [];
   const pmPerformance  = report?.pmPerformance  ?? [];
@@ -348,6 +357,65 @@ export default function ChiefReports() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Pipeline flow — time in stage */}
+        {pipelineFlow && (
+          <Card className="bg-card/50 border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold">{t("chief.reports.pipelineFlow.title")}</CardTitle>
+              <CardDescription className="text-[10px]">{t("chief.reports.pipelineFlow.desc")}</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-2.5">
+                {(() => {
+                  const maxAvg = Math.max(1, ...pipelineFlow.stages.map((s) => s.avgDays));
+                  return pipelineFlow.stages.map((row) => (
+                    <div key={row.stage} className="flex items-center gap-3">
+                      <span className="w-20 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {t(`chief.projects.stage.${row.stage}`)}
+                      </span>
+                      <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted/40">
+                        <div
+                          className="h-full rounded-full bg-primary/70"
+                          style={{ width: `${Math.max(3, (row.avgDays / maxAvg) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="w-24 shrink-0 text-right text-[10.5px] font-semibold">
+                        {row.projects
+                          ? t("chief.reports.pipelineFlow.avgDays", { days: row.avgDays })
+                          : t("chief.reports.pipelineFlow.noData")}
+                      </span>
+                    </div>
+                  ));
+                })()}
+              </div>
+              <div>
+                <p className="mb-2 text-[9px] uppercase tracking-widest text-muted-foreground">
+                  {t("chief.reports.pipelineFlow.slowestTitle")}
+                </p>
+                {pipelineFlow.slowest.length === 0 && (
+                  <p className="py-2 text-[10.5px] text-muted-foreground">{t("chief.reports.pipelineFlow.empty")}</p>
+                )}
+                {pipelineFlow.slowest.map((project) => (
+                  <button
+                    key={project.projectId}
+                    type="button"
+                    onClick={() => navigate(`/chief/workspace?projectId=${encodeURIComponent(project.projectId)}`)}
+                    className="flex w-full items-center justify-between border-b border-border/40 py-1.5 text-left transition-colors last:border-0 hover:bg-muted/10 rounded group"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[10.5px] font-medium transition-colors group-hover:text-primary">{project.name}</p>
+                      <p className="text-[9px] text-muted-foreground">{t(`chief.projects.stage.${project.stage}`)}</p>
+                    </div>
+                    <span className={`ml-2 shrink-0 rounded px-1.5 py-0.5 text-[9.5px] font-bold ${project.days >= 7 ? "bg-red-500/10 text-red-500" : "bg-orange-500/10 text-orange-500"}`}>
+                      {t("chief.reports.pipelineFlow.inStageDays", { days: project.days })}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* PM Leaderboard */}
         <Card className="bg-card/50 border-border">

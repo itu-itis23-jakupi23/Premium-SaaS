@@ -294,7 +294,8 @@ async function canAccessProjectThread(actor: Actor, contactId: string, projectId
   if (actor.role === "client" && actorClientAgency && projectAgency !== actorClientAgency) return false;
 
   if (actor.role === "chief") {
-    return !contactClient || clientMatchesProject(contactClient, project) || isAssignedPm({ ...actor, role: "pm" }, project.pm);
+    if (contactClient) return clientMatchesProject(contactClient, project);
+    return assignedPmMatchesContact(project, contactId, actorCompany);
   }
 
   if (actor.role === "pm") {

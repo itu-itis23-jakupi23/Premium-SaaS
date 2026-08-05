@@ -29,7 +29,7 @@
       "titlePart2": "ثلاثي الأبعاد الفوري",
       "subtitle": "بناء وتخصيص وإدارة أجنحة Octanorm وMaxima مباشرة في متصفحك. أدوات احترافية للمصممين الجادين في مجال المعارض."
     },
-    "trustedBy": "موثوق به من قِبَل",
+    "trustedBy": "مصمّم لإنتاج الأجنحة الفعلي",
     "stats": {
       "projectProgress": "تقدم المشروع",
       "boothDimensions": "أبعاد الجناح",
@@ -167,6 +167,22 @@
         "title": "Communications Hub",
         "desc": "Centralised messaging across clients, PMs, and sub-contractors."
       }
+    },
+    "capabilityItems": {
+      "octanorm": "نظام Octanorm",
+      "maxima": "نظام Maxima",
+      "live3d": "مساحة عمل ثلاثية الأبعاد مباشرة",
+      "bom": "تصدير قائمة المواد والعرض",
+      "approvals": "موافقات العملاء",
+      "languages": "11 لغة"
+    },
+    "agency": {
+      "kicker": "لوكالات المعارض",
+      "title": "أدر وكالتك بالكامل على ENS",
+      "desc": "استأجر المنصة وامنح فريقك نظامًا واحدًا لدورة الجناح الكاملة — من تسجيل العميل والتصميم ثلاثي الأبعاد إلى الموافقات ومهام الإنتاج والفوترة.",
+      "bullet1": "ثلاث بوابات: الإدارة ومديرو المشاريع والعملاء",
+      "bullet2": "كتالوج الأثاث والأسعار الخاصة بك",
+      "bullet3": "تتبع تلقائي للموافقات والمراجعات والفواتير"
     }
   },
   "team": {
@@ -387,7 +403,7 @@
         "pendingApprovals": "الموافقات المعلقة",
         "activeWorkspaces": "مساحات العمل النشطة",
         "saved": "محفوظ",
-        "db": "قاعدة البيانات",
+        "db": "بيانات مباشرة",
         "live": "مباشر",
         "assigned": "معين",
         "open": "مفتوح",
@@ -715,7 +731,16 @@
         "rowTotals": "الإجماليات"
       },
       "notConfigured": "Not configured",
-      "revenueNotice": "Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data."
+      "revenueNotice": "تُفعَّل تقارير الإيرادات والرضا عند بدء استخدام الفوترة وتقييمات العملاء. جميع أرقام المشاريع والتسليم أدناه مباشرة.",
+      "pipelineFlow": {
+        "title": "تدفق المراحل",
+        "desc": "متوسط الوقت الذي تقضيه المشاريع في كل مرحلة",
+        "avgDays": "متوسط {{days}} يوم",
+        "noData": "—",
+        "slowestTitle": "الأطول بقاءً في المرحلة الحالية",
+        "empty": "لا توجد مشاريع نشطة.",
+        "inStageDays": "{{days}} يوم"
+      }
     },
     "messages": {
       "title": "الرسائل",
@@ -819,11 +844,11 @@
         "updated": "تم تحديث {{name}}.",
         "updateError": "تعذر تحديث العميل.",
         "noManagers": "لا يوجد مديرو مشاريع نشطون متاحون.",
-        "assigned": "تم تعيين {{client}} إلى {{manager}}.",
+        "assigned": "تم إسناد {{client}} إلى {{manager}}. المعرض ومشروع الجناح جاهزان في قسم المشاريع.",
         "assignError": "تعذر حفظ تعيين العميل.",
         "archived": "تمت أرشفة {{name}}.",
         "archiveError": "تعذر إزالة العميل.",
-        "openingWorkspace": "فتح {{name}} في شاشة المراقبة.",
+        "openingWorkspace": "جارٍ فتح مساحة عمل الجناح لـ {{name}}.",
         "defaultClient": "عميل",
         "unassigned": "غير معيّن"
       },
@@ -897,7 +922,11 @@
       },
       "kanban": {
         "loading": "جارٍ التحميل",
-        "empty": "فارغ"
+        "empty": "فارغ",
+        "emptyBoardTitle": "لا توجد مشاريع بعد",
+        "emptyBoardBody": "عند إسناد مدير إلى عميل، يُنشأ المعرض ومشروع الجناح تلقائيًا. يمكنك أيضًا البدء بإضافة معرض.",
+        "emptyBoardClientsCta": "الانتقال إلى العملاء",
+        "emptyBoardExhibitionCta": "إضافة معرض"
       },
       "list": {
         "loading": "جارٍ تحميل المشاريع...",
@@ -974,7 +1003,7 @@
       },
       "toast": {
         "updated": "تم تحديث {{name}}",
-        "openMonitor": "جارٍ فتح الشاشة لـ {{name}}",
+        "openMonitor": "جارٍ فتح مساحة عمل الجناح لـ {{name}}",
         "moved": "تم نقل {{name}} إلى {{stage}}",
         "created": "Project \"{{name}}\" created.",
         "exported": "Projects exported to Excel."
@@ -1476,13 +1505,13 @@
         "empty": "لا توجد إجراءات عاجلة لهذه المنظمة."
       },
       "actions": {
-        "pendingApprovals": "{{count}} موافقة معلقة",
+        "pendingApprovals": "موافقات معلّقة",
         "pendingApprovalsDesc": "مراجعات العملاء تنتظر قراراً.",
         "openApprovals": "فتح الموافقات",
-        "delayedProjects": "{{count}} مشروع متأخر",
+        "delayedProjects": "مشاريع متأخرة",
         "delayedProjectsDesc": "المشاريع تحتاج إلى اهتمام مدير المشروع.",
         "reviewRisk": "مراجعة المخاطر",
-        "activeWorkspaces": "{{count}} مساحة عمل نشطة",
+        "activeWorkspaces": "مساحات عمل نشطة",
         "activeWorkspacesDesc": "تصاميم الجناح متاحة للتعديل.",
         "openWorkspace": "فتح مساحة العمل",
         "noDelays": "No projects are currently delayed",
@@ -1652,7 +1681,7 @@
         "operationalStatus": "الحالة التشغيلية",
         "assignedPm": "مدير المشروع المعيّن: {{name}}",
         "lastActivity": "آخر نشاط: {{time}}",
-        "dataSource": "تم التحميل من سجلات PostgreSQL",
+        "dataSource": "سجلات العملاء والمشاريع المباشرة",
         "contact": "Contact",
         "linkedProject": "Linked Project",
         "noLinkedProject": "No linked project",
@@ -2060,7 +2089,7 @@
       "defaultClientName": "العميل",
       "loadingProject": "جارٍ تحميل المشروع...",
       "noActiveProject": "لا يوجد مشروع نشط",
-      "projectSubtitle": "يتم تحميل بيانات المشروع من PostgreSQL",
+      "projectSubtitle": "نظرة مباشرة على مشروع جناحك",
       "loadingActiveProject": "جارٍ تحميل المشروع النشط...",
       "noProjectAssigned": "لم يتم تعيين أي مشروع نشط بعد.",
       "pmLabel": "مدير المشروع",

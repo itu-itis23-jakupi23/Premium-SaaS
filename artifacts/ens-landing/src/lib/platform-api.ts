@@ -1,4 +1,5 @@
 import { chartData, mockActivity, mockClients, mockMessages, mockProjects } from "@/lib/mock-data";
+import { getRequestPortal } from "@/lib/portal";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api").replace(/\/+$/, "");
 const ORGANIZATION_SLUG = import.meta.env.VITE_ORGANIZATION_SLUG ?? "ens-demo-agency";
@@ -302,6 +303,7 @@ export interface WorkspacePlacedItem {
   rotationX?: number;
   rotationY?: number;
   rotationZ?: number;
+  locked?: boolean;
   kind?: "furniture" | "light" | "structure" | "fascia" | "asset";
   shape?: string;
   modelUrl?: string;
@@ -347,6 +349,8 @@ export interface WorkspaceState {
   placedItems: WorkspacePlacedItem[];
   rooms?: WorkspaceRoom[];
   notes: WorkspaceNote[];
+  /** Canonical quote in USD cents from the PM BOM model; server persists per version. */
+  quoteTotalCents?: number;
 }
 
 export interface WorkspaceVersion {
@@ -480,6 +484,66 @@ export interface ChiefWorkflowSummary {
     stalledApprovals: number;
     overloadedManagers: number;
   };
+}
+
+function normalizeChiefWorkflowSummary(value: ChiefWorkflowSummary): ChiefWorkflowSummary {
+  const workflow = value as Partial<ChiefWorkflowSummary>;
+  const counts = workflow.counts as Partial<ChiefWorkflowSummary["counts"]> | undefined;
+
+  return {
+    unassignedClients: Array.isArray(workflow.unassignedClients) ? workflow.unassignedClients : [],
+    unassignedProjects: Array.isArray(workflow.unassignedProjects) ? workflow.unassignedProjects : [],
+    newProjectManagers: Array.isArray(workflow.newProjectManagers) ? workflow.newProjectManagers : [],
+    approvalAging: Array.isArray(workflow.approvalAging) ? workflow.approvalAging : [],
+    workloadAlerts: Array.isArray(workflow.workloadAlerts) ? workflow.workloadAlerts : [],
+    counts: {
+      pendingClientApprovals: Number(counts?.pendingClientApprovals ?? 0),
+      unassignedClients: Number(counts?.unassignedClients ?? 0),
+      unassignedProjects: Number(counts?.unassignedProjects ?? 0),
+      newProjectManagers: Number(counts?.newProjectManagers ?? 0),
+      stalledApprovals: Number(counts?.stalledApprovals ?? 0),
+      overloadedManagers: Number(counts?.overloadedManagers ?? 0),
+    },
+  };
+}
+
+function normalizePlatformOverview(value: PlatformOverview): PlatformOverview {
+  const overview = value && typeof value === "object"
+    ? value as Partial<PlatformOverview>
+    : {};
+  const metrics = overview.metrics as Partial<PlatformMetrics> | undefined;
+  const charts = overview.charts as Partial<PlatformOverview["charts"]> | undefined;
+
+  return {
+    organization: overview.organization && typeof overview.organization === "object"
+      ? overview.organization
+      : null,
+    metrics: {
+      clients: finiteNumber(metrics?.clients),
+      projects: finiteNumber(metrics?.projects),
+      projectManagers: finiteNumber(metrics?.projectManagers),
+      delayedProjects: finiteNumber(metrics?.delayedProjects),
+      pendingApprovals: finiteNumber(metrics?.pendingApprovals),
+      activeWorkspaces: finiteNumber(metrics?.activeWorkspaces),
+      documents: finiteNumber(metrics?.documents),
+      comments: finiteNumber(metrics?.comments),
+      completedProjects: finiteNumber(metrics?.completedProjects),
+    },
+    projects: Array.isArray(overview.projects) ? overview.projects : [],
+    clients: Array.isArray(overview.clients) ? overview.clients : [],
+    activity: Array.isArray(overview.activity) ? overview.activity : [],
+    charts: {
+      activity: Array.isArray(charts?.activity) ? charts.activity : [],
+      distribution: Array.isArray(charts?.distribution) ? charts.distribution : [],
+      activityCount: finiteNumber(charts?.activityCount),
+    },
+    workflow: overview.workflow ? normalizeChiefWorkflowSummary(overview.workflow) : null,
+  };
+}
+
+function finiteNumber(value: unknown) {
+  const number = typeof value === "number" ? value : Number(value ?? 0);
+  return Number.isFinite(number) ? number : 0;
 }
 
 export interface MessageContact {
@@ -739,8 +803,11 @@ export interface CalendarEvent {
 export type CalendarEventInput = Omit<CalendarEvent, "id">;
 
 export async function getPlatformOverview() {
-  if (USE_MOCK_API && !USE_REAL_CORE) return mockPlatformOverview();
-  return apiGet<PlatformOverview>("/platform/overview");
+  const overview = USE_MOCK_API && !USE_REAL_CORE
+    ? mockPlatformOverview()
+    : await apiGet<PlatformOverview>("/platform/overview");
+
+  return normalizePlatformOverview(overview);
 }
 
 export async function getPlatformProjects(params: PlatformProjectListParams = {}) {
@@ -1203,7 +1270,6 @@ export async function deletePlatformClient(clientId: string) {
     credentials: "include",
     headers: {
       accept: "application/json",
-      "x-organization-slug": ORGANIZATION_SLUG,
     },
   });
 
@@ -1228,6 +1294,36 @@ export async function updatePlatformClientStatus(clientId: string, status: strin
     `/platform/clients/${clientId}/status`,
     { status },
   );
+}
+
+export async function approvePlatformClient(clientId: string, input: {
+  managerId: string;
+  note?: string;
+  confirmOverCapacity?: boolean;
+  overrideReason?: string | null;
+}) {
+  if (USE_MOCK_API) {
+    const manager = mockManagerWorkspace().managers.find((item) => item.id === input.managerId);
+    return {
+      ok: true,
+      clients: mockPlatformClients().map((client) => client.id === clientId
+        ? { ...client, status: "Active", pm: manager?.name ?? "Assigned" }
+        : client),
+    };
+  }
+  return apiPatch<{ ok: boolean; clients: PlatformClient[] }>(`/platform/clients/${clientId}/approve`, input);
+}
+
+export async function rejectPlatformClient(clientId: string, reason: string) {
+  if (USE_MOCK_API) {
+    return {
+      ok: true,
+      clients: mockPlatformClients().map((client) => client.id === clientId
+        ? { ...client, status: "Archived" }
+        : client),
+    };
+  }
+  return apiPatch<{ ok: boolean; clients: PlatformClient[] }>(`/platform/clients/${clientId}/reject`, { reason });
 }
 
 export async function getCurrentWorkspace() {
@@ -1463,7 +1559,6 @@ export async function uploadConversationAttachment(file: File) {
       accept: "application/json",
       "content-type": file.type || "application/octet-stream",
       "x-file-name": encodeURIComponent(file.name),
-      "x-organization-slug": ORGANIZATION_SLUG,
       ...actorHeaders(),
     },
     body: file,
@@ -1776,6 +1871,15 @@ export async function recordReportExport(input: { report: string; range?: string
   return apiJson<{ ok: boolean }>("/platform/reports/export-audit", input);
 }
 
+export interface PipelineFlowReport {
+  stages: { stage: string; projects: number; avgDays: number }[];
+  slowest: { projectId: string; name: string; stage: string; days: number }[];
+}
+
+export async function getPipelineFlowReport() {
+  return apiGet<PipelineFlowReport>("/platform/reports/pipeline-flow");
+}
+
 export async function getChiefReport(range: "3M" | "6M" | "12M") {
   if (USE_MOCK_API) return mockChiefReport(range);
   return apiGet<ChiefReportPayload>(`/platform/reports/chief?range=${encodeURIComponent(range)}`);
@@ -1826,6 +1930,26 @@ export interface InviteTokenPayload {
   name: string | null;
   expiresAt: string;
   role: string;
+  organization?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+}
+
+export function invitationTokenFromInput(input: string): string {
+  const value = input.trim();
+  if (!value) return "";
+
+  try {
+    const url = new URL(value, "http://localhost");
+    const token = url.searchParams.get("token") ?? url.searchParams.get("invite");
+    if (token?.trim()) return token.trim();
+  } catch {
+    // A raw invitation code is valid input and does not need URL parsing.
+  }
+
+  return value.replace(/\s+/g, "");
 }
 
 export async function validateInviteToken(token: string): Promise<InviteTokenPayload> {
@@ -1847,6 +1971,11 @@ export async function validateInviteToken(token: string): Promise<InviteTokenPay
       name: invitation.name ?? null,
       expiresAt: invitation.expiresAt,
       role: invitation.role,
+      organization: {
+        id: "mock-organization",
+        name: "ENS Demo Agency",
+        slug: "ens-demo-agency",
+      },
     };
   }
   return apiGet<InviteTokenPayload>(`/platform/managers/invitations/validate?token=${encodeURIComponent(token)}`);
@@ -1916,7 +2045,6 @@ async function apiGet<T>(path: string): Promise<T> {
     credentials: "include",
     headers: {
       accept: "application/json",
-      "x-organization-slug": ORGANIZATION_SLUG,
       ...actorHeaders(),
     },
   });
@@ -1940,7 +2068,6 @@ async function apiJsonWithMethod<T>(method: "POST" | "PUT" | "DELETE", path: str
     headers: {
       accept: "application/json",
       "content-type": "application/json",
-      "x-organization-slug": ORGANIZATION_SLUG,
       ...actorHeaders(),
     },
     body: JSON.stringify(body),
@@ -1960,7 +2087,6 @@ async function apiPatch<T>(path: string, body: unknown): Promise<T> {
     headers: {
       accept: "application/json",
       "content-type": "application/json",
-      "x-organization-slug": ORGANIZATION_SLUG,
       ...actorHeaders(),
     },
     body: JSON.stringify(body),
@@ -1979,7 +2105,6 @@ async function apiDelete<T>(path: string): Promise<T> {
     credentials: "include",
     headers: {
       accept: "application/json",
-      "x-organization-slug": ORGANIZATION_SLUG,
       ...actorHeaders(),
     },
   });
@@ -1995,7 +2120,10 @@ async function apiDelete<T>(path: string): Promise<T> {
 let _refreshPromise: Promise<boolean> | null = null;
 
 async function apiFetch(path: string, init: RequestInit, retried = false): Promise<Response> {
-  const response = await fetch(`${API_BASE_URL}${path}`, init);
+  const headers = new Headers(init.headers);
+  headers.set("x-ens-portal", getRequestPortal());
+  const requestInit = { ...init, headers };
+  const response = await fetch(`${API_BASE_URL}${path}`, requestInit);
   if (response.status !== 401 || retried) return response;
 
   // Deduplicate: all concurrent 401s share the same refresh attempt
@@ -2006,7 +2134,6 @@ async function apiFetch(path: string, init: RequestInit, retried = false): Promi
       headers: {
         accept: "application/json",
         "content-type": "application/json",
-        "x-organization-slug": ORGANIZATION_SLUG,
       },
     })
       .then((r) => r.ok)
@@ -2016,7 +2143,7 @@ async function apiFetch(path: string, init: RequestInit, retried = false): Promi
 
   const refreshed = await _refreshPromise;
   if (!refreshed) return response;
-  return apiFetch(path, init, true);
+  return apiFetch(path, requestInit, true);
 }
 
 async function readApiError(response: Response) {
@@ -2039,9 +2166,13 @@ function apiErrorMessage(body: { error?: string | { message?: string } } | null,
 }
 
 function actorHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "x-ens-portal": getRequestPortal(),
+  };
   const user = readMockAuthUser();
-  if (!user) return {};
+  if (!user) return headers;
   return {
+    ...headers,
     "x-user-id": String(user.id),
     "x-user-name": encodeURIComponent(String(user.name ?? "")),
     "x-user-email": String(user.email ?? ""),

@@ -29,7 +29,7 @@
       "titlePart2": "3D en temps réel",
       "subtitle": "Construisez, personnalisez et gérez des stands Octanorm et Maxima directement dans votre navigateur. Des outils professionnels pour les designers d'expositions sérieux."
     },
-    "trustedBy": "Ils nous font confiance",
+    "trustedBy": "Conçu pour la production réelle de stands",
     "stats": {
       "projectProgress": "Avancement du projet",
       "boothDimensions": "Dimensions du stand",
@@ -167,6 +167,22 @@
         "title": "Communications Hub",
         "desc": "Centralised messaging across clients, PMs, and sub-contractors."
       }
+    },
+    "capabilityItems": {
+      "octanorm": "Système Octanorm",
+      "maxima": "Système Maxima",
+      "live3d": "Espace 3D en direct",
+      "bom": "Export BOM & devis",
+      "approvals": "Validations client",
+      "languages": "11 langues"
+    },
+    "agency": {
+      "kicker": "Pour les agences événementielles",
+      "title": "Gérez toute votre agence sur ENS",
+      "desc": "Louez la plateforme et donnez à votre équipe un seul système pour tout le cycle du stand — de l'accueil client au design 3D, jusqu'aux validations, tâches de production et facturation.",
+      "bullet1": "Trois portails : direction, chefs de projet et clients",
+      "bullet2": "Votre propre catalogue de mobilier et vos tarifs",
+      "bullet3": "Validations, révisions et factures suivies automatiquement"
     }
   },
   "team": {
@@ -387,7 +403,7 @@
         "pendingApprovals": "Approbations en attente",
         "activeWorkspaces": "Espaces de travail actifs",
         "saved": "Enregistré",
-        "db": "BDD",
+        "db": "Données en direct",
         "live": "En cours",
         "assigned": "Assigné",
         "open": "Ouvert",
@@ -715,7 +731,16 @@
         "rowTotals": "Totaux"
       },
       "notConfigured": "Not configured",
-      "revenueNotice": "Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data."
+      "revenueNotice": "Les rapports de revenus et de satisfaction s'activeront dès que la facturation et les évaluations clients seront utilisées. Les chiffres projets et livraisons ci-dessous sont en direct.",
+      "pipelineFlow": {
+        "title": "Flux du pipeline",
+        "desc": "Temps moyen passé par les projets à chaque étape",
+        "avgDays": "{{days}} j en moy.",
+        "noData": "—",
+        "slowestTitle": "Les plus longs dans l'étape actuelle",
+        "empty": "Aucun projet actif.",
+        "inStageDays": "{{days}} j"
+      }
     },
     "messages": {
       "title": "Messages",
@@ -819,11 +844,11 @@
         "updated": "{{name}} mis à jour.",
         "updateError": "Le client n'a pas pu être mis à jour.",
         "noManagers": "Aucun chef de projet actif disponible.",
-        "assigned": "{{client}} assigné à {{manager}}.",
+        "assigned": "{{client}} attribué à {{manager}}. Le salon et le projet de stand sont prêts dans Projets.",
         "assignError": "L'assignation du client n'a pas pu être sauvegardée.",
         "archived": "{{name}} archivé.",
         "archiveError": "Le client n'a pas pu être supprimé.",
-        "openingWorkspace": "Ouverture de {{name}} dans le moniteur chief.",
+        "openingWorkspace": "Ouverture de l'espace stand pour {{name}}.",
         "defaultClient": "Client",
         "unassigned": "Non assigné"
       },
@@ -897,7 +922,11 @@
       },
       "kanban": {
         "loading": "Chargement",
-        "empty": "Vide"
+        "empty": "Vide",
+        "emptyBoardTitle": "Aucun projet pour l'instant",
+        "emptyBoardBody": "Attribuez un manager à un client : le salon et le projet de stand sont créés automatiquement. Vous pouvez aussi commencer par ajouter un salon.",
+        "emptyBoardClientsCta": "Voir les clients",
+        "emptyBoardExhibitionCta": "Ajouter un salon"
       },
       "list": {
         "loading": "Chargement des projets...",
@@ -974,7 +1003,7 @@
       },
       "toast": {
         "updated": "{{name}} mis à jour",
-        "openMonitor": "Ouverture du moniteur pour {{name}}",
+        "openMonitor": "Ouverture de l'espace stand pour {{name}}",
         "moved": "{{name}} déplacé vers {{stage}}",
         "created": "Project \"{{name}}\" created.",
         "exported": "Projects exported to Excel."
@@ -1476,13 +1505,13 @@
         "empty": "Aucune action urgente pour cette organisation."
       },
       "actions": {
-        "pendingApprovals": "{{count}} approbations en attente",
+        "pendingApprovals": "Validations en attente",
         "pendingApprovalsDesc": "Des révisions clients attendent une décision.",
         "openApprovals": "Ouvrir les approbations",
-        "delayedProjects": "{{count}} projets retardés",
+        "delayedProjects": "Projets en retard",
         "delayedProjectsDesc": "Des projets nécessitent l'attention du PM.",
         "reviewRisk": "Examiner les risques",
-        "activeWorkspaces": "{{count}} espaces de travail actifs",
+        "activeWorkspaces": "Espaces de travail actifs",
         "activeWorkspacesDesc": "Des designs de stands sont disponibles pour édition.",
         "openWorkspace": "Ouvrir l'espace de travail",
         "noDelays": "No projects are currently delayed",
@@ -1652,7 +1681,7 @@
         "operationalStatus": "Statut opérationnel",
         "assignedPm": "GP assigné : {{name}}",
         "lastActivity": "Dernière activité : {{time}}",
-        "dataSource": "Chargé depuis les enregistrements PostgreSQL",
+        "dataSource": "Données clients et projets en direct",
         "contact": "Contact",
         "linkedProject": "Linked Project",
         "noLinkedProject": "No linked project",
@@ -2060,7 +2089,7 @@
       "defaultClientName": "Client",
       "loadingProject": "Chargement du projet...",
       "noActiveProject": "Aucun projet actif",
-      "projectSubtitle": "Les données du projet sont chargées depuis PostgreSQL",
+      "projectSubtitle": "Aperçu en direct de votre projet de stand",
       "loadingActiveProject": "Chargement du projet actif...",
       "noProjectAssigned": "Aucun projet actif n'a encore été assigné.",
       "pmLabel": "Chef de projet",

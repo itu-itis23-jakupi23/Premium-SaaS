@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -96,8 +97,7 @@ export default function PMReports() {
   const [report, setReport] = useState<PmReportPayload | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [toastMsg,     setToastMsg]     = useState("");
-  const [toastVisible, setToastVisible] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     document.title = t("pm.reports.title");
@@ -125,9 +125,7 @@ export default function PMReports() {
   }, [period, t]);
 
   function showToast(msg: string) {
-    setToastMsg(msg);
-    setToastVisible(true);
-    window.setTimeout(() => setToastVisible(false), 3000);
+    toast({ title: msg });
   }
 
   function exportReport() {
@@ -144,7 +142,7 @@ export default function PMReports() {
             "ENS PM Report",
             t(`pm.reports.period.${period}`),
             exportedAt,
-            "PostgreSQL",
+            "ENS Platform",
             hasReportData ? "Data available" : "No rows for this period",
             report?.stats.completionRate ?? 0,
             report?.stats.satisfaction ?? "",
@@ -210,7 +208,7 @@ export default function PMReports() {
       delta: signed(report?.stats.activeClientsDelta ?? 0, ""),
       up: (report?.stats.activeClientsDelta ?? 0) >= 0,
       icon: Users,
-      color: "text-purple-600",
+      color: "text-blue-600",
     },
     {
       label: t("pm.reports.stats.avgResponse"),
@@ -481,15 +479,6 @@ export default function PMReports() {
         </div>
       </div>
 
-      {/* Always-rendered ARIA live toast */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 bg-foreground text-background px-4 py-2.5 rounded-lg text-sm font-semibold shadow-xl z-50 transition-all duration-300 ${toastVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"}`}
-      >
-        {toastMsg}
-      </div>
     </DashboardLayout>
   );
 }

@@ -5,11 +5,13 @@ import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
+  approvePlatformClient,
   ClientArchiveBlockedError,
   createPlatformClient,
   deletePlatformClient,
   getManagerWorkspace,
   getPlatformClients,
+  rejectPlatformClient,
   updateManagerAssignments,
   updatePlatformClient,
   type PlatformClient,
@@ -24,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle,
@@ -35,12 +38,15 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Archive, Pencil, Search, MoreVertical, UserPlus, ExternalLink, UserCheck } from "lucide-react";
+import { Archive, Pencil, Search, MoreVertical, UserPlus, ExternalLink, UserCheck, UserX } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { Copy, Link2 } from "lucide-react";
 
 const PAGE_SIZE = 25;
+const CLIENT_APP_URL = (import.meta.env.VITE_CLIENT_APP_URL ?? "http://localhost:5175").replace(/\/+$/, "");
 
 type ClientForm = {
   name:       string;
@@ -65,6 +71,7 @@ function clientStatusBadge(status: string) {
 
 export default function ChiefClients() {
   const { t } = useTranslation();
+  const auth = useAuth();
   const [, navigate] = useLocation();
 
   const [searchTerm,     setSearchTerm]     = useState("");
@@ -83,6 +90,9 @@ export default function ChiefClients() {
   const [assignClientId, setAssignClientId] = useState<string | null>(null);
   const [assignPm,       setAssignPm]       = useState("");
   const [isAssigning,    setIsAssigning]    = useState(false);
+  const [rejectClientId, setRejectClientId] = useState<string | null>(null);
+  const [rejectionReason,setRejectionReason]= useState("");
+  const [isRejecting,    setIsRejecting]    = useState(false);
   const [isMutatingClient,setIsMutatingClient]=useState(false);
   const [toastMsg,       setToastMsg]       = useState("");
   const [toastVisible,   setToastVisible]   = useState(false);
@@ -138,10 +148,19 @@ export default function ChiefClients() {
 
   const managerOptions = managers
     .filter((m) => m.status === "Active")
-    .map((m) => ({ id: m.id, name: m.name }));
+    .map((m) => {
+      const activeProj = m.activeProjects ?? 0;
+      const workloadVal = m.workload ?? 0;
+      return {
+        id: m.id,
+        name: `${m.name} (${activeProj} active project${activeProj === 1 ? "" : "s"}, ${workloadVal}% workload)`,
+      };
+    });
 
   const pageStart = pagination.total ? pagination.offset + 1 : 0;
   const pageEnd   = Math.min(pagination.offset + clients.length, pagination.total);
+  const assignmentTarget = clients.find((client) => client.id === assignClientId) ?? null;
+  const rejectionTarget = clients.find((client) => client.id === rejectClientId) ?? null;
 
   async function reloadClients() {
     const data = await getPlatformClients({ q: debouncedSearch, status: statusFilter, limit: PAGE_SIZE, offset: page * PAGE_SIZE });
@@ -156,6 +175,22 @@ export default function ChiefClients() {
     window.setTimeout(() => setToastVisible(false), 2400);
   }
 
+  async function copyClientRegistrationLink() {
+    const organizationSlug = auth.user?.organizationSlug;
+    if (!organizationSlug) {
+      showToast("Your organization code is unavailable. Sign out and sign in again.");
+      return;
+    }
+
+    const link = `${CLIENT_APP_URL}/signup?organization=${encodeURIComponent(organizationSlug)}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      showToast("Client registration link copied");
+    } catch {
+      window.prompt("Copy this client registration link", link);
+    }
+  }
+
   function clientStatusLabel(status: string): string {
     const map: Record<string, string> = {
       Active:            t("chief.clients.status.active"),
@@ -165,6 +200,12 @@ export default function ChiefClients() {
       Archived:          t("chief.clients.status.archived"),
     };
     return map[status] ?? status;
+  }
+
+  function openAssignment(client: PlatformClient) {
+    setAssignClientId(client.id);
+    const currentManager = managers.find((item) => item.name === client.pm);
+    setAssignPm(currentManager?.id ?? "");
   }
 
   async function addClient() {
@@ -236,46 +277,48 @@ export default function ChiefClients() {
 
   async function confirmAssign() {
     if (!assignClientId || !assignPm) return;
-    const target  = clients.find((c) => c.id === assignClientId);
-    const manager = managerOptions.find((item) => item.id === assignPm);
+    const target = clients.find((client) => client.id === assignClientId);
+    const manager = managers.find((item) => item.id === assignPm);
     if (!managers.length) {
       showToast(t("chief.clients.toast.noManagers"));
       return;
     }
-    try {
-      setIsAssigning(true);
-      const applyAssignment = async (confirmOverCapacity = false) => {
+    const isPendingApproval = target?.status === "Pending Approval";
+    const applyAssignment = async (confirmOverCapacity = false) => {
+      if (isPendingApproval) {
+        await approvePlatformClient(assignClientId, {
+          managerId: assignPm,
+          note: "Approved and assigned from the Chief client queue",
+          confirmOverCapacity,
+          overrideReason: confirmOverCapacity ? "Chief confirmed over-capacity approval from the client queue" : null,
+        });
+      } else {
         await updateManagerAssignments({
-          clientAssignments:  [{ clientId: assignClientId, managerId: manager?.id ?? null }],
+          clientAssignments: [{ clientId: assignClientId, managerId: assignPm }],
           projectAssignments: [],
           cascadeClientProjects: true,
           confirmOverCapacity,
           overrideReason: confirmOverCapacity ? "Chief confirmed over-capacity assignment from client list" : null,
         });
-        const [, workspace] = await Promise.all([reloadClients(), getManagerWorkspace()]);
-        setManagers(workspace.managers);
-        setAssignClientId(null);
-        setAssignPm("");
-        showToast(t("chief.clients.toast.assigned", { client: target?.name ?? t("chief.clients.toast.defaultClient"), manager: manager?.name ?? t("chief.clients.toast.unassigned") }));
-      };
+      }
 
+      const [, workspace] = await Promise.all([reloadClients(), getManagerWorkspace()]);
+      setManagers(workspace.managers);
+      setAssignClientId(null);
+      setAssignPm("");
+      showToast(isPendingApproval
+        ? t("chief.clients.toast.approved", { client: target?.name ?? t("chief.clients.toast.defaultClient"), manager: manager?.name ?? t("chief.clients.toast.unassigned") })
+        : t("chief.clients.toast.assigned", { client: target?.name ?? t("chief.clients.toast.defaultClient"), manager: manager?.name ?? t("chief.clients.toast.unassigned") }));
+    };
+
+    try {
+      setIsAssigning(true);
       await applyAssignment(false);
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : t("chief.clients.toast.assignError");
-      if (/capacity|overload/i.test(message) && window.confirm(`${message}\n\nAssign anyway?`)) {
+      if (/capacity|overload/i.test(message)) {
         try {
-          await updateManagerAssignments({
-            clientAssignments:  [{ clientId: assignClientId, managerId: manager?.id ?? null }],
-            projectAssignments: [],
-            cascadeClientProjects: true,
-            confirmOverCapacity: true,
-            overrideReason: "Chief confirmed over-capacity assignment from client list",
-          });
-          const [, workspace] = await Promise.all([reloadClients(), getManagerWorkspace()]);
-          setManagers(workspace.managers);
-          setAssignClientId(null);
-          setAssignPm("");
-          showToast(t("chief.clients.toast.assigned", { client: target?.name ?? t("chief.clients.toast.defaultClient"), manager: manager?.name ?? t("chief.clients.toast.unassigned") }));
+          await applyAssignment(true);
         } catch (retryReason) {
           showToast(retryReason instanceof Error ? retryReason.message : t("chief.clients.toast.assignError"));
         }
@@ -284,6 +327,22 @@ export default function ChiefClients() {
       showToast(message);
     } finally {
       setIsAssigning(false);
+    }
+  }
+
+  async function confirmReject() {
+    if (!rejectClientId || !rejectionReason.trim()) return;
+    try {
+      setIsRejecting(true);
+      await rejectPlatformClient(rejectClientId, rejectionReason.trim());
+      await reloadClients();
+      setRejectClientId(null);
+      setRejectionReason("");
+      showToast(t("chief.clients.toast.rejected", { client: rejectionTarget?.name ?? t("chief.clients.toast.defaultClient") }));
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : t("chief.clients.toast.rejectError"));
+    } finally {
+      setIsRejecting(false);
     }
   }
 
@@ -317,6 +376,11 @@ export default function ChiefClients() {
           title={t("chief.clients.title")}
           breadcrumbs={[{ label: t("chief.nav.dashboard"), href: "/chief" }, { label: t("chief.nav.clients") }]}
         >
+          <Button variant="outline" onClick={copyClientRegistrationLink} data-testid="button-copy-client-invite">
+            <Link2 aria-hidden="true" className="mr-2 h-4 w-4" />
+            Invite client
+            <Copy aria-hidden="true" className="ml-2 h-3.5 w-3.5 opacity-60" />
+          </Button>
           <Button onClick={() => setAddOpen(true)} data-testid="button-add-client">
             <UserPlus aria-hidden="true" className="mr-2 h-4 w-4" />
             {t("chief.clients.addClient")}
@@ -396,24 +460,44 @@ export default function ChiefClients() {
                     </TableCell>
                     <TableCell className="text-muted-foreground text-xs">{client.lastActivity}</TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
+                      <div className="flex items-center justify-end gap-1">
+                        {client.status === "Pending Approval" && (
+                          <Button
+                            size="sm"
+                            onClick={() => openAssignment(client)}
+                            data-testid={`button-review-client-${client.id}`}
+                          >
+                            <UserCheck aria-hidden="true" className="mr-2 h-4 w-4" />
+                            {t("chief.clients.menu.reviewAndAssign")}
+                          </Button>
+                        )}
+                        <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" data-testid={`button-actions-client-${client.id}`} aria-label={t("chief.clients.table.actions")}>
                             <MoreVertical aria-hidden="true" className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem className="cursor-pointer" onClick={() => {
-                            setAssignClientId(client.id);
-                            const mgr = managerOptions.find((item) => item.name === client.pm);
-                            setAssignPm(client.pm === "Unassigned" ? "" : mgr?.id ?? client.pm);
-                          }}>
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => openAssignment(client)}>
                             <UserCheck aria-hidden="true" className="mr-2 h-4 w-4" />
-                            {t("chief.clients.menu.assignManager")}
+                            {client.status === "Pending Approval"
+                              ? t("chief.clients.menu.reviewAndAssign")
+                              : t("chief.clients.menu.assignManager")}
                           </DropdownMenuItem>
+                          {client.status === "Pending Approval" && (
+                            <DropdownMenuItem className="cursor-pointer text-red-500 focus:text-red-500" onClick={() => {
+                              setRejectClientId(client.id);
+                              setRejectionReason("");
+                            }}>
+                              <UserX aria-hidden="true" className="mr-2 h-4 w-4" />
+                              {t("chief.clients.menu.rejectRequest")}
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem className="cursor-pointer" onClick={() => {
                             showToast(t("chief.clients.toast.openingWorkspace", { name: client.name }));
-                            navigate("/chief/workspace-monitor");
+                            navigate(client.projectId
+                              ? `/chief/workspace?projectId=${encodeURIComponent(client.projectId)}`
+                              : "/chief/workspace");
                           }}>
                             <ExternalLink aria-hidden="true" className="mr-2 h-4 w-4" />
                             {t("chief.clients.menu.openWorkspace")}
@@ -435,6 +519,7 @@ export default function ChiefClients() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -515,15 +600,28 @@ export default function ChiefClients() {
           </DialogContent>
         </Dialog>
 
-        {/* ── Assign Manager Dialog ── */}
+        {/* Assign or approve client */}
         <Dialog open={!!assignClientId} onOpenChange={(open) => { if (!open && !isAssigning) { setAssignClientId(null); setAssignPm(""); } }}>
           <DialogContent className="max-w-sm">
             <DialogHeader>
-              <DialogTitle>{t("chief.clients.assignDialog.title")}</DialogTitle>
+              <DialogTitle>
+                {assignmentTarget?.status === "Pending Approval"
+                  ? t("chief.clients.approveDialog.title")
+                  : t("chief.clients.assignDialog.title")}
+              </DialogTitle>
               <DialogDescription>
-                {t("chief.clients.assignDialog.desc", { name: clients.find((c) => c.id === assignClientId)?.name ?? "…" })}
+                {assignmentTarget?.status === "Pending Approval"
+                  ? t("chief.clients.approveDialog.desc", { name: assignmentTarget.name })
+                  : t("chief.clients.assignDialog.desc", { name: assignmentTarget?.name ?? "..." })}
               </DialogDescription>
             </DialogHeader>
+            {assignmentTarget?.status === "Pending Approval" && (
+              <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                <p className="font-medium">{assignmentTarget.company}</p>
+                <p className="mt-1 text-muted-foreground">{assignmentTarget.exhibition}</p>
+                <p className="mt-2 text-xs text-muted-foreground">{t("chief.clients.approveDialog.result")}</p>
+              </div>
+            )}
             <Select value={assignPm} onValueChange={setAssignPm}>
               <SelectTrigger><SelectValue placeholder={t("chief.clients.assignDialog.placeholder")} /></SelectTrigger>
               <SelectContent>
@@ -537,7 +635,45 @@ export default function ChiefClients() {
                 {t("chief.clients.cancel")}
               </Button>
               <Button onClick={confirmAssign} disabled={!assignPm || isAssigning}>
-                {isAssigning ? t("chief.clients.saving") : t("chief.clients.assignDialog.submit")}
+                {isAssigning
+                  ? t("chief.clients.saving")
+                  : assignmentTarget?.status === "Pending Approval"
+                    ? t("chief.clients.approveDialog.submit")
+                    : t("chief.clients.assignDialog.submit")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!rejectClientId} onOpenChange={(open) => {
+          if (!open && !isRejecting) {
+            setRejectClientId(null);
+            setRejectionReason("");
+          }
+        }}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{t("chief.clients.rejectDialog.title")}</DialogTitle>
+              <DialogDescription>
+                {t("chief.clients.rejectDialog.desc", { name: rejectionTarget?.name ?? t("chief.clients.toast.defaultClient") })}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="client-rejection-reason">{t("chief.clients.rejectDialog.reason")}</Label>
+              <Textarea
+                id="client-rejection-reason"
+                value={rejectionReason}
+                onChange={(event) => setRejectionReason(event.target.value)}
+                placeholder={t("chief.clients.rejectDialog.placeholder")}
+                rows={4}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setRejectClientId(null); setRejectionReason(""); }} disabled={isRejecting}>
+                {t("chief.clients.cancel")}
+              </Button>
+              <Button variant="destructive" onClick={confirmReject} disabled={!rejectionReason.trim() || isRejecting}>
+                {isRejecting ? t("chief.clients.saving") : t("chief.clients.rejectDialog.submit")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -643,8 +779,8 @@ export default function ChiefClients() {
                   </Button>
                   <Button variant="outline" onClick={() => {
                     setAssignClientId(detailClient.id);
-                    const mgr = managerOptions.find((item) => item.name === detailClient.pm);
-                    setAssignPm(detailClient.pm === "Unassigned" ? "" : mgr?.id ?? detailClient.pm);
+                    const currentManager = managers.find((item) => item.name === detailClient.pm);
+                    setAssignPm(currentManager?.id ?? "");
                     setDetailClient(null);
                   }}>
                     <UserCheck className="mr-2 h-4 w-4" />

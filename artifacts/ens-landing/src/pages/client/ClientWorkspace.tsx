@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
+import { CurrencySwitcher, useCurrency } from "@/lib/currency";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 import { Booth3D } from "@/components/workspace/Booth3D";
 import {
   getCurrentWorkspace,
@@ -139,6 +141,7 @@ function workspaceToBoothConfig(workspace?: WorkspaceState | null) {
 
 export default function ClientWorkspace() {
   const { t } = useTranslation();
+  const { formatMoneyCents } = useCurrency();
   const [workspaceRecord, setWorkspaceRecord] =
     useState<ProjectWorkspace | null>(null);
   const [workspaceError, setWorkspaceError] = useState("");
@@ -171,8 +174,7 @@ export default function ClientWorkspace() {
     branding: "approved",
     lighting: "pending",
   });
-  const [toastMsg, setToastMsg] = useState("");
-  const [toastVisible, setToastVisible] = useState(false);
+  const { toast } = useToast();
   const [revisionCount, setRevisionCount] = useState(0);
   const revisionLimit = workspaceRecord ? (workspaceRecord.revisionLimit ?? 2) : 2;
   const revisionsExhausted = revisionCount >= revisionLimit;
@@ -189,9 +191,7 @@ export default function ClientWorkspace() {
   }, [t]);
 
   const showToast = (msg: string) => {
-    setToastMsg(msg);
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 3000);
+    toast({ title: msg });
   };
 
   const elements = useMemo(
@@ -212,9 +212,11 @@ export default function ClientWorkspace() {
       label: `v${v.versionNumber} - ${v.title}`,
       value: String(v.versionNumber),
     })) ?? VERSIONS;
-  const selectedWorkspace =
-    workspaceRecord?.versions.find((v) => String(v.versionNumber) === version)
-      ?.workspace ?? workspaceRecord?.workspace;
+  const selectedVersionRecord =
+    workspaceRecord?.versions.find((v) => String(v.versionNumber) === version) ??
+    (workspaceRecord?.currentVersion as any);
+  const selectedWorkspace = selectedVersionRecord?.workspace ?? workspaceRecord?.workspace;
+  const costEstimateCents = selectedVersionRecord?.costEstimateCents ?? 0;
   const comparedWorkspace =
     workspaceRecord?.versions.find(
       (v) => String(v.versionNumber) === compareVersion,
@@ -652,37 +654,7 @@ export default function ClientWorkspace() {
         userSelect: "none",
       }}
     >
-      {/* ARIA live region for toasts */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        style={{
-          position: "fixed",
-          bottom: 48,
-          left: "50%",
-          transform: `translateX(-50%) translateY(${toastVisible ? "0" : "8px"})`,
-          background: C.ink,
-          color: "#fff",
-          fontFamily: UI,
-          fontSize: 12,
-          fontWeight: 600,
-          padding: "10px 20px",
-          borderRadius: 6,
-          zIndex: 1000,
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-          whiteSpace: "nowrap",
-          opacity: toastVisible ? 1 : 0,
-          pointerEvents: toastVisible ? "auto" : "none",
-          transition: "opacity 0.3s, transform 0.3s",
-        }}
-      >
-        <CheckCircle2 size={14} style={{ color: "#6ee7b7" }} aria-hidden />
-        {toastMsg}
-      </div>
+
 
       {/* ── Top Bar ─────────────────────────────────────────────── */}
       <header
@@ -916,6 +888,7 @@ export default function ClientWorkspace() {
           >
             <Download size={12} aria-hidden /> {t("client.workspace.downloadBtn")}
           </button>
+          <CurrencySwitcher variant="toolbar" />
           {/* Revision counter badge */}
           <span
             style={{
@@ -1098,6 +1071,22 @@ export default function ClientWorkspace() {
             >
               {t("client.workspace.lockedLabel")}
             </span>
+          </div>
+          <div
+            style={{
+              padding: "10px 14px",
+              borderBottom: `1px solid ${C.hair}`,
+              background: "rgba(47, 125, 58, 0.05)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: "uppercase", fontFamily: MONO }}>
+                Est. Cost
+              </span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.green, fontFamily: MONO }}>
+                {costEstimateCents ? formatMoneyCents(costEstimateCents) : "Quote pending"}
+              </span>
+            </div>
           </div>
           <div style={{ flex: 1, overflowY: "auto" }}>
             {clientCatalog.length === 0 && (

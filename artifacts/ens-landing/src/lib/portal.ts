@@ -10,6 +10,30 @@ export const PORTAL_MODE: PortalMode =
 export const STAFF_ROLES: UserRole[] = ['chief', 'pm'];
 export const CLIENT_ROLES: UserRole[] = ['client'];
 
+export type RequestPortal = 'staff' | 'client';
+
+/**
+ * Identifies which authentication cookie namespace an API request belongs to.
+ * Explicit staff/client builds are authoritative. The path fallback keeps the
+ * combined local build usable without relying on ports or referrer parsing.
+ */
+export function getRequestPortal(): RequestPortal {
+  if (PORTAL_MODE === 'staff' || PORTAL_MODE === 'client') return PORTAL_MODE;
+  if (typeof window === 'undefined') return 'staff';
+
+  const port = window.location.port;
+  if (port === '5174') return 'staff';
+  if (port === '5175') return 'client';
+
+  const pathname = window.location.pathname;
+  if (pathname === '/client' || pathname.startsWith('/client/')) return 'client';
+
+  const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+  if (returnTo === '/client' || returnTo?.startsWith('/client/')) return 'client';
+
+  return 'staff';
+}
+
 export function isRoleAllowedInPortal(role: UserRole) {
   if (PORTAL_MODE === 'staff') return STAFF_ROLES.includes(role);
   if (PORTAL_MODE === 'client') return CLIENT_ROLES.includes(role);

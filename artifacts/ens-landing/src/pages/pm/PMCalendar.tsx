@@ -8,45 +8,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   ChevronLeft,
   ChevronRight,
   CalendarDays,
-  Plus,
   MapPin,
   User,
   RotateCcw,
   Search,
   CalendarCheck,
-  Pencil,
-  Trash2,
-  Loader2,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  createCalendarEvent,
-  deleteCalendarEvent,
   getPlatformCalendar,
-  updateCalendarEvent,
   type CalendarEvent,
-  type CalendarEventInput,
 } from "@/lib/platform-api";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -149,27 +125,19 @@ function getMonthNames(locale: string): string[] {
   );
 }
 
-const EMPTY_FORM = {
-  name: "", client: "", pm: "", status: "Pending" as Exhibition["status"],
-  startDate: "", endDate: "", location: "", standType: "",
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function PMCalendar() {
   const { t, i18n } = useTranslation();
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
   const urlParams = new URLSearchParams(location.split("?")[1] ?? "");
   const clientFilterName = urlParams.get("clientName") ?? "";
-  const clientFilterId   = urlParams.get("clientId")   ?? "";
 
   const [exhibitions, setExhibitions] = useState<Exhibition[]>([]);
   const [isLoading, setIsLoading]     = useState(true);
   const [error, setError]             = useState("");
-  const [saveBusy, setSaveBusy]       = useState(false);
-  const [deleteBusy, setDeleteBusy]   = useState(false);
 
   // Calendar navigation
   const today = new Date();
@@ -180,13 +148,6 @@ export default function PMCalendar() {
   // Filters
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch]             = useState("");
-
-  // Event dialogs
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Exhibition | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Exhibition | null>(null);
-  const [form, setForm]             = useState<typeof EMPTY_FORM>(EMPTY_FORM);
-  const [formError, setFormError]   = useState("");
 
   useEffect(() => { document.title = t("pm.calendar.title"); }, [t]);
 
@@ -252,79 +213,6 @@ export default function PMCalendar() {
     setSelectedDay(isoDate(today));
   }
 
-  function openCreate(day?: string) {
-    setForm({ ...EMPTY_FORM, startDate: day ?? "", endDate: day ?? "" });
-    setFormError("");
-    setCreateOpen(true);
-  }
-
-  function openEdit(ex: Exhibition) {
-    setForm({ name: ex.name, client: ex.client, pm: ex.pm, status: ex.status, startDate: ex.startDate, endDate: ex.endDate, location: ex.location, standType: ex.standType });
-    setFormError("");
-    setEditTarget(ex);
-  }
-
-  function updateForm(field: string, value: string) {
-    setForm((f) => ({ ...f, [field]: value }));
-    setFormError("");
-  }
-
-  function validateForm() {
-    if (!form.name.trim()) return t("pm.calendar.error.nameRequired");
-    if (!form.startDate) return t("pm.calendar.error.startRequired");
-    if (!form.endDate)   return t("pm.calendar.error.endRequired");
-    if (form.endDate < form.startDate) return t("pm.calendar.error.endBeforeStart");
-    return null;
-  }
-
-  async function handleCreate() {
-    const err = validateForm();
-    if (err) { setFormError(err); return; }
-    setSaveBusy(true);
-    try {
-      const input: CalendarEventInput = { name: form.name.trim(), client: form.client.trim(), pm: form.pm.trim(), status: form.status, startDate: form.startDate, endDate: form.endDate, location: form.location.trim() || "TBD", standType: form.standType.trim() || "Custom" };
-      const { events } = await createCalendarEvent(input);
-      setExhibitions(events.map(calendarEventToExhibition));
-      setCreateOpen(false);
-      setForm(EMPTY_FORM);
-    } catch (reason) {
-      setFormError(reason instanceof Error ? reason.message : t("pm.calendar.error.save"));
-    } finally {
-      setSaveBusy(false);
-    }
-  }
-
-  async function handleEdit() {
-    if (!editTarget) return;
-    const err = validateForm();
-    if (err) { setFormError(err); return; }
-    setSaveBusy(true);
-    try {
-      const input: CalendarEventInput = { name: form.name.trim(), client: form.client.trim(), pm: form.pm.trim(), status: form.status, startDate: form.startDate, endDate: form.endDate, location: form.location.trim() || "TBD", standType: form.standType.trim() || "Custom" };
-      const { events } = await updateCalendarEvent(editTarget.id, input);
-      setExhibitions(events.map(calendarEventToExhibition));
-      setEditTarget(null);
-    } catch (reason) {
-      setFormError(reason instanceof Error ? reason.message : t("pm.calendar.error.save"));
-    } finally {
-      setSaveBusy(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!deleteTarget) return;
-    setDeleteBusy(true);
-    try {
-      const { events } = await deleteCalendarEvent(deleteTarget.id);
-      setExhibitions(events.map(calendarEventToExhibition));
-      setDeleteTarget(null);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t("pm.calendar.error.delete"));
-    } finally {
-      setDeleteBusy(false);
-    }
-  }
-
   const statusOptions: { key: StatusFilter; label: string }[] = [
     { key: "all",       label: t("pm.calendar.filter.all") },
     { key: "Active",    label: t("pm.calendar.filter.active") },
@@ -334,6 +222,17 @@ export default function PMCalendar() {
   ];
 
   const todayStr = isoDate(today);
+  const assignedSummary = useMemo(() => {
+    const upcoming = exhibitions
+      .filter((ex) => ex.endDate >= todayStr)
+      .sort((a, b) => a.startDate.localeCompare(b.startDate));
+    return {
+      total: exhibitions.length,
+      active: exhibitions.filter((ex) => ex.status === "Active").length,
+      pending: exhibitions.filter((ex) => ex.status === "Pending").length,
+      next: upcoming[0] ?? null,
+    };
+  }, [exhibitions, todayStr]);
 
   return (
     <DashboardLayout role="pm">
@@ -345,10 +244,14 @@ export default function PMCalendar() {
             { label: t("pm.calendar.breadcrumb") },
           ]}
         >
-          <Button size="sm" onClick={() => openCreate()}>
-            <Plus className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-            {t("pm.calendar.addEvent")}
-          </Button>
+          <Badge
+            data-testid="pm-calendar-assigned-only"
+            variant="outline"
+            className="gap-1.5 border-primary/30 bg-primary/5 px-3 py-1.5 text-primary"
+          >
+            <CalendarCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            {t("pm.calendar.title")}
+          </Badge>
         </PageHeader>
 
         {error && (
@@ -373,6 +276,25 @@ export default function PMCalendar() {
             </a>
           </div>
         )}
+
+        <div className="grid gap-3 md:grid-cols-4">
+          <CalendarSummaryCard label="Assigned exhibitions" value={String(assignedSummary.total)} />
+          <CalendarSummaryCard label="Active now" value={String(assignedSummary.active)} tone="green" />
+          <CalendarSummaryCard label="Pending prep" value={String(assignedSummary.pending)} tone="yellow" />
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Next exhibition</p>
+              <p className="mt-1 truncate text-sm font-bold">
+                {assignedSummary.next?.name ?? "No upcoming assignment"}
+              </p>
+              <p className="mt-1 truncate text-xs text-muted-foreground">
+                {assignedSummary.next
+                  ? `${assignedSummary.next.client} · ${formatIso(assignedSummary.next.startDate, locale)}`
+                  : "Chief-assigned client projects will appear here."}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Month header + navigation */}
         <Card className="bg-card/50 backdrop-blur-sm border-border">
@@ -496,15 +418,11 @@ export default function PMCalendar() {
         {/* Day detail panel */}
         {selectedDay && (
           <Card className="bg-card/50 backdrop-blur-sm border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <CalendarDays className="h-4 w-4 text-primary" aria-hidden="true" />
                 {formatIso(selectedDay, locale)}
               </CardTitle>
-              <Button size="sm" variant="outline" onClick={() => openCreate(selectedDay)}>
-                <Plus className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                {t("pm.calendar.addToDay")}
-              </Button>
             </CardHeader>
             <CardContent>
               {selectedDayExhibitions.length === 0 ? (
@@ -532,16 +450,10 @@ export default function PMCalendar() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-1">
+                      <div className="flex shrink-0 items-center">
                         <Badge variant="outline" className={cn("text-[10px]", STATUS_STYLES[ex.status])}>
                           {ex.status}
                         </Badge>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(ex)}>
-                          <Pencil className="h-3 w-3" aria-hidden="true" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-500/10" onClick={() => setDeleteTarget(ex)}>
-                          <Trash2 className="h-3 w-3" aria-hidden="true" />
-                        </Button>
                       </div>
                     </div>
                   ))}
@@ -595,16 +507,10 @@ export default function PMCalendar() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-2">
+                      <div className="flex shrink-0 items-center">
                         <Badge variant="outline" className={cn("text-[10px]", STATUS_STYLES[ex.status])}>
                           {ex.status}
                         </Badge>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(ex)}>
-                          <Pencil className="h-3 w-3" aria-hidden="true" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-500/10" onClick={() => setDeleteTarget(ex)}>
-                          <Trash2 className="h-3 w-3" aria-hidden="true" />
-                        </Button>
                       </div>
                     </div>
                   ))}
@@ -614,66 +520,6 @@ export default function PMCalendar() {
         </Card>
       </div>
 
-      {/* Create Event Dialog */}
-      <Dialog open={createOpen} onOpenChange={(open) => { if (!open && !saveBusy) { setCreateOpen(false); setFormError(""); } }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{t("pm.calendar.create.title")}</DialogTitle>
-            <DialogDescription>{t("pm.calendar.create.description")}</DialogDescription>
-          </DialogHeader>
-          <EventForm form={form} onChange={updateForm} formError={formError} />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setCreateOpen(false); setFormError(""); }} disabled={saveBusy}>
-              {t("pm.common.cancel")}
-            </Button>
-            <Button onClick={handleCreate} disabled={saveBusy || !form.name.trim() || !form.startDate || !form.endDate}>
-              {saveBusy && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-              {t("pm.calendar.create.confirm")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Event Dialog */}
-      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open && !saveBusy) { setEditTarget(null); setFormError(""); } }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{t("pm.calendar.edit.title")}</DialogTitle>
-            <DialogDescription>{t("pm.calendar.edit.description")}</DialogDescription>
-          </DialogHeader>
-          <EventForm form={form} onChange={updateForm} formError={formError} />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setEditTarget(null); setFormError(""); }} disabled={saveBusy}>
-              {t("pm.common.cancel")}
-            </Button>
-            <Button onClick={handleEdit} disabled={saveBusy || !form.name.trim() || !form.startDate || !form.endDate}>
-              {saveBusy && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-              {t("pm.calendar.edit.confirm")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirm Dialog */}
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !deleteBusy) setDeleteTarget(null); }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{t("pm.calendar.delete.title")}</DialogTitle>
-            <DialogDescription>
-              {t("pm.calendar.delete.description", { name: deleteTarget?.name ?? "" })}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleteBusy}>
-              {t("pm.common.cancel")}
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleteBusy}>
-              {deleteBusy && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-              {t("pm.calendar.delete.confirm")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 }
@@ -682,70 +528,27 @@ export default function PMCalendar() {
 // EventForm sub-component
 // ─────────────────────────────────────────────────────────────────────────────
 
-function EventForm({
-  form,
-  onChange,
-  formError,
+function CalendarSummaryCard({
+  label,
+  value,
+  tone = "default",
 }: {
-  form: typeof EMPTY_FORM;
-  onChange: (field: string, value: string) => void;
-  formError: string;
+  label: string;
+  value: string;
+  tone?: "default" | "green" | "yellow";
 }) {
-  const { t } = useTranslation();
+  const toneClass = tone === "green"
+    ? "text-green-500"
+    : tone === "yellow"
+      ? "text-yellow-500"
+      : "text-primary";
 
   return (
-    <div className="grid gap-4 py-2">
-      {formError && (
-        <div role="alert" className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-500">
-          {formError}
-        </div>
-      )}
-      <div className="space-y-1.5">
-        <Label htmlFor="pm-ev-name">
-          {t("pm.calendar.form.name")} <span className="text-red-500">*</span>
-        </Label>
-        <Input id="pm-ev-name" value={form.name} onChange={(e) => onChange("name", e.target.value)} autoFocus />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="pm-ev-client">{t("pm.calendar.form.client")}</Label>
-          <Input id="pm-ev-client" value={form.client} onChange={(e) => onChange("client", e.target.value)} />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="pm-ev-location">{t("pm.calendar.form.location")}</Label>
-          <Input id="pm-ev-location" value={form.location} onChange={(e) => onChange("location", e.target.value)} />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="pm-ev-start">
-            {t("pm.calendar.form.start")} <span className="text-red-500">*</span>
-          </Label>
-          <Input id="pm-ev-start" type="date" value={form.startDate} onChange={(e) => onChange("startDate", e.target.value)} />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="pm-ev-end">
-            {t("pm.calendar.form.end")} <span className="text-red-500">*</span>
-          </Label>
-          <Input id="pm-ev-end" type="date" value={form.endDate} min={form.startDate} onChange={(e) => onChange("endDate", e.target.value)} />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="pm-ev-stand">{t("pm.calendar.form.standType")}</Label>
-          <Input id="pm-ev-stand" value={form.standType} onChange={(e) => onChange("standType", e.target.value)} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>{t("pm.calendar.form.status")}</Label>
-          <Select value={form.status} onValueChange={(v) => onChange("status", v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Delayed">Delayed</SelectItem>
-              <SelectItem value="Completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-    </div>
+    <Card className="bg-card/60">
+      <CardContent className="p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className={cn("mt-2 text-3xl font-bold leading-none", toneClass)}>{value}</p>
+      </CardContent>
+    </Card>
   );
 }

@@ -284,7 +284,7 @@ export default function Login() {
 
           <Button
             type="submit"
-            className="w-full rounded-full h-11 font-semibold shadow-[0_0_15px_rgba(109,40,217,0.2)]"
+            className="w-full rounded-full h-11 font-semibold shadow-[0_0_15px_rgba(37,99,235,0.2)]"
             disabled={isSubmitting || isLocked}
             data-testid="button-login"
           >

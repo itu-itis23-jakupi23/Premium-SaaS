@@ -5,14 +5,25 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { THEME_STORAGE_KEY, ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider, getRoleDashboard, useAuth } from "@/contexts/AuthContext";
+import { CurrencyProvider } from "@/lib/currency";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { getPortalLoginPath, isRoleAllowedInPortal, PORTAL_MODE } from "@/lib/portal";
+import { getPortalLoginPath, getRequestPortal, isRoleAllowedInPortal, PORTAL_MODE } from "@/lib/portal";
 import { StaffGateway } from "@/components/StaffGateway";
 import { RuntimeTextTranslator } from "@/i18n/RuntimeTextTranslator";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { scheduleStaffRoutePreloads } from "@/lib/route-preload";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 45_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    },
+  },
+});
 
 function RedirectTo({ href }: { href: string }): ReactElement | null {
   const [, navigate] = useLocation();
@@ -106,10 +117,21 @@ function createStaffRoutes() {
   const PMTasks = lazyPage(() => import("@/pages/pm/PMTasks"));
   const PMReports = lazyPage(() => import("@/pages/pm/PMReports"));
   const PMSettings = lazyPage(() => import("@/pages/pm/PMSettings"));
+  function StaffRoutePreloader() {
+    const { user } = useAuth();
+
+    useEffect(() => {
+      if (user?.role !== "chief" && user?.role !== "pm") return;
+      return scheduleStaffRoutePreloads(user.role);
+    }, [user?.role]);
+
+    return null;
+  }
 
   return function StaffRoutes() {
     return (
       <>
+      <StaffRoutePreloader />
       <ErrorBoundary label="Chief Dashboard">
         <Route path="/chief">
           {(params) => <ProtectedRoute component={ChiefDashboard} allowedRoles={["chief"]} params={params} />}
@@ -131,7 +153,7 @@ function createStaffRoutes() {
         </Route>
       </ErrorBoundary>
       <Route path="/chief/workspace-monitor">
-        {() => <RedirectTo href="/chief/projects" />}
+        {() => <RedirectTo href="/chief/workspace" />}
       </Route>
       <ErrorBoundary label="Chief Booth Workspace">
         <Route path="/chief/workspace">
@@ -281,6 +303,7 @@ function Router() {
   const showClient = PORTAL_MODE === "all" || PORTAL_MODE === "client";
   const [location] = useLocation();
   const pathname = typeof window === "undefined" ? location.split(/[?#]/)[0] : window.location.pathname;
+  const isPublicPmJoin = pathname === "/pm/join";
   const AuthComponent =
     pathname === "/login" ? Login :
     pathname === "/signup" ? Signup :
@@ -289,16 +312,15 @@ function Router() {
     null;
 
   if (AuthComponent) {
+    const authRoute = <AuthModalRoute component={AuthComponent} />;
     return (
       <Suspense fallback={<LoadingScreen label="Loading page" />}>
-        <StaffGateway>
-          <AuthModalRoute component={AuthComponent} />
-        </StaffGateway>
+        {getRequestPortal() === "staff" ? <StaffGateway>{authRoute}</StaffGateway> : authRoute}
       </Suspense>
     );
   }
 
-  if (showStaff && (pathname === "/pm" || pathname.startsWith("/pm/") || pathname === "/chief" || pathname.startsWith("/chief/"))) {
+  if (showStaff && !isPublicPmJoin && (pathname === "/pm" || pathname.startsWith("/pm/") || pathname === "/chief" || pathname.startsWith("/chief/"))) {
     return (
       <Suspense fallback={<LoadingScreen label="Loading page" />}>
         <StaffGateway>
@@ -346,9 +368,11 @@ function App() {
     <ThemeProvider attribute="class" defaultTheme="dark" storageKey={THEME_STORAGE_KEY} enableSystem disableTransitionOnChange>
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            {ROUTER_BASE ? <WouterRouter base={ROUTER_BASE}>{router}</WouterRouter> : <WouterRouter>{router}</WouterRouter>}
-          </TooltipProvider>
+          <CurrencyProvider>
+            <TooltipProvider>
+              {ROUTER_BASE ? <WouterRouter base={ROUTER_BASE}>{router}</WouterRouter> : <WouterRouter>{router}</WouterRouter>}
+            </TooltipProvider>
+          </CurrencyProvider>
         </QueryClientProvider>
       </AuthProvider>
     </ThemeProvider>

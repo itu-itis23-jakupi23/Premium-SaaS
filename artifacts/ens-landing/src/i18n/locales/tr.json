@@ -29,7 +29,7 @@
       "titlePart2": "Gerçek Zamanlı 3D'de Tasarla",
       "subtitle": "Octanorm ve Maxima standlarını doğrudan tarayıcınızda oluşturun, özelleştirin ve yönetin. Ciddi fuar tasarımcıları için profesyonel araçlar."
     },
-    "trustedBy": "Güvenen markalar",
+    "trustedBy": "Gerçek stant üretimi için tasarlandı",
     "stats": {
       "projectProgress": "Proje İlerlemesi",
       "boothDimensions": "Stand Boyutları",
@@ -167,6 +167,22 @@
         "title": "Communications Hub",
         "desc": "Centralised messaging across clients, PMs, and sub-contractors."
       }
+    },
+    "capabilityItems": {
+      "octanorm": "Octanorm Sistemi",
+      "maxima": "Maxima Sistemi",
+      "live3d": "Canlı 3B Çalışma Alanı",
+      "bom": "BOM ve Teklif Dışa Aktarımı",
+      "approvals": "Müşteri Onayları",
+      "languages": "11 Dil"
+    },
+    "agency": {
+      "kicker": "Fuar ajansları için",
+      "title": "Tüm ajansınızı ENS üzerinde yönetin",
+      "desc": "Platformu kiralayın; müşteri kaydından 3B tasarıma, onaylardan üretim görevlerine ve faturalamaya kadar tüm stant sürecini tek sistemde yürütün.",
+      "bullet1": "Üç portal: yönetici, proje yöneticileri ve müşteriler",
+      "bullet2": "Kendi mobilya kataloğunuz ve fiyatlarınız",
+      "bullet3": "Onaylar, revizyonlar ve faturalar otomatik takip edilir"
     }
   },
   "team": {
@@ -387,7 +403,7 @@
         "pendingApprovals": "Bekleyen Onaylar",
         "activeWorkspaces": "Aktif Çalışma Alanları",
         "saved": "Kaydedildi",
-        "db": "VT",
+        "db": "Canlı veri",
         "live": "Canlı",
         "assigned": "Atandı",
         "open": "Açık",
@@ -715,7 +731,16 @@
         "rowTotals": "Toplamlar"
       },
       "notConfigured": "Not configured",
-      "revenueNotice": "Revenue and satisfaction are not estimated. They will stay at zero until the quote/BOM engine and client rating workflow are connected to real backend data."
+      "revenueNotice": "Gelir ve memnuniyet raporları, faturalama ve müşteri değerlendirmeleri kullanılmaya başlandığında etkinleşir. Aşağıdaki proje ve teslimat verileri canlıdır.",
+      "pipelineFlow": {
+        "title": "Süreç Akışı",
+        "desc": "Projelerin her aşamada geçirdiği ortalama süre",
+        "avgDays": "ort. {{days}} gün",
+        "noData": "—",
+        "slowestTitle": "Mevcut aşamada en uzun kalanlar",
+        "empty": "Aktif proje yok.",
+        "inStageDays": "{{days}} gün"
+      }
     },
     "messages": {
       "title": "Mesajlar",
@@ -819,11 +844,11 @@
         "updated": "{{name}} güncellendi.",
         "updateError": "Müşteri güncellenemedi.",
         "noManagers": "Aktif proje yöneticisi mevcut değil.",
-        "assigned": "{{client}}, {{manager}} kişisine atandı.",
+        "assigned": "{{client}}, {{manager}} yöneticisine atandı. Fuar ve stant projesi Projeler bölümünde hazır.",
         "assignError": "Müşteri ataması kaydedilemedi.",
         "archived": "{{name}} arşivlendi.",
         "archiveError": "Müşteri kaldırılamadı.",
-        "openingWorkspace": "{{name}} Chief monitöründe açılıyor.",
+        "openingWorkspace": "{{name}} için stant çalışma alanı açılıyor.",
         "defaultClient": "Müşteri",
         "unassigned": "Atanmamış"
       },
@@ -897,7 +922,11 @@
       },
       "kanban": {
         "loading": "Yükleniyor",
-        "empty": "Boş"
+        "empty": "Boş",
+        "emptyBoardTitle": "Henüz proje yok",
+        "emptyBoardBody": "Bir müşteriye yönetici atadığınızda fuar ve stant projesi otomatik oluşturulur. Dilerseniz önce bir fuar da ekleyebilirsiniz.",
+        "emptyBoardClientsCta": "Müşterilere Git",
+        "emptyBoardExhibitionCta": "Fuar Ekle"
       },
       "list": {
         "loading": "Projeler yükleniyor...",
@@ -974,7 +1003,7 @@
       },
       "toast": {
         "updated": "{{name}} güncellendi",
-        "openMonitor": "{{name}} için monitör açılıyor",
+        "openMonitor": "{{name}} için stant çalışma alanı açılıyor",
         "moved": "{{name}}, {{stage}} aşamasına taşındı",
         "created": "Project \"{{name}}\" created.",
         "exported": "Projects exported to Excel."
@@ -1476,13 +1505,13 @@
         "empty": "Bu organizasyon için acil eylem yok."
       },
       "actions": {
-        "pendingApprovals": "{{count}} bekleyen onay",
+        "pendingApprovals": "Bekleyen onaylar",
         "pendingApprovalsDesc": "Müşteri incelemeleri bir karar bekliyor.",
         "openApprovals": "Onayları aç",
-        "delayedProjects": "{{count}} gecikmiş proje",
+        "delayedProjects": "Geciken projeler",
         "delayedProjectsDesc": "Projeler PM dikkatine ihtiyaç duyuyor.",
         "reviewRisk": "Riski incele",
-        "activeWorkspaces": "{{count}} aktif çalışma alanı",
+        "activeWorkspaces": "Aktif çalışma alanları",
         "activeWorkspacesDesc": "Fuar tasarımları düzenleme için hazır.",
         "openWorkspace": "Çalışma alanını aç",
         "noDelays": "No projects are currently delayed",
@@ -1652,7 +1681,7 @@
         "operationalStatus": "Operasyonel Durum",
         "assignedPm": "Atanmış PM: {{name}}",
         "lastActivity": "Son aktivite: {{time}}",
-        "dataSource": "PostgreSQL kayıtlarından yüklendi",
+        "dataSource": "Canlı müşteri ve proje kayıtları",
         "contact": "Contact",
         "linkedProject": "Linked Project",
         "noLinkedProject": "No linked project",
@@ -2060,7 +2089,7 @@
       "defaultClientName": "Müşteri",
       "loadingProject": "Proje yükleniyor...",
       "noActiveProject": "Aktif proje yok",
-      "projectSubtitle": "Proje verileri PostgreSQL'den yükleniyor",
+      "projectSubtitle": "Stant projenizin canlı özeti",
       "loadingActiveProject": "Aktif proje yükleniyor...",
       "noProjectAssigned": "Henüz aktif bir proje atanmamış.",
       "pmLabel": "Proje Yöneticisi",

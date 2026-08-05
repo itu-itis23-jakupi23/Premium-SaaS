@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ENSLogo } from '@/components/ENSLogo';
-import { motion, useScroll, useTransform, useInView, Variants } from 'framer-motion';
+import { motion, useInView, Variants } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ExhibitionCursorField } from '@/components/ExhibitionCursorField';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -34,8 +35,8 @@ const PM_FEATURE_KEYS     = ['boothWorkspace', 'clientMgmt', 'taskTracker', 'pip
 const PLATFORM_STATS = [
   { numericValue: 2400, valueSuffix: '+', tKey: 'team.stats.boothsDesigned',   color: 'text-primary',    bg: 'bg-primary/10',    icon: Box          },
   { numericValue: 98,   valueSuffix: '%', tKey: 'team.stats.approvalRate',     color: 'text-blue-400',   bg: 'bg-blue-500/10',   icon: CheckCircle2 },
-  { numericValue: 60,   valueSuffix: '%', tKey: 'team.stats.fasterTurnaround', color: 'text-cyan-400',   bg: 'bg-cyan-500/10',   icon: TrendingUp   },
-  { numericValue: 40,   valueSuffix: '+', tKey: 'team.stats.activeProjects',   color: 'text-purple-400', bg: 'bg-purple-500/10', icon: Globe        },
+  { numericValue: 60,   valueSuffix: '%', tKey: 'team.stats.fasterTurnaround', color: 'text-emerald-500', bg: 'bg-emerald-500/10', icon: TrendingUp   },
+  { numericValue: 40,   valueSuffix: '+', tKey: 'team.stats.activeProjects',   color: 'text-amber-500',   bg: 'bg-amber-500/10',   icon: Globe        },
 ];
 
 const WORKFLOW_STEP_ICONS = [FileText, Settings, Box, Eye, Users, CheckCircle2, Package];
@@ -194,8 +195,6 @@ function HeroDashboardPreview() {
 
 // ─── Component ────────────────────────────────────────────────────
 export default function TeamLanding() {
-  const { scrollYProgress } = useScroll();
-  const y = useTransform(scrollYProgress, [0, 1], [0, -80]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [, navigate] = useLocation();
@@ -235,7 +234,7 @@ export default function TeamLanding() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden font-sans">
+    <div className="ens-platform-landing ens-platform-staff min-h-screen bg-background text-foreground overflow-x-hidden font-sans">
 
       {/* ── Nav ─────────────────────────────────────────────────── */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -280,25 +279,24 @@ export default function TeamLanding() {
       </header>
 
       {/* ── Hero ────────────────────────────────────────────────── */}
-      <section className="relative pt-44 pb-16 md:pt-56 md:pb-24 overflow-hidden">
+      <section className="ens-landing-hero ens-landing-hero-staff relative pt-44 pb-16 md:pt-56 md:pb-24 overflow-hidden">
+        <ExhibitionCursorField variant="staff" />
         <div className="absolute inset-0 grid-pattern opacity-[0.05] dark:opacity-[0.12] -z-10" />
-        <motion.div style={{ y }} className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[950px] h-[600px] rounded-full bg-primary/18 blur-[150px] pointer-events-none -z-10" />
-        <div className="absolute top-1/4 right-0 w-[500px] h-[500px] rounded-full bg-blue-500/12 blur-[120px] pointer-events-none -z-10" />
-        <div className="absolute bottom-0 left-1/4 w-[350px] h-[350px] rounded-full bg-cyan-500/8 blur-[100px] pointer-events-none -z-10" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[720px] rounded-full border border-primary/5 pointer-events-none -z-10" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] rounded-full border border-blue-500/5 pointer-events-none -z-10" />
+        <div className="ens-landing-dimension absolute left-6 right-6 top-32 hidden md:flex" aria-hidden="true">
+          <span>ENS / STAFF OPERATIONS</span><i /><span>02</span>
+        </div>
 
         <div className="container mx-auto px-6">
           <motion.div initial="hidden" animate="visible" variants={STAGGER} className="max-w-5xl mx-auto text-center">
 
             <motion.div variants={FADE_UP}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-6 border border-primary/20">
+              className="ens-landing-hero-badge inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-6 border border-primary/20">
               <Shield className="w-3.5 h-3.5" />
               {t('team.hero.badge')}
             </motion.div>
 
             <motion.h1 variants={FADE_UP}
-              className="text-5xl md:text-7xl font-bold tracking-tight mb-7 leading-[1.08]">
+              className="ens-landing-hero-title text-5xl md:text-7xl font-bold tracking-tight mb-7 leading-[1.08]">
               {t('team.hero.titlePart1')}
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-cyan-400 glow-text">
@@ -307,7 +305,7 @@ export default function TeamLanding() {
             </motion.h1>
 
             <motion.p variants={FADE_UP}
-              className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+              className="ens-landing-hero-copy text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
               {t('team.hero.subtitle')}
             </motion.p>
 
@@ -507,7 +505,7 @@ export default function TeamLanding() {
             <div className="flex flex-wrap gap-2">
               {[
                 { label: 'Chief Dashboard',  path: '/chief',                   clx: 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/15'         },
-                { label: 'Chief Monitor',    path: '/chief/workspace-monitor', clx: 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/15'         },
+                { label: 'Chief Workspace',  path: '/chief/workspace',         clx: 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/15'         },
                 { label: 'PM Dashboard',     path: '/pm',                      clx: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/15'     },
                 { label: '3D Workspace',     path: '/pm/workspace',            clx: 'bg-purple-500/10 text-purple-400 border-purple-500/20 hover:bg-purple-500/15' },
                 { label: 'PM Tasks',         path: '/pm/tasks',                clx: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/15'     },

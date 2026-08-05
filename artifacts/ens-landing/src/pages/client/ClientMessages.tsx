@@ -7,23 +7,27 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Paperclip, MoreVertical, Search, Phone, Video, X } from "lucide-react";
+import { Send, Paperclip, Search, X } from "lucide-react";
 import {
   getConversationMessages,
   getMessageContacts,
+  getPlatformProjects,
   messageAttachmentHref,
   sendConversationMessage,
   uploadConversationAttachment,
   type DirectMessage,
   type DirectMessageAttachment,
   type MessageContact,
+  type PlatformProject,
 } from "@/lib/platform-api";
 
 export default function ClientMessages() {
   const { t } = useTranslation();
   const [contacts, setContacts] = useState<MessageContact[]>([]);
   const [messages, setMessages] = useState<DirectMessage[]>([]);
+  const [projects, setProjects] = useState<PlatformProject[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
@@ -43,13 +47,23 @@ export default function ClientMessages() {
     const q = search.toLowerCase();
     return contacts.filter((contact) => contact.name.toLowerCase().includes(q) || contact.email.toLowerCase().includes(q));
   }, [contacts, search]);
+  const activeProjects = useMemo(() => {
+    if (!active) return [];
+    const assigned = projects.filter((project) => normalize(project.pm) === normalize(active.name));
+    return assigned.length ? assigned : contacts.length === 1 ? projects : [];
+  }, [active, contacts.length, projects]);
+  const activeProject = activeProjects.find((project) => project.id === activeProjectId) ?? activeProjects[0] ?? null;
+  const messageContext = activeProject
+    ? { projectId: activeProject.id, exhibitionName: activeProject.exhibition || activeProject.name }
+    : undefined;
 
   useEffect(() => {
     let mounted = true;
-    getMessageContacts()
-      .then((response) => {
+    Promise.all([getMessageContacts(), getPlatformProjects({ limit: 100 })])
+      .then(([response, projectResponse]) => {
         if (!mounted) return;
         setContacts(response.contacts);
+        setProjects(projectResponse.projects);
         setActiveId((current) => current && response.contacts.some((contact) => contact.id === current) ? current : response.contacts[0]?.id ?? null);
       })
       .catch((reason: unknown) => {
@@ -62,6 +76,12 @@ export default function ClientMessages() {
   }, []);
 
   useEffect(() => {
+    setActiveProjectId((current) => current && activeProjects.some((project) => project.id === current)
+      ? current
+      : activeProjects[0]?.id ?? null);
+  }, [active?.id, activeProjects]);
+
+  useEffect(() => {
     if (!active) return;
     let mounted = true;
 
@@ -70,7 +90,7 @@ export default function ClientMessages() {
 
     async function loadMessages() {
       try {
-        const response = await getConversationMessages(active!.id);
+        const response = await getConversationMessages(active!.id, messageContext);
         if (!mounted) return;
         setMessages(response.messages);
         setContacts((current) => current.map((contact) => contact.id === active!.id ? { ...contact, unread: 0 } : contact));
@@ -92,7 +112,7 @@ export default function ClientMessages() {
       mounted = false;
       window.clearInterval(interval);
     };
-  }, [active?.id]);
+  }, [active?.id, activeProject?.id]);
 
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
@@ -107,7 +127,7 @@ export default function ClientMessages() {
     try {
       const attachments = attachment ? [attachment] : [];
       const preview = text || attachment?.name || "Attachment";
-      const response = await sendConversationMessage(active.id, text, undefined, attachments);
+      const response = await sendConversationMessage(active.id, text, messageContext, attachments);
       setMessages((current) => [...current, response.message]);
       setContacts((current) => current.map((contact) => contact.id === active.id ? {
         ...contact,
@@ -128,7 +148,7 @@ export default function ClientMessages() {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    if (file.size > 25_000_000) {
+    if (file.size > 10_000_000) {
       setError(t("client.messages.error.attachmentTooLarge"));
       return;
     }
@@ -220,18 +240,26 @@ export default function ClientMessages() {
               <div>
                 <p className="text-sm font-bold leading-none">{active?.name ?? t("client.messages.supportManager")}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">{active?.email ?? ""}</p>
+                {activeProjects.length === 1 && (
+                  <p className="mt-1 text-[10px] font-medium text-primary">{activeProject?.exhibition || activeProject?.name}</p>
+                )}
+                {activeProjects.length > 1 && (
+                  <label className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground" htmlFor="client-message-project">
+                    Project
+                    <select
+                      id="client-message-project"
+                      name="client-message-project"
+                      className="max-w-52 rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
+                      value={activeProject?.id ?? ""}
+                      onChange={(event) => setActiveProjectId(event.target.value)}
+                    >
+                      {activeProjects.map((project) => (
+                        <option key={project.id} value={project.id}>{project.exhibition || project.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-label={t("client.messages.actions.phone")}>
-                <Phone className="h-4 w-4" aria-hidden="true" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-label={t("client.messages.actions.video")}>
-                <Video className="h-4 w-4" aria-hidden="true" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-label={t("client.messages.actions.more")}>
-                <MoreVertical className="h-4 w-4" aria-hidden="true" />
-              </Button>
             </div>
           </div>
 
@@ -348,6 +376,10 @@ function formatFileSize(size: number) {
   if (!Number.isFinite(size) || size <= 0) return "0 KB";
   if (size >= 1_000_000) return `${(size / 1_000_000).toFixed(1)} MB`;
   return `${Math.max(1, Math.round(size / 1000))} KB`;
+}
+
+function normalize(value: string | null | undefined) {
+  return String(value || "").trim().toLowerCase();
 }
 
 function isConversationAccessError(message: string) {

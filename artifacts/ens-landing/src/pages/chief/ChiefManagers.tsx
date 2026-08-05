@@ -7,6 +7,7 @@ import { downloadExcelWorkbook } from "@/lib/excel-export";
 import {
   getManagerAssignmentItems,
   getManagerWorkspace,
+  invitationTokenFromInput,
   invitePlatformManager,
   resendManagerInvitation,
   revokeManagerInvitation,
@@ -71,6 +72,7 @@ import {
   Clock,
   Copy,
   Grid2X2,
+  KeyRound,
   ListFilter,
   Loader2,
   MessageSquare,
@@ -623,6 +625,18 @@ export default function ChiefManagers() {
       .catch(() => showToast(t("chief.managers.toast.inviteCopyError")));
   }
 
+  function copyInvitationCode(invitation: ManagerInvitation) {
+    const token = invitation.token || (invitation.inviteUrl ? invitationTokenFromInput(invitation.inviteUrl) : "");
+    if (!token) {
+      showToast(t("chief.managers.toast.inviteCopyFirst"));
+      return;
+    }
+
+    navigator.clipboard.writeText(token)
+      .then(() => showToast(t("chief.managers.toast.inviteCodeCopied")))
+      .catch(() => showToast(t("chief.managers.toast.inviteCodeCopyError")));
+  }
+
   // Opens a confirmation dialog before toggling status
   function requestToggleStatus(id: string) {
     setPendingToggleId(id);
@@ -925,6 +939,7 @@ export default function ChiefManagers() {
           invitations={pendingInvitations}
           busyAction={busyAction}
           onCopy={copyInvitationLink}
+          onCopyCode={copyInvitationCode}
           onResend={resendInvitation}
           onRevoke={revokeInvitation}
         />
@@ -1404,12 +1419,14 @@ function PendingInvitationsPanel({
   invitations,
   busyAction,
   onCopy,
+  onCopyCode,
   onResend,
   onRevoke,
 }: {
   invitations: ManagerInvitation[];
   busyAction: string | null;
   onCopy: (invitation: ManagerInvitation) => void;
+  onCopyCode: (invitation: ManagerInvitation) => void;
   onResend: (invitationId: string) => void;
   onRevoke: (invitationId: string) => void;
 }) {
@@ -1469,8 +1486,27 @@ function PendingInvitationsPanel({
                   )}
                 </div>
                 <div className="flex shrink-0 gap-1">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onCopy(invitation)} aria-label={t("chief.managers.invitations.copyLink", { email: invitation.email })}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-[11px]"
+                    onClick={() => onCopyCode(invitation)}
+                    aria-label={t("chief.managers.invitations.copyCode", { email: invitation.email })}
+                    title={t("chief.managers.invitations.copyCode", { email: invitation.email })}
+                  >
+                    <KeyRound className="h-3.5 w-3.5" />
+                    {t("chief.managers.invitations.code")}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-[11px]"
+                    onClick={() => onCopy(invitation)}
+                    aria-label={t("chief.managers.invitations.copyLink", { email: invitation.email })}
+                    title={t("chief.managers.invitations.copyLink", { email: invitation.email })}
+                  >
                     <Copy className="h-3.5 w-3.5" />
+                    {t("chief.managers.invitations.link")}
                   </Button>
                   <Button
                     variant="ghost"

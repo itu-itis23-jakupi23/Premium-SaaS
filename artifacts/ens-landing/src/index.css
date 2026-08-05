@@ -5,9 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --app-font-samsung: "SamsungOne", "Samsung One", "SamsungOne UI", "Samsung Sharp Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, ui-sans-serif, sans-serif;
+  --app-font-samsung: "IBM Plex Sans", "Segoe UI", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, ui-sans-serif, sans-serif;
   --app-font-sans: var(--app-font-samsung);
-  --app-font-mono: var(--app-font-samsung);
+  --app-font-display: "Space Grotesk", "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --app-font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 @theme inline {
@@ -83,42 +84,42 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
-  --border: 240 5.9% 90%;
+  --background: 48 22% 95%;
+  --foreground: 213 11% 12%;
+  --border: 45 14% 86%;
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --card-border: 240 5.9% 90%;
-  --sidebar: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-border: 240 5.9% 90%;
-  --sidebar-primary: 240 5.9% 10%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 4.8% 95.9%;
-  --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-ring: 240 10% 3.9%;
+  --card-foreground: 213 11% 12%;
+  --card-border: 45 14% 86%;
+  --sidebar: 214 48% 17%;
+  --sidebar-foreground: 215 28% 83%;
+  --sidebar-border: 215 35% 23%;
+  --sidebar-primary: 214 43% 30%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 215 34% 22%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 215 48% 72%;
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --popover-border: 240 5.9% 90%;
-  --primary: 262 83% 58%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --destructive: 0 84.2% 60.2%;
+  --popover-foreground: 213 11% 12%;
+  --popover-border: 45 14% 86%;
+  --primary: 216 49% 33%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 214 39% 95%;
+  --secondary-foreground: 216 49% 25%;
+  --muted: 48 16% 92%;
+  --muted-foreground: 213 7% 38%;
+  --accent: 214 39% 95%;
+  --accent-foreground: 216 49% 25%;
+  --destructive: 359 44% 50%;
   --destructive-foreground: 0 0% 98%;
-  --input: 240 5.9% 90%;
-  --ring: 262 83% 58%;
-  --chart-1: 12 76% 61%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 197 37% 24%;
-  --chart-4: 43 74% 66%;
-  --chart-5: 27 87% 67%;
+  --input: 45 16% 79%;
+  --ring: 216 49% 33%;
+  --chart-1: 216 49% 33%;
+  --chart-2: 145 31% 36%;
+  --chart-3: 32 48% 44%;
+  --chart-4: 359 44% 50%;
+  --chart-5: 214 43% 58%;
 
-  --radius: 0.5rem; 
+  --radius: 0.25rem;
   --shadow-2xs: 0px 2px 0px 0px rgba(0,0,0,0.02);
   --shadow-xs: 0px 2px 0px 0px rgba(0,0,0,0.05);
   --shadow-sm: 0px 2px 0px 0px rgba(0,0,0,0.05), 0px 1px 2px -1px rgba(0,0,0,0.05);
@@ -146,17 +147,17 @@
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 
   /* Workspace specific variables (light mode) */
-  --workspace-bg: #f3f1ec;
-  --workspace-panel: #ffffff;
-  --workspace-panel-e0: rgba(255, 255, 255, 0.88);
-  --workspace-ink: #181613;
-  --workspace-hair: #d8d3c9;
-  --workspace-muted: #6b6560;
-  --workspace-bg-hover: #ece9e3;
-  --workspace-blue: #1d4ed8;
-  --workspace-blue-12: rgba(29, 78, 216, 0.07);
-  --workspace-blue-15: rgba(29, 78, 216, 0.08);
-  --workspace-blue-08: rgba(29, 78, 216, 0.03);
+  --workspace-bg: #edf2f7;
+  --workspace-panel: #f8fafc;
+  --workspace-panel-e0: rgba(248, 250, 252, 0.92);
+  --workspace-ink: #152235;
+  --workspace-hair: #cbd6e2;
+  --workspace-muted: #66758a;
+  --workspace-bg-hover: #e3eaf2;
+  --workspace-blue: #426fa8;
+  --workspace-blue-12: rgba(66, 111, 168, 0.08);
+  --workspace-blue-15: rgba(66, 111, 168, 0.11);
+  --workspace-blue-08: rgba(66, 111, 168, 0.05);
   --workspace-orange: #c2410c;
   --workspace-orange-12: rgba(194, 65, 12, 0.07);
   --workspace-orange-14: rgba(194, 65, 12, 0.08);
@@ -176,40 +177,40 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: 240 20% 4%;
-  --foreground: 210 40% 98%;
-  --border: 240 15% 15%;
-  --card: 240 18% 6%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 240 15% 15%;
-  --sidebar: 240 18% 6%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 240 15% 15%;
-  --sidebar-primary: 262 83% 58%;
+  --background: 214 28% 7%;
+  --foreground: 214 24% 91%;
+  --border: 214 18% 18%;
+  --card: 215 24% 10%;
+  --card-foreground: 214 24% 91%;
+  --card-border: 214 18% 18%;
+  --sidebar: 214 39% 7%;
+  --sidebar-foreground: 215 28% 83%;
+  --sidebar-border: 215 28% 17%;
+  --sidebar-primary: 214 43% 38%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 15% 15%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 262 83% 58%;
-  --popover: 240 18% 6%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 240 15% 15%;
-  --primary: 262 83% 58%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 240 15% 15%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 240 15% 15%;
-  --muted-foreground: 240 5% 65%;
-  --accent: 240 15% 15%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
+  --sidebar-accent: 215 30% 16%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 215 48% 72%;
+  --popover: 215 24% 10%;
+  --popover-foreground: 214 24% 91%;
+  --popover-border: 214 18% 18%;
+  --primary: 215 40% 61%;
+  --primary-foreground: 214 48% 12%;
+  --secondary: 214 24% 14%;
+  --secondary-foreground: 214 24% 91%;
+  --muted: 214 20% 14%;
+  --muted-foreground: 214 12% 67%;
+  --accent: 214 25% 16%;
+  --accent-foreground: 214 24% 91%;
+  --destructive: 359 50% 48%;
   --destructive-foreground: 0 0% 98%;
-  --input: 240 15% 15%;
-  --ring: 262 83% 58%;
-  --chart-1: 220 70% 50%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --input: 214 18% 22%;
+  --ring: 215 40% 61%;
+  --chart-1: 215 48% 65%;
+  --chart-2: 145 34% 52%;
+  --chart-3: 32 52% 58%;
+  --chart-4: 359 52% 60%;
+  --chart-5: 205 42% 63%;
 
   --shadow-2xs: 0px 2px 0px 0px rgba(0,0,0,0.2);
   --shadow-xs: 0px 2px 0px 0px rgba(0,0,0,0.2);
@@ -220,17 +221,17 @@
   --shadow-2xl: 0px 2px 0px 0px rgba(0,0,0,0.2);
 
   /* Workspace specific variables (dark mode) */
-  --workspace-bg: #09090b;
-  --workspace-panel: #18181b;
-  --workspace-panel-e0: rgba(24, 24, 27, 0.88);
-  --workspace-ink: #f4f4f5;
-  --workspace-hair: #27272a;
-  --workspace-muted: #a1a1aa;
-  --workspace-bg-hover: #27272a;
-  --workspace-blue: #3b82f6;
-  --workspace-blue-12: rgba(59, 130, 246, 0.07);
-  --workspace-blue-15: rgba(59, 130, 246, 0.08);
-  --workspace-blue-08: rgba(59, 130, 246, 0.03);
+  --workspace-bg: #0b1119;
+  --workspace-panel: #111a24;
+  --workspace-panel-e0: rgba(17, 26, 36, 0.92);
+  --workspace-ink: #e8edf5;
+  --workspace-hair: #283646;
+  --workspace-muted: #94a3b5;
+  --workspace-bg-hover: #192635;
+  --workspace-blue: #6794cb;
+  --workspace-blue-12: rgba(103, 148, 203, 0.09);
+  --workspace-blue-15: rgba(103, 148, 203, 0.12);
+  --workspace-blue-08: rgba(103, 148, 203, 0.05);
   --workspace-orange: #f97316;
   --workspace-orange-12: rgba(249, 115, 22, 0.07);
   --workspace-orange-14: rgba(249, 115, 22, 0.08);
@@ -537,4 +538,304 @@ html[data-compact="true"] .p-6 {
 html[data-compact="true"] .py-6 {
   padding-bottom: 1rem !important;
   padding-top: 1rem !important;
+}
+
+/* ENS platform design language. Scoped landing rules keep portal behavior and the 3D workspace isolated. */
+.ens-platform-landing {
+  --ens-blueprint-grid: hsl(var(--primary) / 0.075);
+  --ens-dimension-line: hsl(var(--foreground) / 0.22);
+  position: relative;
+  background-color: hsl(var(--background));
+  background-image:
+    linear-gradient(var(--ens-blueprint-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ens-blueprint-grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.ens-platform-landing::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border: 12px solid hsl(var(--background));
+  opacity: 0.55;
+}
+
+.ens-platform-landing > :not(header) {
+  position: relative;
+  z-index: 1;
+}
+
+.ens-platform-landing > header {
+  position: fixed;
+  z-index: 50;
+}
+
+.ens-platform-landing h1,
+.ens-platform-landing h2,
+.ens-platform-landing h3,
+.ens-platform-landing h4 {
+  font-family: var(--app-font-display);
+  letter-spacing: 0 !important;
+}
+
+.ens-platform-landing header {
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--background) / 0.94) !important;
+  box-shadow: 0 1px 0 hsl(var(--foreground) / 0.03);
+}
+
+.ens-platform-landing header nav > a,
+.ens-platform-landing header nav > button {
+  font-family: var(--app-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ens-platform-landing button.rounded-full,
+.ens-platform-landing a.rounded-full {
+  border-radius: 2px !important;
+}
+
+.ens-platform-landing .rounded-3xl,
+.ens-platform-landing .rounded-2xl,
+.ens-platform-landing .rounded-xl {
+  border-radius: var(--radius) !important;
+}
+
+.ens-platform-landing .glow-box,
+.ens-platform-landing [class*="shadow-[0_0_"] {
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.ens-platform-landing .glow-text,
+.ens-platform-landing [class*="bg-gradient-to-r"][class*="text-transparent"] {
+  color: hsl(var(--primary)) !important;
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  -webkit-text-fill-color: currentColor !important;
+  text-shadow: none !important;
+}
+
+.ens-platform-landing section[id] {
+  scroll-margin-top: 5rem;
+}
+
+.ens-platform-landing .ens-landing-hero {
+  min-height: auto;
+  padding-top: 6.75rem !important;
+  isolation: isolate;
+}
+
+.ens-platform-landing .ens-landing-hero > .container {
+  position: relative;
+  z-index: 2;
+}
+
+.ens-platform-landing .ens-landing-hero > .ens-landing-dimension {
+  position: absolute;
+  z-index: 2;
+}
+
+.ens-platform-landing .ens-exhibition-cursor-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.82;
+}
+
+.dark .ens-platform-landing .ens-exhibition-cursor-field {
+  opacity: 0.72;
+}
+
+.ens-platform-landing .ens-landing-hero-staff {
+  padding-bottom: 4.5rem !important;
+}
+
+.ens-platform-landing .ens-landing-hero .ens-landing-dimension {
+  top: 5.25rem !important;
+}
+
+.ens-platform-landing .ens-landing-hero-badge {
+  margin-bottom: 1.25rem !important;
+  border-radius: 999px;
+  font-family: var(--app-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.ens-platform-landing .ens-landing-hero-title {
+  max-width: 70rem;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1.5rem !important;
+  font-size: 4rem !important;
+  line-height: 1.04 !important;
+}
+
+.ens-platform-landing .ens-landing-hero-copy {
+  max-width: 45rem;
+  margin-bottom: 2rem !important;
+  font-size: 1.125rem !important;
+  line-height: 1.65 !important;
+}
+
+.ens-platform-landing section > .container > .text-center > p,
+.ens-platform-landing section > .container > div > p {
+  max-width: 42rem;
+}
+
+.ens-platform-landing .ens-landing-dimension {
+  align-items: center;
+  gap: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ens-platform-landing .ens-landing-dimension i {
+  flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ens-dimension-line) 0 6px,
+    transparent 6px 10px
+  );
+}
+
+.ens-platform-landing .ens-landing-blueprint-mark {
+  width: min(58vw, 46rem);
+  aspect-ratio: 1.75;
+  transform: translate(-50%, -45%);
+  border: 1px solid hsl(var(--primary) / 0.14);
+  background-image:
+    linear-gradient(hsl(var(--primary) / 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--primary) / 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.ens-platform-landing .ens-landing-blueprint-mark::before,
+.ens-platform-landing .ens-landing-blueprint-mark::after {
+  content: "";
+  position: absolute;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-color: hsl(var(--primary));
+}
+
+.ens-platform-landing .ens-landing-blueprint-mark::before {
+  left: -1px;
+  top: -1px;
+  border-left: 2px solid;
+  border-top: 2px solid;
+}
+
+.ens-platform-landing .ens-landing-blueprint-mark::after {
+  right: -1px;
+  bottom: -1px;
+  border-right: 2px solid;
+  border-bottom: 2px solid;
+}
+
+.dark .ens-platform-landing {
+  --ens-blueprint-grid: hsl(var(--primary) / 0.055);
+  --ens-dimension-line: hsl(var(--foreground) / 0.18);
+}
+
+@media (max-width: 767px) {
+  .ens-platform-landing {
+    background-size: 28px 28px;
+  }
+
+  .ens-platform-landing::before {
+    border-width: 6px;
+  }
+
+  .ens-platform-landing .ens-landing-hero {
+    padding-top: 6.5rem !important;
+  }
+
+  .ens-platform-landing .ens-landing-hero-title {
+    max-width: 22rem;
+    margin-bottom: 1.5rem !important;
+    font-size: 2.5rem !important;
+    line-height: 1.08 !important;
+  }
+
+  .ens-platform-landing .ens-landing-hero-copy {
+    max-width: 21rem;
+    margin-bottom: 2rem !important;
+    font-size: 1rem !important;
+    line-height: 1.65 !important;
+  }
+
+  .ens-platform-landing .ens-exhibition-cursor-field {
+    opacity: 0.32;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ens-platform-landing .ens-exhibition-cursor-field {
+    opacity: 0.42;
+  }
+}
+
+/* ==========================================================================
+   Architectural & Blueprint Grid Background Patterns for Dashboards & Modals
+   ========================================================================== */
+.bg-blueprint-grid {
+  background-image:
+    linear-gradient(to right, rgba(99, 102, 241, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(99, 102, 241, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.dark .bg-blueprint-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.bg-dot-pattern {
+  background-image: radial-gradient(circle at 1.5px 1.5px, rgba(99, 102, 241, 0.12) 1.5px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.dark .bg-dot-pattern {
+  background-image: radial-gradient(circle at 1.5px 1.5px, rgba(255, 255, 255, 0.08) 1.5px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* ==========================================================================
+   Dark Theme Native Date Picker & Calendar Styling
+   ========================================================================== */
+input[type="date"],
+input[type="datetime-local"] {
+  color-scheme: dark;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.85) hue-rotate(180deg);
+  opacity: 0.75;
+  padding: 2px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
 }

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { getRequestPortal } from '@/lib/portal';
 
 export type UserRole = 'chief' | 'pm' | 'client';
 
@@ -7,6 +8,7 @@ export interface AuthUser {
   name: string;
   email: string;
   company: string;
+  organizationSlug: string;
   role: UserRole;
   systemRole?: string;
   avatarUrl?: string;
@@ -20,6 +22,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<AuthUser>;
   signup: (input: SignupInput) => Promise<AuthUser>;
+  refresh: () => Promise<AuthUser | null>;
   logout: () => Promise<void>;
 }
 
@@ -83,6 +86,7 @@ const MOCK_USERS: Record<string, AuthUser> = {
     name: 'Agency Owner',
     email: 'chief@demo.example',
     company: 'Demo Agency',
+    organizationSlug: ORGANIZATION_SLUG,
     role: 'chief',
     systemRole: 'owner',
     avatarUrl: '',
@@ -93,6 +97,7 @@ const MOCK_USERS: Record<string, AuthUser> = {
     name: 'Project Manager',
     email: 'pm@demo.example',
     company: 'Demo Agency',
+    organizationSlug: ORGANIZATION_SLUG,
     role: 'pm',
     systemRole: 'pm',
     avatarUrl: '',
@@ -103,6 +108,7 @@ const MOCK_USERS: Record<string, AuthUser> = {
     name: 'Demo Client',
     email: 'client@demo.example',
     company: 'Demo Agency',
+    organizationSlug: ORGANIZATION_SLUG,
     role: 'client',
     systemRole: 'client',
     avatarUrl: '',
@@ -120,6 +126,7 @@ const AuthContext = createContext<AuthContextValue>({
   signup: async () => {
     throw new Error('AuthProvider is not mounted');
   },
+  refresh: async () => null,
   logout: async () => {},
 });
 
@@ -127,12 +134,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const refresh = useCallback(async () => {
+    if (USE_MOCK_API) {
+      const nextUser = readMockUser();
+      setUser(nextUser);
+      return nextUser;
+    }
+
+    const response = await request<AuthResponse>('/auth/me', {
+      headers: { 'x-auth-optional': '1' },
+    });
+    const nextUser = toAuthUser(response);
+    setUser(nextUser);
+    persistCurrentUser(nextUser);
+    return nextUser;
+  }, []);
+
   useEffect(() => {
     if (USE_MOCK_API) {
       setUser(readMockUser());
       setIsLoading(false);
       return;
     }
+
+    // Real sessions live in HTTP-only cookies. Remove legacy mock identity so
+    // a staff name can never leak into client-facing API fallbacks.
+    localStorage.removeItem(MOCK_AUTH_STORAGE_KEY);
 
     let isMounted = true;
 
@@ -168,10 +195,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const response = await request<AuthResponse>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({
-        ...credentials,
-        organizationSlug: credentials.organizationSlug ?? ORGANIZATION_SLUG,
-      }),
+      // Login accounts are globally unique by email. Only constrain the
+      // organization when the caller explicitly supplies one; otherwise a
+      // build-time tenant default can reject valid users from another org.
+      body: JSON.stringify(credentials),
     });
     const nextUser = requireAuthUser(response);
     setUser(nextUser);
@@ -187,6 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: input.name.trim() || input.email.split('@')[0] || (role === 'chief' ? 'Chief Manager' : role === 'pm' ? 'Project Manager' : 'Client Reviewer'),
         email: input.email,
         company: input.company.trim() || 'ENS Demo Agency',
+        organizationSlug: input.organizationSlug ?? ORGANIZATION_SLUG,
         role,
         systemRole: role === 'chief' ? 'owner' : role,
         avatarUrl: '',
@@ -200,12 +228,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const role = input.role ?? 'client';
     const signupPath = role === 'client' ? '/auth/signup' : '/auth/signup-staff';
+    const organizationSlug = role === 'client'
+      ? input.organizationSlug
+      : input.organizationSlug ?? ORGANIZATION_SLUG;
     const response = await request<AuthResponse>(signupPath, {
       method: 'POST',
       body: JSON.stringify({
         ...input,
         role,
-        organizationSlug: input.organizationSlug ?? ORGANIZATION_SLUG,
+        organizationSlug,
       }),
     });
     const nextUser = requireAuthUser(response);
@@ -230,7 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, signup, refresh, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -252,6 +283,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: {
       accept: 'application/json',
       'content-type': 'application/json',
+      'x-ens-portal': getRequestPortal(),
       ...init?.headers,
     },
   });
@@ -268,9 +300,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 // Shared refresh promise — prevents concurrent 401s from spawning multiple refresh requests
 let _authRefreshPromise: Promise<boolean> | null = null;
 
+const NON_REFRESHABLE_AUTH_PATHS = new Set([
+  '/auth/login',
+  '/auth/signup',
+  '/auth/signup-staff',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/logout',
+  '/auth/refresh',
+]);
+
 async function requestFetch(path: string, init: RequestInit, retried = false): Promise<Response> {
   const response = await fetch(`${API_BASE_URL}${path}`, init);
-  if (response.status !== 401 || retried || path === '/auth/refresh') return response;
+  const requestPath = path.split(/[?#]/, 1)[0];
+  if (response.status !== 401 || retried || NON_REFRESHABLE_AUTH_PATHS.has(requestPath)) return response;
 
   if (!_authRefreshPromise) {
     _authRefreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
@@ -279,6 +322,7 @@ async function requestFetch(path: string, init: RequestInit, retried = false): P
       headers: {
         accept: 'application/json',
         'content-type': 'application/json',
+        'x-ens-portal': getRequestPortal(),
       },
     })
       .then((r) => r.ok)
@@ -308,6 +352,7 @@ function toAuthUser(response: AuthResponse): AuthUser | null {
     name: response.user.name,
     email: response.user.email,
     company: response.organization.name,
+    organizationSlug: response.organization.slug,
     role: response.user.role,
     systemRole: response.user.systemRole,
     avatarUrl: response.user.avatarUrl,
@@ -333,6 +378,7 @@ function readMockUser(): AuthUser | null {
 }
 
 function persistCurrentUser(user: AuthUser | null) {
+  if (!USE_MOCK_API) return;
   if (user) {
     localStorage.setItem(MOCK_AUTH_STORAGE_KEY, JSON.stringify(user));
   } else {

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import {
@@ -124,8 +125,7 @@ export default function PMTasks() {
   const [newTask, setNewTask] = useState<NewTask>({ priority: "Medium", col: "todo" });
   const [editingTask, setEditingTask] = useState<PmTask | null>(null);
   const [taskDraft, setTaskDraft] = useState<TaskDraft | null>(null);
-  const [toastMsg,     setToastMsg]     = useState("");
-  const [toastVisible, setToastVisible] = useState(false);
+  const { toast: showGlobalToast } = useToast();
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
   const [editError, setEditError] = useState("");
@@ -231,9 +231,7 @@ export default function PMTasks() {
   }
 
   function showToast(msg: string) {
-    setToastMsg(msg);
-    setToastVisible(true);
-    window.setTimeout(() => setToastVisible(false), 2500);
+    showGlobalToast({ title: msg });
   }
 
   function setUrlTaskId(taskId: string | null) {
@@ -890,14 +888,6 @@ export default function PMTasks() {
         </>
       )}
 
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 bg-foreground text-background px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-xl z-50 transition-all duration-300 ${toastVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"}`}
-      >
-        <CheckCircle2 aria-hidden="true" className="h-4 w-4 text-green-400" /> {toastMsg}
-      </div>
     </DashboardLayout>
   );
 }

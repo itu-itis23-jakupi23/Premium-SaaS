@@ -161,7 +161,7 @@ export function StaffGateway({ children }: { children: ReactNode }) {
           className="w-full max-w-sm relative z-10"
         >
           {/* Card — dark, on-brand */}
-          <div className="rounded-2xl border border-primary/20 bg-card/90 backdrop-blur-xl p-8 shadow-[0_0_60px_rgba(109,40,217,0.15),0_0_0_1px_rgba(109,40,217,0.08)]">
+          <div className="rounded-2xl border border-primary/20 bg-card/90 backdrop-blur-xl p-8 shadow-[0_0_60px_rgba(37,99,235,0.15),0_0_0_1px_rgba(37,99,235,0.08)]">
             {/* Logo */}
             <div className="mb-6 flex justify-center">
               <ENSLogo size="sm" href="/" />
@@ -171,7 +171,7 @@ export function StaffGateway({ children }: { children: ReactNode }) {
             <div className="mb-6 text-center">
               {/* Glowing lock icon ring */}
               <div className="relative mx-auto mb-4 flex h-14 w-14 items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-primary/10 border border-primary/25 shadow-[0_0_20px_rgba(109,40,217,0.3)]" />
+                <div className="absolute inset-0 rounded-full bg-primary/10 border border-primary/25 shadow-[0_0_20px_rgba(37,99,235,0.3)]" />
                 <motion.div
                   animate={{ opacity: isLocked ? [1, 0.4, 1] : 1 }}
                   transition={{ duration: 1.5, repeat: isLocked ? Infinity : 0 }}
@@ -238,7 +238,7 @@ export function StaffGateway({ children }: { children: ReactNode }) {
 
               <Button
                 type="submit"
-                className="w-full shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)] transition-all"
+                className="w-full shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all"
                 disabled={isLocked || code.trim().length === 0}
               >
                 {isLocked ? `Locked (${lockedFor}s)` : "Enter Portal"}
