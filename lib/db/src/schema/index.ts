@@ -221,6 +221,7 @@ export const invitations = pgTable(
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
     email: varchar("email", { length: 255 }).notNull(),
+    name: text("name"),
     role: userRoleEnum("role").notNull(),
     tokenHash: text("token_hash").notNull(),
     invitedByUserId: uuid("invited_by_user_id").references(() => users.id, {

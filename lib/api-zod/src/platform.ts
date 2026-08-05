@@ -22,7 +22,7 @@ export const createProjectSchema = z.object({
 });
 
 export const updateProjectSchema = createProjectSchema.extend({
-  managerId: z.union([uuid, z.literal("unassigned")]).nullable().default(null),
+  managerId: z.union([uuid, z.literal("unassigned")]).nullable().optional(),
 });
 
 export const pipelineStageSchema = z.object({

@@ -5,11 +5,15 @@ import { sql, type SQL } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { createRefreshToken, hashToken, signAccessToken, verifyAccessToken } from "../lib/tokens";
-import { getAuthContext, toUiRole, type AuthContext, type AuthRole } from "../middlewares/session";
+import {
+  getAuthContext,
+  getAuthCookieNames,
+  toUiRole,
+  type AuthContext,
+  type AuthCookieRequest,
+  type AuthRole,
+} from "../middlewares/session";
 import { sendPasswordResetEmail } from "../lib/email";
-
-const ACCESS_COOKIE = "ens_access";
-const REFRESH_COOKIE = "ens_refresh";
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const REFRESH_TOKEN_TTL_DAYS = 30;
 
@@ -58,22 +62,23 @@ async function clearLoginAttempts(key: string) {
 }
 
 router.get("/auth/me", async (req, res) => {
-  const auth = await authFromAccessCookie(req.cookies?.[ACCESS_COOKIE]);
+  const cookies = getAuthCookieNames(req);
+  const auth = await authFromAccessCookie(req.cookies?.[cookies.access]);
 
   if (auth) {
     res.json(await enrichAuthResponse(auth));
     return;
   }
 
-  const refreshedAuth = await refreshAuthFromCookie(req.cookies?.[REFRESH_COOKIE], res);
+  const refreshedAuth = await refreshAuthFromCookie(req, req.cookies?.[cookies.refresh], res);
 
   if (refreshedAuth) {
     res.json(await enrichAuthResponse(refreshedAuth));
     return;
   }
 
-  if (hasCookie(req.cookies?.[ACCESS_COOKIE]) || hasCookie(req.cookies?.[REFRESH_COOKIE])) {
-    clearAuthCookies(res);
+  if (hasCookie(req.cookies?.[cookies.access]) || hasCookie(req.cookies?.[cookies.refresh])) {
+    clearAuthCookies(res, req);
   }
 
   res.json(emptyAuthResponse());
@@ -132,7 +137,7 @@ router.post("/auth/login", async (req, res) => {
     ipAddress: req.ip,
   });
 
-  setAuthCookies(res, auth.accessToken, auth.refreshToken);
+  setAuthCookies(res, req, auth.accessToken, auth.refreshToken);
 
   await db.execute(sql`
     update users
@@ -158,7 +163,7 @@ router.post("/auth/signup", async (req, res) => {
     return;
   }
 
-  const organization = await findOrganizationBySlug(input.value.organizationSlug ?? defaultOrganizationSlug());
+  const organization = await findOrganizationBySlug(input.value.organizationSlug);
 
   if (!organization) {
     res.status(404).json({
@@ -214,6 +219,7 @@ router.post("/auth/signup", async (req, res) => {
       contact_name,
       contact_email,
       status,
+      activated_at,
       intake_exhibition_name,
       intake_booth_size_sqm,
       intake_city,
@@ -228,6 +234,7 @@ router.post("/auth/signup", async (req, res) => {
       ${input.value.name},
       ${input.value.email},
       'pending_approval',
+      null,
       ${input.value.exhibitionName},
       ${input.value.boothSizeSqm},
       ${input.value.city},
@@ -269,12 +276,26 @@ router.post("/auth/signup", async (req, res) => {
     ipAddress: req.ip,
   });
 
-  setAuthCookies(res, auth.accessToken, auth.refreshToken);
+  setAuthCookies(res, req, auth.accessToken, auth.refreshToken);
   await auditAuthEvent(organization.id, userId, "auth_signup", "created client account");
-  res.status(201).json(authResponse(auth.context));
+  res.status(201).json(await enrichAuthResponse(auth.context));
 });
 
 router.post("/auth/signup-staff", async (req, res) => {
+  const requestedRole = req.body && typeof req.body === "object"
+    ? stringValue((req.body as Record<string, unknown>).role)
+    : null;
+
+  if (requestedRole === "pm") {
+    res.status(403).json({
+      error: {
+        code: "invitation_required",
+        message: "Project Managers must join with an invitation from a Chief Manager.",
+      },
+    });
+    return;
+  }
+
   const input = parseSignupStaffInput(req.body);
 
   if (!input.ok) {
@@ -316,22 +337,38 @@ router.post("/auth/signup-staff", async (req, res) => {
     return;
   }
 
-  const orgSlug = slugify(input.value.company);
-  let finalSlug = orgSlug;
-  const existingOrg = await findOrganizationBySlug(finalSlug);
-  if (existingOrg) {
-    finalSlug = `${orgSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
+  let org = input.value.role === "pm" && input.value.organizationSlug
+    ? await findOrganizationBySlug(input.value.organizationSlug)
+    : null;
+
+  if (input.value.role === "pm" && input.value.organizationSlug && !org) {
+    res.status(404).json({
+      error: {
+        code: "organization_not_found",
+        message: "The requested staff organization does not exist.",
+      },
+    });
+    return;
   }
 
-  const orgRows = await queryRows<{ id: string; name: string; slug: string; plan: string }>(sql`
-    insert into organizations (name, slug, plan, timezone, seat_limit, active_project_limit, storage_limit_mb, metadata)
-    values (${input.value.company}, ${finalSlug}, 'starter', 'Europe/Istanbul', 10, 20, 10240, '{}'::jsonb)
-    returning id::text, name, slug, plan
-  `);
-
-  const org = orgRows[0];
   if (!org) {
-    throw new Error("Organization signup insert did not return a row");
+    const orgSlug = slugify(input.value.company);
+    let finalSlug = orgSlug;
+    const existingOrg = await findOrganizationBySlug(finalSlug);
+    if (existingOrg) {
+      finalSlug = `${orgSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+
+    const orgRows = await queryRows<{ id: string; name: string; slug: string; plan: string }>(sql`
+      insert into organizations (name, slug, plan, timezone, seat_limit, active_project_limit, storage_limit_mb, metadata)
+      values (${input.value.company}, ${finalSlug}, 'starter', 'Europe/Istanbul', 10, 20, 10240, '{}'::jsonb)
+      returning id::text, name, slug, plan
+    `);
+
+    org = orgRows[0] ?? null;
+    if (!org) {
+      throw new Error("Organization signup insert did not return a row");
+    }
   }
 
   const passwordHash = hashPassword(input.value.password);
@@ -370,13 +407,14 @@ router.post("/auth/signup-staff", async (req, res) => {
     ipAddress: req.ip,
   });
 
-  setAuthCookies(res, auth.accessToken, auth.refreshToken);
+  setAuthCookies(res, req, auth.accessToken, auth.refreshToken);
   await auditAuthEvent(org.id, userId, "auth_signup", `created staff account (${input.value.role})`);
   res.status(201).json(authResponse(auth.context));
 });
 
 router.post("/auth/refresh", async (req, res) => {
-  const refreshToken = req.cookies?.[REFRESH_COOKIE];
+  const cookies = getAuthCookieNames(req);
+  const refreshToken = req.cookies?.[cookies.refresh];
 
   if (typeof refreshToken !== "string") {
     res.status(401).json({
@@ -392,7 +430,7 @@ router.post("/auth/refresh", async (req, res) => {
   const session = await findSessionByRefreshHash(tokenHash);
 
   if (!session) {
-    clearAuthCookies(res);
+    clearAuthCookies(res, req);
     res.status(401).json({
       error: {
         code: "session_invalid",
@@ -402,12 +440,13 @@ router.post("/auth/refresh", async (req, res) => {
     return;
   }
 
-  const auth = await rotateSession(session, res);
+  const auth = await rotateSession(req, session, res);
   res.json(authResponse(auth));
 });
 
 router.post("/auth/logout", async (req, res) => {
-  const refreshToken = req.cookies?.[REFRESH_COOKIE];
+  const cookies = getAuthCookieNames(req);
+  const refreshToken = req.cookies?.[cookies.refresh];
 
   if (typeof refreshToken === "string") {
     await db.execute(sql`
@@ -418,7 +457,7 @@ router.post("/auth/logout", async (req, res) => {
     `);
   }
 
-  clearAuthCookies(res);
+  clearAuthCookies(res, req);
   res.status(204).send();
 });
 
@@ -496,7 +535,9 @@ async function createSession(input: {
 }
 
 async function findLoginAccount(email: string, organizationSlug: string | null) {
-  const slug = organizationSlug ?? defaultOrganizationSlug();
+  const organizationFilter = organizationSlug
+    ? sql`and o.slug = ${organizationSlug}`
+    : sql``;
   const rows = await queryRows<{
     userId: string;
     email: string;
@@ -524,7 +565,7 @@ async function findLoginAccount(email: string, organizationSlug: string | null) 
     join memberships m on m.user_id = u.id
     join organizations o on o.id = m.organization_id
     where lower(u.email) = lower(${email})
-      and o.slug = ${slug}
+      ${organizationFilter}
       and u.disabled_at is null
       and u.deleted_at is null
       and o.deleted_at is null
@@ -635,16 +676,16 @@ async function authFromAccessCookie(token: unknown) {
   return getAuthContext(payload.sid, payload.sub, payload.org);
 }
 
-async function refreshAuthFromCookie(refreshToken: unknown, res: Response) {
+async function refreshAuthFromCookie(req: AuthCookieRequest, refreshToken: unknown, res: Response) {
   if (typeof refreshToken !== "string") return null;
   const session = await findSessionByRefreshHash(hashToken(refreshToken));
   if (!session) return null;
-  return rotateSession(session, res);
+  return rotateSession(req, session, res);
 }
 
 type RefreshSession = NonNullable<Awaited<ReturnType<typeof findSessionByRefreshHash>>>;
 
-async function rotateSession(session: RefreshSession, res: Response) {
+async function rotateSession(req: AuthCookieRequest, session: RefreshSession, res: Response) {
   const nextRefreshToken = createRefreshToken();
   const nextRefreshHash = hashToken(nextRefreshToken);
 
@@ -662,7 +703,7 @@ async function rotateSession(session: RefreshSession, res: Response) {
     exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_TTL_SECONDS,
   });
 
-  setAuthCookies(res, accessToken, nextRefreshToken);
+  setAuthCookies(res, req, accessToken, nextRefreshToken);
   return toAuthContext(session);
 }
 
@@ -700,20 +741,22 @@ function avatarField(metadata: Record<string, unknown>, key: "avatarUrl" | "avat
   return typeof value === "string" ? value : "";
 }
 
-function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
-  res.cookie(ACCESS_COOKIE, accessToken, {
+function setAuthCookies(res: Response, req: AuthCookieRequest, accessToken: string, refreshToken: string) {
+  const cookies = getAuthCookieNames(req);
+  res.cookie(cookies.access, accessToken, {
     ...cookieOptions(),
     maxAge: ACCESS_TOKEN_TTL_SECONDS * 1000,
   });
-  res.cookie(REFRESH_COOKIE, refreshToken, {
+  res.cookie(cookies.refresh, refreshToken, {
     ...cookieOptions(),
     maxAge: REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,
   });
 }
 
-function clearAuthCookies(res: Response) {
-  res.clearCookie(ACCESS_COOKIE, cookieOptions());
-  res.clearCookie(REFRESH_COOKIE, cookieOptions());
+function clearAuthCookies(res: Response, req: AuthCookieRequest) {
+  const cookies = getAuthCookieNames(req);
+  res.clearCookie(cookies.access, cookieOptions());
+  res.clearCookie(cookies.refresh, cookieOptions());
 }
 
 function cookieOptions(): CookieOptions {
@@ -789,6 +832,9 @@ function parseSignupInput(body: unknown) {
 
   if (!name || name.length < 2) return { ok: false as const, error: "Name is required" };
   if (!company || company.length < 2) return { ok: false as const, error: "Company is required" };
+  if (!organizationSlug || organizationSlug.length < 2) {
+    return { ok: false as const, error: "Agency code is required" };
+  }
   if (!email || !email.includes("@")) return { ok: false as const, error: "Valid email is required" };
   if (!password || password.length < 8) return { ok: false as const, error: "Password must be at least 8 characters" };
   if (!exhibitionName || exhibitionName.length < 2) return { ok: false as const, error: "Exhibition name is required" };
@@ -822,10 +868,6 @@ function stringValue(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function defaultOrganizationSlug() {
-  return process.env.DEFAULT_ORGANIZATION_SLUG ?? "ens-demo-agency";
-}
-
 async function auditAuthEvent(organizationId: string, actorUserId: string, type: string, message: string) {
   await db.execute(sql`
     insert into activity_events (organization_id, actor_user_id, event_type, message, metadata)
@@ -842,6 +884,7 @@ function parseSignupStaffInput(body: unknown) {
   const password = stringValue(data.password);
   const roleRaw = stringValue(data.role);
   const setupKey = stringValue(data.setupKey);
+  const organizationSlug = stringValue(data.organizationSlug)?.toLowerCase();
 
   if (!name || name.length < 2) return { ok: false as const, error: "Name is required" };
   if (!company || company.length < 2) return { ok: false as const, error: "Company name is required" };
@@ -850,7 +893,7 @@ function parseSignupStaffInput(body: unknown) {
 
   const role: "pm" | "chief" = roleRaw === "chief" ? "chief" : "pm";
 
-  return { ok: true as const, value: { name, company, email, password, role, setupKey } };
+  return { ok: true as const, value: { name, company, email, password, role, setupKey, organizationSlug } };
 }
 
 function slugify(value: string) {

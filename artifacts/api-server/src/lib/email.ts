@@ -62,6 +62,28 @@ function safeErrorMessage(error: unknown) {
     .slice(0, 500);
 }
 
+export async function sendReviewReminderEmail(opts: {
+  to: string;
+  name: string;
+  projectName: string;
+  daysWaiting: number;
+}) {
+  const workspaceUrl = `${APP_URL}/client/workspace`;
+  return send(
+    opts.to,
+    `Your booth design is waiting for review - ${opts.projectName}`,
+    base(`
+      <h2>Your design is ready for review</h2>
+      <p>Hi ${opts.name || "there"},</p>
+      <p>The booth design for <strong>${opts.projectName}</strong> has been waiting
+      for your review for ${opts.daysWaiting} day${opts.daysWaiting === 1 ? "" : "s"}.
+      Approving it (or requesting changes) keeps your production schedule on track.</p>
+      <a href="${workspaceUrl}" class="cta">Review the design</a>
+      <div class="box">${workspaceUrl}</div>
+    `),
+  );
+}
+
 export async function sendClientApprovedEmail(opts: { to: string; name: string }) {
   const loginUrl = `${APP_URL}/login`;
   return send(

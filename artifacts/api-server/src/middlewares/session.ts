@@ -5,6 +5,7 @@ import { verifyAccessToken } from "../lib/tokens";
 
 export type AuthRole = "admin" | "owner" | "chief" | "pm" | "client";
 export type UiRole = "chief" | "pm" | "client";
+export type AuthCookieRequest = Pick<Request, "headers">;
 
 export interface AuthContext {
   sessionId: string;
@@ -38,9 +39,27 @@ async function queryRows<T>(statement: SQL) {
   return (result as unknown as { rows: T[] }).rows;
 }
 
+export function getAuthCookieNames(req: AuthCookieRequest) {
+  const requestedPortal = headerValue(req.headers["x-ens-portal"])?.toLowerCase();
+  const referer = headerValue(req.headers.referer) ?? "";
+  const origin = headerValue(req.headers.origin) ?? "";
+  const isClient = requestedPortal === "client"
+    || (requestedPortal !== "staff" && (
+      referer.includes(":5175")
+      || origin.includes(":5175")
+      || referer.includes("/client")
+    ));
+
+  return {
+    access: isClient ? "ens_client_access" : "ens_access",
+    refresh: isClient ? "ens_client_refresh" : "ens_refresh",
+  };
+}
+
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
-    const token = req.cookies?.ens_access;
+    const cookies = getAuthCookieNames(req);
+    const token = req.cookies?.[cookies.access];
     const payload = typeof token === "string" ? verifyAccessToken(token) : null;
 
     if (!payload) {
@@ -179,5 +198,10 @@ function objectValue(value: unknown): Record<string, unknown> {
 }
 
 function stringValue(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function headerValue(value: string | string[] | undefined) {
+  if (Array.isArray(value)) return value[0]?.trim() || null;
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }

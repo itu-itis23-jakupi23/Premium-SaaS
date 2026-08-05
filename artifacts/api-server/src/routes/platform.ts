@@ -13,19 +13,36 @@ import {
   pmTaskSchema,
   pmTaskPatchSchema,
 } from "@workspace/api-zod";
-import { requireAuth, requireRoles, type AuthContext } from "../middlewares/session";
+import {
+  requireAuth,
+  requireRoles,
+  type AuthContext,
+} from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { createRefreshToken, hashToken } from "../lib/tokens";
-import { sendClientApprovedEmail, sendManagerInvitationEmail, type EmailDeliveryResult } from "../lib/email";
+import {
+  sendClientApprovedEmail,
+  sendManagerInvitationEmail,
+  type EmailDeliveryResult,
+} from "../lib/email";
 
 function zParse<T>(
-  schema: { safeParse: (v: unknown) => { success: true; data: T } | { success: false; error: { issues: Array<{ message?: string }> } } },
+  schema: {
+    safeParse: (
+      v: unknown,
+    ) =>
+      | { success: true; data: T }
+      | { success: false; error: { issues: Array<{ message?: string }> } };
+  },
   body: unknown,
 ) {
   const result = schema.safeParse(body);
   if (!result.success) {
-    return { ok: false as const, error: result.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      ok: false as const,
+      error: result.error.issues[0]?.message ?? "Invalid input",
+    };
   }
   return { ok: true as const, value: result.data };
 }
@@ -35,9 +52,17 @@ const router: IRouter = Router();
 // ── Public invitation routes — registered BEFORE requireAuth so they're accessible without a session ──
 
 router.get("/platform/managers/invitations/validate", async (req, res) => {
-  const token = typeof req.query.token === "string" ? req.query.token.trim() : null;
+  const token =
+    typeof req.query.token === "string" ? req.query.token.trim() : null;
   if (!token) {
-    res.status(400).json({ error: { code: "token_required", message: "Invitation token is required." } });
+    res
+      .status(400)
+      .json({
+        error: {
+          code: "token_required",
+          message: "Invitation token is required.",
+        },
+      });
     return;
   }
 
@@ -45,37 +70,96 @@ router.get("/platform/managers/invitations/validate", async (req, res) => {
   const invitation = rows[0];
 
   if (!invitation) {
-    res.status(404).json({ error: { code: "invitation_not_found", message: "This invitation link is invalid. Please ask your administrator for a new one." } });
+    res
+      .status(404)
+      .json({
+        error: {
+          code: "invitation_not_found",
+          message:
+            "This invitation link is invalid. Please ask your administrator for a new one.",
+        },
+      });
     return;
   }
   if (invitation.revokedAt) {
-    res.status(410).json({ error: { code: "invitation_revoked", message: "This invitation has been revoked." } });
+    res
+      .status(410)
+      .json({
+        error: {
+          code: "invitation_revoked",
+          message: "This invitation has been revoked.",
+        },
+      });
     return;
   }
   if (invitation.acceptedAt) {
-    res.status(409).json({ error: { code: "invitation_used", message: "This invitation has already been used. Please log in with your credentials." } });
+    res
+      .status(409)
+      .json({
+        error: {
+          code: "invitation_used",
+          message:
+            "This invitation has already been used. Please log in with your credentials.",
+        },
+      });
     return;
   }
   if (new Date(invitation.expiresAt) < new Date()) {
-    res.status(410).json({ error: { code: "invitation_expired", message: "This invitation link has expired. Please ask your administrator to resend the invitation." } });
+    res
+      .status(410)
+      .json({
+        error: {
+          code: "invitation_expired",
+          message:
+            "This invitation link has expired. Please ask your administrator to resend the invitation.",
+        },
+      });
     return;
   }
 
-  res.json({ valid: true, email: invitation.email, name: null, expiresAt: invitation.expiresAt, role: invitation.role });
+  res.json({
+    valid: true,
+    email: invitation.email,
+    name: invitation.name,
+    expiresAt: invitation.expiresAt,
+    role: invitation.role,
+    organization: {
+      id: invitation.organizationId,
+      name: invitation.organizationName,
+      slug: invitation.organizationSlug,
+    },
+  });
 });
 
 router.post("/platform/managers/invitations/accept", async (req, res) => {
-  const body = req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {};
+  const body =
+    req.body && typeof req.body === "object"
+      ? (req.body as Record<string, unknown>)
+      : {};
   const token = typeof body.token === "string" ? body.token.trim() : null;
   const name = typeof body.name === "string" ? body.name.trim() : null;
   const password = typeof body.password === "string" ? body.password : null;
 
   if (!token || !name || !password) {
-    res.status(400).json({ error: { code: "missing_fields", message: "token, name and password are required." } });
+    res
+      .status(400)
+      .json({
+        error: {
+          code: "missing_fields",
+          message: "token, name and password are required.",
+        },
+      });
     return;
   }
   if (password.length < 8) {
-    res.status(400).json({ error: { code: "password_too_short", message: "Password must be at least 8 characters." } });
+    res
+      .status(400)
+      .json({
+        error: {
+          code: "password_too_short",
+          message: "Password must be at least 8 characters.",
+        },
+      });
     return;
   }
 
@@ -98,19 +182,27 @@ router.post("/platform/managers/invitations/accept", async (req, res) => {
       limit 1
       for update of i
     `);
-    const inv = (invitationResult as unknown as { rows: Array<{
-      id: string;
-      email: string;
-      role: string;
-      expiresAt: string;
-      acceptedAt: string | null;
-      revokedAt: string | null;
-      organizationId: string;
-      organizationSlug: string;
-    }> }).rows[0];
+    const inv = (
+      invitationResult as unknown as {
+        rows: Array<{
+          id: string;
+          email: string;
+          role: string;
+          expiresAt: string;
+          acceptedAt: string | null;
+          revokedAt: string | null;
+          organizationId: string;
+          organizationSlug: string;
+        }>;
+      }
+    ).rows[0];
 
     if (!inv) return { status: "not_found" as const };
-    if (inv.revokedAt || inv.acceptedAt || new Date(inv.expiresAt) < new Date()) {
+    if (
+      inv.revokedAt ||
+      inv.acceptedAt ||
+      new Date(inv.expiresAt) < new Date()
+    ) {
       return { status: "unavailable" as const };
     }
 
@@ -120,7 +212,8 @@ router.post("/platform/managers/invitations/accept", async (req, res) => {
       on conflict do nothing
       returning id::text
     `);
-    const userId = (userResult as unknown as { rows: Array<{ id: string }> }).rows[0]?.id;
+    const userId = (userResult as unknown as { rows: Array<{ id: string }> })
+      .rows[0]?.id;
     if (!userId) return { status: "email_exists" as const };
 
     await tx.execute(sql`
@@ -136,8 +229,11 @@ router.post("/platform/managers/invitations/accept", async (req, res) => {
         and revoked_at is null
       returning id::text
     `);
-    const accepted = (acceptedResult as unknown as { rows: Array<{ id: string }> }).rows[0];
-    if (!accepted) throw new Error("Invitation changed while it was being accepted");
+    const accepted = (
+      acceptedResult as unknown as { rows: Array<{ id: string }> }
+    ).rows[0];
+    if (!accepted)
+      throw new Error("Invitation changed while it was being accepted");
 
     return {
       status: "accepted" as const,
@@ -147,37 +243,82 @@ router.post("/platform/managers/invitations/accept", async (req, res) => {
   });
 
   if (result.status === "not_found") {
-    res.status(404).json({ error: { code: "invitation_not_found", message: "This invitation link is invalid." } });
+    res
+      .status(404)
+      .json({
+        error: {
+          code: "invitation_not_found",
+          message: "This invitation link is invalid.",
+        },
+      });
     return;
   }
   if (result.status === "unavailable") {
-    res.status(409).json({ error: { code: "invitation_unavailable", message: "This invitation is no longer valid." } });
+    res
+      .status(409)
+      .json({
+        error: {
+          code: "invitation_unavailable",
+          message: "This invitation is no longer valid.",
+        },
+      });
     return;
   }
   if (result.status === "email_exists") {
-    res.status(409).json({ error: { code: "email_exists", message: "An account with this email already exists. Please log in." } });
+    res
+      .status(409)
+      .json({
+        error: {
+          code: "email_exists",
+          message: "An account with this email already exists. Please log in.",
+        },
+      });
     return;
   }
 
-  res.status(201).json({ ok: true, user: result.user, organizationSlug: result.organizationSlug });
+  res
+    .status(201)
+    .json({
+      ok: true,
+      user: result.user,
+      organizationSlug: result.organizationSlug,
+    });
 });
 
 router.use("/platform", requireAuth, requireTenant);
 
-async function queryRows<T>(statement: SQL) {
-  const result = await db.execute(statement);
+type SqlExecutor = {
+  execute: (statement: SQL) => Promise<unknown>;
+};
+
+const databaseExecutor = db as unknown as SqlExecutor;
+
+async function queryRows<T>(
+  statement: SQL,
+  executor: SqlExecutor = databaseExecutor,
+) {
+  const result = await executor.execute(statement);
   return (result as unknown as { rows: T[] }).rows;
 }
 
 async function queryInvRows(token: string) {
   return queryRows<{
-    id: string; email: string; role: string; expiresAt: string;
-    acceptedAt: string | null; revokedAt: string | null;
-    organizationId: string; organizationName: string; organizationSlug: string; organizationPlan: string;
+    id: string;
+    email: string;
+    name: string | null;
+    role: string;
+    expiresAt: string;
+    acceptedAt: string | null;
+    revokedAt: string | null;
+    organizationId: string;
+    organizationName: string;
+    organizationSlug: string;
+    organizationPlan: string;
   }>(sql`
     select
       i.id::text,
       i.email,
+      i.name,
       i.role::text,
       i.expires_at::text as "expiresAt",
       i.accepted_at::text as "acceptedAt",
@@ -213,20 +354,23 @@ function isAbsoluteUrl(value: string | undefined | null) {
   return Boolean(value && /^https?:\/\//.test(value));
 }
 
-router.get("/platform/system/readiness", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const isProd = process.env.NODE_ENV === "production";
-  const appUrl = process.env.APP_URL;
-  const cookieSecure = process.env.COOKIE_SECURE?.trim().toLowerCase();
-  const stripeConfigured = hasConfiguredValue(process.env.STRIPE_SECRET_KEY);
-  const recentActivity = await queryRows<{
-    id: string;
-    eventType: string;
-    message: string;
-    actorName: string | null;
-    projectName: string | null;
-    createdAt: string;
-  }>(sql`
+router.get(
+  "/platform/system/readiness",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const isProd = process.env.NODE_ENV === "production";
+    const appUrl = process.env.APP_URL;
+    const cookieSecure = process.env.COOKIE_SECURE?.trim().toLowerCase();
+    const stripeConfigured = hasConfiguredValue(process.env.STRIPE_SECRET_KEY);
+    const recentActivity = await queryRows<{
+      id: string;
+      eventType: string;
+      message: string;
+      actorName: string | null;
+      projectName: string | null;
+      createdAt: string;
+    }>(sql`
     select
       ae.id::text,
       ae.event_type as "eventType",
@@ -241,13 +385,13 @@ router.get("/platform/system/readiness", requireRoles(["admin", "owner", "chief"
     order by ae.created_at desc
     limit 12
   `);
-  const operationalRows = await queryRows<{
-    pendingClients: number;
-    unassignedProjects: number;
-    failedInvitations: number;
-    stalledReviews: number;
-    overloadedPMs: number;
-  }>(sql`
+    const operationalRows = await queryRows<{
+      pendingClients: number;
+      unassignedProjects: number;
+      failedInvitations: number;
+      stalledReviews: number;
+      overloadedPMs: number;
+    }>(sql`
     select
       (select count(*)::int
        from clients c
@@ -289,81 +433,131 @@ router.get("/platform/system/readiness", requireRoles(["admin", "owner", "chief"
              and p.status::text not in ('completed', 'archived', 'cancelled')
          ) / u.pm_capacity_limit >= 1.0) as "overloadedPMs"
   `);
-  const operational = operationalRows[0] ?? {
-    pendingClients: 0,
-    unassignedProjects: 0,
-    failedInvitations: 0,
-    stalledReviews: 0,
-    overloadedPMs: 0,
-  };
-  const checks = {
-    databaseConfigured: hasConfiguredValue(process.env.DATABASE_URL),
-    emailConfigured: hasConfiguredValue(process.env.RESEND_API_KEY) && hasConfiguredValue(process.env.RESEND_FROM),
-    appUrlConfigured: isAbsoluteUrl(appUrl),
-    staffAccessConfigured: hasConfiguredValue(process.env.STAFF_SIGNUP_KEY),
-    authSecretConfigured: hasConfiguredValue(process.env.AUTH_SECRET),
-    messageEncryptionConfigured: hasConfiguredValue(process.env.MESSAGE_ENCRYPTION_KEY),
-    cookieSecureCompatible: !isProd || cookieSecure === "false" || appUrl?.startsWith("https://") === true,
-    documentStorageConfigured: !isProd || hasConfiguredValue(process.env.DOCUMENT_STORAGE_DIR),
-    messageAttachmentStorageConfigured: !isProd || hasConfiguredValue(process.env.MESSAGE_ATTACHMENT_DIR),
-    stripeWebhookConfigured: !stripeConfigured || hasConfiguredValue(process.env.STRIPE_WEBHOOK_SECRET),
-    assetStorageConfigured: !isProd || (hasConfiguredValue(process.env.DOCUMENT_STORAGE_DIR) && hasConfiguredValue(process.env.MESSAGE_ATTACHMENT_DIR)),
-    productionMode: isProd,
-  };
-  const warnings = [
-    !checks.databaseConfigured ? "DATABASE_URL is missing or still a placeholder." : null,
-    !checks.emailConfigured ? "RESEND_API_KEY and RESEND_FROM are not fully configured." : null,
-    !checks.appUrlConfigured ? "APP_URL must be an absolute URL." : null,
-    !checks.staffAccessConfigured ? "STAFF_SIGNUP_KEY is missing or still a placeholder." : null,
-    !checks.authSecretConfigured ? "AUTH_SECRET is missing or still a placeholder." : null,
-    !checks.messageEncryptionConfigured ? "MESSAGE_ENCRYPTION_KEY is missing or still a placeholder." : null,
-    !checks.cookieSecureCompatible ? "COOKIE_SECURE is incompatible with the configured APP_URL. Use COOKIE_SECURE=false for HTTP or deploy behind HTTPS." : null,
-    !checks.documentStorageConfigured ? "DOCUMENT_STORAGE_DIR must point at durable storage in production." : null,
-    !checks.messageAttachmentStorageConfigured ? "MESSAGE_ATTACHMENT_DIR must point at durable storage in production." : null,
-    !checks.stripeWebhookConfigured ? "STRIPE_WEBHOOK_SECRET is required when STRIPE_SECRET_KEY is configured." : null,
-  ].filter(Boolean);
+    const operational = operationalRows[0] ?? {
+      pendingClients: 0,
+      unassignedProjects: 0,
+      failedInvitations: 0,
+      stalledReviews: 0,
+      overloadedPMs: 0,
+    };
+    const checks = {
+      databaseConfigured: hasConfiguredValue(process.env.DATABASE_URL),
+      emailConfigured:
+        hasConfiguredValue(process.env.RESEND_API_KEY) &&
+        hasConfiguredValue(process.env.RESEND_FROM),
+      appUrlConfigured: isAbsoluteUrl(appUrl),
+      staffAccessConfigured: hasConfiguredValue(process.env.STAFF_SIGNUP_KEY),
+      authSecretConfigured: hasConfiguredValue(process.env.AUTH_SECRET),
+      messageEncryptionConfigured: hasConfiguredValue(
+        process.env.MESSAGE_ENCRYPTION_KEY,
+      ),
+      cookieSecureCompatible:
+        !isProd ||
+        cookieSecure === "false" ||
+        appUrl?.startsWith("https://") === true,
+      documentStorageConfigured:
+        !isProd || hasConfiguredValue(process.env.DOCUMENT_STORAGE_DIR),
+      messageAttachmentStorageConfigured:
+        !isProd || hasConfiguredValue(process.env.MESSAGE_ATTACHMENT_DIR),
+      stripeWebhookConfigured:
+        !stripeConfigured ||
+        hasConfiguredValue(process.env.STRIPE_WEBHOOK_SECRET),
+      assetStorageConfigured:
+        !isProd ||
+        (hasConfiguredValue(process.env.DOCUMENT_STORAGE_DIR) &&
+          hasConfiguredValue(process.env.MESSAGE_ATTACHMENT_DIR)),
+      productionMode: isProd,
+    };
+    const warnings = [
+      !checks.databaseConfigured
+        ? "DATABASE_URL is missing or still a placeholder."
+        : null,
+      !checks.emailConfigured
+        ? "RESEND_API_KEY and RESEND_FROM are not fully configured."
+        : null,
+      !checks.appUrlConfigured ? "APP_URL must be an absolute URL." : null,
+      !checks.staffAccessConfigured
+        ? "STAFF_SIGNUP_KEY is missing or still a placeholder."
+        : null,
+      !checks.authSecretConfigured
+        ? "AUTH_SECRET is missing or still a placeholder."
+        : null,
+      !checks.messageEncryptionConfigured
+        ? "MESSAGE_ENCRYPTION_KEY is missing or still a placeholder."
+        : null,
+      !checks.cookieSecureCompatible
+        ? "COOKIE_SECURE is incompatible with the configured APP_URL. Use COOKIE_SECURE=false for HTTP or deploy behind HTTPS."
+        : null,
+      !checks.documentStorageConfigured
+        ? "DOCUMENT_STORAGE_DIR must point at durable storage in production."
+        : null,
+      !checks.messageAttachmentStorageConfigured
+        ? "MESSAGE_ATTACHMENT_DIR must point at durable storage in production."
+        : null,
+      !checks.stripeWebhookConfigured
+        ? "STRIPE_WEBHOOK_SECRET is required when STRIPE_SECRET_KEY is configured."
+        : null,
+    ].filter(Boolean);
 
-  res.json({
-    ready: warnings.length === 0,
-    mode: isProd ? "production" : "development",
-    checks,
-    limits: {
-      apiJsonLimit: process.env.API_JSON_LIMIT || "75mb",
-    },
-    storage: {
-      assetStorageProvider: process.env.STORAGE_PROVIDER || "local",
-      documentStorageDirConfigured: hasConfiguredValue(process.env.DOCUMENT_STORAGE_DIR),
-      messageAttachmentDirConfigured: hasConfiguredValue(process.env.MESSAGE_ATTACHMENT_DIR),
-      workspaceAssetDirConfigured: hasConfiguredValue(process.env.WORKSPACE_ASSET_DIR),
-    },
-    billing: {
-      stripeConfigured,
-      stripeWebhookConfigured: checks.stripeWebhookConfigured,
-    },
-    operational,
-    recentActivity,
-    warnings,
-  });
-});
+    res.json({
+      ready: warnings.length === 0,
+      mode: isProd ? "production" : "development",
+      checks,
+      limits: {
+        apiJsonLimit: process.env.API_JSON_LIMIT || "75mb",
+      },
+      storage: {
+        assetStorageProvider: process.env.STORAGE_PROVIDER || "local",
+        documentStorageDirConfigured: hasConfiguredValue(
+          process.env.DOCUMENT_STORAGE_DIR,
+        ),
+        messageAttachmentDirConfigured: hasConfiguredValue(
+          process.env.MESSAGE_ATTACHMENT_DIR,
+        ),
+        workspaceAssetDirConfigured: hasConfiguredValue(
+          process.env.WORKSPACE_ASSET_DIR,
+        ),
+      },
+      billing: {
+        stripeConfigured,
+        stripeWebhookConfigured: checks.stripeWebhookConfigured,
+      },
+      operational,
+      recentActivity,
+      warnings,
+    });
+  },
+);
 
-router.get("/platform/overview", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
-  const organization = req.tenant!;
-  const auth = req.auth!;
-  const isChief = canManageOrganization(auth);
+router.get(
+  "/platform/overview",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const auth = req.auth!;
+    const isChief = canManageOrganization(auth);
 
-  const [metrics, projects, clients, activity, workflowRows] = await Promise.all([
-    getMetrics(organization.id, auth),
-    getProjects(organization.id, 8, auth),
-    getClients(organization.id, 8, auth).then((result) => result.clients),
-    getActivity(organization.id, 8, auth),
-    isChief ? queryRows<{
-      pendingClientApprovals: number;
-      unassignedClients: number;
-      unassignedProjects: number;
-      newPMs: number;
-      stalledApprovals: number;
-      overloadedPMs: number;
-    }>(sql`
+    const [
+      metrics,
+      projects,
+      clients,
+      activity,
+      workflowRows,
+      workflowDetails,
+    ] = await Promise.all([
+      getMetrics(organization.id, auth),
+      getProjects(organization.id, 8, auth),
+      getClients(organization.id, 8, auth).then((result) => result.clients),
+      getActivity(organization.id, 8, auth),
+      isChief
+        ? queryRows<{
+            pendingClientApprovals: number;
+            unassignedClients: number;
+            unassignedProjects: number;
+            newPMs: number;
+            stalledApprovals: number;
+            overloadedPMs: number;
+          }>(sql`
       select
         (select count(*)::int from clients c where c.organization_id = ${organization.id}::uuid and c.status::text = 'pending_approval' and c.deleted_at is null) as "pendingClientApprovals",
         (select count(*)::int from clients c where c.organization_id = ${organization.id}::uuid and c.assigned_pm_user_id is null and c.status::text = 'active' and c.deleted_at is null) as "unassignedClients",
@@ -371,248 +565,577 @@ router.get("/platform/overview", requireRoles(["admin", "owner", "chief", "pm", 
         (select count(*)::int from users u join memberships m on m.user_id = u.id and m.organization_id = ${organization.id}::uuid where u.role::text = 'pm' and m.joined_at > now() - interval '7 days') as "newPMs",
         (select count(*)::int from approvals a where a.organization_id = ${organization.id}::uuid and a.status::text in ('requested','under_review') and a.requested_at < now() - interval '3 days') as "stalledApprovals",
         (select count(*)::int from users u join memberships m on m.user_id = u.id and m.organization_id = ${organization.id}::uuid where u.role::text = 'pm' and u.pm_capacity_limit is not null and (select count(*) from projects p where p.assigned_pm_user_id = u.id and p.organization_id = ${organization.id}::uuid and p.deleted_at is null and p.status::text not in ('completed','archived','cancelled'))::float / u.pm_capacity_limit >= 1.0) as "overloadedPMs"
-    `) : Promise.resolve([]),
-  ]);
+    `)
+        : Promise.resolve([]),
+      isChief
+        ? Promise.all([
+            queryRows<{ id: string; name: string }>(sql`
+        select id::text, company_name as name
+        from clients
+        where organization_id = ${organization.id}::uuid
+          and assigned_pm_user_id is null
+          and status::text = 'active'
+          and deleted_at is null
+        order by created_at desc
+        limit 5
+      `),
+            queryRows<{ id: string; name: string }>(sql`
+        select id::text, name
+        from projects
+        where organization_id = ${organization.id}::uuid
+          and assigned_pm_user_id is null
+          and deleted_at is null
+          and status::text not in ('completed','archived','cancelled')
+        order by created_at desc
+        limit 5
+      `),
+            queryRows<{ id: string; name: string }>(sql`
+        select u.id::text, u.name
+        from users u
+        join memberships m on m.user_id = u.id and m.organization_id = ${organization.id}::uuid
+        where u.role::text = 'pm'
+          and m.joined_at > now() - interval '7 days'
+        order by m.joined_at desc
+        limit 5
+      `),
+            queryRows<{ id: string; name: string; waitingDays: number }>(sql`
+        select a.id::text, p.name, extract(day from (now() - a.requested_at))::int as "waitingDays"
+        from approvals a
+        join projects p on p.id = a.project_id
+        where a.organization_id = ${organization.id}::uuid
+          and a.status::text in ('requested','under_review')
+          and a.requested_at < now() - interval '3 days'
+        order by a.requested_at asc
+        limit 5
+      `),
+            queryRows<{ id: string; name: string; workload: number }>(sql`
+        select
+          u.id::text,
+          u.name,
+          round(( (select count(*) from projects p where p.assigned_pm_user_id = u.id and p.organization_id = ${organization.id}::uuid and p.deleted_at is null and p.status::text not in ('completed','archived','cancelled'))::float / u.pm_capacity_limit ) * 100)::int as workload
+        from users u
+        join memberships m on m.user_id = u.id and m.organization_id = ${organization.id}::uuid
+        where u.role::text = 'pm'
+          and u.pm_capacity_limit is not null
+          and u.pm_capacity_limit > 0
+          and (select count(*) from projects p where p.assigned_pm_user_id = u.id and p.organization_id = ${organization.id}::uuid and p.deleted_at is null and p.status::text not in ('completed','archived','cancelled'))::float / u.pm_capacity_limit >= 1.0
+        order by workload desc
+        limit 5
+      `),
+          ])
+        : Promise.resolve(null),
+    ]);
 
-  const wf = workflowRows[0];
-  const workflow = isChief && wf ? {
-    counts: {
-      pendingClientApprovals: wf.pendingClientApprovals,
-      unassignedClients: wf.unassignedClients,
-      unassignedProjects: wf.unassignedProjects,
-      newProjectManagers: wf.newPMs,
-      stalledApprovals: wf.stalledApprovals,
-      overloadedManagers: wf.overloadedPMs,
-    },
-  } : null;
+    const wf = workflowRows[0];
+    const workflow =
+      isChief && wf && workflowDetails
+        ? {
+            unassignedClients: workflowDetails[0],
+            unassignedProjects: workflowDetails[1],
+            newProjectManagers: workflowDetails[2],
+            approvalAging: workflowDetails[3],
+            workloadAlerts: workflowDetails[4],
+            counts: {
+              pendingClientApprovals: wf.pendingClientApprovals,
+              unassignedClients: wf.unassignedClients,
+              unassignedProjects: wf.unassignedProjects,
+              newProjectManagers: wf.newPMs,
+              stalledApprovals: wf.stalledApprovals,
+              overloadedManagers: wf.overloadedPMs,
+            },
+          }
+        : null;
 
-  res.json({
-    organization,
-    metrics,
-    projects,
-    clients,
-    activity,
-    charts: buildCharts(metrics, activity),
-    workflow,
-  });
-});
-
-router.get("/platform/projects", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
-  const organization = req.tenant!;
-  res.json(await getProjectList(organization.id, parseProjectListQuery(req.query), req.auth!));
-});
-
-router.post("/platform/projects", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const organization = req.tenant!;
-
-  const input = parseCreateProjectInput(req.body);
-
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
-
-  const project = await createProject(organization.id, req.auth!, input.value);
-  if (project === "client_not_accessible") {
-    res.status(403).json({ error: "This client is not assigned to you" });
-    return;
-  }
-
-  res.status(201).json({ project });
-});
-
-router.put("/platform/projects/:projectId/pipeline-stage", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const organization = req.tenant!;
-  const projectId = stringValue(req.params.projectId);
-  const input = parsePipelineStageInput(req.body);
-
-  if (!projectId || !isUuid(projectId)) {
-    res.status(400).json({ error: "A valid project id is required" });
-    return;
-  }
-
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
-
-  const updated = await updateProjectPipelineStage(organization.id, req.auth!, projectId, input.value.stage);
-  if (updated === "not_found") {
-    res.status(404).json({ error: "Project was not found" });
-    return;
-  }
-  if (updated === "not_authorized") {
-    res.status(403).json({ error: "You do not have access to update this project" });
-    return;
-  }
-
-  res.json({
-    ok: true,
-    project: updated,
-    projects: await getProjects(organization.id, 100, req.auth!),
-  });
-});
-
-router.put("/platform/projects/:projectId", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const organization = req.tenant!;
-  const projectId = stringValue(req.params.projectId);
-  const input = parseUpdateProjectInput(req.body);
-
-  if (!projectId || !isUuid(projectId)) {
-    res.status(400).json({ error: "A valid project id is required" });
-    return;
-  }
-
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
-
-  const updated = await updateProjectRecord(organization.id, req.auth!, projectId, input.value);
-  if (updated === "not_found") {
-    res.status(404).json({ error: "Project was not found" });
-    return;
-  }
-  if (updated === "not_authorized") {
-    res.status(403).json({ error: "You do not have access to update this project" });
-    return;
-  }
-  if (updated === "invalid_manager") {
-    res.status(400).json({ error: "Selected project manager is not active" });
-    return;
-  }
-
-  res.json({
-    ok: true,
-    project: updated,
-    projects: await getProjects(organization.id, 100, req.auth!),
-  });
-});
-
-router.get("/platform/clients", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const organization = req.tenant!;
-  const query = parseClientListQuery(req.query);
-  res.json({
-    ...(await getClients(organization.id, query, req.auth!)),
-  });
-});
-
-router.post("/platform/clients", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const input = parseCreateClientInput(req.body);
-
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
-
-  const clientId = await createClientRecord(organization.id, {
-    ...input.value,
-    contactName: input.value.contactName ?? input.value.companyName,
-  });
-  await auditEvent(organization.id, req.auth!.user.id, "client_created", `created client ${input.value.companyName}`, {
-    clientId,
-    companyName: input.value.companyName,
-  });
-
-  res.status(201).json({ clients: (await getClients(organization.id, 100, req.auth!)).clients });
-});
-
-router.put("/platform/clients/:clientId", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const clientId = stringValue(req.params.clientId);
-  const input = parseUpdateClientInput(req.body);
-
-  if (!clientId || !isUuid(clientId)) {
-    res.status(400).json({ error: "A valid client id is required" });
-    return;
-  }
-
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
-
-  const updated = await updateClientRecord(organization.id, req.auth!.user.id, clientId, input.value);
-  if (updated === "not_found") {
-    res.status(404).json({ error: "Client was not found" });
-    return;
-  }
-  if (updated === "duplicate") {
-    res.status(409).json({ error: "Another client already uses this company name" });
-    return;
-  }
-
-  res.json({ ok: true, clients: (await getClients(organization.id, 100, req.auth!)).clients });
-});
-
-router.delete("/platform/clients/:clientId", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const clientId = stringValue(req.params.clientId);
-
-  if (!clientId || !isUuid(clientId)) {
-    res.status(400).json({ error: "A valid client id is required" });
-    return;
-  }
-
-  const removed = await removeClientRecord(organization.id, req.auth!.user.id, clientId);
-  if (removed.status === "not_found") {
-    res.status(404).json({ error: "Client was not found" });
-    return;
-  }
-  if (removed.status === "has_projects") {
-    res.status(409).json({
-      error: "Client has active projects and cannot be removed",
-      projects: removed.projects,
+    res.json({
+      organization,
+      metrics,
+      projects,
+      clients,
+      activity,
+      charts: buildCharts(metrics, activity),
+      workflow,
     });
-    return;
-  }
+  },
+);
 
-  res.json({ ok: true, clients: (await getClients(organization.id, 100, req.auth!)).clients });
-});
+router.get(
+  "/platform/projects",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    res.json(
+      await getProjectList(
+        organization.id,
+        parseProjectListQuery(req.query),
+        req.auth!,
+      ),
+    );
+  },
+);
 
-router.patch("/platform/clients/:clientId/approve", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const actorUserId = req.auth!.user.id;
-  const clientId = stringValue(req.params.clientId);
+router.post(
+  "/platform/projects",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const organization = req.tenant!;
 
-  if (!clientId || !isUuid(clientId)) {
-    res.status(400).json({ error: "A valid client id is required" });
-    return;
-  }
+    const input = parseCreateProjectInput(req.body);
 
-  const data = req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {};
-  const managerIdRaw = stringValue(data.managerId);
-  const managerId = managerIdRaw === "unassigned" ? null : managerIdRaw ?? null;
-  const note = stringValue(data.note);
-  const confirmOverCapacity = data.confirmOverCapacity === true;
-  const overrideReason = stringValue(data.overrideReason);
-
-  if (managerId && !isUuid(managerId)) {
-    res.status(400).json({ error: "A valid manager id is required" });
-    return;
-  }
-
-  if (managerId) {
-    const managerName = await getAssignmentTargetName(organization.id, managerId);
-    if (!managerName) {
-      res.status(400).json({ error: "Manager must be an active PM in this organization" });
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
       return;
     }
-  }
 
-  const clientRows = await queryRows<{
-    id: string;
-    companyName: string;
-    contactName: string | null;
-    contactEmail: string;
-    status: string;
-    intakeExhibitionName: string | null;
-    intakeBoothSizeSqm: string | null;
-    intakeCity: string | null;
-    intakeDeadlineAt: string | null;
-    intakePreferredSystem: "octanorm" | "maxima" | "custom" | null;
-  }>(sql`
+    const project = await createProject(
+      organization.id,
+      req.auth!,
+      input.value,
+    );
+    if (project === "client_not_accessible") {
+      res.status(403).json({ error: "This client is not assigned to you" });
+      return;
+    }
+
+    res.status(201).json({ project });
+  },
+);
+
+router.put(
+  "/platform/projects/:projectId/pipeline-stage",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const projectId = stringValue(req.params.projectId);
+    const input = parsePipelineStageInput(req.body);
+
+    if (!projectId || !isUuid(projectId)) {
+      res.status(400).json({ error: "A valid project id is required" });
+      return;
+    }
+
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
+
+    const updated = await updateProjectPipelineStage(
+      organization.id,
+      req.auth!,
+      projectId,
+      input.value.stage,
+    );
+    if (updated === "not_found") {
+      res.status(404).json({ error: "Project was not found" });
+      return;
+    }
+    if (updated === "not_authorized") {
+      res
+        .status(403)
+        .json({ error: "You do not have access to update this project" });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      project: updated,
+      projects: await getProjects(organization.id, 100, req.auth!),
+    });
+  },
+);
+
+router.put(
+  "/platform/projects/:projectId",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const projectId = stringValue(req.params.projectId);
+    const input = parseUpdateProjectInput(req.body);
+
+    if (!projectId || !isUuid(projectId)) {
+      res.status(400).json({ error: "A valid project id is required" });
+      return;
+    }
+
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
+
+    const updated = await updateProjectRecord(
+      organization.id,
+      req.auth!,
+      projectId,
+      input.value,
+    );
+    if (updated === "not_found") {
+      res.status(404).json({ error: "Project was not found" });
+      return;
+    }
+    if (updated === "not_authorized") {
+      res
+        .status(403)
+        .json({ error: "You do not have access to update this project" });
+      return;
+    }
+    if (updated === "invalid_manager") {
+      res.status(400).json({ error: "Selected project manager is not active" });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      project: updated,
+      projects: await getProjects(organization.id, 100, req.auth!),
+    });
+  },
+);
+
+router.delete(
+  "/platform/projects/:projectId",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const projectId = stringValue(req.params.projectId);
+
+    if (!projectId || !isUuid(projectId)) {
+      res.status(400).json({ error: "A valid project id is required" });
+      return;
+    }
+
+    const removed = await removeProjectRecord(
+      organization.id,
+      req.auth!,
+      projectId,
+    );
+    if (removed === "not_found") {
+      res.status(404).json({ error: "Project was not found" });
+      return;
+    }
+    if (removed === "not_authorized") {
+      res
+        .status(403)
+        .json({ error: "You do not have access to remove this project" });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      projects: await getProjects(organization.id, 100, req.auth!),
+    });
+  },
+);
+
+interface ServerExhibition {
+  id: string;
+  name: string;
+  venue?: string;
+  city?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  status: "Draft" | "Active" | "Closed";
+  createdAt: string;
+}
+
+const tenantExhibitionsStore = new Map<string, ServerExhibition[]>();
+
+router.get(
+  "/platform/exhibitions",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const stored = tenantExhibitionsStore.get(organization.id) || [];
+    const projectsList = await getProjects(organization.id, 500, req.auth!);
+    const projectExhibitions = Array.from(
+      new Set(projectsList.map((p) => p.exhibition || p.name).filter(Boolean)),
+    );
+
+    const existingNames = new Set(stored.map((e) => e.name));
+    const combined = [...stored];
+    for (const name of projectExhibitions) {
+      if (!existingNames.has(name)) {
+        combined.push({
+          id: `exhibition-${name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+          name,
+          status: "Active",
+          createdAt: new Date().toISOString(),
+        });
+        existingNames.add(name);
+      }
+    }
+
+    res.json({ exhibitions: combined });
+  },
+);
+
+router.post(
+  "/platform/exhibitions",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
+
+    if (!name) {
+      res.status(400).json({ error: "Exhibition name is required" });
+      return;
+    }
+
+    const venue =
+      typeof req.body?.venue === "string" ? req.body.venue.trim() : "";
+    const city = typeof req.body?.city === "string" ? req.body.city.trim() : "";
+    const startDate =
+      typeof req.body?.startDate === "string" ? req.body.startDate : null;
+    const endDate =
+      typeof req.body?.endDate === "string" ? req.body.endDate : null;
+    const status =
+      req.body?.status === "Draft" || req.body?.status === "Closed"
+        ? req.body.status
+        : "Active";
+
+    const currentList = tenantExhibitionsStore.get(organization.id) || [];
+    const newEx: ServerExhibition = {
+      id: `exhibition-${Date.now()}`,
+      name,
+      venue,
+      city,
+      startDate,
+      endDate,
+      status,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedList = [newEx, ...currentList.filter((e) => e.name !== name)];
+    tenantExhibitionsStore.set(organization.id, updatedList);
+
+    res.json({ exhibition: newEx, exhibitions: updatedList });
+  },
+);
+
+router.get(
+  "/platform/clients",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const query = parseClientListQuery(req.query);
+    res.json({
+      ...(await getClients(organization.id, query, req.auth!)),
+    });
+  },
+);
+
+router.post(
+  "/platform/clients",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const input = parseCreateClientInput(req.body);
+
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
+
+    const clientId = await createClientRecord(organization.id, {
+      ...input.value,
+      contactName: input.value.contactName ?? input.value.companyName,
+    });
+    await auditEvent(
+      organization.id,
+      req.auth!.user.id,
+      "client_created",
+      `created client ${input.value.companyName}`,
+      {
+        clientId,
+        companyName: input.value.companyName,
+      },
+    );
+
+    res
+      .status(201)
+      .json({
+        clients: (await getClients(organization.id, 100, req.auth!)).clients,
+      });
+  },
+);
+
+router.put(
+  "/platform/clients/:clientId",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const clientId = stringValue(req.params.clientId);
+    const input = parseUpdateClientInput(req.body);
+
+    if (!clientId || !isUuid(clientId)) {
+      res.status(400).json({ error: "A valid client id is required" });
+      return;
+    }
+
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
+
+    const updated = await updateClientRecord(
+      organization.id,
+      req.auth!.user.id,
+      clientId,
+      input.value,
+    );
+    if (updated === "not_found") {
+      res.status(404).json({ error: "Client was not found" });
+      return;
+    }
+    if (updated === "duplicate") {
+      res
+        .status(409)
+        .json({ error: "Another client already uses this company name" });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      clients: (await getClients(organization.id, 100, req.auth!)).clients,
+    });
+  },
+);
+
+router.put(
+  "/platform/clients/:clientId/status",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const clientId = stringValue(req.params.clientId);
+    const status = normalizeClientStatus(
+      stringValue((req.body as Record<string, unknown> | undefined)?.status),
+    );
+
+    if (!clientId || !isUuid(clientId)) {
+      res.status(400).json({ error: "A valid client id is required" });
+      return;
+    }
+    if (!status) {
+      res
+        .status(400)
+        .json({
+          error: "status must be Active, Lead, Pending, Inactive, or Archived",
+        });
+      return;
+    }
+
+    const updated = await updateClientStatus(
+      organization.id,
+      req.auth!,
+      clientId,
+      status,
+    );
+    if (updated === "not_found") {
+      res.status(404).json({ error: "Client was not found" });
+      return;
+    }
+    if (updated === "not_authorized") {
+      res
+        .status(403)
+        .json({ error: "You do not have access to update this client" });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      clients: (await getClients(organization.id, 100, req.auth!)).clients,
+    });
+  },
+);
+
+router.delete(
+  "/platform/clients/:clientId",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const clientId = stringValue(req.params.clientId);
+
+    if (!clientId || !isUuid(clientId)) {
+      res.status(400).json({ error: "A valid client id is required" });
+      return;
+    }
+
+    const removed = await removeClientRecord(
+      organization.id,
+      req.auth!.user.id,
+      clientId,
+    );
+    if (removed.status === "not_found") {
+      res.status(404).json({ error: "Client was not found" });
+      return;
+    }
+    if (removed.status === "has_projects") {
+      res.status(409).json({
+        error: "Client has active projects and cannot be removed",
+        projects: removed.projects,
+      });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      clients: (await getClients(organization.id, 100, req.auth!)).clients,
+    });
+  },
+);
+
+router.patch(
+  "/platform/clients/:clientId/approve",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const actorUserId = req.auth!.user.id;
+    const clientId = stringValue(req.params.clientId);
+
+    if (!clientId || !isUuid(clientId)) {
+      res.status(400).json({ error: "A valid client id is required" });
+      return;
+    }
+
+    const data =
+      req.body && typeof req.body === "object"
+        ? (req.body as Record<string, unknown>)
+        : {};
+    const managerIdRaw = stringValue(data.managerId);
+    const managerId =
+      managerIdRaw === "unassigned" ? null : (managerIdRaw ?? null);
+    const note = stringValue(data.note);
+    const confirmOverCapacity = data.confirmOverCapacity === true;
+    const overrideReason = stringValue(data.overrideReason);
+
+    if (managerId && !isUuid(managerId)) {
+      res.status(400).json({ error: "A valid manager id is required" });
+      return;
+    }
+
+    if (managerId) {
+      const managerName = await getAssignmentTargetName(
+        organization.id,
+        managerId,
+      );
+      if (!managerName) {
+        res
+          .status(400)
+          .json({ error: "Manager must be an active PM in this organization" });
+        return;
+      }
+    }
+
+    const clientRows = await queryRows<{
+      id: string;
+      companyName: string;
+      contactName: string | null;
+      contactEmail: string;
+      status: string;
+      intakeExhibitionName: string | null;
+      intakeBoothSizeSqm: string | null;
+      intakeCity: string | null;
+      intakeDeadlineAt: string | null;
+      intakePreferredSystem: "octanorm" | "maxima" | "custom" | null;
+    }>(sql`
     select
       id::text,
       company_name as "companyName",
@@ -630,28 +1153,45 @@ router.patch("/platform/clients/:clientId/approve", requireRoles(["admin", "owne
       and deleted_at is null
     limit 1
   `);
-  const client = clientRows[0];
-  if (!client) {
-    res.status(404).json({ error: "Client was not found" });
-    return;
-  }
-  if (client.status !== "pending_approval") {
-    res.status(409).json({ error: "Client is not in pending_approval state", currentStatus: client.status });
-    return;
-  }
+    const client = clientRows[0];
+    if (!client) {
+      res.status(404).json({ error: "Client was not found" });
+      return;
+    }
+    if (client.status !== "pending_approval") {
+      res
+        .status(409)
+        .json({
+          error: "Client is not in pending_approval state",
+          currentStatus: client.status,
+        });
+      return;
+    }
 
-  if (managerId) {
+    if (!managerId) {
+      res
+        .status(400)
+        .json({
+          error:
+            "Select an active Project Manager before approving this client",
+        });
+      return;
+    }
+
     const capacity = await getPmCapacityInfo(organization.id, managerId);
     if (capacity.limit !== null) {
-      const projectLoadRows = await queryRows<{ alreadyAssignedToManager: number }>(sql`
-        select count(*) filter (where assigned_pm_user_id = ${managerId}::uuid)::int as "alreadyAssignedToManager"
-        from projects
-        where organization_id = ${organization.id}::uuid
-          and client_id = ${clientId}::uuid
-          and deleted_at is null
-          and status::text not in ('completed', 'archived', 'cancelled')
-      `);
-      const additionalProjectLoad = (projectLoadRows[0]?.alreadyAssignedToManager ?? 0) > 0 ? 0 : 1;
+      const projectLoadRows = await queryRows<{
+        alreadyAssignedToManager: number;
+      }>(sql`
+      select count(*) filter (where assigned_pm_user_id = ${managerId}::uuid)::int as "alreadyAssignedToManager"
+      from projects
+      where organization_id = ${organization.id}::uuid
+        and client_id = ${clientId}::uuid
+        and deleted_at is null
+        and status::text not in ('completed', 'archived', 'cancelled')
+    `);
+      const additionalProjectLoad =
+        (projectLoadRows[0]?.alreadyAssignedToManager ?? 0) > 0 ? 0 : 1;
       const projectedCount = capacity.count + additionalProjectLoad;
       const projectedRatio = projectedCount / capacity.limit;
 
@@ -666,7 +1206,11 @@ router.patch("/platform/clients/:clientId/approve", requireRoles(["admin", "owne
         return;
       }
 
-      if (projectedRatio >= PM_BLOCK_THRESHOLD && !confirmOverCapacity && !overrideReason) {
+      if (
+        projectedRatio >= PM_BLOCK_THRESHOLD &&
+        !confirmOverCapacity &&
+        !overrideReason
+      ) {
         res.status(409).json({
           error: "over_capacity",
           managerId,
@@ -677,41 +1221,97 @@ router.patch("/platform/clients/:clientId/approve", requireRoles(["admin", "owne
         return;
       }
     }
-  }
 
-  await db.execute(sql`
-    update clients
-    set
-      status = 'active',
-      activated_at = now(),
-      assigned_pm_user_id = ${managerId}::uuid,
-      updated_at = now()
-    where id = ${clientId}::uuid
-      and organization_id = ${organization.id}::uuid
-  `);
+    const approvalResult = await db.transaction(async (tx) => {
+      const executor = tx as unknown as SqlExecutor;
+      const lockedClients = await queryRows<{
+        status: string;
+        previousManagerId: string | null;
+      }>(
+        sql`
+      select status::text, assigned_pm_user_id::text as "previousManagerId"
+      from clients
+      where id = ${clientId}::uuid
+        and organization_id = ${organization.id}::uuid
+        and deleted_at is null
+      limit 1
+      for update
+    `,
+        executor,
+      );
+      const lockedClient = lockedClients[0];
+      if (!lockedClient) return { status: "not_found" as const };
+      if (lockedClient.status !== "pending_approval") {
+        return {
+          status: "not_pending" as const,
+          currentStatus: lockedClient.status,
+        };
+      }
 
-  if (managerId) {
-    await recordAssignmentHistory(organization.id, {
-      targetType: "client_pm",
-      projectId: null,
-      clientId,
-      actorUserId,
-      previousManagerId: null,
-      newManagerId: managerId,
-      reason: note ?? "Assigned at client approval",
+      await executor.execute(sql`
+      update clients
+      set
+        status = 'active',
+        activated_at = now(),
+        assigned_pm_user_id = ${managerId}::uuid,
+        updated_at = now()
+      where id = ${clientId}::uuid
+        and organization_id = ${organization.id}::uuid
+    `);
+
+      await recordAssignmentHistory(
+        organization.id,
+        {
+          targetType: "client_pm",
+          projectId: null,
+          clientId,
+          actorUserId,
+          previousManagerId: lockedClient.previousManagerId,
+          newManagerId: managerId,
+          reason: note ?? "Assigned at client approval",
+        },
+        executor,
+      );
+
+      await ensureClientIntakeProject(
+        organization.id,
+        actorUserId,
+        client,
+        managerId,
+        executor,
+      );
+      await auditEvent(
+        organization.id,
+        actorUserId,
+        "client_approved",
+        `approved client ${client.companyName}`,
+        {
+          clientId,
+          managerId,
+          note,
+        },
+        executor,
+      );
+
+      return { status: "approved" as const };
     });
 
-    await ensureClientIntakeProject(organization.id, actorUserId, client, managerId);
-  }
+    if (approvalResult.status === "not_found") {
+      res.status(404).json({ error: "Client was not found" });
+      return;
+    }
+    if (approvalResult.status === "not_pending") {
+      res
+        .status(409)
+        .json({
+          error: "Client is not in pending_approval state",
+          currentStatus: approvalResult.currentStatus,
+        });
+      return;
+    }
 
-  await auditEvent(organization.id, actorUserId, "client_approved", `approved client ${client.companyName}`, {
-    clientId,
-    managerId,
-    note,
-  });
-
-  // Notify the client user if their account is linked by email
-  const userRows = await queryRows<{ id: string }>(sql`
+    // Notify the client user if their account is linked by email
+    const userRows = await queryRows<{ id: string }>(sql`
     select u.id::text
     from users u
     join memberships m on m.user_id = u.id
@@ -720,8 +1320,8 @@ router.patch("/platform/clients/:clientId/approve", requireRoles(["admin", "owne
     where lower(u.email) = lower(${client.contactEmail})
     limit 1
   `);
-  if (userRows[0]) {
-    await db.execute(sql`
+    if (userRows[0]) {
+      await db.execute(sql`
       insert into notifications (organization_id, user_id, title, body, href)
       values (
         ${organization.id}::uuid,
@@ -731,38 +1331,64 @@ router.patch("/platform/clients/:clientId/approve", requireRoles(["admin", "owne
         '/client/dashboard'
       )
     `);
-  }
+    }
 
-  // Send email to the newly-activated client (non-blocking — failure is logged, never thrown)
-  const approvalEmailDelivery = await sendClientApprovedEmail({ to: client.contactEmail, name: client.companyName });
-  await recordEmailDeliveryIncident(organization.id, actorUserId, approvalEmailDelivery, {
-    kind: "client_approval",
-    to: client.contactEmail,
-    clientId,
-    clientName: client.companyName,
-  });
+    // Send email to the newly-activated client (non-blocking — failure is logged, never thrown)
+    const approvalEmailDelivery = await sendClientApprovedEmail({
+      to: client.contactEmail,
+      name: client.companyName,
+    });
+    await recordEmailDeliveryIncident(
+      organization.id,
+      actorUserId,
+      approvalEmailDelivery,
+      {
+        kind: "client_approval",
+        to: client.contactEmail,
+        clientId,
+        clientName: client.companyName,
+      },
+    );
 
-  res.json({ ok: true, clients: (await getClients(organization.id, 100, req.auth!)).clients });
-});
+    res.json({
+      ok: true,
+      clients: (await getClients(organization.id, 100, req.auth!)).clients,
+    });
+  },
+);
 
-router.patch("/platform/clients/:clientId/reject", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const actorUserId = req.auth!.user.id;
-  const clientId = stringValue(req.params.clientId);
+router.patch(
+  "/platform/clients/:clientId/reject",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const actorUserId = req.auth!.user.id;
+    const clientId = stringValue(req.params.clientId);
 
-  if (!clientId || !isUuid(clientId)) {
-    res.status(400).json({ error: "A valid client id is required" });
-    return;
-  }
+    if (!clientId || !isUuid(clientId)) {
+      res.status(400).json({ error: "A valid client id is required" });
+      return;
+    }
 
-  const data = req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {};
-  const reason = stringValue(data.reason);
-  if (!reason) {
-    res.status(400).json({ error: "A reason is required when rejecting a client account" });
-    return;
-  }
+    const data =
+      req.body && typeof req.body === "object"
+        ? (req.body as Record<string, unknown>)
+        : {};
+    const reason = stringValue(data.reason);
+    if (!reason) {
+      res
+        .status(400)
+        .json({
+          error: "A reason is required when rejecting a client account",
+        });
+      return;
+    }
 
-  const clientRows = await queryRows<{ id: string; companyName: string; status: string }>(sql`
+    const clientRows = await queryRows<{
+      id: string;
+      companyName: string;
+      status: string;
+    }>(sql`
     select id::text, company_name as "companyName", status::text
     from clients
     where id = ${clientId}::uuid
@@ -770,342 +1396,583 @@ router.patch("/platform/clients/:clientId/reject", requireRoles(["admin", "owner
       and deleted_at is null
     limit 1
   `);
-  const client = clientRows[0];
-  if (!client) {
-    res.status(404).json({ error: "Client was not found" });
-    return;
-  }
-  if (client.status !== "pending_approval") {
-    res.status(409).json({ error: "Client is not in pending_approval state", currentStatus: client.status });
-    return;
-  }
+    const client = clientRows[0];
+    if (!client) {
+      res.status(404).json({ error: "Client was not found" });
+      return;
+    }
+    if (client.status !== "pending_approval") {
+      res
+        .status(409)
+        .json({
+          error: "Client is not in pending_approval state",
+          currentStatus: client.status,
+        });
+      return;
+    }
 
-  await db.execute(sql`
+    await db.execute(sql`
     update clients
     set status = 'archived', updated_at = now()
     where id = ${clientId}::uuid
       and organization_id = ${organization.id}::uuid
   `);
 
-  await auditEvent(organization.id, actorUserId, "client_rejected", `rejected client ${client.companyName}`, {
-    clientId,
-    reason,
-  });
+    await auditEvent(
+      organization.id,
+      actorUserId,
+      "client_rejected",
+      `rejected client ${client.companyName}`,
+      {
+        clientId,
+        reason,
+      },
+    );
 
-  res.json({ ok: true, clients: (await getClients(organization.id, 100, req.auth!)).clients });
-});
+    res.json({
+      ok: true,
+      clients: (await getClients(organization.id, 100, req.auth!)).clients,
+    });
+  },
+);
 
-router.get("/platform/tasks", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  res.json(await getPmTaskBoard(req.auth!));
-});
+router.get(
+  "/platform/tasks",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    res.json(await getPmTaskBoard(req.auth!));
+  },
+);
 
-router.post("/platform/tasks", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const input = parsePmTaskInput(req.body);
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
+router.post(
+  "/platform/tasks",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const input = parsePmTaskInput(req.body);
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
 
-  const result = await createPmTask(req.auth!, input.value);
-  if (result === "project_not_found") {
-    res.status(404).json({ error: "Project was not found or is not accessible" });
-    return;
-  }
+    const result = await createPmTask(req.auth!, input.value);
+    if (result === "project_not_found") {
+      res
+        .status(404)
+        .json({ error: "Project was not found or is not accessible" });
+      return;
+    }
 
-  res.status(201).json(await getPmTaskBoard(req.auth!));
-});
+    res.status(201).json(await getPmTaskBoard(req.auth!));
+  },
+);
 
-router.patch("/platform/tasks/:taskId", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const taskId = stringValue(req.params.taskId);
-  const input = parsePmTaskPatch(req.body);
-  if (!taskId || !isUuid(taskId)) {
-    res.status(400).json({ error: "A valid task id is required" });
-    return;
-  }
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
+router.patch(
+  "/platform/tasks/:taskId",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const taskId = stringValue(req.params.taskId);
+    const input = parsePmTaskPatch(req.body);
+    if (!taskId || !isUuid(taskId)) {
+      res.status(400).json({ error: "A valid task id is required" });
+      return;
+    }
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
 
-  const updated = await updatePmTask(req.auth!, taskId, input.value);
-  if (!updated) {
-    res.status(404).json({ error: "Task was not found or is not accessible" });
-    return;
-  }
+    const updated = await updatePmTask(req.auth!, taskId, input.value);
+    if (!updated) {
+      res
+        .status(404)
+        .json({ error: "Task was not found or is not accessible" });
+      return;
+    }
 
-  res.json(await getPmTaskBoard(req.auth!));
-});
+    res.json(await getPmTaskBoard(req.auth!));
+  },
+);
 
-router.delete("/platform/tasks/:taskId", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const taskId = stringValue(req.params.taskId);
-  if (!taskId || !isUuid(taskId)) {
-    res.status(400).json({ error: "A valid task id is required" });
-    return;
-  }
+router.delete(
+  "/platform/tasks/:taskId",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const taskId = stringValue(req.params.taskId);
+    if (!taskId || !isUuid(taskId)) {
+      res.status(400).json({ error: "A valid task id is required" });
+      return;
+    }
 
-  const removed = await deletePmTask(req.auth!, taskId);
-  if (!removed) {
-    res.status(404).json({ error: "Task was not found or is not accessible" });
-    return;
-  }
+    const removed = await deletePmTask(req.auth!, taskId);
+    if (!removed) {
+      res
+        .status(404)
+        .json({ error: "Task was not found or is not accessible" });
+      return;
+    }
 
-  res.json(await getPmTaskBoard(req.auth!));
-});
+    res.json(await getPmTaskBoard(req.auth!));
+  },
+);
 
-router.get("/platform/requests", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  res.json(await getPmRequests(req.auth!, parsePmRequestListQuery(req.query)));
-});
+router.get(
+  "/platform/requests",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    res.json(
+      await getPmRequests(req.auth!, parsePmRequestListQuery(req.query)),
+    );
+  },
+);
 
-router.patch("/platform/requests/:requestId/status", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const requestId = stringValue(req.params.requestId);
-  const input = parsePmRequestStatusInput(req.body);
+router.patch(
+  "/platform/requests/:requestId/status",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const requestId = stringValue(req.params.requestId);
+    const input = parsePmRequestStatusInput(req.body);
 
-  if (!requestId || !isUuid(requestId)) {
-    res.status(400).json({ error: "A valid request id is required" });
-    return;
-  }
+    if (!requestId || !isUuid(requestId)) {
+      res.status(400).json({ error: "A valid request id is required" });
+      return;
+    }
 
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
 
-  const updated = await updatePmRequestStatus(req.auth!, requestId, input.value.status);
-  if (updated === "invalid_transition") {
-    res.status(409).json({ error: "Request status transition is not allowed" });
-    return;
-  }
-  if (!updated) {
-    res.status(404).json({ error: "Request was not found or is not accessible" });
-    return;
-  }
+    const updated = await updatePmRequestStatus(
+      req.auth!,
+      requestId,
+      input.value.status,
+    );
+    if (updated === "invalid_transition") {
+      res
+        .status(409)
+        .json({ error: "Request status transition is not allowed" });
+      return;
+    }
+    if (!updated) {
+      res
+        .status(404)
+        .json({ error: "Request was not found or is not accessible" });
+      return;
+    }
 
-  res.json(await getPmRequests(req.auth!, parsePmRequestListQuery(req.query)));
-});
+    res.json(
+      await getPmRequests(req.auth!, parsePmRequestListQuery(req.query)),
+    );
+  },
+);
 
-router.post("/platform/requests/:requestId/replies", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const requestId = stringValue(req.params.requestId);
-  const input = parsePmRequestReplyInput(req.body);
+router.post(
+  "/platform/requests/:requestId/replies",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const requestId = stringValue(req.params.requestId);
+    const input = parsePmRequestReplyInput(req.body);
 
-  if (!requestId || !isUuid(requestId)) {
-    res.status(400).json({ error: "A valid request id is required" });
-    return;
-  }
+    if (!requestId || !isUuid(requestId)) {
+      res.status(400).json({ error: "A valid request id is required" });
+      return;
+    }
 
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
 
-  const created = await createPmRequestReply(req.auth!, requestId, input.value.body);
-  if (!created) {
-    res.status(404).json({ error: "Request was not found or is not accessible" });
-    return;
-  }
+    const created = await createPmRequestReply(
+      req.auth!,
+      requestId,
+      input.value.body,
+    );
+    if (!created) {
+      res
+        .status(404)
+        .json({ error: "Request was not found or is not accessible" });
+      return;
+    }
 
-  res.status(201).json(await getPmRequests(req.auth!, parsePmRequestListQuery(req.query)));
-});
+    res
+      .status(201)
+      .json(await getPmRequests(req.auth!, parsePmRequestListQuery(req.query)));
+  },
+);
 
-router.get("/platform/account/settings", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
-  const settings = await getAccountSettings(req.auth!);
-  res.json(settings);
-});
+router.get(
+  "/platform/account/settings",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    const settings = await getAccountSettings(req.auth!);
+    res.json(settings);
+  },
+);
 
-router.put("/platform/account/settings", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
-  const input = parseAccountSettingsInput(req.body);
+router.put(
+  "/platform/account/settings",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    const input = parseAccountSettingsInput(req.body);
 
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
 
-  const settings = await updateAccountSettings(req.auth!, input.value);
-  if ("error" in settings) {
-    res.status(409).json({ error: settings.error });
-    return;
-  }
-  await auditEvent(req.tenant!.id, req.auth!.user.id, "account_settings_updated", "updated account settings", {});
-  res.json(settings);
-});
+    const settings = await updateAccountSettings(req.auth!, input.value);
+    if ("error" in settings) {
+      res.status(409).json({ error: settings.error });
+      return;
+    }
+    await auditEvent(
+      req.tenant!.id,
+      req.auth!.user.id,
+      "account_settings_updated",
+      "updated account settings",
+      {},
+    );
+    res.json(settings);
+  },
+);
 
-router.put("/platform/account/avatar", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
-  const input = parseAvatarInput(req.body);
+router.put(
+  "/platform/account/avatar",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    const input = parseAvatarInput(req.body);
 
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
 
-  const settings = await updateAccountAvatar(req.auth!, input.value);
-  await auditEvent(req.tenant!.id, req.auth!.user.id, "account_avatar_updated", "updated account avatar", {});
-  res.json(settings);
-});
+    const settings = await updateAccountAvatar(req.auth!, input.value);
+    await auditEvent(
+      req.tenant!.id,
+      req.auth!.user.id,
+      "account_avatar_updated",
+      "updated account avatar",
+      {},
+    );
+    res.json(settings);
+  },
+);
 
-router.put("/platform/account/password", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
-  const input = parsePasswordInput(req.body);
+router.put(
+  "/platform/account/password",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    const input = parsePasswordInput(req.body);
 
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
 
-  const changed = await updateAccountPassword(req.auth!, input.value.currentPassword, input.value.newPassword);
+    const changed = await updateAccountPassword(
+      req.auth!,
+      input.value.currentPassword,
+      input.value.newPassword,
+    );
 
-  if (!changed.ok) {
-    res.status(400).json({ error: changed.error });
-    return;
-  }
+    if (!changed.ok) {
+      res.status(400).json({ error: changed.error });
+      return;
+    }
 
-  await auditEvent(req.tenant!.id, req.auth!.user.id, "account_password_updated", "updated account password", {});
-  res.status(204).send();
-});
+    await auditEvent(
+      req.tenant!.id,
+      req.auth!.user.id,
+      "account_password_updated",
+      "updated account password",
+      {},
+    );
+    res.status(204).send();
+  },
+);
 
-router.get("/platform/account/sessions", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
-  res.json({ sessions: await getAccountSessions(req.auth!) });
-});
+router.get(
+  "/platform/account/sessions",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    res.json({ sessions: await getAccountSessions(req.auth!) });
+  },
+);
 
-router.delete("/platform/account/sessions/:sessionId", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
-  const sessionId = stringValue(req.params.sessionId);
-  if (!sessionId) {
-    res.status(400).json({ error: "Session id is required" });
-    return;
-  }
+router.delete(
+  "/platform/account/sessions/:sessionId",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    const sessionId = stringValue(req.params.sessionId);
+    if (!sessionId) {
+      res.status(400).json({ error: "Session id is required" });
+      return;
+    }
 
-  const count = await revokeAccountSession(req.auth!, sessionId);
-  res.json({ revoked: count });
-});
+    const count = await revokeAccountSession(req.auth!, sessionId);
+    res.json({ revoked: count });
+  },
+);
 
-router.get("/platform/managers", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  res.json({
-    managers: await getManagers(organization.id),
-    clients: await getManagedClients(organization.id),
-    projects: await getManagedProjects(organization.id),
-    audit: await getManagerAudit(organization.id, 30),
-    invitations: await getManagerInvitations(organization.id),
-  });
-});
+router.get(
+  "/platform/managers",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    res.json({
+      managers: await getManagers(organization.id),
+      clients: await getManagedClients(organization.id),
+      projects: await getManagedProjects(organization.id),
+      audit: await getManagerAudit(organization.id, 30),
+      invitations: await getManagerInvitations(organization.id),
+    });
+  },
+);
 
-router.get("/platform/managers/assignment-items", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  res.json(await getManagerAssignmentItems(organization.id, parseManagerAssignmentItemsQuery(req.query)));
-});
+router.get(
+  "/platform/managers/assignment-items",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    res.json(
+      await getManagerAssignmentItems(
+        organization.id,
+        parseManagerAssignmentItemsQuery(req.query),
+      ),
+    );
+  },
+);
 
-router.post("/platform/managers/invitations", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const input = parseInviteManagerInput(req.body);
+router.post(
+  "/platform/managers/invitations",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const input = parseInviteManagerInput(req.body);
 
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
 
-  const invitation = await inviteManager(organization.id, req.auth!.user.id, input.value);
-  await auditEvent(organization.id, req.auth!.user.id, "manager_invited", `invited ${input.value.email}`, { email: input.value.email });
-  const delivery = await sendManagerInvitationEmail({
-    to: input.value.email,
-    name: input.value.name,
-    inviteUrl: invitation.inviteUrl,
-    expiresAt: invitation.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-  });
-  await updateInvitationEmailDelivery(organization.id, invitation.id, delivery);
-  await recordEmailDeliveryIncident(organization.id, req.auth!.user.id, delivery, {
-    kind: "manager_invitation",
-    to: input.value.email,
-    invitationId: invitation.id,
-  });
-  res.status(201).json({ invitation: invitationWithEmailDelivery(invitation, delivery) });
-});
+    const normalizedInput = {
+      ...input.value,
+      email: input.value.email.trim().toLowerCase(),
+    };
+    const existingUsers = await queryRows<{ id: string }>(sql`
+    select id::text
+    from users
+    where lower(email) = ${normalizedInput.email}
+      and deleted_at is null
+    limit 1
+  `);
+    if (existingUsers[0]) {
+      res.status(409).json({
+        error: {
+          code: "account_exists",
+          message:
+            "An account already exists for this email. Sign in instead of creating another invitation.",
+        },
+      });
+      return;
+    }
 
-router.post("/platform/managers/invitations/:invitationId/resend", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const invitationId = stringValue(req.params.invitationId);
+    const pendingInvitations = await queryRows<{ id: string }>(sql`
+    select id::text
+    from invitations
+    where organization_id = ${organization.id}::uuid
+      and lower(email) = ${normalizedInput.email}
+      and accepted_at is null
+      and revoked_at is null
+      and expires_at > now()
+    limit 1
+  `);
+    if (pendingInvitations[0]) {
+      res.status(409).json({
+        error: {
+          code: "invitation_pending",
+          message:
+            "A valid invitation is already pending for this email. Resend or revoke it from the invitation list.",
+        },
+      });
+      return;
+    }
 
-  if (!invitationId || !isUuid(invitationId)) {
-    res.status(400).json({ error: "A valid invitation id is required" });
-    return;
-  }
+    const invitation = await inviteManager(
+      organization.id,
+      req.auth!.user.id,
+      normalizedInput,
+    );
+    await auditEvent(
+      organization.id,
+      req.auth!.user.id,
+      "manager_invited",
+      `invited ${normalizedInput.email}`,
+      { email: normalizedInput.email },
+    );
+    const delivery = await sendManagerInvitationEmail({
+      to: normalizedInput.email,
+      name: normalizedInput.name,
+      inviteUrl: invitation.inviteUrl,
+      expiresAt:
+        invitation.expiresAt ??
+        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+    await updateInvitationEmailDelivery(
+      organization.id,
+      invitation.id,
+      delivery,
+    );
+    await recordEmailDeliveryIncident(
+      organization.id,
+      req.auth!.user.id,
+      delivery,
+      {
+        kind: "manager_invitation",
+        to: normalizedInput.email,
+        invitationId: invitation.id,
+      },
+    );
+    res
+      .status(201)
+      .json({ invitation: invitationWithEmailDelivery(invitation, delivery) });
+  },
+);
 
-  const invitation = await resendManagerInvitation(organization.id, req.auth!.user.id, invitationId);
-  if (!invitation) {
-    res.status(404).json({ error: "Pending invitation was not found" });
-    return;
-  }
+router.post(
+  "/platform/managers/invitations/:invitationId/resend",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const invitationId = stringValue(req.params.invitationId);
 
-  const delivery = await sendManagerInvitationEmail({
-    to: invitation.email,
-    name: invitation.name ?? "",
-    inviteUrl: invitation.inviteUrl,
-    expiresAt: invitation.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-  });
-  await updateInvitationEmailDelivery(organization.id, invitation.id, delivery);
-  await recordEmailDeliveryIncident(organization.id, req.auth!.user.id, delivery, {
-    kind: "manager_invitation_resend",
-    to: invitation.email,
-    invitationId: invitation.id,
-  });
-  res.json({ invitation: invitationWithEmailDelivery(invitation, delivery) });
-});
+    if (!invitationId || !isUuid(invitationId)) {
+      res.status(400).json({ error: "A valid invitation id is required" });
+      return;
+    }
 
-router.delete("/platform/managers/invitations/:invitationId", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const invitationId = stringValue(req.params.invitationId);
+    const invitation = await resendManagerInvitation(
+      organization.id,
+      req.auth!.user.id,
+      invitationId,
+    );
+    if (!invitation) {
+      res.status(404).json({ error: "Pending invitation was not found" });
+      return;
+    }
 
-  if (!invitationId || !isUuid(invitationId)) {
-    res.status(400).json({ error: "A valid invitation id is required" });
-    return;
-  }
+    const delivery = await sendManagerInvitationEmail({
+      to: invitation.email,
+      name: invitation.name ?? "",
+      inviteUrl: invitation.inviteUrl,
+      expiresAt:
+        invitation.expiresAt ??
+        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+    await updateInvitationEmailDelivery(
+      organization.id,
+      invitation.id,
+      delivery,
+    );
+    await recordEmailDeliveryIncident(
+      organization.id,
+      req.auth!.user.id,
+      delivery,
+      {
+        kind: "manager_invitation_resend",
+        to: invitation.email,
+        invitationId: invitation.id,
+      },
+    );
+    res.json({ invitation: invitationWithEmailDelivery(invitation, delivery) });
+  },
+);
 
-  const revoked = await revokeManagerInvitation(organization.id, req.auth!.user.id, invitationId);
-  if (!revoked) {
-    res.status(404).json({ error: "Pending invitation was not found" });
-    return;
-  }
+router.delete(
+  "/platform/managers/invitations/:invitationId",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const invitationId = stringValue(req.params.invitationId);
 
-  res.json({ ok: true, invitations: await getManagerInvitations(organization.id) });
-});
+    if (!invitationId || !isUuid(invitationId)) {
+      res.status(400).json({ error: "A valid invitation id is required" });
+      return;
+    }
 
-router.put("/platform/managers/assignments", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const input = parseAssignmentsInput(req.body);
+    const revoked = await revokeManagerInvitation(
+      organization.id,
+      req.auth!.user.id,
+      invitationId,
+    );
+    if (!revoked) {
+      res.status(404).json({ error: "Pending invitation was not found" });
+      return;
+    }
 
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
+    res.json({
+      ok: true,
+      invitations: await getManagerInvitations(organization.id),
+    });
+  },
+);
 
-  const result = await updateAssignments(organization.id, req.auth!.user.id, input.value);
-  if ("error" in result) {
-    res.status(422).json(result);
-    return;
-  }
-  res.json(result);
-});
+router.put(
+  "/platform/managers/assignments",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const input = parseAssignmentsInput(req.body);
 
-router.get("/platform/assignment-history", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const organization = req.tenant!;
-  const projectId = stringValue(req.query.projectId);
-  const clientId = stringValue(req.query.clientId);
-  if (projectId && !isUuid(projectId)) {
-    res.status(400).json({ error: "A valid projectId is required" });
-    return;
-  }
-  if (clientId && !isUuid(clientId)) {
-    res.status(400).json({ error: "A valid clientId is required" });
-    return;
-  }
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
 
-  const rows = await queryRows<{
-    id: string;
-    targetType: string;
-    projectId: string | null;
-    clientId: string | null;
-    changedBy: string | null;
-    previousPm: string | null;
-    newPm: string | null;
-    reason: string | null;
-    createdAt: string;
-  }>(sql`
+    const result = await updateAssignments(
+      organization.id,
+      req.auth!.user.id,
+      input.value,
+    );
+    if ("error" in result) {
+      res
+        .status(result.error === "pending_approval_requires_review" ? 409 : 422)
+        .json(result);
+      return;
+    }
+    res.json(result);
+  },
+);
+
+router.get(
+  "/platform/assignment-history",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const projectId = stringValue(req.query.projectId);
+    const clientId = stringValue(req.query.clientId);
+    if (projectId && !isUuid(projectId)) {
+      res.status(400).json({ error: "A valid projectId is required" });
+      return;
+    }
+    if (clientId && !isUuid(clientId)) {
+      res.status(400).json({ error: "A valid clientId is required" });
+      return;
+    }
+
+    const rows = await queryRows<{
+      id: string;
+      targetType: string;
+      projectId: string | null;
+      clientId: string | null;
+      changedBy: string | null;
+      previousPm: string | null;
+      newPm: string | null;
+      reason: string | null;
+      createdAt: string;
+    }>(sql`
     select
       h.id::text,
       h.target_type::text as "targetType",
@@ -1127,37 +1994,55 @@ router.get("/platform/assignment-history", requireRoles(["admin", "owner", "chie
     limit 200
   `);
 
-  res.json({ history: rows });
-});
+    res.json({ history: rows });
+  },
+);
 
-router.get("/platform/managers/:managerId/capacity", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const managerId = stringValue(req.params.managerId);
-  if (!managerId || !isUuid(managerId)) {
-    res.status(400).json({ error: "A valid manager id is required" });
-    return;
-  }
-  const info = await getPmCapacityInfo(organization.id, managerId);
-  res.json({
-    managerId,
-    count: info.count,
-    limit: info.limit,
-    percentage: info.limit ? Math.round((info.count / info.limit) * 100) : null,
-    status: info.status,
-  });
-});
+router.get(
+  "/platform/managers/:managerId/capacity",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const managerId = stringValue(req.params.managerId);
+    if (!managerId || !isUuid(managerId)) {
+      res.status(400).json({ error: "A valid manager id is required" });
+      return;
+    }
+    const info = await getPmCapacityInfo(organization.id, managerId);
+    res.json({
+      managerId,
+      count: info.count,
+      limit: info.limit,
+      percentage: info.limit
+        ? Math.round((info.count / info.limit) * 100)
+        : null,
+      status: info.status,
+    });
+  },
+);
 
-router.patch("/platform/managers/:managerId/status", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const status = stringValue((req.body as Record<string, unknown> | undefined)?.status);
-  const managerId = stringValue(req.params.managerId);
+router.patch(
+  "/platform/managers/:managerId/status",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const status = stringValue(
+      (req.body as Record<string, unknown> | undefined)?.status,
+    );
+    const managerId = stringValue(req.params.managerId);
 
-  if (!managerId || !isUuid(managerId) || !["active", "suspended"].includes(status ?? "")) {
-    res.status(400).json({ error: "A valid manager id and status are required" });
-    return;
-  }
+    if (
+      !managerId ||
+      !isUuid(managerId) ||
+      !["active", "suspended"].includes(status ?? "")
+    ) {
+      res
+        .status(400)
+        .json({ error: "A valid manager id and status are required" });
+      return;
+    }
 
-  const rows = await queryRows<{ name: string }>(sql`
+    const rows = await queryRows<{ name: string }>(sql`
     update memberships
     set status = ${status}::membership_status, updated_at = now()
     where organization_id = ${organization.id}::uuid
@@ -1168,187 +2053,419 @@ router.patch("/platform/managers/:managerId/status", requireRoles(["admin", "own
     ) as name
   `);
 
-  const manager = rows[0];
-  if (!manager?.name) {
-    res.status(404).json({ error: "Project manager was not found" });
-    return;
-  }
+    const manager = rows[0];
+    if (!manager?.name) {
+      res.status(404).json({ error: "Project manager was not found" });
+      return;
+    }
 
-  await auditEvent(organization.id, req.auth!.user.id, "manager_status_updated", `updated manager status to ${status}`, { managerId, status });
-  await createNotification(
-    organization.id,
-    managerId,
-    status === "active" ? "Account reactivated" : "Account paused",
-    status === "active"
-      ? "Your project manager account is active again."
-      : "Your project manager account has been paused. Contact the chief manager if you need access restored.",
-    "/pm",
-  );
-  res.json({ ok: true });
-});
+    await auditEvent(
+      organization.id,
+      req.auth!.user.id,
+      "manager_status_updated",
+      `updated manager status to ${status}`,
+      { managerId, status },
+    );
+    await createNotification(
+      organization.id,
+      managerId,
+      status === "active" ? "Account reactivated" : "Account paused",
+      status === "active"
+        ? "Your project manager account is active again."
+        : "Your project manager account has been paused. Contact the chief manager if you need access restored.",
+      "/pm",
+    );
+    res.json({ ok: true });
+  },
+);
 
-router.post("/platform/managers/:managerId/reminders", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const managerId = stringValue(req.params.managerId);
-  const input = parseManagerReminderInput(req.body);
+router.post(
+  "/platform/managers/:managerId/reminders",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const managerId = stringValue(req.params.managerId);
+    const input = parseManagerReminderInput(req.body);
 
-  if (!managerId || !isUuid(managerId)) {
-    res.status(400).json({ error: "A valid manager id is required" });
-    return;
-  }
+    if (!managerId || !isUuid(managerId)) {
+      res.status(400).json({ error: "A valid manager id is required" });
+      return;
+    }
 
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
 
-  const queued = await queueManagerReminder(organization.id, req.auth!.user.id, managerId, input.value);
-  if (!queued) {
-    res.status(404).json({ error: "Project manager was not found" });
-    return;
-  }
+    const queued = await queueManagerReminder(
+      organization.id,
+      req.auth!.user.id,
+      managerId,
+      input.value,
+    );
+    if (!queued) {
+      res.status(404).json({ error: "Project manager was not found" });
+      return;
+    }
 
-  res.status(201).json({ ok: true });
-});
+    res.status(201).json({ ok: true });
+  },
+);
 
-router.get("/platform/notifications", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
-  res.json(await getNotifications(req.auth!, 20));
-});
+router.get(
+  "/platform/notifications",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    res.json(await getNotifications(req.auth!, 20));
+  },
+);
 
-router.patch("/platform/notifications/read-all", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
-  const updated = await markAllNotificationsRead(req.auth!);
-  res.json({ updated, ...(await getNotifications(req.auth!, 20)) });
-});
+router.patch(
+  "/platform/notifications/read-all",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    const updated = await markAllNotificationsRead(req.auth!);
+    res.json({ updated, ...(await getNotifications(req.auth!, 20)) });
+  },
+);
 
-router.patch("/platform/notifications/:notificationId/read", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
-  const notificationId = stringValue(req.params.notificationId);
+router.patch(
+  "/platform/notifications/:notificationId/read",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    const notificationId = stringValue(req.params.notificationId);
 
-  if (!notificationId || !isUuid(notificationId)) {
-    res.status(400).json({ error: "A valid notification id is required" });
-    return;
-  }
+    if (!notificationId || !isUuid(notificationId)) {
+      res.status(400).json({ error: "A valid notification id is required" });
+      return;
+    }
 
-  const updated = await markNotificationRead(req.auth!, notificationId);
-  if (!updated) {
-    res.status(404).json({ error: "Notification was not found" });
-    return;
-  }
+    const updated = await markNotificationRead(req.auth!, notificationId);
+    if (!updated) {
+      res.status(404).json({ error: "Notification was not found" });
+      return;
+    }
 
-  res.json({ ok: true, ...(await getNotifications(req.auth!, 20)) });
-});
+    res.json({ ok: true, ...(await getNotifications(req.auth!, 20)) });
+  },
+);
 
-router.post("/platform/reports/export-audit", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const organization = req.tenant!;
-  const data = objectValue(req.body);
-  const report = stringValue(data.report) ?? "chief_report";
-  const range = stringValue(data.range) ?? "current";
-  const format = stringValue(data.format) ?? "xls";
+router.post(
+  "/platform/reports/export-audit",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const data = objectValue(req.body);
+    const report = stringValue(data.report) ?? "chief_report";
+    const range = stringValue(data.range) ?? "current";
+    const format = stringValue(data.format) ?? "xls";
 
-  await auditEvent(organization.id, req.auth!.user.id, "report_exported", `exported ${report}`, {
-    report,
-    range,
-    format,
-  });
-  await createNotification(
-    organization.id,
-    req.auth!.user.id,
-    "Report exported",
-    `${report} was exported as ${format.toUpperCase()}.`,
-    req.auth!.user.role === "pm" ? "/pm/reports" : "/chief/reports",
-    "reports",
-  );
+    await auditEvent(
+      organization.id,
+      req.auth!.user.id,
+      "report_exported",
+      `exported ${report}`,
+      {
+        report,
+        range,
+        format,
+      },
+    );
+    await createNotification(
+      organization.id,
+      req.auth!.user.id,
+      "Report exported",
+      `${report} was exported as ${format.toUpperCase()}.`,
+      req.auth!.user.role === "pm" ? "/pm/reports" : "/chief/reports",
+      "reports",
+    );
 
-  res.status(201).json({ ok: true });
-});
+    res.status(201).json({ ok: true });
+  },
+);
 
-router.get("/platform/reports/chief", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const range = stringValue(req.query.range) ?? "6M";
-  res.json(await getChiefReport(organization.id, range));
-});
+router.get(
+  "/platform/reports/chief",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const range = stringValue(req.query.range) ?? "6M";
+    res.json(await getChiefReport(organization.id, range));
+  },
+);
 
-router.get("/platform/reports/pm", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const period = stringValue(req.query.period) ?? "this_week";
-  res.json(await getPmReport(req.auth!, period));
-});
+router.get(
+  "/platform/reports/pm",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const period = stringValue(req.query.period) ?? "this_week";
+    res.json(await getPmReport(req.auth!, period));
+  },
+);
 
-router.get("/platform/calendar", requireRoles(["admin", "owner", "chief", "pm"]), async (req, res) => {
-  const organization = req.tenant!;
-  res.json({ events: await getCalendarEvents(organization.id, req.auth!) });
-});
+// Time-in-stage analytics built from recorded pipeline-stage transitions
+// (manual kanban moves and automatic lifecycle sync both emit
+// 'project_pipeline_stage_updated' events).
+router.get(
+  "/platform/reports/pipeline-flow",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
 
-router.get("/platform/workspaces/monitor", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  res.json({
-    projects: await getWorkspaceMonitorProjects(organization.id),
-    managers: await getManagers(organization.id),
-  });
-});
+    const projects = await queryRows<{
+      id: string;
+      name: string;
+      createdAt: string;
+      status: string;
+      metadataStage: string | null;
+    }>(sql`
+    select id::text, name, created_at::text as "createdAt", status::text as status,
+      (metadata ->> 'pipelineStage') as "metadataStage"
+    from projects
+    where organization_id = ${organization.id}::uuid and deleted_at is null
+  `);
 
-router.post("/platform/calendar/events", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const input = parseCalendarEventInput(req.body);
+    const events = await queryRows<{
+      projectId: string | null;
+      stage: string | null;
+      createdAt: string;
+    }>(sql`
+    select
+      coalesce(project_id::text, metadata ->> 'projectId') as "projectId",
+      (metadata ->> 'stage') as stage,
+      created_at::text as "createdAt"
+    from activity_events
+    where organization_id = ${organization.id}::uuid
+      and event_type = 'project_pipeline_stage_updated'
+    order by created_at asc
+  `);
 
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
+    const eventsByProject = new Map<string, { stage: string; at: number }[]>();
+    for (const event of events) {
+      if (!event.projectId || !event.stage) continue;
+      const list = eventsByProject.get(event.projectId) ?? [];
+      list.push({
+        stage: event.stage,
+        at: new Date(event.createdAt).getTime(),
+      });
+      eventsByProject.set(event.projectId, list);
+    }
 
-  const event = await createCalendarEvent(organization.id, req.auth!.user.id, input.value);
-  await auditEvent(organization.id, req.auth!.user.id, "calendar_event_created", `created calendar event ${event.name}`, {
-    projectId: event.id,
-    name: event.name,
-  });
+    const STAGES = [
+      "intake",
+      "design",
+      "review",
+      "production",
+      "closed",
+    ] as const;
+    const totals = new Map<
+      string,
+      { totalMs: number; projects: Set<string> }
+    >();
+    const now = Date.now();
+    const slowest: {
+      projectId: string;
+      name: string;
+      stage: string;
+      days: number;
+    }[] = [];
 
-  res.status(201).json({ event, events: await getCalendarEvents(organization.id, req.auth!) });
-});
+    for (const project of projects) {
+      const transitions = eventsByProject.get(project.id) ?? [];
+      let cursorStage = "intake";
+      let cursorAt = new Date(project.createdAt).getTime();
 
-router.put("/platform/calendar/events/:eventId", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const eventId = stringValue(req.params.eventId);
-  const input = parseCalendarEventInput(req.body);
+      const addSpan = (stage: string, from: number, to: number) => {
+        if (to <= from) return;
+        const bucket = totals.get(stage) ?? {
+          totalMs: 0,
+          projects: new Set<string>(),
+        };
+        bucket.totalMs += to - from;
+        bucket.projects.add(project.id);
+        totals.set(stage, bucket);
+      };
 
-  if (!eventId || !isUuid(eventId)) {
-    res.status(400).json({ error: "A valid calendar event id is required" });
-    return;
-  }
+      for (const transition of transitions) {
+        if (transition.stage === cursorStage) continue;
+        addSpan(cursorStage, cursorAt, transition.at);
+        cursorStage = transition.stage;
+        cursorAt = transition.at;
+      }
 
-  if (!input.ok) {
-    res.status(400).json({ error: input.error });
-    return;
-  }
+      const currentStage =
+        normalizePipelineStage(project.metadataStage) ??
+        pipelineStageFromProjectStatus(project.status);
+      if (currentStage !== "closed") {
+        addSpan(cursorStage, cursorAt, now);
+        slowest.push({
+          projectId: project.id,
+          name: project.name,
+          stage: currentStage,
+          days:
+            Math.round(((now - cursorAt) / (24 * 60 * 60 * 1000)) * 10) / 10,
+        });
+      } else {
+        addSpan(
+          cursorStage,
+          cursorAt,
+          transitions.length ? transitions[transitions.length - 1].at : now,
+        );
+      }
+    }
 
-  const event = await updateCalendarEvent(organization.id, req.auth!.user.id, eventId, input.value);
-  if (!event) {
-    res.status(404).json({ error: "Calendar event was not found" });
-    return;
-  }
+    res.json({
+      stages: STAGES.map((stage) => {
+        const bucket = totals.get(stage);
+        const projectCount = bucket?.projects.size ?? 0;
+        return {
+          stage,
+          projects: projectCount,
+          avgDays: projectCount
+            ? Math.round(
+                (bucket!.totalMs / projectCount / (24 * 60 * 60 * 1000)) * 10,
+              ) / 10
+            : 0,
+        };
+      }),
+      slowest: slowest.sort((a, b) => b.days - a.days).slice(0, 5),
+    });
+  },
+);
 
-  await auditEvent(organization.id, req.auth!.user.id, "calendar_event_updated", `updated calendar event ${event.name}`, {
-    projectId: event.id,
-    name: event.name,
-  });
+router.get(
+  "/platform/calendar",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    res.json({ events: await getCalendarEvents(organization.id, req.auth!) });
+  },
+);
 
-  res.json({ event, events: await getCalendarEvents(organization.id, req.auth!) });
-});
+router.get(
+  "/platform/workspaces/monitor",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    res.json({
+      projects: await getWorkspaceMonitorProjects(organization.id),
+      managers: await getManagers(organization.id),
+    });
+  },
+);
 
-router.delete("/platform/calendar/events/:eventId", requireRoles(["admin", "owner", "chief"]), async (req, res) => {
-  const organization = req.tenant!;
-  const eventId = stringValue(req.params.eventId);
+router.post(
+  "/platform/calendar/events",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const input = parseCalendarEventInput(req.body);
 
-  if (!eventId || !isUuid(eventId)) {
-    res.status(400).json({ error: "A valid calendar event id is required" });
-    return;
-  }
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
 
-  const removed = await deleteCalendarEvent(organization.id, req.auth!.user.id, eventId);
-  if (!removed) {
-    res.status(404).json({ error: "Calendar event was not found" });
-    return;
-  }
+    const event = await createCalendarEvent(
+      organization.id,
+      req.auth!.user.id,
+      input.value,
+    );
+    await auditEvent(
+      organization.id,
+      req.auth!.user.id,
+      "calendar_event_created",
+      `created calendar event ${event.name}`,
+      {
+        projectId: event.id,
+        name: event.name,
+      },
+    );
 
-  res.json({ ok: true, events: await getCalendarEvents(organization.id, req.auth!) });
-});
+    res
+      .status(201)
+      .json({
+        event,
+        events: await getCalendarEvents(organization.id, req.auth!),
+      });
+  },
+);
+
+router.put(
+  "/platform/calendar/events/:eventId",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const eventId = stringValue(req.params.eventId);
+    const input = parseCalendarEventInput(req.body);
+
+    if (!eventId || !isUuid(eventId)) {
+      res.status(400).json({ error: "A valid calendar event id is required" });
+      return;
+    }
+
+    if (!input.ok) {
+      res.status(400).json({ error: input.error });
+      return;
+    }
+
+    const event = await updateCalendarEvent(
+      organization.id,
+      req.auth!.user.id,
+      eventId,
+      input.value,
+    );
+    if (!event) {
+      res.status(404).json({ error: "Calendar event was not found" });
+      return;
+    }
+
+    await auditEvent(
+      organization.id,
+      req.auth!.user.id,
+      "calendar_event_updated",
+      `updated calendar event ${event.name}`,
+      {
+        projectId: event.id,
+        name: event.name,
+      },
+    );
+
+    res.json({
+      event,
+      events: await getCalendarEvents(organization.id, req.auth!),
+    });
+  },
+);
+
+router.delete(
+  "/platform/calendar/events/:eventId",
+  requireRoles(["admin", "owner", "chief"]),
+  async (req, res) => {
+    const organization = req.tenant!;
+    const eventId = stringValue(req.params.eventId);
+
+    if (!eventId || !isUuid(eventId)) {
+      res.status(400).json({ error: "A valid calendar event id is required" });
+      return;
+    }
+
+    const removed = await deleteCalendarEvent(
+      organization.id,
+      req.auth!.user.id,
+      eventId,
+    );
+    if (!removed) {
+      res.status(404).json({ error: "Calendar event was not found" });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      events: await getCalendarEvents(organization.id, req.auth!),
+    });
+  },
+);
 
 async function getAccountSettings(auth: AuthContext) {
   const rows = await queryRows<{
@@ -1467,7 +2584,10 @@ async function updateAccountSettings(
   return getAccountSettings(auth);
 }
 
-async function updateAccountAvatar(auth: AuthContext, input: { avatarUrl: string; avatarTone: string }) {
+async function updateAccountAvatar(
+  auth: AuthContext,
+  input: { avatarUrl: string; avatarTone: string },
+) {
   return updateAccountSettings(auth, {
     profile: {
       avatarUrl: input.avatarUrl,
@@ -1476,7 +2596,11 @@ async function updateAccountAvatar(auth: AuthContext, input: { avatarUrl: string
   });
 }
 
-async function updateAccountPassword(auth: AuthContext, currentPassword: string, newPassword: string) {
+async function updateAccountPassword(
+  auth: AuthContext,
+  currentPassword: string,
+  newPassword: string,
+) {
   const rows = await queryRows<{ passwordHash: string | null }>(sql`
     select password_hash as "passwordHash"
     from users
@@ -1486,7 +2610,10 @@ async function updateAccountPassword(auth: AuthContext, currentPassword: string,
   `);
   const existing = rows[0];
 
-  if (!existing?.passwordHash || !verifyPassword(currentPassword, existing.passwordHash)) {
+  if (
+    !existing?.passwordHash ||
+    !verifyPassword(currentPassword, existing.passwordHash)
+  ) {
     return { ok: false as const, error: "Current password is incorrect" };
   }
 
@@ -1640,7 +2767,10 @@ async function createNotification(
   `);
 }
 
-async function shouldDeliverNotification(userId: string, category: "assignments" | "milestones" | "reports" | "system") {
+async function shouldDeliverNotification(
+  userId: string,
+  category: "assignments" | "milestones" | "reports" | "system",
+) {
   const metadata = await getUserMetadata(userId);
   const settings = objectValue(metadata.accountSettings);
   const notifications = objectValue(settings.notifications);
@@ -1690,14 +2820,28 @@ async function getManagers(organizationId: string) {
     const delayedProjects = Number(manager.delayedProjects ?? 0);
     const urgentProjects = Number(manager.urgentProjects ?? 0);
     const clientCount = Number(manager.clients ?? 0);
-    const workload = Math.min(100, Math.max(0, activeProjects * 18 + delayedProjects * 18 + urgentProjects * 8 + clientCount * 5));
+    const workload = Math.min(
+      100,
+      Math.max(
+        0,
+        activeProjects * 18 +
+          delayedProjects * 18 +
+          urgentProjects * 8 +
+          clientCount * 5,
+      ),
+    );
 
     return {
       id: manager.id,
       name: manager.name,
       email: manager.email,
       role: "Project Manager",
-      status: manager.status === "active" ? "Active" : manager.status === "invited" ? "Pending" : "On Leave",
+      status:
+        manager.status === "active"
+          ? "Active"
+          : manager.status === "invited"
+            ? "Pending"
+            : "On Leave",
       rating: numberFromMetadata(manager.metadata.rating, 4.7),
       avatarUrl: stringValue(profile.avatarUrl) ?? "",
       avatarTone: stringValue(profile.avatarTone) ?? "primary",
@@ -1732,7 +2876,7 @@ async function getManagedClients(organizationId: string) {
       c.contact_email as "contactEmail",
       c.assigned_pm_user_id::text as "managerId",
       u.name as "managerName",
-      coalesce(max(p.exhibition_name), c.metadata ->> 'exhibition') as exhibition,
+      coalesce(c.intake_exhibition_name, c.metadata ->> 'exhibition', max(p.exhibition_name)) as exhibition,
       c.status::text as status,
       greatest(c.updated_at, coalesce(max(p.updated_at), c.updated_at))::text as "lastActivity"
     from clients c
@@ -1826,7 +2970,10 @@ interface ManagerAssignmentItemsQuery {
   projectOffset: number;
 }
 
-async function getManagerAssignmentItems(organizationId: string, query: ManagerAssignmentItemsQuery) {
+async function getManagerAssignmentItems(
+  organizationId: string,
+  query: ManagerAssignmentItemsQuery,
+) {
   const clientConditions: SQL[] = [
     sql`c.organization_id = ${organizationId}::uuid`,
     sql`c.deleted_at is null`,
@@ -1837,8 +2984,12 @@ async function getManagerAssignmentItems(organizationId: string, query: ManagerA
   ];
 
   if (query.managerId) {
-    clientConditions.push(sql`(c.assigned_pm_user_id = ${query.managerId}::uuid or c.assigned_pm_user_id is null)`);
-    projectConditions.push(sql`(p.assigned_pm_user_id = ${query.managerId}::uuid or p.assigned_pm_user_id is null)`);
+    clientConditions.push(
+      sql`(c.assigned_pm_user_id = ${query.managerId}::uuid or c.assigned_pm_user_id is null)`,
+    );
+    projectConditions.push(
+      sql`(p.assigned_pm_user_id = ${query.managerId}::uuid or p.assigned_pm_user_id is null)`,
+    );
   }
 
   if (query.clientQ) {
@@ -1877,18 +3028,19 @@ async function getManagerAssignmentItems(organizationId: string, query: ManagerA
   const clientWhere = sql.join(clientConditions, sql` and `);
   const projectWhere = sql.join(projectConditions, sql` and `);
 
-  const [clientRows, clientCountRows, projectRows, projectCountRows] = await Promise.all([
-    queryRows<{
-      id: string;
-      name: string;
-      contactName: string;
-      contactEmail: string;
-      managerId: string | null;
-      managerName: string | null;
-      exhibition: string | null;
-      status: string;
-      lastActivity: string;
-    }>(sql`
+  const [clientRows, clientCountRows, projectRows, projectCountRows] =
+    await Promise.all([
+      queryRows<{
+        id: string;
+        name: string;
+        contactName: string;
+        contactEmail: string;
+        managerId: string | null;
+        managerName: string | null;
+        exhibition: string | null;
+        status: string;
+        lastActivity: string;
+      }>(sql`
       select
         c.id::text,
         c.company_name as name,
@@ -1896,7 +3048,7 @@ async function getManagerAssignmentItems(organizationId: string, query: ManagerA
         c.contact_email as "contactEmail",
         c.assigned_pm_user_id::text as "managerId",
         u.name as "managerName",
-        coalesce(max(p.exhibition_name), c.metadata ->> 'exhibition') as exhibition,
+        coalesce(c.intake_exhibition_name, c.metadata ->> 'exhibition', max(p.exhibition_name)) as exhibition,
         c.status::text as status,
         greatest(c.updated_at, coalesce(max(p.updated_at), c.updated_at))::text as "lastActivity"
       from clients c
@@ -1908,24 +3060,24 @@ async function getManagerAssignmentItems(organizationId: string, query: ManagerA
       limit ${query.clientLimit}
       offset ${query.clientOffset}
     `),
-    queryRows<{ count: number }>(sql`
+      queryRows<{ count: number }>(sql`
       select count(distinct c.id)::int as count
       from clients c
       where ${clientWhere}
     `),
-    queryRows<{
-      id: string;
-      name: string;
-      clientId: string;
-      client: string;
-      managerId: string | null;
-      managerName: string | null;
-      exhibition: string | null;
-      status: string;
-      health: string;
-      deadline: string | null;
-      system: string;
-    }>(sql`
+      queryRows<{
+        id: string;
+        name: string;
+        clientId: string;
+        client: string;
+        managerId: string | null;
+        managerName: string | null;
+        exhibition: string | null;
+        status: string;
+        health: string;
+        deadline: string | null;
+        system: string;
+      }>(sql`
       select
         p.id::text,
         p.name,
@@ -1953,13 +3105,13 @@ async function getManagerAssignmentItems(organizationId: string, query: ManagerA
       limit ${query.projectLimit}
       offset ${query.projectOffset}
     `),
-    queryRows<{ count: number }>(sql`
+      queryRows<{ count: number }>(sql`
       select count(distinct p.id)::int as count
       from projects p
       join clients c on c.id = p.client_id
       where ${projectWhere}
     `),
-  ]);
+    ]);
 
   const clientTotal = Number(clientCountRows[0]?.count ?? 0);
   const projectTotal = Number(projectCountRows[0]?.count ?? 0);
@@ -2006,15 +3158,19 @@ async function getManagerAssignmentItems(organizationId: string, query: ManagerA
 }
 
 async function getManagerAudit(organizationId: string, limit: number) {
-  const events = await getActivity(
-    organizationId,
-    limit,
-    {
-      sessionId: "",
-      user: { id: "00000000-0000-0000-0000-000000000000", name: "System", email: "", role: "owner", uiRole: "chief", avatarUrl: "", avatarTone: "primary" },
-      organization: { id: organizationId, name: "", slug: "", plan: "" },
+  const events = await getActivity(organizationId, limit, {
+    sessionId: "",
+    user: {
+      id: "00000000-0000-0000-0000-000000000000",
+      name: "System",
+      email: "",
+      role: "owner",
+      uiRole: "chief",
+      avatarUrl: "",
+      avatarTone: "primary",
     },
-  );
+    organization: { id: organizationId, name: "", slug: "", plan: "" },
+  });
   return events;
 }
 
@@ -2022,6 +3178,7 @@ async function getManagerInvitations(organizationId: string) {
   const rows = await queryRows<{
     id: string;
     email: string;
+    name: string | null;
     role: string;
     expiresAt: string;
     acceptedAt: string | null;
@@ -2034,6 +3191,7 @@ async function getManagerInvitations(organizationId: string) {
     select
       id::text,
       email,
+      name,
       role::text,
       expires_at::text as "expiresAt",
       accepted_at::text as "acceptedAt",
@@ -2051,10 +3209,17 @@ async function getManagerInvitations(organizationId: string) {
 
   return rows.map((invite) => ({
     ...invite,
-    status: invite.revokedAt ? "Revoked" : invite.acceptedAt ? "Accepted" : new Date(invite.expiresAt) < new Date() ? "Expired" : "Pending",
-    emailWarning: invite.emailStatus === "failed" || invite.emailStatus === "skipped"
-      ? invite.emailLastError ?? "Invitation email was not delivered"
-      : null,
+    status: invite.revokedAt
+      ? "Revoked"
+      : invite.acceptedAt
+        ? "Accepted"
+        : new Date(invite.expiresAt) < new Date()
+          ? "Expired"
+          : "Pending",
+    emailWarning:
+      invite.emailStatus === "failed" || invite.emailStatus === "skipped"
+        ? (invite.emailLastError ?? "Invitation email was not delivered")
+        : null,
   }));
 }
 
@@ -2099,12 +3264,16 @@ async function inviteManager(
     ...rows[0],
     name: input.name,
     token,
-    inviteUrl: `/signup?invite=${encodeURIComponent(token)}`,
+    inviteUrl: `/pm/join?token=${encodeURIComponent(token)}`,
     status: "Pending",
   };
 }
 
-async function resendManagerInvitation(organizationId: string, actorUserId: string, invitationId: string) {
+async function resendManagerInvitation(
+  organizationId: string,
+  actorUserId: string,
+  invitationId: string,
+) {
   const token = createRefreshToken();
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -2131,20 +3300,30 @@ async function resendManagerInvitation(organizationId: string, actorUserId: stri
   const invitation = rows[0];
   if (!invitation) return null;
 
-  await auditEvent(organizationId, actorUserId, "manager_invite_resent", `resent invite to ${invitation.email}`, {
-    invitationId,
-    email: invitation.email,
-  });
+  await auditEvent(
+    organizationId,
+    actorUserId,
+    "manager_invite_resent",
+    `resent invite to ${invitation.email}`,
+    {
+      invitationId,
+      email: invitation.email,
+    },
+  );
 
   return {
     ...invitation,
     token,
-    inviteUrl: `/signup?invite=${encodeURIComponent(token)}`,
+    inviteUrl: `/pm/join?token=${encodeURIComponent(token)}`,
     status: "Pending",
   };
 }
 
-async function updateInvitationEmailDelivery(organizationId: string, invitationId: string, delivery: EmailDeliveryResult) {
+async function updateInvitationEmailDelivery(
+  organizationId: string,
+  invitationId: string,
+  delivery: EmailDeliveryResult,
+) {
   const error = delivery.ok ? null : delivery.error;
   await db.execute(sql`
     update invitations
@@ -2156,7 +3335,10 @@ async function updateInvitationEmailDelivery(organizationId: string, invitationI
   `);
 }
 
-function invitationWithEmailDelivery<T extends Record<string, unknown>>(invitation: T, delivery: EmailDeliveryResult) {
+function invitationWithEmailDelivery<T extends Record<string, unknown>>(
+  invitation: T,
+  delivery: EmailDeliveryResult,
+) {
   return {
     ...invitation,
     emailStatus: delivery.status,
@@ -2172,7 +3354,10 @@ async function recordEmailDeliveryIncident(
 ) {
   if (delivery.ok) return;
 
-  const type = delivery.status === "failed" ? "email_delivery_failed" : "email_delivery_skipped";
+  const type =
+    delivery.status === "failed"
+      ? "email_delivery_failed"
+      : "email_delivery_skipped";
   await auditEvent(
     organizationId,
     actorUserId,
@@ -2186,7 +3371,11 @@ async function recordEmailDeliveryIncident(
   );
 }
 
-async function revokeManagerInvitation(organizationId: string, actorUserId: string, invitationId: string) {
+async function revokeManagerInvitation(
+  organizationId: string,
+  actorUserId: string,
+  invitationId: string,
+) {
   const rows = await queryRows<{ id: string; email: string }>(sql`
     update invitations
     set revoked_at = now()
@@ -2201,10 +3390,16 @@ async function revokeManagerInvitation(organizationId: string, actorUserId: stri
   const invitation = rows[0];
   if (!invitation) return false;
 
-  await auditEvent(organizationId, actorUserId, "manager_invite_revoked", `revoked invite to ${invitation.email}`, {
-    invitationId,
-    email: invitation.email,
-  });
+  await auditEvent(
+    organizationId,
+    actorUserId,
+    "manager_invite_revoked",
+    `revoked invite to ${invitation.email}`,
+    {
+      invitationId,
+      email: invitation.email,
+    },
+  );
 
   return true;
 }
@@ -2233,9 +3428,10 @@ async function updateAssignments(
   for (const managerId of allTargetManagerIds) {
     const capacity = await getPmCapacityInfo(organizationId, managerId);
     if (capacity.limit === null) continue;
-    const newCount = [...input.clientAssignments, ...input.projectAssignments].filter(
-      (a) => a.managerId === managerId,
-    ).length;
+    const newCount = [
+      ...input.clientAssignments,
+      ...input.projectAssignments,
+    ].filter((a) => a.managerId === managerId).length;
     const projectedCount = capacity.count + newCount;
     const projectedRatio = projectedCount / capacity.limit;
     if (projectedRatio >= PM_EXTREME_THRESHOLD && !input.overrideReason) {
@@ -2247,7 +3443,11 @@ async function updateAssignments(
         message: `PM would reach ${Math.round(projectedRatio * 100)}% capacity. An override reason is required.`,
       } as const;
     }
-    if (projectedRatio >= PM_BLOCK_THRESHOLD && !input.confirmOverCapacity && !input.overrideReason) {
+    if (
+      projectedRatio >= PM_BLOCK_THRESHOLD &&
+      !input.confirmOverCapacity &&
+      !input.overrideReason
+    ) {
       return {
         error: "over_capacity",
         managerId,
@@ -2258,16 +3458,64 @@ async function updateAssignments(
     }
   }
 
+  const clientIds = [
+    ...new Set(
+      input.clientAssignments.map((assignment) => assignment.clientId),
+    ),
+  ];
+  if (clientIds.length > 0) {
+    const clientIdList = sql.join(
+      clientIds.map((clientId) => sql`${clientId}::uuid`),
+      sql`, `,
+    );
+    const pendingClients = await queryRows<{ id: string; name: string }>(sql`
+      select c.id::text, c.company_name as name
+      from clients c
+      where c.organization_id = ${organizationId}::uuid
+        and c.id in (${clientIdList})
+        and c.status::text = 'pending_approval'
+        and c.deleted_at is null
+    `);
+    if (pendingClients.length > 0) {
+      return {
+        error: "pending_approval_requires_review",
+        clientIds: pendingClients.map((client) => client.id),
+        message:
+          "Pending clients must be reviewed and approved before assignment.",
+      } as const;
+    }
+  }
+
   for (const assignment of input.clientAssignments) {
-    const targetName = await getAssignmentTargetName(organizationId, assignment.managerId);
+    const targetName = await getAssignmentTargetName(
+      organizationId,
+      assignment.managerId,
+    );
     if (assignment.managerId && !targetName) continue;
 
-    const clientRows = await queryRows<AssignmentState>(sql`
+    const clientRows = await queryRows<{
+      id: string;
+      name: string;
+      managerId: string | null;
+      managerName: string | null;
+      contactEmail: string;
+      intakeExhibitionName: string | null;
+      intakeBoothSizeSqm: string | null;
+      intakeCity: string | null;
+      intakeDeadlineAt: string | null;
+      intakePreferredSystem: string | null;
+    }>(sql`
       select
         c.id::text,
         c.company_name as name,
         c.assigned_pm_user_id::text as "managerId",
-        u.name as "managerName"
+        u.name as "managerName",
+        c.contact_email as "contactEmail",
+        c.intake_exhibition_name as "intakeExhibitionName",
+        c.intake_booth_size_sqm::text as "intakeBoothSizeSqm",
+        c.intake_city as "intakeCity",
+        c.intake_deadline_at::text as "intakeDeadlineAt",
+        c.intake_preferred_system::text as "intakePreferredSystem"
       from clients c
       left join users u on u.id = c.assigned_pm_user_id
       where c.id = ${assignment.clientId}::uuid
@@ -2276,15 +3524,69 @@ async function updateAssignments(
       limit 1
     `);
     const client = clientRows[0];
-    if (!client || (client.managerId ?? null) === assignment.managerId) continue;
+    if (!client || (client.managerId ?? null) === assignment.managerId)
+      continue;
 
     await db.execute(sql`
       update clients
-      set assigned_pm_user_id = ${assignment.managerId}::uuid, updated_at = now()
+      set
+        assigned_pm_user_id = ${assignment.managerId}::uuid,
+        status = 'active',
+        activated_at = coalesce(activated_at, now()),
+        updated_at = now()
       where id = ${assignment.clientId}::uuid
         and organization_id = ${organizationId}::uuid
         and deleted_at is null
     `);
+
+    if (assignment.managerId) {
+      await ensureClientIntakeProject(
+        organizationId,
+        actorUserId,
+        {
+          id: client.id,
+          companyName: client.name,
+          contactEmail: client.contactEmail,
+          intakeExhibitionName: client.intakeExhibitionName,
+          intakeBoothSizeSqm: client.intakeBoothSizeSqm,
+          intakeCity: client.intakeCity,
+          intakeDeadlineAt: client.intakeDeadlineAt,
+          intakePreferredSystem: client.intakePreferredSystem as
+            | "octanorm"
+            | "maxima"
+            | "custom"
+            | null,
+        },
+        assignment.managerId,
+      );
+
+      const clientUserRows = await queryRows<{ id: string }>(sql`
+        select u.id::text
+        from users u
+        join memberships m on m.user_id = u.id
+          and m.organization_id = ${organizationId}::uuid
+          and m.role::text = 'client'
+        where lower(u.email) = lower(${client.contactEmail})
+          and u.deleted_at is null
+        limit 1
+      `);
+      if (clientUserRows[0]?.id) {
+        const body = `A project manager (${targetName}) has been assigned to your workspace. Log in to access your booth project.`;
+        await createNotification(
+          organizationId,
+          clientUserRows[0].id,
+          "Project Manager Assigned",
+          body,
+          "/client",
+          "assignments",
+        );
+      }
+      await sendClientApprovedEmail({
+        to: client.contactEmail,
+        name: client.name,
+      });
+    }
+
     await recordAssignmentHistory(organizationId, {
       targetType: "client_pm",
       projectId: null,
@@ -2319,7 +3621,13 @@ async function updateAssignments(
 
       for (const project of clientProjects) {
         if ((project.managerId ?? null) === assignment.managerId) continue;
-        await reassignProjectManager(organizationId, actorUserId, project.id, assignment.managerId, input.reason);
+        await reassignProjectManager(
+          organizationId,
+          actorUserId,
+          project.id,
+          assignment.managerId,
+          input.reason,
+        );
         projectChanges.push({
           id: project.id,
           name: project.name,
@@ -2333,7 +3641,10 @@ async function updateAssignments(
   }
 
   for (const assignment of input.projectAssignments) {
-    const targetName = await getAssignmentTargetName(organizationId, assignment.managerId);
+    const targetName = await getAssignmentTargetName(
+      organizationId,
+      assignment.managerId,
+    );
     if (assignment.managerId && !targetName) continue;
 
     const projectRows = await queryRows<AssignmentState>(sql`
@@ -2350,9 +3661,16 @@ async function updateAssignments(
       limit 1
     `);
     const project = projectRows[0];
-    if (!project || (project.managerId ?? null) === assignment.managerId) continue;
+    if (!project || (project.managerId ?? null) === assignment.managerId)
+      continue;
 
-    await reassignProjectManager(organizationId, actorUserId, project.id, assignment.managerId, input.reason);
+    await reassignProjectManager(
+      organizationId,
+      actorUserId,
+      project.id,
+      assignment.managerId,
+      input.reason,
+    );
     projectChanges.push({
       id: project.id,
       name: project.name,
@@ -2367,14 +3685,24 @@ async function updateAssignments(
   const changedProjects = projectChanges.length;
 
   if (changedClients || changedProjects) {
-    await auditEvent(organizationId, actorUserId, "manager_assignments_updated", "updated manager assignments", {
-      changedClients,
-      changedProjects,
-      cascadeClientProjects: input.cascadeClientProjects,
-      clientChanges: clientChanges.slice(0, 20),
-      projectChanges: projectChanges.slice(0, 20),
-    });
-    await notifyManagerAssignmentChanges(organizationId, clientChanges, projectChanges);
+    await auditEvent(
+      organizationId,
+      actorUserId,
+      "manager_assignments_updated",
+      "updated manager assignments",
+      {
+        changedClients,
+        changedProjects,
+        cascadeClientProjects: input.cascadeClientProjects,
+        clientChanges: clientChanges.slice(0, 20),
+        projectChanges: projectChanges.slice(0, 20),
+      },
+    );
+    await notifyManagerAssignmentChanges(
+      organizationId,
+      clientChanges,
+      projectChanges,
+    );
   }
 
   return {
@@ -2453,7 +3781,10 @@ function assignmentSummary(names: string[], action: string) {
   return `${shown}${extra} ${names.length === 1 ? "was" : "were"} ${action}.`;
 }
 
-async function getAssignmentTargetName(organizationId: string, managerId: string | null) {
+async function getAssignmentTargetName(
+  organizationId: string,
+  managerId: string | null,
+) {
   if (!managerId) return "Unassigned";
 
   const rows = await queryRows<{ name: string }>(sql`
@@ -2498,10 +3829,13 @@ async function getPmCapacityInfo(organizationId: string, managerId: string) {
   if (limit === null) return { count, limit: null, status: "ok" as const };
   const ratio = count / limit;
   const status =
-    ratio >= PM_EXTREME_THRESHOLD ? ("extreme" as const) :
-    ratio >= PM_BLOCK_THRESHOLD   ? ("over" as const) :
-    ratio >= PM_WARN_THRESHOLD    ? ("warn" as const) :
-    ("ok" as const);
+    ratio >= PM_EXTREME_THRESHOLD
+      ? ("extreme" as const)
+      : ratio >= PM_BLOCK_THRESHOLD
+        ? ("over" as const)
+        : ratio >= PM_WARN_THRESHOLD
+          ? ("warn" as const)
+          : ("ok" as const);
   return { count, limit, status };
 }
 
@@ -2511,19 +3845,23 @@ async function reassignProjectManager(
   projectId: string,
   managerId: string | null,
   reason?: string | null,
+  executor: SqlExecutor = databaseExecutor,
 ) {
-  const previous = await queryRows<{ managerId: string | null }>(sql`
+  const previous = await queryRows<{ managerId: string | null }>(
+    sql`
     select assigned_pm_user_id::text as "managerId"
     from projects
     where id = ${projectId}::uuid
       and organization_id = ${organizationId}::uuid
       and deleted_at is null
     limit 1
-  `);
+  `,
+    executor,
+  );
   const previousManagerId = previous[0]?.managerId ?? null;
   if (previousManagerId === managerId) return;
 
-  await db.execute(sql`
+  await executor.execute(sql`
     update projects
     set assigned_pm_user_id = ${managerId}::uuid, updated_at = now()
     where id = ${projectId}::uuid
@@ -2531,29 +3869,33 @@ async function reassignProjectManager(
       and deleted_at is null
   `);
 
-  await db.execute(sql`
+  await executor.execute(sql`
     delete from project_members
     where project_id = ${projectId}::uuid
       and role::text = 'pm'
   `);
 
   if (managerId) {
-    await db.execute(sql`
+    await executor.execute(sql`
       insert into project_members (project_id, user_id, role)
       values (${projectId}::uuid, ${managerId}::uuid, 'pm')
       on conflict (project_id, user_id) do nothing
     `);
   }
 
-  await recordAssignmentHistory(organizationId, {
-    targetType: "project_pm",
-    projectId,
-    clientId: null,
-    actorUserId,
-    previousManagerId,
-    newManagerId: managerId,
-    reason: reason ?? null,
-  });
+  await recordAssignmentHistory(
+    organizationId,
+    {
+      targetType: "project_pm",
+      projectId,
+      clientId: null,
+      actorUserId,
+      previousManagerId,
+      newManagerId: managerId,
+      reason: reason ?? null,
+    },
+    executor,
+  );
 }
 
 async function recordAssignmentHistory(
@@ -2567,8 +3909,9 @@ async function recordAssignmentHistory(
     newManagerId: string | null;
     reason: string | null;
   },
+  executor: SqlExecutor = databaseExecutor,
 ) {
-  await db.execute(sql`
+  await executor.execute(sql`
     insert into project_assignment_history (
       organization_id,
       target_type,
@@ -2620,14 +3963,27 @@ async function queueManagerReminder(
     ? `Please review ${priorityParts.join(" and ")} project item${input.itemCount === 1 ? "" : "s"}.`
     : "Please review your current project workload.";
 
-  await createNotification(organizationId, managerId, "Chief manager reminder", body, "/pm/projects", "assignments");
-
-  await auditEvent(organizationId, actorUserId, "manager_reminder_queued", `queued reminder for ${manager.name}`, {
+  await createNotification(
+    organizationId,
     managerId,
-    itemCount: input.itemCount,
-    delayedCount: input.delayedCount,
-    urgentCount: input.urgentCount,
-  });
+    "Chief manager reminder",
+    body,
+    "/pm/projects",
+    "assignments",
+  );
+
+  await auditEvent(
+    organizationId,
+    actorUserId,
+    "manager_reminder_queued",
+    `queued reminder for ${manager.name}`,
+    {
+      managerId,
+      itemCount: input.itemCount,
+      delayedCount: input.delayedCount,
+      urgentCount: input.urgentCount,
+    },
+  );
 
   return true;
 }
@@ -2686,7 +4042,11 @@ async function getCalendarEvents(organizationId: string, auth: AuthContext) {
   }));
 }
 
-async function getCalendarEventById(organizationId: string, auth: AuthContext, eventId: string) {
+async function getCalendarEventById(
+  organizationId: string,
+  auth: AuthContext,
+  eventId: string,
+) {
   const events = await getCalendarEvents(organizationId, auth);
   return events.find((event) => event.id === eventId) ?? null;
 }
@@ -2747,19 +4107,31 @@ async function createCalendarEvent(
 
   const eventId = rows[0]?.id;
   if (!eventId) throw new Error("Calendar event insert did not return an id");
-  if (managerId) await reassignProjectManager(organizationId, actorUserId, eventId, managerId);
+  if (managerId)
+    await reassignProjectManager(
+      organizationId,
+      actorUserId,
+      eventId,
+      managerId,
+    );
 
-  return (await getCalendarEventById(organizationId, managerAuth(organizationId), eventId)) ?? {
-    id: eventId,
-    name: input.name,
-    client: input.client,
-    pm: input.pm || "Unassigned",
-    status: input.status,
-    startDate: input.startDate,
-    endDate: input.endDate,
-    location: input.location,
-    standType: input.standType,
-  };
+  return (
+    (await getCalendarEventById(
+      organizationId,
+      managerAuth(organizationId),
+      eventId,
+    )) ?? {
+      id: eventId,
+      name: input.name,
+      client: input.client,
+      pm: input.pm || "Unassigned",
+      status: input.status,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      location: input.location,
+      standType: input.standType,
+    }
+  );
 }
 
 async function updateCalendarEvent(
@@ -2809,10 +4181,18 @@ async function updateCalendarEvent(
   `);
   await reassignProjectManager(organizationId, actorUserId, eventId, managerId);
 
-  return getCalendarEventById(organizationId, managerAuth(organizationId), eventId);
+  return getCalendarEventById(
+    organizationId,
+    managerAuth(organizationId),
+    eventId,
+  );
 }
 
-async function deleteCalendarEvent(organizationId: string, actorUserId: string, eventId: string) {
+async function deleteCalendarEvent(
+  organizationId: string,
+  actorUserId: string,
+  eventId: string,
+) {
   const rows = await queryRows<{ id: string; name: string }>(sql`
     update projects
     set deleted_at = now(), updated_at = now()
@@ -2825,10 +4205,16 @@ async function deleteCalendarEvent(organizationId: string, actorUserId: string, 
   const event = rows[0];
   if (!event) return false;
 
-  await auditEvent(organizationId, actorUserId, "calendar_event_deleted", `deleted calendar event ${event.name}`, {
-    projectId: event.id,
-    name: event.name,
-  });
+  await auditEvent(
+    organizationId,
+    actorUserId,
+    "calendar_event_deleted",
+    `deleted calendar event ${event.name}`,
+    {
+      projectId: event.id,
+      name: event.name,
+    },
+  );
   return true;
 }
 
@@ -2898,12 +4284,20 @@ async function getWorkspaceMonitorProjects(organizationId: string) {
       system: toTitle(project.system),
       status: monitorStatus(project.status, project.health),
       version: `v${project.versionNumber ?? 1}.0`,
-      dims: project.widthMm && project.depthMm ? `${formatMeters(project.widthMm)}x${formatMeters(project.depthMm)}` : "TBD",
+      dims:
+        project.widthMm && project.depthMm
+          ? `${formatMeters(project.widthMm)}x${formatMeters(project.depthMm)}`
+          : "TBD",
       pm: project.pm ?? "Unassigned",
       managerId: project.managerId,
       lastActionMins: minutesSince(lastActionAt),
-      currentAction: project.activity ?? monitorAction(project.status, project.health),
-      waitingDays: monitorWaitingDays(project.status, project.health, project.updatedAt),
+      currentAction:
+        project.activity ?? monitorAction(project.status, project.health),
+      waitingDays: monitorWaitingDays(
+        project.status,
+        project.health,
+        project.updatedAt,
+      ),
       progress: projectProgress(project.progressStatus),
       sort: index,
     };
@@ -2911,27 +4305,52 @@ async function getWorkspaceMonitorProjects(organizationId: string) {
 }
 
 function monitorStatus(status: string, health: string) {
-  if (["blocked", "delayed", "at_risk"].includes(health) || status === "delayed") return "blocked";
-  if (["client_review", "revision", "approved"].includes(status)) return "review";
+  if (
+    ["blocked", "delayed", "at_risk"].includes(health) ||
+    status === "delayed"
+  )
+    return "blocked";
+  if (["client_review", "revision", "approved"].includes(status))
+    return "review";
   if (["draft", "planning"].includes(status)) return "pending";
   return "live";
 }
 
 function monitorAction(status: string, health: string) {
-  if (["blocked", "delayed", "at_risk"].includes(health) || status === "delayed") return "Waiting for recovery action";
-  if (["client_review", "revision"].includes(status)) return "Waiting for client review";
+  if (
+    ["blocked", "delayed", "at_risk"].includes(health) ||
+    status === "delayed"
+  )
+    return "Waiting for recovery action";
+  if (["client_review", "revision"].includes(status))
+    return "Waiting for client review";
   if (["draft", "planning"].includes(status)) return "Preparing workspace";
   return "Workspace updated";
 }
 
 function monitorWaitingDays(status: string, health: string, updatedAt: string) {
-  if (!["client_review", "revision", "delayed"].includes(status) && !["blocked", "delayed", "at_risk"].includes(health)) return 0;
-  return Math.max(1, Math.round((Date.now() - new Date(updatedAt).getTime()) / 86_400_000));
+  if (
+    !["client_review", "revision", "delayed"].includes(status) &&
+    !["blocked", "delayed", "at_risk"].includes(health)
+  )
+    return 0;
+  return Math.max(
+    1,
+    Math.round((Date.now() - new Date(updatedAt).getTime()) / 86_400_000),
+  );
 }
 
-async function findProjectManagerIdByName(organizationId: string, name: string) {
+async function findProjectManagerIdByName(
+  organizationId: string,
+  name: string,
+) {
   const normalized = name.trim();
-  if (!normalized || normalized === "-" || normalized.toLowerCase() === "unassigned") return null;
+  if (
+    !normalized ||
+    normalized === "-" ||
+    normalized.toLowerCase() === "unassigned"
+  )
+    return null;
 
   const rows = await queryRows<{ id: string }>(sql`
     select u.id::text
@@ -2949,7 +4368,8 @@ async function findProjectManagerIdByName(organizationId: string, name: string) 
 }
 
 function calendarStatusToProject(status: CalendarEventInput["status"]) {
-  if (status === "Completed") return { status: "completed", health: "on_track" };
+  if (status === "Completed")
+    return { status: "completed", health: "on_track" };
   if (status === "Delayed") return { status: "delayed", health: "delayed" };
   if (status === "Active") return { status: "in_design", health: "on_track" };
   return { status: "planning", health: "on_track" };
@@ -2958,7 +4378,15 @@ function calendarStatusToProject(status: CalendarEventInput["status"]) {
 function managerAuth(organizationId: string): AuthContext {
   return {
     sessionId: "",
-    user: { id: "00000000-0000-0000-0000-000000000000", name: "System", email: "", role: "owner", uiRole: "chief", avatarUrl: "", avatarTone: "primary" },
+    user: {
+      id: "00000000-0000-0000-0000-000000000000",
+      name: "System",
+      email: "",
+      role: "owner",
+      uiRole: "chief",
+      avatarUrl: "",
+      avatarTone: "primary",
+    },
     organization: { id: organizationId, name: "", slug: "", plan: "" },
   };
 }
@@ -3004,7 +4432,10 @@ async function getChiefReport(organizationId: string, rawRange: string) {
       and coalesce(p.starts_at, p.deadline_at, p.created_at) >= ${since}::timestamptz
   `);
 
-  const invoices = await queryRows<{ totalCents: number; invoiceDate: string }>(sql`
+  const invoices = await queryRows<{
+    totalCents: number;
+    invoiceDate: string;
+  }>(sql`
     select total_cents as "totalCents", created_at::text as "invoiceDate"
     from invoices
     where organization_id = ${organizationId}::uuid
@@ -3015,21 +4446,33 @@ async function getChiefReport(organizationId: string, rawRange: string) {
   const invoiceRevenueByMonth = new Map<string, number>();
   for (const invoice of invoices) {
     const key = monthKey(invoice.invoiceDate);
-    invoiceRevenueByMonth.set(key, (invoiceRevenueByMonth.get(key) ?? 0) + centsToCurrency(invoice.totalCents));
+    invoiceRevenueByMonth.set(
+      key,
+      (invoiceRevenueByMonth.get(key) ?? 0) +
+        centsToCurrency(invoice.totalCents),
+    );
   }
 
   const projectRevenueByMonth = new Map<string, number>();
   const projectCountByMonth = new Map<string, number>();
   for (const project of projects) {
     const key = monthKey(project.projectDate);
-    projectRevenueByMonth.set(key, (projectRevenueByMonth.get(key) ?? 0) + centsToCurrency(project.budgetCents));
+    projectRevenueByMonth.set(
+      key,
+      (projectRevenueByMonth.get(key) ?? 0) +
+        centsToCurrency(project.budgetCents),
+    );
     projectCountByMonth.set(key, (projectCountByMonth.get(key) ?? 0) + 1);
   }
 
   const hasInvoiceRevenue = invoices.length > 0;
   const revenueData = monthStarts.map((date) => {
     const key = monthKey(date.toISOString());
-    const revenue = Math.round(hasInvoiceRevenue ? invoiceRevenueByMonth.get(key) ?? 0 : projectRevenueByMonth.get(key) ?? 0);
+    const revenue = Math.round(
+      hasInvoiceRevenue
+        ? (invoiceRevenueByMonth.get(key) ?? 0)
+        : (projectRevenueByMonth.get(key) ?? 0),
+    );
     const projectsForMonth = projectCountByMonth.get(key) ?? 0;
     return {
       month: shortMonth(date),
@@ -3046,7 +4489,14 @@ async function getChiefReport(organizationId: string, rawRange: string) {
     month: item.month,
     revenue: item.revenue,
     projects: item.projects,
-    satisfaction: item.projects ? Number((4.1 + Math.min(0.8, item.revenue / Math.max(1, item.projects * 100_000))).toFixed(1)) : 0,
+    satisfaction: item.projects
+      ? Number(
+          (
+            4.1 +
+            Math.min(0.8, item.revenue / Math.max(1, item.projects * 100_000))
+          ).toFixed(1),
+        )
+      : 0,
   }));
 
   return {
@@ -3060,11 +4510,21 @@ async function getChiefReport(organizationId: string, rawRange: string) {
 }
 
 async function getPmReport(auth: AuthContext, rawPeriod: string) {
-  const period = rawPeriod === "last_week" ? "last_week" : "this_week";
-  const range = weekRange(period);
+  const period = normalizePmReportPeriod(rawPeriod);
+  const range = pmReportRange(period);
   const canSeeAll = canManageOrganization(auth);
 
-  const [taskMetrics, previousTaskMetrics, approvalMetrics, previousApprovalMetrics, activeClients, weeklyRows, projectRows, revisionRows, statusRows] = await Promise.all([
+  const [
+    taskMetrics,
+    previousTaskMetrics,
+    approvalMetrics,
+    previousApprovalMetrics,
+    activeClients,
+    weeklyRows,
+    projectRows,
+    revisionRows,
+    statusRows,
+  ] = await Promise.all([
     queryRows<{ total: number; done: number }>(sql`
       select count(*)::int as total, count(*) filter (where t.status::text = 'done')::int as done
       from tasks t
@@ -3091,7 +4551,12 @@ async function getPmReport(auth: AuthContext, rawPeriod: string) {
           or exists (select 1 from project_members pm where pm.project_id = t.project_id and pm.user_id = ${auth.user.id}::uuid)
         )
     `),
-    queryRows<{ total: number; approved: number; rejected: number; avgHours: number | null }>(sql`
+    queryRows<{
+      total: number;
+      approved: number;
+      rejected: number;
+      avgHours: number | null;
+    }>(sql`
       select
         count(*)::int as total,
         count(*) filter (where a.status::text = 'approved')::int as approved,
@@ -3108,7 +4573,12 @@ async function getPmReport(auth: AuthContext, rawPeriod: string) {
           or exists (select 1 from project_members pm where pm.project_id = p.id and pm.user_id = ${auth.user.id}::uuid)
         )
     `),
-    queryRows<{ total: number; approved: number; rejected: number; avgHours: number | null }>(sql`
+    queryRows<{
+      total: number;
+      approved: number;
+      rejected: number;
+      avgHours: number | null;
+    }>(sql`
       select
         count(*)::int as total,
         count(*) filter (where a.status::text = 'approved')::int as approved,
@@ -3145,7 +4615,12 @@ async function getPmReport(auth: AuthContext, rawPeriod: string) {
           )
         )
     `),
-    queryRows<{ key: string; tasks: number; revisions: number; approvals: number }>(sql`
+    queryRows<{
+      key: string;
+      tasks: number;
+      revisions: number;
+      approvals: number;
+    }>(sql`
       with days as (
         select generate_series(${range.start.toISOString()}::timestamptz, ${range.end.toISOString()}::timestamptz - interval '1 day', interval '1 day') as day
       )
@@ -3198,7 +4673,14 @@ async function getPmReport(auth: AuthContext, rawPeriod: string) {
       from days
       order by day asc
     `),
-    queryRows<{ name: string; status: string; health: string; deadline: string | null; tasks: number; done: number }>(sql`
+    queryRows<{
+      name: string;
+      status: string;
+      health: string;
+      deadline: string | null;
+      tasks: number;
+      done: number;
+    }>(sql`
       select
         coalesce(p.exhibition_name, p.name) as name,
         p.status::text as status,
@@ -3281,12 +4763,31 @@ async function getPmReport(auth: AuthContext, rawPeriod: string) {
 
   const tasks = taskMetrics[0] ?? { total: 0, done: 0 };
   const previousTasks = previousTaskMetrics[0] ?? { total: 0, done: 0 };
-  const approvals = approvalMetrics[0] ?? { total: 0, approved: 0, rejected: 0, avgHours: null };
-  const previousApprovals = previousApprovalMetrics[0] ?? { total: 0, approved: 0, rejected: 0, avgHours: null };
+  const approvals = approvalMetrics[0] ?? {
+    total: 0,
+    approved: 0,
+    rejected: 0,
+    avgHours: null,
+  };
+  const previousApprovals = previousApprovalMetrics[0] ?? {
+    total: 0,
+    approved: 0,
+    rejected: 0,
+    avgHours: null,
+  };
   const completionRate = percent(tasks.done, tasks.total);
-  const previousCompletionRate = percent(previousTasks.done, previousTasks.total);
-  const satisfaction = approvalSatisfaction(approvals.approved, approvals.rejected);
-  const previousSatisfaction = approvalSatisfaction(previousApprovals.approved, previousApprovals.rejected);
+  const previousCompletionRate = percent(
+    previousTasks.done,
+    previousTasks.total,
+  );
+  const satisfaction = approvalSatisfaction(
+    approvals.approved,
+    approvals.rejected,
+  );
+  const previousSatisfaction = approvalSatisfaction(
+    previousApprovals.approved,
+    previousApprovals.rejected,
+  );
   const avgResponseHours = Number(approvals.avgHours ?? 0);
   const previousAvgResponseHours = Number(previousApprovals.avgHours ?? 0);
 
@@ -3296,11 +4797,16 @@ async function getPmReport(auth: AuthContext, rawPeriod: string) {
       completionRate,
       completionRateDelta: completionRate - previousCompletionRate,
       satisfaction,
-      satisfactionDelta: satisfaction === null || previousSatisfaction === null ? null : satisfaction - previousSatisfaction,
+      satisfactionDelta:
+        satisfaction === null || previousSatisfaction === null
+          ? null
+          : satisfaction - previousSatisfaction,
       activeClients: Number(activeClients[0]?.count ?? 0),
       activeClientsDelta: 0,
       avgResponseHours,
-      avgResponseHoursDelta: previousAvgResponseHours ? avgResponseHours - previousAvgResponseHours : 0,
+      avgResponseHoursDelta: previousAvgResponseHours
+        ? avgResponseHours - previousAvgResponseHours
+        : 0,
     },
     weeklyData: weeklyRows.map((row) => ({
       key: row.key.trim(),
@@ -3309,11 +4815,18 @@ async function getPmReport(auth: AuthContext, rawPeriod: string) {
       approvals: Number(row.approvals ?? 0),
     })),
     projectEfficiency: projectRows.map((project) => {
-      const delayed = project.status === "delayed" || ["delayed", "blocked", "at_risk"].includes(project.health);
-      const overdue = !!project.deadline && new Date(project.deadline).getTime() < Date.now() && !["completed", "approved"].includes(project.status);
+      const delayed =
+        project.status === "delayed" ||
+        ["delayed", "blocked", "at_risk"].includes(project.health);
+      const overdue =
+        !!project.deadline &&
+        new Date(project.deadline).getTime() < Date.now() &&
+        !["completed", "approved"].includes(project.status);
       return {
         name: project.name,
-        efficiency: project.tasks ? percent(project.done, project.tasks) : projectProgress(project.status),
+        efficiency: project.tasks
+          ? percent(project.done, project.tasks)
+          : projectProgress(project.status),
         onTime: delayed || overdue ? 0 : 100,
       };
     }),
@@ -3326,18 +4839,57 @@ async function getPmReport(auth: AuthContext, rawPeriod: string) {
   };
 }
 
-function weekRange(period: "this_week" | "last_week") {
-  const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const day = start.getUTCDay();
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-  start.setUTCDate(start.getUTCDate() + mondayOffset);
-  if (period === "last_week") start.setUTCDate(start.getUTCDate() - 7);
+type PmReportPeriod =
+  | "this_week"
+  | "last_week"
+  | "this_month"
+  | "last_month"
+  | "this_quarter";
 
-  const end = new Date(start);
-  end.setUTCDate(end.getUTCDate() + 7);
-  const previousStart = new Date(start);
-  previousStart.setUTCDate(previousStart.getUTCDate() - 7);
+function normalizePmReportPeriod(value: string): PmReportPeriod {
+  if (
+    [
+      "this_week",
+      "last_week",
+      "this_month",
+      "last_month",
+      "this_quarter",
+    ].includes(value)
+  ) {
+    return value as PmReportPeriod;
+  }
+  return "this_week";
+}
+
+function pmReportRange(period: PmReportPeriod) {
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth();
+  let start: Date;
+  let end: Date;
+  let previousStart: Date;
+
+  if (period === "this_month" || period === "last_month") {
+    const monthOffset = period === "last_month" ? -1 : 0;
+    start = new Date(Date.UTC(year, month + monthOffset, 1));
+    end = new Date(Date.UTC(year, month + monthOffset + 1, 1));
+    previousStart = new Date(Date.UTC(year, month + monthOffset - 1, 1));
+  } else if (period === "this_quarter") {
+    const quarterStartMonth = Math.floor(month / 3) * 3;
+    start = new Date(Date.UTC(year, quarterStartMonth, 1));
+    end = new Date(Date.UTC(year, quarterStartMonth + 3, 1));
+    previousStart = new Date(Date.UTC(year, quarterStartMonth - 3, 1));
+  } else {
+    start = new Date(Date.UTC(year, month, now.getUTCDate()));
+    const day = start.getUTCDay();
+    start.setUTCDate(start.getUTCDate() + (day === 0 ? -6 : 1 - day));
+    if (period === "last_week") start.setUTCDate(start.getUTCDate() - 7);
+    end = new Date(start);
+    end.setUTCDate(end.getUTCDate() + 7);
+    previousStart = new Date(start);
+    previousStart.setUTCDate(previousStart.getUTCDate() - 7);
+  }
+
   const previousEnd = new Date(start);
 
   return { start, end, previousStart, previousEnd };
@@ -3359,18 +4911,32 @@ function pmStatusPie(rows: Array<{ bucket: string; count: number }>) {
     review: "#1d4ed8",
     delayed: "#dc2626",
   };
-  const byBucket = new Map(rows.map((row) => [row.bucket, Number(row.count ?? 0)]));
+  const byBucket = new Map(
+    rows.map((row) => [row.bucket, Number(row.count ?? 0)]),
+  );
   return (["active", "pending", "review", "delayed"] as const)
     .map((key) => ({ key, value: byBucket.get(key) ?? 0, color: colors[key] }))
     .filter((item) => item.value > 0);
 }
 
-function buildPmPerformance(projects: Array<{ pm: string | null; status: string; health: string; budgetCents: number }>) {
-  const grouped = new Map<string, { projects: number; onTime: number; revenue: number }>();
+function buildPmPerformance(
+  projects: Array<{
+    pm: string | null;
+    status: string;
+    health: string;
+    budgetCents: number;
+  }>,
+) {
+  const grouped = new Map<
+    string,
+    { projects: number; onTime: number; revenue: number }
+  >();
   for (const project of projects) {
     const name = project.pm ?? "Unassigned";
     const current = grouped.get(name) ?? { projects: 0, onTime: 0, revenue: 0 };
-    const delayed = project.status === "delayed" || ["delayed", "blocked", "at_risk"].includes(project.health);
+    const delayed =
+      project.status === "delayed" ||
+      ["delayed", "blocked", "at_risk"].includes(project.health);
     current.projects += 1;
     current.onTime += delayed ? 0 : 1;
     current.revenue += centsToCurrency(project.budgetCents);
@@ -3378,19 +4944,27 @@ function buildPmPerformance(projects: Array<{ pm: string | null; status: string;
   }
 
   return Array.from(grouped, ([name, value]) => {
-    const onTime = value.projects ? Math.round((value.onTime / value.projects) * 100) : 0;
+    const onTime = value.projects
+      ? Math.round((value.onTime / value.projects) * 100)
+      : 0;
     return {
       name,
       projects: value.projects,
       onTime,
-      satisfaction: value.projects ? Number(Math.min(5, 4.1 + onTime / 120).toFixed(1)) : 0,
+      satisfaction: value.projects
+        ? Number(Math.min(5, 4.1 + onTime / 120).toFixed(1))
+        : 0,
       revenue: Math.round(value.revenue),
     };
   }).sort((a, b) => b.projects - a.projects);
 }
 
 function buildSystemSplit(projects: Array<{ system: string }>) {
-  const colors: Record<string, string> = { maxima: "#1d4ed8", octanorm: "#c2410c", custom: "#2f7d3a" };
+  const colors: Record<string, string> = {
+    maxima: "#1d4ed8",
+    octanorm: "#c2410c",
+    custom: "#2f7d3a",
+  };
   const counts = new Map<string, number>();
   for (const project of projects) {
     const system = project.system.toLowerCase();
@@ -3404,12 +4978,30 @@ function buildSystemSplit(projects: Array<{ system: string }>) {
   }));
 }
 
-function buildBottlenecks(projects: Array<{ name: string; status: string; health: string; updatedAt: string }>) {
+function buildBottlenecks(
+  projects: Array<{
+    name: string;
+    status: string;
+    health: string;
+    updatedAt: string;
+  }>,
+) {
   return projects
-    .filter((project) => project.status === "client_review" || project.status === "revision" || project.status === "delayed" || ["blocked", "at_risk", "delayed"].includes(project.health))
+    .filter(
+      (project) =>
+        project.status === "client_review" ||
+        project.status === "revision" ||
+        project.status === "delayed" ||
+        ["blocked", "at_risk", "delayed"].includes(project.health),
+    )
     .map((project) => ({
       name: project.name,
-      waitDays: Math.max(1, Math.round((Date.now() - new Date(project.updatedAt).getTime()) / 86_400_000)),
+      waitDays: Math.max(
+        1,
+        Math.round(
+          (Date.now() - new Date(project.updatedAt).getTime()) / 86_400_000,
+        ),
+      ),
       stage: toTitle(project.status),
     }))
     .sort((a, b) => b.waitDays - a.waitDays)
@@ -3418,7 +5010,17 @@ function buildBottlenecks(projects: Array<{ name: string; status: string; health
 
 function lastMonthStarts(months: number) {
   const now = new Date();
-  return Array.from({ length: months }, (_, index) => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months + index + 1, 1)));
+  return Array.from(
+    { length: months },
+    (_, index) =>
+      new Date(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth() - months + index + 1,
+          1,
+        ),
+      ),
+  );
 }
 
 function monthKey(value: string) {
@@ -3431,7 +5033,12 @@ function shortMonth(date: Date) {
 }
 
 function centsToCurrency(value: number | string | null | undefined) {
-  const cents = typeof value === "number" ? value : typeof value === "string" ? Number(value) : 0;
+  const cents =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value)
+        : 0;
   return Number.isFinite(cents) ? cents / 100 : 0;
 }
 
@@ -3487,17 +5094,19 @@ async function getMetrics(organizationId: string, auth: AuthContext) {
       ))) as "completedProjects"
   `);
 
-  return rows[0] ?? {
-    clients: 0,
-    projects: 0,
-    projectManagers: 0,
-    delayedProjects: 0,
-    pendingApprovals: 0,
-    activeWorkspaces: 0,
-    documents: 0,
-    comments: 0,
-    completedProjects: 0,
-  };
+  return (
+    rows[0] ?? {
+      clients: 0,
+      projects: 0,
+      projectManagers: 0,
+      delayedProjects: 0,
+      pendingApprovals: 0,
+      activeWorkspaces: 0,
+      documents: 0,
+      comments: 0,
+      completedProjects: 0,
+    }
+  );
 }
 
 type ProjectRow = {
@@ -3526,11 +5135,25 @@ interface ProjectListQuery {
   offset: number;
 }
 
-async function getProjects(organizationId: string, limit: number, auth: AuthContext) {
-  return (await getProjectList(organizationId, { q: "", status: null, limit, offset: 0 }, auth)).projects;
+async function getProjects(
+  organizationId: string,
+  limit: number,
+  auth: AuthContext,
+) {
+  return (
+    await getProjectList(
+      organizationId,
+      { q: "", status: null, limit, offset: 0 },
+      auth,
+    )
+  ).projects;
 }
 
-async function getProjectList(organizationId: string, input: ProjectListQuery, auth: AuthContext) {
+async function getProjectList(
+  organizationId: string,
+  input: ProjectListQuery,
+  auth: AuthContext,
+) {
   const canSeeAll = canManageOrganization(auth);
   const conditions: SQL[] = [
     sql`p.organization_id = ${organizationId}::uuid`,
@@ -3581,7 +5204,9 @@ async function getProjectList(organizationId: string, input: ProjectListQuery, a
 
   const whereSql = sql.join(conditions, sql` and `);
   const [rows, countRows, summaryRows] = await Promise.all([
-    queryRows<ProjectRow>(projectRowsQuery(whereSql, input.limit, input.offset)),
+    queryRows<ProjectRow>(
+      projectRowsQuery(whereSql, input.limit, input.offset),
+    ),
     queryRows<{ count: number }>(sql`
       select count(distinct p.id)::int as count
       from projects p
@@ -3605,7 +5230,12 @@ async function getProjectList(organizationId: string, input: ProjectListQuery, a
     `),
   ]);
   const total = Number(countRows[0]?.count ?? 0);
-  const summary = summaryRows[0] ?? { total, inDesign: 0, review: 0, delayed: 0 };
+  const summary = summaryRows[0] ?? {
+    total,
+    inDesign: 0,
+    review: 0,
+    delayed: 0,
+  };
 
   return {
     projects: rows.map(mapProjectRow),
@@ -3690,7 +5320,11 @@ function mapProjectRow(project: ProjectRow) {
 }
 
 function projectLifecycleHistory(value: unknown) {
-  const rows = Array.isArray(value) ? value : typeof value === "string" ? safeJsonArray(value) : [];
+  const rows = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? safeJsonArray(value)
+      : [];
   return rows
     .map((item) => {
       const row = objectValue(item);
@@ -3698,7 +5332,9 @@ function projectLifecycleHistory(value: unknown) {
       const fromStage = normalizePipelineStage(stringValue(row.fromStage));
       const createdAt = stringValue(row.createdAt);
       return {
-        id: stringValue(row.id) ?? `${fromStage ?? "unknown"}-${toStage ?? "unknown"}-${createdAt ?? ""}`,
+        id:
+          stringValue(row.id) ??
+          `${fromStage ?? "unknown"}-${toStage ?? "unknown"}-${createdAt ?? ""}`,
         fromStage,
         toStage: toStage ?? "intake",
         fromStatus: stringValue(row.fromStatus),
@@ -3713,29 +5349,38 @@ function projectLifecycleHistory(value: unknown) {
     .reverse();
 }
 
-async function getClients(organizationId: string, input: number | ClientListQuery, auth: AuthContext) {
+async function getClients(
+  organizationId: string,
+  input: number | ClientListQuery,
+  auth: AuthContext,
+) {
   const canSeeAll = canManageOrganization(auth);
-  const options: ClientListQuery = typeof input === "number"
-    ? { q: "", status: null, limit: input, offset: 0 }
-    : input;
+  const options: ClientListQuery =
+    typeof input === "number"
+      ? { q: "", status: null, limit: input, offset: 0 }
+      : input;
   const conditions: SQL[] = [
     sql`c.organization_id = ${organizationId}::uuid`,
     sql`c.deleted_at is null`,
-    sql`(${canSeeAll}::boolean or c.assigned_pm_user_id = ${auth.user.id}::uuid or exists (
-      select 1
-      from projects scoped_p
-      where scoped_p.client_id = c.id
-        and scoped_p.deleted_at is null
-        and (
-          scoped_p.assigned_pm_user_id = ${auth.user.id}::uuid
-          or exists (
-            select 1
-            from project_members scoped_pm
-            where scoped_pm.project_id = scoped_p.id
-              and scoped_pm.user_id = ${auth.user.id}::uuid
+    sql`(${canSeeAll}::boolean
+      or lower(c.contact_email) = lower(${auth.user.email})
+      or c.assigned_pm_user_id = ${auth.user.id}::uuid
+      or exists (
+        select 1
+        from projects scoped_p
+        where scoped_p.client_id = c.id
+          and scoped_p.deleted_at is null
+          and (
+            scoped_p.assigned_pm_user_id = ${auth.user.id}::uuid
+            or exists (
+              select 1
+              from project_members scoped_pm
+              where scoped_pm.project_id = scoped_p.id
+                and scoped_pm.user_id = ${auth.user.id}::uuid
+            )
           )
-        )
-    ))`,
+      )
+    )`,
   ];
 
   if (options.status) {
@@ -3786,7 +5431,7 @@ async function getClients(organizationId: string, input: number | ClientListQuer
       c.contact_email as "contactEmail",
       min(p.id::text) as "projectId",
       coalesce(assigned_pm.name, member_pm.name) as pm,
-      coalesce(max(p.exhibition_name), c.metadata ->> 'exhibition') as exhibition,
+      coalesce(c.intake_exhibition_name, c.metadata ->> 'exhibition', max(p.exhibition_name)) as exhibition,
       c.status::text as status,
       greatest(c.updated_at, coalesce(max(p.updated_at), c.updated_at))::text as "lastActivity",
       c.intake_exhibition_name as "intakeExhibitionName",
@@ -3862,7 +5507,9 @@ async function getClients(organizationId: string, input: number | ClientListQuer
       lastActivity: relativeTime(client.lastActivity),
       intake: {
         exhibitionName: client.intakeExhibitionName,
-        boothSizeSqm: client.intakeBoothSizeSqm ? Number(client.intakeBoothSizeSqm) : null,
+        boothSizeSqm: client.intakeBoothSizeSqm
+          ? Number(client.intakeBoothSizeSqm)
+          : null,
         city: client.intakeCity,
         deadlineAt: client.intakeDeadlineAt,
         preferredSystem: client.intakePreferredSystem,
@@ -3949,7 +5596,11 @@ async function getPmTaskBoard(auth: AuthContext) {
     limit 200
   `);
 
-  const projectRows = await queryRows<{ id: string; name: string; client: string }>(sql`
+  const projectRows = await queryRows<{
+    id: string;
+    name: string;
+    client: string;
+  }>(sql`
     select
       p.id::text,
       p.name,
@@ -3989,7 +5640,8 @@ async function getPmTaskBoard(auth: AuthContext) {
 }
 
 async function createPmTask(auth: AuthContext, input: PmTaskInput) {
-  if (!(await canAccessProject(auth, input.projectId))) return "project_not_found" as const;
+  if (!(await canAccessProject(auth, input.projectId)))
+    return "project_not_found" as const;
 
   await db.execute(sql`
     insert into tasks (
@@ -4016,15 +5668,26 @@ async function createPmTask(auth: AuthContext, input: PmTaskInput) {
     )
   `);
 
-  await auditEvent(auth.organization.id, auth.user.id, "task_created", `created task ${input.title}`, {
-    projectId: input.projectId,
-  });
+  await auditEvent(
+    auth.organization.id,
+    auth.user.id,
+    "task_created",
+    `created task ${input.title}`,
+    {
+      projectId: input.projectId,
+    },
+  );
 
   return "created" as const;
 }
 
-async function updatePmTask(auth: AuthContext, taskId: string, input: PmTaskPatch) {
-  if (input.projectId && !(await canAccessProject(auth, input.projectId))) return false;
+async function updatePmTask(
+  auth: AuthContext,
+  taskId: string,
+  input: PmTaskPatch,
+) {
+  if (input.projectId && !(await canAccessProject(auth, input.projectId)))
+    return false;
 
   const rows = await queryRows<{ id: string; title: string }>(sql`
     update tasks t
@@ -4067,7 +5730,13 @@ async function updatePmTask(auth: AuthContext, taskId: string, input: PmTaskPatc
   `);
 
   if (!rows[0]) return false;
-  await auditEvent(auth.organization.id, auth.user.id, "task_updated", `updated task ${rows[0].title}`, { taskId });
+  await auditEvent(
+    auth.organization.id,
+    auth.user.id,
+    "task_updated",
+    `updated task ${rows[0].title}`,
+    { taskId },
+  );
   return true;
 }
 
@@ -4090,7 +5759,13 @@ async function deletePmTask(auth: AuthContext, taskId: string) {
   `);
 
   if (!rows[0]) return false;
-  await auditEvent(auth.organization.id, auth.user.id, "task_deleted", `deleted task ${rows[0].title}`, { taskId });
+  await auditEvent(
+    auth.organization.id,
+    auth.user.id,
+    "task_deleted",
+    `deleted task ${rows[0].title}`,
+    { taskId },
+  );
   return true;
 }
 
@@ -4194,17 +5869,17 @@ async function getPmRequests(auth: AuthContext, input: PmRequestListQuery) {
 
   const [rows, countRows, summaryRows] = await Promise.all([
     queryRows<{
-    id: string;
-    client: string;
-    project: string;
-    request: string | null;
-    status: string;
-    requestedAt: string;
-    dueAt: string | null;
-    projectHealth: string;
-    comments: unknown;
-    history: unknown;
-  }>(sql`
+      id: string;
+      client: string;
+      project: string;
+      request: string | null;
+      status: string;
+      requestedAt: string;
+      dueAt: string | null;
+      projectHealth: string;
+      comments: unknown;
+      history: unknown;
+    }>(sql`
     select
       a.id::text,
       c.company_name as client,
@@ -4288,7 +5963,13 @@ async function getPmRequests(auth: AuthContext, input: PmRequestListQuery) {
   ]);
 
   const total = Number(countRows[0]?.count ?? 0);
-  const summary = summaryRows[0] ?? { total, pending: 0, inProgress: 0, resolved: 0, declined: 0 };
+  const summary = summaryRows[0] ?? {
+    total,
+    pending: 0,
+    inProgress: 0,
+    resolved: 0,
+    declined: 0,
+  };
 
   return {
     requests: rows.map((row) => ({
@@ -4324,9 +6005,18 @@ async function getPmRequests(auth: AuthContext, input: PmRequestListQuery) {
   };
 }
 
-async function updatePmRequestStatus(auth: AuthContext, requestId: string, status: PmRequestStatus) {
+async function updatePmRequestStatus(
+  auth: AuthContext,
+  requestId: string,
+  status: PmRequestStatus,
+) {
   const approvalStatus = pmRequestStatusToApproval(status);
-  const currentRows = await queryRows<{ id: string; projectId: string; boothVersionId: string; currentStatus: string }>(sql`
+  const currentRows = await queryRows<{
+    id: string;
+    projectId: string;
+    boothVersionId: string;
+    currentStatus: string;
+  }>(sql`
     select
       a.id::text,
       a.project_id::text as "projectId",
@@ -4355,10 +6045,15 @@ async function updatePmRequestStatus(auth: AuthContext, requestId: string, statu
   if (!current) return false;
 
   const currentStatus = pmRequestStatus(current.currentStatus);
-  if (!canTransitionPmRequest(currentStatus, status)) return "invalid_transition" as const;
+  if (!canTransitionPmRequest(currentStatus, status))
+    return "invalid_transition" as const;
   if (currentStatus === status) return true;
 
-  const rows = await queryRows<{ id: string; projectId: string; boothVersionId: string }>(sql`
+  const rows = await queryRows<{
+    id: string;
+    projectId: string;
+    boothVersionId: string;
+  }>(sql`
     update approvals a
     set
       status = ${approvalStatus}::approval_status,
@@ -4395,28 +6090,48 @@ async function updatePmRequestStatus(auth: AuthContext, requestId: string, statu
       and organization_id = ${auth.organization.id}::uuid
   `);
 
-  await auditEvent(auth.organization.id, auth.user.id, "pm_request_status_updated", `updated request to ${status}`, {
-    requestId,
-    status,
-    projectId: row.projectId,
-  });
+  await auditEvent(
+    auth.organization.id,
+    auth.user.id,
+    "pm_request_status_updated",
+    `updated request to ${status}`,
+    {
+      requestId,
+      status,
+      projectId: row.projectId,
+    },
+  );
 
   await notifyPmRequestRequester(auth, requestId, {
     title: "Revision request updated",
-    body: (projectName) => `${auth.user.name} marked ${projectName} as ${status}.`,
+    body: (projectName) =>
+      `${auth.user.name} marked ${projectName} as ${status}.`,
   });
   return true;
 }
 
-function canTransitionPmRequest(current: PmRequestStatus, next: PmRequestStatus) {
+function canTransitionPmRequest(
+  current: PmRequestStatus,
+  next: PmRequestStatus,
+) {
   if (current === next) return true;
-  if (current === "Pending") return next === "In Progress" || next === "Resolved" || next === "Declined";
-  if (current === "In Progress") return next === "Resolved" || next === "Declined";
+  if (current === "Pending")
+    return next === "In Progress" || next === "Resolved" || next === "Declined";
+  if (current === "In Progress")
+    return next === "Resolved" || next === "Declined";
   return false;
 }
 
-async function createPmRequestReply(auth: AuthContext, requestId: string, body: string) {
-  const rows = await queryRows<{ id: string; projectId: string; boothVersionId: string }>(sql`
+async function createPmRequestReply(
+  auth: AuthContext,
+  requestId: string,
+  body: string,
+) {
+  const rows = await queryRows<{
+    id: string;
+    projectId: string;
+    boothVersionId: string;
+  }>(sql`
     select a.id::text, a.project_id::text as "projectId", a.booth_version_id::text as "boothVersionId"
     from approvals a
     join projects p on p.id = a.project_id
@@ -4452,10 +6167,16 @@ async function createPmRequestReply(auth: AuthContext, requestId: string, body: 
       and organization_id = ${auth.organization.id}::uuid
   `);
 
-  await auditEvent(auth.organization.id, auth.user.id, "pm_request_replied", "replied to revision request", {
-    requestId,
-    projectId: request.projectId,
-  });
+  await auditEvent(
+    auth.organization.id,
+    auth.user.id,
+    "pm_request_replied",
+    "replied to revision request",
+    {
+      requestId,
+      projectId: request.projectId,
+    },
+  );
 
   await notifyPmRequestRequester(auth, requestId, {
     title: "Revision request reply",
@@ -4469,8 +6190,12 @@ async function notifyPmRequestRequester(
   requestId: string,
   message: { title: string; body: (projectName: string) => string },
 ) {
-  const context = await getPmRequestNotificationContext(auth.organization.id, requestId);
-  if (!context?.requestedByUserId || context.requestedByUserId === auth.user.id) return;
+  const context = await getPmRequestNotificationContext(
+    auth.organization.id,
+    requestId,
+  );
+  if (!context?.requestedByUserId || context.requestedByUserId === auth.user.id)
+    return;
 
   await createNotification(
     auth.organization.id,
@@ -4482,7 +6207,10 @@ async function notifyPmRequestRequester(
   );
 }
 
-async function getPmRequestNotificationContext(organizationId: string, requestId: string) {
+async function getPmRequestNotificationContext(
+  organizationId: string,
+  requestId: string,
+) {
   const rows = await queryRows<{
     requestedByUserId: string | null;
     projectName: string;
@@ -4511,22 +6239,36 @@ function pmRequestNotificationHref(role: string | null) {
 }
 
 function pmRequestComments(value: unknown): PmRequestComment[] {
-  const rows = Array.isArray(value) ? value : typeof value === "string" ? safeJsonArray(value) : [];
-  return rows.map((item) => {
-    const row = objectValue(item);
-    return {
-      id: stringValue(row.id) ?? "",
-      text: stringValue(row.text) ?? "",
-      author: stringValue(row.author) ?? "Client",
-      authorUserId: stringValue(row.authorUserId),
-      createdAt: stringValue(row.createdAt) ?? new Date().toISOString(),
-      time: "",
-    };
-  }).filter((item) => item.id && item.text);
+  const rows = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? safeJsonArray(value)
+      : [];
+  return rows
+    .map((item) => {
+      const row = objectValue(item);
+      return {
+        id: stringValue(row.id) ?? "",
+        text: stringValue(row.text) ?? "",
+        author: stringValue(row.author) ?? "Client",
+        authorUserId: stringValue(row.authorUserId),
+        createdAt: stringValue(row.createdAt) ?? new Date().toISOString(),
+        time: "",
+      };
+    })
+    .filter((item) => item.id && item.text);
 }
 
-function pmRequestHistory(value: unknown, requestedAt: string, authUserId: string) {
-  const rows = Array.isArray(value) ? value : typeof value === "string" ? safeJsonArray(value) : [];
+function pmRequestHistory(
+  value: unknown,
+  requestedAt: string,
+  authUserId: string,
+) {
+  const rows = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? safeJsonArray(value)
+      : [];
   const baseline = {
     id: `requested-${requestedAt}`,
     type: "requested",
@@ -4553,7 +6295,9 @@ function pmRequestHistory(value: unknown, requestedAt: string, authUserId: strin
     })
     .filter((item) => item.id);
 
-  return [baseline, ...events].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return [baseline, ...events].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
 }
 
 function safeJsonArray(value: string) {
@@ -4581,12 +6325,23 @@ function pmRequestStatusToApproval(status: PmRequestStatus) {
 
 function pmRequestStatusCondition(status: PmRequestStatus | null) {
   if (!status) return null;
-  if (status === "Pending") return sql`a.status::text in ('requested', 'revision_requested')`;
+  if (status === "Pending")
+    return sql`a.status::text in ('requested', 'revision_requested')`;
   return sql`a.status::text = ${pmRequestStatusToApproval(status)}`;
 }
 
-function pmRequestPriority(status: string, health: string, dueAt: string | null): PmRequestPriority {
-  if (status === "revision_requested" || health === "blocked" || health === "delayed" || health === "at_risk") return "High";
+function pmRequestPriority(
+  status: string,
+  health: string,
+  dueAt: string | null,
+): PmRequestPriority {
+  if (
+    status === "revision_requested" ||
+    health === "blocked" ||
+    health === "delayed" ||
+    health === "at_risk"
+  )
+    return "High";
   if (!dueAt) return "Low";
 
   const days = Math.ceil((new Date(dueAt).getTime() - Date.now()) / 86_400_000);
@@ -4607,8 +6362,16 @@ async function createProject(
     deadline: string | null;
   },
 ) {
-  const pm = auth.user.role === "pm" ? { id: auth.user.id, name: auth.user.name } : await getFirstProjectManager(organizationId);
-  const clientId = await findOrCreateProjectClient(organizationId, auth, input.client, pm?.id ?? null);
+  const pm =
+    auth.user.role === "pm"
+      ? { id: auth.user.id, name: auth.user.name }
+      : await getFirstProjectManager(organizationId);
+  const clientId = await findOrCreateProjectClient(
+    organizationId,
+    auth,
+    input.client,
+    pm?.id ?? null,
+  );
   if (clientId === "client_not_accessible") return clientId;
 
   const projectRows = await queryRows<{
@@ -4753,7 +6516,8 @@ async function createProject(
   `);
 
   const project = await getProjectById(organizationId, projectId);
-  if (!project) throw new Error("Project was created but could not be read back");
+  if (!project)
+    throw new Error("Project was created but could not be read back");
   return project;
 }
 
@@ -4771,17 +6535,28 @@ async function ensureClientIntakeProject(
     intakePreferredSystem: "octanorm" | "maxima" | "custom" | null;
   },
   managerId: string,
+  executor: SqlExecutor = databaseExecutor,
 ) {
-  const existing = await queryRows<{ id: string }>(sql`
+  const existing = await queryRows<{ id: string }>(
+    sql`
     select id::text
     from projects
     where organization_id = ${organizationId}::uuid
       and client_id = ${client.id}::uuid
       and deleted_at is null
     limit 1
-  `);
+  `,
+    executor,
+  );
   if (existing[0]?.id) {
-    await reassignProjectManager(organizationId, actorUserId, existing[0].id, managerId, "Assigned at client approval");
+    await reassignProjectManager(
+      organizationId,
+      actorUserId,
+      existing[0].id,
+      managerId,
+      "Assigned at client approval",
+      executor,
+    );
     return existing[0].id;
   }
 
@@ -4793,10 +6568,12 @@ async function ensureClientIntakeProject(
   const depthMm = Math.round(depthM * 1000);
   const system = client.intakePreferredSystem ?? "octanorm";
   const heightMm = system === "maxima" ? 4000 : 2500;
-  const exhibitionName = client.intakeExhibitionName ?? `${client.companyName} Exhibition`;
-  const projectName = `${client.companyName} Project`;
+  const exhibitionName =
+    client.intakeExhibitionName ?? `${client.companyName} Exhibition`;
+  const projectName = `${exhibitionName} - ${client.companyName}`;
 
-  const projectRows = await queryRows<{ id: string }>(sql`
+  const projectRows = await queryRows<{ id: string }>(
+    sql`
     insert into projects (
       organization_id,
       client_id,
@@ -4828,17 +6605,21 @@ async function ensureClientIntakeProject(
       ${JSON.stringify({ pipelineStage: "intake", source: "client_signup_approval", boothSizeSqm: safeSqm })}::jsonb
     )
     returning id::text
-  `);
+  `,
+    executor,
+  );
   const projectId = projectRows[0]?.id;
-  if (!projectId) throw new Error("Client intake project insert did not return an id");
+  if (!projectId)
+    throw new Error("Client intake project insert did not return an id");
 
-  await db.execute(sql`
+  await executor.execute(sql`
     insert into project_members (project_id, user_id, role)
     values (${projectId}::uuid, ${managerId}::uuid, 'pm')
     on conflict (project_id, user_id) do nothing
   `);
 
-  const clientUserRows = await queryRows<{ id: string }>(sql`
+  const clientUserRows = await queryRows<{ id: string }>(
+    sql`
     select u.id::text
     from users u
     join memberships m on m.user_id = u.id
@@ -4847,16 +6628,19 @@ async function ensureClientIntakeProject(
     where lower(u.email) = lower(${client.contactEmail})
       and u.deleted_at is null
     limit 1
-  `);
+  `,
+    executor,
+  );
   if (clientUserRows[0]?.id) {
-    await db.execute(sql`
+    await executor.execute(sql`
       insert into project_members (project_id, user_id, role)
       values (${projectId}::uuid, ${clientUserRows[0].id}::uuid, 'client')
       on conflict (project_id, user_id) do nothing
     `);
   }
 
-  const designRows = await queryRows<{ id: string }>(sql`
+  const designRows = await queryRows<{ id: string }>(
+    sql`
     insert into booth_designs (
       organization_id,
       project_id,
@@ -4886,11 +6670,14 @@ async function ensureClientIntakeProject(
       ${actorUserId}::uuid
     )
     returning id::text
-  `);
+  `,
+    executor,
+  );
   const designId = designRows[0]?.id;
-  if (!designId) throw new Error("Client intake booth design insert did not return an id");
+  if (!designId)
+    throw new Error("Client intake booth design insert did not return an id");
 
-  await db.execute(sql`
+  await executor.execute(sql`
     insert into booth_versions (
       organization_id,
       design_id,
@@ -4922,22 +6709,32 @@ async function ensureClientIntakeProject(
     )
   `);
 
-  await auditEvent(organizationId, actorUserId, "project_created_from_client_intake", `created project for ${client.companyName}`, {
-    clientId: client.id,
-    projectId,
-    managerId,
-    exhibitionName,
-  });
+  await auditEvent(
+    organizationId,
+    actorUserId,
+    "project_created_from_client_intake",
+    `created project for ${client.companyName}`,
+    {
+      clientId: client.id,
+      projectId,
+      managerId,
+      exhibitionName,
+    },
+    executor,
+  );
 
   return projectId;
 }
 
 async function getProjectById(organizationId: string, projectId: string) {
-  const whereSql = sql.join([
-    sql`p.organization_id = ${organizationId}::uuid`,
-    sql`p.id = ${projectId}::uuid`,
-    sql`p.deleted_at is null`,
-  ], sql` and `);
+  const whereSql = sql.join(
+    [
+      sql`p.organization_id = ${organizationId}::uuid`,
+      sql`p.id = ${projectId}::uuid`,
+      sql`p.deleted_at is null`,
+    ],
+    sql` and `,
+  );
   const rows = await queryRows<ProjectRow>(projectRowsQuery(whereSql, 1));
   return rows[0] ? mapProjectRow(rows[0]) : null;
 }
@@ -4964,7 +6761,10 @@ async function updateProjectRecord(
   }
 
   if (input.managerId) {
-    const targetName = await getAssignmentTargetName(organizationId, input.managerId);
+    const targetName = await getAssignmentTargetName(
+      organizationId,
+      input.managerId,
+    );
     if (!targetName) return "invalid_manager" as const;
   }
 
@@ -4982,7 +6782,8 @@ async function updateProjectRecord(
       ))
     limit 1
   `);
-  if (!existing[0]?.id) return canManage ? "not_found" as const : "not_authorized" as const;
+  if (!existing[0]?.id)
+    return canManage ? ("not_found" as const) : ("not_authorized" as const);
 
   const clientId = await findOrCreateClient(organizationId, input.client);
   const rows = await queryRows<{ id: string; name: string }>(sql`
@@ -4992,7 +6793,7 @@ async function updateProjectRecord(
       name = ${input.name},
       exhibition_name = ${input.exhibition ?? input.name},
       deadline_at = ${input.deadline}::timestamptz,
-      metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object('description', ${input.description}),
+      metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object('description', ${input.description}::text),
       updated_at = now()
     where id = ${projectId}::uuid
       and organization_id = ${organizationId}::uuid
@@ -5001,25 +6802,96 @@ async function updateProjectRecord(
   `);
 
   const project = rows[0];
-  if (!project) return canManage ? "not_found" as const : "not_authorized" as const;
+  if (!project)
+    return canManage ? ("not_found" as const) : ("not_authorized" as const);
 
   if (input.managerId !== undefined) {
-    await reassignProjectManager(organizationId, auth.user.id, projectId, input.managerId);
+    await reassignProjectManager(
+      organizationId,
+      auth.user.id,
+      projectId,
+      input.managerId,
+    );
   }
-  await updateProjectBoothDesign(organizationId, auth.user.id, projectId, input.name, input.system, input.widthM, input.depthM);
-
-  await auditEvent(organizationId, auth.user.id, "project_updated", `updated project ${project.name}`, {
+  await updateProjectBoothDesign(
+    organizationId,
+    auth.user.id,
     projectId,
-    client: input.client,
-    managerId: input.managerId,
-    system: input.system,
-    widthM: input.widthM,
-    depthM: input.depthM,
-  });
+    input.name,
+    input.system,
+    input.widthM,
+    input.depthM,
+  );
+
+  await auditEvent(
+    organizationId,
+    auth.user.id,
+    "project_updated",
+    `updated project ${project.name}`,
+    {
+      projectId,
+      client: input.client,
+      managerId: input.managerId,
+      system: input.system,
+      widthM: input.widthM,
+      depthM: input.depthM,
+    },
+  );
 
   const updated = await getProjectById(organizationId, projectId);
   if (!updated) return "not_found" as const;
   return updated;
+}
+
+async function removeProjectRecord(
+  organizationId: string,
+  auth: AuthContext,
+  projectId: string,
+) {
+  const canManage = canManageOrganization(auth);
+  const rows = await queryRows<{ id: string; name: string }>(sql`
+    update projects p
+    set deleted_at = now(), updated_at = now()
+    where p.id = ${projectId}::uuid
+      and p.organization_id = ${organizationId}::uuid
+      and p.deleted_at is null
+      and (${canManage}::boolean
+        or p.assigned_pm_user_id = ${auth.user.id}::uuid
+        or exists (
+          select 1
+          from project_members scoped_member
+          where scoped_member.project_id = p.id
+            and scoped_member.user_id = ${auth.user.id}::uuid
+            and scoped_member.role::text = 'pm'
+        )
+      )
+    returning p.id::text, p.name
+  `);
+
+  const project = rows[0];
+  if (!project) {
+    const exists = await queryRows<{ id: string }>(sql`
+      select id::text
+      from projects
+      where id = ${projectId}::uuid
+        and organization_id = ${organizationId}::uuid
+        and deleted_at is null
+      limit 1
+    `);
+    return exists[0] ? ("not_authorized" as const) : ("not_found" as const);
+  }
+
+  await auditEvent(
+    organizationId,
+    auth.user.id,
+    "project_removed",
+    `removed project ${project.name}`,
+    {
+      projectId,
+      projectName: project.name,
+    },
+  );
+  return "removed" as const;
 }
 
 async function updateProjectBoothDesign(
@@ -5136,7 +7008,9 @@ async function updateProjectPipelineStage(
   if (!snapshot) return "not_found" as const;
   if (!snapshot.canAccess) return "not_authorized" as const;
 
-  const previousStage = normalizePipelineStage(snapshot.pipelineStage) ?? pipelineStageFromProjectStatus(snapshot.status);
+  const previousStage =
+    normalizePipelineStage(snapshot.pipelineStage) ??
+    pipelineStageFromProjectStatus(snapshot.status);
   if (previousStage === stage) {
     return { id: snapshot.id, name: snapshot.name, unchanged: true };
   }
@@ -5147,7 +7021,7 @@ async function updateProjectPipelineStage(
       status = ${status.status}::project_status,
       health = ${status.health}::project_health,
       metadata = jsonb_set(
-        coalesce(metadata, '{}'::jsonb) || jsonb_build_object('pipelineStage', ${stage}),
+        coalesce(metadata, '{}'::jsonb) || jsonb_build_object('pipelineStage', ${stage}::text),
         '{lifecycleHistory}',
         (
           case
@@ -5157,14 +7031,14 @@ async function updateProjectPipelineStage(
           end
           || jsonb_build_array(jsonb_build_object(
             'id', gen_random_uuid()::text,
-            'fromStage', ${previousStage},
-            'toStage', ${stage},
-            'fromStatus', ${snapshot.status},
-            'toStatus', ${status.status},
-            'fromHealth', ${snapshot.health},
-            'toHealth', ${status.health},
-            'actorUserId', ${auth.user.id},
-            'actorName', ${auth.user.name},
+            'fromStage', ${previousStage}::text,
+            'toStage', ${stage}::text,
+            'fromStatus', ${snapshot.status}::text,
+            'toStatus', ${status.status}::text,
+            'fromHealth', ${snapshot.health}::text,
+            'toHealth', ${status.health}::text,
+            'actorUserId', ${auth.user.id}::text,
+            'actorName', ${auth.user.name}::text,
             'createdAt', now()
           ))
         ),
@@ -5180,19 +7054,27 @@ async function updateProjectPipelineStage(
   const project = rows[0];
   if (!project) return "not_found" as const;
 
-  await auditEvent(organizationId, auth.user.id, "project_pipeline_stage_updated", `moved ${project.name} to ${stage}`, {
-    projectId,
-    previousStage,
-    stage,
-  });
+  await auditEvent(
+    organizationId,
+    auth.user.id,
+    "project_pipeline_stage_updated",
+    `moved ${project.name} to ${stage}`,
+    {
+      projectId,
+      previousStage,
+      stage,
+    },
+  );
 
   return project;
 }
 
 function pipelineStageToProject(stage: PipelineStage) {
   if (stage === "closed") return { status: "completed", health: "on_track" };
-  if (stage === "production") return { status: "in_production", health: "on_track" };
-  if (stage === "review") return { status: "client_review", health: "on_track" };
+  if (stage === "production")
+    return { status: "in_production", health: "on_track" };
+  if (stage === "review")
+    return { status: "client_review", health: "on_track" };
   if (stage === "design") return { status: "in_design", health: "on_track" };
   return { status: "planning", health: "on_track" };
 }
@@ -5206,14 +7088,25 @@ function pipelineStageFromProjectStatus(status: string): PipelineStage {
 }
 
 function normalizePipelineStage(stage: string | null): PipelineStage | null {
-  if (stage === "intake" || stage === "design" || stage === "review" || stage === "production" || stage === "closed") {
+  if (
+    stage === "intake" ||
+    stage === "design" ||
+    stage === "review" ||
+    stage === "production" ||
+    stage === "closed"
+  ) {
     return stage;
   }
   return null;
 }
 
-function parseProjectListQuery(query: Record<string, unknown>): ProjectListQuery {
-  const limit = Math.min(100, Math.max(1, Math.floor(numberValue(query.limit) ?? 25)));
+function parseProjectListQuery(
+  query: Record<string, unknown>,
+): ProjectListQuery {
+  const limit = Math.min(
+    100,
+    Math.max(1, Math.floor(numberValue(query.limit) ?? 25)),
+  );
   const offset = Math.max(0, Math.floor(numberValue(query.offset) ?? 0));
 
   return {
@@ -5225,7 +7118,10 @@ function parseProjectListQuery(query: Record<string, unknown>): ProjectListQuery
 }
 
 function projectStatusValue(value: unknown) {
-  const normalized = stringValue(value)?.toLowerCase().replace(/[\s-]+/g, "_") ?? null;
+  const normalized =
+    stringValue(value)
+      ?.toLowerCase()
+      .replace(/[\s-]+/g, "_") ?? null;
   if (
     normalized === "active" ||
     normalized === "pending" ||
@@ -5247,10 +7143,13 @@ function projectStatusValue(value: unknown) {
 
 function projectStatusCondition(status: string | null) {
   if (!status) return null;
-  if (status === "active") return sql`p.status::text in ('in_design', 'client_review', 'revision', 'in_production')`;
+  if (status === "active")
+    return sql`p.status::text in ('in_design', 'client_review', 'revision', 'in_production')`;
   if (status === "pending") return sql`p.status::text in ('draft', 'planning')`;
-  if (status === "delayed") return sql`(p.status::text = 'delayed' or p.health::text in ('delayed', 'blocked', 'at_risk'))`;
-  if (status === "completed" || status === "completed_or_approved") return sql`p.status::text in ('completed', 'approved')`;
+  if (status === "delayed")
+    return sql`(p.status::text = 'delayed' or p.health::text in ('delayed', 'blocked', 'at_risk'))`;
+  if (status === "completed" || status === "completed_or_approved")
+    return sql`p.status::text in ('completed', 'approved')`;
   return sql`p.status::text = ${status}`;
 }
 
@@ -5327,7 +7226,8 @@ async function findOrCreateProjectClient(
   `);
 
   const client = existing[0];
-  if (client?.id) return client.canAccess ? client.id : "client_not_accessible" as const;
+  if (client?.id)
+    return client.canAccess ? client.id : ("client_not_accessible" as const);
 
   const inserted = await queryRows<{ id: string }>(sql`
     insert into clients (
@@ -5383,6 +7283,8 @@ async function createClientRecord(
       contact_name,
       contact_email,
       status,
+      activated_at,
+      intake_exhibition_name,
       metadata
     )
     values (
@@ -5390,7 +7292,9 @@ async function createClientRecord(
       ${input.companyName},
       ${input.contactName},
       ${input.contactEmail ?? `${slugify(input.companyName)}@pending.local`},
-      'pending_approval',
+      'active',
+      now(),
+      ${input.exhibition},
       ${JSON.stringify({ exhibition: input.exhibition })}::jsonb
     )
     returning id::text
@@ -5430,7 +7334,8 @@ async function updateClientRecord(
       company_name = ${input.companyName},
       contact_name = ${input.contactName},
       contact_email = ${input.contactEmail ?? `${slugify(input.companyName)}@pending.local`},
-      metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object('exhibition', ${input.exhibition}),
+      intake_exhibition_name = ${input.exhibition},
+      metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object('exhibition', ${input.exhibition}::text),
       updated_at = now()
     where id = ${clientId}::uuid
       and organization_id = ${organizationId}::uuid
@@ -5441,16 +7346,92 @@ async function updateClientRecord(
   const client = rows[0];
   if (!client) return "not_found" as const;
 
-  await auditEvent(organizationId, actorUserId, "client_updated", `updated client ${client.companyName}`, {
-    clientId,
-    companyName: client.companyName,
-  });
+  await auditEvent(
+    organizationId,
+    actorUserId,
+    "client_updated",
+    `updated client ${client.companyName}`,
+    {
+      clientId,
+      companyName: client.companyName,
+    },
+  );
 
   return "updated" as const;
 }
 
-async function removeClientRecord(organizationId: string, actorUserId: string, clientId: string) {
-  const projectRows = await queryRows<{ id: string; name: string; status: string; deadline: string | null }>(sql`
+async function updateClientStatus(
+  organizationId: string,
+  auth: AuthContext,
+  clientId: string,
+  status: "lead" | "pending_approval" | "active" | "inactive" | "archived",
+) {
+  const canManage = canManageOrganization(auth);
+  const rows = await queryRows<{ id: string; companyName: string }>(sql`
+    update clients c
+    set status = ${status}::client_status, updated_at = now()
+    where c.id = ${clientId}::uuid
+      and c.organization_id = ${organizationId}::uuid
+      and c.deleted_at is null
+      and (${canManage}::boolean
+        or c.assigned_pm_user_id = ${auth.user.id}::uuid
+        or exists (
+          select 1
+          from projects scoped_project
+          where scoped_project.client_id = c.id
+            and scoped_project.deleted_at is null
+            and (
+              scoped_project.assigned_pm_user_id = ${auth.user.id}::uuid
+              or exists (
+                select 1
+                from project_members scoped_member
+                where scoped_member.project_id = scoped_project.id
+                  and scoped_member.user_id = ${auth.user.id}::uuid
+                  and scoped_member.role::text = 'pm'
+              )
+            )
+        )
+      )
+    returning c.id::text, c.company_name as "companyName"
+  `);
+
+  const client = rows[0];
+  if (!client) {
+    const exists = await queryRows<{ id: string }>(sql`
+      select id::text
+      from clients
+      where id = ${clientId}::uuid
+        and organization_id = ${organizationId}::uuid
+        and deleted_at is null
+      limit 1
+    `);
+    return exists[0] ? ("not_authorized" as const) : ("not_found" as const);
+  }
+
+  await auditEvent(
+    organizationId,
+    auth.user.id,
+    "client_status_updated",
+    `changed ${client.companyName} to ${status}`,
+    {
+      clientId,
+      status,
+    },
+  );
+  return "updated" as const;
+}
+
+async function removeClientRecord(
+  organizationId: string,
+  actorUserId: string,
+  clientId: string,
+) {
+  const projectRows = await queryRows<{
+    id: string;
+    name: string;
+    status: string;
+    deadline: string | null;
+  }>(sql`
     select id::text, name, status::text, deadline_at::text as deadline
     from projects
     where organization_id = ${organizationId}::uuid
@@ -5484,10 +7465,16 @@ async function removeClientRecord(organizationId: string, actorUserId: string, c
   const client = rows[0];
   if (!client) return { status: "not_found" as const };
 
-  await auditEvent(organizationId, actorUserId, "client_removed", `removed client ${client.companyName}`, {
-    clientId,
-    companyName: client.companyName,
-  });
+  await auditEvent(
+    organizationId,
+    actorUserId,
+    "client_removed",
+    `removed client ${client.companyName}`,
+    {
+      clientId,
+      companyName: client.companyName,
+    },
+  );
 
   return { status: "removed" as const };
 }
@@ -5558,8 +7545,16 @@ function parseAvatarInput(body: unknown) {
   const avatarUrl = stringValue(data.avatarUrl) ?? "";
   const avatarTone = stringValue(data.avatarTone) ?? "primary";
 
-  if (avatarUrl && !avatarUrl.startsWith("data:image/") && !avatarUrl.startsWith("https://") && !avatarUrl.startsWith("/")) {
-    return { ok: false as const, error: "Avatar must be a data URL, HTTPS URL, or local path" };
+  if (
+    avatarUrl &&
+    !avatarUrl.startsWith("data:image/") &&
+    !avatarUrl.startsWith("https://") &&
+    !avatarUrl.startsWith("/")
+  ) {
+    return {
+      ok: false as const,
+      error: "Avatar must be a data URL, HTTPS URL, or local path",
+    };
   }
 
   if (avatarUrl.length > 2_000_000) {
@@ -5578,8 +7573,13 @@ function parsePasswordInput(body: unknown) {
   const currentPassword = stringValue(data.currentPassword);
   const newPassword = stringValue(data.newPassword);
 
-  if (!currentPassword) return { ok: false as const, error: "Current password is required" };
-  if (!newPassword || newPassword.length < 8) return { ok: false as const, error: "New password must be at least 8 characters" };
+  if (!currentPassword)
+    return { ok: false as const, error: "Current password is required" };
+  if (!newPassword || newPassword.length < 8)
+    return {
+      ok: false as const,
+      error: "New password must be at least 8 characters",
+    };
 
   return { ok: true as const, value: { currentPassword, newPassword } };
 }
@@ -5596,7 +7596,12 @@ function parseUpdateClientInput(body: unknown) {
   return zParse(updateClientSchema, body);
 }
 
-type ClientStatus = "lead" | "pending_approval" | "active" | "inactive" | "archived";
+type ClientStatus =
+  | "lead"
+  | "pending_approval"
+  | "active"
+  | "inactive"
+  | "archived";
 
 interface ClientListQuery {
   q: string;
@@ -5606,7 +7611,10 @@ interface ClientListQuery {
 }
 
 function parseClientListQuery(query: Record<string, unknown>): ClientListQuery {
-  const limit = Math.min(100, Math.max(1, Math.floor(numberValue(query.limit) ?? 25)));
+  const limit = Math.min(
+    100,
+    Math.max(1, Math.floor(numberValue(query.limit) ?? 25)),
+  );
   const offset = Math.max(0, Math.floor(numberValue(query.offset) ?? 0));
   return {
     q: stringValue(query.q) ?? "",
@@ -5617,7 +7625,9 @@ function parseClientListQuery(query: Record<string, unknown>): ClientListQuery {
 }
 
 function clientStatusValue(value: unknown): ClientStatus | null {
-  const normalized = stringValue(value)?.toLowerCase().replace(/[\s-]+/g, "_");
+  const normalized = stringValue(value)
+    ?.toLowerCase()
+    .replace(/[\s-]+/g, "_");
   if (
     normalized === "lead" ||
     normalized === "pending_approval" ||
@@ -5656,13 +7666,20 @@ function parseCalendarEventInput(body: unknown) {
   const location = stringValue(data.location) ?? "Location TBD";
   const standType = stringValue(data.standType) ?? "Custom";
 
-  if (!name) return { ok: false as const, error: "Exhibition name is required" };
-  if (!startDate || !isIsoDate(startDate)) return { ok: false as const, error: "Valid start date is required" };
-  if (!endDate || !isIsoDate(endDate)) return { ok: false as const, error: "Valid end date is required" };
-  if (startDate > endDate) return { ok: false as const, error: "End date must be after start date" };
+  if (!name)
+    return { ok: false as const, error: "Exhibition name is required" };
+  if (!startDate || !isIsoDate(startDate))
+    return { ok: false as const, error: "Valid start date is required" };
+  if (!endDate || !isIsoDate(endDate))
+    return { ok: false as const, error: "Valid end date is required" };
+  if (startDate > endDate)
+    return { ok: false as const, error: "End date must be after start date" };
 
   const status: CalendarEventInput["status"] =
-    rawStatus === "Active" || rawStatus === "Completed" || rawStatus === "Delayed" || rawStatus === "Pending"
+    rawStatus === "Active" ||
+    rawStatus === "Completed" ||
+    rawStatus === "Delayed" ||
+    rawStatus === "Pending"
       ? rawStatus
       : "Pending";
 
@@ -5685,16 +7702,36 @@ function parseAssignmentsInput(body: unknown) {
   return zParse(assignmentsSchema, body);
 }
 
-function parseManagerAssignmentItemsQuery(query: Record<string, unknown>): ManagerAssignmentItemsQuery {
+function parseManagerAssignmentItemsQuery(
+  query: Record<string, unknown>,
+): ManagerAssignmentItemsQuery {
   const managerId = stringValue(query.managerId);
   return {
     managerId: managerId && isUuid(managerId) ? managerId : null,
     clientQ: stringValue(query.clientQ ?? query.q) ?? "",
     projectQ: stringValue(query.projectQ ?? query.q) ?? "",
-    clientLimit: Math.min(100, Math.max(1, Math.floor(numberValue(query.clientLimit ?? query.limit) ?? 20))),
-    clientOffset: Math.max(0, Math.floor(numberValue(query.clientOffset ?? query.offset) ?? 0)),
-    projectLimit: Math.min(100, Math.max(1, Math.floor(numberValue(query.projectLimit ?? query.limit) ?? 20))),
-    projectOffset: Math.max(0, Math.floor(numberValue(query.projectOffset ?? query.offset) ?? 0)),
+    clientLimit: Math.min(
+      100,
+      Math.max(
+        1,
+        Math.floor(numberValue(query.clientLimit ?? query.limit) ?? 20),
+      ),
+    ),
+    clientOffset: Math.max(
+      0,
+      Math.floor(numberValue(query.clientOffset ?? query.offset) ?? 0),
+    ),
+    projectLimit: Math.min(
+      100,
+      Math.max(
+        1,
+        Math.floor(numberValue(query.projectLimit ?? query.limit) ?? 20),
+      ),
+    ),
+    projectOffset: Math.max(
+      0,
+      Math.floor(numberValue(query.projectOffset ?? query.offset) ?? 0),
+    ),
   };
 }
 
@@ -5707,8 +7744,16 @@ function parsePmTaskPatch(body: unknown) {
 }
 
 function pmTaskStatusValue(value: unknown): PmTaskStatus | null {
-  const normalized = stringValue(value)?.toLowerCase().replace(/[\s-]+/g, "_");
-  if (normalized === "todo" || normalized === "in_progress" || normalized === "blocked" || normalized === "done") return normalized;
+  const normalized = stringValue(value)
+    ?.toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  if (
+    normalized === "todo" ||
+    normalized === "in_progress" ||
+    normalized === "blocked" ||
+    normalized === "done"
+  )
+    return normalized;
   if (normalized === "inprogress") return "in_progress";
   if (normalized === "review") return "blocked";
   return null;
@@ -5723,11 +7768,16 @@ function pmTaskPriorityValue(value: unknown): PmTaskPriority | null {
   return null;
 }
 
-function parsePmRequestListQuery(query: Record<string, unknown>): PmRequestListQuery {
+function parsePmRequestListQuery(
+  query: Record<string, unknown>,
+): PmRequestListQuery {
   return {
     q: stringValue(query.q) ?? "",
     status: pmRequestStatusValue(query.status),
-    limit: Math.min(100, Math.max(1, Math.floor(numberValue(query.limit) ?? 20))),
+    limit: Math.min(
+      100,
+      Math.max(1, Math.floor(numberValue(query.limit) ?? 20)),
+    ),
     offset: Math.max(0, Math.floor(numberValue(query.offset) ?? 0)),
   };
 }
@@ -5756,9 +7806,16 @@ function parsePmRequestReplyInput(body: unknown) {
 }
 
 function pmRequestStatusValue(value: unknown): PmRequestStatus | null {
-  const normalized = stringValue(value)?.toLowerCase().replace(/[\s-]+/g, "_");
+  const normalized = stringValue(value)
+    ?.toLowerCase()
+    .replace(/[\s-]+/g, "_");
   if (normalized === "pending") return "Pending";
-  if (normalized === "in_progress" || normalized === "inprogress" || normalized === "started") return "In Progress";
+  if (
+    normalized === "in_progress" ||
+    normalized === "inprogress" ||
+    normalized === "started"
+  )
+    return "In Progress";
   if (normalized === "resolved" || normalized === "approved") return "Resolved";
   if (normalized === "declined" || normalized === "rejected") return "Declined";
   return null;
@@ -5774,7 +7831,10 @@ function parseManagerReminderInput(body: unknown) {
     ok: true as const,
     value: {
       itemCount: Math.max(0, Math.round(numberValue(data.itemCount) ?? 0)),
-      delayedCount: Math.max(0, Math.round(numberValue(data.delayedCount) ?? 0)),
+      delayedCount: Math.max(
+        0,
+        Math.round(numberValue(data.delayedCount) ?? 0),
+      ),
       urgentCount: Math.max(0, Math.round(numberValue(data.urgentCount) ?? 0)),
     },
   };
@@ -5796,7 +7856,9 @@ function parseAssignmentRow(value: unknown) {
   };
 }
 
-function isAssignmentRow(value: ReturnType<typeof parseAssignmentRow>): value is { clientId: string; managerId: string | null } {
+function isAssignmentRow(
+  value: ReturnType<typeof parseAssignmentRow>,
+): value is { clientId: string; managerId: string | null } {
   return value !== null;
 }
 
@@ -5805,7 +7867,9 @@ function stringValue(value: unknown) {
 }
 
 function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
 }
 
 function isIsoDate(value: string) {
@@ -5815,7 +7879,9 @@ function isIsoDate(value: string) {
 }
 
 function objectValue(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
 function boolValue(value: unknown, fallback: boolean) {
@@ -5823,11 +7889,18 @@ function boolValue(value: unknown, fallback: boolean) {
 }
 
 function arrayOfStrings(value: unknown) {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 }
 
 function numberValue(value: unknown) {
-  const parsed = typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
+  const parsed =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value)
+        : NaN;
   return Number.isFinite(parsed) ? parsed : null;
 }
 
@@ -5852,8 +7925,9 @@ async function auditEvent(
   type: string,
   message: string,
   metadata: Record<string, unknown>,
+  executor: SqlExecutor = databaseExecutor,
 ) {
-  await db.execute(sql`
+  await executor.execute(sql`
     insert into activity_events (
       organization_id,
       actor_user_id,
@@ -5882,10 +7956,19 @@ function describeUserAgent(userAgent: string | null) {
 }
 
 function slugify(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "client";
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "client"
+  );
 }
 
-async function getActivity(organizationId: string, limit: number, auth: AuthContext) {
+async function getActivity(
+  organizationId: string,
+  limit: number,
+  auth: AuthContext,
+) {
   const canSeeAll = canManageOrganization(auth);
   const rows = await queryRows<{
     id: string;
@@ -5987,12 +8070,24 @@ function buildCharts(
   activity: Array<{ time: string }>,
 ) {
   return {
-    activity: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => ({
-      day,
-      projects: index === 6 ? metrics.projects : Math.max(0, metrics.projects - (6 - index)),
-    })),
+    activity: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+      (day, index) => ({
+        day,
+        projects:
+          index === 6
+            ? metrics.projects
+            : Math.max(0, metrics.projects - (6 - index)),
+      }),
+    ),
     distribution: [
-      { name: "Active", value: metrics.projects - metrics.completedProjects - metrics.delayedProjects, color: "#3b82f6" },
+      {
+        name: "Active",
+        value:
+          metrics.projects -
+          metrics.completedProjects -
+          metrics.delayedProjects,
+        color: "#3b82f6",
+      },
       { name: "Pending", value: metrics.pendingApprovals, color: "#eab308" },
       { name: "Delayed", value: metrics.delayedProjects, color: "#ef4444" },
       { name: "Completed", value: metrics.completedProjects, color: "#22c55e" },
@@ -6026,6 +8121,28 @@ function toTitle(value: string) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
     .join(" ");
+}
+
+function normalizeClientStatus(value: string | null) {
+  if (!value) return null;
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  if (normalized === "pending") return "pending_approval" as const;
+  if (
+    ["lead", "pending_approval", "active", "inactive", "archived"].includes(
+      normalized,
+    )
+  ) {
+    return normalized as
+      | "lead"
+      | "pending_approval"
+      | "active"
+      | "inactive"
+      | "archived";
+  }
+  return null;
 }
 
 function relativeTime(dateText: string) {

@@ -28,6 +28,7 @@ describe("PATCH /api/platform/clients/:clientId/approve", () => {
   let pmCookies: string[];
   let pendingClient: TestClient;
   let pendingIntakeClient: TestClient;
+  let bulkAssignmentClient: TestClient;
   let overCapacityClient: TestClient;
   let activeClient: TestClient;
 
@@ -41,6 +42,7 @@ describe("PATCH /api/platform/clients/:clientId/approve", () => {
     pmCookies = await loginAs(app, org.slug, pm);
     pendingClient = await createTestClient(org.id, { status: "pending_approval", contactEmail: chief.email });
     pendingIntakeClient = await createTestClient(org.id, { status: "pending_approval", contactEmail: clientUser.email });
+    bulkAssignmentClient = await createTestClient(org.id, { status: "pending_approval" });
     overCapacityClient = await createTestClient(org.id, { status: "pending_approval" });
     await db.execute(sql`
       update clients
@@ -95,11 +97,61 @@ describe("PATCH /api/platform/clients/:clientId/approve", () => {
     expect(response.status).toBe(400);
   });
 
-  it("approves the client and returns status 200 with updated client list", async () => {
+  it("requires a Project Manager before approving the client", async () => {
     const response = await request(app)
       .patch(`/api/platform/clients/${pendingClient.id}/approve`)
       .set("Cookie", chiefCookies)
-      .send({ note: "Approved by automated test" });
+      .send({ note: "Approval without ownership" });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/select an active project manager/i);
+  });
+
+  it("prevents bulk assignment from bypassing pending-client approval", async () => {
+    const response = await request(app)
+      .put("/api/platform/managers/assignments")
+      .set("Cookie", chiefCookies)
+      .send({
+        clientAssignments: [{ clientId: bulkAssignmentClient.id, managerId: pm.id }],
+        projectAssignments: [],
+        cascadeClientProjects: true,
+        reason: "Attempted assignment before approval",
+      });
+
+    expect(response.status).toBe(409);
+    expect(response.body).toMatchObject({
+      error: "pending_approval_requires_review",
+      clientIds: [bulkAssignmentClient.id],
+    });
+
+    const rows = await db.execute(sql`
+      select
+        c.status::text,
+        c.assigned_pm_user_id::text as "managerId",
+        count(p.id)::int as "projectCount"
+      from clients c
+      left join projects p on p.client_id = c.id and p.deleted_at is null
+      where c.id = ${bulkAssignmentClient.id}::uuid
+      group by c.id
+    `);
+    const clientState = (rows as unknown as { rows: Array<{
+      status: string;
+      managerId: string | null;
+      projectCount: number;
+    }> }).rows[0];
+
+    expect(clientState).toEqual({
+      status: "pending_approval",
+      managerId: null,
+      projectCount: 0,
+    });
+  });
+
+  it("approves and assigns the client in one request", async () => {
+    const response = await request(app)
+      .patch(`/api/platform/clients/${pendingClient.id}/approve`)
+      .set("Cookie", chiefCookies)
+      .send({ managerId: pm.id, note: "Approved by automated test" });
 
     expect(response.status).toBe(200);
     expect(response.body.ok).toBe(true);
@@ -107,6 +159,7 @@ describe("PATCH /api/platform/clients/:clientId/approve", () => {
     const updatedClient = response.body.clients?.find((c: { id: string }) => c.id === pendingClient.id);
     expect(updatedClient).toBeDefined();
     expect(updatedClient.status.toLowerCase()).toBe("active");
+    expect(updatedClient.pm).toBe("Test pm");
   });
 
   it("creates the intake project, design, and memberships when assigning a PM at approval", async () => {
@@ -160,7 +213,7 @@ describe("PATCH /api/platform/clients/:clientId/approve", () => {
     }> }).rows[0];
 
     expect(project).toMatchObject({
-      name: "Beauty Istanbul Client Project",
+      name: "Beauty Istanbul 2027 - Beauty Istanbul Client",
       exhibitionName: "Beauty Istanbul 2027",
       city: "Istanbul",
       status: "planning",
@@ -173,6 +226,24 @@ describe("PATCH /api/platform/clients/:clientId/approve", () => {
     expect(project.memberCount).toBeGreaterThanOrEqual(2);
     expect(project.clientMemberCount).toBe(1);
     expect(project.pmMemberCount).toBe(1);
+
+    const secondaryProject = await createTestProject(org.id, pendingIntakeClient.id, {
+      assignedPmUserId: pm.id,
+    });
+    await db.execute(sql`
+      update projects
+      set name = 'Workspace Editor', exhibition_name = 'Workspace Editor'
+      where id = ${secondaryProject.id}::uuid
+    `);
+
+    const clientsResponse = await request(app)
+      .get("/api/platform/clients?limit=25")
+      .set("Cookie", chiefCookies);
+    expect(clientsResponse.status).toBe(200);
+    const listedClient = clientsResponse.body.clients?.find(
+      (client: { id: string }) => client.id === pendingIntakeClient.id,
+    );
+    expect(listedClient?.exhibition).toBe("Beauty Istanbul 2027");
   });
 
   it("requires explicit confirmation before approving a client into an overloaded PM queue", async () => {

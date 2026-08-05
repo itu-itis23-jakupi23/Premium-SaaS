@@ -71,48 +71,71 @@ describe("POST /api/platform/projects/:projectId/approve (workspace)", () => {
   });
 
   it("client can approve a project that is in client_review", async () => {
-    // The project needs at least one booth version to approve (getLatestVersion).
+    // createTestProject already creates the canonical booth design. Insert the
+    // submitted version against that exact row so approval cannot accidentally
+    // resolve a different design.
     await db.execute(sql`
-      insert into booth_designs (organization_id, project_id, name, booth_system, booth_type, width_mm, depth_mm, height_mm)
-      values (
-        (select organization_id from projects where id = ${reviewProject.id}::uuid),
-        ${reviewProject.id}::uuid,
-        'Test Design',
-        'octanorm'::booth_system,
-        'inline'::booth_type,
-        6000, 3000, 2500
+      insert into booth_versions (
+        organization_id,
+        design_id,
+        project_id,
+        version_number,
+        status,
+        title,
+        layout_json,
+        cost_estimate_cents
       )
-      on conflict do nothing
+      select
+        p.organization_id,
+        bd.id,
+        p.id,
+        1,
+        'submitted'::booth_version_status,
+        'v1',
+        '{}'::jsonb,
+        1234500
+      from projects p
+      join booth_designs bd on bd.project_id = p.id and bd.deleted_at is null
+      where p.id = ${reviewProject.id}::uuid
+      on conflict (design_id, version_number) do update
+      set status = excluded.status,
+          cost_estimate_cents = excluded.cost_estimate_cents
     `);
-    const designRow = await db.execute(sql`
-      select id::text from booth_designs where project_id = ${reviewProject.id}::uuid limit 1
-    `);
-    const designId = (designRow as unknown as { rows: { id: string }[] }).rows[0]?.id;
-
-    if (designId) {
-      await db.execute(sql`
-        insert into booth_versions (organization_id, design_id, project_id, version_number, status, title, layout_json)
-        values (
-          (select organization_id from projects where id = ${reviewProject.id}::uuid),
-          ${designId}::uuid,
-          ${reviewProject.id}::uuid,
-          1,
-          'submitted'::booth_version_status,
-          'v1',
-          '{}'::jsonb
-        )
-        on conflict do nothing
-      `);
-    }
 
     const response = await request(app)
       .post(`/api/platform/projects/${reviewProject.id}/approve`)
       .set("Cookie", clientCookies);
 
-    expect([200, 400]).toContain(response.status);
-    if (response.status === 200) {
-      expect(response.body.projectStatus).toBe("approved");
-    }
+    expect(response.status).toBe(200);
+    expect(response.body.project?.status).toBe("Approved");
+
+    const invoiceResult = await db.execute(sql`
+      select status, currency, subtotal_cents as "subtotalCents", total_cents as "totalCents"
+      from invoices
+      where organization_id = ${org.id}::uuid
+        and client_id = (
+          select client_id
+          from projects
+          where id = ${reviewProject.id}::uuid
+        )
+      order by created_at desc
+      limit 1
+    `);
+    const invoice = (invoiceResult as unknown as {
+      rows: Array<{
+        status: string;
+        currency: string;
+        subtotalCents: number;
+        totalCents: number;
+      }>;
+    }).rows[0];
+
+    expect(invoice).toEqual({
+      status: "draft",
+      currency: "USD",
+      subtotalCents: 1234500,
+      totalCents: 1234500,
+    });
   });
 });
 
@@ -259,6 +282,10 @@ describe("PUT /api/platform/projects/:projectId/workspace", () => {
             x: -500,
             z: 500,
             rotation: 0,
+            rotationX: 15,
+            rotationY: 0,
+            rotationZ: -15,
+            locked: true,
             kind: "furniture",
           }],
           notes: [],
@@ -271,5 +298,69 @@ describe("PUT /api/platform/projects/:projectId/workspace", () => {
     expect(item.d).toBe(3);
     expect(item.x).toBe(3);
     expect(item.z).toBe(1.5);
+    expect(item).toMatchObject({ rotationX: 15, rotationY: 0, rotationZ: -15, locked: true });
+  });
+
+  it("preserves room customization through save and reload", async () => {
+    const room = {
+      id: "storage-room-1",
+      name: "Storage room",
+      width: 2,
+      depth: 1,
+      height: 2.5,
+      x: 2,
+      z: 1.5,
+      hasDoor: true,
+      hasCeiling: true,
+      doorSide: "left",
+      doorWidth: 0.75,
+      doorPosition: "right",
+      doorSwing: "right-out",
+      doorOpen: true,
+      wallFinish: "dark",
+      floorColor: "#123456",
+      locked: true,
+      designImageUrl: "data:image/png;base64,iVBORw0KGgo=",
+      designImageName: "storage-wall.png",
+      designOpacity: 0.55,
+      designWall: "right",
+      designFit: "contain",
+    };
+    const payload = {
+      title: "Room persistence",
+      workspace: {
+        booth: {
+          width: 6,
+          depth: 3,
+          height: 2.5,
+          system: "octanorm",
+          companyName: "Room Test",
+          openFront: true,
+          openBack: false,
+          openLeft: false,
+          openRight: false,
+        },
+        themeIdx: 0,
+        carpetIdx: 0,
+        placedItems: [],
+        rooms: [room],
+        notes: [],
+      },
+    };
+
+    const saveResponse = await request(app)
+      .put(`/api/platform/projects/${project.id}/workspace`)
+      .set("Cookie", pmCookies)
+      .send(payload);
+
+    expect(saveResponse.status).toBe(200);
+    expect(saveResponse.body.workspace.rooms).toEqual([room]);
+
+    const reloadResponse = await request(app)
+      .get(`/api/platform/projects/${project.id}/workspace`)
+      .set("Cookie", pmCookies);
+
+    expect(reloadResponse.status).toBe(200);
+    expect(reloadResponse.body.workspace.rooms).toEqual([room]);
   });
 });

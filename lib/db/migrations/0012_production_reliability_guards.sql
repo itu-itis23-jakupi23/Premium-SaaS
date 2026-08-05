@@ -41,5 +41,20 @@ CREATE TABLE IF NOT EXISTS "stripe_webhook_events" (
     CHECK ("status" IN ('processing', 'processed', 'failed'))
 );
 
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'stripe_webhook_events_status_chk'
+      AND conrelid = 'public.stripe_webhook_events'::regclass
+  ) THEN
+    ALTER TABLE "stripe_webhook_events"
+      ADD CONSTRAINT "stripe_webhook_events_status_chk"
+      CHECK ("status" IN ('processing', 'processed', 'failed'));
+  END IF;
+END
+$$;
+
 CREATE INDEX IF NOT EXISTS "stripe_webhook_events_status_updated_idx"
   ON "stripe_webhook_events" ("status", "updated_at");

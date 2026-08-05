@@ -20,11 +20,13 @@ describe("platform message contacts", () => {
   let assignedPm: TestUser;
   let otherPm: TestUser;
   let assignedClientUser: TestUser;
+  let otherAssignedClientUser: TestUser;
   let unassignedClientUser: TestUser;
   let chiefCookies: string[];
   let pmCookies: string[];
   let clientCookies: string[];
   let project: TestProject;
+  let otherProject: TestProject;
 
   beforeAll(async () => {
     org = await createTestOrg();
@@ -32,6 +34,7 @@ describe("platform message contacts", () => {
     assignedPm = await createTestUser(org.id, "pm");
     otherPm = await createTestUser(org.id, "pm");
     assignedClientUser = await createTestUser(org.id, "client");
+    otherAssignedClientUser = await createTestUser(org.id, "client");
     unassignedClientUser = await createTestUser(org.id, "client");
 
     chiefCookies = await loginAs(app, org.slug, chief);
@@ -55,6 +58,18 @@ describe("platform message contacts", () => {
     });
     await addProjectMember(project.id, assignedPm.id, "pm");
     await addProjectMember(project.id, assignedClientUser.id, "client");
+
+    const otherAssignedClient = await createTestClient(org.id, {
+      status: "active",
+      contactEmail: otherAssignedClientUser.email,
+      assignedPmUserId: assignedPm.id,
+    });
+    otherProject = await createTestProject(org.id, otherAssignedClient.id, {
+      status: "planning",
+      assignedPmUserId: assignedPm.id,
+    });
+    await addProjectMember(otherProject.id, assignedPm.id, "pm");
+    await addProjectMember(otherProject.id, otherAssignedClientUser.id, "client");
   });
 
   afterAll(async () => {
@@ -102,6 +117,12 @@ describe("platform message contacts", () => {
     expect(clientReadsAssignedPm.status).toBe(200);
     expect(clientReadsAssignedPm.body.scope).toMatchObject({ projectId: project.id, isScoped: true });
 
+    const clientCannotReadAnotherClientProject = await request(app)
+      .get(`/api/platform/messages/${assignedPm.id}?projectId=${encodeURIComponent(otherProject.id)}`)
+      .set("Cookie", clientCookies);
+    expect(clientCannotReadAnotherClientProject.status).toBe(404);
+    expect(clientCannotReadAnotherClientProject.body.error.code).toBe("message_scope_denied");
+
     const chiefReadsProjectThread = await request(app)
       .get(`/api/platform/messages/${assignedPm.id}?projectId=${encodeURIComponent(project.id)}`)
       .set("Cookie", chiefCookies);
@@ -113,6 +134,90 @@ describe("platform message contacts", () => {
       .set("Cookie", pmCookies);
     expect(pmCannotReadUnassignedClient.status).toBe(404);
     expect(pmCannotReadUnassignedClient.body.error.code).toBe("contact_not_found");
+  });
+
+  it("keeps PM and client on the same project-scoped thread", async () => {
+    const body = `project-thread-${Date.now()}`;
+    const sent = await request(app)
+      .post(`/api/platform/messages/${assignedClientUser.id}`)
+      .set("Cookie", pmCookies)
+      .send({ body, context: { projectId: project.id } });
+    expect(sent.status).toBe(201);
+
+    const received = await request(app)
+      .get(`/api/platform/messages/${assignedPm.id}?projectId=${encodeURIComponent(project.id)}`)
+      .set("Cookie", clientCookies);
+    expect(received.status).toBe(200);
+    expect(received.body.messages).toEqual(expect.arrayContaining([
+      expect.objectContaining({ body, isMe: false }),
+    ]));
+  });
+
+  it("persists Chief attachments and allows the addressed PM to download them", async () => {
+    const bytes = Buffer.from(`chief-message-attachment-${Date.now()}`, "utf8");
+    const upload = await request(app)
+      .post("/api/platform/messages/attachments")
+      .set("Cookie", chiefCookies)
+      .set("Content-Type", "application/pdf")
+      .set("X-File-Name", "chief-brief.pdf")
+      .send(bytes);
+
+    expect(upload.status, JSON.stringify(upload.body)).toBe(201);
+    expect(upload.body.attachment).toMatchObject({
+      name: "chief-brief.pdf",
+      size: bytes.byteLength,
+      type: "application/pdf",
+    });
+
+    const body = `chief-to-pm-${Date.now()}`;
+    const sent = await request(app)
+      .post(`/api/platform/messages/${assignedPm.id}`)
+      .set("Cookie", chiefCookies)
+      .send({ body, attachments: [upload.body.attachment] });
+    expect(sent.status, JSON.stringify(sent.body)).toBe(201);
+    expect(sent.body.message).toMatchObject({
+      body,
+      attachments: [expect.objectContaining({ id: upload.body.attachment.id, name: "chief-brief.pdf" })],
+    });
+
+    const received = await request(app)
+      .get(`/api/platform/messages/${chief.id}`)
+      .set("Cookie", pmCookies);
+    expect(received.status, JSON.stringify(received.body)).toBe(200);
+    expect(received.body.messages).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        body,
+        isMe: false,
+        attachments: [expect.objectContaining({ id: upload.body.attachment.id })],
+      }),
+    ]));
+
+    const download = await request(app)
+      .get(`/api/platform/messages/attachments/${upload.body.attachment.id}`)
+      .set("Cookie", pmCookies);
+    expect(download.status, JSON.stringify(download.body)).toBe(200);
+    expect(Buffer.from(download.body)).toEqual(bytes);
+  });
+
+  it("rejects malformed contact and project identifiers without database errors", async () => {
+    const malformedProject = await request(app)
+      .get(`/api/platform/messages/${assignedClientUser.id}?projectId=not-a-uuid`)
+      .set("Cookie", pmCookies);
+    expect(malformedProject.status).toBe(404);
+    expect(malformedProject.body.error.code).toBe("message_scope_denied");
+
+    const malformedContact = await request(app)
+      .get("/api/platform/messages/not-a-uuid")
+      .set("Cookie", pmCookies);
+    expect(malformedContact.status).toBe(404);
+    expect(malformedContact.body.error.code).toBe("contact_not_found");
+
+    const malformedPostContact = await request(app)
+      .post("/api/platform/messages/not-a-uuid")
+      .set("Cookie", pmCookies)
+      .send({ body: "must not reach a UUID cast" });
+    expect(malformedPostContact.status).toBe(404);
+    expect(malformedPostContact.body.error.code).toBe("contact_not_found");
   });
 });
 

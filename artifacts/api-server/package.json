@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
-    "dev:watch": "NODE_ENV=development pnpm exec tsx watch src/index.ts",
+    "dev": "pnpm run build && pnpm run start",
+    "dev:watch": "tsx watch src/index.ts",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -36,6 +36,7 @@
     "pino-pretty": "^13",
     "supertest": "^7.2.2",
     "thread-stream": "3.1.0",
+    "tsx": "catalog:",
     "vitest": "^4.1.9"
   }
 }

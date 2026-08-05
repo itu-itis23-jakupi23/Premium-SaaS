@@ -1,4 +1,9 @@
-import express, { type Express, type Request, type Response, type NextFunction } from "express";
+import express, {
+  type Express,
+  type Request,
+  type Response,
+  type NextFunction,
+} from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import pinoHttp from "pino-http";
@@ -6,8 +11,10 @@ import router from "./routes";
 import { webhookRouter } from "./routes/billing";
 import { logger } from "./lib/logger";
 import { validateMessageEncryptionConfig } from "./lib/messageCrypto";
+import { assertRuntimeEnvironment } from "./lib/env";
 
 const app: Express = express();
+assertRuntimeEnvironment();
 validateMessageEncryptionConfig();
 
 app.use(
@@ -29,10 +36,12 @@ app.use(
     },
   }),
 );
-app.use(cors({
-  origin: corsOrigin(),
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: corsOrigin(),
+    credentials: true,
+  }),
+);
 app.use(cookieParser());
 
 // Stripe webhook needs the raw, unparsed body to verify signatures — it must be
@@ -64,8 +73,17 @@ app.use("/api", router);
 // error message. The error detail is intentionally verbose in non-production
 // environments; production gets a generic message.
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  const error = err as { type?: string; status?: number; statusCode?: number; message?: string };
-  if (error?.type === "entity.too.large" || error?.status === 413 || error?.statusCode === 413) {
+  const error = err as {
+    type?: string;
+    status?: number;
+    statusCode?: number;
+    message?: string;
+  };
+  if (
+    error?.type === "entity.too.large" ||
+    error?.status === 413 ||
+    error?.statusCode === 413
+  ) {
     res.status(413).json({
       error: {
         code: "payload_too_large",
@@ -78,7 +96,12 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   const message = err instanceof Error ? err.message : "Internal server error";
   const status = error.status ?? error.statusCode ?? 500;
   const verbose = process.env.NODE_ENV !== "production" || process.env.VITEST;
-  res.status(status).json({ error: { code: "internal_error", message: verbose ? message : "An unexpected error occurred." } });
+  res.status(status).json({
+    error: {
+      code: "internal_error",
+      message: verbose ? message : "An unexpected error occurred.",
+    },
+  });
 });
 
 export default app;
@@ -86,7 +109,10 @@ export default app;
 function corsOrigin() {
   const configured = process.env.CORS_ORIGIN;
   if (configured) {
-    const origins = configured.split(",").map((origin) => origin.trim()).filter(Boolean);
+    const origins = configured
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean);
     return origins.length > 1 ? origins : origins[0];
   }
   return process.env.NODE_ENV === "production" ? false : true;

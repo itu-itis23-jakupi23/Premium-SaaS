@@ -404,11 +404,14 @@ router.post("/platform/projects/:projectId/change-requests", requireRoles(["clie
 
   await db.execute(sql`
     update projects
-    set status = 'revision'::project_status, updated_at = now()
+    set status = 'revision'::project_status,
+        metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object('pipelineStage', 'review'),
+        updated_at = now()
     where id = ${projectId}::uuid
   `);
 
   await auditWorkspaceEvent(auth, projectId, "client_change_request", `Client requested revision on v${latestVersion.versionNumber}`);
+  await recordStageEvent(auth, projectId, "review", "client_change_request").catch(() => undefined);
 
   if (access.assignedPmUserId) {
     await deliverNotification(
@@ -579,7 +582,9 @@ router.post("/platform/projects/:projectId/approve", requireRoles(["client", "ad
 
   await db.execute(sql`
     update projects
-    set status = 'approved'::project_status, updated_at = now()
+    set status = 'approved'::project_status,
+        metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object('pipelineStage', 'closed'),
+        updated_at = now()
     where id = ${projectId}::uuid
   `);
 
@@ -603,6 +608,9 @@ router.post("/platform/projects/:projectId/approve", requireRoles(["client", "ad
       workspaceUrl: `${process.env.APP_URL ?? "http://localhost:5173"}/pm/workspace?projectId=${projectId}`,
     });
   }
+
+  await recordStageEvent(auth, projectId, "closed", "client_approved").catch(() => undefined);
+  await runApprovalAutomation(auth, access, projectId, latestVersion.costEstimateCents ?? 0);
 
   const workspace = await loadWorkspace(auth, projectId);
   res.json(workspace);
@@ -813,13 +821,18 @@ async function createWorkspaceVersion(
   if (status === "submitted") {
     await db.execute(sql`
       update projects
-      set status = 'client_review'::project_status, updated_at = now()
+      set status = 'client_review'::project_status,
+          metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object('pipelineStage', 'review'),
+          updated_at = now()
       where id = ${access.projectId}::uuid
         and organization_id = ${auth.organization.id}::uuid
         and status::text <> 'approved'
     `);
   }
   await auditWorkspaceEvent(auth, access.projectId, status === "submitted" ? "workspace_submitted" : "workspace_version_created", `${status === "submitted" ? "submitted" : "created"} booth workspace v${savedVersionNumber}`);
+  if (status === "submitted") {
+    await recordStageEvent(auth, access.projectId, "review", "design_submitted").catch(() => undefined);
+  }
 
   return loadWorkspace(auth, access.projectId);
 }
@@ -1052,6 +1065,11 @@ function normalizeWorkspace(value: unknown, access: ProjectAccess | null): Works
     placedItems: Array.isArray(data.placedItems) ? data.placedItems.map((item) => normalizePlacedItem(item, width, depth)).filter(Boolean) as WorkspacePlacedItem[] : [],
     rooms: Array.isArray(data.rooms) ? data.rooms.map((room) => normalizeRoom(room, width, depth, height)).filter(Boolean) as WorkspaceRoom[] : [],
     notes: Array.isArray(data.notes) ? data.notes.map(normalizeNote).filter(Boolean) as WorkspaceNote[] : [],
+    quoteTotalCents: (() => {
+      const cents = numberValue(data.quoteTotalCents);
+      if (cents === null || !Number.isFinite(cents)) return undefined;
+      return Math.min(500_000_000, Math.max(0, Math.round(cents)));
+    })(),
   };
 }
 
@@ -1066,10 +1084,15 @@ function normalizePlacedItem(value: unknown, boothWidth: number, boothDepth: num
 
   const w = clamp(numberValue(item.w) ?? 1, 0.05, Math.max(0.05, boothWidth));
   const d = clamp(numberValue(item.d) ?? 1, 0.05, Math.max(0.05, boothDepth));
-  const minX = w / 2;
-  const maxX = Math.max(minX, boothWidth - w / 2);
-  const minZ = d / 2;
-  const maxZ = Math.max(minZ, boothDepth - d / 2);
+  const rotation = numberValue(item.rotation) ?? 0;
+  const rotationY = numberValue(item.rotationY) ?? rotation;
+  const radians = rotationY * Math.PI / 180;
+  const footprintWidth = w * Math.abs(Math.cos(radians)) + d * Math.abs(Math.sin(radians));
+  const footprintDepth = w * Math.abs(Math.sin(radians)) + d * Math.abs(Math.cos(radians));
+  const minX = footprintWidth / 2;
+  const maxX = Math.max(minX, boothWidth - footprintWidth / 2);
+  const minZ = footprintDepth / 2;
+  const maxZ = Math.max(minZ, boothDepth - footprintDepth / 2);
 
   return {
     id,
@@ -1084,7 +1107,11 @@ function normalizePlacedItem(value: unknown, boothWidth: number, boothDepth: num
     weight: numberValue(item.weight) ?? 0,
     x: clamp(numberValue(item.x) ?? boothWidth / 2, minX, maxX),
     z: clamp(numberValue(item.z) ?? boothDepth / 2, minZ, maxZ),
-    rotation: numberValue(item.rotation) ?? 0,
+    rotation,
+    rotationX: numberValue(item.rotationX) ?? 0,
+    rotationY,
+    rotationZ: numberValue(item.rotationZ) ?? 0,
+    locked: booleanValue(item.locked, false),
     kind: normalizeItemKind(item.kind),
     shape: stringValue(item.shape) ?? undefined,
     modelUrl: stringValue(item.modelUrl) ?? undefined,
@@ -1100,7 +1127,15 @@ function normalizeRoom(value: unknown, boothWidth: number, boothDepth: number, b
 
   const width = clamp(numberValue(room.width) ?? 3, 1, Math.max(1, boothWidth));
   const depth = clamp(numberValue(room.depth) ?? 3, 1, Math.max(1, boothDepth));
-  const height = clamp(numberValue(room.height) ?? 2.4, 1.8, Math.max(1.8, boothHeight));
+  const height = clamp(numberValue(room.height) ?? boothHeight, 1.8, Math.max(1.8, boothHeight));
+  const hasDoor = booleanValue(room.hasDoor, true);
+  const x = clamp(numberValue(room.x) ?? boothWidth / 2, width / 2, Math.max(width / 2, boothWidth - width / 2));
+  const z = clamp(numberValue(room.z) ?? boothDepth / 2, depth / 2, Math.max(depth / 2, boothDepth - depth / 2));
+  const requestedDoorSide = normalizeDoorSide(room.doorSide);
+  const availableDoorSides = availableRoomWallSides(width, depth, x, z, boothWidth, boothDepth);
+  const doorSide = availableDoorSides.includes(requestedDoorSide) ? requestedDoorSide : availableDoorSides[0] ?? requestedDoorSide;
+  const doorSpan = doorSide === "left" || doorSide === "right" ? depth : width;
+  const maxDoorWidth = Math.max(0.55, Math.min(1.4, doorSpan - 0.16));
 
   return {
     id,
@@ -1108,13 +1143,23 @@ function normalizeRoom(value: unknown, boothWidth: number, boothDepth: number, b
     width,
     depth,
     height,
-    x: clamp(numberValue(room.x) ?? boothWidth / 2, width / 2, Math.max(width / 2, boothWidth - width / 2)),
-    z: clamp(numberValue(room.z) ?? boothDepth / 2, depth / 2, Math.max(depth / 2, boothDepth - depth / 2)),
-    hasDoor: booleanValue(room.hasDoor, true),
+    x,
+    z,
+    hasDoor,
     hasCeiling: booleanValue(room.hasCeiling, false),
+    doorSide,
+    doorWidth: clamp(numberValue(room.doorWidth) ?? 0.85, 0.55, maxDoorWidth),
     doorPosition: normalizeDoorPosition(room.doorPosition),
     doorSwing: normalizeDoorSwing(room.doorSwing),
     doorOpen: booleanValue(room.doorOpen, false),
+    wallFinish: normalizeRoomWallFinish(room.wallFinish),
+    floorColor: normalizeRoomFloorColor(room.floorColor),
+    locked: booleanValue(room.locked, false),
+    designImageUrl: normalizeRoomDesignImageUrl(room.designImageUrl),
+    designImageName: stringValue(room.designImageName)?.slice(0, 80) ?? undefined,
+    designOpacity: normalizeRoomDesignOpacity(room.designOpacity),
+    designWall: roomGraphicWall(room.designWall, hasDoor, doorSide),
+    designFit: normalizeRoomDesignFit(room.designFit),
   };
 }
 
@@ -1143,6 +1188,12 @@ function buildAssetSummary(workspace: WorkspaceState) {
 }
 
 function estimateCostCents(workspace: WorkspaceState) {
+  // Prefer the quote computed by the PM workspace BOM model (the canonical
+  // number every portal shows); fall back to a rough floor-area formula for
+  // payloads that predate quoteTotalCents.
+  if (typeof workspace.quoteTotalCents === "number" && workspace.quoteTotalCents > 0) {
+    return workspace.quoteTotalCents;
+  }
   const floorArea = workspace.booth.width * workspace.booth.depth;
   const systemMultiplier = workspace.booth.system === "maxima" ? 1.65 : 1;
   const placedItems = workspace.placedItems.reduce((sum, item) => sum + item.qty, 0);
@@ -1162,6 +1213,111 @@ function toVersionSummary(version: WorkspaceVersionRow) {
     lockedAt: version.lockedAt,
     createdAt: version.createdAt,
   };
+}
+
+/** Records a pipeline-stage transition for time-in-stage analytics. */
+async function recordStageEvent(auth: AuthContext, projectId: string, stage: string, reason: string) {
+  await db.execute(sql`
+    insert into activity_events (organization_id, actor_user_id, project_id, event_type, message, metadata)
+    values (
+      ${auth.organization.id}::uuid,
+      ${auth.user.id}::uuid,
+      ${projectId}::uuid,
+      'project_pipeline_stage_updated',
+      ${`Pipeline stage set to ${stage} (${reason})`},
+      ${JSON.stringify({ stage, reason })}::jsonb
+    )
+  `);
+}
+
+const PRODUCTION_TASK_TEMPLATE = [
+  { title: "Order stand system materials", daysBeforeDeadline: 21, priority: "high" },
+  { title: "Print fascia and graphic panels", daysBeforeDeadline: 14, priority: "high" },
+  { title: "Confirm logistics and delivery slot", daysBeforeDeadline: 10, priority: "normal" },
+  { title: "Schedule build crew", daysBeforeDeadline: 7, priority: "normal" },
+  { title: "Final QA and handover photos", daysBeforeDeadline: 1, priority: "high" },
+] as const;
+
+/**
+ * Post-approval automation: draft invoice from the approved version's quote
+ * plus the production task checklist for the assigned PM. Best-effort — an
+ * error here must never fail the approval itself.
+ */
+async function runApprovalAutomation(
+  auth: AuthContext,
+  access: ProjectAccess,
+  projectId: string,
+  approvedCostCents: number,
+) {
+  try {
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${Date.now().toString(36).toUpperCase()}`;
+    await db.execute(sql`
+      insert into invoices (organization_id, client_id, invoice_number, status, currency, subtotal_cents, tax_cents, total_cents, due_at)
+      values (
+        ${auth.organization.id}::uuid,
+        ${access.clientId}::uuid,
+        ${invoiceNumber},
+        'draft'::invoice_status,
+        'USD',
+        ${approvedCostCents},
+        0,
+        ${approvedCostCents},
+        now() + interval '30 days'
+      )
+    `);
+    await auditWorkspaceEvent(auth, projectId, "invoice_drafted", `Draft invoice ${invoiceNumber} created from approved design quote`);
+  } catch (error) {
+    console.error("approval automation: invoice creation failed", error);
+  }
+
+  try {
+    const existing = await queryRows<{ count: number }>(sql`
+      select count(*)::int as count from tasks
+      where project_id = ${projectId}::uuid
+        and title = ${PRODUCTION_TASK_TEMPLATE[0].title}
+    `);
+    if ((existing[0]?.count ?? 0) === 0) {
+      const deadlineRows = await queryRows<{ deadlineAt: string | null }>(sql`
+        select deadline_at::text as "deadlineAt" from projects where id = ${projectId}::uuid
+      `);
+      const deadline = deadlineRows[0]?.deadlineAt ? new Date(deadlineRows[0].deadlineAt) : null;
+
+      for (const task of PRODUCTION_TASK_TEMPLATE) {
+        let dueAt: Date | null = null;
+        if (deadline) {
+          dueAt = new Date(deadline.getTime() - task.daysBeforeDeadline * 24 * 60 * 60 * 1000);
+          if (dueAt.getTime() < Date.now()) dueAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        }
+        await db.execute(sql`
+          insert into tasks (organization_id, project_id, assigned_to_user_id, created_by_user_id, title, description, status, priority, due_at)
+          values (
+            ${auth.organization.id}::uuid,
+            ${projectId}::uuid,
+            ${access.assignedPmUserId}::uuid,
+            ${auth.user.id}::uuid,
+            ${task.title},
+            ${`Auto-created from the production checklist when the client approved "${access.projectName}".`},
+            'todo'::task_status,
+            ${task.priority}::task_priority,
+            ${dueAt ? dueAt.toISOString() : null}::timestamptz
+          )
+        `);
+      }
+      await auditWorkspaceEvent(auth, projectId, "production_tasks_created", `Production checklist (${PRODUCTION_TASK_TEMPLATE.length} tasks) created for the assigned PM`);
+      if (access.assignedPmUserId) {
+        await deliverNotification(
+          auth.organization.id,
+          access.assignedPmUserId,
+          "Production checklist ready",
+          `The production checklist for "${access.projectName}" was created after client approval.`,
+          "/pm/tasks",
+          "milestones",
+        );
+      }
+    }
+  } catch (error) {
+    console.error("approval automation: production tasks failed", error);
+  }
 }
 
 async function auditWorkspaceEvent(auth: AuthContext, projectId: string, type: string, message: string) {
@@ -1214,8 +1370,56 @@ function normalizeDoorPosition(value: unknown): "left" | "center" | "right" {
   return value === "left" || value === "right" ? value : "center";
 }
 
+function normalizeDoorSide(value: unknown): "front" | "back" | "left" | "right" {
+  return value === "back" || value === "left" || value === "right" ? value : "front";
+}
+
+function availableRoomWallSides(width: number, depth: number, x: number, z: number, boothWidth: number, boothDepth: number) {
+  const tolerance = 0.02;
+  return (["front", "back", "left", "right"] as const).filter((side) => {
+    if (side === "back") return z - depth / 2 > tolerance;
+    if (side === "front") return z + depth / 2 < boothDepth - tolerance;
+    if (side === "left") return x - width / 2 > tolerance;
+    return x + width / 2 < boothWidth - tolerance;
+  });
+}
+
 function normalizeDoorSwing(value: unknown): "left-in" | "right-in" | "left-out" | "right-out" {
   return value === "right-in" || value === "left-out" || value === "right-out" ? value : "left-in";
+}
+
+function normalizeRoomWallFinish(value: unknown): "white" | "frosted" | "glass" | "dark" {
+  return value === "frosted" || value === "glass" || value === "dark" ? value : "white";
+}
+
+function normalizeRoomFloorColor(value: unknown) {
+  const color = stringValue(value);
+  return color && /^#[0-9a-f]{6}$/i.test(color) ? color : "#1f2937";
+}
+
+function normalizeRoomDesignImageUrl(value: unknown) {
+  const imageUrl = stringValue(value);
+  if (!imageUrl || imageUrl.length > 512_000) return undefined;
+  return /^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i.test(imageUrl) ? imageUrl : undefined;
+}
+
+function normalizeRoomDesignOpacity(value: unknown) {
+  const opacity = numberValue(value);
+  return opacity === null ? undefined : clamp(opacity, 0.15, 1);
+}
+
+function normalizeRoomDesignWall(value: unknown): "front" | "back" | "left" | "right" {
+  return value === "front" || value === "left" || value === "right" ? value : "back";
+}
+
+function roomGraphicWall(value: unknown, hasDoor: boolean, doorSide: "front" | "back" | "left" | "right") {
+  const requested = normalizeRoomDesignWall(value);
+  if (!hasDoor || requested !== doorSide) return requested;
+  return (["back", "front", "left", "right"] as const).find((side) => side !== doorSide) ?? "back";
+}
+
+function normalizeRoomDesignFit(value: unknown): "cover" | "contain" | "stretch" {
+  return value === "contain" || value === "stretch" ? value : "cover";
 }
 
 function mmToM(value: number | null | undefined) {
@@ -1298,6 +1502,7 @@ interface WorkspaceState {
   placedItems: WorkspacePlacedItem[];
   rooms: WorkspaceRoom[];
   notes: WorkspaceNote[];
+  quoteTotalCents?: number;
 }
 
 interface WorkspacePlacedItem {
@@ -1314,6 +1519,10 @@ interface WorkspacePlacedItem {
   x: number;
   z: number;
   rotation: number;
+  rotationX?: number;
+  rotationY?: number;
+  rotationZ?: number;
+  locked?: boolean;
   kind: "furniture" | "light" | "structure" | "fascia" | "asset";
   shape?: string;
   modelUrl?: string;
@@ -1330,9 +1539,19 @@ interface WorkspaceRoom {
   z: number;
   hasDoor: boolean;
   hasCeiling: boolean;
+  doorSide: "front" | "back" | "left" | "right";
+  doorWidth: number;
   doorPosition: "left" | "center" | "right";
   doorSwing: "left-in" | "right-in" | "left-out" | "right-out";
   doorOpen: boolean;
+  wallFinish: "white" | "frosted" | "glass" | "dark";
+  floorColor: string;
+  locked: boolean;
+  designImageUrl?: string;
+  designImageName?: string;
+  designOpacity?: number;
+  designWall: "front" | "back" | "left" | "right";
+  designFit: "cover" | "contain" | "stretch";
 }
 
 interface WorkspaceNote {

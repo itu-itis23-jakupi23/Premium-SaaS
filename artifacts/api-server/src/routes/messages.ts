@@ -71,6 +71,10 @@ router.get("/platform/messages/attachments/:attachmentId", requireRoles(["admin"
 router.get("/platform/messages/:contactId", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const auth = req.auth!;
   const contactId = paramValue(req.params.contactId);
+  if (!isUuid(contactId)) {
+    res.status(404).json({ error: { code: "contact_not_found", message: "Contact was not found." } });
+    return;
+  }
   const scope = await resolveConversationScope(auth, contactId, parseMessageContext(req.query));
 
   if (!(await canContact(auth, contactId))) {
@@ -92,6 +96,10 @@ router.get("/platform/messages/:contactId", requireRoles(["admin", "owner", "chi
 router.post("/platform/messages/:contactId", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const auth = req.auth!;
   const contactId = paramValue(req.params.contactId);
+  if (!isUuid(contactId)) {
+    res.status(404).json({ error: { code: "contact_not_found", message: "Contact was not found." } });
+    return;
+  }
   const body = typeof req.body?.body === "string" ? req.body.body.trim() : "";
   const attachmentInput = parseMessageAttachments(req.body?.attachments);
   const scope = await resolveConversationScope(auth, contactId, parseMessageContext(req.body?.context));
@@ -111,7 +119,8 @@ router.post("/platform/messages/:contactId", requireRoles(["admin", "owner", "ch
     return;
   }
 
-  if (!(await canContact(auth, contactId))) {
+  const contactRole = await contactRoleFor(auth, contactId);
+  if (!contactRole) {
     res.status(404).json({ error: { code: "contact_not_found", message: "Contact was not found." } });
     return;
   }
@@ -163,7 +172,7 @@ router.post("/platform/messages/:contactId", requireRoles(["admin", "owner", "ch
     contactId,
     `New message from ${auth.user.name}`,
     scope.value.isScoped ? `Encrypted message about ${scope.value.exhibitionName}` : "Encrypted message",
-    auth.user.role === "pm" ? "/chief/messages" : "/pm/messages",
+    messageInboxForRole(contactRole),
     "system",
   );
 
@@ -406,10 +415,14 @@ async function getContacts(auth: AuthContext) {
 }
 
 async function canContact(auth: AuthContext, contactId: string) {
+  return !!(await contactRoleFor(auth, contactId));
+}
+
+async function contactRoleFor(auth: AuthContext, contactId: string) {
   const roleFilter = sql.join(messageContactRoles(auth.user.role).map((role) => sql`${role}`), sql`, `);
   const projectAccessFilter = messageContactProjectAccessFilter(auth);
-  const rows = await queryRows<{ id: string }>(sql`
-    select u.id::text
+  const rows = await queryRows<{ role: string }>(sql`
+    select m.role::text as role
     from memberships m
     join users u on u.id = m.user_id
     where m.organization_id = ${auth.organization.id}::uuid
@@ -422,7 +435,13 @@ async function canContact(auth: AuthContext, contactId: string) {
       and (${projectAccessFilter})
     limit 1
   `);
-  return !!rows[0];
+  return rows[0]?.role ?? null;
+}
+
+function messageInboxForRole(role: string) {
+  if (role === "client") return "/client/messages";
+  if (role === "pm") return "/pm/messages";
+  return "/chief/messages";
 }
 
 function messageContactRoles(role: string) {
@@ -502,13 +521,9 @@ async function resolveConversationScope(auth: AuthContext, contactId: string, in
     };
   }
 
-  const project = ["chief", "owner", "admin"].includes(auth.user.role)
-    ? input.projectId
-      ? await findOrganizationProjectById(auth.organization.id, input.projectId)
-      : await findOrganizationProjectByExhibition(auth.organization.id, input.exhibitionId ?? input.exhibitionName)
-    : input.projectId
-      ? await findScopedProjectById(auth.organization.id, auth.user.role === "pm" ? auth.user.id : contactId, input.projectId)
-      : await findScopedProjectByExhibition(auth.organization.id, auth.user.role === "pm" ? auth.user.id : contactId, input.exhibitionId ?? input.exhibitionName);
+  const project = input.projectId
+    ? await findAuthorizedProjectById(auth, contactId, input.projectId)
+    : await findAuthorizedProjectByExhibition(auth, contactId, input.exhibitionId ?? input.exhibitionName);
 
   if (!project) {
     return {
@@ -532,70 +547,58 @@ async function resolveConversationScope(auth: AuthContext, contactId: string, in
   };
 }
 
-async function findOrganizationProjectById(organizationId: string, projectId: string) {
+function projectParticipantFilter(userId: string) {
+  return sql`
+    p.assigned_pm_user_id = ${userId}::uuid
+    or exists (
+      select 1
+      from project_members member
+      where member.project_id = p.id
+        and member.user_id = ${userId}::uuid
+    )
+    or exists (
+      select 1
+      from clients client
+      join users participant on lower(participant.email) = lower(client.contact_email)
+      where client.id = p.client_id
+        and participant.id = ${userId}::uuid
+        and participant.deleted_at is null
+    )
+  `;
+}
+
+function projectConversationAccessFilter(auth: AuthContext, contactId: string) {
+  const contactParticipates = projectParticipantFilter(contactId);
+  if (["chief", "owner", "admin"].includes(auth.user.role)) return contactParticipates;
+  return sql`(${projectParticipantFilter(auth.user.id)}) and (${contactParticipates})`;
+}
+
+async function findAuthorizedProjectById(auth: AuthContext, contactId: string, projectId: string) {
+  if (!isUuid(projectId)) return null;
+  const accessFilter = projectConversationAccessFilter(auth, contactId);
   const rows = await queryRows<{ id: string; name: string; exhibitionName: string | null }>(sql`
-    select id::text, name, exhibition_name as "exhibitionName"
-    from projects
-    where organization_id = ${organizationId}::uuid
-      and id = ${projectId}::uuid
-      and deleted_at is null
+    select p.id::text, p.name, p.exhibition_name as "exhibitionName"
+    from projects p
+    where p.organization_id = ${auth.organization.id}::uuid
+      and p.id = ${projectId}::uuid
+      and p.deleted_at is null
+      and (${accessFilter})
     limit 1
   `);
   return rows[0] ?? null;
 }
 
-async function findOrganizationProjectByExhibition(organizationId: string, exhibition: string | null) {
+async function findAuthorizedProjectByExhibition(auth: AuthContext, contactId: string, exhibition: string | null) {
   if (!exhibition) return null;
   const requestedKey = scopeKey(exhibition);
+  const accessFilter = projectConversationAccessFilter(auth, contactId);
   const rows = await queryRows<{ id: string; name: string; exhibitionName: string | null }>(sql`
-    select id::text, name, exhibition_name as "exhibitionName"
-    from projects
-    where organization_id = ${organizationId}::uuid
-      and deleted_at is null
-    order by deadline_at nulls last, updated_at desc
-  `);
-  return rows.find((row) => scopeKey(row.exhibitionName ?? row.name) === requestedKey) ?? null;
-}
-
-async function findScopedProjectById(organizationId: string, pmUserId: string, projectId: string) {
-  const rows = await queryRows<{ id: string; name: string; exhibitionName: string | null }>(sql`
-    select id::text, name, exhibition_name as "exhibitionName"
-    from projects
-    where organization_id = ${organizationId}::uuid
-      and id = ${projectId}::uuid
-      and deleted_at is null
-      and (
-        assigned_pm_user_id = ${pmUserId}::uuid
-        or exists (
-          select 1
-          from project_members pm
-          where pm.project_id = projects.id
-            and pm.user_id = ${pmUserId}::uuid
-        )
-      )
-    limit 1
-  `);
-  return rows[0] ?? null;
-}
-
-async function findScopedProjectByExhibition(organizationId: string, pmUserId: string, exhibition: string | null) {
-  if (!exhibition) return null;
-  const requestedKey = scopeKey(exhibition);
-  const rows = await queryRows<{ id: string; name: string; exhibitionName: string | null }>(sql`
-    select id::text, name, exhibition_name as "exhibitionName"
-    from projects
-    where organization_id = ${organizationId}::uuid
-      and deleted_at is null
-      and (
-        assigned_pm_user_id = ${pmUserId}::uuid
-        or exists (
-          select 1
-          from project_members pm
-          where pm.project_id = projects.id
-            and pm.user_id = ${pmUserId}::uuid
-        )
-      )
-    order by deadline_at nulls last, updated_at desc
+    select p.id::text, p.name, p.exhibition_name as "exhibitionName"
+    from projects p
+    where p.organization_id = ${auth.organization.id}::uuid
+      and p.deleted_at is null
+      and (${accessFilter})
+    order by p.deadline_at nulls last, p.updated_at desc
   `);
   return rows.find((row) => scopeKey(row.exhibitionName ?? row.name) === requestedKey) ?? null;
 }
@@ -692,6 +695,10 @@ function formatRelative(value: string | null) {
 
 function paramValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value ?? "";
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 function parseMessageContext(value: unknown): MessageContextInput {
