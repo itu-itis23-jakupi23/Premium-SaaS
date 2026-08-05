@@ -121,16 +121,16 @@ try {
 
 function run(command, args, cwd, childEnv = process.env) {
   console.log(`\n> ${command} ${args.join(" ")}`);
-  const executable =
-    process.platform === "win32" && command === "pnpm" ? "pnpm.cmd" : command;
-  const result = spawnSync(executable, args, {
+  const result = spawnSync(command, args, {
     cwd,
     env: childEnv,
+    shell: process.platform === "win32" && command === "pnpm",
     stdio: "inherit",
   });
   if (result.status !== 0) {
+    const detail = result.error ? `: ${result.error.message}` : "";
     throw new Error(
-      `${command} ${args.join(" ")} failed with exit code ${result.status ?? "unknown"}.`,
+      `${command} ${args.join(" ")} failed with exit code ${result.status ?? "unknown"}${detail}.`,
     );
   }
 }
