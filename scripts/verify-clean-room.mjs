@@ -121,10 +121,11 @@ try {
 
 function run(command, args, cwd, childEnv = process.env) {
   console.log(`\n> ${command} ${args.join(" ")}`);
-  const result = spawnSync(command, args, {
+  const invocation = resolveInvocation(command, args);
+  const result = spawnSync(invocation.command, invocation.args, {
     cwd,
     env: childEnv,
-    shell: process.platform === "win32" && command === "pnpm",
+    shell: false,
     stdio: "inherit",
   });
   if (result.status !== 0) {
@@ -133,6 +134,18 @@ function run(command, args, cwd, childEnv = process.env) {
       `${command} ${args.join(" ")} failed with exit code ${result.status ?? "unknown"}${detail}.`,
     );
   }
+}
+
+function resolveInvocation(command, args) {
+  if (command !== "pnpm") return { command, args };
+
+  const pnpmCli = process.env.npm_execpath;
+  if (!pnpmCli) {
+    throw new Error(
+      "Unable to locate pnpm. Run this verifier through `pnpm run release:clean-room`.",
+    );
+  }
+  return { command: process.execPath, args: [pnpmCli, ...args] };
 }
 
 function capture(command, args, cwd) {

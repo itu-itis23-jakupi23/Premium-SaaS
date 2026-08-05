@@ -66,19 +66,13 @@ function quoteDatabase(value) {
 function run(command, args, options = {}) {
   const label = [command, ...args].join(" ");
   console.log(`\n> ${label}`);
-  const result =
-    process.platform === "win32"
-      ? spawnSync(label, {
-          cwd: options.cwd ?? root,
-          env: options.env ?? process.env,
-          shell: true,
-          stdio: "inherit",
-        })
-      : spawnSync(command, args, {
-          cwd: options.cwd ?? root,
-          env: options.env ?? process.env,
-          stdio: "inherit",
-        });
+  const invocation = resolveInvocation(command, args);
+  const result = spawnSync(invocation.command, invocation.args, {
+    cwd: options.cwd ?? root,
+    env: options.env ?? process.env,
+    shell: false,
+    stdio: "inherit",
+  });
   if (result.status !== 0)
     throw new Error(
       `${label} failed with exit code ${result.status ?? "unknown"}.`,
@@ -86,13 +80,25 @@ function run(command, args, options = {}) {
 }
 
 function start(command, args, options = {}) {
-  const useShell = options.shell ?? process.platform === "win32";
-  return spawn(command, args, {
+  const invocation = resolveInvocation(command, args);
+  return spawn(invocation.command, invocation.args, {
     cwd: options.cwd ?? root,
     env: options.env ?? process.env,
-    shell: useShell,
+    shell: options.shell ?? false,
     stdio: "inherit",
   });
+}
+
+function resolveInvocation(command, args) {
+  if (command !== "pnpm") return { command, args };
+
+  const pnpmCli = process.env.npm_execpath;
+  if (!pnpmCli) {
+    throw new Error(
+      "Unable to locate pnpm. Run this verifier through `pnpm run e2e:release`.",
+    );
+  }
+  return { command: process.execPath, args: [pnpmCli, ...args] };
 }
 
 async function waitFor(url, child, label) {
@@ -152,6 +158,10 @@ const serviceEnv = {
   VITE_USE_REAL_CORE: "true",
   VITE_USE_REAL_MESSAGES: "true",
 };
+const portalBuildEnv = {
+  ...serviceEnv,
+  NODE_ENV: "production",
+};
 
 try {
   await administrationPool.query(
@@ -165,6 +175,12 @@ try {
   if (process.env.PLAYWRIGHT_RELEASE_SKIP_BUILD !== "1") {
     run("pnpm", ["--filter", "@workspace/api-server", "run", "build"], {
       env: serviceEnv,
+    });
+    run("pnpm", ["--filter", "@workspace/ens-landing", "run", "build:staff"], {
+      env: portalBuildEnv,
+    });
+    run("pnpm", ["--filter", "@workspace/ens-landing", "run", "build:client"], {
+      env: portalBuildEnv,
     });
   }
 
@@ -183,6 +199,7 @@ try {
     [
       "exec",
       "vite",
+      "preview",
       "--config",
       "vite.config.ts",
       "--mode",
@@ -194,7 +211,7 @@ try {
     ],
     {
       cwd: landingDirectory,
-      env: serviceEnv,
+      env: { ...portalBuildEnv, PORT: staffPort },
     },
   );
   clientProcess = start(
@@ -202,6 +219,7 @@ try {
     [
       "exec",
       "vite",
+      "preview",
       "--config",
       "vite.config.ts",
       "--mode",
@@ -213,7 +231,7 @@ try {
     ],
     {
       cwd: landingDirectory,
-      env: serviceEnv,
+      env: { ...portalBuildEnv, PORT: clientPort },
     },
   );
   await Promise.all([

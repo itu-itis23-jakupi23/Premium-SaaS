@@ -44,6 +44,10 @@ export default defineConfig(async ({ mode }) => {
     outDir: path.resolve(import.meta.dirname, outDir),
     emptyOutDir: true,
     rollupOptions: {
+      input: {
+        index: path.resolve(import.meta.dirname, "index.html"),
+        "booth-render": path.resolve(import.meta.dirname, "booth-render.html"),
+      },
       // Radix UI packages ship without source maps. Suppress the cascade of
       // SOURCEMAP_ERROR warnings that Rollup emits when it tries to link
       // shadcn/ui component imports back to Radix internals.
