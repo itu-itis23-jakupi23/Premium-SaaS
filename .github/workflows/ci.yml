@@ -29,6 +29,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit production dependencies
+        run: pnpm run security:audit
+
+      - name: Scan repository for committed secrets
+        run: pnpm run security:secrets
+
       - name: Typecheck libraries
         run: pnpm run typecheck
 
@@ -94,16 +100,7 @@ jobs:
 
     env:
       DATABASE_URL: postgres://ens_e2e:ens_e2e_pass@localhost:5432/ens_e2e
-      NODE_ENV: development
-      PORT: 5000
-      AUTH_SECRET: e2e-test-secret-not-for-production
-      MESSAGE_ENCRYPTION_KEY: e2e-test-message-encryption-key-not-for-production
-      STAFF_SIGNUP_KEY: e2e-test-staff-key
-      APP_URL: http://localhost:5173
-      CORS_ORIGIN: http://localhost:5173
-      VITE_ORGANIZATION_SLUG: ens-demo-agency
-      VITE_API_BASE_URL: http://localhost:5000/api
-      VITE_USE_MOCK_API: "false"
+      ALLOW_DISPOSABLE_DATABASE_TEST: "1"
 
     steps:
       - uses: actions/checkout@v4
@@ -124,85 +121,8 @@ jobs:
         working-directory: artifacts/ens-landing
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Apply migrations
-        working-directory: lib/db
-        run: pnpm run migrate
-
-      - name: Build and start production api-server
-        working-directory: artifacts/api-server
-        run: |
-          pnpm run build
-          node --enable-source-maps dist/index.mjs > /tmp/e2e-api.out.log 2> /tmp/e2e-api.err.log &
-          for i in {1..30}; do
-            if curl -fsS http://localhost:5000/api/healthz/ready > /dev/null 2>&1; then break; fi
-            sleep 1
-          done
-          curl -fsS http://localhost:5000/api/healthz/ready || (cat /tmp/e2e-api.err.log; exit 1)
-
-      - name: Seed E2E accounts
-        run: |
-          set -euo pipefail
-
-          # Step 1: Chief signs up — creates the org; slugify("ENS Demo Agency") = "ens-demo-agency"
-          curl -fsS -X POST http://localhost:5000/api/auth/signup-staff \
-            -H 'content-type: application/json' \
-            -d '{"name":"E2E Chief","company":"ENS Demo Agency","email":"chief@demo.example","password":"EnsDev2026!","role":"chief","setupKey":"e2e-test-staff-key"}' \
-            | jq -e '.user.role' || { echo "chief signup failed"; cat /tmp/e2e-api.err.log; exit 1; }
-
-          # Step 2: Chief logs in — capture the session cookie from the response headers
-          curl -fsS -D /tmp/chief-login-hdrs.txt \
-            -X POST http://localhost:5000/api/auth/login \
-            -H 'content-type: application/json' \
-            -d '{"email":"chief@demo.example","password":"EnsDev2026!","organizationSlug":"ens-demo-agency"}' \
-            > /tmp/chief-login-body.json
-          CHIEF_COOKIE=$(grep -i 'ens_access' /tmp/chief-login-hdrs.txt | head -1 | sed 's/.*set-cookie: //i' | cut -d';' -f1 | tr -d '\r\n')
-          [ -n "$CHIEF_COOKIE" ] || { echo "chief login cookie missing"; cat /tmp/e2e-api.err.log; exit 1; }
-
-          # Step 3: Chief sends PM invitation — PM joins the same org via token
-          INV_TOKEN=$(curl -fsS \
-            -X POST http://localhost:5000/api/platform/managers/invitations \
-            -H 'content-type: application/json' \
-            -H "cookie: $CHIEF_COOKIE" \
-            -d '{"name":"E2E PM","email":"pm@demo.example"}' \
-            | jq -re '.invitation.token')
-          [ -n "$INV_TOKEN" ] || { echo "PM invitation token missing"; cat /tmp/e2e-api.err.log; exit 1; }
-
-          # Step 4: PM accepts invitation — creates account in the chief's org
-          curl -fsS -X POST http://localhost:5000/api/platform/managers/invitations/accept \
-            -H 'content-type: application/json' \
-            -d "{\"token\":\"$INV_TOKEN\",\"name\":\"E2E PM\",\"password\":\"EnsDev2026!\"}" \
-            | jq -e '.ok' || { echo "PM invitation acceptance failed"; cat /tmp/e2e-api.err.log; exit 1; }
-
-          # Step 5: Client signs up (must succeed — failure is a real error)
-          curl -fsS -X POST http://localhost:5000/api/auth/signup \
-            -H 'content-type: application/json' \
-            -d '{"name":"E2E Client","company":"E2E Client Co","exhibitionName":"E2E Expo 2026","boothSizeSqm":18,"preferredSystem":"Octanorm","city":"Istanbul","deadline":"2026-09-01","notes":"E2E test account","email":"client@demo.example","password":"EnsDev2026!","organizationSlug":"ens-demo-agency"}' \
-            | jq -e '.user.role' || { echo "client signup failed"; cat /tmp/e2e-api.err.log; exit 1; }
-
-      - name: Build and start Vite dev server
-        working-directory: artifacts/ens-landing
-        run: |
-          pnpm exec vite --config vite.config.ts --host 0.0.0.0 --port 5173 &
-          for i in {1..30}; do
-            if curl -fsS http://localhost:5173 > /dev/null 2>&1; then exit 0; fi
-            sleep 1
-          done
-          exit 1
-
-      - name: Run Playwright tests
-        working-directory: artifacts/ens-landing
-        env:
-          PLAYWRIGHT_BASE_URL: http://localhost:5173
-          PLAYWRIGHT_CLIENT_BASE_URL: http://localhost:5173
-          API_URL: http://localhost:5000
-          TEST_ORG_SLUG: ens-demo-agency
-          TEST_CHIEF_EMAIL: chief@demo.example
-          TEST_CHIEF_PASSWORD: EnsDev2026!
-          TEST_PM_EMAIL: pm@demo.example
-          TEST_PM_PASSWORD: EnsDev2026!
-          TEST_CLIENT_EMAIL: client@demo.example
-          TEST_CLIENT_PASSWORD: EnsDev2026!
-        run: pnpm run e2e
+      - name: Run isolated production Playwright release suite
+        run: pnpm run e2e:release
 
       - name: Upload Playwright report on failure
         if: failure()
@@ -223,7 +143,7 @@ jobs:
     # ship undetected.
     services:
       postgres:
-        image: postgres:17-alpine
+        image: postgres:16-alpine
         env:
           POSTGRES_DB: ens_ci
           POSTGRES_USER: ens_ci
@@ -238,8 +158,12 @@ jobs:
 
     env:
       DATABASE_URL: postgres://ens_ci:ens_ci_password@localhost:5432/ens_ci
+      # Exercise the production build against CI-local HTTP and storage. Strict
+      # cloud production configuration is covered by the env preflight tests.
+      DEPLOYMENT_ENV: local
       MESSAGE_ENCRYPTION_KEY: ci-test-message-encryption-key-not-for-production
       APP_URL: http://localhost:5173
+      CORS_ORIGIN: http://localhost:5173
 
     steps:
       - name: Checkout
@@ -259,6 +183,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install PostgreSQL backup tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-16
+
+      - name: Validate migration journal
+        run: pnpm run db:check-journal
+
+      - name: Verify clean and interrupted database migrations
+        run: pnpm run db:verify-migrations
+
       - name: Apply migrations to CI database
         working-directory: lib/db
         run: pnpm run migrate
@@ -277,6 +212,12 @@ jobs:
       - name: Build api-server
         working-directory: artifacts/api-server
         run: pnpm run build
+
+      - name: Verify durable uploads across API restart
+        env:
+          UPLOAD_PERSISTENCE_SKIP_BUILD: "1"
+          ALLOW_DISPOSABLE_DATABASE_TEST: "1"
+        run: pnpm run storage:verify-restart
 
       - name: Start api-server
         working-directory: artifacts/api-server
@@ -310,3 +251,8 @@ jobs:
             echo "--- api-server stderr ---"; cat ../api-server/api-server-ci.err.log
           fi
           exit $EXIT
+
+      - name: Verify database backup and restore
+        env:
+          ALLOW_DISPOSABLE_DATABASE_TEST: "1"
+        run: pnpm run db:verify-backup

@@ -1,53 +1,52 @@
 # PostgreSQL Database
 
-This app now uses a real PostgreSQL database through Drizzle.
+The app uses PostgreSQL through Drizzle ORM. The schema source of truth is
+`lib/db/src/schema/`; migrations live in `lib/db/migrations/`.
 
-## Local Database
+## Local development setup (canonical)
 
-Start any PostgreSQL server and create a database named `ens`, or use the included compose file:
+The local dev database is **`premium_saas`** on a locally installed PostgreSQL
+(any recent version; 16 is known-good). Connection values come from the root
+`.env` file:
 
-```powershell
-docker compose up -d postgres
+```
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/premium_saas
 ```
 
-Use this local connection string:
+The API server does **not** load `.env` files itself — `DATABASE_URL` must be
+present in the shell environment when you start it:
 
 ```powershell
-$env:DATABASE_URL="postgres://ens_app:ens_dev_password@localhost:5432/ens"
+$env:DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/premium_saas"
+pnpm --filter @workspace/api-server run dev:watch
 ```
 
-Apply the schema:
+If you prefer Docker instead of a native install, `docker-compose.dev.yml`
+starts only Postgres (it reads `POSTGRES_DB` / `POSTGRES_USER` /
+`POSTGRES_PASSWORD` from the environment or root `.env`):
 
 ```powershell
-pnpm run db:migrate
+docker compose -f docker-compose.dev.yml up -d
 ```
 
-For development-only schema sync without migration history:
+> Historical note: older docs referenced an `ens` database owned by an
+> `ens_app` role. That database may still exist locally but is **stale and
+> unused** — everything runs against `premium_saas`.
+
+## Apply the schema
 
 ```powershell
-pnpm run db:push
+pnpm run db:migrate     # migration history (preferred)
+pnpm run db:push        # dev-only direct schema sync
 ```
 
-If your local database already contains the older partial schema from a previous run, preserve and upgrade it with:
+## Seed demo accounts
 
 ```powershell
-$env:PGPASSWORD="ens_dev_password"
-& "C:\Program Files\PostgreSQL\16\bin\psql.exe" -h localhost -U ens_app -d ens -v ON_ERROR_STOP=1 -f .\lib\db\manual\upgrade-legacy-local.sql
+pnpm run db:seed
 ```
 
-## API Check
-
-After starting the API with `DATABASE_URL` set, verify the database:
-
-```powershell
-Invoke-WebRequest -UseBasicParsing http://localhost:5000/api/db/status
-```
-
-The response includes connection latency and row counts for the core SaaS tables.
-
-## Local Auth Accounts
-
-The local seed users are backed by PostgreSQL and use HttpOnly cookie sessions through the API:
+The seed is idempotent — safe to re-run; it upserts by email/slug. Accounts:
 
 | Role | Email | Password |
 | --- | --- | --- |
@@ -55,8 +54,41 @@ The local seed users are backed by PostgreSQL and use HttpOnly cookie sessions t
 | Project Manager | `pm@ens.test` | `EnsDev2026!` |
 | Client | `client@ens.test` | `EnsDev2026!` |
 
-Production must set a strong `AUTH_SECRET` and must not publish local test credentials.
+The staff portal (`:5174`) additionally asks for the company access code
+before showing the login form — locally that is `VITE_STAFF_ACCESS_CODE` in
+`artifacts/ens-landing/.env.staff`.
+
+Production must set a strong `AUTH_SECRET` and must not publish local test
+credentials.
+
+## Clean up e2e/smoke test data
+
+E2E and smoke runs create throwaway users (`*@example.com` with `smoke.`
+prefixes, `*@workflow.test`, `*@e2e.test`). Purge them with:
+
+```powershell
+pnpm run db:clean-test-data
+```
+
+The script only deletes rows whose email matches those test patterns (plus
+their memberships, sessions, and dependent rows) and prints a summary. Run it
+whenever the dev database accumulates junk.
+
+## Health check
+
+With the API running (`PORT` 5000):
+
+```powershell
+Invoke-WebRequest -UseBasicParsing http://localhost:5000/api/healthz/ready
+```
+
+`/api/db/status` returns connection latency and row counts but requires an
+authenticated session.
 
 ## Tables
 
-Core tables include organizations, users, memberships, sessions, invitations, clients, projects, project members, milestones, tasks, booth designs, booth versions, approvals, comments, documents, subscriptions, invoices, activity events, and notifications.
+Core tables: organizations, users, memberships, sessions, invitations,
+clients, projects, project members, milestones, tasks, booth designs, booth
+versions, approvals, comments, documents, direct conversations/messages,
+subscriptions, invoices, stripe webhook events, login rate limits, password
+reset tokens, activity events, and notifications.

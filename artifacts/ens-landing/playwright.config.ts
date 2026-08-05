@@ -10,7 +10,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: process.env.CI ? "github" : "list",
-  timeout: 30_000,
+  timeout: Number(process.env.PLAYWRIGHT_TEST_TIMEOUT ?? 30_000),
   expect: { timeout: 8_000 },
 
   use: {

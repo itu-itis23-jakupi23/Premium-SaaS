@@ -22,23 +22,25 @@ test.describe("Client workspace", () => {
     expect(realErrors).toHaveLength(0);
   });
 
-  test("client opens a locked view-only workspace", async ({ page }) => {
+  test("client opens a locked workspace while awaiting approval", async ({ page }) => {
     await page.goto(clientUrl("/client/workspace"));
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText(/view only/i).first()).toBeVisible();
-    await expect(page.getByText(/locked|restricted access/i).first()).toBeVisible();
-    await expect(page.locator("iframe").first()).toBeVisible();
+    // A not-yet-approved client is gated on every portal page — never a blank
+    // page and never the live editor.
+    await expect(page.getByRole("heading", { name: /pending approval/i })).toBeVisible();
+    await expect(page.getByText(/waiting for your agency/i).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /approve design|request changes/i })).toHaveCount(0);
   });
 
   test("pending client project stays non-approvable on direct portal access", async ({ page }) => {
     await page.goto(clientUrl("/client/projects"));
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText("Pending", { exact: true }).first()).toBeVisible();
-
-    // The workspace must be in exactly one of these defined states — never a blank page
-    await expect(page.getByRole("button", { name: /approve|accept/i })).toHaveCount(0);
+    // The approval gate covers the projects route too: no rows, no approval
+    // affordances anywhere on the page.
+    await expect(page.getByRole("heading", { name: /pending approval/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /approve design|accept/i })).toHaveCount(0);
   });
 });
 
@@ -50,6 +52,7 @@ test.describe("Client signup", () => {
     await expect(page).toHaveURL(/\/signup/);
 
     // The intake fields added in our last dev pass should be present
+    await expect(page.getByTestId("input-organization-code")).toBeVisible();
     await expect(page.getByLabel(/exhibition name|exhibition/i).first()).toBeVisible({ timeout: 5_000 });
     await expect(page.getByLabel(/booth size|size/i).first()).toBeVisible().catch(() => {
       // Some forms use placeholder text instead of explicit labels

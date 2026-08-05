@@ -3,6 +3,35 @@ import { clientUrl, grantStaffAccess, seedE2EAccounts, TEST_CREDS } from "./help
 
 // ── Login flow ──────────────────────────────────────────────────────────────
 
+test.describe("Staff onboarding", () => {
+  test.beforeEach(async ({ page }) => {
+    await grantStaffAccess(page);
+  });
+
+  test("PM signup requires a Chief invitation and never asks for a company name", async ({ page }) => {
+    await page.goto("/signup");
+
+    await expect(page.getByRole("heading", { name: "Join as a Project Manager" })).toBeVisible();
+    await expect(page.getByLabel("Invitation link or code")).toBeVisible();
+    await expect(page.getByLabel("Company")).toHaveCount(0);
+  });
+
+  test("Chief signup creates a new company", async ({ page }) => {
+    await page.goto("/signup");
+    await page.getByTestId("button-role-chief").click();
+
+    await expect(page.getByRole("heading", { name: "Create Chief Manager account" })).toBeVisible();
+    await expect(page.getByLabel("Company")).toBeVisible();
+  });
+
+  test("legacy invitation URLs open the public PM join route", async ({ page }) => {
+    await page.goto("/signup?invite=legacy-invitation-token");
+
+    await expect(page).toHaveURL(/\/pm\/join\?token=legacy-invitation-token$/);
+    await expect(page.getByText(/validating invitation|invitation/i).first()).toBeVisible();
+  });
+});
+
 test.describe("Authentication", () => {
   test.beforeEach(async ({ page }) => {
     await seedE2EAccounts(page);
@@ -29,14 +58,27 @@ test.describe("Authentication", () => {
     await expect(page.getByText(/project manager|pm|dashboard/i).first()).toBeVisible();
   });
 
+  test("PM calendar shows Chief-assigned exhibitions without unauthorized edit controls", async ({ page }) => {
+    await grantStaffAccess(page);
+    await page.goto("/login");
+    await page.getByTestId("input-email").fill(TEST_CREDS.pm.email);
+    await page.getByTestId("input-password").fill(TEST_CREDS.pm.password);
+    await page.getByTestId("button-login").click();
+    await page.waitForURL(/\/pm/);
+
+    await page.goto("/pm/calendar");
+    await expect(page.getByTestId("pm-calendar-assigned-only")).toBeVisible();
+    await expect(page.getByRole("button", { name: /add event|add to day/i })).toHaveCount(0);
+  });
+
   test("client login shows pending project before Chief assignment", async ({ page }) => {
     await page.goto(clientUrl("/login"));
     await page.getByTestId("input-email").fill(TEST_CREDS.client.email);
     await page.getByTestId("input-password").fill(TEST_CREDS.client.password);
     await page.getByTestId("button-login").click();
     await page.waitForURL(/\/client/);
-    await expect(page.getByText("Pending", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("Unassigned", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Waiting for Chief assignment", { exact: true })).toBeVisible();
+    await expect(page.getByText("Workspace locked until assignment", { exact: true })).toBeVisible();
   });
 
   test("wrong password shows an error", async ({ page }) => {

@@ -19,18 +19,23 @@ import { test, expect, type APIRequestContext, type Page } from "@playwright/tes
 import { API_URL } from "../playwright.config";
 import { clientUrl, grantStaffAccess, monitorPageFailures } from "./helpers";
 
-const ORG_SLUG = process.env.TEST_ORG_SLUG ?? "ens-demo-agency";
 const RUN = Date.now();
+const ORG_SLUG = process.env.TEST_ORG_SLUG ?? `ens-workflow-${RUN}`;
+const ORG_COMPANY = process.env.TEST_ORG_COMPANY ?? ORG_SLUG;
+const WORKFLOW_EXHIBITION = `Workflow Expo ${RUN}`;
+const WORKFLOW_PROJECT_NAME = `${WORKFLOW_EXHIBITION} - Workflow Co`;
 const CHIEF_EMAIL = process.env.TEST_CHIEF_EMAIL ?? `workflow.chief.${RUN}@workflow.test`;
 const CHIEF_PASSWORD = process.env.TEST_CHIEF_PASSWORD ?? "EnsDev2026!";
 const PM_EMAIL = process.env.TEST_PM_EMAIL ?? `workflow.pm.${RUN}@workflow.test`;
 const PM_PASSWORD = process.env.TEST_PM_PASSWORD ?? "EnsDev2026!";
+const STAFF_SIGNUP_KEY = process.env.STAFF_SIGNUP_KEY ?? "";
 
 let chiefCookie: string;
 let pmCookie: string;
 let clientCookie: string;
 let clientEmail: string;
 let projectId: string;
+let editorProjectId: string;
 let pmUserId: string;
 let uiMessageBody: string;
 const pageFailureAssertions = new WeakMap<Page, () => Promise<void>>();
@@ -61,6 +66,10 @@ async function apiPut(request: APIRequestContext, path: string, body: unknown, c
   return request.put(`${API_URL}/api${path}`, { data: body, headers: authHeaders(cookie) });
 }
 
+async function apiPatch(request: APIRequestContext, path: string, body: unknown, cookie?: string) {
+  return request.patch(`${API_URL}/api${path}`, { data: body, headers: authHeaders(cookie) });
+}
+
 async function apiGet(request: APIRequestContext, path: string, cookie: string) {
   return request.get(`${API_URL}/api${path}`, { headers: { cookie } });
 }
@@ -89,6 +98,7 @@ async function loginStaffPage(page: Page, email: string, password: string, targe
   await page.getByTestId("input-password").fill(password);
   await page.getByTestId("button-login").click();
   await page.waitForURL(target);
+  await page.waitForLoadState("networkidle");
 }
 
 async function loginClientPage(page: Page, email: string, password: string) {
@@ -152,6 +162,27 @@ const MINIMAL_WORKSPACE = {
   themeIdx: 0,
   carpetIdx: 0,
   placedItems: [],
+  rooms: [{
+    id: "workflow-storage-room",
+    name: "Workflow storage room",
+    width: 2,
+    depth: 1,
+    height: 2.5,
+    x: 4.5,
+    z: 1.5,
+    hasDoor: true,
+    hasCeiling: true,
+    doorSide: "left",
+    doorWidth: 0.75,
+    doorPosition: "center",
+    doorSwing: "left-in",
+    doorOpen: false,
+    wallFinish: "white",
+    floorColor: "#1f2937",
+    locked: false,
+    designWall: "right",
+    designFit: "contain",
+  }],
   notes: [],
 };
 
@@ -168,19 +199,12 @@ test.describe("Three-role workflow", () => {
   test.beforeAll(async ({ request }) => {
     await apiPostAllowExisting(request, "/auth/signup-staff", {
       name: "Workflow Chief",
-      company: "ENS Demo Agency",
+      company: ORG_COMPANY,
       email: CHIEF_EMAIL,
       password: CHIEF_PASSWORD,
       role: "chief",
       organizationSlug: ORG_SLUG,
-    });
-    await apiPostAllowExisting(request, "/auth/signup-staff", {
-      name: "Workflow PM",
-      company: "ENS Demo Agency",
-      email: PM_EMAIL,
-      password: PM_PASSWORD,
-      role: "pm",
-      organizationSlug: ORG_SLUG,
+      setupKey: STAFF_SIGNUP_KEY,
     });
 
     // 1. Sign in as chief
@@ -192,10 +216,30 @@ test.describe("Three-role workflow", () => {
     const chiefData = await chiefLogin.json();
     expect(chiefData.user.role).toBe("chief");
 
-    // 2. Sign in as PM
-    const pmLogin = await apiPost(request, "/auth/login", {
+    // 2. Chief invites the PM, then the PM activates and signs in.
+    let pmLogin = await apiPost(request, "/auth/login", {
       email: PM_EMAIL, password: PM_PASSWORD, organizationSlug: ORG_SLUG,
     });
+    if (!pmLogin.ok()) {
+      const invitationResponse = await apiPost(request, "/platform/managers/invitations", {
+        name: "Workflow PM",
+        email: PM_EMAIL,
+      }, chiefCookie);
+      expect(invitationResponse.ok(), `PM invite failed: ${await invitationResponse.text()}`).toBeTruthy();
+      const invitationData = await invitationResponse.json() as { invitation?: { token?: string } };
+      expect(invitationData.invitation?.token, "PM invite should return an activation token").toBeTruthy();
+
+      const acceptance = await apiPost(request, "/platform/managers/invitations/accept", {
+        token: invitationData.invitation!.token,
+        name: "Workflow PM",
+        password: PM_PASSWORD,
+      });
+      expect(acceptance.ok(), `PM invitation acceptance failed: ${await acceptance.text()}`).toBeTruthy();
+
+      pmLogin = await apiPost(request, "/auth/login", {
+        email: PM_EMAIL, password: PM_PASSWORD, organizationSlug: ORG_SLUG,
+      });
+    }
     expect(pmLogin.ok(), `PM login failed: ${await pmLogin.text()}`).toBeTruthy();
     pmCookie = extractCookie(pmLogin);
     const pmData = await pmLogin.json();
@@ -207,7 +251,7 @@ test.describe("Three-role workflow", () => {
     const clientSignup = await apiPost(request, "/auth/signup", {
       name: "Workflow Client",
       company: "Workflow Co",
-      exhibitionName: `Workflow Expo ${RUN}`,
+      exhibitionName: WORKFLOW_EXHIBITION,
       boothSizeSqm: 18,
       preferredSystem: "Octanorm",
       city: "Istanbul",
@@ -231,29 +275,31 @@ test.describe("Three-role workflow", () => {
     );
     expect(newClient, "new client should appear in client list").toBeTruthy();
 
-    const approveRes = await apiPut(
+    const approveRes = await apiPatch(
       request,
-      "/platform/managers/assignments",
+      `/platform/clients/${newClient.id}/approve`,
       {
-        clientAssignments: [{ clientId: newClient.id, managerId: pmUserId }],
-        projectAssignments: [],
-        cascadeClientProjects: true,
+        managerId: pmUserId,
+        confirmOverCapacity: true,
+        overrideReason: "Approved by the complete browser workflow",
+        note: "Approved and assigned by the complete browser workflow",
       },
       chiefCookie,
     );
-    expect(approveRes.ok(), `client assignment failed: ${await approveRes.text()}`).toBeTruthy();
+    expect(approveRes.ok(), `client approval failed: ${await approveRes.text()}`).toBeTruthy();
 
-    // 5. PM creates a project — "Workflow Co" matches the client record by company_name
-    const projectRes = await apiPost(request, "/platform/projects", {
-      name: `Workflow Project ${RUN}`,
-      client: "Workflow Co",
-      system: "octanorm",
-      widthM: 6,
-      depthM: 3,
-      deadline: "2026-10-01",
-    }, pmCookie);
-    expect(projectRes.ok(), `project creation failed: ${await projectRes.text()}`).toBeTruthy();
-    const { project } = await projectRes.json();
+    // 5. Approval creates the canonical intake project and assigns it to the PM.
+    const projectsRes = await apiGet(request, "/platform/projects?limit=100", pmCookie);
+    expect(projectsRes.ok(), `project list failed: ${await projectsRes.text()}`).toBeTruthy();
+    const projectsPayload = await projectsRes.json() as {
+      projects: Array<{ id: string; name: string; clientId?: string }>;
+    };
+    const project = projectsPayload.projects.find((candidate) => (
+      candidate.name === WORKFLOW_PROJECT_NAME || candidate.clientId === newClient.id
+    ));
+    if (!project) {
+      throw new Error(`Canonical intake project was not created for ${newClient.id}`);
+    }
     projectId = project.id;
     expect(projectId).toBeTruthy();
 
@@ -324,6 +370,39 @@ test.describe("Three-role workflow", () => {
     );
     expect(approveWorkspaceRes.ok(), `client workspace approval failed: ${await approveWorkspaceRes.text()}`).toBeTruthy();
 
+    // Keep editor interaction tests isolated from the approved client version.
+    // Saving a UI regression fixture must never alter the lifecycle under test.
+    const editorProjectRes = await apiPost(request, "/platform/projects", {
+      name: `Workspace Editor ${RUN}`,
+      client: "Workflow Co",
+      system: "octanorm",
+      widthM: 6,
+      depthM: 3,
+      deadline: "2026-10-02",
+    }, pmCookie);
+    expect(
+      editorProjectRes.ok(),
+      `editor project creation failed: ${await editorProjectRes.text()}`,
+    ).toBeTruthy();
+    editorProjectId = (await editorProjectRes.json()).project.id;
+
+    const editorDraftRes = await apiPut(
+      request,
+      `/platform/projects/${editorProjectId}/workspace`,
+      {
+        workspace: {
+          ...MINIMAL_WORKSPACE,
+          booth: { ...MINIMAL_WORKSPACE.booth, companyName: "Workspace Editor" },
+        },
+        title: "Editor regression draft",
+      },
+      pmCookie,
+    );
+    expect(
+      editorDraftRes.ok(),
+      `editor workspace save failed: ${await editorDraftRes.text()}`,
+    ).toBeTruthy();
+
     // 9. Client sends a message to PM (client→PM is the only allowed direction)
     const attachmentBytes = Buffer.from(`workflow attachment ${RUN}`, "utf8");
     const uploadRes = await apiUpload(
@@ -389,7 +468,11 @@ test.describe("Three-role workflow", () => {
 
     await page.goto("/chief/clients");
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText(`Workflow Project ${RUN}`, { exact: true })).toBeVisible({ timeout: 10_000 });
+    const clientRow = page.getByRole("row").filter({ hasText: "Workflow Co" });
+    await expect(clientRow.getByText(WORKFLOW_EXHIBITION, { exact: true })).toBeVisible({ timeout: 10_000 });
+    // The Assigned PM cell renders avatar initials next to the name, so match
+    // on cell content rather than an exact standalone text node.
+    await expect(clientRow).toContainText("Workflow PM");
   });
 
   test("PM dashboard shows the created project", async ({ page }) => {
@@ -409,11 +492,147 @@ test.describe("Three-role workflow", () => {
     await expectBoothRendererHealthy(page, "PM workspace");
   });
 
+  test("PM workspace currency switch updates prices and persists after reload", async ({ page }) => {
+    await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
+    await page.goto(`/pm/workspace?projectId=${editorProjectId}`);
+    await page.waitForLoadState("networkidle");
+    await expectBoothRendererHealthy(page, "PM currency workspace");
+
+    const currency = page.getByLabel("Display currency");
+    await expect(currency).toHaveValue("USD");
+    await currency.selectOption("EUR");
+    await expect(currency).toHaveValue("EUR");
+    await expect(page.getByText(/^EUR \d[\d,]*$/).last()).toBeVisible();
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("ens-display-currency"))).toBe("EUR");
+
+    await page.reload({ waitUntil: "networkidle" });
+    await expectBoothRendererHealthy(page, "PM currency workspace after reload");
+    await expect(page.getByLabel("Display currency")).toHaveValue("EUR");
+    await expect(page.getByText(/^EUR \d[\d,]*$/).last()).toBeVisible();
+  });
+
+  test("PM drags catalogue furniture onto a valid floor position and can undo it", async ({ page }) => {
+    await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
+    await page.goto(`/pm/workspace?projectId=${editorProjectId}`);
+    await page.waitForLoadState("networkidle");
+    await expectBoothRendererHealthy(page, "PM catalogue drag workspace");
+
+    const source = page.locator('[data-catalog-item-id="sedef-149"]');
+    await source.scrollIntoViewIfNeeded();
+    await expect(source).toHaveAttribute("data-catalog-draggable", "true");
+
+    const sourceBox = await source.boundingBox();
+    const iframe = page.locator('iframe[title="Booth Renderer"]');
+    const iframeBox = await iframe.boundingBox();
+    expect(sourceBox, "catalogue card should have a screen position").toBeTruthy();
+    expect(iframeBox, "renderer iframe should have a screen position").toBeTruthy();
+
+    const frame = page.frameLocator('iframe[title="Booth Renderer"]');
+    const floorPoint = await frame.locator("body").evaluate(() => {
+      const rendererWindow = window as typeof window & {
+        project: (point: number[]) => { x: number; y: number } | null;
+      };
+      const svg = document.getElementById("scene") as SVGSVGElement;
+      const projected = rendererWindow.project([-1.5, 0, 1.5]);
+      if (!projected) throw new Error("Expected floor point to project into the renderer");
+      const point = svg.createSVGPoint();
+      point.x = projected.x;
+      point.y = projected.y;
+      const client = point.matrixTransform(svg.getScreenCTM()!);
+      const rect = svg.getBoundingClientRect();
+      return { x: client.x - rect.left, y: client.y - rect.top };
+    });
+
+    await page.mouse.move(sourceBox!.x + sourceBox!.width / 2, sourceBox!.y + sourceBox!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(sourceBox!.x + sourceBox!.width / 2 + 8, sourceBox!.y + sourceBox!.height / 2 + 8, { steps: 3 });
+    await page.mouse.move(iframeBox!.x + floorPoint.x, iframeBox!.y + floorPoint.y, { steps: 16 });
+    await expect(page.locator('[data-catalog-drop-zone="true"]')).toBeVisible();
+    await page.mouse.up();
+
+    await expect.poll(async () => frame.locator("body").evaluate(() => {
+      const state = (window as typeof window & { __pendingGlbState?: { placedItems?: Array<{ catalogId?: string }> } }).__pendingGlbState;
+      return state?.placedItems?.filter(item => item.catalogId === "sedef-149").length ?? 0;
+    })).toBe(1);
+
+    await page.getByTitle(/Undo \(Ctrl\+Z\)/).click();
+    await expect.poll(async () => frame.locator("body").evaluate(() => {
+      const state = (window as typeof window & { __pendingGlbState?: { placedItems?: Array<{ catalogId?: string }> } }).__pendingGlbState;
+      return state?.placedItems?.filter(item => item.catalogId === "sedef-149").length ?? 0;
+    })).toBe(0);
+  });
+
+  test("PM furniture deletion clears Three.js state and persists after reload", async ({ page, request }) => {
+    await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
+    await page.goto(`/pm/workspace?projectId=${editorProjectId}`);
+    await page.waitForLoadState("networkidle");
+    await expectBoothRendererHealthy(page, "PM deletion workspace");
+
+    const source = page.locator('[data-catalog-item-id="sedef-149"]');
+    await source.scrollIntoViewIfNeeded();
+    await source.click();
+
+    const frame = page.frameLocator('iframe[title="Booth Renderer"]');
+    const readPlacedItemId = () => frame.locator("body").evaluate(() => {
+      const state = (window as typeof window & {
+        __pendingGlbState?: { placedItems?: Array<{ id?: string; catalogId?: string }> };
+      }).__pendingGlbState;
+      return state?.placedItems?.find(item => item.catalogId === "sedef-149")?.id ?? "";
+    });
+    await expect.poll(readPlacedItemId).not.toBe("");
+    const placedItemId = await readPlacedItemId();
+
+    const removeButton = page.locator(`[data-workspace-remove-item="${placedItemId}"]`);
+    await expect(removeButton).toBeVisible();
+    await removeButton.click();
+
+    await expect.poll(async () => frame.locator("body").evaluate((id) => {
+      const rendererWindow = window as typeof window & {
+        __pendingGlbState?: { placedItems?: Array<{ id?: string }> };
+        __glbVisibleItems?: Set<string>;
+        __glbPhysicalBounds?: Map<string, unknown>;
+      };
+      return {
+        inWorkspace: rendererWindow.__pendingGlbState?.placedItems?.some(item => item.id === id) ?? false,
+        visible: rendererWindow.__glbVisibleItems?.has(id) ?? false,
+        bounds: rendererWindow.__glbPhysicalBounds?.has(id) ?? false,
+      };
+    }, placedItemId)).toEqual({ inWorkspace: false, visible: false, bounds: false });
+
+    await expect(page.getByText("UNSAVED CHANGES", { exact: true })).toBeVisible();
+    await expect(page.getByText("SAVED", { exact: true })).toBeVisible({ timeout: 10_000 });
+
+    const savedRes = await apiGet(
+      request,
+      `/platform/projects/${editorProjectId}/workspace`,
+      pmCookie,
+    );
+    expect(savedRes.ok(), `saved editor workspace load failed: ${await savedRes.text()}`).toBeTruthy();
+    const saved = await savedRes.json();
+    expect(
+      saved.workspace?.placedItems?.some((item: { id?: string }) => item.id === placedItemId) ?? false,
+      "deleted furniture must not remain in PostgreSQL",
+    ).toBe(false);
+
+    await page.reload({ waitUntil: "networkidle" });
+    await expectBoothRendererHealthy(page, "PM deletion workspace after reload");
+    await expect.poll(async () => frame.locator("body").evaluate((id) => {
+      const rendererWindow = window as typeof window & {
+        __pendingGlbState?: { placedItems?: Array<{ id?: string }> };
+        __glbVisibleItems?: Set<string>;
+      };
+      return {
+        inWorkspace: rendererWindow.__pendingGlbState?.placedItems?.some(item => item.id === id) ?? false,
+        visible: rendererWindow.__glbVisibleItems?.has(id) ?? false,
+      };
+    }, placedItemId)).toEqual({ inWorkspace: false, visible: false });
+  });
+
   test("renderer re-initializes after navigation away and back", async ({ page }) => {
     await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
 
     // First load
-    await page.goto(`/pm/workspace?projectId=${projectId}`);
+    await page.goto(`/pm/workspace?projectId=${editorProjectId}`);
     await page.waitForLoadState("networkidle");
     await expectBoothRendererHealthy(page, "PM workspace first load");
 
@@ -423,7 +642,7 @@ test.describe("Three-role workflow", () => {
     await expect(page.locator('iframe[title="Booth Renderer"]')).toHaveCount(0);
 
     // Navigate back — renderer must re-initialize without error
-    await page.goto(`/pm/workspace?projectId=${projectId}`);
+    await page.goto(`/pm/workspace?projectId=${editorProjectId}`);
     await page.waitForLoadState("networkidle");
     await expectBoothRendererHealthy(page, "PM workspace reload");
   });
@@ -437,6 +656,16 @@ test.describe("Three-role workflow", () => {
     expect(body.workspace?.booth?.depth, "booth depth should be 3m").toBe(3);
     expect(body.workspace?.booth?.companyName, "company name should match revised submission").toBe("Workflow Co Revised");
     expect(body.workspace?.booth?.system, "booth system should be octanorm").toBe("octanorm");
+    expect(body.workspace?.rooms, "configured room should survive draft, submit, revision, and approval").toEqual([
+      expect.objectContaining({
+        id: "workflow-storage-room",
+        doorSide: "left",
+        doorWidth: 0.75,
+        hasCeiling: true,
+        designWall: "right",
+        designFit: "contain",
+      }),
+    ]);
     // Project should now be in approved state after client approved it
     expect(body.project?.status, "project status after approval").toMatch(/approved/i);
   });
@@ -457,6 +686,33 @@ test.describe("Three-role workflow", () => {
     await page.waitForLoadState("networkidle");
     await page.getByRole("textbox", { name: /search messages/i }).fill(PM_EMAIL);
     await page.getByRole("listitem").filter({ hasText: uiMessageBody }).click();
-    await expect(page.getByText(uiMessageBody, { exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByLabel("Message thread").getByText(uiMessageBody, { exact: true }),
+    ).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("PM messages page shows the exact project conversation", async ({ page }) => {
+    await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
+    await page.goto("/pm/messages");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByText(WORKFLOW_EXHIBITION, { exact: true }).click();
+    await page.getByText("Workflow Client", { exact: true }).last().click();
+    await expect(
+      page.getByLabel("Message thread").getByText(uiMessageBody, { exact: true }),
+    ).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("Chief message thread exposes an accessible live conversation", async ({ page }) => {
+    await loginStaffPage(page, CHIEF_EMAIL, CHIEF_PASSWORD, /\/chief/);
+    await page.goto("/chief/messages");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByRole("button", { name: WORKFLOW_EXHIBITION, exact: true }).click();
+    await page.getByRole("button", { name: /^Project Managers/ }).click();
+    await page.getByRole("button", { name: "Workflow PM", exact: true }).click();
+    await expect(page.getByRole("log", { name: "Message thread" })).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });

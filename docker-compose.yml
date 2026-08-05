@@ -4,15 +4,16 @@ services:
     container_name: ens-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
-      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: "${POSTGRES_DB:?POSTGRES_DB must be set}"
+      POSTGRES_USER: "${POSTGRES_USER:?POSTGRES_USER must be set}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}"
     ports:
       - "5432:5432"
     volumes:
       - ens_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      test:
+        ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,25 +29,33 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
+      # This Compose file is a single-host local profile. Real deployments must
+      # use DEPLOYMENT_ENV=production and satisfy the strict startup preflight.
+      DEPLOYMENT_ENV: local
       PORT: "5000"
-      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set, for example postgres://user:password@postgres:5432/db}
-      APP_URL: http://localhost
-      CORS_ORIGIN: http://localhost
-      COOKIE_SECURE: ${COOKIE_SECURE:-false}
-      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET must be set — generate with: openssl rand -base64 64}
-      MESSAGE_ENCRYPTION_KEY: ${MESSAGE_ENCRYPTION_KEY:?MESSAGE_ENCRYPTION_KEY must be set and kept stable}
-      STAFF_SIGNUP_KEY: ${STAFF_SIGNUP_KEY:?STAFF_SIGNUP_KEY must be set to gate staff/chief signup}
-      RESEND_API_KEY: ${RESEND_API_KEY:-}
-      RESEND_FROM: ${RESEND_FROM:-ENS Agency <noreply@ens.example.com>}
-      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
+      DATABASE_URL: "${DATABASE_URL:?DATABASE_URL must be set, for example postgres://user:password@postgres:5432/db}"
+      APP_URL: "http://localhost"
+      CORS_ORIGIN: "http://localhost"
+      COOKIE_SECURE: "${COOKIE_SECURE:-false}"
+      AUTH_SECRET: "${AUTH_SECRET:?AUTH_SECRET must be set - generate with openssl rand -base64 64}"
+      MESSAGE_ENCRYPTION_KEY: "${MESSAGE_ENCRYPTION_KEY:?MESSAGE_ENCRYPTION_KEY must be set and kept stable}"
+      STAFF_SIGNUP_KEY: "${STAFF_SIGNUP_KEY:?STAFF_SIGNUP_KEY must be set to gate staff/chief signup}"
+      RESEND_API_KEY: "${RESEND_API_KEY:-}"
+      RESEND_FROM: "${RESEND_FROM:-ENS Agency <noreply@ens.example.com>}"
+      SEED_DEMO_DATA: "${SEED_DEMO_DATA:-false}"
       DOCUMENT_STORAGE_DIR: /app/data/documents
       MESSAGE_ATTACHMENT_DIR: /app/data/message-attachments
+      WORKSPACE_ASSET_DIR: /app/data/workspace-assets
     volumes:
       - ens_api_data:/app/data
     ports:
       - "5000:5000"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/api/healthz/ready || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:5000/api/healthz/ready || exit 1",
+        ]
       interval: 15s
       timeout: 5s
       start_period: 30s

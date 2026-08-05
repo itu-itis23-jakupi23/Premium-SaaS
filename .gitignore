@@ -44,6 +44,11 @@ testem.log
 *.out.log
 *.err.log
 artifacts/ens-landing/.dev-data/
+artifacts/ens-landing/test-results/
+artifacts/ens-landing/playwright-report/
+artifacts/ens-landing/_tmp-*.mjs
+artifacts/api-server/data/
+/data/
 /typings
 
 # System Files
@@ -56,3 +61,4 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+.release-evidence/

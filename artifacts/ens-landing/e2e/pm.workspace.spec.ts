@@ -44,8 +44,8 @@ test.describe("PM workspace", () => {
     await page.goto("/pm/messages");
     await expect(page).toHaveURL(/\/pm\/messages/);
     await page.waitForLoadState("networkidle");
-    await expect(
-      page.getByText("No assigned projects. Messages will use a general thread.", { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByText("General", { exact: true })).toBeVisible();
+    await expect(page.getByText("Chief", { exact: true })).toBeVisible();
+    await expect(page.getByText("Select an exhibition", { exact: true }).last()).toBeVisible();
   });
 });

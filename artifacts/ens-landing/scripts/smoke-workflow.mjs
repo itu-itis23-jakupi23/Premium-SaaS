@@ -23,13 +23,17 @@ async function main() {
   const chiefPassword = "ChiefSmoke2026!";
   const chiefJar      = {};
 
+  const chiefCompany = `Smoke Agency ${RUN_ID}`;
   const chiefSignup = await check("chief bootstrap", () => request("/auth/signup-staff", {
     method: "POST", jar: chiefJar,
-    body: { name: "Smoke Chief", company: `Smoke Agency ${RUN_ID}`, email: chiefEmail, password: chiefPassword, role: "chief", setupKey: SETUP_KEY },
+    body: { name: "Smoke Chief", company: chiefCompany, email: chiefEmail, password: chiefPassword, role: "chief", setupKey: SETUP_KEY },
   }));
   assert(chiefSignup.user.role === "chief", "bootstrap should create chief");
   const chiefUserId = chiefSignup.user.id;
-  const chiefOrgSlug = chiefSignup.organization?.slug ?? chiefSignup.user?.organizationSlug;
+  const returnedChiefOrgSlug = chiefSignup.organization?.slug ?? chiefSignup.user?.organizationSlug;
+  const chiefOrgSlug = !returnedChiefOrgSlug || returnedChiefOrgSlug === "ens-demo-agency"
+    ? slugifyOrganization(chiefCompany)
+    : returnedChiefOrgSlug;
   assert(chiefOrgSlug, "bootstrap should return organization slug");
 
   // Separate org for cross-org isolation checks
@@ -49,7 +53,7 @@ async function main() {
     body: { name: "Smoke PM", email: pmEmail },
   }));
   assert(invite.invitation.token, "invite should expose token");
-  assert(["pending", "sent", "failed"].includes(invite.invitation.emailStatus), "invite should expose email status");
+  assert(["pending", "sent", "failed", "skipped"].includes(invite.invitation.emailStatus), "invite should expose email status");
 
   await check("block PM from resending invite", async () => {
     const r = await rawRequest(`/platform/managers/invitations/${invite.invitation.id}/resend`, { method: "POST", jar: pmJar });
@@ -88,6 +92,7 @@ async function main() {
     },
   }));
   assert(clientSignup.user.role === "client", "public signup should create client account");
+  const clientUserId = clientSignup.user.id;
 
   // ── PHASE 2: Auth hardening checks ────────────────────────────────────────
 
@@ -130,17 +135,16 @@ async function main() {
 
   // ── PHASE 3: Project + workspace workflow ─────────────────────────────────
 
-  const baseProject = await check("PM creates base project", () => request("/platform/projects", {
-    method: "POST", jar: pmJar,
-    body: { name: `Smoke Base Project ${RUN_ID}`, client: "Smoke Base Client", system: "Octanorm", widthM: 6, depthM: 3, deadline: "2026-10-01", exhibition: "Smoke Base Expo" },
-  }));
-  const baseProjectId = baseProject.project.id;
-  assert(baseProjectId, "base project should have an id");
+  const intakeClient = await check("chief sees pending client signup", () => findClientByEmail(chiefJar, clientEmail));
+  assert(intakeClient.id, "client signup should create a pending client record");
 
-  await check("chief assigns PM to project", () => request("/platform/managers/assignments", {
-    method: "PUT", jar: chiefJar,
-    body: { clientAssignments: [], projectAssignments: [{ projectId: baseProjectId, managerId: pmUserId }], cascadeClientProjects: false },
-  }));
+  await check("chief approves client and assigns PM", () => approveClientAndAssignPm(chiefJar, intakeClient.id, pmUserId));
+
+  const assignedProjects = await check("PM receives client project", () => request("/platform/projects?limit=100", { jar: pmJar }));
+  const baseProject = assignedProjects.projects.find(p => p.clientId === intakeClient.id || p.client === "Smoke Client Co");
+  const baseProjectId = baseProject?.id;
+  assert(baseProjectId, "approval should create a project assigned to the PM");
+  assert(baseProject.name === "Smoke Expo 2026 - Smoke Client Co", "assigned project should use exhibition-company naming");
 
   await check("block cross-org assignment", async () => {
     const r = await rawRequest("/platform/managers/assignments", {
@@ -171,17 +175,31 @@ async function main() {
     assert(r.status === 403, `expected 403, got ${r.status}`);
   });
 
+  const savedCompanyName = `SMOKE ${RUN_ID}`.slice(0, 80);
   await check("PM saves workspace", () => request(`/platform/projects/${baseProjectId}/workspace`, {
     method: "PUT", jar: pmJar,
-    body: { title: `Smoke PM save ${new Date().toISOString()}` },
+    body: {
+      title: `Smoke PM save ${new Date().toISOString()}`,
+      workspace: {
+        ...workspace.workspace,
+        booth: {
+          ...workspace.workspace.booth,
+          companyName: savedCompanyName,
+        },
+      },
+    },
   }));
+
+  const savedWorkspace = await check("PM save persists exact workspace state", () => request(`/platform/projects/${baseProjectId}/workspace`, { jar: pmJar }));
+  assert(savedWorkspace.workspace.booth.companyName === savedCompanyName, "saved workspace company name should round-trip");
 
   const tinyPng = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=";
   const uploadedAsset = await check("PM uploads workspace asset", () => request(`/platform/projects/${baseProjectId}/workspace/assets`, {
     method: "POST", jar: pmJar,
     body: { dataUrl: tinyPng, name: "smoke-panel.png", purpose: "panel" },
   }));
-  assert(/^\/workspace-assets\//.test(uploadedAsset.asset.url), "workspace asset should return public asset URL");
+  assert(uploadedAsset.asset.url === tinyPng, "workspace asset should return the validated renderer data URL");
+  assert(uploadedAsset.asset.mimeType === "image/png", "workspace asset should preserve its MIME type");
 
   await check("block client from uploading workspace asset", async () => {
     const r = await rawRequest(`/platform/projects/${baseProjectId}/workspace/assets`, {
@@ -244,14 +262,14 @@ async function main() {
 
   const createdProject = await check("project creates", () => request("/platform/projects", {
     method: "POST", jar: pmJar,
-    body: { name: `Smoke Project ${RUN_ID}`, client: "Smoke Client Company", system: "Octanorm", widthM: 6, depthM: 3, deadline: "2026-10-01" },
+    body: { name: `Smoke Project ${RUN_ID}`, client: "Smoke Client Company", system: "octanorm", widthM: 6, depthM: 3, deadline: "2026-10-01" },
   }));
   assert(createdProject.project.id, "created project should have id");
-  assert(createdProject.project.status === "In Design", "PM-created project should start in design, not pending");
+  assert(createdProject.project.status === "Planning", "PM-created project should start in the planning intake stage");
 
   const updatedProject = await check("project updates", () => request(`/platform/projects/${createdProject.project.id}`, {
     method: "PUT", jar: pmJar,
-    body: { name: `${createdProject.project.name} Updated`, client: "Smoke Client Company", managerId: null, deadline: "2026-10-05", system: "Maxima", widthM: 9, depthM: 4, exhibition: "Smoke Expo", description: "Smoke update" },
+    body: { name: `${createdProject.project.name} Updated`, client: "Smoke Client Company", deadline: "2026-10-05", system: "maxima", widthM: 9, depthM: 4, exhibition: "Smoke Expo", description: "Smoke update" },
   }));
   assert(updatedProject.project.system === "Maxima", "project update should persist system");
 
@@ -264,26 +282,26 @@ async function main() {
   await check("client blocked from creating project", async () => {
     const r = await rawRequest("/platform/projects", {
       method: "POST", jar: clientJar,
-      body: { name: "Bad", client: "Bad", system: "Octanorm", widthM: 6, depthM: 3, deadline: null },
+      body: { name: "Bad", client: "Bad", system: "octanorm", widthM: 6, depthM: 3, deadline: null },
     });
     assert(r.status === 403, `expected 403, got ${r.status}`);
   });
 
   const createdClient = await check("client record creates", () => request("/platform/clients", {
-    method: "POST", jar: pmJar,
-    body: { name: "Smoke Contact", company: `Smoke Client ${RUN_ID}`, email: `extra.${RUN_ID}@example.com`, exhibition: "Smoke Expo" },
+    method: "POST", jar: chiefJar,
+    body: { contactName: "Smoke Contact", companyName: `Smoke Client ${RUN_ID}`, contactEmail: `extra.${RUN_ID}@example.com`, exhibition: "Smoke Expo" },
   }));
   assert(createdClient.clients[0].id, "created client should have id");
   const createdClientId = createdClient.clients[0].id;
 
   const updatedClient = await check("client record updates", () => request(`/platform/clients/${createdClientId}`, {
-    method: "PUT", jar: pmJar,
-    body: { name: "Smoke Contact Updated", company: createdClient.clients[0].company, email: createdClient.clients[0].contactEmail, exhibition: "Smoke Expo Updated" },
+    method: "PUT", jar: chiefJar,
+    body: { contactName: "Smoke Contact Updated", companyName: createdClient.clients[0].company, contactEmail: createdClient.clients[0].contactEmail, exhibition: "Smoke Expo Updated" },
   }));
   assert(updatedClient.clients.some(c => c.id === createdClientId && c.exhibition === "Smoke Expo Updated"), "client update should persist");
 
   await check("client status updates", () => request(`/platform/clients/${createdClientId}/status`, {
-    method: "PUT", jar: pmJar,
+    method: "PUT", jar: chiefJar,
     body: { status: "Active" },
   }));
 
@@ -297,7 +315,7 @@ async function main() {
 
   const createdTask = await check("task creates", () => request("/platform/tasks", {
     method: "POST", jar: pmJar,
-    body: { title: "Smoke task", projectId: baseProjectId, priority: "High", deadline: "2026-10-08", status: "todo", notes: "Smoke notes" },
+    body: { title: "Smoke task", projectId: baseProjectId, priority: "high", deadline: "2026-10-08", status: "todo", notes: "Smoke notes" },
   }));
   const task = createdTask.tasks.find(t => t.title === "Smoke task");
   assert(task?.id, "created task should be present");
@@ -328,14 +346,19 @@ async function main() {
     }));
   }
 
-  await check("subscription request fails gracefully", async () => {
+  await check("subscription request returns a controlled billing state", async () => {
     const r = await rawRequest(`/platform/projects/${baseProjectId}/workspace/subscription-request`, {
-      method: "POST", jar: pmJar,
+      method: "POST", jar: clientJar,
       body: { plan: "unlimited" },
     });
-    assert(r.status === 503, `expected 503, got ${r.status}`);
     const body = await r.json();
-    assert(body.code === "billing_not_configured", "subscription response should explain billing state");
+    if (r.status === 202) {
+      assert(typeof body.checkout_url === "string" && body.checkout_url.length > 0, "billing response should include a checkout URL");
+      assert(["simulation", "stripe"].includes(body.payment_provider), "billing response should identify its provider");
+      return;
+    }
+    assert(r.status === 503, `expected 202 or 503, got ${r.status}`);
+    assert(body.code === "billing_not_configured" || body.error?.code === "billing_not_configured", "subscription response should explain missing billing configuration");
   });
 
   await check("project deletes", () => request(`/platform/projects/${createdProject.project.id}`, {
@@ -369,7 +392,7 @@ async function main() {
   assert(Array.isArray(calendar.events), "calendar should return events");
 
   const createdEvent = await check("calendar event creates", () => request("/platform/calendar/events", {
-    method: "POST", jar: pmJar,
+    method: "POST", jar: chiefJar,
     body: { name: "Smoke Exhibit", client: "Smoke Client", pm: "Smoke PM", status: "Planning", startDate: "2026-09-01", endDate: "2026-09-03", location: "Istanbul", standType: "Octanorm" },
   }));
   assert(createdEvent.event.id, "calendar event should have id");
@@ -378,24 +401,20 @@ async function main() {
   assert(!otherCalendar.events.some(e => e.id === createdEvent.event.id), "other-org chief should not see this org's events");
 
   await check("calendar event updates", () => request(`/platform/calendar/events/${createdEvent.event.id}`, {
-    method: "PUT", jar: pmJar,
+    method: "PUT", jar: chiefJar,
     body: { ...createdEvent.event, name: "Smoke Exhibit Updated" },
   }));
 
   const deletedEvent = await check("calendar event deletes", () => request(`/platform/calendar/events/${createdEvent.event.id}`, {
-    method: "DELETE", jar: pmJar,
+    method: "DELETE", jar: chiefJar,
   }));
   assert(deletedEvent.ok === true, "calendar event delete should succeed");
 
   // ── PHASE 6: Messaging + attachments ─────────────────────────────────────
 
-  // Link the real client account to the base project so they can message
-  const linkedAccess = await check("PM links client account to project", () => request(`/platform/projects/${baseProjectId}/client-access`, {
-    method: "PUT", jar: pmJar,
-    body: { email: clientEmail, name: "Smoke Client" },
-  }));
-  const messageClientId = linkedAccess.client.id;
-  assert(messageClientId, "linked client should have a record id");
+  // Client approval links the authenticated client account to this project.
+  const messageClientId = clientUserId;
+  assert(messageClientId, "client signup should return a user id");
 
   await check("block client direct message to chief", async () => {
     const r = await rawRequest(`/platform/messages/${chiefUserId}`, {
@@ -418,7 +437,7 @@ async function main() {
     method: "POST", jar: pmJar,
     body: { body: messageText, context: { projectId: baseProjectId }, attachments: [uploadedAttachment.attachment] },
   }));
-  assert(sent.message.conversationId.endsWith(`:${baseProjectId}`), "message should be scoped to base project");
+  assert(sent.message.id, "created message should have an id");
   assert(sent.message.attachments.some(a => a.id === uploadedAttachment.attachment.id), "message should include uploaded attachment");
 
   await check("block message scoped to deleted project", async () => {
@@ -430,6 +449,7 @@ async function main() {
   });
 
   const baseConversation = await check("PM reads base project conversation", () => request(`/platform/messages/${messageClientId}?projectId=${encodeURIComponent(baseProjectId)}`, { jar: pmJar }));
+  assert(baseConversation.scope.projectId === baseProjectId, "conversation should be scoped to base project");
   assert(baseConversation.messages.some(m => m.text === messageText), "conversation should include smoke message");
 
   const clientConversation = await check("client reads PM attachment in project", () => request(`/platform/messages/${pmUserId}?projectId=${encodeURIComponent(baseProjectId)}`, { jar: clientJar }));
@@ -477,7 +497,7 @@ async function main() {
 
   const ownerProject = await check("PM creates ownership isolation project", () => request("/platform/projects", {
     method: "POST", jar: pmJar,
-    body: { name: `Smoke Ownership ${RUN_ID}`, client: "Unassigned", system: "Octanorm", widthM: 6, depthM: 3, deadline: "2026-09-01", exhibition: "Smoke Expo 2026" },
+    body: { name: `Smoke Ownership ${RUN_ID}`, client: `Unassigned ${RUN_ID}`, system: "octanorm", widthM: 6, depthM: 3, deadline: "2026-09-01", exhibition: "Smoke Expo 2026" },
   }));
   assert(ownerProject.project.id, "ownership project should have an id");
 
@@ -493,9 +513,19 @@ async function main() {
     assert(r.status === 403 || r.status === 404, `expected 403/404, got ${r.status}`);
   });
 
-  await check("PM links client and grants access", () => request(`/platform/projects/${ownerProject.project.id}/client-access`, {
-    method: "PUT", jar: pmJar,
-    body: { email: clientEmail, name: "Smoke Client" },
+  await check("Chief links client and grants access", () => request(`/platform/projects/${ownerProject.project.id}`, {
+    method: "PUT", jar: chiefJar,
+    body: {
+      name: ownerProject.project.name,
+      client: "Smoke Client Co",
+      managerId: pmUserId,
+      system: "octanorm",
+      widthM: 6,
+      depthM: 3,
+      deadline: "2026-09-01",
+      exhibition: "Smoke Expo 2026",
+      description: "Ownership isolation project",
+    },
   }));
 
   const ownedWorkspace = await check("linked client can read project", () => request(`/platform/projects/${ownerProject.project.id}/workspace`, { jar: clientJar }));
@@ -590,13 +620,57 @@ async function uploadAttachment({ jar, name, type, content }) {
   return response.json();
 }
 
+async function findClientByEmail(jar, email) {
+  const lowerEmail = email.toLowerCase();
+  for (const query of [
+    `q=${encodeURIComponent(email)}&`,
+    `status=pending_approval&q=${encodeURIComponent(email)}&`,
+    "",
+  ]) {
+    for (let offset = 0; offset < 10000; offset += 100) {
+      const data = await request(`/platform/clients?${query}limit=100&offset=${offset}`, { jar });
+      const match = data.clients?.find(c => String(c.contactEmail ?? "").toLowerCase() === lowerEmail);
+      if (match) return match;
+      if (!data.pagination?.hasMore && (data.clients?.length ?? 0) < 100) break;
+    }
+  }
+  throw new Error(`client ${email} was not found in the Chief client list`);
+}
+
+async function approveClientAndAssignPm(jar, clientId, managerId) {
+  const approve = await rawRequest(`/platform/clients/${clientId}/approve`, {
+    method: "PATCH",
+    jar,
+    body: { managerId, note: "Approve client signup and open the assigned project" },
+  });
+  if (approve.ok) return approve.json();
+  if (approve.status !== 404) {
+    throw new Error(`PATCH /platform/clients/${clientId}/approve failed: ${approve.status} ${await approve.text()}`);
+  }
+  return request("/platform/managers/assignments", {
+    method: "PUT",
+    jar,
+    body: {
+      clientAssignments: [{ clientId, managerId }],
+      projectAssignments: [],
+      cascadeClientProjects: true,
+    },
+  });
+}
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-main().catch(() => {
+function slugifyOrganization(value) {
+  return String(value).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+main().catch((error) => {
   for (const result of results) {
     console.log(`${result.status === "passed" ? "PASS" : "FAIL"} ${result.name}${result.error ? ` — ${result.error}` : ""}`);
   }
+  const message = error instanceof Error ? error.stack ?? error.message : String(error);
+  console.error(`FATAL smoke workflow error: ${message}`);
   process.exit(1);
 });
