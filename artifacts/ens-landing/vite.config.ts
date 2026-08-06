@@ -51,6 +51,9 @@ export default defineConfig(async ({ mode }) => {
       },
       dedupe: ["react", "react-dom"],
     },
+    define: {
+      "import.meta.env.VITE_PORTAL": JSON.stringify(portalMode),
+    },
     root: path.resolve(import.meta.dirname),
     build: {
       outDir: path.resolve(import.meta.dirname, outDir),
