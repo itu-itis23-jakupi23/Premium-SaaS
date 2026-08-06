@@ -5,15 +5,24 @@
 1. Build from a clean, reviewed commit. Record the commit SHA and immutable image digest.
 2. Run `pnpm install --frozen-lockfile`.
 3. Run `pnpm run release:check`; retain `.release-evidence/release-check.json`.
-4. Confirm strict `DEPLOYMENT_ENV=production` startup preflight passes with real secret references, HTTPS origins, email, and durable storage.
+4. Run `pnpm run deployment:preflight` with the production environment loaded. This validates the strict runtime profile plus Docker, Nginx, proxy, upload-limit, health-check, and persistent-storage wiring.
 5. Take and verify a database backup before applying migrations.
 6. Confirm the previous application image remains deployable.
+
+The production deployment uses the base Compose file plus its strict override:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.prod.yml config
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+```
+
+Do not deploy when `deployment:preflight` or `docker compose ... config` fails. Production values must come from the deployment secret store; do not put credentials in either Compose file.
 
 ## Deployment Sequence
 
 1. Put irreversible workflow/background jobs into maintenance mode where applicable.
 2. Apply database migrations once from a dedicated migration job. Application replicas must not race migrations.
-3. Deploy one canary API instance and verify liveness, readiness, login, workspace read/save, and attachment download.
+3. Deploy one canary API instance and verify `/api/healthz/live`, `/api/healthz/ready`, login, workspace read/save, and attachment download.
 4. Deploy the remaining API instances, then staff and client frontends.
 5. Run a production-safe smoke: Chief login, PM assigned-project read, client submitted-version read, message round trip, and a non-destructive upload/download.
 6. Monitor the alert signals in [Operations Runbook](operations-runbook.md) for at least 30 minutes.

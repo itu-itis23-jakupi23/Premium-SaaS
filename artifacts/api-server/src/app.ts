@@ -16,6 +16,7 @@ import { assertRuntimeEnvironment } from "./lib/env";
 const app: Express = express();
 assertRuntimeEnvironment();
 validateMessageEncryptionConfig();
+app.set("trust proxy", trustProxySetting());
 
 app.use(
   pinoHttp({
@@ -120,4 +121,14 @@ function corsOrigin() {
 
 function apiJsonLimit() {
   return process.env.API_JSON_LIMIT?.trim() || "75mb";
+}
+
+function trustProxySetting(): false | number | string | string[] {
+  const configured = process.env.TRUST_PROXY?.trim().toLowerCase();
+  if (!configured || configured === "false" || configured === "0") return false;
+  if (/^[1-9]\d*$/.test(configured)) return Number(configured);
+  if (configured.includes(",")) {
+    return configured.split(",").map((entry) => entry.trim());
+  }
+  return configured;
 }

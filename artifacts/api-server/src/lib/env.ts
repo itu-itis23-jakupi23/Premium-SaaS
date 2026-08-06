@@ -1,3 +1,5 @@
+import { isIP } from "node:net";
+
 export type DeploymentProfile =
   | "development"
   | "test"
@@ -50,15 +52,18 @@ export function validateRuntimeEnvironment(
       errors.push("APP_URL must use HTTPS in production.");
     }
 
-    if (env.COOKIE_SECURE?.trim().toLowerCase() === "false") {
-      errors.push("COOKIE_SECURE cannot be false in production.");
+    if (env.COOKIE_SECURE?.trim().toLowerCase() !== "true") {
+      errors.push("COOKIE_SECURE must be true in production.");
     }
 
+    validateTrustProxy(env, errors);
+    validateCorsOrigins(env, errors);
     validateStorage(env, errors);
   }
 
   validateSecretLength(env.AUTH_SECRET, "AUTH_SECRET", 32, report);
   validateMessageKey(env.MESSAGE_ENCRYPTION_KEY, report);
+  validateApiJsonLimit(env.API_JSON_LIMIT, report);
   validateStripe(env, report);
 
   return { profile, errors, warnings };
@@ -149,6 +154,89 @@ function validateStorage(env: NodeJS.ProcessEnv, errors: string[]) {
     if (!configured(env[key])) {
       errors.push(`${key} must point to durable storage in production.`);
     }
+  }
+}
+
+function validateTrustProxy(env: NodeJS.ProcessEnv, errors: string[]) {
+  const value = env.TRUST_PROXY?.trim().toLowerCase();
+  if (!value) {
+    errors.push("TRUST_PROXY is required in production.");
+    return;
+  }
+  if (value === "true") {
+    errors.push(
+      "TRUST_PROXY cannot be true in production; use the exact proxy hop count or a trusted subnet.",
+    );
+    return;
+  }
+  const validName = ["loopback", "linklocal", "uniquelocal"].includes(value);
+  const validHopCount = /^[1-9]\d*$/.test(value) && Number(value) <= 10;
+  const validSubnetList = value.split(",").every(validTrustedAddress);
+  if (!validName && !validHopCount && !validSubnetList) {
+    errors.push(
+      "TRUST_PROXY must be a proxy hop count, trusted subnet, loopback, linklocal, or uniquelocal.",
+    );
+  }
+}
+
+function validTrustedAddress(value: string) {
+  const [address, prefix, extra] = value.trim().split("/");
+  if (extra !== undefined) return false;
+  const version = isIP(address);
+  if (version === 0) return false;
+  if (prefix === undefined) return true;
+  if (!/^\d+$/.test(prefix)) return false;
+  const bits = Number(prefix);
+  return bits >= 0 && bits <= (version === 4 ? 32 : 128);
+}
+
+function validateCorsOrigins(env: NodeJS.ProcessEnv, errors: string[]) {
+  const values =
+    env.CORS_ORIGIN?.split(",")
+      .map((value) => value.trim())
+      .filter(Boolean) ?? [];
+  if (values.length === 0) return;
+  for (const value of values) {
+    if (value === "*") {
+      errors.push("CORS_ORIGIN cannot contain * when credentials are enabled.");
+      continue;
+    }
+    try {
+      const url = new URL(value);
+      if (
+        url.protocol !== "https:" ||
+        url.origin !== value.replace(/\/$/, "")
+      ) {
+        errors.push(
+          `CORS_ORIGIN entry must be an HTTPS origin without a path: ${value}`,
+        );
+      }
+    } catch {
+      errors.push(`CORS_ORIGIN contains an invalid URL: ${value}`);
+    }
+  }
+}
+
+function validateApiJsonLimit(
+  value: string | undefined,
+  report: (message: string) => void,
+) {
+  if (!value) {
+    report("API_JSON_LIMIT is required and must use kb or mb units.");
+    return;
+  }
+  const match = value
+    .trim()
+    .toLowerCase()
+    .match(/^(\d+)(kb|mb)$/);
+  if (!match) {
+    report("API_JSON_LIMIT must be a positive integer followed by kb or mb.");
+    return;
+  }
+  const amount = Number(match[1]);
+  const bytes = amount * (match[2] === "mb" ? 1024 * 1024 : 1024);
+  if (amount < 1 || bytes > 100 * 1024 * 1024) {
+    report("API_JSON_LIMIT must be between 1kb and 100mb.");
   }
 }
 

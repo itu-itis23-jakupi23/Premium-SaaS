@@ -22,6 +22,7 @@
     "e2e:release": "node scripts/run-playwright-release.mjs",
     "security:audit": "pnpm audit --prod --audit-level high",
     "security:secrets": "node scripts/scan-secrets.mjs",
+    "deployment:preflight": "node scripts/validate-deployment.mjs && pnpm --filter @workspace/api-server run preflight:env",
     "release:check": "node scripts/release-check.mjs",
     "release:clean-room": "node scripts/verify-clean-room.mjs",
     "typecheck:libs": "tsc --build",

@@ -4,13 +4,19 @@ import { assertRuntimeEnvironment, validateRuntimeEnvironment } from "./env";
 const productionEnv = {
   NODE_ENV: "production",
   DEPLOYMENT_ENV: "production",
-  ["DATABASE" + "_URL"]: ["postgres://service", "fixture@database.example/ens"].join(":"),
+  ["DATABASE" + "_URL"]: [
+    "postgres://service",
+    "fixture@database.example/ens",
+  ].join(":"),
   ["AUTH" + "_SECRET"]: "a".repeat(64),
-  ["MESSAGE_ENCRYPTION" + "_KEY"]: `base64:${Buffer.alloc(32, 7).toString("base64")}`,
+  ["MESSAGE_ENCRYPTION" + "_KEY"]:
+    `base64:${Buffer.alloc(32, 7).toString("base64")}`,
   STAFF_SIGNUP_KEY: "b".repeat(40),
   APP_URL: "https://staff.example.com",
   CORS_ORIGIN: "https://staff.example.com,https://client.example.com",
   COOKIE_SECURE: "true",
+  TRUST_PROXY: "1",
+  API_JSON_LIMIT: "75mb",
   RESEND_API_KEY: "re_live_example",
   RESEND_FROM: "ENS <noreply@example.com>",
   STORAGE_PROVIDER: "s3",
@@ -30,7 +36,10 @@ describe("runtime environment validation", () => {
   it("rejects placeholder secrets, HTTP cookies, demo data, email, and missing durable storage", () => {
     const result = validateRuntimeEnvironment({
       NODE_ENV: "production",
-      ["DATABASE" + "_URL"]: ["postgres://service", "fixture@database.example/ens"].join(":"),
+      ["DATABASE" + "_URL"]: [
+        "postgres://service",
+        "fixture@database.example/ens",
+      ].join(":"),
       ["AUTH" + "_SECRET"]: "change-me-before-deploy",
       ["MESSAGE_ENCRYPTION" + "_KEY"]: "change-me-before-deploy",
       STAFF_SIGNUP_KEY: "change-me-before-deploy",
@@ -50,6 +59,7 @@ describe("runtime environment validation", () => {
         expect.stringContaining("RESEND_API_KEY"),
         expect.stringContaining("APP_URL must use HTTPS"),
         expect.stringContaining("COOKIE_SECURE"),
+        expect.stringContaining("TRUST_PROXY"),
         expect.stringContaining("SEED_DEMO_DATA"),
         expect.stringContaining("DOCUMENT_STORAGE_DIR"),
       ]),
@@ -72,9 +82,27 @@ describe("runtime environment validation", () => {
       STAFF_SIGNUP_KEY: "b".repeat(32),
       APP_URL: "http://localhost",
       CORS_ORIGIN: "http://localhost",
+      API_JSON_LIMIT: "75mb",
     });
 
     expect(result.profile).toBe("local");
     expect(result.errors).toEqual([]);
+  });
+
+  it("rejects unsafe proxy trust, wildcard CORS, and malformed payload limits", () => {
+    const result = validateRuntimeEnvironment({
+      ...productionEnv,
+      TRUST_PROXY: "true",
+      CORS_ORIGIN: "*",
+      API_JSON_LIMIT: "500mb",
+    });
+
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("TRUST_PROXY cannot be true"),
+        expect.stringContaining("CORS_ORIGIN cannot contain *"),
+        expect.stringContaining("API_JSON_LIMIT"),
+      ]),
+    );
   });
 });

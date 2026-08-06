@@ -50,6 +50,7 @@ if (existsSync(envPath)) {
 
 const checks = [
   ["pnpm", ["run", "typecheck", "--pretty", "false"]],
+  ["pnpm", ["run", "deployment:preflight"]],
   ["pnpm", ["run", "security:audit"]],
   ["pnpm", ["run", "security:secrets"]],
   ["pnpm", ["run", "db:check-journal"]],

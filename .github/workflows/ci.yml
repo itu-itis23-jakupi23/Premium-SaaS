@@ -35,6 +35,9 @@ jobs:
       - name: Scan repository for committed secrets
         run: pnpm run security:secrets
 
+      - name: Validate deployment wiring
+        run: pnpm run deployment:preflight
+
       - name: Typecheck libraries
         run: pnpm run typecheck
 
