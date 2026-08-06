@@ -164,10 +164,7 @@ for (const [command, args] of postSmokeChecks) {
   });
 }
 
-runCheck("pnpm", ["run", "e2e:release"], {
-  ...process.env,
-  PLAYWRIGHT_RELEASE_SKIP_BUILD: "1",
-});
+runCheck("pnpm", ["run", "e2e:release"]);
 
 writeEvidence("passed");
 console.log("\nrelease:check passed");
