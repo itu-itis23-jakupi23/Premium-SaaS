@@ -1,6 +1,6 @@
 # Premium SaaS Production Readiness Tracker
 
-Last updated: 2026-08-05
+Last updated: 2026-08-06
 
 Status values: `not started`, `in progress`, `blocked`, `implemented`, `verified`.
 
@@ -8,17 +8,17 @@ Status values: `not started`, `in progress`, `blocked`, `implemented`, `verified
 
 | Item                               | Status      | Evidence / limitation                                                                                                                                                                                                                                                                                                                                           |
 | ---------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Repository architecture inventory  | implemented | pnpm monorepo; Express 5 API in `artifacts/api-server`; Vite/React staff and client builds in `artifacts/ens-landing`; secondary development server under `artifacts/ens-landing/server`; Drizzle/PostgreSQL in `lib/db`; iframe Three.js renderer in `public/booth-render.html`; Vitest and Playwright test suites; Docker Compose and GitHub Actions present. |
-| Dirty worktree review              | implemented | Worktree contains broad intentional changes across CI, backend, migrations, renderer, portals, tests, and documentation. Nothing has been discarded or reset.                                                                                                                                                                                                   |
-| Baseline release gate              | verified    | `pnpm run release:check` now passes typecheck, migrations, journal validation, 55 unit/integration tests, API build, authenticated workflow smoke, and staff/client production builds.                                                                                                                                                                          |
+| Repository architecture inventory  | implemented | pnpm monorepo; Express 5 API in `artifacts/api-server`; Vite/React staff and client builds in `artifacts/ens-landing`; secondary development server under `artifacts/ens-landing/server`; Drizzle/PostgreSQL in `lib/db`; Vite-compiled iframe Three.js renderer in `booth-render.html`; Vitest and Playwright test suites; Docker Compose and GitHub Actions present. |
+| Dirty worktree review              | verified    | Commit `a843e1d` was cloned into an isolated checkout; the source and cloned checkout were clean before and after verification.                                                                                                                                                                                                                                  |
+| Baseline release gate              | verified    | Exact-checkout `pnpm run release:check` passed all 15 stages: typecheck, migrations, security checks, 21 schema tests, 85 API tests, API build, smoke, staff/client builds, 38 Playwright tests, backup/restore, and restart persistence.                                                                                                                            |
 | Migration file/journal consistency | verified    | `pnpm run db:check-journal`: 15 ordered migrations passed. This checks repository metadata only, not database history.                                                                                                                                                                                                                                          |
 
 ## Phase 1: Reproducible Release Gate
 
 | ID    | Requirement                                  | Status      | Relevant files                                                      | Verification / evidence                                                                                                                                                                           |
 | ----- | -------------------------------------------- | ----------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| RG-01 | One fail-fast release command for one commit | implemented | `scripts/release-check.mjs`, `package.json`                         | The deterministic gate now includes database fixtures, tests, smoke, builds, and isolated Playwright; security scans remain to be incorporated.                                                   |
-| RG-02 | Deterministic dependency installation        | verified    | `pnpm-lock.yaml`, CI                                                | `pnpm install --frozen-lockfile` passes across all nine workspace projects and is mandatory in every CI job.                                                                                      |
+| RG-01 | One fail-fast release command for one commit | verified    | `scripts/release-check.mjs`, `package.json`                         | The deterministic 15-stage gate includes database fixtures, tests, smoke, production builds, security scans, backup/restore, restart persistence, and isolated Playwright.                       |
+| RG-02 | Deterministic dependency installation        | verified    | `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, CI         | pnpm 10.24.0 is pinned; platform-native packages resolve per operating system; a fresh frozen-lockfile install passed across all nine workspace projects.                                         |
 | RG-03 | PostgreSQL startup and readiness             | implemented | `docker-compose.yml`, `docker-compose.dev.yml`                      | Must verify from clean environment.                                                                                                                                                               |
 | RG-04 | Empty-database migrations                    | verified    | `lib/db/migrations`, Drizzle journal                                | All 15 migrations passed against a uniquely named empty disposable PostgreSQL database, which was removed after verification.                                                                     |
 | RG-05 | Historical upgrade migration fixture         | verified    | `scripts/verify-database-migrations.mjs`                            | Disposable PostgreSQL fixture applies migrations 0000-0011, injects an interrupted 0012 state, completes 0012-0014, and asserts journal and schema integrity.                                     |
@@ -33,7 +33,7 @@ Status values: `not started`, `in progress`, `blocked`, `implemented`, `verified
 | RG-14 | Secret scan                                  | verified    | `scripts/scan-secrets.mjs`, release/CI scripts                      | Scanner passed across 589 tracked and untracked repository files and is mandatory in both the root release gate and CI.                                                                           |
 | RG-15 | Machine-readable final summary               | verified    | `scripts/release-check.mjs`, `.release-evidence/release-check.json` | Passing report records commit, timestamps, status, failed step, and per-check durations.                                                                                                          |
 | RG-16 | One-command local startup                    | in progress | Compose, package scripts, docs                                      | Compose exists; clean startup not proved.                                                                                                                                                         |
-| RG-17 | Clean checkout / same-commit verification    | not started | release scripts, CI                                                 | Requires temporary checkout and commit evidence.                                                                                                                                                  |
+| RG-17 | Clean checkout / same-commit verification    | verified    | `scripts/verify-clean-room.mjs`, `.release-evidence`                | Commit `a843e1d38e9ebb0fb1a7b0790846a8062a7d5a78` passed dependency installation and all 15 release stages in an isolated clone; the clone remained clean.                                       |
 
 ## Release Blockers and Data Safety
 
@@ -204,7 +204,9 @@ Required documents:
 
 ## Current Highest-Priority Work
 
-1. Run the complete gate from a clean checkout.
+1. Confirm the required GitHub Actions checks pass for commit `a843e1d`.
+2. Add explicit backend/frontend lint commands and a documented performance baseline.
+3. Complete the remaining workspace placement, collision, room, asset-failure, and concurrency edge-case matrix.
 
 ## Verification Log
 
@@ -229,10 +231,10 @@ Required documents:
 | 2026-08-05 | authorization matrix suite                                                 | `6d25bdf` + dirty worktree | Passed 48/48 unauthenticated, disallowed-role, and representative cross-organization checks; full API suite passed 82/82 and monorepo typecheck passed.                                                        |
 | 2026-08-05 | production environment preflight                                           | `6d25bdf` + dirty worktree | Strict production startup validation added with three profile tests; full API suite passed 85/85 and monorepo typecheck passed.                                                                                |
 | 2026-08-05 | post-hardening `pnpm run release:check`                                    | `6d25bdf` + dirty worktree | Passed all 15 gates in 3m52s: typecheck, migrations, security, backup/restore, 21 schema tests, 85 API tests, API build, restart persistence, workflow smoke, staff/client builds, and 38/38 Playwright tests. |
+| 2026-08-06 | `pnpm run release:clean-room`                                               | `a843e1d`                  | Passed from an isolated exact-commit checkout: frozen dependency install, all 15 release stages, 21 schema tests, 85 API tests, 38/38 production-preview Playwright tests, and a clean checkout after the gate. |
 
 ## Known Limitations
 
-- Baseline is against a dirty worktree, not a clean commit.
 - Local database had unjournaled schema objects from an interrupted deployment. The schema and journal are now consistent, and both clean and interrupted-upgrade migration paths are covered by disposable-database verification.
-- The root release gate now runs Playwright and both security scans; remote Action status was not inspected in this session.
-- No production-readiness claim is valid until clean-room verification passes.
+- The root release gate and clean-room gate pass locally; remote GitHub Actions status for `a843e1d` was not inspected in this session.
+- Production deployment configuration, external email delivery, monitoring, disaster-recovery scheduling, and several workspace edge cases remain unverified.
