@@ -8,9 +8,13 @@ export default defineConfig(async ({ mode }) => {
   const env = loadEnv(mode, import.meta.dirname, "");
   const rawPort = process.env.PORT ?? env.PORT;
   const basePath = process.env.BASE_PATH ?? env.BASE_PATH ?? "/";
+  const requestedPortal =
+    mode === "staff" || mode === "client"
+      ? mode
+      : process.env.VITE_PORTAL ?? env.VITE_PORTAL;
   const portalMode =
-    env.VITE_PORTAL === "staff" || env.VITE_PORTAL === "client"
-      ? env.VITE_PORTAL
+    requestedPortal === "staff" || requestedPortal === "client"
+      ? requestedPortal
       : "all";
   const outDir = portalMode === "all" ? "dist/public" : `dist/${portalMode}`;
   const port = parsePort(rawPort, 5173);
