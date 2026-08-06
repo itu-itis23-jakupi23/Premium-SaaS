@@ -1,6 +1,6 @@
 # Premium SaaS Production Readiness Tracker
 
-Last updated: 2026-08-06
+Last updated: 2026-08-07
 
 Status values: `not started`, `in progress`, `blocked`, `implemented`, `verified`.
 
@@ -201,6 +201,42 @@ Required documents:
 | Persistence after restart                                                                    | verified    |
 | Authorization matrix coverage                                                                | verified    |
 | Backup restoration validation                                                                | verified    |
+
+## Commercial Surface and Launch Readiness
+
+The public marketing surface (`artifacts/ens-landing/src/pages/Home.tsx`, `artifacts/ens-landing/index.html`, `artifacts/ens-landing/public`) has no coverage elsewhere in this tracker. Nothing in the release gate inspects it, so regressions here are invisible to `pnpm run release:check`.
+
+### Launch blockers — must be correct on the day `noindex` is removed
+
+| ID    | Requirement                                                    | Status      | Relevant files                                      | Verification target                                                                                       |
+| ----- | -------------------------------------------------------------- | ----------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| CS-01 | Remove staging `noindex, nofollow` and publish `robots.txt`     | not started | `index.html:20`, `public/`                          | Production build serves an indexable page; `public/robots.txt` and a `sitemap.xml` exist and resolve.     |
+| CS-02 | Legal pages written and routed                                  | not started | `App.tsx`, footer link list in `Home.tsx:877`       | `/privacy`, `/terms`, `/security`, `/cookies`, `/gdpr` resolve to real content, not `href="#"`.           |
+| CS-03 | Cookie consent for EU visitors                                  | not started | none exist                                          | Consent gate present before any non-essential cookie or analytics tag fires. Required before CS-05.       |
+| CS-04 | Public pricing matches implemented billing                      | not started | `Home.tsx:725-737`, `routes/billing.ts:22-26`       | Advertised tiers map 1:1 to real Stripe prices, or the section is removed until they do. See CS-11.       |
+| CS-05 | Product/marketing analytics instrumented                        | not started | none exist                                          | Signup funnel is measurable. Currently zero analytics: the only `analytics` matches are pricing copy.     |
+| CS-06 | `og:image` tag emitted                                          | not started | `index.html`, `public/opengraph.jpg`                | Link preview renders. The asset already exists and is unreferenced; `twitter:card` promises an image.     |
+
+### Conversion and credibility — the site's actual job
+
+| ID    | Requirement                                            | Status      | Relevant files                            | Verification target                                                                                              |
+| ----- | ------------------------------------------------------ | ----------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| CS-07 | Show the product                                       | not started | `Home.tsx` (0 `<img>` tags), `public/`    | Showcase section uses real workspace captures. `mockup-1/2/3.png` are committed and unused.                       |
+| CS-08 | CTAs route to what they promise                        | not started | `Home.tsx:215`, `Home.tsx:803`            | "Watch Demo" reaches a demo; "Contact Sales" reaches a sales contact path. Both currently route to `/login`.      |
+| CS-09 | No fabricated metrics presented as live data           | not started | `Home.tsx:227-231`, `:635`, `:689`        | Hero stat tiles, `₺2.4M Budget Tracked`, and `72% complete` bars are labelled as illustrative or made real.       |
+| CS-10 | Replace "Trusted by" with real proof                   | not started | `Home.tsx:257-271`                        | Customer logos, a named case study, or the strip is reframed. It currently lists own features under social proof. |
+| CS-11 | Self-serve signup produces the advertised account      | not started | `routes/auth.ts:153`, `pages/auth/Signup` | Tiers describe agency capability, but `/auth/signup` creates a **client** account and collects no plan/payment.   |
+| CS-12 | Landing copy fully localized                           | in progress | `Home.tsx`, `i18n/locales/*`              | Tracked as AX-04. Whole sections are hardcoded English while 11 locales carry ~2,700 keys.                        |
+| CS-13 | Landing page RTL-correct in Arabic                     | not started | `Home.tsx:187`, `:498`, `:523`            | Timeline rail, dimension strip, and drawer use fixed left/right; only `DashboardLayout` is RTL-aware.             |
+
+### Quality gates the release pipeline should own
+
+| ID    | Requirement                                        | Status      | Relevant files                          | Verification target                                                                                    |
+| ----- | -------------------------------------------------- | ----------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| CS-14 | Marketing page has its own weight budget            | not started | `scripts/check-frontend-budgets.mjs`    | Landing entry measured separately. It currently ships ~229 KB gzip of app JS plus a 100 KB eager `en.json`. |
+| CS-15 | Restore pinch-zoom                                  | not started | `index.html:5`                          | `maximum-scale=1` removed; WCAG 1.4.4 passes. Cheap fix, currently a hard accessibility failure.        |
+| CS-16 | Link integrity check in the release gate            | not started | `scripts/`                              | Build fails on any `href="#"` or unrouted internal link in production output.                           |
+| CS-17 | Playwright coverage for the public landing page     | not started | `e2e/`                                  | All 38 existing browser tests are authenticated flows; the logged-out marketing page is untested.       |
 
 ## Current Highest-Priority Work
 
