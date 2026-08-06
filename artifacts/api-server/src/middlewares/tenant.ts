@@ -1,6 +1,4 @@
-import { sql, type SQL } from "drizzle-orm";
 import type { NextFunction, Request, Response } from "express";
-import { db } from "@workspace/db";
 
 export interface TenantContext {
   id: string;
@@ -15,11 +13,6 @@ declare global {
       tenant?: TenantContext;
     }
   }
-}
-
-async function queryRows<T>(statement: SQL) {
-  const result = await db.execute(statement);
-  return (result as unknown as { rows: T[] }).rows;
 }
 
 export async function requireTenant(req: Request, res: Response, next: NextFunction) {
@@ -68,36 +61,4 @@ export async function requireTenant(req: Request, res: Response, next: NextFunct
 function headerValue(req: Request, name: string) {
   const value = req.header(name);
   return typeof value === "string" && value.trim() ? value.trim() : null;
-}
-
-function localDefaultSlug() {
-  if (process.env.DEFAULT_ORGANIZATION_SLUG) {
-    return process.env.DEFAULT_ORGANIZATION_SLUG;
-  }
-
-  return process.env.NODE_ENV === "production" ? null : "ens-demo-agency";
-}
-
-async function findOrganizationById(id: string) {
-  const rows = await queryRows<TenantContext>(sql`
-    select id::text, name, slug, plan
-    from organizations
-    where id = ${id}::uuid
-      and deleted_at is null
-    limit 1
-  `);
-
-  return rows[0] ?? null;
-}
-
-async function findOrganizationBySlug(slug: string) {
-  const rows = await queryRows<TenantContext>(sql`
-    select id::text, name, slug, plan
-    from organizations
-    where slug = ${slug}
-      and deleted_at is null
-    limit 1
-  `);
-
-  return rows[0] ?? null;
 }

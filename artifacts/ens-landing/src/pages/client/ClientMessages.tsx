@@ -43,6 +43,7 @@ export default function ClientMessages() {
   }, [t]);
 
   const active = contacts.find((contact) => contact.id === activeId) ?? contacts[0] ?? null;
+  const activeContactId = active?.id ?? null;
   const filteredContacts = useMemo(() => {
     const q = search.toLowerCase();
     return contacts.filter((contact) => contact.name.toLowerCase().includes(q) || contact.email.toLowerCase().includes(q));
@@ -53,9 +54,12 @@ export default function ClientMessages() {
     return assigned.length ? assigned : contacts.length === 1 ? projects : [];
   }, [active, contacts.length, projects]);
   const activeProject = activeProjects.find((project) => project.id === activeProjectId) ?? activeProjects[0] ?? null;
-  const messageContext = activeProject
-    ? { projectId: activeProject.id, exhibitionName: activeProject.exhibition || activeProject.name }
-    : undefined;
+  const messageContext = useMemo(
+    () => activeProject
+      ? { projectId: activeProject.id, exhibitionName: activeProject.exhibition || activeProject.name }
+      : undefined,
+    [activeProject],
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -73,7 +77,7 @@ export default function ClientMessages() {
         if (mounted) setIsLoading(false);
       });
     return () => { mounted = false; };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     setActiveProjectId((current) => current && activeProjects.some((project) => project.id === current)
@@ -82,7 +86,8 @@ export default function ClientMessages() {
   }, [active?.id, activeProjects]);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeContactId) return;
+    const contactId = activeContactId;
     let mounted = true;
 
     loadMessages();
@@ -90,15 +95,15 @@ export default function ClientMessages() {
 
     async function loadMessages() {
       try {
-        const response = await getConversationMessages(active!.id, messageContext);
+        const response = await getConversationMessages(contactId, messageContext);
         if (!mounted) return;
         setMessages(response.messages);
-        setContacts((current) => current.map((contact) => contact.id === active!.id ? { ...contact, unread: 0 } : contact));
+        setContacts((current) => current.map((contact) => contact.id === contactId ? { ...contact, unread: 0 } : contact));
       } catch (reason) {
         if (!mounted) return;
         const message = reason instanceof Error ? reason.message : t("client.messages.error.messages");
         if (isConversationAccessError(message)) {
-          setContacts((current) => current.filter((contact) => contact.id !== active!.id));
+          setContacts((current) => current.filter((contact) => contact.id !== contactId));
           setMessages([]);
           setActiveId(null);
           mounted = false;
@@ -112,7 +117,7 @@ export default function ClientMessages() {
       mounted = false;
       window.clearInterval(interval);
     };
-  }, [active?.id, activeProject?.id]);
+  }, [activeContactId, messageContext, t]);
 
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: "smooth" });

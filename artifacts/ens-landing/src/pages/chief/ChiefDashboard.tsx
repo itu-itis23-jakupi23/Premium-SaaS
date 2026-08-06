@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ElementType } from "react";
+import { useCallback, useEffect, useMemo, useState, type ElementType } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { 
@@ -73,7 +73,6 @@ export default function ChiefDashboard() {
   const [overview, setOverview] = useState<PlatformOverview>(EMPTY_OVERVIEW);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAllActivity, setShowAllActivity] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
 
@@ -81,7 +80,7 @@ export default function ChiefDashboard() {
     document.title = t("chief.dashboard.pageTitle");
   }, [t]);
 
-  function reloadData() {
+  const reloadData = useCallback(() => {
     let mounted = true;
     setIsLoading(true);
     setError(null);
@@ -90,9 +89,9 @@ export default function ChiefDashboard() {
       .catch((reason: unknown) => { if (mounted) setError(reason instanceof Error ? reason.message : t("chief.dashboard.loadError")); })
       .finally(() => { if (mounted) setIsLoading(false); });
     return () => { mounted = false; };
-  }
+  }, [t]);
 
-  useEffect(reloadData, []);
+  useEffect(reloadData, [reloadData]);
 
   const stats = useMemo(() => [
     { label: t("chief.dashboard.stats.totalClients"),    value: String(overview.metrics.clients),         icon: Users,       trend: t("chief.dashboard.stats.db"),       trendUp: true,                                         href: "/chief/clients" },
@@ -167,7 +166,7 @@ export default function ChiefDashboard() {
     ];
   }, [overview.metrics.pendingApprovals, overview.projects, t]);
 
-  const visibleActivity = showAllActivity ? overview.activity : overview.activity.slice(0, 3);
+  const visibleActivity = overview.activity.slice(0, 3);
 
   function showToast(message: string) {
     setToastMsg(message);

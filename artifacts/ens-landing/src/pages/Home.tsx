@@ -19,11 +19,9 @@ import {
   X,
   Sparkles,
   Zap,
-  Globe,
   LayoutDashboard,
   Eye,
   Settings,
-  ArrowRight,
   TrendingUp,
   BoxSelect,
   Package,
@@ -31,7 +29,6 @@ import {
   Activity,
   CheckCircle2,
   FileText,
-  DollarSign,
 } from 'lucide-react';
 
 const FADE_UP: Variants = {

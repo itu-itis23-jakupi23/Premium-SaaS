@@ -9,7 +9,6 @@ import {
   updateClientSchema,
   assignmentsSchema,
   inviteManagerSchema,
-  pmCapacityLimitSchema,
   pmTaskSchema,
   pmTaskPatchSchema,
 } from "@workspace/api-zod";
@@ -3802,7 +3801,6 @@ async function getAssignmentTargetName(
   return rows[0]?.name ?? null;
 }
 
-const PM_CAPACITY_DEFAULT = 10;
 const PM_WARN_THRESHOLD = 0.8;
 const PM_BLOCK_THRESHOLD = 1.0;
 const PM_EXTREME_THRESHOLD = 1.5;
@@ -7743,31 +7741,6 @@ function parsePmTaskPatch(body: unknown) {
   return zParse(pmTaskPatchSchema, body);
 }
 
-function pmTaskStatusValue(value: unknown): PmTaskStatus | null {
-  const normalized = stringValue(value)
-    ?.toLowerCase()
-    .replace(/[\s-]+/g, "_");
-  if (
-    normalized === "todo" ||
-    normalized === "in_progress" ||
-    normalized === "blocked" ||
-    normalized === "done"
-  )
-    return normalized;
-  if (normalized === "inprogress") return "in_progress";
-  if (normalized === "review") return "blocked";
-  return null;
-}
-
-function pmTaskPriorityValue(value: unknown): PmTaskPriority | null {
-  const normalized = stringValue(value)?.toLowerCase();
-  if (normalized === "low") return "low";
-  if (normalized === "medium" || normalized === "normal") return "normal";
-  if (normalized === "high") return "high";
-  if (normalized === "urgent") return "urgent";
-  return null;
-}
-
 function parsePmRequestListQuery(
   query: Record<string, unknown>,
 ): PmRequestListQuery {
@@ -7838,28 +7811,6 @@ function parseManagerReminderInput(body: unknown) {
       urgentCount: Math.max(0, Math.round(numberValue(data.urgentCount) ?? 0)),
     },
   };
-}
-
-function parseAssignmentRow(value: unknown) {
-  if (!value || typeof value !== "object") return null;
-  const data = value as Record<string, unknown>;
-  const clientId = stringValue(data.clientId ?? data.projectId);
-  const rawManagerId = stringValue(data.managerId);
-
-  if (!clientId || !isUuid(clientId)) return null;
-  const managerId = rawManagerId === "unassigned" ? null : rawManagerId;
-  if (managerId && !isUuid(managerId)) return null;
-
-  return {
-    clientId,
-    managerId,
-  };
-}
-
-function isAssignmentRow(
-  value: ReturnType<typeof parseAssignmentRow>,
-): value is { clientId: string; managerId: string | null } {
-  return value !== null;
 }
 
 function stringValue(value: unknown) {
@@ -8040,29 +7991,6 @@ async function getActivity(
     project: event.project,
     time: relativeTime(event.createdAt),
   }));
-}
-
-function emptyOverview() {
-  const metrics = {
-    clients: 0,
-    projects: 0,
-    projectManagers: 0,
-    delayedProjects: 0,
-    pendingApprovals: 0,
-    activeWorkspaces: 0,
-    documents: 0,
-    comments: 0,
-    completedProjects: 0,
-  };
-
-  return {
-    organization: null,
-    metrics,
-    projects: [],
-    clients: [],
-    activity: [],
-    charts: buildCharts(metrics, []),
-  };
 }
 
 function buildCharts(

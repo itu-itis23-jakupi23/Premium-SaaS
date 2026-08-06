@@ -185,7 +185,19 @@ export default function PMTasks() {
     if (!taskId || editingTask?.id === taskId) return;
 
     const match = tasks.find((task) => task.id === taskId);
-    if (match) openTaskEditor(match);
+    if (match) {
+      setUrlTaskId(match.id);
+      setEditingTask(match);
+      setTaskDraft({
+        title: match.title,
+        projectId: match.projectId ?? "",
+        priority: match.priority,
+        deadline: match.deadline,
+        col: match.col,
+        notes: match.notes ?? "",
+      });
+      setEditError("");
+    }
   }, [editingTask?.id, isLoading, tasks]);
 
   async function reloadBoard() {

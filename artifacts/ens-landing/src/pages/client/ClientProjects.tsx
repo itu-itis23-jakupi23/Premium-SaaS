@@ -124,7 +124,7 @@ export default function ClientProjects() {
         if (mounted) setIsLoading(false);
       });
     return () => { mounted = false; };
-  }, []);
+  }, [t]);
 
   const stats = useMemo(
     () => [
@@ -208,7 +208,7 @@ export default function ClientProjects() {
             </div>
           )}
 
-          {projects.map((project, idx) => {
+          {projects.map((project) => {
             const sc = STATUS_CFG[project.status] ?? STATUS_CFG.Active;
             const isExp = expanded === project.id;
             const hasAction = project.status === "Pending" || project.status === "Client Review";

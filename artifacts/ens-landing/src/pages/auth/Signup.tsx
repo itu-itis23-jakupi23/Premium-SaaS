@@ -19,7 +19,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Spinner } from '@/components/ui/spinner';
 import { ArrowRight, Eye, EyeOff, CheckCircle2, AlertTriangle, KeyRound, ShieldCheck } from 'lucide-react';
 import { useAuth, getRoleDashboard, type UserRole } from '@/contexts/AuthContext';
-import { PORTAL_MODE, getRequestPortal } from '@/lib/portal';
+import { getRequestPortal } from '@/lib/portal';
 import { invitationTokenFromInput } from '@/lib/platform-api';
 
 function PasswordStrength({ password }: { password: string }) {

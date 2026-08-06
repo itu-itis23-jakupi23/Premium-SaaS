@@ -8,7 +8,6 @@ import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import {
   getPlatformOverview,
   type PlatformOverview,
-  type PlatformProject,
 } from "@/lib/platform-api";
 import {
   Card,

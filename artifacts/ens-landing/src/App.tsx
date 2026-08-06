@@ -4,11 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { THEME_STORAGE_KEY, ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider, getRoleDashboard, useAuth } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CurrencyProvider } from "@/lib/currency";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { getPortalLoginPath, getRequestPortal, isRoleAllowedInPortal, PORTAL_MODE } from "@/lib/portal";
+import { getRequestPortal, PORTAL_MODE } from "@/lib/portal";
 import { StaffGateway } from "@/components/StaffGateway";
 import { RuntimeTextTranslator } from "@/i18n/RuntimeTextTranslator";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -47,26 +47,6 @@ const INCLUDE_CLIENT_ROUTES = import.meta.env.VITE_PORTAL !== "staff";
 const ROUTER_BASE = import.meta.env.BASE_URL && import.meta.env.BASE_URL !== "/"
   ? import.meta.env.BASE_URL.replace(/\/$/, "")
   : undefined;
-
-function PortalRoot() {
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
-  const [, navigate] = useLocation();
-
-  useEffect(() => {
-    if (isLoading) return;
-    if (isAuthenticated && user && isRoleAllowedInPortal(user.role)) {
-      navigate(getRoleDashboard(user.role), { replace: true });
-      return;
-    }
-    if (isAuthenticated && user && !isRoleAllowedInPortal(user.role)) {
-      void logout().finally(() => navigate(getPortalLoginPath(), { replace: true }));
-      return;
-    }
-    navigate(getPortalLoginPath(), { replace: true });
-  }, [isAuthenticated, isLoading, logout, navigate, user]);
-
-  return null;
-}
 
 function AuthModalRoute({ component: Component }: { component: React.ComponentType }) {
   const [, navigate] = useLocation();

@@ -14,9 +14,9 @@ import {
   type PlatformPagination,
 } from "@/lib/platform-api";
 import {
-  Search, Monitor, Mail, Building2, CalendarDays, CheckCircle2,
+  Search, Mail, Building2, CalendarDays, CheckCircle2,
   Clock, AlertCircle, Layers, Users, ArrowUpRight, X, MessageSquare,
-  Key, DollarSign, ShieldCheck, Laptop, Check, Copy, CreditCard, ArrowRight,
+  Key, ShieldCheck, Laptop, Copy, CreditCard, ArrowRight,
   type LucideIcon,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";

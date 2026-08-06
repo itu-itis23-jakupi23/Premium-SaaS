@@ -23,7 +23,6 @@ describe("POST /api/platform/projects/:projectId/approve (workspace)", () => {
   let chief: TestUser;
   let clientUser: TestUser;
   let pmUser: TestUser;
-  let chiefCookies: string[];
   let clientCookies: string[];
   let pmCookies: string[];
   let reviewProject: TestProject;
@@ -34,7 +33,7 @@ describe("POST /api/platform/projects/:projectId/approve (workspace)", () => {
     chief = await createTestUser(org.id, "chief");
     clientUser = await createTestUser(org.id, "client");
     pmUser = await createTestUser(org.id, "pm");
-    chiefCookies = await loginAs(app, org.slug, chief);
+    await loginAs(app, org.slug, chief);
     clientCookies = await loginAs(app, org.slug, clientUser);
     pmCookies = await loginAs(app, org.slug, pmUser);
 

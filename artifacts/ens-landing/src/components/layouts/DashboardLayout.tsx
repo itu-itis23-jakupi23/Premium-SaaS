@@ -24,8 +24,6 @@ import {
   CalendarDays,
   CheckCheck,
   Search,
-  Command,
-  Sparkles,
   Plus,
   ArrowRight,
   ChevronUp,

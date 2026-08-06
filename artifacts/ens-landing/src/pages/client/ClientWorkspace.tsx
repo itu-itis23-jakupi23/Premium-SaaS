@@ -20,9 +20,6 @@ import {
 } from "@/lib/platform-api";
 import {
   Lock,
-  ZoomIn,
-  ZoomOut,
-  Maximize2,
   Send,
   CheckCircle2,
   AlertCircle,
@@ -30,7 +27,6 @@ import {
   ChevronLeft,
   ChevronDown,
   Layers,
-  RotateCcw,
   MessageSquare,
   Download,
   Pin,

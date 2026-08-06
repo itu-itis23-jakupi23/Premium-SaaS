@@ -8,87 +8,94 @@ export default defineConfig(async ({ mode }) => {
   const env = loadEnv(mode, import.meta.dirname, "");
   const rawPort = process.env.PORT ?? env.PORT;
   const basePath = process.env.BASE_PATH ?? env.BASE_PATH ?? "/";
-  const portalMode = env.VITE_PORTAL === "staff" || env.VITE_PORTAL === "client" ? env.VITE_PORTAL : "all";
+  const portalMode =
+    env.VITE_PORTAL === "staff" || env.VITE_PORTAL === "client"
+      ? env.VITE_PORTAL
+      : "all";
   const outDir = portalMode === "all" ? "dist/public" : `dist/${portalMode}`;
   const port = parsePort(rawPort, 5173);
 
   return {
     base: basePath,
-  plugins: [
-    react(),
-    tailwindcss(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer({
-              root: path.resolve(import.meta.dirname, ".."),
-            }),
+    plugins: [
+      react(),
+      tailwindcss(),
+      runtimeErrorOverlay(),
+      ...(process.env.NODE_ENV !== "production" &&
+      process.env.REPL_ID !== undefined
+        ? [
+            await import("@replit/vite-plugin-cartographer").then((m) =>
+              m.cartographer({
+                root: path.resolve(import.meta.dirname, ".."),
+              }),
+            ),
+            await import("@replit/vite-plugin-dev-banner").then((m) =>
+              m.devBanner(),
+            ),
+          ]
+        : []),
+    ],
+    resolve: {
+      alias: {
+        "@": path.resolve(import.meta.dirname, "src"),
+        "@assets": path.resolve(
+          import.meta.dirname,
+          "..",
+          "..",
+          "attached_assets",
+        ),
+      },
+      dedupe: ["react", "react-dom"],
+    },
+    root: path.resolve(import.meta.dirname),
+    build: {
+      outDir: path.resolve(import.meta.dirname, outDir),
+      emptyOutDir: true,
+      // Three.js is route-loaded and governed by check-frontend-budgets.mjs.
+      // Keep Vite's generic warning threshold aligned with that release gate.
+      chunkSizeWarningLimit: 640,
+      rollupOptions: {
+        input: {
+          index: path.resolve(import.meta.dirname, "index.html"),
+          "booth-render": path.resolve(
+            import.meta.dirname,
+            "booth-render.html",
           ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "src"),
-      "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
-    },
-    dedupe: ["react", "react-dom"],
-  },
-  root: path.resolve(import.meta.dirname),
-  build: {
-    outDir: path.resolve(import.meta.dirname, outDir),
-    emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        index: path.resolve(import.meta.dirname, "index.html"),
-        "booth-render": path.resolve(import.meta.dirname, "booth-render.html"),
-      },
-      // Radix UI packages ship without source maps. Suppress the cascade of
-      // SOURCEMAP_ERROR warnings that Rollup emits when it tries to link
-      // shadcn/ui component imports back to Radix internals.
-      onwarn(warning, defaultHandler) {
-        if (warning.code === "SOURCEMAP_ERROR") return;
-        defaultHandler(warning);
-      },
-      output: {
-        manualChunks: splitVendorChunks,
+        },
+        output: {
+          manualChunks: splitVendorChunks,
+        },
       },
     },
-  },
-  server: {
-    port,
-    strictPort: true,
-    host: "0.0.0.0",
-    allowedHosts: true,
-    watch: {
-      ignored: ["**/.dev-data/**"],
-    },
-    fs: {
-      strict: true,
-    },
-    // Proxy all /api calls to the Express backend in development.
-    // Start the backend with: npm run server
-    proxy: {
-      "/api": {
-        target: `http://localhost:${process.env.API_PORT ?? 5000}`,
-        changeOrigin: true,
+    server: {
+      port,
+      strictPort: true,
+      host: "0.0.0.0",
+      allowedHosts: true,
+      watch: {
+        ignored: ["**/.dev-data/**"],
       },
-      "/workspace-assets": {
-        target: `http://localhost:${process.env.API_PORT ?? 5000}`,
-        changeOrigin: true,
+      fs: {
+        strict: true,
+      },
+      // Proxy all /api calls to the Express backend in development.
+      // Start the backend with: npm run server
+      proxy: {
+        "/api": {
+          target: `http://localhost:${process.env.API_PORT ?? 5000}`,
+          changeOrigin: true,
+        },
+        "/workspace-assets": {
+          target: `http://localhost:${process.env.API_PORT ?? 5000}`,
+          changeOrigin: true,
+        },
       },
     },
-  },
-  preview: {
-    port,
-    host: "0.0.0.0",
-    allowedHosts: true,
-  },
+    preview: {
+      port,
+      host: "0.0.0.0",
+      allowedHosts: true,
+    },
   };
 });
 
@@ -123,6 +130,15 @@ function splitVendorChunks(id: string) {
     return "vendor-radix";
   }
 
+  // These helpers are used by the application shell and by Recharts. Keep
+  // them out of the lazy chart chunk so landing pages do not preload Recharts.
+  if (
+    normalizedId.includes("/clsx/") ||
+    normalizedId.includes("/tailwind-merge/")
+  ) {
+    return "vendor-utils";
+  }
+
   if (
     normalizedId.includes("/recharts/") ||
     normalizedId.includes("/d3-") ||
@@ -131,11 +147,17 @@ function splitVendorChunks(id: string) {
     return "vendor-charts";
   }
 
-  if (normalizedId.includes("/three/") || normalizedId.includes("/@react-three/")) {
+  if (
+    normalizedId.includes("/three/") ||
+    normalizedId.includes("/@react-three/")
+  ) {
     return "vendor-three";
   }
 
-  if (normalizedId.includes("/i18next/") || normalizedId.includes("/react-i18next/")) {
+  if (
+    normalizedId.includes("/i18next/") ||
+    normalizedId.includes("/react-i18next/")
+  ) {
     return "vendor-i18n";
   }
 

@@ -38,6 +38,9 @@ jobs:
       - name: Validate deployment wiring
         run: pnpm run deployment:preflight
 
+      - name: Lint production source
+        run: pnpm run lint
+
       - name: Typecheck libraries
         run: pnpm run typecheck
 
@@ -79,6 +82,9 @@ jobs:
       - name: Build client portal
         working-directory: artifacts/ens-landing
         run: pnpm run build:client
+
+      - name: Enforce frontend performance budgets
+        run: pnpm run performance:budgets
 
   playwright:
     name: Playwright browser tests (production backend)

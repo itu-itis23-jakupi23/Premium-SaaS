@@ -218,7 +218,7 @@ export default function ClientApprovals() {
     return () => {
       active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const showToast = (msg: string) => {

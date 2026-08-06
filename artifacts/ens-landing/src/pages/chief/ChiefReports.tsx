@@ -75,7 +75,10 @@ export default function ChiefReports() {
   }, []);
 
   const revenueData    = report?.revenueData    ?? [];
-  const pmPerformance  = report?.pmPerformance  ?? [];
+  const pmPerformance = useMemo(
+    () => report?.pmPerformance ?? [],
+    [report?.pmPerformance],
+  );
   const systemPie      = report?.systemSplit    ?? [];
   const bottleneckData = report?.bottlenecks    ?? [];
   const monthlyTrend   = report?.monthlyTrend   ?? [];

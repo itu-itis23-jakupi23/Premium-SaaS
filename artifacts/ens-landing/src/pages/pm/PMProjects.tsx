@@ -34,7 +34,6 @@ import {
   LayoutGrid,
   List,
   Loader2,
-  Pencil,
   Ruler,
   Search,
   Trash2,
@@ -294,7 +293,7 @@ export default function PMProjects() {
     toast({ title: message });
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   const sortedProjects = useMemo(() => {
     const list = [...projects];
     list.sort((a, b) => {
@@ -1167,8 +1166,8 @@ function ProjectDetailDrawer({
   stageBusy,
   onClose,
   onStageChange,
-  onEdit,
-  onDelete,
+  onEdit: _onEdit,
+  onDelete: _onDelete,
   t,
 }: {
   project: PlatformProject;

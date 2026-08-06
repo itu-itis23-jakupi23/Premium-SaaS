@@ -9,10 +9,7 @@ import {
   MessageSquare, 
   CheckCircle2, 
   Layout, 
-  Package, 
-  Settings,
   TrendingUp,
-  BarChart3
 } from "lucide-react";
 
 export const mockStats = {

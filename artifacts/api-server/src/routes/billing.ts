@@ -39,7 +39,6 @@ router.post(
   requireTenant,
   requireRoles(["client", "admin", "owner", "chief"]),
   async (req: Request, res: Response) => {
-    const auth = req.auth!;
     const organization = req.tenant!;
     const projectId = typeof req.params.projectId === "string" ? req.params.projectId : req.params.projectId[0] ?? "";
     const plan = typeof req.body?.plan === "string" ? req.body.plan : "";

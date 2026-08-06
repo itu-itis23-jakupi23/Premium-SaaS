@@ -21,9 +21,9 @@ import {
 } from "@/lib/platform-api";
 import {
   ChevronLeft, Undo2, Redo2, Save, Camera, History, Send,
-  ZoomIn, ZoomOut, Maximize2, Search, Plus, ChevronDown, Trash2, Download,
-  Square, LayoutTemplate, Lightbulb, Monitor, Layers, Map, Box, PanelLeft, X,
-  CheckCircle2, Package, StickyNote, Settings2, Home, Copy, MessageSquare, ImagePlus, Lock, Unlock,
+  Maximize2, Search, Plus, ChevronDown, Trash2, Download,
+  Square, LayoutTemplate, Lightbulb, Layers, Map, Box, X,
+  CheckCircle2, Package, StickyNote, Settings2, Copy, MessageSquare, ImagePlus, Lock, Unlock,
 } from "lucide-react";
 
 // ── Palette ────────────────────────────────────────────────────────
@@ -101,19 +101,6 @@ const SEDEF_FURNITURE_ITEMS: Omit<CatItem,'icon'>[] = [
   {id:'sedef-447', name:'BUYUK BUZDOLABI - LARGE REFRIGERATOR', sku:'447', dim:'0.75 x 0.70 x 1.85', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'cabinet', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/447%20BUYUK%20BUZDOLABI%20-%20LARGE%20REFRIGERATOR.glb'},
   {id:'sedef-513', name:'TEL BAR SANDALYESI - WIRE BLACK BAR CHAIR', sku:'513', dim:'0.50 x 0.50 x 1.05', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'bar_stool', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/513%20TEL%20BAR%20SANDALYESI%20-%20WIRE%20BLACK%20BAR%20CHAIR.glb'},
 ];
-const FURNITURE_CATEGORY_LABELS: Record<FurnitureCategory,string> = {
-  all: 'All',
-  chairs: 'Chairs',
-  stools: 'Bar stools',
-  seating: 'Sofas & poufs',
-  tables: 'Tables',
-  storage: 'Storage',
-  shelves: 'Shelves',
-  appliances: 'Appliances',
-  lighting: 'Lights',
-  decor: 'Decor',
-  parts: 'Parts',
-};
 const FURNITURE_CATEGORY_ORDER: FurnitureCategory[] = ['all','chairs','stools','seating','tables','storage','shelves','appliances','lighting','decor','parts'];
 function furnitureCategoryFor(item: Pick<CatItem,'name'|'sku'|'shape'>): FurnitureCategory {
   const text = `${item.name} ${item.sku}`.toLowerCase();
@@ -327,18 +314,6 @@ function OpenSidesPlan({openFront,openBack,openLeft,openRight}:{openFront:boolea
     <text x="172" y="60" textAnchor="middle" fontSize="7.5" fill={openRight?C.orange:C.muted} transform="rotate(90,172,60)">RIGHT</text>
   </svg>);
 }
-function AxisGizmo() {
-  return (<svg width="58" height="58" viewBox="0 0 58 58">
-    <line x1="29" y1="29" x2="50" y2="39" stroke="#c53030" strokeWidth="1.5"/>
-    <text x="52" y="43" fontSize="8" fill="#c53030" fontFamily={MONO} fontWeight="700">X</text>
-    <line x1="29" y1="29" x2="29" y2="7" stroke="#2f855a" strokeWidth="1.5"/>
-    <text x="25" y="5" fontSize="8" fill="#2f855a" fontFamily={MONO} fontWeight="700">Y</text>
-    <line x1="29" y1="29" x2="8" y2="39" stroke="#2b6cb0" strokeWidth="1.5"/>
-    <text x="1" y="43" fontSize="8" fill="#2b6cb0" fontFamily={MONO} fontWeight="700">Z</text>
-    <circle cx="29" cy="29" r="2.5" fill={C.ink}/>
-  </svg>);
-}
-
 // ── Toast ──────────────────────────────────────────────────────────
 function Toast({msg,onClose}:{msg:string;onClose:()=>void}) {
   useEffect(()=>{const t=setTimeout(onClose,3000);return()=>clearTimeout(t);},[onClose]);
@@ -854,7 +829,6 @@ export default function PMWorkspace() {
   const [histIdx, setHistIdx] = useState(0);
   const [histLen, setHistLen] = useState(1);
 
-  const [viewMode,   setViewMode]   = useState('iso');
   const [search,     setSearch]     = useState('');
   const [openCats,   setOpenCats]   = useState(new Set(['Furniture','Lighting']));
   const [activeFurnitureCategory, setActiveFurnitureCategory] = useState<FurnitureCategory>('all');
@@ -2039,7 +2013,7 @@ export default function PMWorkspace() {
               const isOpen = openCats.has(cat);
               return (
                 <div key={cat} style={{borderBottom:`1px solid ${C.hair}`}}>
-                  <button onClick={()=>setOpenCats(prev=>{const s=new Set(prev);s.has(cat)?s.delete(cat):s.add(cat);return s;})}
+                  <button onClick={()=>setOpenCats(prev=>{const s=new Set(prev);if(s.has(cat)){s.delete(cat);}else{s.add(cat);}return s;})}
                     style={{width:'100%',background:'none',border:'none',cursor:'pointer',padding:'7px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',textAlign:'left'}}>
                     <span style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,letterSpacing:'0.07em',textTransform:'uppercase',color:C.ink}}>
                       {cat} · {String(CAT_TOTAL[cat]??items.length).padStart(2,'0')}

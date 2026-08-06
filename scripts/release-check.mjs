@@ -49,6 +49,7 @@ if (existsSync(envPath)) {
 }
 
 const checks = [
+  ["pnpm", ["run", "lint"]],
   ["pnpm", ["run", "typecheck", "--pretty", "false"]],
   ["pnpm", ["run", "deployment:preflight"]],
   ["pnpm", ["run", "security:audit"]],
@@ -65,6 +66,7 @@ const checks = [
 const postSmokeChecks = [
   ["pnpm", ["--filter", "@workspace/ens-landing", "run", "build:staff"]],
   ["pnpm", ["--filter", "@workspace/ens-landing", "run", "build:client"]],
+  ["pnpm", ["run", "performance:budgets"]],
 ];
 
 if (process.env.RELEASE_CHECK_SKIP_MIGRATE !== "1") {
@@ -156,7 +158,10 @@ try {
 }
 
 for (const [command, args] of postSmokeChecks) {
-  runCheck(command, args);
+  runCheck(command, args, {
+    ...process.env,
+    NODE_ENV: "production",
+  });
 }
 
 runCheck("pnpm", ["run", "e2e:release"], {

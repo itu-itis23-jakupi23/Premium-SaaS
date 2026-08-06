@@ -61,7 +61,6 @@ import {
   Download,
   ExternalLink,
   Layers,
-  List,
   Loader2,
   Mail,
   Pencil,
@@ -2012,19 +2011,6 @@ function ProjectRow({
         </div>
       </TableCell>
     </TableRow>
-  );
-}
-
-function MetricTile({ label, value, tone }: { label: string; value: number; tone: "warning" | "success" | "info" }) {
-  return (
-    <div className={cn(
-      "rounded-lg border bg-card p-3",
-      tone === "warning" && "border-red-500/40",
-      tone === "success" && "border-green-500/40",
-    )}>
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xl font-bold">{value}</p>
-    </div>
   );
 }
 

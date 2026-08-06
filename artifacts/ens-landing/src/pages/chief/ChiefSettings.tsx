@@ -52,7 +52,6 @@ import {
   Copy,
   Download,
   Globe,
-  KeyRound,
   Laptop,
   Lock,
   LogOut,
@@ -385,30 +384,6 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
       showToast(t("chief.settings.security.toast.passwordSaved"));
     } catch (error) {
       showToast(error instanceof Error ? error.message : t("chief.settings.security.toast.passwordError"));
-    }
-  }
-
-  async function disableTwoFactor() {
-    try {
-      const settings = await saveAccountSettings({ security: { twoFactorEnabled: false, recoveryCodes: [] } });
-      setTwoFactorEnabled(settings.security.twoFactorEnabled);
-      setRecoveryCodes(settings.security.recoveryCodes);
-      showToast(t("chief.settings.security.toast.twoFactorDisabled"));
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : t("chief.settings.security.toast.twoFactorDisableError"));
-    }
-  }
-
-  async function regenerateRecoveryCodes() {
-    if (!twoFactorEnabled) {
-      showToast(t("chief.settings.security.toast.twoFactorRequired")); return;
-    }
-    try {
-      const settings = await saveAccountSettings({ security: { twoFactorEnabled: true, recoveryCodes: makeRecoveryCodes() } });
-      setRecoveryCodes(settings.security.recoveryCodes);
-      showToast(t("chief.settings.security.toast.codesRegenerated"));
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : t("chief.settings.security.toast.codesError"));
     }
   }
 
@@ -1256,17 +1231,6 @@ function getPasswordStrength(password: string, t: (key: string) => string) {
   return { score, label: labels[score] };
 }
 
-function makeRecoveryCodes() {
-  const values = new Uint32Array(12);
-  crypto.getRandomValues(values);
-
-  return Array.from({ length: 6 }, (_, index) => {
-    const left = 1000 + (values[index * 2] % 9000);
-    const right = 1000 + (values[index * 2 + 1] % 9000);
-    return `ENS-${index + 1}${left}-${right}`;
-  });
-}
-
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return "AC";
@@ -1289,7 +1253,7 @@ function defaultNameForRole(role: UserRole) {
   return "Chief Manager";
 }
 
-function defaultEmailForRole(role: UserRole) {
+function defaultEmailForRole(_role: UserRole) {
   return "";
 }
 

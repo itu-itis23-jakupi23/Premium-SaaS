@@ -145,7 +145,7 @@ export default function ChiefWorkspaceMonitor() {
 
   const [projects, setProjects]             = useState<WProject[]>([]);
   const [managers, setManagers]             = useState<PlatformManager[]>([]);
-  const [highlightId, setHighlightId]       = useState<string | null>(urlProjectId);
+  const [highlightId] = useState<string | null>(urlProjectId);
   const [filter, setFilter]                 = useState<"all" | WStatus>("all");
   const [reassignDlg, setReassignDlg]       = useState<WProject | null>(null);
   const [newPM, setNewPM]                   = useState("");
@@ -260,13 +260,6 @@ export default function ChiefWorkspaceMonitor() {
     { key: "pending" as WStatus, label: t("chief.monitor.status.pending"), count: counts.pending },
     { key: "blocked" as WStatus, label: t("chief.monitor.status.blocked"), count: counts.blocked },
   ], [t, projects.length, counts.live, counts.review, counts.pending, counts.blocked]);
-
-  const statDescriptions = useMemo<Record<WStatus, string>>(() => ({
-    live:    t("chief.monitor.stat.liveDesc"),
-    review:  t("chief.monitor.stat.reviewDesc"),
-    pending: t("chief.monitor.stat.pendingDesc"),
-    blocked: t("chief.monitor.stat.blockedDesc"),
-  }), [t]);
 
   const editingNow    = t("chief.monitor.card.editingNow");
   const minutesAgoTpl = (mins: number) => t("chief.monitor.card.minutesAgo", { mins });

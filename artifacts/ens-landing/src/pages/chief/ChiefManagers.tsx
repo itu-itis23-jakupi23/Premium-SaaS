@@ -195,11 +195,6 @@ const DEFAULT_MANAGER_VIEW_DEFS = [
   { id: "default-on-leave",     nameKey: "chief.common.status.onLeave",        search: "", statusFilter: "On Leave"  as StatusFilter, sortMode: "workload-desc" as SortMode, viewMode: "table" as ViewMode, isDefault: true },
 ];
 
-// Resolved at render time with t() — not a module-level constant
-function buildDefaultViews(t: (k: string) => string): SavedManagerView[] {
-  return DEFAULT_MANAGER_VIEW_DEFS.map((def) => ({ ...def, name: t(def.nameKey) }));
-}
-
 const DEFAULT_MANAGER_VIEWS = DEFAULT_MANAGER_VIEW_DEFS.map((def) => ({ ...def, name: def.nameKey }));
 
 export default function ChiefManagers() {

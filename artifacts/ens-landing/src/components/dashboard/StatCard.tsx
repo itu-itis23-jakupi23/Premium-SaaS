@@ -33,7 +33,6 @@ export function StatCard({ label, value, icon: Icon, trend, trendUp, className, 
       return;
     }
 
-    let start = 0;
     const duration = 600; // ms
     const startTime = performance.now();
 

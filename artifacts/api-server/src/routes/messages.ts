@@ -722,7 +722,7 @@ function parseMessageAttachments(value: unknown):
   if (value.length > 5) return { ok: false, error: "A message can include up to 5 attachments." };
 
   const attachments: MessageAttachment[] = [];
-  for (const [index, item] of value.entries()) {
+  for (const item of value) {
     if (!item || typeof item !== "object" || Array.isArray(item)) {
       return { ok: false, error: "Attachment metadata is invalid." };
     }

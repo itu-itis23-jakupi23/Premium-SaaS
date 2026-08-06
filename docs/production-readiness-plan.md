@@ -22,9 +22,9 @@ Status values: `not started`, `in progress`, `blocked`, `implemented`, `verified
 | RG-03 | PostgreSQL startup and readiness             | implemented | `docker-compose.yml`, `docker-compose.dev.yml`, `docker-compose.prod.yml` | Persistent volumes, dependency health checks, and the API readiness probe are wired and statically validated; clean container startup remains unverified because Docker is unavailable locally.   |
 | RG-04 | Empty-database migrations                    | verified    | `lib/db/migrations`, Drizzle journal                                      | All 15 migrations passed against a uniquely named empty disposable PostgreSQL database, which was removed after verification.                                                                     |
 | RG-05 | Historical upgrade migration fixture         | verified    | `scripts/verify-database-migrations.mjs`                                  | Disposable PostgreSQL fixture applies migrations 0000-0011, injects an interrupted 0012 state, completes 0012-0014, and asserts journal and schema integrity.                                     |
-| RG-06 | Backend lint/static checks                   | in progress | API scripts                                                               | Typecheck exists; lint command absent.                                                                                                                                                            |
-| RG-07 | Backend unit/integration tests               | verified    | API Vitest tests                                                          | 34 API tests pass against PostgreSQL.                                                                                                                                                             |
-| RG-08 | Frontend lint/typecheck                      | in progress | root scripts                                                              | Typecheck passed; lint command absent.                                                                                                                                                            |
+| RG-06 | Backend lint/static checks                   | verified    | API scripts, `eslint.config.mjs`                                          | ESLint and TypeScript checks are mandatory in the release gate and CI; both pass with zero warnings.                                                                                              |
+| RG-07 | Backend unit/integration tests               | verified    | API Vitest tests                                                          | 86 API tests pass against PostgreSQL.                                                                                                                                                             |
+| RG-08 | Frontend lint/typecheck                      | verified    | root scripts, `eslint.config.mjs`                                         | ESLint and TypeScript checks are mandatory in the release gate and CI; both pass with zero warnings.                                                                                              |
 | RG-09 | Staff production build                       | verified    | Vite scripts                                                              | Production staff build passes.                                                                                                                                                                    |
 | RG-10 | Client production build                      | verified    | Vite scripts                                                              | Production client build passes.                                                                                                                                                                   |
 | RG-11 | Smoke workflow                               | verified    | `scripts/smoke-workflow.mjs`                                              | Release runner starts the production API on an isolated port and the authenticated workflow passes.                                                                                               |
@@ -149,9 +149,9 @@ Status values: `not started`, `in progress`, `blocked`, `implemented`, `verified
 
 | ID    | Requirement                                                             | Status      | Verification target                    |
 | ----- | ----------------------------------------------------------------------- | ----------- | -------------------------------------- |
-| PF-01 | Route, API, bundle, FPS, memory, asset performance baseline and budgets | not started | `docs/performance-baseline.md`.        |
+| PF-01 | Route, API, bundle, FPS, memory, asset performance baseline and budgets | in progress | Build budgets are enforced; staging runtime traces remain outstanding. |
 | PF-02 | Safe route prefetch and elimination of duplicate requests               | in progress | Network trace comparison.              |
-| PF-03 | Lazy charts/workspace and smaller chart imports                         | in progress | Build artifact budgets.                |
+| PF-03 | Lazy charts/workspace and smaller chart imports                         | verified    | Build gate rejects eager chart/Three.js preloads and budget regressions. |
 | PF-04 | Virtualized client/project/message/catalogue lists                      | not started | Large fixture responsiveness.          |
 | PF-05 | GLB/texture/thumbnail optimization and cache headers                    | not started | Asset audit.                           |
 | AX-01 | Keyboard navigation and focus restoration                               | in progress | Critical-flow keyboard tests.          |
@@ -179,7 +179,7 @@ Status values: `not started`, `in progress`, `blocked`, `implemented`, `verified
 Required documents:
 
 - `docs/authorization-matrix.md` — implemented; expand alongside every new protected route
-- `docs/performance-baseline.md` — not started
+- `docs/performance-baseline.md` - implemented; staging runtime evidence remains pending
 - `docs/operations-runbook.md` — verified
 - `docs/backup-and-restore.md` — implemented
 - `docs/deployment-and-rollback.md` — verified
@@ -206,7 +206,7 @@ Required documents:
 
 1. Prove clean production Compose startup and readiness on a host with Docker available.
 2. Confirm the required GitHub Actions checks pass for the next verified release commit.
-3. Add explicit backend/frontend lint commands and a documented performance baseline.
+3. Capture staging runtime traces for route, API, workspace FPS, and memory budgets.
 4. Complete the remaining workspace placement, collision, room, asset-failure, and concurrency edge-case matrix.
 
 ## Verification Log
@@ -237,6 +237,10 @@ Required documents:
 | 2026-08-06 | API environment and full API test suites                                   | dirty worktree             | Passed 4/4 environment tests and 86/86 API tests after deployment hardening.                                                                                                                                                                                                                                                    |
 | 2026-08-06 | `pnpm run typecheck`                                                       | dirty worktree             | Passed across the monorepo after proxy and environment-validation changes.                                                                                                                                                                                                                                                      |
 | 2026-08-06 | expanded `pnpm run release:check`                                          | `df20178` + dirty worktree | Machine-readable evidence reports all 16 stages passed in 15m03s, including deployment preflight, migrations, security, 21 schema tests, 86 API tests, persistence, smoke, both builds, and 38 Playwright tests; Playwright accounted for 13m43s. The outer shell timeout fired seconds after the passing evidence was written. |
+| 2026-08-06 | `pnpm run lint` and `pnpm run typecheck`                                    | dirty worktree             | Backend, frontend, and release scripts passed ESLint with zero warnings; TypeScript passed across the monorepo. |
+| 2026-08-06 | API/schema tests and production builds                                      | dirty worktree             | Passed 86/86 API tests, 21/21 shared-schema tests, API build, and staff/client production builds. |
+| 2026-08-06 | `pnpm run performance:budgets`                                               | dirty worktree             | Passed enforced initial JS/CSS, largest-chunk, asset-size, and lazy-preload budgets for both portals; evidence written to `.release-evidence/frontend-performance.json`. |
+| 2026-08-06 | expanded `pnpm run release:check`                                           | dirty worktree             | Machine-readable evidence reports all 18 stages passed: lint, migrations, typecheck, deployment preflight, security, backup/restore, 21 schema tests, 86 API tests, persistence, smoke, production builds, frontend budgets, and Playwright. E2E passed in 29m10s; the outer shell timed out shortly before the child wrote the passing report. |
 
 ## Known Limitations
 

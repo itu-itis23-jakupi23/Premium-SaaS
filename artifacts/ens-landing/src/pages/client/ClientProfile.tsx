@@ -28,7 +28,7 @@ import {
   saveAccountSettings,
   updateAccountPassword,
 } from "@/lib/platform-api";
-import { User, Building, Shield, Bell, Camera, CheckCircle2 } from "lucide-react";
+import { User, Building, Shield, Bell, Camera } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";

@@ -118,6 +118,7 @@ const RENDERER_TIMEOUT_MS = 12_000;
 
 export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
   const cfg: RequiredIframeConfig = { ...DEFAULTS, ...config };
+  const openSides = buildOpenParam(cfg);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
   const [rendererError, setRendererError] = useState<string | null>(null);
@@ -158,7 +159,7 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
       wall:   cfg.wallColor ?? '#f8fafc',
       frame:  cfg.frameColor ?? '#b8bdc3',
       fasciaColor: cfg.fasciaColor ?? '#ffffff',
-      open:   buildOpenParam(cfg),
+      open:   openSides,
       carpet: cfg.carpetColor ?? '#3b3e44',
       placedItems: cfg.placedItems ?? [],
       rooms: cfg.rooms ?? [],
@@ -175,7 +176,7 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
   }, [
     cfg.width, cfg.depth, cfg.height,
     cfg.system, cfg.companyName, cfg.wallColor, cfg.frameColor, cfg.fasciaColor, cfg.carpetColor,
-    cfg.openFront, cfg.openBack, cfg.openLeft, cfg.openRight,
+    openSides,
     cfg.placedItems, cfg.rooms, cfg.panelOverrides, cfg.frontSupportPositions, cfg.suppressedDefaultPositions, cfg.fasciaEnabled, cfg.fasciaOption, cfg.lightingPreset, cfg.pins, cfg.pinMode, cfg.invalidItemIds,
   ]);
 
