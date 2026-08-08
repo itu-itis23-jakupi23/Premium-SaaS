@@ -35,7 +35,8 @@
       "boothDimensions": "Booth Dimensions",
       "approvalStatus": "Approval Status",
       "furnitureCount": "Furniture Count",
-      "pending": "Pending"
+      "pending": "Pending",
+      "illustrative": "Example project — illustrative figures"
     },
     "demo": {
       "badge": "Live Demo Access",
@@ -183,7 +184,229 @@
       "bullet1": "Three portals: chief, project managers, and clients",
       "bullet2": "Your own furniture catalog and pricing",
       "bullet3": "Approvals, revisions, and invoices tracked automatically"
-    }
+    },
+    "dimensionLabel": "ENS / EXHIBITOR PLATFORM",
+    "systemComparison": {
+      "heading": "System Comparison",
+      "subheading": "Choose the framework that matches your client's brand and budget."
+    },
+    "systems": {
+      "octanorm": {
+        "name": "OCTANORM",
+        "desc": "The global standard for modular exhibitions. Practical, efficient, and highly customizable structure.",
+        "features": [
+          "4mm Groove System",
+          "Aluminum Extrusion",
+          "Modular Flexibility",
+          "Standard Panels"
+        ]
+      },
+      "maxima": {
+        "name": "MAXIMA",
+        "desc": "Premium architectural system for high-impact presence. Large spans and smooth, seamless finishes.",
+        "features": [
+          "Large Format Spans",
+          "Clean Geometry",
+          "Premium Visuals",
+          "Integrated Lighting"
+        ]
+      }
+    },
+    "featureCards": [
+      {
+        "title": "3D Booth Workspace",
+        "desc": "Real-time interactive editor with perspective controls."
+      },
+      {
+        "title": "Octanorm Support",
+        "desc": "Native modular snapping logic for standard system walls."
+      },
+      {
+        "title": "Maxima Support",
+        "desc": "Architectural spans and premium structural components."
+      },
+      {
+        "title": "Furniture Placement",
+        "desc": "Intelligent surface snapping for tables, chairs, and racks."
+      },
+      {
+        "title": "Client Collaboration",
+        "desc": "Live feedback loop between managers and clients."
+      },
+      {
+        "title": "Workspace Snapshots",
+        "desc": "Capture design states and instantly switch between them."
+      },
+      {
+        "title": "Version History",
+        "desc": "Track changes across the entire design lifecycle."
+      },
+      {
+        "title": "Approval Workflow",
+        "desc": "Streamlined sign-off process for structural designs."
+      },
+      {
+        "title": "Project Management",
+        "desc": "Comprehensive dashboard for tracking multiple shows."
+      },
+      {
+        "title": "Live Monitoring",
+        "desc": "Chief managers can monitor all active workspaces."
+      }
+    ],
+    "workflow": {
+      "heading": "From Brief to Build in 7 Steps",
+      "subheading": "The most efficient workflow in the exhibition industry.",
+      "steps": [
+        {
+          "title": "Initial Brief",
+          "desc": "Define exhibition goals, floor space, and brand requirements."
+        },
+        {
+          "title": "Workspace Setup",
+          "desc": "Create a new project and set your base booth dimensions."
+        },
+        {
+          "title": "3D Construction",
+          "desc": "Build walls, fascias, and structural elements using Octanorm or Maxima."
+        },
+        {
+          "title": "Furniture & Styling",
+          "desc": "Drag and drop items from our extensive library into your space."
+        },
+        {
+          "title": "Client Review",
+          "desc": "Share a live link for clients to explore the booth in their browser."
+        },
+        {
+          "title": "Revision Cycle",
+          "desc": "Make adjustments in real-time based on client feedback and requests."
+        },
+        {
+          "title": "Final Approval",
+          "desc": "Get structural sign-off and export documentation for production."
+        }
+      ]
+    },
+    "team": {
+      "heading": "Built for the Whole Team",
+      "subheading": "Every role gets a dedicated experience. No shared spreadsheets, no lost emails.",
+      "roles": [
+        {
+          "role": "Chief Manager",
+          "headline": "Full visibility across every project.",
+          "points": [
+            "Live workspace monitor for all active stands",
+            "PM performance leaderboard and revenue tracking",
+            "One-click manager assignment and reassignment",
+            "Exportable reports — Excel or PDF, any date range"
+          ]
+        },
+        {
+          "role": "Project Manager",
+          "headline": "Design the stand, manage the client.",
+          "points": [
+            "Drag-and-drop 3D editor with 30+ real GLB furniture models",
+            "Octanorm & Maxima structural systems with wall snapping",
+            "Version history and one-click snapshot capture",
+            "Integrated task board (To Do / In Progress / Blocked / Done)"
+          ]
+        },
+        {
+          "role": "Client",
+          "headline": "Review and approve with full context.",
+          "points": [
+            "Read-only 3D view of every design version",
+            "Pin comments directly on the booth canvas",
+            "Approve or request revision with a single action",
+            "Document hub for all uploaded files and contracts"
+          ]
+        }
+      ]
+    },
+    "showcase": {
+      "heading": "See Every Role in Action",
+      "subheading": "From the chief's command centre to the client's design review — every screen is built for its user.",
+      "previewCaption": "Interface preview of the booth workspace",
+      "illustrative": "Figures shown are an illustrative example",
+      "cards": [
+        {
+          "title": "Chief Dashboard",
+          "role": "Chief Manager",
+          "badge": "Command Centre",
+          "metrics": [
+            "6 Active Projects",
+            "3 Delayed — Action Required",
+            "₺2.4M Budget Tracked"
+          ]
+        },
+        {
+          "title": "PM Workspace Builder",
+          "role": "Project Manager",
+          "badge": "3D Design",
+          "metrics": [
+            "Octanorm 8×6m Stand",
+            "Furniture placed: 12 items",
+            "v2.4 → Pending Chief Review"
+          ]
+        },
+        {
+          "title": "Client Review Portal",
+          "role": "Client",
+          "badge": "Read-Only View",
+          "metrics": [
+            "Design v2.4 — Pending Approval",
+            "Revisions: 1 / 2",
+            "Pins & comments enabled"
+          ]
+        }
+      ],
+      "percentComplete": "{{percent}}% complete",
+      "previewAlt": "The booth workspace showing an Octanorm component list, a wireframe stand on the build grid, and a wall panel properties panel with width and height in millimetres."
+    },
+    "billing": {
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "saveBadge": "Save 20%",
+      "perMonthAnnual": "/mo · billed annually",
+      "savePerYear": "Save ${{amount}}/year",
+      "getStarted": "Get Started",
+      "contactSales": "Contact Sales"
+    },
+    "pricingTiers": [
+      {
+        "tier": "Starter",
+        "features": [
+          "5 Active Projects",
+          "Octanorm System",
+          "Standard Furniture Library",
+          "2 GB Storage",
+          "Email Support"
+        ]
+      },
+      {
+        "tier": "Professional",
+        "features": [
+          "Unlimited Projects",
+          "Octanorm & Maxima",
+          "Full Furniture Library",
+          "Client Review Links",
+          "Priority Support",
+          "Advanced Analytics"
+        ]
+      },
+      {
+        "tier": "Enterprise",
+        "features": [
+          "White-label Client Links",
+          "Custom Object Imports",
+          "Full API Access",
+          "Dedicated Success Manager",
+          "99.9% SLA",
+          "On-site Training"
+        ]
+      }
+    ]
   },
   "team": {
     "hero": {

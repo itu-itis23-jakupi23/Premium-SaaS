@@ -78,6 +78,24 @@ test.describe("Public marketing surface", () => {
     await expect(showcaseLabel).toBeVisible();
   });
 
+  test("translated section copy renders from i18n keys", async ({ page }) => {
+    await page.goto(clientUrl("/"));
+
+    // CS-12: this copy moved from hardcoded JSX into home.* keys. A failed
+    // lookup renders the raw key or nothing, so assert the resolved text.
+    await expect(page.getByRole("heading", { name: "System Comparison" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "From Brief to Build in 7 Steps" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Built for the Whole Team" })).toBeVisible();
+
+    // Array-valued keys resolved via returnObjects.
+    await expect(page.getByRole("heading", { name: "3D Booth Workspace" })).toBeVisible();
+    await expect(page.getByText("Initial Brief", { exact: true })).toBeVisible();
+    await expect(page.getByText("Full visibility across every project.")).toBeVisible();
+
+    // No unresolved i18n keys leaked into the page.
+    await expect(page.getByText(/home\.(featureCards|workflow|team|showcase)/)).toHaveCount(0);
+  });
+
   test("browser zoom is not disabled", async ({ page }) => {
     await page.goto(clientUrl("/"));
 

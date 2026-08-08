@@ -60,6 +60,66 @@ const STAGGER = {
   }
 };
 
+/**
+ * Presentation-only values (CS-12).
+ *
+ * The copy for these sections lives in `home.*` translation keys. Icons,
+ * gradients, and progress values are not translatable, so they stay here and
+ * are zipped with the translated content by index. Keep the lengths in sync
+ * with the corresponding arrays in `en.json`.
+ */
+const FEATURE_ICONS = [
+  <MonitorPlay className="w-6 h-6" />,
+  <Box className="w-6 h-6" />,
+  <Sparkles className="w-6 h-6" />,
+  <MousePointer2 className="w-6 h-6" />,
+  <Users className="w-6 h-6" />,
+  <Save className="w-6 h-6" />,
+  <History className="w-6 h-6" />,
+  <Activity className="w-6 h-6" />,
+  <LayoutDashboard className="w-6 h-6" />,
+  <Eye className="w-6 h-6" />,
+];
+
+const WORKFLOW_ICONS = [
+  <FileText className="w-5 h-5" />,
+  <Settings className="w-5 h-5" />,
+  <Box className="w-5 h-5" />,
+  <Package className="w-5 h-5" />,
+  <Eye className="w-5 h-5" />,
+  <History className="w-5 h-5" />,
+  <CheckCircle2 className="w-5 h-5" />,
+];
+
+const ROLE_GRADIENTS = [
+  'from-violet-600 to-indigo-600',
+  'from-blue-600 to-cyan-500',
+  'from-emerald-600 to-teal-500',
+];
+
+const SHOWCASE_ICONS = [LayoutDashboard, Box, Eye];
+
+const SHOWCASE_PROGRESS = [72, 45, 88];
+
+type LabelledItem = { title: string; desc: string };
+type TeamRole = { role: string; headline: string; points: string[] };
+type ShowcaseCard = { title: string; role: string; badge: string; metrics: string[] };
+type PricingTier = { tier: string; features: string[] };
+
+/**
+ * Commercial figures stay in code — they are amounts, not copy, and must not
+ * drift per locale. Tier names and feature lists come from `home.pricingTiers`.
+ *
+ * NOTE (CS-04): these tiers do not correspond to the plans implemented in
+ * `artifacts/api-server/src/routes/billing.ts`, which bills starter/pro/
+ * unlimited as a per-project client subscription. Resolve before launch.
+ */
+const PRICING_PLANS = [
+  { monthlyPrice: '$99', annualPrice: '$79', monthlyPriceCents: 9900, annualPriceCents: 7900, recommended: false },
+  { monthlyPrice: '$299', annualPrice: '$239', monthlyPriceCents: 29900, annualPriceCents: 23900, recommended: true },
+  { monthlyPrice: 'Custom', annualPrice: 'Custom', monthlyPriceCents: null, annualPriceCents: null, recommended: false },
+];
+
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -68,6 +128,15 @@ export default function Home() {
   const { t } = useTranslation();
   const showStaffLinks = PORTAL_MODE !== 'client';
   const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+
+  // Translated content (CS-12). Arrays come back via returnObjects.
+  const octanormFeatures = t('home.systems.octanorm.features', { returnObjects: true }) as string[];
+  const maximaFeatures = t('home.systems.maxima.features', { returnObjects: true }) as string[];
+  const featureCards = t('home.featureCards', { returnObjects: true }) as LabelledItem[];
+  const workflowSteps = t('home.workflow.steps', { returnObjects: true }) as LabelledItem[];
+  const teamRoles = t('home.team.roles', { returnObjects: true }) as TeamRole[];
+  const showcaseCards = t('home.showcase.cards', { returnObjects: true }) as ShowcaseCard[];
+  const pricingTiers = t('home.pricingTiers', { returnObjects: true }) as PricingTier[];
 
   useEffect(() => {
     document.title = t('home.pageTitle');
@@ -192,7 +261,7 @@ export default function Home() {
         <ExhibitionCursorField variant="client" />
         <div className="absolute inset-0 grid-pattern opacity-[0.04] dark:opacity-[0.12] -z-10" />
         <div className="ens-landing-dimension absolute left-6 right-6 top-32 hidden md:flex" aria-hidden="true">
-          <span>ENS / EXHIBITOR PLATFORM</span><i /><span>01</span>
+          <span>{t('home.dimensionLabel')}</span><i /><span>01</span>
         </div>
         
         <div className="container mx-auto px-6 relative">
@@ -231,7 +300,7 @@ export default function Home() {
       {/* Hero Stats (floating) — illustrative, not live data (CS-09) */}
       <div className="container mx-auto px-6 mb-20 relative z-20">
         <p className="text-center text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-3" data-testid="label-hero-stats-illustrative">
-          {t('home.stats.illustrative', 'Example project — illustrative figures')}
+          {t('home.stats.illustrative')}
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
@@ -320,8 +389,8 @@ export default function Home() {
       <section id="features" className="py-24 bg-muted/10">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 uppercase tracking-tighter">System Comparison</h2>
-            <p className="text-muted-foreground">Choose the framework that matches your client's brand and budget.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 uppercase tracking-tighter">{t('home.systemComparison.heading')}</h2>
+            <p className="text-muted-foreground">{t('home.systemComparison.subheading')}</p>
           </div>
           
           <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto mb-32">
@@ -335,13 +404,13 @@ export default function Home() {
                 <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
                   <Box className="w-6 h-6" />
                 </div>
-                <h3 className="text-3xl font-bold">OCTANORM</h3>
+                <h3 className="text-3xl font-bold">{t('home.systems.octanorm.name')}</h3>
               </div>
               <p className="text-muted-foreground mb-6 leading-relaxed">
-                The global standard for modular exhibitions. Practical, efficient, and highly customizable structure.
+                {t('home.systems.octanorm.desc')}
               </p>
               <ul className="space-y-3 mb-8">
-                {["4mm Groove System", "Aluminum Extrusion", "Modular Flexibility", "Standard Panels"].map((item, i) => (
+                {octanormFeatures.map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm text-blue-400/80">
                     <Zap className="w-4 h-4" /> {item}
                   </li>
@@ -403,13 +472,13 @@ export default function Home() {
                 <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
                   <Sparkles className="w-6 h-6" />
                 </div>
-                <h3 className="text-3xl font-bold">MAXIMA</h3>
+                <h3 className="text-3xl font-bold">{t('home.systems.maxima.name')}</h3>
               </div>
               <p className="text-muted-foreground mb-6 leading-relaxed">
-                Premium architectural system for high-impact presence. Large spans and smooth, seamless finishes.
+                {t('home.systems.maxima.desc')}
               </p>
               <ul className="space-y-3 mb-8">
-                {["Large Format Spans", "Clean Geometry", "Premium Visuals", "Integrated Lighting"].map((item, i) => (
+                {maximaFeatures.map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm text-purple-400/80">
                     <Zap className="w-4 h-4" /> {item}
                   </li>
@@ -463,18 +532,7 @@ export default function Home() {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {[
-              { icon: <MonitorPlay className="w-6 h-6" />, title: "3D Booth Workspace", desc: "Real-time interactive editor with perspective controls." },
-              { icon: <Box className="w-6 h-6" />, title: "Octanorm Support", desc: "Native modular snapping logic for standard system walls." },
-              { icon: <Sparkles className="w-6 h-6" />, title: "Maxima Support", desc: "Architectural spans and premium structural components." },
-              { icon: <MousePointer2 className="w-6 h-6" />, title: "Furniture Placement", desc: "Intelligent surface snapping for tables, chairs, and racks." },
-              { icon: <Users className="w-6 h-6" />, title: "Client Collaboration", desc: "Live feedback loop between managers and clients." },
-              { icon: <Save className="w-6 h-6" />, title: "Workspace Snapshots", desc: "Capture design states and instantly switch between them." },
-              { icon: <History className="w-6 h-6" />, title: "Version History", desc: "Track changes across the entire design lifecycle." },
-              { icon: <Activity className="w-6 h-6" />, title: "Approval Workflow", desc: "Streamlined sign-off process for structural designs." },
-              { icon: <LayoutDashboard className="w-6 h-6" />, title: "Project Management", desc: "Comprehensive dashboard for tracking multiple shows." },
-              { icon: <Eye className="w-6 h-6" />, title: "Live Monitoring", desc: "Chief managers can monitor all active workspaces." }
-            ].map((feature, i) => (
+            {featureCards.map((feature, i) => (
               <motion.div 
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
@@ -484,7 +542,7 @@ export default function Home() {
                 className="p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/30 transition-all hover:shadow-[0_0_20px_rgba(109,40,217,0.1)] group"
               >
                 <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  {feature.icon}
+                  {FEATURE_ICONS[i]}
                 </div>
                 <h3 className="text-base font-semibold mb-2">{feature.title}</h3>
                 <p className="text-muted-foreground text-xs leading-relaxed">{feature.desc}</p>
@@ -499,8 +557,8 @@ export default function Home() {
         <div className="absolute top-1/2 left-0 w-64 h-64 bg-primary/5 blur-3xl -z-10" />
         <div className="container mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-20">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">From Brief to Build in 7 Steps</h2>
-            <p className="text-muted-foreground">The most efficient workflow in the exhibition industry.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('home.workflow.heading')}</h2>
+            <p className="text-muted-foreground">{t('home.workflow.subheading')}</p>
           </div>
 
           <div className="max-w-4xl mx-auto relative">
@@ -508,15 +566,7 @@ export default function Home() {
             <div className="absolute left-[20px] md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary/50 via-border to-transparent -translate-x-1/2" />
             
             <div className="space-y-12">
-              {[
-                { title: "Initial Brief", desc: "Define exhibition goals, floor space, and brand requirements.", icon: <FileText className="w-5 h-5" /> },
-                { title: "Workspace Setup", desc: "Create a new project and set your base booth dimensions.", icon: <Settings className="w-5 h-5" /> },
-                { title: "3D Construction", desc: "Build walls, fascias, and structural elements using Octanorm or Maxima.", icon: <Box className="w-5 h-5" /> },
-                { title: "Furniture & Styling", desc: "Drag and drop items from our extensive library into your space.", icon: <Package className="w-5 h-5" /> },
-                { title: "Client Review", desc: "Share a live link for clients to explore the booth in their browser.", icon: <Eye className="w-5 h-5" /> },
-                { title: "Revision Cycle", desc: "Make adjustments in real-time based on client feedback and requests.", icon: <History className="w-5 h-5" /> },
-                { title: "Final Approval", desc: "Get structural sign-off and export documentation for production.", icon: <CheckCircle2 className="w-5 h-5" /> }
-              ].map((step, i) => (
+              {workflowSteps.map((step, i) => (
                 <motion.div 
                   key={i}
                   initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
@@ -531,7 +581,7 @@ export default function Home() {
                   <div className="flex-1">
                     <div className={`p-6 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 transition-colors shadow-xl ${i % 2 === 0 ? 'md:text-left' : 'md:text-right'}`}>
                       <div className={`w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4 ${i % 2 === 0 ? '' : 'md:ml-auto'}`}>
-                        {step.icon}
+                        {WORKFLOW_ICONS[i]}
                       </div>
                       <h3 className="text-xl font-bold mb-2">{step.title}</h3>
                       <p className="text-muted-foreground text-sm">{step.desc}</p>
@@ -548,46 +598,12 @@ export default function Home() {
       <section className="py-24">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Built for the Whole Team</h2>
-            <p className="text-muted-foreground">Every role gets a dedicated experience. No shared spreadsheets, no lost emails.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('home.team.heading')}</h2>
+            <p className="text-muted-foreground">{t('home.team.subheading')}</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                role: "Chief Manager",
-                gradient: "from-violet-600 to-indigo-600",
-                headline: "Full visibility across every project.",
-                points: [
-                  "Live workspace monitor for all active stands",
-                  "PM performance leaderboard and revenue tracking",
-                  "One-click manager assignment and reassignment",
-                  "Exportable reports — Excel or PDF, any date range",
-                ],
-              },
-              {
-                role: "Project Manager",
-                gradient: "from-blue-600 to-cyan-500",
-                headline: "Design the stand, manage the client.",
-                points: [
-                  "Drag-and-drop 3D editor with 30+ real GLB furniture models",
-                  "Octanorm & Maxima structural systems with wall snapping",
-                  "Version history and one-click snapshot capture",
-                  "Integrated task board (To Do / In Progress / Blocked / Done)",
-                ],
-              },
-              {
-                role: "Client",
-                gradient: "from-emerald-600 to-teal-500",
-                headline: "Review and approve with full context.",
-                points: [
-                  "Read-only 3D view of every design version",
-                  "Pin comments directly on the booth canvas",
-                  "Approve or request revision with a single action",
-                  "Document hub for all uploaded files and contracts",
-                ],
-              },
-            ].map((item, i) => (
+            {teamRoles.map((item, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
@@ -596,7 +612,7 @@ export default function Home() {
                 transition={{ delay: i * 0.1 }}
                 className="p-8 rounded-3xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-all flex flex-col group"
               >
-                <div className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full bg-gradient-to-r ${item.gradient} text-white mb-5 self-start`}>
+                <div className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full bg-gradient-to-r ${ROLE_GRADIENTS[i]} text-white mb-5 self-start`}>
                   {item.role}
                 </div>
                 <p className="text-lg font-semibold mb-5 leading-snug">{item.headline}</p>
@@ -628,13 +644,13 @@ export default function Home() {
               <Eye className="w-3.5 h-3.5" /> {t('nav.showcase')}
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">
-              See Every Role in Action
+              {t('home.showcase.heading')}
             </h2>
             <p className="text-muted-foreground">
-              From the chief's command centre to the client's design review — every screen is built for its user.
+              {t('home.showcase.subheading')}
             </p>
             <p className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground/60" data-testid="label-showcase-illustrative">
-              {t('home.showcase.illustrative', 'Figures shown are an illustrative example')}
+              {t('home.showcase.illustrative')}
             </p>
           </motion.div>
 
@@ -648,7 +664,7 @@ export default function Home() {
             <div className="rounded-3xl border border-border/60 bg-card overflow-hidden shadow-2xl">
               <img
                 src="/mockup-1.png"
-                alt="The booth workspace showing an Octanorm component list, a wireframe stand on the build grid, and a wall panel properties panel with width and height in millimetres."
+                alt={t('home.showcase.previewAlt')}
                 width={1685}
                 height={998}
                 loading="lazy"
@@ -657,38 +673,13 @@ export default function Home() {
               />
             </div>
             <figcaption className="mt-3 text-center text-xs text-muted-foreground">
-              {t('home.showcase.previewCaption', 'Interface preview of the booth workspace')}
+              {t('home.showcase.previewCaption')}
             </figcaption>
           </motion.figure>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {[
-              {
-                title: "Chief Dashboard",
-                role: "Chief Manager",
-                gradient: "from-violet-600 to-indigo-600",
-                icon: LayoutDashboard,
-                metrics: ["6 Active Projects", "3 Delayed — Action Required", "₺2.4M Budget Tracked"],
-                badge: "Command Centre",
-              },
-              {
-                title: "PM Workspace Builder",
-                role: "Project Manager",
-                gradient: "from-blue-600 to-cyan-500",
-                icon: Box,
-                metrics: ["Octanorm 8×6m Stand", "Furniture placed: 12 items", "v2.4 → Pending Chief Review"],
-                badge: "3D Design",
-              },
-              {
-                title: "Client Review Portal",
-                role: "Client",
-                gradient: "from-emerald-600 to-teal-500",
-                icon: Eye,
-                metrics: ["Design v2.4 — Pending Approval", "Revisions: 1 / 2", "Pins & comments enabled"],
-                badge: "Read-Only View",
-              },
-            ].map((item, i) => {
-              const Icon = item.icon;
+            {showcaseCards.map((item, i) => {
+              const Icon = SHOWCASE_ICONS[i];
               return (
                 <motion.div
                   key={i}
@@ -699,10 +690,10 @@ export default function Home() {
                   whileHover={{ y: -6, scale: 1.01 }}
                   className="rounded-3xl border border-border/50 bg-card overflow-hidden group hover:border-primary/30 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] transition-all"
                 >
-                  <div className={`h-2 bg-gradient-to-r ${item.gradient}`} />
+                  <div className={`h-2 bg-gradient-to-r ${ROLE_GRADIENTS[i]}`} />
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
-                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center flex-shrink-0`}>
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${ROLE_GRADIENTS[i]} flex items-center justify-center flex-shrink-0`}>
                         <Icon className="w-5 h-5 text-white" />
                       </div>
                       <span className="text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
@@ -714,18 +705,18 @@ export default function Home() {
                     <div className="space-y-2">
                       {item.metrics.map((m, j) => (
                         <div key={j} className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-br ${item.gradient} flex-shrink-0`} />
+                          <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-br ${ROLE_GRADIENTS[i]} flex-shrink-0`} />
                           {m}
                         </div>
                       ))}
                     </div>
                     <div className="mt-5 h-1 rounded-full bg-muted overflow-hidden">
                       <div
-                        className={`h-full bg-gradient-to-r ${item.gradient} transition-all duration-700`}
-                        style={{ width: `${[72, 45, 88][i]}%` }}
+                        className={`h-full bg-gradient-to-r ${ROLE_GRADIENTS[i]} transition-all duration-700`}
+                        style={{ width: `${SHOWCASE_PROGRESS[i]}%` }}
                       />
                     </div>
-                    <p className="text-[10px] font-mono text-muted-foreground mt-1.5">{[72, 45, 88][i]}% complete</p>
+                    <p className="text-[10px] font-mono text-muted-foreground mt-1.5">{t('home.showcase.percentComplete', { percent: SHOWCASE_PROGRESS[i] })}</p>
                   </div>
                 </motion.div>
               );
@@ -744,7 +735,7 @@ export default function Home() {
 
           {/* Billing toggle */}
           <div className="flex items-center justify-center gap-4 mb-12">
-            <span className={`text-sm font-medium transition-colors ${!billingAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>Monthly</span>
+            <span className={`text-sm font-medium transition-colors ${!billingAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>{t('home.billing.monthly')}</span>
             <button
               onClick={() => setBillingAnnual(v => !v)}
               className={`relative w-12 h-6 rounded-full border-2 transition-all duration-200 ${billingAnnual ? 'bg-primary border-primary' : 'bg-muted border-border'}`}
@@ -752,26 +743,13 @@ export default function Home() {
               <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${billingAnnual ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
             <span className={`text-sm font-medium transition-colors flex items-center gap-2 ${billingAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
-              Annual
-              <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">Save 20%</span>
+              {t('home.billing.annual')}
+              <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">{t('home.billing.saveBadge')}</span>
             </span>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                tier: "Starter", monthlyPrice: "$99", annualPrice: "$79", monthlyPriceCents: 9900, annualPriceCents: 7900,
-                features: ["5 Active Projects", "Octanorm System", "Standard Furniture Library", "2 GB Storage", "Email Support"]
-              },
-              {
-                tier: "Professional", monthlyPrice: "$299", annualPrice: "$239", monthlyPriceCents: 29900, annualPriceCents: 23900,
-                features: ["Unlimited Projects", "Octanorm & Maxima", "Full Furniture Library", "Client Review Links", "Priority Support", "Advanced Analytics"], recommended: true
-              },
-              {
-                tier: "Enterprise", monthlyPrice: "Custom", annualPrice: "Custom", monthlyPriceCents: null, annualPriceCents: null,
-                features: ["White-label Client Links", "Custom Object Imports", "Full API Access", "Dedicated Success Manager", "99.9% SLA", "On-site Training"]
-              }
-            ].map((p, i) => (
+            {PRICING_PLANS.map((p, i) => (
               <motion.div
                 key={i}
                 whileHover={{ y: -8 }}
@@ -782,11 +760,11 @@ export default function Home() {
                     {t('home.pricing.recommended')}
                   </div>
                 )}
-                <div className="text-xl font-bold mb-2">{p.tier}</div>
+                <div className="text-xl font-bold mb-2">{pricingTiers[i]?.tier}</div>
                 <div className="flex items-baseline gap-1 mb-2">
                   <span className="text-4xl font-black">{billingAnnual ? p.annualPrice : p.monthlyPrice}</span>
                   {p.monthlyPrice !== 'Custom' && (
-                    <span className="text-muted-foreground text-sm">{billingAnnual ? '/mo · billed annually' : t('home.pricing.perMonth')}</span>
+                    <span className="text-muted-foreground text-sm">{billingAnnual ? t('home.billing.perMonthAnnual') : t('home.pricing.perMonth')}</span>
                   )}
                 </div>
                 {p.monthlyPriceCents !== null && billingAnnual && (
@@ -796,7 +774,7 @@ export default function Home() {
                 )}
                 {(p.monthlyPriceCents === null || !billingAnnual) && <div className="mb-8" />}
                 <ul className="space-y-3 mb-10 flex-1">
-                  {p.features.map((f, j) => (
+                  {(pricingTiers[i]?.features ?? []).map((f, j) => (
                     <li key={j} className="flex items-center gap-3 text-sm">
                       <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${p.recommended ? 'text-primary' : 'text-muted-foreground'}`} />
                       {f}
@@ -809,7 +787,7 @@ export default function Home() {
                     asChild
                     className="mt-auto w-full rounded-xl h-12 font-bold"
                   >
-                    <a href={SALES_CONTACT_HREF} data-testid="btn-pricing-contact-sales">Contact Sales</a>
+                    <a href={SALES_CONTACT_HREF} data-testid="btn-pricing-contact-sales">{t('home.billing.contactSales')}</a>
                   </Button>
                 ) : (
                   <Button
@@ -817,7 +795,7 @@ export default function Home() {
                     className={`mt-auto w-full rounded-xl h-12 font-bold ${p.recommended ? 'shadow-lg shadow-primary/20' : ''}`}
                     onClick={() => navigate('/signup')}
                   >
-                    Get Started
+                    {t('home.billing.getStarted')}
                   </Button>
                 )}
               </motion.div>
