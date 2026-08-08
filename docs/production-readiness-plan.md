@@ -140,7 +140,7 @@ Status values: `not started`, `in progress`, `blocked`, `implemented`, `verified
 | AU-02 | Secure cookies/proxy/CORS/CSRF/CSP/iframe/upload headers        | in progress | Deployment-mode integration tests.                                                                                                     |
 | AU-03 | Email verification and password reset delivery                  | in progress | Local mail/test-provider flow.                                                                                                         |
 | AU-04 | Complete or hide unfinished 2FA                                 | not started | Production UI and auth behavior.                                                                                                       |
-| AU-05 | Session management and forced logout after account/role changes | in progress | Existing-session invalidation test.                                                                                                    |
+| AU-05 | Session management and forced logout after account/role changes | in progress | Browser coverage proves one shared refresh, valid-cookie rotation, terminal expiry redirect, and no render loop; administrator-driven account/role invalidation remains.                             |
 | AU-06 | Lockout recovery and Chief-assisted disabling                   | in progress | Browser/API tests.                                                                                                                     |
 | AU-07 | Dependency and secret scanning                                  | verified    | Production dependency audit and repository secret scan are mandatory release and CI checks.                                            |
 | AU-08 | Deny-by-default authorization matrix                            | verified    | Contract documented in `docs/authorization-matrix.md`; 48 table-driven unauthenticated, disallowed-role, and cross-tenant checks pass. |
@@ -204,25 +204,27 @@ Required documents:
 
 ## Commercial Surface and Launch Readiness
 
-The public marketing surface (`artifacts/ens-landing/src/pages/Home.tsx`, `artifacts/ens-landing/index.html`, `artifacts/ens-landing/public`) has no coverage elsewhere in this tracker. Nothing in the release gate inspects it, so regressions here are invisible to `pnpm run release:check`.
+The public marketing surface (`artifacts/ens-landing/src/pages/Home.tsx`, `artifacts/ens-landing/index.html`, `artifacts/ens-landing/public`) now has a release-gated metadata, browser-zoom, and link-integrity contract via `public:metadata` and `public:routes`. Content integrity and visual/browser coverage remain outstanding.
+
+Placeholder footer links are counted against a declining budget in `scripts/check-public-routes.mjs` (currently 4 in `Home.tsx`, 3 in `TeamLanding.tsx`, covering ~20 rendered links to unwritten pages such as docs, blog, and careers). The budget may only be lowered. It must reach zero before CS-01's launch flip.
 
 ### Launch blockers — must be correct on the day `noindex` is removed
 
 | ID    | Requirement                                                    | Status      | Relevant files                                      | Verification target                                                                                       |
 | ----- | -------------------------------------------------------------- | ----------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| CS-01 | Remove staging `noindex, nofollow` and publish `robots.txt`     | not started | `index.html:20`, `public/`                          | Production build serves an indexable page; `public/robots.txt` and a `sitemap.xml` exist and resolve.     |
-| CS-02 | Legal pages written and routed                                  | not started | `App.tsx`, footer link list in `Home.tsx:877`       | `/privacy`, `/terms`, `/security`, `/cookies`, `/gdpr` resolve to real content, not `href="#"`.           |
+| CS-01 | Remove staging `noindex, nofollow` and publish `robots.txt`     | in progress | `index.html:20`, `public/robots.txt`                | `robots.txt` exists and `public:routes` fails if it disagrees with the robots meta tag. The launch flip itself is deliberately not applied; `sitemap.xml` remains outstanding. |
+| CS-02 | Legal pages written and routed                                  | implemented | `pages/legal/*`, `App.tsx`, `Home.tsx`              | `/privacy`, `/terms`, `/security`, `/cookies`, `/gdpr` render code-verified content and are gate-checked. `COUNSEL_REVIEWED` is false: a lawyer has not reviewed the text, and the pages show a review notice until they have. |
 | CS-03 | Cookie consent for EU visitors                                  | not started | none exist                                          | Consent gate present before any non-essential cookie or analytics tag fires. Required before CS-05.       |
 | CS-04 | Public pricing matches implemented billing                      | not started | `Home.tsx:725-737`, `routes/billing.ts:22-26`       | Advertised tiers map 1:1 to real Stripe prices, or the section is removed until they do. See CS-11.       |
 | CS-05 | Product/marketing analytics instrumented                        | not started | none exist                                          | Signup funnel is measurable. Currently zero analytics: the only `analytics` matches are pricing copy.     |
-| CS-06 | `og:image` tag emitted                                          | not started | `index.html`, `public/opengraph.jpg`                | Link preview renders. The asset already exists and is unreferenced; `twitter:card` promises an image.     |
+| CS-06 | `og:image` tag emitted                                          | verified    | `index.html`, `public/opengraph.jpg`                | `public:metadata` verifies matching Open Graph/Twitter tags and a resolvable public asset; both production portal builds preserve the tags and image. |
 
 ### Conversion and credibility — the site's actual job
 
 | ID    | Requirement                                            | Status      | Relevant files                            | Verification target                                                                                              |
 | ----- | ------------------------------------------------------ | ----------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | CS-07 | Show the product                                       | not started | `Home.tsx` (0 `<img>` tags), `public/`    | Showcase section uses real workspace captures. `mockup-1/2/3.png` are committed and unused.                       |
-| CS-08 | CTAs route to what they promise                        | not started | `Home.tsx:215`, `Home.tsx:803`            | "Watch Demo" reaches a demo; "Contact Sales" reaches a sales contact path. Both currently route to `/login`.      |
+| CS-08 | CTAs route to what they promise                        | verified    | `Home.tsx`                                | "Watch Demo" scrolls to the showcase; both "Contact Sales" buttons open a sales mail path. `public:routes` rejects unrouted internal links. A recorded product demo does not exist yet — the button reaches real content, not a video. |
 | CS-09 | No fabricated metrics presented as live data           | not started | `Home.tsx:227-231`, `:635`, `:689`        | Hero stat tiles, `₺2.4M Budget Tracked`, and `72% complete` bars are labelled as illustrative or made real.       |
 | CS-10 | Replace "Trusted by" with real proof                   | not started | `Home.tsx:257-271`                        | Customer logos, a named case study, or the strip is reframed. It currently lists own features under social proof. |
 | CS-11 | Self-serve signup produces the advertised account      | not started | `routes/auth.ts:153`, `pages/auth/Signup` | Tiers describe agency capability, but `/auth/signup` creates a **client** account and collects no plan/payment.   |
@@ -234,8 +236,8 @@ The public marketing surface (`artifacts/ens-landing/src/pages/Home.tsx`, `artif
 | ID    | Requirement                                        | Status      | Relevant files                          | Verification target                                                                                    |
 | ----- | -------------------------------------------------- | ----------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | CS-14 | Marketing page has its own weight budget            | not started | `scripts/check-frontend-budgets.mjs`    | Landing entry measured separately. It currently ships ~229 KB gzip of app JS plus a 100 KB eager `en.json`. |
-| CS-15 | Restore pinch-zoom                                  | not started | `index.html:5`                          | `maximum-scale=1` removed; WCAG 1.4.4 passes. Cheap fix, currently a hard accessibility failure.        |
-| CS-16 | Link integrity check in the release gate            | not started | `scripts/`                              | Build fails on any `href="#"` or unrouted internal link in production output.                           |
+| CS-15 | Restore pinch-zoom                                  | verified    | `index.html:5`, `scripts/check-public-metadata.mjs` | `maximum-scale` is removed and the release-gated metadata check rejects future zoom-disabling viewport directives. |
+| CS-16 | Link integrity check in the release gate            | verified    | `scripts/check-public-routes.mjs`       | `public:routes` runs in the release gate and fails on unrouted internal links, placeholder counts above budget, and robots/meta disagreement. All three failure modes were negative-tested and exit 1; the clean tree exits 0. |
 | CS-17 | Playwright coverage for the public landing page     | not started | `e2e/`                                  | All 38 existing browser tests are authenticated flows; the logged-out marketing page is untested.       |
 
 ## Current Highest-Priority Work
@@ -283,9 +285,11 @@ The public marketing surface (`artifacts/ens-landing/src/pages/Home.tsx`, `artif
 | 2026-08-07 | second current `pnpm run release:clean-room`                                | `93211cb`                  | Reached Playwright with 32/38 passing; six client-portal cases exposed that `VITE_PORTAL=client` was still supplied only by ignored `.env.client`. |
 | 2026-08-07 | affected client-portal regression suite                                    | `9b597c3` + dirty tracker  | Passed 7/7 focused client cases after Vite began compiling the selected portal mode directly into each bundle. |
 | 2026-08-07 | final `pnpm run release:clean-room`                                         | `9b597c3`                  | Passed in an isolated exact-commit checkout in 5m53s: frozen install, all 18 release stages, 21 schema tests, 86 API tests, persistence, smoke, production builds, budgets, 38/38 Playwright tests, and a clean checkout after the gate. |
+| 2026-08-07 | public metadata contract, lint, and staff/client production builds           | dirty worktree             | Passed. Browser zoom remains enabled, Open Graph and Twitter preview tags resolve to the committed image, and both mode-specific Vite outputs preserve the metadata and asset. |
+| 2026-08-07 | auth lifecycle regression suite, typecheck, lint, and staff/client builds      | dirty worktree             | Passed 13/13 auth browser tests. Missing access credentials now perform one successful refresh and restore `ens_access`; terminal expiry performs one failed refresh, clears stale React auth state, redirects once, and emits no maximum-update-depth error. Monorepo typecheck, zero-warning lint, and both portal builds also passed. |
 
 ## Known Limitations
 
 - Local database had unjournaled schema objects from an interrupted deployment. The schema and journal are now consistent, and both clean and interrupted-upgrade migration paths are covered by disposable-database verification.
-- The root release gate and clean-room gate pass locally; remote GitHub Actions status for `9b597c3` was not inspected in this session.
+- The root release gate and clean-room gate pass locally. The verified release commits currently exist only on local `main`, so GitHub Actions cannot evaluate them until they are intentionally pushed.
 - Production deployment wiring is statically validated, but clean container startup is unverified because Docker is unavailable on this machine; external email delivery, monitoring, disaster-recovery scheduling, and several workspace edge cases also remain unverified.

@@ -31,6 +31,13 @@ import {
   FileText,
 } from 'lucide-react';
 
+/**
+ * Sales enquiries route to the same published address as support (CS-08).
+ * Previously "Contact Sales" navigated to /login, which promised a
+ * conversation and delivered a password prompt.
+ */
+const SALES_CONTACT_HREF = 'mailto:support@ens.io?subject=Sales%20enquiry';
+
 const FADE_UP: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: { 
@@ -212,7 +219,7 @@ export default function Home() {
                 <Button size="lg" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold shadow-[0_0_20px_rgba(109,40,217,0.4)] hover:shadow-[0_0_35px_rgba(109,40,217,0.6)] transition-all gap-2" data-testid="btn-hero-cta1">
                   {t('common.startDesigning')} <ChevronRight className="w-4 h-4" />
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border-border/80 hover:bg-muted/50" data-testid="btn-hero-cta2">
+                <Button size="lg" variant="outline" onClick={() => scrollTo('showcase')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border-border/80 hover:bg-muted/50" data-testid="btn-hero-cta2">
                   {t('common.watchDemo')}
                 </Button>
               </motion.div>
@@ -767,13 +774,23 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <Button
-                  variant={p.recommended ? 'default' : 'outline'}
-                  className={`mt-auto w-full rounded-xl h-12 font-bold ${p.recommended ? 'shadow-lg shadow-primary/20' : ''}`}
-                  onClick={() => navigate('/signup')}
-                >
-                  {p.monthlyPrice === 'Custom' ? 'Contact Sales' : 'Get Started'}
-                </Button>
+                {p.monthlyPrice === 'Custom' ? (
+                  <Button
+                    variant="outline"
+                    asChild
+                    className="mt-auto w-full rounded-xl h-12 font-bold"
+                  >
+                    <a href={SALES_CONTACT_HREF} data-testid="btn-pricing-contact-sales">Contact Sales</a>
+                  </Button>
+                ) : (
+                  <Button
+                    variant={p.recommended ? 'default' : 'outline'}
+                    className={`mt-auto w-full rounded-xl h-12 font-bold ${p.recommended ? 'shadow-lg shadow-primary/20' : ''}`}
+                    onClick={() => navigate('/signup')}
+                  >
+                    Get Started
+                  </Button>
+                )}
               </motion.div>
             ))}
           </div>
@@ -800,8 +817,8 @@ export default function Home() {
               <Button size="lg" onClick={() => navigate('/login')} className="rounded-full px-12 h-16 text-lg font-bold shadow-[0_0_30px_rgba(109,40,217,0.5)]">
                 {t('common.getAccess')}
               </Button>
-              <Button variant="outline" size="lg" onClick={() => navigate('/login')} className="rounded-full px-12 h-16 text-lg font-bold border-border">
-                {t('common.contactSales')}
+              <Button variant="outline" size="lg" asChild className="rounded-full px-12 h-16 text-lg font-bold border-border">
+                <a href={SALES_CONTACT_HREF} data-testid="btn-contact-sales">{t('common.contactSales')}</a>
               </Button>
             </div>
           </motion.div>
@@ -874,8 +891,14 @@ export default function Home() {
           <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <span className="text-xs text-muted-foreground">{t('common.copyright', { year: new Date().getFullYear() })}</span>
             <div className="flex flex-wrap justify-center gap-6 text-xs text-muted-foreground">
-              {[t('home.footer.privacy'), t('home.footer.terms'), t('home.footer.security'), t('home.footer.cookies'), t('home.footer.gdpr')].map(l => (
-                <a key={l} href="#" className="hover:text-primary transition-colors">{l}</a>
+              {[
+                { label: t('home.footer.privacy'), slug: 'privacy' },
+                { label: t('home.footer.terms'), slug: 'terms' },
+                { label: t('home.footer.security'), slug: 'security' },
+                { label: t('home.footer.cookies'), slug: 'cookies' },
+                { label: t('home.footer.gdpr'), slug: 'gdpr' },
+              ].map(({ label, slug }) => (
+                <a key={slug} href={`/${slug}`} className="hover:text-primary transition-colors" data-testid={`link-legal-${slug}`}>{label}</a>
               ))}
             </div>
           </div>

@@ -23,6 +23,8 @@
     "lint": "eslint artifacts/api-server/src artifacts/ens-landing/src scripts --max-warnings 0",
     "security:audit": "pnpm audit --prod --audit-level high",
     "security:secrets": "node scripts/scan-secrets.mjs",
+    "public:metadata": "node scripts/check-public-metadata.mjs",
+    "public:routes": "node scripts/check-public-routes.mjs",
     "performance:budgets": "node scripts/check-frontend-budgets.mjs",
     "deployment:preflight": "node scripts/validate-deployment.mjs && pnpm --filter @workspace/api-server run preflight:env",
     "release:check": "node scripts/release-check.mjs",

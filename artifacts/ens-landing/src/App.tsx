@@ -13,6 +13,7 @@ import { StaffGateway } from "@/components/StaffGateway";
 import { RuntimeTextTranslator } from "@/i18n/RuntimeTextTranslator";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { scheduleStaffRoutePreloads } from "@/lib/route-preload";
+import { LEGAL_SLUGS } from "@/pages/legal/slugs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,6 +42,7 @@ const Login = lazyPage(() => import("@/pages/auth/Login"));
 const Signup = lazyPage(() => import("@/pages/auth/Signup"));
 const ForgotPassword = lazyPage(() => import("@/pages/auth/ForgotPassword"));
 const ResetPassword = lazyPage(() => import("@/pages/auth/ResetPassword"));
+const LegalPage = lazyPage(() => import("@/pages/legal/LegalPage"));
 
 const INCLUDE_STAFF_ROUTES = import.meta.env.VITE_PORTAL !== "client";
 const INCLUDE_CLIENT_ROUTES = import.meta.env.VITE_PORTAL !== "staff";
@@ -325,6 +327,11 @@ function Router() {
       {PORTAL_MODE === "staff" && <Route path="/">{() => <TeamLanding />}</Route>}
       {PORTAL_MODE === "client" && <Route path="/">{() => <Home />}</Route>}
       {showStaff && <Route path="/team">{() => <TeamLanding />}</Route>}
+
+      {/* Legal documents — public in every portal mode, no authentication */}
+      {LEGAL_SLUGS.map((slug) => (
+        <Route key={slug} path={`/${slug}`}>{() => <LegalPage slug={slug} />}</Route>
+      ))}
 
       {/* PM invitation join — accessible without authentication */}
       {showStaff && <StaffPublicRoutes />}

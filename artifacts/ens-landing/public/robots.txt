@@ -1,0 +1,18 @@
+# Staging posture (CS-01).
+#
+# This file currently mirrors the `noindex, nofollow` meta tag in index.html:
+# the platform is pre-launch and must not be indexed. On launch day, replace
+# the Disallow below with the commented-out production block AND remove the
+# robots meta tag from index.html. Changing only one of the two leaves the
+# site half-indexable.
+#
+# Production block:
+#   User-agent: *
+#   Allow: /
+#   Disallow: /chief/
+#   Disallow: /pm/
+#   Disallow: /client/
+#   Sitemap: https://ens.io/sitemap.xml
+
+User-agent: *
+Disallow: /

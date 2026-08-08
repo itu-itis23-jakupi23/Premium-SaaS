@@ -50,6 +50,8 @@ if (existsSync(envPath)) {
 
 const checks = [
   ["pnpm", ["run", "lint"]],
+  ["pnpm", ["run", "public:metadata"]],
+  ["pnpm", ["run", "public:routes"]],
   ["pnpm", ["run", "typecheck", "--pretty", "false"]],
   ["pnpm", ["run", "deployment:preflight"]],
   ["pnpm", ["run", "security:audit"]],
