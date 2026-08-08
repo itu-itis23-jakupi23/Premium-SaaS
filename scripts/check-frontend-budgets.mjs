@@ -33,6 +33,24 @@ const budgets = {
   },
 };
 
+/**
+ * Marketing entry budget (CS-14).
+ *
+ * The client portal serves the public landing page at "/", so an anonymous
+ * prospect on a phone pays this cost before reading a single word. The general
+ * `initialJavaScript` budget is sized for an authenticated application view and
+ * is too loose to catch marketing-page creep.
+ *
+ * This is a ratchet: set just above the current measurement so any regression
+ * fails the release gate. Lower it when the number improves; never raise it to
+ * make a build pass.
+ */
+const MARKETING_PORTAL = "client";
+const marketingBudget = {
+  initialJavaScriptGzipBytes: 220 * 1024,
+  initialStylesheetGzipBytes: 30 * 1024,
+};
+
 const forbiddenInitialChunks = [/vendor-charts/i, /vendor-three/i];
 const failures = [];
 const portals = ["staff", "client"].map(measurePortal);
@@ -142,6 +160,19 @@ function measurePortal(name) {
     initialJavaScript.gzipBytes,
     budgets.initialJavaScript.gzipBytes,
   );
+  if (name === MARKETING_PORTAL) {
+    enforceLimit(
+      `${name}: marketing entry JavaScript gzip (CS-14)`,
+      initialJavaScript.gzipBytes,
+      marketingBudget.initialJavaScriptGzipBytes,
+    );
+    enforceLimit(
+      `${name}: marketing entry stylesheet gzip (CS-14)`,
+      initialStylesheets.gzipBytes,
+      marketingBudget.initialStylesheetGzipBytes,
+    );
+  }
+
   enforceLimit(
     `${name}: initial stylesheet raw`,
     initialStylesheets.rawBytes,
