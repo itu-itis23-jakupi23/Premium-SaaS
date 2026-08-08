@@ -1,5 +1,6 @@
 import { chartData, mockActivity, mockClients, mockMessages, mockProjects } from "@/lib/mock-data";
 import { getRequestPortal } from "@/lib/portal";
+import { fetchWithSessionRefresh } from "@/lib/auth-session";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api").replace(/\/+$/, "");
 const ORGANIZATION_SLUG = import.meta.env.VITE_ORGANIZATION_SLUG ?? "ens-demo-agency";
@@ -2116,34 +2117,8 @@ async function apiDelete<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-// Single shared refresh promise — prevents concurrent 401s from firing multiple refresh requests
-let _refreshPromise: Promise<boolean> | null = null;
-
-async function apiFetch(path: string, init: RequestInit, retried = false): Promise<Response> {
-  const headers = new Headers(init.headers);
-  headers.set("x-ens-portal", getRequestPortal());
-  const requestInit = { ...init, headers };
-  const response = await fetch(`${API_BASE_URL}${path}`, requestInit);
-  if (response.status !== 401 || retried) return response;
-
-  // Deduplicate: all concurrent 401s share the same refresh attempt
-  if (!_refreshPromise) {
-    _refreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-      },
-    })
-      .then((r) => r.ok)
-      .catch(() => false)
-      .finally(() => { _refreshPromise = null; });
-  }
-
-  const refreshed = await _refreshPromise;
-  if (!refreshed) return response;
-  return apiFetch(path, requestInit, true);
+async function apiFetch(path: string, init: RequestInit): Promise<Response> {
+  return fetchWithSessionRefresh(API_BASE_URL, path, init);
 }
 
 async function readApiError(response: Response) {

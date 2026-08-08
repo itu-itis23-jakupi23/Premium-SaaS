@@ -43,7 +43,8 @@ test.describe("Authentication", () => {
     await page.getByTestId("input-email").fill(TEST_CREDS.chief.email);
     await page.getByTestId("input-password").fill(TEST_CREDS.chief.password);
     await page.getByTestId("button-login").click();
-    await page.waitForURL(/\/chief/);
+    await page.waitForURL((url) => url.pathname === "/chief");
+    await expect(page.getByRole("heading", { name: /chief dashboard/i })).toBeVisible();
     // The chief dashboard should be visible
     await expect(page.getByText(/chief|dashboard|projects/i).first()).toBeVisible();
   });
@@ -98,7 +99,8 @@ test.describe("Authentication", () => {
     await page.getByTestId("input-email").fill(TEST_CREDS.chief.email);
     await page.getByTestId("input-password").fill(TEST_CREDS.chief.password);
     await page.getByTestId("button-login").click();
-    await page.waitForURL(/\/chief/);
+    await page.waitForURL((url) => url.pathname === "/chief");
+    await expect(page.getByRole("heading", { name: /chief dashboard/i })).toBeVisible();
 
     // Open user menu or find logout button
     const logoutButton = page.getByRole("button", { name: /logout|log out|sign out/i });
@@ -112,6 +114,78 @@ test.describe("Authentication", () => {
     }
     await page.waitForURL(/login/);
     await expect(page).toHaveURL(/login/);
+  });
+
+  test("expired staff session refreshes once and redirects without a render loop", async ({ page, context }) => {
+    await grantStaffAccess(page);
+    await page.goto("/login");
+    await page.getByTestId("input-email").fill(TEST_CREDS.chief.email);
+    await page.getByTestId("input-password").fill(TEST_CREDS.chief.password);
+    await page.getByTestId("button-login").click();
+    await page.waitForURL((url) => url.pathname === "/chief");
+    await expect(page.getByRole("heading", { name: /chief dashboard/i })).toBeVisible();
+
+    const refreshResponses: number[] = [];
+    const runtimeErrors: string[] = [];
+    page.on("response", (response) => {
+      if (response.url().includes("/api/auth/refresh")) refreshResponses.push(response.status());
+    });
+    page.on("pageerror", (error) => runtimeErrors.push(error.message));
+    page.on("console", (message) => {
+      if (message.type() === "error" && /maximum update depth/i.test(message.text())) {
+        runtimeErrors.push(message.text());
+      }
+    });
+
+    await context.clearCookies();
+    await page.locator('a[href="/chief/clients"]').click();
+
+    await page.waitForURL(/\/login\?returnTo=%2Fchief%2Fclients$/);
+    await page.waitForTimeout(250);
+    expect(refreshResponses).toEqual([401]);
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("missing access cookie uses one refresh and keeps the staff session", async ({ page, context }) => {
+    await grantStaffAccess(page);
+    await page.goto("/login");
+    await page.getByTestId("input-email").fill(TEST_CREDS.chief.email);
+    await page.getByTestId("input-password").fill(TEST_CREDS.chief.password);
+    await page.getByTestId("button-login").click();
+    await page.waitForURL((url) => url.pathname === "/chief");
+    await expect(page.getByRole("heading", { name: /chief dashboard/i })).toBeVisible();
+
+    const refreshCookie = (await context.cookies()).find((cookie) => cookie.name === "ens_refresh");
+    expect(refreshCookie).toBeDefined();
+    await context.clearCookies();
+    await context.addCookies([refreshCookie!]);
+
+    const refreshResponses: number[] = [];
+    const runtimeErrors: string[] = [];
+    page.on("response", (response) => {
+      if (response.url().includes("/api/auth/refresh")) refreshResponses.push(response.status());
+    });
+    page.on("pageerror", (error) => runtimeErrors.push(error.message));
+    page.on("console", (message) => {
+      if (message.type() === "error" && /maximum update depth/i.test(message.text())) {
+        runtimeErrors.push(message.text());
+      }
+    });
+
+    const refreshResponsePromise = page.waitForResponse((response) => (
+      response.url().includes("/api/auth/refresh")
+    ));
+    await page.evaluate("import('/src/lib/platform-api.ts').then((module) => module.getPlatformOverview())");
+    const refreshResponse = await refreshResponsePromise;
+
+    expect(refreshResponse.status()).toBe(200);
+    expect((await context.cookies()).some((cookie) => cookie.name === "ens_access")).toBe(true);
+    await page.locator('a[href="/chief/clients"]').click();
+    await page.waitForURL((url) => url.pathname === "/chief/clients");
+    await expect(page.getByRole("heading", { name: /clients/i }).first()).toBeVisible();
+    await page.waitForTimeout(250);
+    expect(refreshResponses).toEqual([200]);
+    expect(runtimeErrors).toEqual([]);
   });
 
   test("PM cannot open Chief routes", async ({ page }) => {

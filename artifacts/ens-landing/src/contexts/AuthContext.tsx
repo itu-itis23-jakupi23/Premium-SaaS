@@ -1,5 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { getRequestPortal } from '@/lib/portal';
+import {
+  fetchWithSessionRefresh,
+  resetSessionExpiry,
+  subscribeToSessionExpiry,
+} from '@/lib/auth-session';
 
 export type UserRole = 'chief' | 'pm' | 'client';
 
@@ -134,6 +139,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => subscribeToSessionExpiry(({ portal }) => {
+    if (portal !== getRequestPortal()) return;
+    setUser((current) => current === null ? current : null);
+  }), []);
+
   const refresh = useCallback(async () => {
     if (USE_MOCK_API) {
       const nextUser = readMockUser();
@@ -201,6 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify(credentials),
     });
     const nextUser = requireAuthUser(response);
+    resetSessionExpiry();
     setUser(nextUser);
     persistCurrentUser(nextUser);
     return nextUser;
@@ -240,6 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }),
     });
     const nextUser = requireAuthUser(response);
+    resetSessionExpiry();
     setUser(nextUser);
     persistCurrentUser(nextUser);
     return nextUser;
@@ -277,7 +289,7 @@ export function getRoleDashboard(role: UserRole): string {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await requestFetch(path, {
+  const response = await fetchWithSessionRefresh(API_BASE_URL, path, {
     ...init,
     credentials: 'include',
     headers: {
@@ -295,44 +307,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
-}
-
-// Shared refresh promise — prevents concurrent 401s from spawning multiple refresh requests
-let _authRefreshPromise: Promise<boolean> | null = null;
-
-const NON_REFRESHABLE_AUTH_PATHS = new Set([
-  '/auth/login',
-  '/auth/signup',
-  '/auth/signup-staff',
-  '/auth/forgot-password',
-  '/auth/reset-password',
-  '/auth/logout',
-  '/auth/refresh',
-]);
-
-async function requestFetch(path: string, init: RequestInit, retried = false): Promise<Response> {
-  const response = await fetch(`${API_BASE_URL}${path}`, init);
-  const requestPath = path.split(/[?#]/, 1)[0];
-  if (response.status !== 401 || retried || NON_REFRESHABLE_AUTH_PATHS.has(requestPath)) return response;
-
-  if (!_authRefreshPromise) {
-    _authRefreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        accept: 'application/json',
-        'content-type': 'application/json',
-        'x-ens-portal': getRequestPortal(),
-      },
-    })
-      .then((r) => r.ok)
-      .catch(() => false)
-      .finally(() => { _authRefreshPromise = null; });
-  }
-
-  const refreshed = await _authRefreshPromise;
-  if (!refreshed) return response;
-  return requestFetch(path, init, true);
 }
 
 async function readError(response: Response) {

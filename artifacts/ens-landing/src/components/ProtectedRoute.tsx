@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useAuth, UserRole, getRoleDashboard } from '@/contexts/AuthContext';
@@ -71,10 +71,13 @@ function ClientPendingScreen({
 
 export function ProtectedRoute({ component: Component, allowedRoles, params = {} }: ProtectedRouteProps) {
   const { user, isAuthenticated, isLoading, refresh, logout } = useAuth();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const redirectingRef = useRef(false);
 
   const clientIsPending = user?.role === 'client' && !!user.clientStatus && user.clientStatus !== 'active';
+  const portalRoleAllowed = !user || isRoleAllowedInPortal(user.role);
+  const routeRoleAllowed = !allowedRoles || !user || allowedRoles.includes(user.role);
 
   async function refreshClientStatus() {
     if (isRefreshing) return;
@@ -92,17 +95,19 @@ export function ProtectedRoute({ component: Component, allowedRoles, params = {}
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) {
-      navigate(loginPathWithReturnTo());
+      const loginPath = loginPathWithReturnTo();
+      if (location !== loginPath) navigate(loginPath, { replace: true });
       return;
     }
-    if (user && !isRoleAllowedInPortal(user.role)) {
+    if (user && !portalRoleAllowed && !redirectingRef.current) {
+      redirectingRef.current = true;
       void logout().finally(() => navigate(getPortalLoginPath(), { replace: true }));
       return;
     }
-    if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    if (user && !routeRoleAllowed) {
       navigate(getRoleDashboard(user.role), { replace: true });
     }
-  }, [isAuthenticated, isLoading, user, allowedRoles, navigate, logout]);
+  }, [isAuthenticated, isLoading, location, user, portalRoleAllowed, routeRoleAllowed, navigate, logout]);
 
   useEffect(() => {
     if (!clientIsPending) return;
@@ -114,8 +119,7 @@ export function ProtectedRoute({ component: Component, allowedRoles, params = {}
 
   if (isLoading) return <LoadingScreen label="Checking access" />;
   if (!isAuthenticated) return null;
-  if (user && !isRoleAllowedInPortal(user.role)) return null;
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) return null;
+  if (!portalRoleAllowed || !routeRoleAllowed) return null;
 
   // Client accounts that haven't been approved yet see a holding screen
   // rather than empty dashboards or confusing 403 errors.
