@@ -175,12 +175,17 @@ test.describe("Authentication", () => {
     const refreshResponsePromise = page.waitForResponse((response) => (
       response.url().includes("/api/auth/refresh")
     ));
-    await page.evaluate("import('/src/lib/platform-api.ts').then((module) => module.getPlatformOverview())");
+    // Trigger the authenticated request through the real app rather than by
+    // importing a source module. `/src/...` is only served by the Vite dev
+    // server, so the previous `import('/src/lib/platform-api.ts')` could never
+    // pass against the production preview build the release runner uses.
+    // Navigating in-app issues a data request carrying only the refresh
+    // cookie, which is exactly the 401-then-refresh path under test.
+    await page.locator('a[href="/chief/clients"]').click();
     const refreshResponse = await refreshResponsePromise;
 
     expect(refreshResponse.status()).toBe(200);
     expect((await context.cookies()).some((cookie) => cookie.name === "ens_access")).toBe(true);
-    await page.locator('a[href="/chief/clients"]').click();
     await page.waitForURL((url) => url.pathname === "/chief/clients");
     await expect(page.getByRole("heading", { name: /clients/i }).first()).toBeVisible();
     await page.waitForTimeout(250);

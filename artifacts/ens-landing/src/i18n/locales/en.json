@@ -38,69 +38,6 @@
       "pending": "Pending",
       "illustrative": "Example project — illustrative figures"
     },
-    "demo": {
-      "badge": "Live Demo Access",
-      "title": "See the full platform in action",
-      "subtitle": "Get a personalised walkthrough with one of our product specialists.",
-      "cta": "Book a Demo"
-    },
-    "features": {
-      "heading": "Everything you need to",
-      "headingAccent": "design and deliver",
-      "subheading": "A complete design and project management suite built specifically for the exhibition industry.",
-      "realtime": {
-        "title": "Real-Time 3D Canvas",
-        "desc": "Drag-and-drop system components onto a live 3D stage. What you see is what gets built."
-      },
-      "octanorm": {
-        "title": "Octanorm System",
-        "desc": "Full Octanorm modular system with accurate 40mm and 50mm profiles, connectors, and panels."
-      },
-      "maxima": {
-        "title": "Maxima Framework",
-        "desc": "Heavy-duty Maxima aluminium extrusion system with configurable spans and infill options."
-      },
-      "client": {
-        "title": "Client Preview",
-        "desc": "Share a live 3D link with clients. They annotate directly on the model — no account needed."
-      },
-      "analytics": {
-        "title": "Project Analytics",
-        "desc": "Track project velocity, approval cycles, cost forecasts, and team utilisation in real time."
-      },
-      "automation": {
-        "title": "Smart Automation",
-        "desc": "Auto-generate floor plans, elevation drawings, parts lists and cost estimates at the click of a button."
-      }
-    },
-    "howItWorks": {
-      "heading": "From brief to build in",
-      "headingAccent": "four steps",
-      "brief": {
-        "step": "01",
-        "title": "Upload Brief",
-        "desc": "Import your client's event brief, floor plan, or booth specification sheet."
-      },
-      "design": {
-        "step": "02",
-        "title": "Design in 3D",
-        "desc": "Build the stand using Octanorm or Maxima system components and the furniture library."
-      },
-      "review": {
-        "step": "03",
-        "title": "Client Review",
-        "desc": "Send a shareable link. Client reviews and approves directly in the 3D model."
-      },
-      "deliver": {
-        "step": "04",
-        "title": "Export & Deliver",
-        "desc": "One-click export to production documents, drawings, and part schedules."
-      }
-    },
-    "testimonials": {
-      "heading": "Trusted by the",
-      "headingAccent": "best in the business"
-    },
     "pricing": {
       "heading": "Pricing Tiers",
       "subheading": "Scale your exhibition business with the right plan.",
@@ -143,32 +80,6 @@
       "gdpr": "GDPR"
     },
     "pageTitle": "ENS — Exhibition & Stand Design Platform",
-    "chiefFeatures": {
-      "workspaceMonitor": {
-        "title": "Workspace Monitor",
-        "desc": "Live oversight of every active design session across all projects."
-      },
-      "teamManagement": {
-        "title": "Team Management",
-        "desc": "Assign project managers, track workloads, and manage access levels."
-      },
-      "clientPortfolio": {
-        "title": "Client Portfolio",
-        "desc": "Full view of all client accounts, contacts, and active contracts."
-      },
-      "analytics": {
-        "title": "Analytics & Reports",
-        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
-      },
-      "approvalGateway": {
-        "title": "Approval Gateway",
-        "desc": "Final structural and design sign-off before production release."
-      },
-      "commsHub": {
-        "title": "Communications Hub",
-        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
-      }
-    },
     "capabilityItems": {
       "octanorm": "Octanorm System",
       "maxima": "Maxima System",

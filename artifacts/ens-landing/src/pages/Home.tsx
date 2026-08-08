@@ -125,7 +125,12 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [billingAnnual, setBillingAnnual] = useState(false);
   const [, navigate] = useLocation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // CS-13: the drawer slides in from the inline-end edge, which is the left
+  // side in Arabic. Tailwind logical utilities handle placement; the motion
+  // offset has to be mirrored explicitly.
+  const isRtl = i18n.dir() === 'rtl';
+  const drawerOffscreen = isRtl ? '-100%' : '100%';
   const showStaffLinks = PORTAL_MODE !== 'client';
   const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 
@@ -201,11 +206,11 @@ export default function Home() {
           >
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
             <motion.div
-              initial={{ x: '100%' }}
+              initial={{ x: drawerOffscreen }}
               animate={{ x: 0 }}
-              exit={{ x: '100%' }}
+              exit={{ x: drawerOffscreen }}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute right-0 top-0 h-full w-80 max-w-[90vw] bg-card/98 backdrop-blur-2xl border-l border-border/60 shadow-2xl flex flex-col"
+              className="absolute end-0 top-0 h-full w-80 max-w-[90vw] bg-card/98 backdrop-blur-2xl border-s border-border/60 shadow-2xl flex flex-col"
             >
               <div className="flex items-center justify-between px-6 py-5 border-b border-border/40">
                 <ENSLogo size="sm" href="/" />
@@ -563,7 +568,7 @@ export default function Home() {
 
           <div className="max-w-4xl mx-auto relative">
             {/* Vertical Line */}
-            <div className="absolute left-[20px] md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary/50 via-border to-transparent -translate-x-1/2" />
+            <div className="absolute start-[20px] md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary/50 via-border to-transparent -translate-x-1/2" />
             
             <div className="space-y-12">
               {workflowSteps.map((step, i) => (
@@ -579,8 +584,8 @@ export default function Home() {
                     {i + 1}
                   </div>
                   <div className="flex-1">
-                    <div className={`p-6 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 transition-colors shadow-xl ${i % 2 === 0 ? 'md:text-left' : 'md:text-right'}`}>
-                      <div className={`w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4 ${i % 2 === 0 ? '' : 'md:ml-auto'}`}>
+                    <div className={`p-6 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 transition-colors shadow-xl ${i % 2 === 0 ? 'md:text-start' : 'md:text-end'}`}>
+                      <div className={`w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4 ${i % 2 === 0 ? '' : 'md:ms-auto'}`}>
                         {WORKFLOW_ICONS[i]}
                       </div>
                       <h3 className="text-xl font-bold mb-2">{step.title}</h3>

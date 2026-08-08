@@ -104,6 +104,31 @@ test.describe("Public marketing surface", () => {
   });
 });
 
+test.describe("Right-to-left support", () => {
+  test("Arabic renders the landing page in RTL without horizontal overflow", async ({ page }) => {
+    await page.goto(clientUrl("/?lang=ar"));
+
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    await expect(page.locator("html")).toHaveAttribute("lang", "ar");
+    await expect(page.getByTestId("btn-hero-cta1")).toBeVisible();
+
+    // CS-13: direction-sensitive layout previously used physical left/right
+    // utilities. A mirrored page that overflows horizontally is the usual
+    // symptom of one that was missed.
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+  });
+
+  test("Arabic keeps the legal pages readable", async ({ page }) => {
+    await page.goto(clientUrl("/privacy?lang=ar"));
+
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    await expect(page.getByTestId("legal-title")).toBeVisible();
+  });
+});
+
 test.describe("Legal documents", () => {
   for (const { slug, title } of LEGAL_ROUTES) {
     test(`/${slug} resolves to real content`, async ({ page }) => {

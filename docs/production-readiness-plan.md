@@ -229,7 +229,7 @@ Placeholder footer links are counted against a declining budget in `scripts/chec
 | CS-10 | Replace "Trusted by" with real proof                   | in progress | `Home.tsx`, `i18n/locales/*`              | **Correction:** the earlier finding was wrong about the copy. The displayed string is "Built for real stand production" in all 11 locales — an honest capability claim, not a false social-proof claim. Only the internal key name `home.trustedBy` is misleading. Remaining work is optional: add real proof (logos, a named case study) once customers exist, and rename the key. |
 | CS-11 | Self-serve signup produces the advertised account      | not started | `routes/auth.ts:153`, `pages/auth/Signup` | Tiers describe agency capability, but `/auth/signup` creates a **client** account and collects no plan/payment.   |
 | CS-12 | Landing copy fully localized                           | implemented | `Home.tsx`, `i18n/locales/en.json`        | Code half complete: hardcoded JSX text and `title`/`desc` literals both measured at **0** (was 7 and 49); `t()` calls 81 → 108. Browser test asserts the extracted copy resolves and that no raw `home.*` key leaks. **Remaining: the other 10 locales still fall back to English** — now a data task on `en.json`, no code change needed. Stale orphaned keys (`home.features.*`, `home.howItWorks.*`, `home.demo`, `home.testimonials`) describe a previous page version and should be pruned. |
-| CS-13 | Landing page RTL-correct in Arabic                     | not started | `Home.tsx:187`, `:498`, `:523`            | Timeline rail, dimension strip, and drawer use fixed left/right; only `DashboardLayout` is RTL-aware.             |
+| CS-13 | Landing page RTL-correct in Arabic                     | verified    | `Home.tsx`, `e2e/public-surface.spec.ts`  | Physical `left/right/ml-auto/text-left` utilities replaced with Tailwind v4 logical equivalents (`start`/`end`/`ms-auto`/`text-start`); the drawer's motion offset mirrors on RTL. Two browser tests assert `dir="rtl"`, `lang="ar"`, readable legal pages, and no horizontal overflow. |
 
 ### Quality gates the release pipeline should own
 
@@ -239,6 +239,18 @@ Placeholder footer links are counted against a declining budget in `scripts/chec
 | CS-15 | Restore pinch-zoom                                  | verified    | `index.html:5`, `scripts/check-public-metadata.mjs` | `maximum-scale` is removed and the release-gated metadata check rejects future zoom-disabling viewport directives. |
 | CS-16 | Link integrity check in the release gate            | verified    | `scripts/check-public-routes.mjs`       | `public:routes` runs in the release gate and fails on unrouted internal links, placeholder counts above budget, and robots/meta disagreement. All three failure modes were negative-tested and exit 1; the clean tree exits 0. |
 | CS-17 | Playwright coverage for the public landing page     | verified    | `e2e/public-surface.spec.ts`            | 18 browser tests cover the logged-out marketing page, all five legal routes, footer and cross-page navigation, CTA destinations, illustrative-figure labelling, preview alt text, staging noindex, social metadata, zoom, and a no-console-error assertion. Run via `pnpm run e2e:release public-surface.spec.ts`: 18/18 passed against production portal builds and a disposable database. |
+
+### Verification note on the browser suite
+
+`pnpm run e2e:release` reported 58 passed / 1 failed on 2026-08-08. The failing
+test, `auth.spec.ts › missing access cookie uses one refresh`, drove its
+assertion via `import('/src/lib/platform-api.ts')`. That path is served only by
+the Vite dev server, so the test could never pass against the production
+preview build the release runner uses. It now navigates in-app to trigger the
+same 401-then-refresh path. Full suite: **61/61 passed, exit 0**.
+
+Watch the exit code, not the summary line: piping the runner through `grep`/
+`tail` returns the pipeline's status and masks a real failure.
 
 ## Current Highest-Priority Work
 

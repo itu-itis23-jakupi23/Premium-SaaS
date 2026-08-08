@@ -37,69 +37,6 @@
       "furnitureCount": "عدد الأثاث",
       "pending": "قيد الانتظار"
     },
-    "demo": {
-      "badge": "وصول للعرض المباشر",
-      "title": "شاهد المنصة الكاملة في العمل",
-      "subtitle": "احصل على جولة مخصصة مع أحد متخصصي المنتج لدينا.",
-      "cta": "احجز عرضاً توضيحياً"
-    },
-    "features": {
-      "heading": "كل ما تحتاجه",
-      "headingAccent": "للتصميم والتسليم",
-      "subheading": "مجموعة كاملة للتصميم وإدارة المشاريع مبنية خصيصاً لصناعة المعارض.",
-      "realtime": {
-        "title": "لوحة رسم ثلاثية الأبعاد فورية",
-        "desc": "اسحب وأفلت مكونات النظام على مرحلة ثلاثية الأبعاد مباشرة. ما تراه هو ما يُبنى."
-      },
-      "octanorm": {
-        "title": "نظام Octanorm",
-        "desc": "نظام Octanorm المعياري الكامل مع ملفات تعريف دقيقة 40 مم و50 مم وموصلات وألواح."
-      },
-      "maxima": {
-        "title": "إطار Maxima",
-        "desc": "نظام بثق ألومنيوم Maxima الثقيل مع امتدادات قابلة للتهيئة وخيارات تعبئة."
-      },
-      "client": {
-        "title": "معاينة العميل",
-        "desc": "شارك رابطاً ثلاثي الأبعاد مباشراً مع العملاء. يضيفون تعليقات مباشرة على النموذج — لا حاجة لحساب."
-      },
-      "analytics": {
-        "title": "تحليلات المشروع",
-        "desc": "تتبع سرعة المشروع ودورات الموافقة وتوقعات التكلفة واستخدام الفريق في الوقت الفعلي."
-      },
-      "automation": {
-        "title": "أتمتة ذكية",
-        "desc": "إنشاء تلقائي للمخططات الأرضية ورسومات الارتفاع وقوائم الأجزاء وتقديرات التكلفة بنقرة واحدة."
-      }
-    },
-    "howItWorks": {
-      "heading": "من الإحاطة إلى البناء في",
-      "headingAccent": "أربع خطوات",
-      "brief": {
-        "step": "٠١",
-        "title": "رفع الإحاطة",
-        "desc": "استيراد إحاطة الفعالية أو المخطط الأرضي أو ورقة مواصفات الجناح الخاصة بعميلك."
-      },
-      "design": {
-        "step": "٠٢",
-        "title": "التصميم ثلاثي الأبعاد",
-        "desc": "بناء الجناح باستخدام مكونات نظام Octanorm أو Maxima ومكتبة الأثاث."
-      },
-      "review": {
-        "step": "٠٣",
-        "title": "مراجعة العميل",
-        "desc": "أرسل رابطاً قابلاً للمشاركة. يراجع العميل ويوافق مباشرة في النموذج ثلاثي الأبعاد."
-      },
-      "deliver": {
-        "step": "٠٤",
-        "title": "التصدير والتسليم",
-        "desc": "تصدير بنقرة واحدة إلى وثائق الإنتاج والرسومات وجداول الأجزاء."
-      }
-    },
-    "testimonials": {
-      "heading": "موثوق به من قِبَل",
-      "headingAccent": "الأفضل في المجال"
-    },
     "pricing": {
       "heading": "مستويات الأسعار",
       "subheading": "وسّع نطاق أعمال المعارض الخاصة بك مع الخطة المناسبة.",
@@ -142,32 +79,6 @@
       "gdpr": "اللائحة الأوروبية لحماية البيانات"
     },
     "pageTitle": "ENS — منصة تصميم المعارض والأجنحة",
-    "chiefFeatures": {
-      "workspaceMonitor": {
-        "title": "Workspace Monitor",
-        "desc": "Live oversight of every active design session across all projects."
-      },
-      "teamManagement": {
-        "title": "Team Management",
-        "desc": "Assign project managers, track workloads, and manage access levels."
-      },
-      "clientPortfolio": {
-        "title": "Client Portfolio",
-        "desc": "Full view of all client accounts, contacts, and active contracts."
-      },
-      "analytics": {
-        "title": "Analytics & Reports",
-        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
-      },
-      "approvalGateway": {
-        "title": "Approval Gateway",
-        "desc": "Final structural and design sign-off before production release."
-      },
-      "commsHub": {
-        "title": "Communications Hub",
-        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
-      }
-    },
     "capabilityItems": {
       "octanorm": "نظام Octanorm",
       "maxima": "نظام Maxima",

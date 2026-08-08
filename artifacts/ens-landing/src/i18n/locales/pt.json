@@ -37,69 +37,6 @@
       "furnitureCount": "Contagem de móveis",
       "pending": "Pendente"
     },
-    "demo": {
-      "badge": "Acesso à demo ao vivo",
-      "title": "Veja a plataforma completa em ação",
-      "subtitle": "Obtenha um tour personalizado com um de nossos especialistas de produto.",
-      "cta": "Agendar uma demo"
-    },
-    "features": {
-      "heading": "Tudo que você precisa para",
-      "headingAccent": "projetar e entregar",
-      "subheading": "Uma suite completa de design e gestão de projetos construída especificamente para a indústria de exposições.",
-      "realtime": {
-        "title": "Canvas 3D em tempo real",
-        "desc": "Arraste e solte componentes do sistema em um palco 3D ao vivo. O que você vê é o que será construído."
-      },
-      "octanorm": {
-        "title": "Sistema Octanorm",
-        "desc": "Sistema modular Octanorm completo com perfis precisos de 40 mm e 50 mm, conectores e painéis."
-      },
-      "maxima": {
-        "title": "Estrutura Maxima",
-        "desc": "Sistema robusto de extrusão de alumínio Maxima com vãos configuráveis e opções de preenchimento."
-      },
-      "client": {
-        "title": "Visualização do cliente",
-        "desc": "Compartilhe um link 3D ao vivo com clientes. Eles anotam diretamente no modelo — sem necessidade de conta."
-      },
-      "analytics": {
-        "title": "Análise de projetos",
-        "desc": "Acompanhe a velocidade do projeto, ciclos de aprovação, previsões de custo e utilização da equipe em tempo real."
-      },
-      "automation": {
-        "title": "Automação inteligente",
-        "desc": "Gere automaticamente plantas baixas, elevações, listas de peças e estimativas de custo com um clique."
-      }
-    },
-    "howItWorks": {
-      "heading": "Do briefing à construção em",
-      "headingAccent": "quatro etapas",
-      "brief": {
-        "step": "01",
-        "title": "Enviar briefing",
-        "desc": "Importe o briefing do evento, a planta baixa ou a ficha de especificações do estande do seu cliente."
-      },
-      "design": {
-        "step": "02",
-        "title": "Projetar em 3D",
-        "desc": "Construa o estande usando componentes do sistema Octanorm ou Maxima e a biblioteca de móveis."
-      },
-      "review": {
-        "step": "03",
-        "title": "Revisão do cliente",
-        "desc": "Envie um link compartilhável. O cliente revisa e aprova diretamente no modelo 3D."
-      },
-      "deliver": {
-        "step": "04",
-        "title": "Exportar e entregar",
-        "desc": "Exportação com um clique para documentos de produção, desenhos e cronogramas de peças."
-      }
-    },
-    "testimonials": {
-      "heading": "Confiado pelos",
-      "headingAccent": "melhores do setor"
-    },
     "pricing": {
       "heading": "Planos de preços",
       "subheading": "Escale seu negócio de exposições com o plano certo.",
@@ -142,32 +79,6 @@
       "gdpr": "LGPD"
     },
     "pageTitle": "ENS — Plataforma de design de stands e exposições",
-    "chiefFeatures": {
-      "workspaceMonitor": {
-        "title": "Workspace Monitor",
-        "desc": "Live oversight of every active design session across all projects."
-      },
-      "teamManagement": {
-        "title": "Team Management",
-        "desc": "Assign project managers, track workloads, and manage access levels."
-      },
-      "clientPortfolio": {
-        "title": "Client Portfolio",
-        "desc": "Full view of all client accounts, contacts, and active contracts."
-      },
-      "analytics": {
-        "title": "Analytics & Reports",
-        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
-      },
-      "approvalGateway": {
-        "title": "Approval Gateway",
-        "desc": "Final structural and design sign-off before production release."
-      },
-      "commsHub": {
-        "title": "Communications Hub",
-        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
-      }
-    },
     "capabilityItems": {
       "octanorm": "Sistema Octanorm",
       "maxima": "Sistema Maxima",

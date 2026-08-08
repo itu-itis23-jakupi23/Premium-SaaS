@@ -37,69 +37,6 @@
       "furnitureCount": "家具数量",
       "pending": "待审批"
     },
-    "demo": {
-      "badge": "实时演示访问",
-      "title": "查看完整平台的实际效果",
-      "subtitle": "与我们的产品专家预约个性化演示。",
-      "cta": "预约演示"
-    },
-    "features": {
-      "heading": "您设计和交付所需的",
-      "headingAccent": "一切工具",
-      "subheading": "专为展览行业构建的完整设计和项目管理套件。",
-      "realtime": {
-        "title": "实时3D画布",
-        "desc": "将系统组件拖放到实时3D舞台上。所见即所建。"
-      },
-      "octanorm": {
-        "title": "Octanorm系统",
-        "desc": "完整的Octanorm模块系统，具有精确的40mm和50mm型材、连接件和面板。"
-      },
-      "maxima": {
-        "title": "Maxima框架",
-        "desc": "重型Maxima铝型材挤压系统，具有可配置的跨度和填充选项。"
-      },
-      "client": {
-        "title": "客户预览",
-        "desc": "与客户分享实时3D链接。他们直接在模型上注释——无需账户。"
-      },
-      "analytics": {
-        "title": "项目分析",
-        "desc": "实时跟踪项目进度、审批周期、成本预测和团队利用率。"
-      },
-      "automation": {
-        "title": "智能自动化",
-        "desc": "一键自动生成平面图、立面图、零件清单和成本估算。"
-      }
-    },
-    "howItWorks": {
-      "heading": "从简报到竣工",
-      "headingAccent": "四个步骤",
-      "brief": {
-        "step": "01",
-        "title": "上传简报",
-        "desc": "导入客户的活动简报、平面图或展位规格表。"
-      },
-      "design": {
-        "step": "02",
-        "title": "3D设计",
-        "desc": "使用Octanorm或Maxima系统组件和家具库构建展位。"
-      },
-      "review": {
-        "step": "03",
-        "title": "客户审核",
-        "desc": "发送可共享链接。客户直接在3D模型中审核和批准。"
-      },
-      "deliver": {
-        "step": "04",
-        "title": "导出并交付",
-        "desc": "一键导出到生产文件、图纸和零件清单。"
-      }
-    },
-    "testimonials": {
-      "heading": "业内",
-      "headingAccent": "顶尖企业的信赖之选"
-    },
     "pricing": {
       "heading": "价格方案",
       "subheading": "选择合适的方案，扩展您的展览业务。",
@@ -142,32 +79,6 @@
       "gdpr": "GDPR"
     },
     "pageTitle": "ENS — 展览与展台设计平台",
-    "chiefFeatures": {
-      "workspaceMonitor": {
-        "title": "Workspace Monitor",
-        "desc": "Live oversight of every active design session across all projects."
-      },
-      "teamManagement": {
-        "title": "Team Management",
-        "desc": "Assign project managers, track workloads, and manage access levels."
-      },
-      "clientPortfolio": {
-        "title": "Client Portfolio",
-        "desc": "Full view of all client accounts, contacts, and active contracts."
-      },
-      "analytics": {
-        "title": "Analytics & Reports",
-        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
-      },
-      "approvalGateway": {
-        "title": "Approval Gateway",
-        "desc": "Final structural and design sign-off before production release."
-      },
-      "commsHub": {
-        "title": "Communications Hub",
-        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
-      }
-    },
     "capabilityItems": {
       "octanorm": "Octanorm 系统",
       "maxima": "Maxima 系统",

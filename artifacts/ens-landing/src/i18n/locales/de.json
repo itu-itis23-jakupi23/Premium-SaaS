@@ -37,69 +37,6 @@
       "furnitureCount": "Möbelanzahl",
       "pending": "Ausstehend"
     },
-    "demo": {
-      "badge": "Live-Demo-Zugang",
-      "title": "Sehen Sie die Plattform in Aktion",
-      "subtitle": "Erhalten Sie eine persönliche Führung durch einen unserer Produktspezialisten.",
-      "cta": "Demo buchen"
-    },
-    "features": {
-      "heading": "Alles was Sie brauchen zum",
-      "headingAccent": "Gestalten und Liefern",
-      "subheading": "Eine vollständige Design- und Projektmanagement-Suite, speziell für die Messebranche entwickelt.",
-      "realtime": {
-        "title": "Echtzeit-3D-Canvas",
-        "desc": "Systemkomponenten per Drag-and-Drop auf eine Live-3D-Bühne ziehen. Was Sie sehen, wird gebaut."
-      },
-      "octanorm": {
-        "title": "Octanorm-System",
-        "desc": "Vollständiges Octanorm-Modulsystem mit präzisen 40-mm- und 50-mm-Profilen, Verbindern und Platten."
-      },
-      "maxima": {
-        "title": "Maxima-Rahmen",
-        "desc": "Schweres Maxima-Aluminiumextrusionssystem mit konfigurierbaren Spannweiten und Fülloptionen."
-      },
-      "client": {
-        "title": "Kundenvorschau",
-        "desc": "Teilen Sie einen Live-3D-Link mit Kunden. Sie kommentieren direkt am Modell – kein Konto erforderlich."
-      },
-      "analytics": {
-        "title": "Projektanalyse",
-        "desc": "Verfolgen Sie Projektgeschwindigkeit, Genehmigungszyklen, Kostenprognosen und Teamauslastung in Echtzeit."
-      },
-      "automation": {
-        "title": "Intelligente Automatisierung",
-        "desc": "Grundrisse, Aufrisszeichnungen, Teilelisten und Kostenschätzungen per Knopfdruck automatisch generieren."
-      }
-    },
-    "howItWorks": {
-      "heading": "Vom Briefing zum Aufbau in",
-      "headingAccent": "vier Schritten",
-      "brief": {
-        "step": "01",
-        "title": "Briefing hochladen",
-        "desc": "Importieren Sie das Eventbriefing, den Grundriss oder das Stand-Spec-Blatt Ihres Kunden."
-      },
-      "design": {
-        "step": "02",
-        "title": "In 3D gestalten",
-        "desc": "Bauen Sie den Stand mit Octanorm- oder Maxima-Systemkomponenten und der Möbelbibliothek."
-      },
-      "review": {
-        "step": "03",
-        "title": "Kundenkontrolle",
-        "desc": "Senden Sie einen teilbaren Link. Der Kunde prüft und genehmigt direkt im 3D-Modell."
-      },
-      "deliver": {
-        "step": "04",
-        "title": "Exportieren & Liefern",
-        "desc": "Ein-Klick-Export in Produktionsdokumente, Zeichnungen und Teilepläne."
-      }
-    },
-    "testimonials": {
-      "heading": "Vertrauen der",
-      "headingAccent": "Besten der Branche"
-    },
     "pricing": {
       "heading": "Preismodelle",
       "subheading": "Skalieren Sie Ihr Messegeschäft mit dem richtigen Plan.",
@@ -142,32 +79,6 @@
       "gdpr": "DSGVO"
     },
     "pageTitle": "ENS — Messe- & Standbau-Plattform",
-    "chiefFeatures": {
-      "workspaceMonitor": {
-        "title": "Workspace Monitor",
-        "desc": "Live oversight of every active design session across all projects."
-      },
-      "teamManagement": {
-        "title": "Team Management",
-        "desc": "Assign project managers, track workloads, and manage access levels."
-      },
-      "clientPortfolio": {
-        "title": "Client Portfolio",
-        "desc": "Full view of all client accounts, contacts, and active contracts."
-      },
-      "analytics": {
-        "title": "Analytics & Reports",
-        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
-      },
-      "approvalGateway": {
-        "title": "Approval Gateway",
-        "desc": "Final structural and design sign-off before production release."
-      },
-      "commsHub": {
-        "title": "Communications Hub",
-        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
-      }
-    },
     "capabilityItems": {
       "octanorm": "Octanorm-System",
       "maxima": "Maxima-System",

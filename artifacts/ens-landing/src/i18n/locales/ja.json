@@ -37,69 +37,6 @@
       "furnitureCount": "家具点数",
       "pending": "承認待ち"
     },
-    "demo": {
-      "badge": "ライブデモアクセス",
-      "title": "プラットフォームの全機能をご覧ください",
-      "subtitle": "製品スペシャリストによる個別ツアーをご予約ください。",
-      "cta": "デモを予約"
-    },
-    "features": {
-      "heading": "デザインと納品に必要な",
-      "headingAccent": "すべての機能",
-      "subheading": "展示業界向けに特化した、完全なデザイン・プロジェクト管理スイート。",
-      "realtime": {
-        "title": "リアルタイム3Dキャンバス",
-        "desc": "システムコンポーネントをライブ3Dステージにドラッグ＆ドロップ。見たままが実際に構築されます。"
-      },
-      "octanorm": {
-        "title": "Octanormシステム",
-        "desc": "精密な40mm・50mmプロファイル、コネクター、パネルを備えた完全なOctanormモジュールシステム。"
-      },
-      "maxima": {
-        "title": "Maximaフレーム",
-        "desc": "設定可能なスパンと充填オプションを備えた頑丈なMaximaアルミ押出システム。"
-      },
-      "client": {
-        "title": "クライアントプレビュー",
-        "desc": "ライブ3Dリンクをクライアントと共有。アカウント不要でモデルに直接注釈できます。"
-      },
-      "analytics": {
-        "title": "プロジェクト分析",
-        "desc": "プロジェクト速度、承認サイクル、コスト予測、チーム稼働率をリアルタイムで追跡。"
-      },
-      "automation": {
-        "title": "スマート自動化",
-        "desc": "フロアプラン、立面図、部品リスト、費用見積もりをワンクリックで自動生成。"
-      }
-    },
-    "howItWorks": {
-      "heading": "ブリーフから施工まで",
-      "headingAccent": "4つのステップ",
-      "brief": {
-        "step": "01",
-        "title": "ブリーフのアップロード",
-        "desc": "クライアントのイベントブリーフ、フロアプラン、またはブース仕様書をインポート。"
-      },
-      "design": {
-        "step": "02",
-        "title": "3Dでデザイン",
-        "desc": "OctanormまたはMaximaシステムコンポーネントと家具ライブラリを使ってスタンドを構築。"
-      },
-      "review": {
-        "step": "03",
-        "title": "クライアントレビュー",
-        "desc": "共有リンクを送信。クライアントは3Dモデルで直接確認・承認できます。"
-      },
-      "deliver": {
-        "step": "04",
-        "title": "エクスポートと納品",
-        "desc": "製作書類、図面、部品スケジュールにワンクリックでエクスポート。"
-      }
-    },
-    "testimonials": {
-      "heading": "業界トップ企業が",
-      "headingAccent": "信頼するプラットフォーム"
-    },
     "pricing": {
       "heading": "料金プラン",
       "subheading": "最適なプランで展示ビジネスを拡大しましょう。",
@@ -142,32 +79,6 @@
       "gdpr": "GDPR"
     },
     "pageTitle": "ENS — 展示会・ブースデザインプラットフォーム",
-    "chiefFeatures": {
-      "workspaceMonitor": {
-        "title": "Workspace Monitor",
-        "desc": "Live oversight of every active design session across all projects."
-      },
-      "teamManagement": {
-        "title": "Team Management",
-        "desc": "Assign project managers, track workloads, and manage access levels."
-      },
-      "clientPortfolio": {
-        "title": "Client Portfolio",
-        "desc": "Full view of all client accounts, contacts, and active contracts."
-      },
-      "analytics": {
-        "title": "Analytics & Reports",
-        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
-      },
-      "approvalGateway": {
-        "title": "Approval Gateway",
-        "desc": "Final structural and design sign-off before production release."
-      },
-      "commsHub": {
-        "title": "Communications Hub",
-        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
-      }
-    },
     "capabilityItems": {
       "octanorm": "Octanormシステム",
       "maxima": "Maximaシステム",

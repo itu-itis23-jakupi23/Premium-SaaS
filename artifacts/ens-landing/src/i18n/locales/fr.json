@@ -37,69 +37,6 @@
       "furnitureCount": "Nombre de meubles",
       "pending": "En attente"
     },
-    "demo": {
-      "badge": "Accès démo en direct",
-      "title": "Découvrez la plateforme complète en action",
-      "subtitle": "Obtenez une visite guidée personnalisée avec l'un de nos spécialistes produit.",
-      "cta": "Réserver une démo"
-    },
-    "features": {
-      "heading": "Tout ce dont vous avez besoin pour",
-      "headingAccent": "concevoir et livrer",
-      "subheading": "Une suite complète de conception et de gestion de projet, spécialement conçue pour l'industrie des expositions.",
-      "realtime": {
-        "title": "Canvas 3D en temps réel",
-        "desc": "Glissez-déposez les composants système sur une scène 3D en direct. Ce que vous voyez est ce qui sera construit."
-      },
-      "octanorm": {
-        "title": "Système Octanorm",
-        "desc": "Système modulaire Octanorm complet avec des profilés 40 mm et 50 mm, des connecteurs et des panneaux précis."
-      },
-      "maxima": {
-        "title": "Cadre Maxima",
-        "desc": "Système d'extrusion d'aluminium Maxima robuste avec des portées configurables et des options de remplissage."
-      },
-      "client": {
-        "title": "Aperçu client",
-        "desc": "Partagez un lien 3D en direct avec les clients. Ils annotent directement sur le modèle — aucun compte requis."
-      },
-      "analytics": {
-        "title": "Analyses de projet",
-        "desc": "Suivez la vélocité du projet, les cycles d'approbation, les prévisions de coûts et l'utilisation de l'équipe en temps réel."
-      },
-      "automation": {
-        "title": "Automatisation intelligente",
-        "desc": "Générez automatiquement des plans d'étage, des dessins d'élévation, des listes de pièces et des estimations de coûts en un clic."
-      }
-    },
-    "howItWorks": {
-      "heading": "Du brief à la construction en",
-      "headingAccent": "quatre étapes",
-      "brief": {
-        "step": "01",
-        "title": "Charger le brief",
-        "desc": "Importez le brief événementiel, le plan d'étage ou la fiche de spécification du stand de votre client."
-      },
-      "design": {
-        "step": "02",
-        "title": "Concevoir en 3D",
-        "desc": "Construisez le stand avec des composants système Octanorm ou Maxima et la bibliothèque de meubles."
-      },
-      "review": {
-        "step": "03",
-        "title": "Révision client",
-        "desc": "Envoyez un lien partageable. Le client examine et approuve directement dans le modèle 3D."
-      },
-      "deliver": {
-        "step": "04",
-        "title": "Exporter et livrer",
-        "desc": "Export en un clic vers des documents de production, des dessins et des calendriers de pièces."
-      }
-    },
-    "testimonials": {
-      "heading": "Approuvé par les",
-      "headingAccent": "meilleurs du secteur"
-    },
     "pricing": {
       "heading": "Niveaux tarifaires",
       "subheading": "Développez votre activité d'exposition avec le bon forfait.",
@@ -142,32 +79,6 @@
       "gdpr": "RGPD"
     },
     "pageTitle": "ENS — Plateforme de conception de stands et expositions",
-    "chiefFeatures": {
-      "workspaceMonitor": {
-        "title": "Workspace Monitor",
-        "desc": "Live oversight of every active design session across all projects."
-      },
-      "teamManagement": {
-        "title": "Team Management",
-        "desc": "Assign project managers, track workloads, and manage access levels."
-      },
-      "clientPortfolio": {
-        "title": "Client Portfolio",
-        "desc": "Full view of all client accounts, contacts, and active contracts."
-      },
-      "analytics": {
-        "title": "Analytics & Reports",
-        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
-      },
-      "approvalGateway": {
-        "title": "Approval Gateway",
-        "desc": "Final structural and design sign-off before production release."
-      },
-      "commsHub": {
-        "title": "Communications Hub",
-        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
-      }
-    },
     "capabilityItems": {
       "octanorm": "Système Octanorm",
       "maxima": "Système Maxima",

@@ -37,69 +37,6 @@
       "furnitureCount": "Meubelaantal",
       "pending": "In behandeling"
     },
-    "demo": {
-      "badge": "Live demo-toegang",
-      "title": "Bekijk het volledige platform in actie",
-      "subtitle": "Ontvang een gepersonaliseerde rondleiding met een van onze productspecialisten.",
-      "cta": "Demo boeken"
-    },
-    "features": {
-      "heading": "Alles wat u nodig heeft om",
-      "headingAccent": "te ontwerpen en te leveren",
-      "subheading": "Een complete ontwerp- en projectbeheersuite speciaal gebouwd voor de tentoonstellingsindustrie.",
-      "realtime": {
-        "title": "Real-time 3D canvas",
-        "desc": "Sleep systeemcomponenten naar een live 3D-podium. Wat u ziet, wordt gebouwd."
-      },
-      "octanorm": {
-        "title": "Octanorm-systeem",
-        "desc": "Volledig Octanorm-modulair systeem met nauwkeurige 40 mm en 50 mm profielen, connectors en panelen."
-      },
-      "maxima": {
-        "title": "Maxima-raamwerk",
-        "desc": "Zwaar Maxima-aluminium extrusiessysteem met configureerbare overspanningen en opvullopties."
-      },
-      "client": {
-        "title": "Klantbeoordeling",
-        "desc": "Deel een live 3D-link met klanten. Ze annoteren direct op het model — geen account nodig."
-      },
-      "analytics": {
-        "title": "Projectanalyse",
-        "desc": "Volg projectsnelheid, goedkeuringscycli, kostenprognoses en teamgebruik in realtime."
-      },
-      "automation": {
-        "title": "Slimme automatisering",
-        "desc": "Genereer automatisch plattegronden, aanzichttekeningen, onderdelenlijsten en kostenramingen met één klik."
-      }
-    },
-    "howItWorks": {
-      "heading": "Van briefing tot bouw in",
-      "headingAccent": "vier stappen",
-      "brief": {
-        "step": "01",
-        "title": "Briefing uploaden",
-        "desc": "Importeer de evenementbriefing, plattegrond of standspecificatieblad van uw klant."
-      },
-      "design": {
-        "step": "02",
-        "title": "Ontwerpen in 3D",
-        "desc": "Bouw de stand met Octanorm- of Maxima-systeemcomponenten en de meubelbibliotheek."
-      },
-      "review": {
-        "step": "03",
-        "title": "Klantbeoordeling",
-        "desc": "Stuur een deelbare link. De klant beoordeelt en keurt goed direct in het 3D-model."
-      },
-      "deliver": {
-        "step": "04",
-        "title": "Exporteren en leveren",
-        "desc": "Met één klik exporteren naar productiedocumenten, tekeningen en onderdelenplanningen."
-      }
-    },
-    "testimonials": {
-      "heading": "Vertrouwd door de",
-      "headingAccent": "besten in de branche"
-    },
     "pricing": {
       "heading": "Prijsniveaus",
       "subheading": "Schaal uw tentoonstellingsbedrijf met het juiste plan.",
@@ -142,32 +79,6 @@
       "gdpr": "AVG"
     },
     "pageTitle": "ENS — Platform voor beurs- en standontwerp",
-    "chiefFeatures": {
-      "workspaceMonitor": {
-        "title": "Workspace Monitor",
-        "desc": "Live oversight of every active design session across all projects."
-      },
-      "teamManagement": {
-        "title": "Team Management",
-        "desc": "Assign project managers, track workloads, and manage access levels."
-      },
-      "clientPortfolio": {
-        "title": "Client Portfolio",
-        "desc": "Full view of all client accounts, contacts, and active contracts."
-      },
-      "analytics": {
-        "title": "Analytics & Reports",
-        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
-      },
-      "approvalGateway": {
-        "title": "Approval Gateway",
-        "desc": "Final structural and design sign-off before production release."
-      },
-      "commsHub": {
-        "title": "Communications Hub",
-        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
-      }
-    },
     "capabilityItems": {
       "octanorm": "Octanorm-systeem",
       "maxima": "Maxima-systeem",

@@ -37,69 +37,6 @@
       "furnitureCount": "Recuento de mobiliario",
       "pending": "Pendiente"
     },
-    "demo": {
-      "badge": "Acceso a demo en vivo",
-      "title": "Vea la plataforma completa en acción",
-      "subtitle": "Obtenga una visita guiada personalizada con uno de nuestros especialistas de producto.",
-      "cta": "Reservar una demo"
-    },
-    "features": {
-      "heading": "Todo lo que necesitas para",
-      "headingAccent": "diseñar y entregar",
-      "subheading": "Una suite completa de diseño y gestión de proyectos construida específicamente para la industria de exposiciones.",
-      "realtime": {
-        "title": "Canvas 3D en tiempo real",
-        "desc": "Arrastra y suelta componentes del sistema en un escenario 3D en vivo. Lo que ves es lo que se construye."
-      },
-      "octanorm": {
-        "title": "Sistema Octanorm",
-        "desc": "Sistema modular Octanorm completo con perfiles de 40 mm y 50 mm precisos, conectores y paneles."
-      },
-      "maxima": {
-        "title": "Marco Maxima",
-        "desc": "Sistema de extrusión de aluminio Maxima resistente con vanos configurables y opciones de relleno."
-      },
-      "client": {
-        "title": "Vista previa del cliente",
-        "desc": "Comparte un enlace 3D en vivo con los clientes. Anotan directamente en el modelo — sin necesidad de cuenta."
-      },
-      "analytics": {
-        "title": "Analítica de proyectos",
-        "desc": "Sigue la velocidad del proyecto, los ciclos de aprobación, las previsiones de costes y la utilización del equipo en tiempo real."
-      },
-      "automation": {
-        "title": "Automatización inteligente",
-        "desc": "Genera automáticamente planos, alzados, listas de piezas y estimaciones de costes con un solo clic."
-      }
-    },
-    "howItWorks": {
-      "heading": "Del briefing a la construcción en",
-      "headingAccent": "cuatro pasos",
-      "brief": {
-        "step": "01",
-        "title": "Subir briefing",
-        "desc": "Importa el briefing del evento, el plano o la ficha de especificaciones del stand de tu cliente."
-      },
-      "design": {
-        "step": "02",
-        "title": "Diseñar en 3D",
-        "desc": "Construye el stand usando componentes del sistema Octanorm o Maxima y la biblioteca de mobiliario."
-      },
-      "review": {
-        "step": "03",
-        "title": "Revisión del cliente",
-        "desc": "Envía un enlace compartible. El cliente revisa y aprueba directamente en el modelo 3D."
-      },
-      "deliver": {
-        "step": "04",
-        "title": "Exportar y entregar",
-        "desc": "Exportación con un clic a documentos de producción, planos y calendarios de piezas."
-      }
-    },
-    "testimonials": {
-      "heading": "Con la confianza de los",
-      "headingAccent": "mejores del sector"
-    },
     "pricing": {
       "heading": "Niveles de precios",
       "subheading": "Escala tu negocio de exposiciones con el plan adecuado.",
@@ -142,32 +79,6 @@
       "gdpr": "RGPD"
     },
     "pageTitle": "ENS — Plataforma de diseño de stands y exposiciones",
-    "chiefFeatures": {
-      "workspaceMonitor": {
-        "title": "Workspace Monitor",
-        "desc": "Live oversight of every active design session across all projects."
-      },
-      "teamManagement": {
-        "title": "Team Management",
-        "desc": "Assign project managers, track workloads, and manage access levels."
-      },
-      "clientPortfolio": {
-        "title": "Client Portfolio",
-        "desc": "Full view of all client accounts, contacts, and active contracts."
-      },
-      "analytics": {
-        "title": "Analytics & Reports",
-        "desc": "Project KPIs, time-to-approval rates, and revenue dashboards."
-      },
-      "approvalGateway": {
-        "title": "Approval Gateway",
-        "desc": "Final structural and design sign-off before production release."
-      },
-      "commsHub": {
-        "title": "Communications Hub",
-        "desc": "Centralised messaging across clients, PMs, and sub-contractors."
-      }
-    },
     "capabilityItems": {
       "octanorm": "Sistema Octanorm",
       "maxima": "Sistema Maxima",
