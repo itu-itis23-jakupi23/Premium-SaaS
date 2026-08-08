@@ -228,8 +228,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Hero Stats (floating) */}
+      {/* Hero Stats (floating) — illustrative, not live data (CS-09) */}
       <div className="container mx-auto px-6 mb-20 relative z-20">
+        <p className="text-center text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-3" data-testid="label-hero-stats-illustrative">
+          {t('home.stats.illustrative', 'Example project — illustrative figures')}
+        </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: t('home.stats.projectProgress'), value: "84%", icon: TrendingUp, color: "text-blue-500" },
@@ -630,7 +633,33 @@ export default function Home() {
             <p className="text-muted-foreground">
               From the chief's command centre to the client's design review — every screen is built for its user.
             </p>
+            <p className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground/60" data-testid="label-showcase-illustrative">
+              {t('home.showcase.illustrative', 'Figures shown are an illustrative example')}
+            </p>
           </motion.div>
+
+          {/* Interface preview (CS-07). Labelled as a preview, not a live capture. */}
+          <motion.figure
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-5xl mx-auto mb-16"
+          >
+            <div className="rounded-3xl border border-border/60 bg-card overflow-hidden shadow-2xl">
+              <img
+                src="/mockup-1.png"
+                alt="The booth workspace showing an Octanorm component list, a wireframe stand on the build grid, and a wall panel properties panel with width and height in millimetres."
+                width={1685}
+                height={998}
+                loading="lazy"
+                className="w-full h-auto block"
+                data-testid="img-workspace-preview"
+              />
+            </div>
+            <figcaption className="mt-3 text-center text-xs text-muted-foreground">
+              {t('home.showcase.previewCaption', 'Interface preview of the booth workspace')}
+            </figcaption>
+          </motion.figure>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {[
