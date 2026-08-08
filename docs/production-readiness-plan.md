@@ -240,6 +240,12 @@ Placeholder footer links are counted against a declining budget in `scripts/chec
 | CS-16 | Link integrity check in the release gate            | verified    | `scripts/check-public-routes.mjs`       | `public:routes` runs in the release gate and fails on unrouted internal links, placeholder counts above budget, and robots/meta disagreement. All three failure modes were negative-tested and exit 1; the clean tree exits 0. |
 | CS-17 | Playwright coverage for the public landing page     | verified    | `e2e/public-surface.spec.ts`            | 18 browser tests cover the logged-out marketing page, all five legal routes, footer and cross-page navigation, CTA destinations, illustrative-figure labelling, preview alt text, staging noindex, social metadata, zoom, and a no-console-error assertion. Run via `pnpm run e2e:release public-surface.spec.ts`: 18/18 passed against production portal builds and a disposable database. |
 
+### Release gate evidence
+
+`pnpm run release:check` passed at commit `70b0ec6` on 2026-08-08: **20 stages,
+zero failures**, now including `public:metadata` and `public:routes`. Browser
+suite 61/61. Recorded in `.release-evidence/release-check.json`.
+
 ### Verification note on the browser suite
 
 `pnpm run e2e:release` reported 58 passed / 1 failed on 2026-08-08. The failing
