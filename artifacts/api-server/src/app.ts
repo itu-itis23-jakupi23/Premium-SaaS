@@ -10,6 +10,7 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { webhookRouter } from "./routes/billing";
 import { logger } from "./lib/logger";
+import { reportError } from "./lib/error-reporting";
 import { validateMessageEncryptionConfig } from "./lib/messageCrypto";
 import { assertRuntimeEnvironment } from "./lib/env";
 
@@ -73,7 +74,7 @@ app.use("/api", router);
 // Global error handler: always returns JSON so test assertions can read the
 // error message. The error detail is intentionally verbose in non-production
 // environments; production gets a generic message.
-app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   const error = err as {
     type?: string;
     status?: number;
@@ -97,6 +98,20 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   const message = err instanceof Error ? err.message : "Internal server error";
   const status = error.status ?? error.statusCode ?? 500;
   const verbose = process.env.NODE_ENV !== "production" || process.env.VITEST;
+
+  // OP-02: report server faults only. 4xx are client mistakes and would drown
+  // the signal. Route path, not URL — query strings can carry tokens.
+  if (status >= 500) {
+    reportError(err, {
+      source: "http",
+      requestId: (req as Request & { id?: string | number }).id,
+      method: req.method,
+      route: req.route?.path ?? req.path,
+      statusCode: status,
+      organizationId: (req as Request & { tenant?: { id?: string } }).tenant?.id,
+    });
+  }
+
   res.status(status).json({
     error: {
       code: "internal_error",

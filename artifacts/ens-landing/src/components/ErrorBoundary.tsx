@@ -2,6 +2,7 @@ import { Component, type ReactNode, type ErrorInfo } from "react";
 import { ShieldAlert, RefreshCcw, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { reportError } from "@/lib/error-reporting";
 
 interface Props {
   children: ReactNode;
@@ -36,7 +37,12 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("[ErrorBoundary]", error, info.componentStack);
+    // OP-02: previously console.error only, so a render crash in a customer's
+    // browser never reached the team.
+    reportError(error, {
+      source: this.props.label ? `react:${this.props.label}` : "react",
+      componentStack: info.componentStack ?? undefined,
+    });
   }
 
   private handleReset = () => {
