@@ -50,6 +50,12 @@ jobs:
       - name: Check public routes and link integrity
         run: pnpm run public:routes
 
+      # WS-03: the iframe renderer duplicates snapping rules as inline
+      # arithmetic and cannot import the shared module, so CI asserts the two
+      # still encode the same numbers.
+      - name: Check workspace transform constants
+        run: pnpm run workspace:transform
+
       - name: Typecheck libraries
         run: pnpm run typecheck
 

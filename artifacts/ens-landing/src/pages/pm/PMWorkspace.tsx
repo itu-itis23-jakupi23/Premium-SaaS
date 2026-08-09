@@ -25,6 +25,15 @@ import {
   Square, LayoutTemplate, Lightbulb, Layers, Map, Box, X,
   CheckCircle2, Package, StickyNote, Settings2, Copy, MessageSquare, ImagePlus, Lock, Unlock,
 } from "lucide-react";
+import {
+  clampNumber,
+  snapNumber,
+  snapItemCoordinate,
+  ROOM_SNAP_M,
+  ROOM_DIMENSION_SNAP_M,
+  ITEM_WALL_CLEARANCE_M,
+  DUPLICATE_OFFSET_M,
+} from "@/lib/workspace-transform";
 
 // ── Palette ────────────────────────────────────────────────────────
 const C = {
@@ -326,16 +335,8 @@ function Toast({msg,onClose}:{msg:string;onClose:()=>void}) {
 const INITIAL_BOOTH: BoothState = {width:6,depth:3,height:2.5,system:'octanorm',companyName:'TECHCORP INDUSTRIES',openFront:true,openBack:false,openLeft:false,openRight:false,fasciaEnabled:true,fasciaOption:'full'};
 const INITIAL_WS: WSData = {booth:INITIAL_BOOTH,themeIdx:0,wallFinishIdx:0,frameFinishIdx:0,fasciaFinishIdx:0,carpetIdx:0,lightingPreset:'exhibition',placedItems:[],rooms:[],notes:[],panelOverrides:{},frontSupportPositions:[],suppressedDefaultPositions:[]};
 
-function clampNumber(value:number, min:number, max:number) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function snapNumber(value:number, step = 0.5) {
-  return Number((Math.round(value / step) * step).toFixed(3));
-}
-
 function itemPositionBounds(w:number, d:number, booth:BoothState) {
-  const clearance = 0.25;
+  const clearance = ITEM_WALL_CLEARANCE_M;
   const minX = Math.min(booth.width / 2, w / 2 + clearance);
   const maxX = Math.max(minX, booth.width - w / 2 - clearance);
   const minZ = Math.min(booth.depth / 2, d / 2 + clearance);
@@ -767,12 +768,12 @@ function normalizePlacedItem(raw: unknown, index: number, booth: BoothState): Wo
 
 function normalizeRoom(raw: unknown, index: number, booth: BoothState): WorkspaceRoom {
   const room = raw && typeof raw === 'object' ? raw as Partial<WorkspaceRoom> : {};
-  const width = clampNumber(snapNumber(Number(room.width) || 3, 1), 1, Math.max(1, booth.width));
-  const depth = clampNumber(snapNumber(Number(room.depth) || 3, 1), 1, Math.max(1, booth.depth));
+  const width = clampNumber(snapNumber(Number(room.width) || 3, ROOM_DIMENSION_SNAP_M), 1, Math.max(1, booth.width));
+  const depth = clampNumber(snapNumber(Number(room.depth) || 3, ROOM_DIMENSION_SNAP_M), 1, Math.max(1, booth.depth));
   const wallHeight = Math.max(1.8, booth.height);
   const hasDoor = room.hasDoor !== false;
-  const x = clampNumber(snapNumber(Number(room.x) || booth.width / 2, 0.5), width / 2, Math.max(width / 2, booth.width - width / 2));
-  const z = clampNumber(snapNumber(Number(room.z) || booth.depth / 2, 0.5), depth / 2, Math.max(depth / 2, booth.depth - depth / 2));
+  const x = clampNumber(snapNumber(Number(room.x) || booth.width / 2, ROOM_SNAP_M), width / 2, Math.max(width / 2, booth.width - width / 2));
+  const z = clampNumber(snapNumber(Number(room.z) || booth.depth / 2, ROOM_SNAP_M), depth / 2, Math.max(depth / 2, booth.depth - depth / 2));
   const requestedDoorSide = normalizeDoorSide(room.doorSide);
   const availableDoorSides = availableRoomWallSides(width,depth,x,z,booth);
   const doorSide = availableDoorSides.includes(requestedDoorSide) ? requestedDoorSide : availableDoorSides[0] || requestedDoorSide;
@@ -1197,8 +1198,8 @@ export default function PMWorkspace() {
     const bounds = itemPositionBounds(props.w, props.d, ws.booth);
     const position = requestedPosition
       ? {
-          x: clampNumber(snapNumber(requestedPosition.x, 0.05), bounds.minX, bounds.maxX),
-          z: clampNumber(snapNumber(requestedPosition.z, 0.05), bounds.minZ, bounds.maxZ),
+          x: snapItemCoordinate(requestedPosition.x, bounds.minX, bounds.maxX),
+          z: snapItemCoordinate(requestedPosition.z, bounds.minZ, bounds.maxZ),
         }
       : nextItemPosition(ws, props);
     const modelUrl = item.modelUrl ?? ENS_MODEL_URLS[item.id];
@@ -1372,8 +1373,8 @@ export default function PMWorkspace() {
         ...source,
         id:`${source.catalogId}-${Date.now()}-${Math.random().toString(16).slice(2,6)}`,
         locked:false,
-        x:clampNumber(snapNumber(source.x + 0.35,0.05), bounds.minX, bounds.maxX),
-        z:clampNumber(snapNumber(source.z + 0.35,0.05), bounds.minZ, bounds.maxZ),
+        x:snapItemCoordinate(source.x + DUPLICATE_OFFSET_M, bounds.minX, bounds.maxX),
+        z:snapItemCoordinate(source.z + DUPLICATE_OFFSET_M, bounds.minZ, bounds.maxZ),
       };
       nextId = next.id;
       return {...prev,placedItems:[...prev.placedItems,next]};
