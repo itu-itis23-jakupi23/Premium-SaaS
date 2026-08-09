@@ -41,6 +41,15 @@ jobs:
       - name: Lint production source
         run: pnpm run lint
 
+      # The public marketing surface is not covered by the authenticated
+      # Playwright specs, so without these two gates a pull request can break
+      # social metadata, browser zoom, or a legal route and CI stays green.
+      - name: Check public metadata (zoom, social preview)
+        run: pnpm run public:metadata
+
+      - name: Check public routes and link integrity
+        run: pnpm run public:routes
+
       - name: Typecheck libraries
         run: pnpm run typecheck
 
@@ -252,14 +261,16 @@ jobs:
         env:
           API_BASE_URL: http://localhost:5000/api
           STAFF_SIGNUP_KEY: ci-test-staff-key
+        # Steps run under `bash -eo pipefail`, so a bare failing command aborts
+        # the step before any diagnostic can run. Guarding the call with `if !`
+        # suppresses errexit for it, so the server logs are actually printed on
+        # the failure they exist to explain.
         run: |
-          node scripts/smoke-workflow.mjs
-          EXIT=$?
-          if [ $EXIT -ne 0 ]; then
+          if ! node scripts/smoke-workflow.mjs; then
             echo "--- api-server stdout ---"; cat ../api-server/api-server-ci.out.log
             echo "--- api-server stderr ---"; cat ../api-server/api-server-ci.err.log
+            exit 1
           fi
-          exit $EXIT
 
       - name: Verify database backup and restore
         env:
