@@ -731,7 +731,7 @@ export default function Home() {
       </section>
 
       {/* Pricing */}
-      <section className="py-24 bg-muted/5 border-t border-border/50">
+      <section id="pricing" className="py-24 bg-muted/5 border-t border-border/50">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 uppercase tracking-tighter">{t('home.pricing.heading')}</h2>
@@ -849,47 +849,57 @@ export default function Home() {
               <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-6">
                 {t('home.footer.tagline')}
               </p>
-              <div className="flex gap-3">
-                {[
-                  { label: 'LinkedIn', path: 'M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z M2 9h4v12H2z M4 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4z' },
-                  { label: 'Twitter', path: 'M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z' },
-                  { label: 'Instagram', path: 'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a3.999 3.999 0 1 1 0-7.998 3.999 3.999 0 0 1 0 7.998zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z' },
-                ].map(s => (
-                  <a key={s.label} href="#" aria-label={s.label}
-                    className="w-8 h-8 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d={s.path} /></svg>
-                  </a>
-                ))}
-              </div>
+              {/*
+                Social icons removed (CS-16). They pointed at href="#", which
+                is a dead link, not a social presence. Restore them here with
+                real profile URLs when the accounts exist.
+              */}
             </div>
 
-            {/* Platform links */}
+            {/* Platform — anchors to real sections of this page */}
             <div>
               <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('home.footer.platform')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                {[t('home.footer.workspace'), t('home.footer.octanorm'), t('home.footer.maxima'), t('home.footer.furnitureLib'), t('home.footer.clientReview'), t('home.footer.apiAccess')].map(l => (
-                  <li key={l}><a href="#" className="hover:text-foreground transition-colors">{l}</a></li>
+                {[
+                  { label: t('nav.features'), id: 'features' },
+                  { label: t('nav.howItWorks'), id: 'how-it-works' },
+                  { label: t('nav.showcase'), id: 'showcase' },
+                  { label: t('home.pricing.heading'), id: 'pricing' },
+                ].map(({ label, id }) => (
+                  <li key={id}>
+                    <button onClick={() => scrollTo(id)} className="hover:text-foreground transition-colors text-start">
+                      {label}
+                    </button>
+                  </li>
                 ))}
               </ul>
             </div>
 
-            {/* Company links */}
+            {/* Legal — routed documents */}
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('home.footer.company')}</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('home.footer.legal')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                {[t('home.footer.about'), t('home.footer.blog'), t('home.footer.careers'), t('home.footer.press'), t('home.footer.partners'), t('home.footer.contact')].map(l => (
-                  <li key={l}><a href="#" className="hover:text-foreground transition-colors">{l}</a></li>
+                {[
+                  { label: t('home.footer.privacy'), slug: 'privacy' },
+                  { label: t('home.footer.terms'), slug: 'terms' },
+                  { label: t('home.footer.security'), slug: 'security' },
+                  { label: t('home.footer.cookies'), slug: 'cookies' },
+                  { label: t('home.footer.gdpr'), slug: 'gdpr' },
+                ].map(({ label, slug }) => (
+                  <li key={slug}>
+                    <a href={`/${slug}`} className="hover:text-foreground transition-colors" data-testid={`link-legal-${slug}`}>{label}</a>
+                  </li>
                 ))}
               </ul>
             </div>
 
-            {/* Support links */}
+            {/* Support */}
             <div>
               <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('home.footer.support')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                {[t('home.footer.docs'), t('home.footer.tutorials'), t('home.footer.releaseNotes'), t('home.footer.systemStatus'), t('home.footer.community')].map(l => (
-                  <li key={l}><a href="#" className="hover:text-foreground transition-colors">{l}</a></li>
-                ))}
+                <li>
+                  <a href={SALES_CONTACT_HREF} className="hover:text-foreground transition-colors">{t('home.footer.contact')}</a>
+                </li>
               </ul>
               <div className="mt-6 p-3 rounded-xl bg-primary/5 border border-primary/15">
                 <div className="text-xs font-semibold mb-1">{t('home.footer.needHelp')}</div>
@@ -902,17 +912,6 @@ export default function Home() {
           {/* Bottom bar */}
           <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <span className="text-xs text-muted-foreground">{t('common.copyright', { year: new Date().getFullYear() })}</span>
-            <div className="flex flex-wrap justify-center gap-6 text-xs text-muted-foreground">
-              {[
-                { label: t('home.footer.privacy'), slug: 'privacy' },
-                { label: t('home.footer.terms'), slug: 'terms' },
-                { label: t('home.footer.security'), slug: 'security' },
-                { label: t('home.footer.cookies'), slug: 'cookies' },
-                { label: t('home.footer.gdpr'), slug: 'gdpr' },
-              ].map(({ label, slug }) => (
-                <a key={slug} href={`/${slug}`} className="hover:text-primary transition-colors" data-testid={`link-legal-${slug}`}>{label}</a>
-              ))}
-            </div>
           </div>
         </div>
       </footer>

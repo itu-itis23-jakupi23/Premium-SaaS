@@ -12,10 +12,13 @@
  *   3. Placeholder links elsewhere are counted against a declining budget.
  *      The budget may only ever be lowered — a new placeholder fails the gate.
  *
- * The budget exists because the footer still advertises pages that have not
- * been written (docs, blog, careers). Those are tracked as CS-02 follow-on
- * work. Rather than allow them silently, the gate makes the debt a number
- * that has to reach zero before launch.
+ * The budget makes remaining dead-link debt a number that has to reach zero
+ * before launch, rather than something that rots silently. `Home.tsx` is at
+ * zero: its footer links to real page sections, routed legal documents, and a
+ * mail path. `TeamLanding.tsx` still has three.
+ *
+ * The check deliberately fails when a count drops *below* its budget too, so
+ * an improvement gets locked in rather than leaving headroom for a regression.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -32,7 +35,7 @@ const fail = (message) => failures.push(message);
 // Occurrences of href="#" per public page. Lower these as real pages ship.
 // Do not raise them.
 const PLACEHOLDER_BUDGET = {
-  "pages/Home.tsx": 4, // footer: social icons, platform, company, support columns
+  "pages/Home.tsx": 0, // every link resolves: section anchors, legal routes, mailto
   "pages/TeamLanding.tsx": 3,
 };
 
@@ -90,7 +93,11 @@ for (const [relativePath, budget] of Object.entries(PLACEHOLDER_BUDGET)) {
     continue;
   }
 
-  const source = readFileSync(filePath, "utf8");
+  const rawSource = readFileSync(filePath, "utf8");
+
+  // Strip block comments before counting. A comment explaining why a
+  // placeholder was removed should not itself register as a placeholder.
+  const source = rawSource.replace(/\/\*[\s\S]*?\*\//g, "");
 
   const placeholders = (source.match(/href="#"/g) ?? []).length;
   if (placeholders > budget) {
