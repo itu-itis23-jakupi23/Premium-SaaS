@@ -14,6 +14,7 @@ import { RuntimeTextTranslator } from "@/i18n/RuntimeTextTranslator";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { scheduleStaffRoutePreloads } from "@/lib/route-preload";
 import { LEGAL_SLUGS } from "@/pages/legal/slugs";
+import { DesktopOnlyGuard } from "@/components/workspace/DesktopOnlyGuard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -184,8 +185,13 @@ function createStaffRoutes() {
         </Route>
       </ErrorBoundary>
       <ErrorBoundary label="PM Workspace">
+        {/* WS-18: the 3D editor has no touch or small-viewport design. */}
         <Route path="/pm/workspace">
-          {(params) => <ProtectedRoute component={PMWorkspace} allowedRoles={["pm"]} params={params} />}
+          {(params) => (
+            <DesktopOnlyGuard>
+              <ProtectedRoute component={PMWorkspace} allowedRoles={["pm"]} params={params} />
+            </DesktopOnlyGuard>
+          )}
         </Route>
       </ErrorBoundary>
       <ErrorBoundary label="PM Requests">

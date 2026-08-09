@@ -69,7 +69,7 @@ Status values: `not started`, `in progress`, `blocked`, `implemented`, `verified
 | WS-15 | Autosave, local recovery, concurrency and conflict UX           | in progress | Concurrent save and crash recovery tests.                 |
 | WS-16 | Payload preflight and large binary separation                   | in progress | Boundary tests before API 413.                            |
 | WS-17 | Production snapshot/image export                                | in progress | Resolution/framing/loaded-asset tests.                    |
-| WS-18 | Mobile/tablet support or desktop-only guard                     | not started | Responsive browser tests.                                 |
+| WS-18 | Mobile/tablet support or desktop-only guard                       | implemented | Editor is explicitly desktop-only. `DesktopOnlyGuard` (min 1024 px, subscribed to matchMedia) wraps `/pm/workspace` and shows a stated limitation screen instead of a laid-out but unusable editor; `PMWorkspace.tsx` contains no responsive breakpoints at all. Three browser tests: phone viewport is guarded with no iframe rendered, guard releases live on widening without reload, desktop is unaffected. Touch support is not built — when it is, delete the guard rather than widening the threshold. |
 
 ## Furniture Catalogue
 

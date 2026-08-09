@@ -2840,5 +2840,13 @@
         "passwordsMismatch": "Passwords don't match"
       }
     }
+  },
+  "workspace": {
+    "desktopOnly": {
+      "title": "The booth editor needs a larger screen",
+      "body": "The 3D editor is built for a mouse and a wide viewport — dragging furniture, marquee selection, and the property inspector all need room to work. We would rather tell you that than hand you a broken screen.",
+      "requirement": "Requires a viewport at least {{width}} px wide. A laptop or desktop works; so does a tablet in landscape.",
+      "back": "Back to dashboard"
+    }
   }
 }
