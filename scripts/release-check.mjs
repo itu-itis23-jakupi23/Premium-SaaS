@@ -70,6 +70,7 @@ const postSmokeChecks = [
   ["pnpm", ["--filter", "@workspace/ens-landing", "run", "build:staff"]],
   ["pnpm", ["--filter", "@workspace/ens-landing", "run", "build:client"]],
   ["pnpm", ["run", "performance:budgets"]],
+  ["pnpm", ["run", "ui:unfinished"]],
 ];
 
 if (process.env.RELEASE_CHECK_SKIP_MIGRATE !== "1") {

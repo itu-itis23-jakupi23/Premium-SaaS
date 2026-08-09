@@ -26,6 +26,7 @@
     "public:metadata": "node scripts/check-public-metadata.mjs",
     "public:routes": "node scripts/check-public-routes.mjs",
     "workspace:transform": "node scripts/check-transform-constants.mjs",
+    "ui:unfinished": "node scripts/check-unfinished-controls.mjs",
     "performance:budgets": "node scripts/check-frontend-budgets.mjs",
     "deployment:preflight": "node scripts/validate-deployment.mjs && pnpm --filter @workspace/api-server run preflight:env",
     "release:check": "node scripts/release-check.mjs",

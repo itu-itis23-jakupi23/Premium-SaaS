@@ -101,6 +101,10 @@ jobs:
       - name: Enforce frontend performance budgets
         run: pnpm run performance:budgets
 
+      # AX-06: asserts against built output, so it must follow the builds.
+      - name: Check no unfinished controls shipped
+        run: pnpm run ui:unfinished
+
   playwright:
     name: Playwright browser tests (production backend)
     runs-on: ubuntu-latest

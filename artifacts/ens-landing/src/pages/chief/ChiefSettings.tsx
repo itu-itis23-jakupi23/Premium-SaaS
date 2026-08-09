@@ -65,6 +65,7 @@ import {
   User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FEATURE_TWO_FACTOR } from "@/lib/feature-flags";
 
 type ThemeMode = "light" | "dark" | "system";
 type AvatarTone = "primary" | "blue" | "green" | "amber";
@@ -682,24 +683,32 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
                   </Button>
                 </div>
 
-                <div className="flex flex-col gap-4 border-t pt-6 md:flex-row md:items-center md:justify-between">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">{t("chief.settings.security.twoFactor.title")}</p>
-                      <Badge variant={twoFactorEnabled ? "default" : "outline"}>
-                        {twoFactorEnabled ? t("chief.settings.security.twoFactor.enabled") : t("chief.settings.security.twoFactor.disabled")}
-                      </Badge>
+                {/*
+                  AU-04 / AX-06: two-factor is not implemented. This block is
+                  hidden in production builds rather than shown disabled,
+                  because the badge reports a security posture from a persisted
+                  flag and would claim protection that does not exist.
+                */}
+                {FEATURE_TWO_FACTOR && (
+                  <div className="flex flex-col gap-4 border-t pt-6 md:flex-row md:items-center md:justify-between" data-testid="settings-two-factor">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{t("chief.settings.security.twoFactor.title")}</p>
+                        <Badge variant={twoFactorEnabled ? "default" : "outline"}>
+                          {twoFactorEnabled ? t("chief.settings.security.twoFactor.enabled") : t("chief.settings.security.twoFactor.disabled")}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{t("chief.settings.security.twoFactor.description")}</p>
                     </div>
-                    <p className="text-xs text-muted-foreground">{t("chief.settings.security.twoFactor.description")}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" disabled>
+                        <Lock className="mr-2 h-4 w-4" aria-hidden="true" /> {t("chief.settings.security.twoFactor.enable")}
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" disabled>
-                      <Lock className="mr-2 h-4 w-4" aria-hidden="true" /> {t("chief.settings.security.twoFactor.enable")} — Coming Soon
-                    </Button>
-                  </div>
-                </div>
+                )}
 
-                {twoFactorEnabled && recoveryCodes.length > 0 && (
+                {FEATURE_TWO_FACTOR && twoFactorEnabled && recoveryCodes.length > 0 && (
                   <div className="rounded-lg border bg-background/40 p-4">
                     <div className="mb-3 flex items-center justify-between">
                       <p className="text-sm font-medium">{t("chief.settings.security.recoveryCodes.title")}</p>
