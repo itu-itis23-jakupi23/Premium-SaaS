@@ -206,7 +206,9 @@ Required documents:
 
 The public marketing surface (`artifacts/ens-landing/src/pages/Home.tsx`, `artifacts/ens-landing/index.html`, `artifacts/ens-landing/public`) now has a release-gated metadata, browser-zoom, and link-integrity contract via `public:metadata` and `public:routes`. Content integrity and visual/browser coverage remain outstanding.
 
-Placeholder footer links are counted against a declining budget in `scripts/check-public-routes.mjs` (currently 4 in `Home.tsx`, 3 in `TeamLanding.tsx`, covering ~20 rendered links to unwritten pages such as docs, blog, and careers). The budget may only be lowered. It must reach zero before CS-01's launch flip.
+Placeholder footer links are counted against a declining budget in `scripts/check-public-routes.mjs`. **`Home.tsx` is now at zero** — every footer link resolves to a page section, a routed legal document, or a mail path; the 17 links to unwritten pages (Blog, Careers, Press Kit, Documentation, Community…) and three dead social icons were removed, and their keys pruned from all 11 locales. `TeamLanding.tsx` still has 3 and must reach zero before CS-01's launch flip.
+
+The budget fails in both directions: dropping below it also fails, so an improvement is locked in rather than leaving headroom for a regression.
 
 ### Launch blockers — must be correct on the day `noindex` is removed
 
