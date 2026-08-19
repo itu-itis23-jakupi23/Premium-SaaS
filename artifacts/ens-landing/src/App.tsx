@@ -198,10 +198,13 @@ function createStaffRoutes() {
         <Route path="/chief/workspace-monitor">
           {() => <RedirectTo href="/chief/workspace" />}
         </Route>
+        {/* WS-18: same desktop-only editor as /pm/workspace. */}
         <Route path="/chief/workspace">
           {(params) => (
             <ErrorBoundary label="Chief Booth Workspace">
-              <ProtectedRoute component={PMWorkspace} allowedRoles={["chief", "pm"]} params={params} />
+              <DesktopOnlyGuard backTo="/chief">
+                <ProtectedRoute component={PMWorkspace} allowedRoles={["chief", "pm"]} params={params} />
+              </DesktopOnlyGuard>
             </ErrorBoundary>
           )}
         </Route>
@@ -387,10 +390,13 @@ function createClientRoutes() {
             </ErrorBoundary>
           )}
         </Route>
+        {/* WS-18: ClientWorkspace mounts Booth3D and has no breakpoints either. */}
         <Route path="/client/workspace">
           {(params) => (
             <ErrorBoundary label="Client Workspace">
-              <ProtectedRoute component={ClientWorkspace} allowedRoles={["client"]} params={params} />
+              <DesktopOnlyGuard backTo="/client">
+                <ProtectedRoute component={ClientWorkspace} allowedRoles={["client"]} params={params} />
+              </DesktopOnlyGuard>
             </ErrorBoundary>
           )}
         </Route>

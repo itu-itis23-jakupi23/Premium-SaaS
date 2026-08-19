@@ -9,10 +9,16 @@ import { Monitor, ArrowLeft } from 'lucide-react';
  *
  * The editor is a pointer-driven CAD-style surface: drag-to-place furniture,
  * marquee selection, a multi-panel inspector, and a Three.js viewport. None of
- * it has a touch or small-viewport design, and `PMWorkspace.tsx` contains no
- * responsive breakpoints at all. Rendering it on a phone produced a laid-out
- * but unusable screen, which reads as a broken product rather than an
- * unsupported one.
+ * it has a touch or small-viewport design: `PMWorkspace.tsx` and
+ * `ClientWorkspace.tsx` contain no responsive breakpoints at all, and both
+ * mount the Three.js `Booth3D` viewport (the client view renders two of them
+ * side by side when comparing revisions). Rendering either on a phone produced
+ * a laid-out but unusable screen, which reads as a broken product rather than
+ * an unsupported one.
+ *
+ * Applied to all three editor routes: /pm/workspace, /chief/workspace and
+ * /client/workspace. The client route matters most - clients are the users
+ * most likely to open a link on a phone.
  *
  * WS-18 allows either tested mobile support or an explicit limitation screen.
  * This is the second option, stated plainly. When touch support is built, the
@@ -25,7 +31,21 @@ import { Monitor, ArrowLeft } from 'lucide-react';
  */
 export const EDITOR_MIN_WIDTH_PX = 1024;
 
-export function DesktopOnlyGuard({ children }: { children: ReactNode }) {
+/**
+ * Where the "Back to dashboard" button goes.
+ *
+ * The guard wraps the editor in three portals and each has a different home.
+ * Sending a client to `/pm` would bounce them off ProtectedRoute into a
+ * forbidden screen — an explanatory page that dead-ends is no better than the
+ * broken layout it replaced, so the caller states the destination.
+ */
+export function DesktopOnlyGuard({
+  children,
+  backTo = '/pm',
+}: {
+  children: ReactNode;
+  backTo?: string;
+}) {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
 
@@ -69,7 +89,7 @@ export function DesktopOnlyGuard({ children }: { children: ReactNode }) {
         <Button
           variant="outline"
           className="gap-2 rounded-full px-6"
-          onClick={() => navigate('/pm')}
+          onClick={() => navigate(backTo)}
           data-testid="btn-desktop-only-back"
         >
           <ArrowLeft className="h-4 w-4" />

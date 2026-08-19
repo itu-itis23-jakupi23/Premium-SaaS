@@ -41,7 +41,17 @@ const WIP_MARKERS = [
  * than shipping hidden code.
  */
 const GATED_FEATURE_MARKERS = [
-  { marker: 'settings-two-factor', feature: "two-factor settings block (AU-04)" },
+  // Empty on purpose — every previously gated feature has since shipped.
+  //
+  // 'settings-two-factor' (AU-04) lived here while the two-factor block was a
+  // security badge with no second factor behind it, and the gate proved the
+  // bundler dropped it. TOTP enrolment, the login challenge, and backup codes
+  // are now implemented end to end, so FEATURE_TWO_FACTOR is unconditionally
+  // true and the block is *expected* in the bundle. Leaving the entry here made
+  // this gate fail the build for a finished feature.
+  //
+  // Add an entry whenever a feature is hidden behind a build-time flag, and
+  // remove it in the same commit that ships the feature.
 ];
 
 function listFiles(directory) {
