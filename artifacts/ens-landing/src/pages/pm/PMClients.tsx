@@ -152,7 +152,8 @@ export default function PMClients() {
 
         {/* Compact client table */}
         <div className="overflow-hidden rounded-lg border bg-card">
-          <table className="w-full">
+          <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr className="border-b bg-muted/30">
                 <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -276,6 +277,7 @@ export default function PMClients() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Pagination */}

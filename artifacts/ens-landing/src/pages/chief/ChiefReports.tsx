@@ -429,7 +429,8 @@ export default function ChiefReports() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <table className="w-full text-sm">
+            <div className="w-full overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
               <thead>
                 <tr className="border-b">
                   <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -481,6 +482,7 @@ export default function ChiefReports() {
                 ))}
               </tbody>
             </table>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -212,7 +212,8 @@ export default function ClientDocuments() {
 
         {/* File list */}
         <div className="border rounded-lg overflow-hidden bg-card">
-          <table className="w-full text-sm">
+          <div className="w-full overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b bg-muted/20">
                 {tableHeaders.map((h, i) => (
@@ -308,6 +309,7 @@ export default function ClientDocuments() {
                   })}
             </tbody>
           </table>
+          </div>
           {!loading && filtered.length === 0 && (
             <div className="text-center py-12 text-muted-foreground text-sm">
               {t("client.documents.emptyState")}

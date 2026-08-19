@@ -70,15 +70,35 @@ export interface PlatformProject {
   lastUpdate: string;
 }
 
+export type ExhibitionStatus =
+  | "planned" | "confirmed" | "in_production" | "on_site" | "live" | "completed" | "cancelled";
+
+/** A show's own calendar. Internal deadlines are planned backwards from these. */
 export interface PlatformExhibition {
   id: string;
   name: string;
-  venue?: string;
-  city?: string;
-  startDate?: string | null;
-  endDate?: string | null;
-  status: "Draft" | "Active" | "Closed";
-  createdAt: string;
+  venue?: string | null;
+  city?: string | null;
+  country?: string | null;
+  hall?: string | null;
+  standNumber?: string | null;
+  status: ExhibitionStatus;
+  opensAt?: string | null;
+  closesAt?: string | null;
+  moveInAt?: string | null;
+  moveOutAt?: string | null;
+  freightDeadlineAt?: string | null;
+  notes?: string | null;
+  createdAt?: string;
+  projectCount?: number;
+  leadTime?: ExhibitionLeadTime;
+}
+
+export interface ExhibitionLeadTime {
+  hasRunway: boolean;
+  runwayDays: number | null;
+  shortfallDays: number;
+  feasible: boolean;
 }
 
 export interface PlatformProjectLifecycleHistoryItem {
@@ -852,7 +872,7 @@ export async function getPlatformExhibitions() {
       exhibitions: names.map((name, index) => ({
         id: `mock-exhibition-${index + 1}`,
         name,
-        status: "Active" as const,
+        status: "confirmed" as const,
         createdAt: new Date().toISOString(),
       })),
     };
@@ -864,33 +884,31 @@ export async function createPlatformExhibition(input: {
   name: string;
   venue?: string;
   city?: string;
-  startDate?: string | null;
-  endDate?: string | null;
-  status?: "Draft" | "Active" | "Closed";
+  country?: string;
+  hall?: string;
+  standNumber?: string;
+  opensAt?: string | null;
+  closesAt?: string | null;
+  moveInAt?: string | null;
+  moveOutAt?: string | null;
+  freightDeadlineAt?: string | null;
 }) {
   if (USE_MOCK_API && !USE_REAL_CORE) {
     return {
       exhibition: {
         id: `mock-exhibition-${Date.now()}`,
         name: input.name,
-        venue: input.venue || "",
-        city: input.city || "",
-        startDate: input.startDate || null,
-        endDate: input.endDate || null,
-        status: input.status || "Active",
+        venue: input.venue || null,
+        city: input.city || null,
+        opensAt: input.opensAt || null,
+        closesAt: input.closesAt || null,
+        moveInAt: input.moveInAt || null,
+        status: "planned" as const,
         createdAt: new Date().toISOString(),
       },
-      exhibitions: [],
     };
   }
-  return apiJson<{ exhibition: PlatformExhibition; exhibitions: PlatformExhibition[] }>("/platform/exhibitions", {
-    name: input.name,
-    venue: input.venue || "",
-    city: input.city || "",
-    startDate: input.startDate || null,
-    endDate: input.endDate || null,
-    status: input.status || "Active",
-  });
+  return apiJson<{ exhibition: PlatformExhibition; leadTime: ExhibitionLeadTime }>("/platform/exhibitions", input);
 }
 
 export async function createPlatformProject(input: {
@@ -1596,6 +1614,257 @@ export async function saveAccountAvatar(input: { avatarUrl: string; avatarTone: 
   return settings;
 }
 
+// ── Two-factor authentication (TOTP) ──────────────────────────────────────────
+export interface TwoFactorStatus {
+  enabled: boolean;
+  pending: boolean;
+  backupCodesRemaining: number;
+}
+
+export async function getTwoFactorStatus(): Promise<TwoFactorStatus> {
+  return apiGet<TwoFactorStatus>("/auth/2fa/status");
+}
+
+export async function startTwoFactorSetup(): Promise<{ secret: string; otpauthUri: string }> {
+  return apiJsonWithMethod("POST", "/auth/2fa/setup", {});
+}
+
+export async function enableTwoFactor(code: string): Promise<{ enabled: boolean; backupCodes: string[] }> {
+  return apiJsonWithMethod("POST", "/auth/2fa/enable", { code });
+}
+
+export async function disableTwoFactor(code: string): Promise<{ enabled: boolean }> {
+  return apiJsonWithMethod("POST", "/auth/2fa/disable", { code });
+}
+
+// ── Public lead intake ("Request a quote") ────────────────────────────────────
+export interface LeadIntakeInput {
+  companyName: string;
+  contactName: string;
+  contactEmail: string;
+  phone?: string;
+  exhibitionName?: string;
+  boothSize?: string;
+  budget?: string;
+  timeline?: string;
+  message?: string;
+}
+
+export async function submitLead(input: LeadIntakeInput): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/leads`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!response.ok) {
+    let message = "Could not submit your request. Please try again.";
+    try {
+      const body = await response.json();
+      if (body?.error?.message) message = body.error.message;
+    } catch {
+      // keep the default message
+    }
+    throw new Error(message);
+  }
+}
+
+// ── Quotes / proposals ────────────────────────────────────────────────────────
+export interface QuoteLineItem {
+  description: string;
+  sku?: string;
+  quantity: number;
+  unitPriceCents: number;
+  totalCents: number;
+  kind?: string;
+}
+
+export interface Quote {
+  id: string;
+  quoteNumber: string;
+  title: string | null;
+  status: "draft" | "sent" | "viewed" | "accepted" | "rejected" | "expired" | "revised";
+  currency: string;
+  lineItems: QuoteLineItem[];
+  subtotalCents: number;
+  discountCents: number;
+  taxCents: number;
+  totalCents: number;
+  notes: string | null;
+  terms: string | null;
+  validUntil: string | null;
+  clientId: string | null;
+  projectId: string | null;
+  sentAt: string | null;
+  viewedAt: string | null;
+  respondedAt: string | null;
+  responseNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateQuoteInput {
+  clientId?: string;
+  projectId?: string;
+  title?: string;
+  currency?: string;
+  discountCents?: number;
+  taxCents?: number;
+  notes?: string;
+  terms?: string;
+  validUntil?: string;
+  lineItems: Array<{ description: string; sku?: string; quantity: number; unitPriceCents: number; kind?: string }>;
+}
+
+export async function listQuotes(params?: { status?: string; projectId?: string }): Promise<Quote[]> {
+  const qs = new URLSearchParams();
+  if (params?.status) qs.set("status", params.status);
+  if (params?.projectId) qs.set("projectId", params.projectId);
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  const body = await apiGet<{ quotes: Quote[] }>(`/platform/quotes${suffix}`);
+  return body.quotes;
+}
+
+export async function getQuote(id: string): Promise<Quote> {
+  const body = await apiGet<{ quote: Quote }>(`/platform/quotes/${id}`);
+  return body.quote;
+}
+
+export async function createQuote(input: CreateQuoteInput): Promise<Quote> {
+  const body = await apiJsonWithMethod<{ quote: Quote }>("POST", "/platform/quotes", input);
+  return body.quote;
+}
+
+export async function updateQuote(id: string, input: Partial<CreateQuoteInput>): Promise<Quote> {
+  const body = await apiJsonWithMethod<{ quote: Quote }>("PUT", `/platform/quotes/${id}`, input);
+  return body.quote;
+}
+
+export async function sendQuote(id: string): Promise<Quote> {
+  const body = await apiJsonWithMethod<{ quote: Quote }>("POST", `/platform/quotes/${id}/send`, {});
+  return body.quote;
+}
+
+export async function respondToQuote(id: string, decision: "accept" | "reject", note?: string): Promise<Quote> {
+  const body = await apiJsonWithMethod<{ quote: Quote }>("POST", `/platform/quotes/${id}/respond`, { decision, note });
+  return body.quote;
+}
+
+export async function deleteQuote(id: string): Promise<void> {
+  await apiJsonWithMethod("DELETE", `/platform/quotes/${id}`, {});
+}
+
+// ── Invoices / billing ────────────────────────────────────────────────────────
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  title: string | null;
+  status: "draft" | "open" | "paid" | "void" | "uncollectible";
+  currency: string;
+  lineItems: QuoteLineItem[];
+  subtotalCents: number;
+  discountCents: number;
+  taxCents: number;
+  totalCents: number;
+  amountPaidCents: number;
+  notes: string | null;
+  dueAt: string | null;
+  issuedAt: string | null;
+  paidAt: string | null;
+  clientId: string | null;
+  projectId: string | null;
+  quoteId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateInvoiceInput {
+  clientId?: string;
+  projectId?: string;
+  quoteId?: string;
+  title?: string;
+  currency?: string;
+  discountCents?: number;
+  taxCents?: number;
+  notes?: string;
+  dueAt?: string;
+  lineItems?: Array<{ description: string; sku?: string; quantity: number; unitPriceCents: number; kind?: string }>;
+}
+
+export async function listInvoices(params?: { status?: string }): Promise<Invoice[]> {
+  const qs = params?.status ? `?status=${encodeURIComponent(params.status)}` : "";
+  const body = await apiGet<{ invoices: Invoice[] }>(`/platform/invoices${qs}`);
+  return body.invoices;
+}
+
+export async function getInvoice(id: string): Promise<Invoice> {
+  const body = await apiGet<{ invoice: Invoice }>(`/platform/invoices/${id}`);
+  return body.invoice;
+}
+
+export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice> {
+  const body = await apiJsonWithMethod<{ invoice: Invoice }>("POST", "/platform/invoices", input);
+  return body.invoice;
+}
+
+export async function sendInvoice(id: string): Promise<Invoice> {
+  const body = await apiJsonWithMethod<{ invoice: Invoice }>("POST", `/platform/invoices/${id}/send`, {});
+  return body.invoice;
+}
+
+export async function markInvoicePaid(id: string): Promise<Invoice> {
+  const body = await apiJsonWithMethod<{ invoice: Invoice }>("POST", `/platform/invoices/${id}/mark-paid`, {});
+  return body.invoice;
+}
+
+export async function voidInvoice(id: string): Promise<Invoice> {
+  const body = await apiJsonWithMethod<{ invoice: Invoice }>("POST", `/platform/invoices/${id}/void`, {});
+  return body.invoice;
+}
+
+export async function deleteInvoice(id: string): Promise<void> {
+  await apiJsonWithMethod("DELETE", `/platform/invoices/${id}`, {});
+}
+
+// ── CRM lead pipeline ─────────────────────────────────────────────────────────
+export type LeadStage = "new" | "contacted" | "qualified" | "proposal" | "won" | "lost";
+
+export interface PipelineLead {
+  id: string;
+  companyName: string;
+  contactName: string;
+  contactEmail: string;
+  phone: string | null;
+  status: string;
+  leadStage: LeadStage;
+  leadValueCents: number;
+  leadStageChangedAt: string | null;
+  nextFollowUpAt: string | null;
+  lostReason: string | null;
+  assignedPmUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PipelineColumn { leads: PipelineLead[]; count: number; valueCents: number; }
+export interface Pipeline { stages: LeadStage[]; columns: Record<LeadStage, PipelineColumn>; }
+
+export async function getPipeline(): Promise<Pipeline> {
+  return apiGet<Pipeline>("/platform/pipeline");
+}
+
+export async function updateLeadStage(clientId: string, stage: LeadStage, lostReason?: string): Promise<PipelineLead> {
+  const body = await apiJsonWithMethod<{ lead: PipelineLead }>("PATCH", `/platform/leads/${clientId}/stage`, { stage, lostReason });
+  return body.lead;
+}
+
+export async function updateLead(
+  clientId: string,
+  input: { leadValueCents?: number; nextFollowUpAt?: string | null; assignedPmUserId?: string | null },
+): Promise<PipelineLead> {
+  const body = await apiJsonWithMethod<{ lead: PipelineLead }>("PATCH", `/platform/leads/${clientId}`, input);
+  return body.lead;
+}
+
 export async function updateAccountPassword(input: { currentPassword: string; newPassword: string }) {
   if (USE_MOCK_API) return undefined;
   await apiJsonWithMethod<void>("PUT", "/platform/account/password", input);
@@ -2062,7 +2331,7 @@ async function apiJson<T>(path: string, body: unknown): Promise<T> {
   return apiJsonWithMethod<T>("POST", path, body);
 }
 
-async function apiJsonWithMethod<T>(method: "POST" | "PUT" | "DELETE", path: string, body: unknown): Promise<T> {
+async function apiJsonWithMethod<T>(method: "POST" | "PUT" | "PATCH" | "DELETE", path: string, body: unknown): Promise<T> {
   const response = await apiFetch(path, {
     method,
     credentials: "include",

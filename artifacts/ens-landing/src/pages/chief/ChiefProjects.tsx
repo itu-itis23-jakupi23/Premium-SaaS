@@ -44,6 +44,7 @@ import {
   updatePlatformProjectStage,
   type PlatformPagination,
   type PlatformExhibition,
+  type ExhibitionStatus,
   type ManagedClient,
   type PlatformManager,
   type PlatformProject,
@@ -163,6 +164,10 @@ const PRIORITY_TEXT: Record<Priority, string> = {
 };
 
 const PAGE_SIZE = 25;
+
+// A show counts as active from the moment it is confirmed until it is over.
+const ACTIVE_EXHIBITION_STATUSES: ExhibitionStatus[] = ["confirmed", "in_production", "on_site", "live"];
+const isActiveExhibition = (status: ExhibitionStatus) => ACTIVE_EXHIBITION_STATUSES.includes(status);
 
 export default function ChiefProjects() {
   const { t, i18n } = useTranslation();
@@ -526,8 +531,7 @@ export default function ChiefProjects() {
       if (!createForm.clientId && !client) {
         await createPlatformExhibition({
           name: exhibition,
-          status: "Active",
-          startDate: createForm.deadline || null,
+          opensAt: createForm.deadline || null,
         });
         const response = await getPlatformExhibitions();
         setExhibitions(response.exhibitions);
@@ -570,9 +574,8 @@ export default function ChiefProjects() {
         name,
         venue: exhibitionForm.venue.trim() || undefined,
         city:  exhibitionForm.city.trim()  || undefined,
-        startDate: exhibitionForm.startDate || null,
-        endDate:   exhibitionForm.endDate   || null,
-        status: "Active",
+        opensAt:  exhibitionForm.startDate || null,
+        closesAt: exhibitionForm.endDate   || null,
       });
       const response = await getPlatformExhibitions();
       setExhibitions(response.exhibitions);
@@ -1058,11 +1061,11 @@ export default function ChiefProjects() {
               </div>
               <div className="rounded-lg border bg-card/60 p-4">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Active</p>
-                <p className="mt-2 text-2xl font-bold">{exhibitions.filter((e) => e.status === "Active").length}</p>
+                <p className="mt-2 text-2xl font-bold">{exhibitions.filter((e) => isActiveExhibition(e.status)).length}</p>
               </div>
               <div className="rounded-lg border bg-card/60 p-4">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Draft / Closed</p>
-                <p className="mt-2 text-2xl font-bold">{exhibitions.filter((e) => e.status !== "Active").length}</p>
+                <p className="mt-2 text-2xl font-bold">{exhibitions.filter((e) => !isActiveExhibition(e.status)).length}</p>
               </div>
             </div>
 
@@ -1084,8 +1087,8 @@ export default function ChiefProjects() {
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {exhibitions.map((ex) => {
                   const statusColor =
-                    ex.status === "Active" ? "text-green-600 bg-green-500/10 border-green-500/30" :
-                    ex.status === "Draft"  ? "text-gray-500 bg-gray-500/10 border-gray-400/30" :
+                    isActiveExhibition(ex.status) ? "text-green-600 bg-green-500/10 border-green-500/30" :
+                    ex.status === "planned" ? "text-gray-500 bg-gray-500/10 border-gray-400/30" :
                     "text-muted-foreground bg-muted/30 border-border";
                   return (
                     <button
@@ -1103,10 +1106,10 @@ export default function ChiefProjects() {
                       {(ex.venue || ex.city) && (
                         <p className="text-xs text-muted-foreground">{[ex.venue, ex.city].filter(Boolean).join(" · ")}</p>
                       )}
-                      {(ex.startDate || ex.endDate) && (
+                      {(ex.opensAt || ex.closesAt) && (
                         <p className="text-[10px] text-muted-foreground/70">
-                          {ex.startDate ? new Date(ex.startDate).toLocaleDateString() : "—"}
-                          {ex.endDate ? ` → ${new Date(ex.endDate).toLocaleDateString()}` : ""}
+                          {ex.opensAt ? new Date(ex.opensAt).toLocaleDateString() : "—"}
+                          {ex.closesAt ? ` → ${new Date(ex.closesAt).toLocaleDateString()}` : ""}
                         </p>
                       )}
                       <p className="text-[10px] text-muted-foreground/60">
@@ -1624,8 +1627,8 @@ export default function ChiefProjects() {
                 : exClients;
 
               const statusColor =
-                ex.status === "Active" ? "text-green-500 border-green-500/40 bg-green-500/10" :
-                ex.status === "Draft"  ? "text-gray-400 border-gray-400/40 bg-gray-400/10"  :
+                isActiveExhibition(ex.status) ? "text-green-500 border-green-500/40 bg-green-500/10" :
+                ex.status === "planned" ? "text-gray-400 border-gray-400/40 bg-gray-400/10"  :
                 "text-muted-foreground border-border bg-muted/20";
 
               return (
@@ -1640,7 +1643,7 @@ export default function ChiefProjects() {
                       </div>
                       <SheetDescription>
                         {[ex.venue, ex.city].filter(Boolean).join(" · ")}
-                        {ex.startDate && ` · ${new Date(ex.startDate).toLocaleDateString()} – ${ex.endDate ? new Date(ex.endDate).toLocaleDateString() : "?"}`}
+                        {ex.opensAt && ` · ${new Date(ex.opensAt).toLocaleDateString()} – ${ex.closesAt ? new Date(ex.closesAt).toLocaleDateString() : "?"}`}
                       </SheetDescription>
                     </SheetHeader>
                   </div>
@@ -1705,7 +1708,7 @@ export default function ChiefProjects() {
                         </div>
                       </div>
 
-                      <div className="flex-1 overflow-y-auto">
+                      <div className="flex-1 overflow-auto">
                         {exClients.length === 0 ? (
                           <div className="m-8 rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">
                             No clients registered for this exhibition yet.
@@ -1715,7 +1718,7 @@ export default function ChiefProjects() {
                             No clients match your search.
                           </div>
                         ) : (
-                          <table className="w-full">
+                          <table className="w-full min-w-[560px]">
                             <thead className="sticky top-0 z-10 border-b bg-muted/30">
                               <tr>
                                 <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Client</th>

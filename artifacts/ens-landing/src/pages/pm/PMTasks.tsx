@@ -661,6 +661,7 @@ export default function PMTasks() {
                   value={newTask.title ?? ""}
                   onChange={(e) => setNewTask((n) => ({ ...n, title: e.target.value }))}
                   placeholder={t("pm.tasks.modal.taskTitlePlaceholder")}
+                  aria-label={t("pm.tasks.modal.taskTitle")}
                   className="w-full h-9 border rounded-md px-3 text-sm bg-muted/30 outline-none focus:border-primary"
                   autoFocus
                 />
@@ -673,6 +674,7 @@ export default function PMTasks() {
                   value={newTask.notes ?? ""}
                   onChange={(e) => setNewTask((n) => ({ ...n, notes: e.target.value }))}
                   placeholder={t("pm.tasks.modal.notesPlaceholder")}
+                  aria-label={t("pm.tasks.modal.notes")}
                   rows={3}
                   className="w-full resize-none rounded-md border bg-muted/30 px-3 py-2 text-sm outline-none focus:border-primary"
                 />
@@ -682,6 +684,7 @@ export default function PMTasks() {
                 <select
                   value={newTask.projectId ?? ""}
                   onChange={(e) => setNewTask((n) => ({ ...n, projectId: e.target.value }))}
+                  aria-label={t("pm.tasks.modal.project")}
                   className="w-full h-9 border rounded-md px-3 text-sm bg-muted/30 outline-none focus:border-primary"
                 >
                   <option value="">{t("pm.tasks.modal.select")}</option>
@@ -696,6 +699,7 @@ export default function PMTasks() {
                   <select
                     value={newTask.priority ?? "Medium"}
                     onChange={(e) => setNewTask((n) => ({ ...n, priority: e.target.value as Priority }))}
+                    aria-label={t("pm.tasks.modal.priority")}
                     className="w-full h-9 border rounded-md px-3 text-sm bg-muted/30 outline-none focus:border-primary"
                   >
                     <option value="High">{t("pm.common.priority.high")}</option>
@@ -710,6 +714,7 @@ export default function PMTasks() {
                     min={todayInputValue()}
                     value={newTask.deadline ?? ""}
                     onChange={(e) => { setFormError(""); setNewTask((n) => ({ ...n, deadline: e.target.value })); }}
+                    aria-label={t("pm.tasks.modal.deadline")}
                     className="w-full h-9 border rounded-md px-3 text-sm bg-muted/30 outline-none focus:border-primary"
                   />
                 </div>
@@ -719,6 +724,7 @@ export default function PMTasks() {
                 <select
                   value={newTask.col ?? "todo"}
                   onChange={(e) => setNewTask((n) => ({ ...n, col: e.target.value as Col }))}
+                  aria-label={t("pm.tasks.modal.initialCol")}
                   className="w-full h-9 border rounded-md px-3 text-sm bg-muted/30 outline-none focus:border-primary"
                 >
                   {COLS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
@@ -774,6 +780,7 @@ export default function PMTasks() {
                 <input
                   value={taskDraft.title}
                   onChange={(e) => setTaskDraft((current) => current ? { ...current, title: e.target.value } : current)}
+                  aria-label={t("pm.tasks.modal.taskTitle")}
                   className="w-full h-9 border rounded-md px-3 text-sm bg-muted/30 outline-none focus:border-primary"
                   autoFocus
                 />
@@ -783,6 +790,7 @@ export default function PMTasks() {
                 <select
                   value={taskDraft.projectId}
                   onChange={(e) => setTaskDraft((current) => current ? { ...current, projectId: e.target.value } : current)}
+                  aria-label={t("pm.tasks.modal.project")}
                   className="w-full h-9 border rounded-md px-3 text-sm bg-muted/30 outline-none focus:border-primary"
                 >
                   <option value="">{t("pm.tasks.modal.select")}</option>
@@ -797,6 +805,7 @@ export default function PMTasks() {
                   <select
                     value={taskDraft.priority}
                     onChange={(e) => setTaskDraft((current) => current ? { ...current, priority: e.target.value as Priority } : current)}
+                    aria-label={t("pm.tasks.modal.priority")}
                     className="w-full h-9 border rounded-md px-3 text-sm bg-muted/30 outline-none focus:border-primary"
                   >
                     <option value="High">{t("pm.common.priority.high")}</option>
@@ -810,6 +819,7 @@ export default function PMTasks() {
                     type="date"
                     value={taskDraft.deadline}
                     onChange={(e) => setTaskDraft((current) => current ? { ...current, deadline: e.target.value } : current)}
+                    aria-label={t("pm.tasks.modal.deadline")}
                     className="w-full h-9 border rounded-md px-3 text-sm bg-muted/30 outline-none focus:border-primary"
                   />
                 </div>
@@ -819,6 +829,7 @@ export default function PMTasks() {
                 <select
                   value={taskDraft.col}
                   onChange={(e) => setTaskDraft((current) => current ? { ...current, col: e.target.value as Col } : current)}
+                  aria-label={t("pm.tasks.modal.initialCol")}
                   className="w-full h-9 border rounded-md px-3 text-sm bg-muted/30 outline-none focus:border-primary"
                 >
                   {COLS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
@@ -831,6 +842,7 @@ export default function PMTasks() {
                 <textarea
                   value={taskDraft.notes}
                   onChange={(e) => setTaskDraft((current) => current ? { ...current, notes: e.target.value } : current)}
+                  aria-label={t("pm.tasks.modal.notes")}
                   rows={6}
                   className="w-full resize-none rounded-md border bg-muted/30 px-3 py-2 text-sm outline-none focus:border-primary"
                 />

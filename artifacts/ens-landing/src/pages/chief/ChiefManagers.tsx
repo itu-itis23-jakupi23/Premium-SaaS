@@ -95,107 +95,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+// Types + tuning constants live in a dedicated data module.
+import {
+  AUDIT_PAGE_SIZE, ASSIGNMENT_PAGE_SIZE, PM_ACTIVE_PROJECT_CAPACITY, PM_CLIENT_CAPACITY,
+  EMPTY_ASSIGNMENT_PAGINATION, MANAGER_STATUS_OPTIONS, SAVED_MANAGER_VIEWS_KEY,
+  DEFAULT_MANAGER_VIEW_DEFS, DEFAULT_MANAGER_VIEWS,
+  type ManagerStatus, type WorkStatus, type StatusFilter, type ViewMode, type SortMode,
+  type SavedManagerView, type Manager, type ManagedClient, type ManagedProject,
+  type AuditEntry, type ManagerSummary, type RebalancePreview,
+} from "./managers-model";
 
-type ManagerStatus = "Active" | "Pending" | "On Leave";
-type WorkStatus = "Active" | "Pending" | "Delayed" | "Completed";
-type StatusFilter = "all" | ManagerStatus | "High Load";
-type ViewMode = "cards" | "table";
-type SortMode = "workload-desc" | "workload-asc" | "projects-desc" | "rating-desc";
-
-interface SavedManagerView {
-  id: string;
-  name: string;
-  search: string;
-  statusFilter: StatusFilter;
-  sortMode: SortMode;
-  viewMode: ViewMode;
-  isDefault?: boolean;
-}
-
-interface Manager {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  rating: number;
-  status: ManagerStatus;
-  avatarUrl?: string;
-  avatarTone?: string;
-}
-
-interface ManagedClient {
-  id: string;
-  name: string;
-  contactName?: string;
-  contactEmail?: string;
-  exhibition: string;
-  boothWidthM?: number | null;
-  boothDepthM?: number | null;
-  preferredSystem?: string;
-  venueCity?: string;
-  targetDate?: string;
-  intakeNotes?: string;
-  managerId: string | null;
-  status: WorkStatus;
-  lastActivity: string;
-}
-
-interface ManagedProject {
-  id: string;
-  name: string;
-  clientId: string;
-  exhibition: string;
-  managerId: string | null;
-  status: WorkStatus;
-  progress: number;
-  deadline: string;
-  system: string;
-}
-
-interface AuditEntry {
-  id: string;
-  action: string;
-  detail: string;
-  time: string;
-  managerId?: string;
-  tone: "info" | "success" | "warning";
-}
-
-interface ManagerSummary extends Manager {
-  workload: number;
-  activeProjects: ManagedProject[];
-  allProjects: ManagedProject[];
-  clients: ManagedClient[];
-  delayedCount: number;
-  urgentCount: number;
-  nextDeadline: string | null;
-}
-
-interface RebalancePreview {
-  project: ManagedProject;
-  source: ManagerSummary;
-  target: ManagerSummary;
-}
-
-const AUDIT_PAGE_SIZE = 6;
-const ASSIGNMENT_PAGE_SIZE = 20;
-const PM_ACTIVE_PROJECT_CAPACITY = 200;
-const PM_CLIENT_CAPACITY = 200;
-const EMPTY_ASSIGNMENT_PAGINATION: PlatformPagination = {
-  total: 0,
-  limit: ASSIGNMENT_PAGE_SIZE,
-  offset: 0,
-  hasMore: false,
-};
-const MANAGER_STATUS_OPTIONS: StatusFilter[] = ["all", "Active", "Pending", "On Leave", "High Load"];
-const SAVED_MANAGER_VIEWS_KEY = "ens-chief-manager-saved-views";
-const DEFAULT_MANAGER_VIEW_DEFS = [
-  { id: "default-all-managers", nameKey: "chief.managers.filters.allManagers", search: "", statusFilter: "all" as StatusFilter, sortMode: "workload-desc" as SortMode, viewMode: "cards" as ViewMode, isDefault: true },
-  { id: "default-high-load",    nameKey: "chief.managers.filters.highLoad",    search: "", statusFilter: "High Load" as StatusFilter, sortMode: "workload-desc" as SortMode, viewMode: "cards" as ViewMode, isDefault: true },
-  { id: "default-on-leave",     nameKey: "chief.common.status.onLeave",        search: "", statusFilter: "On Leave"  as StatusFilter, sortMode: "workload-desc" as SortMode, viewMode: "table" as ViewMode, isDefault: true },
-];
-
-const DEFAULT_MANAGER_VIEWS = DEFAULT_MANAGER_VIEW_DEFS.map((def) => ({ ...def, name: def.nameKey }));
 
 export default function ChiefManagers() {
   const { t } = useTranslation();

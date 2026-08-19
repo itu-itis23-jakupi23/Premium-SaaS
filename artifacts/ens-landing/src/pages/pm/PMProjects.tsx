@@ -621,7 +621,8 @@ function ProjectTable({ projects, isLoading, locale, stageBusy, onDetails, onSta
 
   return (
     <div className="overflow-hidden rounded-lg border bg-card">
-      <table className="w-full text-sm">
+      <div className="w-full overflow-x-auto">
+      <table className="w-full text-sm min-w-[640px]">
         <thead>
           <tr className="border-b bg-muted/20">
             {headers.map((heading) => (
@@ -721,6 +722,7 @@ function ProjectTable({ projects, isLoading, locale, stageBusy, onDetails, onSta
           ))}
         </tbody>
       </table>
+      </div>
       {!projects.length && !isLoading && (
         <div className="py-12 text-center text-sm text-muted-foreground">
           {t("pm.projects.noMatch")}
