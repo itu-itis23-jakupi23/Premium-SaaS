@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, type ComponentType, type ReactElement } from "react";
+import { X } from "lucide-react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -54,22 +55,35 @@ const ROUTER_BASE = import.meta.env.BASE_URL && import.meta.env.BASE_URL !== "/"
 
 function AuthModalRoute({ component: Component }: { component: React.ComponentType }) {
   const [, navigate] = useLocation();
-  const Background = PORTAL_MODE === "staff" ? TeamLanding : Home;
 
   return (
     <div className="relative min-h-screen bg-background overflow-hidden">
-      <div className="absolute inset-0 blur-md pointer-events-none select-none opacity-70 scale-[1.02]">
-        <Background />
+      {/*
+        Decorative backdrop only.
+
+        This previously rendered the entire <Home /> (or <TeamLanding />)
+        marketing page, blurred, behind the form. That put the whole marketing
+        page into the accessibility tree ahead of the login fields — a screen
+        reader met the marketing hero before "Welcome back" — and paid a full
+        marketing render, animations and cursor field included, on every auth
+        route. /login carried more body text than the home page it imitated.
+
+        The grid and glows match the ambient treatment already used by
+        GetQuote and not-found, so the screen still reads as part of the app.
+      */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 select-none">
+        <div className="absolute inset-0 bg-blueprint-grid opacity-60 dark:opacity-30" />
+        <div className="absolute left-1/2 top-0 h-96 w-full max-w-4xl -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-blue-500/10 blur-[100px]" />
       </div>
-      <div className="absolute inset-0 bg-background/55 backdrop-blur-sm" />
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
         <button
           type="button"
-          aria-label="Close auth modal"
+          aria-label="Close and return to the home page"
           onClick={() => navigate("/", { replace: true })}
-          className="absolute right-5 top-5 z-20 h-10 w-10 rounded-full border border-border/70 bg-background/75 backdrop-blur-xl text-xl leading-none text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+          className="absolute right-5 top-5 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-background/75 backdrop-blur-xl text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          x
+          <X aria-hidden="true" className="h-4 w-4" />
         </button>
         <div className="w-full animate-in fade-in slide-in-from-bottom-3 zoom-in-95 duration-200">
           <Component />
