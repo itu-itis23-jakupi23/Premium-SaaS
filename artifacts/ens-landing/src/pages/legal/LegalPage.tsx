@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { ENSLogo } from '@/components/ENSLogo';
+import { SkipToContent, MAIN_CONTENT_ID } from '@/components/SkipToContent';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
@@ -25,6 +26,7 @@ export default function LegalPage({ slug }: { slug: string }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
+      <SkipToContent />
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-lg sticky top-0 z-40">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <ENSLogo size="sm" href="/" />
@@ -42,7 +44,7 @@ export default function LegalPage({ slug }: { slug: string }) {
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-16 max-w-3xl">
+      <main id={MAIN_CONTENT_ID} className="container mx-auto px-6 py-16 max-w-3xl">
         <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">Legal</p>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4" data-testid="legal-title">
           {doc.title}

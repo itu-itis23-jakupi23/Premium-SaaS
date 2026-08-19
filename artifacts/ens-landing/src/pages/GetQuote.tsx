@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { motion, useReducedMotion } from "framer-motion";
 import { CheckCircle2, ArrowLeft, Sparkles, Loader2, AlertTriangle } from "lucide-react";
 import { ENSLogo } from "@/components/ENSLogo";
+import { MAIN_CONTENT_ID } from "@/components/SkipToContent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,7 +63,7 @@ export default function GetQuote() {
       <div className="pointer-events-none fixed inset-0 bg-blueprint-grid opacity-60 dark:opacity-30" aria-hidden="true" />
       <div className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 h-96 w-full max-w-4xl bg-primary/5 blur-3xl rounded-full" aria-hidden="true" />
 
-      <div className="relative z-10 mx-auto w-full max-w-2xl px-4 py-10 sm:py-16">
+      <main id={MAIN_CONTENT_ID} className="relative z-10 mx-auto w-full max-w-2xl px-4 py-10 sm:py-16">
         <div className="mb-8 flex flex-col items-center text-center">
           <ENSLogo size="md" showTagline href="/" />
         </div>
@@ -160,7 +161,7 @@ export default function GetQuote() {
             </Card>
           )}
         </motion.div>
-      </div>
+      </main>
     </div>
   );
 }

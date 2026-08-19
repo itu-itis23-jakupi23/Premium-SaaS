@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { SkipToContent, MAIN_CONTENT_ID } from '@/components/SkipToContent';
 import { useTranslation } from 'react-i18next';
 import { ENSLogo } from '@/components/ENSLogo';
 import { motion, useInView, Variants } from 'framer-motion';
@@ -235,6 +236,7 @@ export default function TeamLanding() {
 
   return (
     <div className="ens-platform-landing ens-platform-staff min-h-screen bg-background text-foreground overflow-x-hidden font-sans">
+      <SkipToContent />
 
       {/* ── Nav ─────────────────────────────────────────────────── */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -279,6 +281,7 @@ export default function TeamLanding() {
       </header>
 
       {/* ── Hero ────────────────────────────────────────────────── */}
+      <main id={MAIN_CONTENT_ID}>
       <section className="ens-landing-hero ens-landing-hero-staff relative pt-44 pb-16 md:pt-56 md:pb-24 overflow-hidden">
         <ExhibitionCursorField variant="staff" />
         <div className="absolute inset-0 grid-pattern opacity-[0.05] dark:opacity-[0.12] -z-10" />
@@ -756,6 +759,8 @@ export default function TeamLanding() {
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────── */}
+      </main>
+
       <footer className="border-t border-border/50 bg-background pt-16 pb-8">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">

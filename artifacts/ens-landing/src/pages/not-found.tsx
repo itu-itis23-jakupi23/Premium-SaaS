@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { MAIN_CONTENT_ID } from "@/components/SkipToContent";
 import { Home, ArrowLeft, Search } from "lucide-react";
 
 export default function NotFound() {
@@ -19,11 +20,12 @@ export default function NotFound() {
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/15 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
 
-      <motion.div
+      <motion.main
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-10 text-center px-6 max-w-lg mx-auto"
+        id={MAIN_CONTENT_ID}
       >
         <div className="mb-6 flex items-center justify-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl font-mono shadow-[0_0_20px_rgba(109,40,217,0.5)]">
@@ -88,7 +90,7 @@ export default function NotFound() {
             ))}
           </div>
         </motion.div>
-      </motion.div>
+      </motion.main>
     </div>
   );
 }

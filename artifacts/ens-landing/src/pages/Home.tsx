@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { SkipToContent, MAIN_CONTENT_ID } from '@/components/SkipToContent';
 import { useTranslation } from 'react-i18next';
 import { ENSLogo } from '@/components/ENSLogo';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
@@ -158,6 +159,7 @@ export default function Home() {
 
   return (
     <div className="ens-platform-landing ens-platform-client min-h-screen bg-background text-foreground overflow-x-hidden font-sans">
+      <SkipToContent />
       {/* Navigation */}
       <header 
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -282,6 +284,7 @@ export default function Home() {
       </AnimatePresence>,
       document.body)}
 
+      <main id={MAIN_CONTENT_ID}>
       {/* Hero Section */}
       <section className="ens-landing-hero ens-landing-hero-client relative pt-40 pb-0 md:pt-52 overflow-hidden">
         <ExhibitionCursorField variant="client" />
@@ -857,6 +860,8 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      </main>
 
       <footer className="border-t border-border/50 bg-background pt-16 pb-8">
         <div className="container mx-auto px-6">
