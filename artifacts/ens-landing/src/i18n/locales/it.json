@@ -11,7 +11,8 @@
     "copyright": "© {{year}} ENS Expo Solutions Ltd. Tutti i diritti riservati.",
     "internalOnly": "Solo uso interno",
     "vsLastMonth": "vs mese scorso",
-    "clickToView": "Clicca per visualizzare →"
+    "clickToView": "Clicca per visualizzare →",
+    "cancel": "Annulla"
   },
   "nav": {
     "features": "Funzionalità",
@@ -1316,7 +1317,11 @@
     "collapseSidebar": "Comprimi barra laterale",
     "switchToLight": "Passa al tema chiaro",
     "switchToDark": "Passa al tema scuro",
-    "selectLanguage": "Seleziona la lingua"
+    "selectLanguage": "Seleziona la lingua",
+    "commandPalette": {
+      "title": "Ricerca rapida e azioni",
+      "description": "Cerca pagine, progetti e azioni, poi premi Invio per navigare."
+    }
   },
   "pm": {
     "nav": {
@@ -2493,6 +2498,16 @@
       "validation": {
         "email": "Indirizzo e-mail non valido",
         "passwordMin": "La password deve contenere almeno 8 caratteri"
+      },
+      "twoFactor": {
+        "title": "Verifica a due fattori",
+        "description": "Inserisci il codice dalla tua app di autenticazione per completare l’accesso.",
+        "codeLabel": "Codice di autenticazione",
+        "hint": "Inserisci il codice a 6 cifre della tua app di autenticazione o uno dei tuoi codici di backup.",
+        "verify": "Verifica e accedi",
+        "back": "Torna all’accesso",
+        "required": "Inserisci il codice di verifica.",
+        "invalid": "Questo codice di verifica non è corretto o è scaduto."
       }
     },
     "signup": {
@@ -2596,6 +2611,39 @@
         "confirmRequired": "Conferma la tua password",
         "passwordsMismatch": "Le password non corrispondono"
       }
+    }
+  },
+  "settings": {
+    "twoFactor": {
+      "title": "Autenticazione a due fattori",
+      "description": "Aggiungi un secondo passaggio all’accesso con un’app di autenticazione come Google Authenticator, 1Password o Authy.",
+      "on": "Attiva",
+      "off": "Disattiva",
+      "enable": "Attiva",
+      "disable": "Disattiva",
+      "backupRemaining": "{{count}} codici di backup rimanenti",
+      "setupTitle": "Configura il tuo autenticatore",
+      "step1": "Apri la tua app di autenticazione e aggiungi un nuovo account.",
+      "step2": "Inserisci la chiave qui sotto (o apri il link); mostrerà un codice a 6 cifre.",
+      "step3": "Digita quel codice qui per completare l’attivazione dei due fattori.",
+      "manualKey": "Chiave di configurazione",
+      "openInApp": "Apri nell’app di autenticazione",
+      "codeLabel": "Codice a 6 cifre",
+      "verifyEnable": "Verifica e attiva",
+      "backupTitle": "Salva i tuoi codici di backup",
+      "backupWarning": "Conservali in un luogo sicuro. Ogni codice funziona una volta se perdi l’accesso al tuo autenticatore. Non verranno più mostrati.",
+      "copyAll": "Copia tutto",
+      "copied": "Copiato",
+      "done": "Fatto",
+      "disableTitle": "Disattiva i due fattori",
+      "disableHint": "Inserisci un codice attuale dell’autenticatore o un codice di backup per confermare.",
+      "confirmDisable": "Disattiva i due fattori",
+      "enabledToast": "Autenticazione a due fattori attivata.",
+      "disabledToast": "Autenticazione a due fattori disattivata.",
+      "invalidCode": "Questo codice non è corretto o è scaduto.",
+      "genericError": "Qualcosa è andato storto. Riprova.",
+      "qrAlt": "Codice QR per la configurazione a due fattori",
+      "scanHint": "Scansiona con la tua app di autenticazione"
     }
   }
 }

@@ -11,7 +11,8 @@
     "copyright": "© {{year}} ENS Expo Solutions Ltd. All rights reserved.",
     "internalOnly": "社内利用のみ",
     "vsLastMonth": "先月比",
-    "clickToView": "クリックして表示 →"
+    "clickToView": "クリックして表示 →",
+    "cancel": "キャンセル"
   },
   "nav": {
     "features": "機能",
@@ -1316,7 +1317,11 @@
     "collapseSidebar": "サイドバーを折りたたむ",
     "switchToLight": "ライトテーマに切り替え",
     "switchToDark": "ダークテーマに切り替え",
-    "selectLanguage": "言語を選択"
+    "selectLanguage": "言語を選択",
+    "commandPalette": {
+      "title": "クイック検索とアクション",
+      "description": "ページ、プロジェクト、アクションを検索し、Enter キーで移動します。"
+    }
   },
   "pm": {
     "nav": {
@@ -2493,6 +2498,16 @@
       "validation": {
         "email": "無効なメールアドレスです",
         "passwordMin": "パスワードは8文字以上必要です"
+      },
+      "twoFactor": {
+        "title": "二段階認証",
+        "description": "認証アプリのコードを入力してログインを完了します。",
+        "codeLabel": "認証コード",
+        "hint": "認証アプリの 6 桁のコード、またはバックアップコードのいずれかを入力してください。",
+        "verify": "確認してログイン",
+        "back": "ログインに戻る",
+        "required": "認証コードを入力してください。",
+        "invalid": "この認証コードは正しくないか、有効期限が切れています。"
       }
     },
     "signup": {
@@ -2596,6 +2611,39 @@
         "confirmRequired": "パスワードを確認してください",
         "passwordsMismatch": "パスワードが一致しません"
       }
+    }
+  },
+  "settings": {
+    "twoFactor": {
+      "title": "二段階認証",
+      "description": "Google Authenticator、1Password、Authy などの認証アプリを使って、ログイン時に 2 番目のステップを追加します。",
+      "on": "オン",
+      "off": "オフ",
+      "enable": "有効にする",
+      "disable": "無効にする",
+      "backupRemaining": "バックアップコードの残り {{count}} 個",
+      "setupTitle": "認証アプリを設定",
+      "step1": "認証アプリを開いて新しいアカウントを追加します。",
+      "step2": "下のキーを入力（またはリンクを開く）すると、6 桁のコードが表示されます。",
+      "step3": "そのコードをここに入力して二段階認証を有効にします。",
+      "manualKey": "セットアップキー",
+      "openInApp": "認証アプリで開く",
+      "codeLabel": "6 桁のコード",
+      "verifyEnable": "確認して有効にする",
+      "backupTitle": "バックアップコードを保存",
+      "backupWarning": "安全な場所に保管してください。認証アプリにアクセスできなくなった場合、各コードは 1 回だけ使えます。再表示はされません。",
+      "copyAll": "すべてコピー",
+      "copied": "コピーしました",
+      "done": "完了",
+      "disableTitle": "二段階認証を無効にする",
+      "disableHint": "確認のため、現在の認証コードまたはバックアップコードを入力してください。",
+      "confirmDisable": "二段階認証を無効にする",
+      "enabledToast": "二段階認証を有効にしました。",
+      "disabledToast": "二段階認証を無効にしました。",
+      "invalidCode": "このコードは正しくないか、有効期限が切れています。",
+      "genericError": "問題が発生しました。もう一度お試しください。",
+      "qrAlt": "二段階認証設定用の QR コード",
+      "scanHint": "認証アプリでスキャンしてください"
     }
   }
 }

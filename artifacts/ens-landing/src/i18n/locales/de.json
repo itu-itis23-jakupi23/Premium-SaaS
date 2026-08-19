@@ -11,7 +11,8 @@
     "copyright": "© {{year}} ENS Expo Solutions Ltd. Alle Rechte vorbehalten.",
     "internalOnly": "Nur für interne Nutzung",
     "vsLastMonth": "vs. letzten Monat",
-    "clickToView": "Klicken zum Anzeigen →"
+    "clickToView": "Klicken zum Anzeigen →",
+    "cancel": "Abbrechen"
   },
   "nav": {
     "features": "Funktionen",
@@ -1316,7 +1317,11 @@
     "collapseSidebar": "Seitenleiste einklappen",
     "switchToLight": "Zum hellen Design wechseln",
     "switchToDark": "Zum dunklen Design wechseln",
-    "selectLanguage": "Sprache auswählen"
+    "selectLanguage": "Sprache auswählen",
+    "commandPalette": {
+      "title": "Schnellsuche und Aktionen",
+      "description": "Seiten, Projekte und Aktionen durchsuchen und mit Enter öffnen."
+    }
   },
   "pm": {
     "nav": {
@@ -2493,6 +2498,16 @@
       "validation": {
         "email": "Ungültige E-Mail-Adresse",
         "passwordMin": "Passwort muss mindestens 8 Zeichen lang sein"
+      },
+      "twoFactor": {
+        "title": "Zwei-Faktor-Verifizierung",
+        "description": "Geben Sie den Code aus Ihrer Authenticator-App ein, um die Anmeldung abzuschließen.",
+        "codeLabel": "Authentifizierungscode",
+        "hint": "Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App oder einen Ihrer Backup-Codes ein.",
+        "verify": "Bestätigen und anmelden",
+        "back": "Zurück zur Anmeldung",
+        "required": "Geben Sie Ihren Verifizierungscode ein.",
+        "invalid": "Dieser Verifizierungscode ist falsch oder abgelaufen."
       }
     },
     "signup": {
@@ -2596,6 +2611,39 @@
         "confirmRequired": "Bitte Passwort bestätigen",
         "passwordsMismatch": "Passwörter stimmen nicht überein"
       }
+    }
+  },
+  "settings": {
+    "twoFactor": {
+      "title": "Zwei-Faktor-Authentifizierung",
+      "description": "Fügen Sie beim Anmelden einen zweiten Schritt mit einer Authenticator-App wie Google Authenticator, 1Password oder Authy hinzu.",
+      "on": "Ein",
+      "off": "Aus",
+      "enable": "Aktivieren",
+      "disable": "Deaktivieren",
+      "backupRemaining": "{{count}} Backup-Codes verbleibend",
+      "setupTitle": "Authenticator einrichten",
+      "step1": "Öffnen Sie Ihre Authenticator-App und fügen Sie ein neues Konto hinzu.",
+      "step2": "Geben Sie den Schlüssel unten ein (oder öffnen Sie den Link); dann wird ein 6-stelliger Code angezeigt.",
+      "step3": "Geben Sie diesen Code hier ein, um die Zwei-Faktor-Authentifizierung zu aktivieren.",
+      "manualKey": "Einrichtungsschlüssel",
+      "openInApp": "In Authenticator-App öffnen",
+      "codeLabel": "6-stelliger Code",
+      "verifyEnable": "Bestätigen und aktivieren",
+      "backupTitle": "Backup-Codes speichern",
+      "backupWarning": "Bewahren Sie diese sicher auf. Jeder Code funktioniert einmal, falls Sie den Zugriff auf Ihre Authenticator-App verlieren. Sie werden nicht erneut angezeigt.",
+      "copyAll": "Alle kopieren",
+      "copied": "Kopiert",
+      "done": "Fertig",
+      "disableTitle": "Zwei-Faktor deaktivieren",
+      "disableHint": "Geben Sie einen aktuellen Authenticator-Code oder einen Backup-Code zur Bestätigung ein.",
+      "confirmDisable": "Zwei-Faktor deaktivieren",
+      "enabledToast": "Zwei-Faktor-Authentifizierung aktiviert.",
+      "disabledToast": "Zwei-Faktor-Authentifizierung deaktiviert.",
+      "invalidCode": "Dieser Code ist falsch oder abgelaufen.",
+      "genericError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+      "qrAlt": "QR-Code für die Zwei-Faktor-Einrichtung",
+      "scanHint": "Mit Ihrer Authenticator-App scannen"
     }
   }
 }

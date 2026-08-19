@@ -11,7 +11,245 @@
     "copyright": "© {{year}} ENS Expo Solutions Ltd. All rights reserved.",
     "internalOnly": "Internal use only",
     "vsLastMonth": "vs last month",
-    "clickToView": "Click to view →"
+    "clickToView": "Click to view →",
+    "cancel": "Cancel",
+    "requestQuote": "Request a Quote"
+  },
+  "getQuote": {
+    "pageTitle": "Request a Quote | ENS",
+    "title": "Request a quote",
+    "subtitle": "Tell us about your exhibition and booth. Our team will get back to you within one business day.",
+    "fields": {
+      "company": "Company",
+      "name": "Your name",
+      "email": "Work email",
+      "phone": "Phone",
+      "exhibition": "Exhibition / show",
+      "boothSize": "Booth size",
+      "budget": "Budget",
+      "timeline": "Timeline",
+      "message": "Project details"
+    },
+    "placeholders": {
+      "exhibition": "e.g. CES 2027, Hannover Messe",
+      "boothSize": "e.g. 6 × 3 m",
+      "timeline": "e.g. Q1 2027",
+      "message": "Systems, open sides, must-have features, brand guidelines…",
+      "select": "Select a range"
+    },
+    "validation": {
+      "company": "Please enter your company name.",
+      "name": "Please enter your name.",
+      "email": "Please enter a valid email address."
+    },
+    "submit": "Send request",
+    "disclaimer": "By submitting, you agree to our",
+    "privacyLink": "Privacy Policy",
+    "error": "Could not submit your request. Please try again.",
+    "success": {
+      "title": "Request received",
+      "body": "Thanks — your booth inquiry is in. Our team will review it and reach out within one business day.",
+      "back": "Back to home"
+    }
+  },
+  "quotes": {
+    "title": "Quotes",
+    "subtitle": "Build a quote from a booth design and send it to your client for approval.",
+    "new": "New quote",
+    "empty": "No quotes yet. Create your first quote to send to a client.",
+    "col": {
+      "number": "Number",
+      "title": "Title",
+      "total": "Total",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "viewed": "Viewed",
+      "accepted": "Accepted",
+      "rejected": "Declined",
+      "expired": "Expired",
+      "revised": "Revised"
+    },
+    "action": {
+      "send": "Send",
+      "delete": "Delete"
+    },
+    "toast": {
+      "created": "Quote saved as draft.",
+      "sent": "Quote sent to the client."
+    },
+    "form": {
+      "title": "New quote",
+      "name": "Quote title",
+      "client": "Client",
+      "selectClient": "Select a client",
+      "lineItems": "Line items",
+      "description": "Description",
+      "qty": "Qty",
+      "unitPrice": "Unit price",
+      "addLine": "Add line",
+      "removeLine": "Remove line",
+      "discount": "Discount",
+      "tax": "Tax",
+      "notes": "Notes",
+      "subtotal": "Subtotal",
+      "total": "Total",
+      "saveDraft": "Save draft",
+      "needLine": "Add at least one line item with a description.",
+      "error": "Something went wrong. Please try again."
+    }
+  },
+  "clientQuotes": {
+    "title": "Quotes",
+    "subtitle": "Review the quotes your agency has prepared and accept or decline them.",
+    "empty": "You have no quotes yet.",
+    "untitled": "Booth quote",
+    "item": "Item",
+    "qty": "Qty",
+    "unit": "Unit",
+    "lineTotal": "Total",
+    "accept": "Accept quote",
+    "decline": "Decline",
+    "acceptedNote": "You accepted this quote.",
+    "declinedNote": "You declined this quote.",
+    "error": "Something went wrong. Please try again.",
+    "toast": {
+      "accepted": "Quote accepted. Your agency has been notified.",
+      "rejected": "Quote declined."
+    }
+  },
+  "pipeline": {
+    "title": "Sales Pipeline",
+    "subtitle": "Track every lead from first contact to a won deal.",
+    "openValue": "Open value · {{count}} leads",
+    "emptyColumn": "No leads in this stage.",
+    "edit": "Edit lead",
+    "moveStage": "Move to stage",
+    "won": "Won",
+    "dealValue": "Deal value",
+    "followUp": "Next follow-up",
+    "error": "Something went wrong. Please try again.",
+    "toast": {
+      "won": "{{company}} moved to won and sent for client approval."
+    },
+    "stage": {
+      "new": "New",
+      "contacted": "Contacted",
+      "qualified": "Qualified",
+      "proposal": "Proposal",
+      "won": "Won",
+      "lost": "Lost"
+    }
+  },
+  "invoices": {
+    "title": "Invoices",
+    "subtitle": "Issue invoices to clients, track payment, and turn accepted quotes into bills.",
+    "new": "New invoice",
+    "empty": "No invoices yet. Create one from scratch or from an accepted quote.",
+    "col": {
+      "number": "Number",
+      "title": "Title",
+      "total": "Total",
+      "due": "Due",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "draft": "Draft",
+      "open": "Awaiting payment",
+      "paid": "Paid",
+      "void": "Void",
+      "uncollectible": "Uncollectible"
+    },
+    "action": {
+      "issue": "Issue",
+      "markPaid": "Mark paid",
+      "void": "Void",
+      "delete": "Delete"
+    },
+    "toast": {
+      "created": "Invoice saved as draft.",
+      "sent": "Invoice issued to the client.",
+      "paid": "Payment recorded.",
+      "voided": "Invoice voided.",
+      "deleted": "Draft invoice deleted."
+    },
+    "form": {
+      "title": "New invoice",
+      "name": "Invoice title",
+      "client": "Client",
+      "selectClient": "Select a client",
+      "fromQuote": "Create from an accepted quote",
+      "fromQuoteNone": "— Start from scratch —",
+      "fromQuoteHint": "Line items and totals will be copied from the selected quote.",
+      "untitled": "Untitled quote",
+      "lineItems": "Line items",
+      "description": "Description",
+      "qty": "Qty",
+      "unitPrice": "Unit price",
+      "addLine": "Add line",
+      "removeLine": "Remove line",
+      "discount": "Discount",
+      "tax": "Tax",
+      "due": "Due date",
+      "notes": "Notes",
+      "subtotal": "Subtotal",
+      "total": "Total",
+      "saveDraft": "Save draft",
+      "needLine": "Add at least one line item with a description.",
+      "error": "Something went wrong. Please try again."
+    }
+  },
+  "clientInvoices": {
+    "title": "Invoices",
+    "subtitle": "View invoices from your agency and track what has been paid.",
+    "empty": "You have no invoices yet.",
+    "untitled": "Invoice",
+    "overdue": "Overdue",
+    "item": "Item",
+    "qty": "Qty",
+    "unit": "Unit",
+    "lineTotal": "Total",
+    "issued": "Issued",
+    "due": "Due",
+    "paidOn": "Paid",
+    "payNote": "To arrange payment, please contact your project manager."
+  },
+  "settings": {
+    "twoFactor": {
+      "title": "Two-factor authentication",
+      "description": "Add a second step at sign-in using an authenticator app such as Google Authenticator, 1Password, or Authy.",
+      "on": "On",
+      "off": "Off",
+      "enable": "Enable",
+      "disable": "Disable",
+      "backupRemaining": "{{count}} backup codes remaining",
+      "setupTitle": "Set up your authenticator",
+      "step1": "Open your authenticator app and add a new account.",
+      "step2": "Enter the key below (or open the link), then it will show a 6-digit code.",
+      "step3": "Type that code here to finish enabling two-factor.",
+      "manualKey": "Setup key",
+      "openInApp": "Open in authenticator app",
+      "codeLabel": "6-digit code",
+      "verifyEnable": "Verify & enable",
+      "backupTitle": "Save your backup codes",
+      "backupWarning": "Store these somewhere safe. Each code works once if you lose access to your authenticator. They won't be shown again.",
+      "copyAll": "Copy all",
+      "copied": "Copied",
+      "done": "Done",
+      "disableTitle": "Disable two-factor",
+      "disableHint": "Enter a current authenticator code or a backup code to confirm.",
+      "confirmDisable": "Disable two-factor",
+      "enabledToast": "Two-factor authentication enabled.",
+      "disabledToast": "Two-factor authentication disabled.",
+      "invalidCode": "That code is incorrect or expired.",
+      "genericError": "Something went wrong. Please try again.",
+      "qrAlt": "QR code for two-factor setup",
+      "scanHint": "Scan with your authenticator app"
+    }
   },
   "nav": {
     "features": "Features",
@@ -462,7 +700,10 @@
       "reports": "Reports",
       "messages": "Messages",
       "calendar": "Calendar",
-      "settings": "Settings"
+      "settings": "Settings",
+      "quotes": "Quotes",
+      "invoices": "Invoices",
+      "pipeline": "Sales Pipeline"
     },
     "common": {
       "cancel": "Cancel",
@@ -1551,6 +1792,10 @@
   },
   "layout": {
     "logout": "Logout",
+    "commandPalette": {
+      "title": "Quick search and actions",
+      "description": "Search pages, projects, and actions, then press Enter to navigate."
+    },
     "notifications": "Notifications",
     "unread": "{{count}} unread",
     "markAllRead": "Mark all read",
@@ -1574,7 +1819,9 @@
       "messages": "Messages",
       "tasks": "Tasks",
       "reports": "Reports",
-      "settings": "Settings"
+      "settings": "Settings",
+      "quotes": "Quotes",
+      "invoices": "Invoices"
     },
     "common": {
       "noDeadline": "No deadline",
@@ -2217,7 +2464,9 @@
       "workspace": "Workspace",
       "messages": "Messages",
       "documents": "Documents",
-      "profile": "Profile"
+      "profile": "Profile",
+      "quotes": "Quotes",
+      "invoices": "Invoices"
     },
     "dashboard": {
       "pageTitle": "Dashboard | ENS",
@@ -2726,6 +2975,16 @@
       "lockedBtn": "Locked",
       "lockMessage": "Account temporarily locked. Try again in {{time}}.",
       "signInError": "Could not sign in.",
+      "twoFactor": {
+        "title": "Two-factor verification",
+        "description": "Enter the code from your authenticator app to finish signing in.",
+        "codeLabel": "Authentication code",
+        "hint": "Enter the 6-digit code from your authenticator app, or one of your backup codes.",
+        "verify": "Verify & sign in",
+        "back": "Back to sign in",
+        "required": "Enter your verification code.",
+        "invalid": "That verification code is incorrect or expired."
+      },
       "attemptsRemaining_one": "{{count}} sign-in attempt remaining before temporary lockout",
       "attemptsRemaining_other": "{{count}} sign-in attempts remaining before temporary lockout",
       "noAccount": "Don't have an account?",

@@ -11,7 +11,8 @@
     "copyright": "© {{year}} ENS Expo Solutions Ltd. Tüm hakları saklıdır.",
     "internalOnly": "Yalnızca dahili kullanım",
     "vsLastMonth": "geçen aya kıyasla",
-    "clickToView": "Görüntülemek için tıklayın →"
+    "clickToView": "Görüntülemek için tıklayın →",
+    "cancel": "İptal"
   },
   "nav": {
     "features": "Özellikler",
@@ -1316,7 +1317,11 @@
     "collapseSidebar": "Kenar çubuğunu daralt",
     "switchToLight": "Açık temaya geç",
     "switchToDark": "Koyu temaya geç",
-    "selectLanguage": "Dil seç"
+    "selectLanguage": "Dil seç",
+    "commandPalette": {
+      "title": "Hızlı arama ve işlemler",
+      "description": "Sayfaları, projeleri ve işlemleri arayın, gitmek için Enter’a basın."
+    }
   },
   "pm": {
     "nav": {
@@ -2493,6 +2498,16 @@
       "validation": {
         "email": "Geçersiz e-posta adresi",
         "passwordMin": "Şifre en az 8 karakter olmalıdır"
+      },
+      "twoFactor": {
+        "title": "İki adımlı doğrulama",
+        "description": "Girişi tamamlamak için kimlik doğrulama uygulamanızdaki kodu girin.",
+        "codeLabel": "Doğrulama kodu",
+        "hint": "Kimlik doğrulama uygulamanızdaki 6 haneli kodu veya yedek kodlarınızdan birini girin.",
+        "verify": "Doğrula ve giriş yap",
+        "back": "Girişe dön",
+        "required": "Doğrulama kodunuzu girin.",
+        "invalid": "Bu doğrulama kodu yanlış veya süresi dolmuş."
       }
     },
     "signup": {
@@ -2596,6 +2611,39 @@
         "confirmRequired": "Lütfen şifrenizi onaylayın",
         "passwordsMismatch": "Şifreler eşleşmiyor"
       }
+    }
+  },
+  "settings": {
+    "twoFactor": {
+      "title": "İki adımlı doğrulama",
+      "description": "Girişte Google Authenticator, 1Password veya Authy gibi bir kimlik doğrulama uygulamasıyla ikinci bir adım ekleyin.",
+      "on": "Açık",
+      "off": "Kapalı",
+      "enable": "Etkinleştir",
+      "disable": "Devre dışı bırak",
+      "backupRemaining": "{{count}} yedek kod kaldı",
+      "setupTitle": "Kimlik doğrulayıcınızı kurun",
+      "step1": "Kimlik doğrulama uygulamanızı açın ve yeni bir hesap ekleyin.",
+      "step2": "Aşağıdaki anahtarı girin (veya bağlantıyı açın); 6 haneli bir kod gösterecektir.",
+      "step3": "İki adımlı doğrulamayı etkinleştirmeyi tamamlamak için bu kodu buraya yazın.",
+      "manualKey": "Kurulum anahtarı",
+      "openInApp": "Kimlik doğrulama uygulamasında aç",
+      "codeLabel": "6 haneli kod",
+      "verifyEnable": "Doğrula ve etkinleştir",
+      "backupTitle": "Yedek kodlarınızı kaydedin",
+      "backupWarning": "Bunları güvenli bir yerde saklayın. Kimlik doğrulayıcınıza erişiminizi kaybederseniz her kod bir kez çalışır. Tekrar gösterilmeyecekler.",
+      "copyAll": "Tümünü kopyala",
+      "copied": "Kopyalandı",
+      "done": "Tamam",
+      "disableTitle": "İki adımlı doğrulamayı kapat",
+      "disableHint": "Onaylamak için geçerli bir kimlik doğrulama kodu veya yedek kod girin.",
+      "confirmDisable": "İki adımlı doğrulamayı kapat",
+      "enabledToast": "İki adımlı doğrulama etkinleştirildi.",
+      "disabledToast": "İki adımlı doğrulama devre dışı bırakıldı.",
+      "invalidCode": "Bu kod yanlış veya süresi dolmuş.",
+      "genericError": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+      "qrAlt": "İki adımlı kurulum için QR kodu",
+      "scanHint": "Kimlik doğrulama uygulamanızla tarayın"
     }
   }
 }

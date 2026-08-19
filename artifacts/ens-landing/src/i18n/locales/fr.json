@@ -11,7 +11,8 @@
     "copyright": "© {{year}} ENS Expo Solutions Ltd. Tous droits réservés.",
     "internalOnly": "Usage interne uniquement",
     "vsLastMonth": "vs mois dernier",
-    "clickToView": "Cliquer pour afficher →"
+    "clickToView": "Cliquer pour afficher →",
+    "cancel": "Annuler"
   },
   "nav": {
     "features": "Fonctionnalités",
@@ -1316,7 +1317,11 @@
     "collapseSidebar": "Réduire la barre latérale",
     "switchToLight": "Passer au thème clair",
     "switchToDark": "Passer au thème sombre",
-    "selectLanguage": "Choisir la langue"
+    "selectLanguage": "Choisir la langue",
+    "commandPalette": {
+      "title": "Recherche rapide et actions",
+      "description": "Recherchez des pages, des projets et des actions, puis appuyez sur Entrée pour naviguer."
+    }
   },
   "pm": {
     "nav": {
@@ -2493,6 +2498,16 @@
       "validation": {
         "email": "Adresse e-mail invalide",
         "passwordMin": "Le mot de passe doit contenir au moins 8 caractères"
+      },
+      "twoFactor": {
+        "title": "Vérification à deux facteurs",
+        "description": "Saisissez le code de votre application d’authentification pour terminer la connexion.",
+        "codeLabel": "Code d’authentification",
+        "hint": "Saisissez le code à 6 chiffres de votre application d’authentification ou l’un de vos codes de secours.",
+        "verify": "Vérifier et se connecter",
+        "back": "Retour à la connexion",
+        "required": "Saisissez votre code de vérification.",
+        "invalid": "Ce code de vérification est incorrect ou a expiré."
       }
     },
     "signup": {
@@ -2596,6 +2611,39 @@
         "confirmRequired": "Veuillez confirmer votre mot de passe",
         "passwordsMismatch": "Les mots de passe ne correspondent pas"
       }
+    }
+  },
+  "settings": {
+    "twoFactor": {
+      "title": "Authentification à deux facteurs",
+      "description": "Ajoutez une deuxième étape à la connexion avec une application d’authentification comme Google Authenticator, 1Password ou Authy.",
+      "on": "Activé",
+      "off": "Désactivé",
+      "enable": "Activer",
+      "disable": "Désactiver",
+      "backupRemaining": "{{count}} codes de secours restants",
+      "setupTitle": "Configurer votre authentificateur",
+      "step1": "Ouvrez votre application d’authentification et ajoutez un nouveau compte.",
+      "step2": "Saisissez la clé ci-dessous (ou ouvrez le lien) ; un code à 6 chiffres s’affichera.",
+      "step3": "Saisissez ce code ici pour terminer l’activation de la double authentification.",
+      "manualKey": "Clé de configuration",
+      "openInApp": "Ouvrir dans l’application d’authentification",
+      "codeLabel": "Code à 6 chiffres",
+      "verifyEnable": "Vérifier et activer",
+      "backupTitle": "Enregistrez vos codes de secours",
+      "backupWarning": "Conservez-les en lieu sûr. Chaque code fonctionne une fois si vous perdez l’accès à votre authentificateur. Ils ne seront plus affichés.",
+      "copyAll": "Tout copier",
+      "copied": "Copié",
+      "done": "Terminé",
+      "disableTitle": "Désactiver la double authentification",
+      "disableHint": "Saisissez un code d’authentification actuel ou un code de secours pour confirmer.",
+      "confirmDisable": "Désactiver la double authentification",
+      "enabledToast": "Authentification à deux facteurs activée.",
+      "disabledToast": "Authentification à deux facteurs désactivée.",
+      "invalidCode": "Ce code est incorrect ou a expiré.",
+      "genericError": "Une erreur s’est produite. Veuillez réessayer.",
+      "qrAlt": "Code QR pour la configuration à deux facteurs",
+      "scanHint": "Scannez avec votre application d’authentification"
     }
   }
 }

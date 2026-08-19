@@ -11,7 +11,8 @@
     "copyright": "© {{year}} ENS Expo Solutions Ltd. Alle rechten voorbehouden.",
     "internalOnly": "Alleen intern gebruik",
     "vsLastMonth": "vs vorige maand",
-    "clickToView": "Klik om te bekijken →"
+    "clickToView": "Klik om te bekijken →",
+    "cancel": "Annuleren"
   },
   "nav": {
     "features": "Functies",
@@ -1316,7 +1317,11 @@
     "collapseSidebar": "Zijbalk inklappen",
     "switchToLight": "Schakel naar licht thema",
     "switchToDark": "Schakel naar donker thema",
-    "selectLanguage": "Taal selecteren"
+    "selectLanguage": "Taal selecteren",
+    "commandPalette": {
+      "title": "Snel zoeken en acties",
+      "description": "Zoek pagina’s, projecten en acties en druk op Enter om te navigeren."
+    }
   },
   "pm": {
     "nav": {
@@ -2493,6 +2498,16 @@
       "validation": {
         "email": "Ongeldig e-mailadres",
         "passwordMin": "Wachtwoord moet minimaal 8 tekens bevatten"
+      },
+      "twoFactor": {
+        "title": "Tweestapsverificatie",
+        "description": "Voer de code uit je authenticator-app in om het inloggen te voltooien.",
+        "codeLabel": "Authenticatiecode",
+        "hint": "Voer de 6-cijferige code uit je authenticator-app of een van je back-upcodes in.",
+        "verify": "Verifiëren en inloggen",
+        "back": "Terug naar inloggen",
+        "required": "Voer je verificatiecode in.",
+        "invalid": "Deze verificatiecode is onjuist of verlopen."
       }
     },
     "signup": {
@@ -2596,6 +2611,39 @@
         "confirmRequired": "Bevestig uw wachtwoord",
         "passwordsMismatch": "Wachtwoorden komen niet overeen"
       }
+    }
+  },
+  "settings": {
+    "twoFactor": {
+      "title": "Tweestapsverificatie",
+      "description": "Voeg een tweede stap toe bij het inloggen met een authenticator-app zoals Google Authenticator, 1Password of Authy.",
+      "on": "Aan",
+      "off": "Uit",
+      "enable": "Inschakelen",
+      "disable": "Uitschakelen",
+      "backupRemaining": "{{count}} back-upcodes over",
+      "setupTitle": "Stel je authenticator in",
+      "step1": "Open je authenticator-app en voeg een nieuw account toe.",
+      "step2": "Voer de sleutel hieronder in (of open de link); er verschijnt een 6-cijferige code.",
+      "step3": "Typ die code hier in om tweestapsverificatie in te schakelen.",
+      "manualKey": "Instelsleutel",
+      "openInApp": "Openen in authenticator-app",
+      "codeLabel": "6-cijferige code",
+      "verifyEnable": "Verifiëren en inschakelen",
+      "backupTitle": "Bewaar je back-upcodes",
+      "backupWarning": "Bewaar ze op een veilige plek. Elke code werkt één keer als je geen toegang meer hebt tot je authenticator. Ze worden niet opnieuw getoond.",
+      "copyAll": "Alles kopiëren",
+      "copied": "Gekopieerd",
+      "done": "Klaar",
+      "disableTitle": "Tweestapsverificatie uitschakelen",
+      "disableHint": "Voer een huidige authenticatorcode of een back-upcode in om te bevestigen.",
+      "confirmDisable": "Tweestapsverificatie uitschakelen",
+      "enabledToast": "Tweestapsverificatie ingeschakeld.",
+      "disabledToast": "Tweestapsverificatie uitgeschakeld.",
+      "invalidCode": "Deze code is onjuist of verlopen.",
+      "genericError": "Er ging iets mis. Probeer het opnieuw.",
+      "qrAlt": "QR-code voor tweestapsverificatie",
+      "scanHint": "Scan met je authenticator-app"
     }
   }
 }

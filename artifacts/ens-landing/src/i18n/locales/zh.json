@@ -11,7 +11,8 @@
     "copyright": "© {{year}} ENS Expo Solutions Ltd. 保留所有权利。",
     "internalOnly": "仅供内部使用",
     "vsLastMonth": "与上月相比",
-    "clickToView": "点击查看 →"
+    "clickToView": "点击查看 →",
+    "cancel": "取消"
   },
   "nav": {
     "features": "功能",
@@ -1316,7 +1317,11 @@
     "collapseSidebar": "折叠侧栏",
     "switchToLight": "切换到浅色主题",
     "switchToDark": "切换到深色主题",
-    "selectLanguage": "选择语言"
+    "selectLanguage": "选择语言",
+    "commandPalette": {
+      "title": "快速搜索和操作",
+      "description": "搜索页面、项目和操作，按回车键跳转。"
+    }
   },
   "pm": {
     "nav": {
@@ -2493,6 +2498,16 @@
       "validation": {
         "email": "无效的电子邮件地址",
         "passwordMin": "密码至少需要 8 个字符"
+      },
+      "twoFactor": {
+        "title": "双重身份验证",
+        "description": "输入身份验证器应用中的验证码以完成登录。",
+        "codeLabel": "身份验证码",
+        "hint": "输入身份验证器应用中的 6 位数验证码，或输入一个备用码。",
+        "verify": "验证并登录",
+        "back": "返回登录",
+        "required": "请输入你的验证码。",
+        "invalid": "该验证码不正确或已过期。"
       }
     },
     "signup": {
@@ -2596,6 +2611,39 @@
         "confirmRequired": "请确认您的密码",
         "passwordsMismatch": "密码不匹配"
       }
+    }
+  },
+  "settings": {
+    "twoFactor": {
+      "title": "双重身份验证",
+      "description": "使用 Google Authenticator、1Password 或 Authy 等身份验证器应用，在登录时添加第二个步骤。",
+      "on": "开启",
+      "off": "关闭",
+      "enable": "启用",
+      "disable": "停用",
+      "backupRemaining": "剩余 {{count}} 个备用码",
+      "setupTitle": "设置你的身份验证器",
+      "step1": "打开身份验证器应用并添加一个新账户。",
+      "step2": "输入下方的密钥（或打开链接），它会显示一个 6 位数验证码。",
+      "step3": "在此输入该验证码以完成启用双重验证。",
+      "manualKey": "设置密钥",
+      "openInApp": "在身份验证器应用中打开",
+      "codeLabel": "6 位数验证码",
+      "verifyEnable": "验证并启用",
+      "backupTitle": "保存你的备用码",
+      "backupWarning": "请妥善保管。如果你无法使用身份验证器，每个备用码可使用一次。它们不会再次显示。",
+      "copyAll": "全部复制",
+      "copied": "已复制",
+      "done": "完成",
+      "disableTitle": "停用双重验证",
+      "disableHint": "输入当前的身份验证器验证码或备用码以确认。",
+      "confirmDisable": "停用双重验证",
+      "enabledToast": "已启用双重身份验证。",
+      "disabledToast": "已停用双重身份验证。",
+      "invalidCode": "该验证码不正确或已过期。",
+      "genericError": "出了点问题。请重试。",
+      "qrAlt": "用于双重验证设置的二维码",
+      "scanHint": "使用你的身份验证器应用扫描"
     }
   }
 }
