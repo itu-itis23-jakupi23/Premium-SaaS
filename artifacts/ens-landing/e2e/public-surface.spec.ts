@@ -26,8 +26,9 @@ test.describe("Public marketing surface", () => {
     await page.goto(clientUrl("/"));
 
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    // The hero leads with the quote CTA; "Start Designing" is the secondary.
+    await expect(page.getByTestId("btn-hero-quote")).toBeVisible();
     await expect(page.getByTestId("btn-hero-cta1")).toBeVisible();
-    await expect(page.getByTestId("btn-hero-cta2")).toBeVisible();
   });
 
   test("landing page loads with no console or page errors", async ({ page }) => {
@@ -183,13 +184,22 @@ test.describe("Marketing calls to action", () => {
     await expect(pricingContact).toHaveAttribute("href", /^mailto:/);
   });
 
-  test("Watch Demo reveals the showcase instead of navigating away", async ({ page }) => {
+  test("the showcase nav link reveals the showcase instead of navigating away", async ({ page }) => {
     await page.goto(clientUrl("/"));
 
-    await page.getByTestId("btn-hero-cta2").click();
+    // "Showcase" appears in both the nav and the footer; scope to the nav.
+    await page.getByRole("navigation").getByRole("button", { name: "Showcase" }).click();
 
-    // Must stay on the marketing page; it previously navigated to /login.
+    // Must stay on the marketing page; the anchor scrolls, it does not route.
     await expect(page).toHaveURL(/\/$/);
     await expect(page.locator("#showcase")).toBeInViewport({ timeout: 10_000 });
+  });
+
+  test("the hero quote CTA routes to the lead form", async ({ page }) => {
+    await page.goto(clientUrl("/"));
+
+    await page.getByTestId("btn-hero-quote").click();
+
+    await expect(page).toHaveURL(/\/get-quote$/);
   });
 });

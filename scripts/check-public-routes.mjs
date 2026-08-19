@@ -36,7 +36,7 @@ const fail = (message) => failures.push(message);
 // Do not raise them.
 const PLACEHOLDER_BUDGET = {
   "pages/Home.tsx": 0, // every link resolves: section anchors, legal routes, mailto
-  "pages/TeamLanding.tsx": 3,
+  "pages/TeamLanding.tsx": 0, // every link resolves after the footer cleanup
 };
 
 // Routes registered in App.tsx that a public page may link to.

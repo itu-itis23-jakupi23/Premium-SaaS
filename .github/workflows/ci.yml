@@ -65,6 +65,9 @@ jobs:
       - name: Typecheck API server
         run: pnpm --filter @workspace/api-server run typecheck
 
+      - name: Run ENS app unit tests
+        run: pnpm --filter @workspace/ens-landing run test
+
       - name: Start ENS API
         working-directory: artifacts/ens-landing
         env:
