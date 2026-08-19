@@ -471,7 +471,10 @@
       "reports": "レポート",
       "messages": "メッセージ",
       "calendar": "カレンダー",
-      "settings": "設定"
+      "settings": "設定",
+      "quotes": "見積書",
+      "invoices": "請求書",
+      "pipeline": "営業パイプライン"
     },
     "common": {
       "cancel": "キャンセル",
@@ -616,7 +619,10 @@
         "showMore": "Show {{count}} more",
         "showLess": "Show less",
         "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured"
+        "emailProviderNotConfigured": "email provider is not configured",
+        "code": "コード",
+        "link": "リンク",
+        "copyCode": "{{email}} の招待コードをコピー"
       },
       "invite": {
         "title": "マネージャーを招待",
@@ -789,7 +795,9 @@
         "reminderSent": "{{name}} へのリマインダーがキューに追加されました — 通知が作成されました",
         "reminderError": "リマインダーを送信できませんでした",
         "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}"
+        "ratingUpdated": "Rating updated to {{rating}}",
+        "inviteCodeCopied": "招待コードをコピーしました",
+        "inviteCodeCopyError": "招待コードをコピーできませんでした"
       },
       "error": {
         "rating": "Failed to update rating"
@@ -963,7 +971,9 @@
         "openWorkspace": "ワークスペースを開く",
         "editClient": "クライアントを編集",
         "viewDetails": "詳細を表示",
-        "archive": "クライアントをアーカイブ"
+        "archive": "クライアントをアーカイブ",
+        "reviewAndAssign": "確認して割り当て",
+        "rejectRequest": "申請を却下"
       },
       "toast": {
         "added": "{{name}} をクライアントに追加しました。",
@@ -977,7 +987,10 @@
         "archiveError": "クライアントを削除できませんでした。",
         "openingWorkspace": "{{name}}のブースワークスペースを開いています。",
         "defaultClient": "クライアント",
-        "unassigned": "未割り当て"
+        "unassigned": "未割り当て",
+        "approved": "{{client}} を承認し、{{manager}} に割り当てました。初期プロジェクトの準備ができました。",
+        "rejected": "{{client}} の登録を却下しました。",
+        "rejectError": "クライアント登録を却下できませんでした。"
       },
       "addDialog": {
         "title": "クライアントを追加",
@@ -1013,6 +1026,19 @@
         "pm": "PM",
         "exhibition": "展示会",
         "status": "ステータス"
+      },
+      "approveDialog": {
+        "title": "クライアントを承認して割り当て",
+        "desc": "{{name}} を確認し、この顧客を担当するプロジェクトマネージャーを選択してください。",
+        "result": "承認すると、クライアントプロジェクト、ブースのワークスペース、PM とクライアントのアクセス権が一度に作成されます。",
+        "submit": "承認してプロジェクトを作成"
+      },
+      "rejectDialog": {
+        "title": "クライアント申請を却下",
+        "desc": "{{name}} を却下し、判断の理由を記録します。",
+        "reason": "理由",
+        "placeholder": "再登録の前に修正が必要な点を記入してください。",
+        "submit": "申請を却下"
       }
     },
     "projects": {
@@ -1565,7 +1591,9 @@
       "messages": "メッセージ",
       "tasks": "タスク",
       "reports": "レポート",
-      "settings": "設定"
+      "settings": "設定",
+      "quotes": "見積書",
+      "invoices": "請求書"
     },
     "common": {
       "noDeadline": "期限なし",
@@ -2210,7 +2238,9 @@
       "messages": "メッセージ",
       "approvals": "承認",
       "documents": "ドキュメント",
-      "profile": "プロフィール"
+      "profile": "プロフィール",
+      "quotes": "見積書",
+      "invoices": "請求書"
     },
     "dashboard": {
       "pageTitle": "ダッシュボード | ENS",
@@ -2875,6 +2905,217 @@
       "genericError": "問題が発生しました。もう一度お試しください。",
       "qrAlt": "二段階認証設定用の QR コード",
       "scanHint": "認証アプリでスキャンしてください"
+    }
+  },
+  "getQuote": {
+    "pageTitle": "見積もりを依頼 | ENS",
+    "title": "見積もりを依頼",
+    "subtitle": "展示会とブースについてお聞かせください。担当チームが1営業日以内にご連絡します。",
+    "fields": {
+      "company": "会社名",
+      "name": "お名前",
+      "email": "仕事用メールアドレス",
+      "phone": "電話番号",
+      "exhibition": "展示会・イベント",
+      "boothSize": "ブースサイズ",
+      "budget": "ご予算",
+      "timeline": "スケジュール",
+      "message": "プロジェクトの詳細"
+    },
+    "placeholders": {
+      "exhibition": "例：CES 2027、ハノーバーメッセ",
+      "boothSize": "例：6 × 3 m",
+      "timeline": "例：2027年 第1四半期",
+      "message": "システム、開放面、必須要件、ブランドガイドラインなど",
+      "select": "範囲を選択"
+    },
+    "validation": {
+      "company": "会社名を入力してください。",
+      "name": "お名前を入力してください。",
+      "email": "有効なメールアドレスを入力してください。"
+    },
+    "submit": "依頼を送信",
+    "disclaimer": "送信すると次に同意したものとみなされます：",
+    "privacyLink": "プライバシーポリシー",
+    "error": "依頼を送信できませんでした。もう一度お試しください。",
+    "success": {
+      "title": "依頼を受け付けました",
+      "body": "ありがとうございます。ブースのご相談を受け付けました。担当チームが確認のうえ、1営業日以内にご連絡します。",
+      "back": "ホームに戻る"
+    }
+  },
+  "quotes": {
+    "title": "見積書",
+    "subtitle": "ブースデザインから見積書を作成し、クライアントに送って承認を受けます。",
+    "new": "新規見積",
+    "empty": "見積書はまだありません。最初の見積を作成してクライアントに送りましょう。",
+    "col": {
+      "number": "番号",
+      "title": "件名",
+      "total": "合計",
+      "status": "ステータス",
+      "actions": "操作"
+    },
+    "status": {
+      "draft": "下書き",
+      "sent": "送信済み",
+      "viewed": "閲覧済み",
+      "accepted": "承認済み",
+      "rejected": "却下",
+      "expired": "期限切れ",
+      "revised": "改訂済み"
+    },
+    "action": {
+      "send": "送信",
+      "delete": "削除"
+    },
+    "toast": {
+      "created": "見積を下書きとして保存しました。",
+      "sent": "見積をクライアントに送信しました。"
+    },
+    "form": {
+      "title": "新規見積",
+      "name": "見積の件名",
+      "client": "クライアント",
+      "selectClient": "クライアントを選択",
+      "lineItems": "明細",
+      "description": "内容",
+      "qty": "数量",
+      "unitPrice": "単価",
+      "addLine": "明細を追加",
+      "removeLine": "明細を削除",
+      "discount": "値引き",
+      "tax": "税",
+      "notes": "備考",
+      "subtotal": "小計",
+      "total": "合計",
+      "saveDraft": "下書きを保存",
+      "needLine": "内容を入力した明細を1件以上追加してください。",
+      "error": "問題が発生しました。もう一度お試しください。"
+    }
+  },
+  "clientQuotes": {
+    "title": "見積書",
+    "subtitle": "代理店が作成した見積を確認し、承認または却下します。",
+    "empty": "見積書はまだありません。",
+    "untitled": "ブース見積",
+    "item": "項目",
+    "qty": "数量",
+    "unit": "単価",
+    "lineTotal": "合計",
+    "accept": "見積を承認",
+    "decline": "却下",
+    "acceptedNote": "この見積を承認しました。",
+    "declinedNote": "この見積を却下しました。",
+    "error": "問題が発生しました。もう一度お試しください。",
+    "toast": {
+      "accepted": "見積を承認しました。代理店に通知されました。",
+      "rejected": "見積を却下しました。"
+    }
+  },
+  "pipeline": {
+    "title": "営業パイプライン",
+    "subtitle": "初回接触から受注まで、すべての案件を追跡します。",
+    "openValue": "進行中の金額 · {{count}} 件",
+    "emptyColumn": "この段階に案件はありません。",
+    "edit": "案件を編集",
+    "moveStage": "ステージへ移動",
+    "won": "受注",
+    "dealValue": "案件金額",
+    "followUp": "次回フォロー",
+    "error": "問題が発生しました。もう一度お試しください。",
+    "toast": {
+      "won": "{{company}} を受注に移し、クライアント承認へ送りました。"
+    },
+    "stage": {
+      "new": "新規",
+      "contacted": "接触済み",
+      "qualified": "見込みあり",
+      "proposal": "提案中",
+      "won": "受注",
+      "lost": "失注"
+    }
+  },
+  "invoices": {
+    "title": "請求書",
+    "subtitle": "クライアントへ請求書を発行し、入金を管理し、承認済みの見積を請求に変換します。",
+    "new": "新規請求書",
+    "empty": "請求書はまだありません。新規作成するか、承認済みの見積から作成できます。",
+    "col": {
+      "number": "番号",
+      "title": "件名",
+      "total": "合計",
+      "due": "支払期日",
+      "status": "ステータス",
+      "actions": "操作"
+    },
+    "status": {
+      "draft": "下書き",
+      "open": "入金待ち",
+      "paid": "入金済み",
+      "void": "無効",
+      "uncollectible": "回収不能"
+    },
+    "action": {
+      "issue": "発行",
+      "markPaid": "入金済みにする",
+      "void": "無効にする",
+      "delete": "削除"
+    },
+    "toast": {
+      "created": "請求書を下書きとして保存しました。",
+      "sent": "請求書をクライアントに発行しました。",
+      "paid": "入金を記録しました。",
+      "voided": "請求書を無効にしました。",
+      "deleted": "下書きの請求書を削除しました。"
+    },
+    "form": {
+      "title": "新規請求書",
+      "name": "請求書の件名",
+      "client": "クライアント",
+      "selectClient": "クライアントを選択",
+      "fromQuote": "承認済みの見積から作成",
+      "fromQuoteNone": "— 新規に作成 —",
+      "fromQuoteHint": "選択した見積から明細と合計が引き継がれます。",
+      "untitled": "件名なしの見積",
+      "lineItems": "明細",
+      "description": "内容",
+      "qty": "数量",
+      "unitPrice": "単価",
+      "addLine": "明細を追加",
+      "removeLine": "明細を削除",
+      "discount": "値引き",
+      "tax": "税",
+      "due": "支払期日",
+      "notes": "備考",
+      "subtotal": "小計",
+      "total": "合計",
+      "saveDraft": "下書きを保存",
+      "needLine": "内容を入力した明細を1件以上追加してください。",
+      "error": "問題が発生しました。もう一度お試しください。"
+    }
+  },
+  "clientInvoices": {
+    "title": "請求書",
+    "subtitle": "代理店からの請求書を確認し、支払い状況を把握できます。",
+    "empty": "請求書はまだありません。",
+    "untitled": "請求書",
+    "overdue": "支払期日超過",
+    "item": "項目",
+    "qty": "数量",
+    "unit": "単価",
+    "lineTotal": "合計",
+    "issued": "発行日",
+    "due": "支払期日",
+    "paidOn": "入金日",
+    "payNote": "お支払いの手配は担当プロジェクトマネージャーへご連絡ください。"
+  },
+  "workspace": {
+    "desktopOnly": {
+      "title": "ブースエディタには大きな画面が必要です",
+      "body": "3D エディタはマウスと広い画面を前提に作られています。什器のドラッグ、範囲選択、プロパティパネルにはいずれも十分な広さが必要です。使えない画面をお見せするより、先にお伝えします。",
+      "requirement": "幅 {{width}} px 以上の画面が必要です。ノート PC やデスクトップ、横向きのタブレットで利用できます。",
+      "back": "ダッシュボードに戻る"
     }
   }
 }

@@ -471,7 +471,10 @@
       "reports": "Rapporten",
       "messages": "Berichten",
       "calendar": "Kalender",
-      "settings": "Instellingen"
+      "settings": "Instellingen",
+      "quotes": "Offertes",
+      "invoices": "Facturen",
+      "pipeline": "Verkooppijplijn"
     },
     "common": {
       "cancel": "Annuleren",
@@ -616,7 +619,10 @@
         "showMore": "Show {{count}} more",
         "showLess": "Show less",
         "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured"
+        "emailProviderNotConfigured": "email provider is not configured",
+        "code": "Code",
+        "link": "Link",
+        "copyCode": "Uitnodigingscode voor {{email}} kopiëren"
       },
       "invite": {
         "title": "Manager uitnodigen",
@@ -789,7 +795,9 @@
         "reminderSent": "Herinnering in wachtrij voor {{name}} — melding aangemaakt",
         "reminderError": "De herinnering kon niet worden verzonden",
         "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}"
+        "ratingUpdated": "Rating updated to {{rating}}",
+        "inviteCodeCopied": "Uitnodigingscode gekopieerd",
+        "inviteCodeCopyError": "Uitnodigingscode kon niet worden gekopieerd"
       },
       "error": {
         "rating": "Failed to update rating"
@@ -963,7 +971,9 @@
         "openWorkspace": "Werkruimte openen",
         "editClient": "Klant bewerken",
         "viewDetails": "Klantdetails bekijken",
-        "archive": "Klant archiveren"
+        "archive": "Klant archiveren",
+        "reviewAndAssign": "Beoordelen en toewijzen",
+        "rejectRequest": "Aanvraag afwijzen"
       },
       "toast": {
         "added": "{{name}} toegevoegd aan klanten.",
@@ -977,7 +987,10 @@
         "archiveError": "Klant kon niet worden verwijderd.",
         "openingWorkspace": "Standwerkruimte voor {{name}} wordt geopend.",
         "defaultClient": "Klant",
-        "unassigned": "Niet toegewezen"
+        "unassigned": "Niet toegewezen",
+        "approved": "{{client}} goedgekeurd en toegewezen aan {{manager}}. Het startproject staat klaar.",
+        "rejected": "De registratie van {{client}} is afgewezen.",
+        "rejectError": "De klantregistratie kon niet worden afgewezen."
       },
       "addDialog": {
         "title": "Klant toevoegen",
@@ -1013,6 +1026,19 @@
         "pm": "PM",
         "exhibition": "Tentoonstelling",
         "status": "Status"
+      },
+      "approveDialog": {
+        "title": "Klant goedkeuren en toewijzen",
+        "desc": "Beoordeel {{name}} en kies de projectleider die het account gaat beheren.",
+        "result": "Goedkeuring maakt in één stap het klantproject, de standwerkruimte en de toegang voor projectleider en klant aan.",
+        "submit": "Goedkeuren en project aanmaken"
+      },
+      "rejectDialog": {
+        "title": "Klantaanvraag afwijzen",
+        "desc": "Wijs {{name}} af en leg een reden voor het besluit vast.",
+        "reason": "Reden",
+        "placeholder": "Leg uit wat er moet worden gecorrigeerd voordat de klant zich opnieuw registreert.",
+        "submit": "Aanvraag afwijzen"
       }
     },
     "projects": {
@@ -1565,7 +1591,9 @@
       "messages": "Berichten",
       "tasks": "Taken",
       "reports": "Rapporten",
-      "settings": "Instellingen"
+      "settings": "Instellingen",
+      "quotes": "Offertes",
+      "invoices": "Facturen"
     },
     "common": {
       "noDeadline": "Geen deadline",
@@ -2210,7 +2238,9 @@
       "messages": "Berichten",
       "approvals": "Goedkeuringen",
       "documents": "Documenten",
-      "profile": "Profiel"
+      "profile": "Profiel",
+      "quotes": "Offertes",
+      "invoices": "Facturen"
     },
     "dashboard": {
       "pageTitle": "Dashboard | ENS",
@@ -2875,6 +2905,217 @@
       "genericError": "Er ging iets mis. Probeer het opnieuw.",
       "qrAlt": "QR-code voor tweestapsverificatie",
       "scanHint": "Scan met je authenticator-app"
+    }
+  },
+  "getQuote": {
+    "pageTitle": "Offerte aanvragen | ENS",
+    "title": "Offerte aanvragen",
+    "subtitle": "Vertel ons over uw beurs en uw stand. Ons team reageert binnen één werkdag.",
+    "fields": {
+      "company": "Bedrijf",
+      "name": "Uw naam",
+      "email": "Zakelijk e-mailadres",
+      "phone": "Telefoon",
+      "exhibition": "Beurs / evenement",
+      "boothSize": "Standgrootte",
+      "budget": "Budget",
+      "timeline": "Planning",
+      "message": "Projectdetails"
+    },
+    "placeholders": {
+      "exhibition": "bijv. CES 2027, Hannover Messe",
+      "boothSize": "bijv. 6 × 3 m",
+      "timeline": "bijv. Q1 2027",
+      "message": "Systemen, open zijden, onmisbare functies, huisstijlrichtlijnen…",
+      "select": "Kies een bereik"
+    },
+    "validation": {
+      "company": "Vul uw bedrijfsnaam in.",
+      "name": "Vul uw naam in.",
+      "email": "Vul een geldig e-mailadres in."
+    },
+    "submit": "Aanvraag versturen",
+    "disclaimer": "Door te versturen gaat u akkoord met ons",
+    "privacyLink": "Privacybeleid",
+    "error": "Uw aanvraag kon niet worden verstuurd. Probeer het opnieuw.",
+    "success": {
+      "title": "Aanvraag ontvangen",
+      "body": "Bedankt — uw standaanvraag is binnen. Ons team bekijkt hem en neemt binnen één werkdag contact op.",
+      "back": "Terug naar home"
+    }
+  },
+  "quotes": {
+    "title": "Offertes",
+    "subtitle": "Maak een offerte op basis van een standontwerp en stuur die ter goedkeuring naar uw klant.",
+    "new": "Nieuwe offerte",
+    "empty": "Nog geen offertes. Maak uw eerste offerte om naar een klant te sturen.",
+    "col": {
+      "number": "Nummer",
+      "title": "Titel",
+      "total": "Totaal",
+      "status": "Status",
+      "actions": "Acties"
+    },
+    "status": {
+      "draft": "Concept",
+      "sent": "Verstuurd",
+      "viewed": "Bekeken",
+      "accepted": "Geaccepteerd",
+      "rejected": "Afgewezen",
+      "expired": "Verlopen",
+      "revised": "Herzien"
+    },
+    "action": {
+      "send": "Versturen",
+      "delete": "Verwijderen"
+    },
+    "toast": {
+      "created": "Offerte opgeslagen als concept.",
+      "sent": "Offerte naar de klant verstuurd."
+    },
+    "form": {
+      "title": "Nieuwe offerte",
+      "name": "Offertetitel",
+      "client": "Klant",
+      "selectClient": "Kies een klant",
+      "lineItems": "Regels",
+      "description": "Omschrijving",
+      "qty": "Aantal",
+      "unitPrice": "Stukprijs",
+      "addLine": "Regel toevoegen",
+      "removeLine": "Regel verwijderen",
+      "discount": "Korting",
+      "tax": "Btw",
+      "notes": "Notities",
+      "subtotal": "Subtotaal",
+      "total": "Totaal",
+      "saveDraft": "Concept opslaan",
+      "needLine": "Voeg minstens één regel met omschrijving toe.",
+      "error": "Er is iets misgegaan. Probeer het opnieuw."
+    }
+  },
+  "clientQuotes": {
+    "title": "Offertes",
+    "subtitle": "Bekijk de offertes van uw bureau en accepteer of weiger ze.",
+    "empty": "U hebt nog geen offertes.",
+    "untitled": "Standofferte",
+    "item": "Regel",
+    "qty": "Aantal",
+    "unit": "Stuk",
+    "lineTotal": "Totaal",
+    "accept": "Offerte accepteren",
+    "decline": "Weigeren",
+    "acceptedNote": "U hebt deze offerte geaccepteerd.",
+    "declinedNote": "U hebt deze offerte geweigerd.",
+    "error": "Er is iets misgegaan. Probeer het opnieuw.",
+    "toast": {
+      "accepted": "Offerte geaccepteerd. Uw bureau is op de hoogte gebracht.",
+      "rejected": "Offerte geweigerd."
+    }
+  },
+  "pipeline": {
+    "title": "Verkooppijplijn",
+    "subtitle": "Volg elke lead van eerste contact tot gewonnen opdracht.",
+    "openValue": "Openstaande waarde · {{count}} leads",
+    "emptyColumn": "Geen leads in deze fase.",
+    "edit": "Lead bewerken",
+    "moveStage": "Naar fase verplaatsen",
+    "won": "Gewonnen",
+    "dealValue": "Opdrachtwaarde",
+    "followUp": "Volgende opvolging",
+    "error": "Er is iets misgegaan. Probeer het opnieuw.",
+    "toast": {
+      "won": "{{company}} is op gewonnen gezet en ter goedkeuring naar de klant gestuurd."
+    },
+    "stage": {
+      "new": "Nieuw",
+      "contacted": "Benaderd",
+      "qualified": "Gekwalificeerd",
+      "proposal": "Voorstel",
+      "won": "Gewonnen",
+      "lost": "Verloren"
+    }
+  },
+  "invoices": {
+    "title": "Facturen",
+    "subtitle": "Factureer klanten, volg betalingen en zet geaccepteerde offertes om in facturen.",
+    "new": "Nieuwe factuur",
+    "empty": "Nog geen facturen. Maak er een vanaf nul of vanuit een geaccepteerde offerte.",
+    "col": {
+      "number": "Nummer",
+      "title": "Titel",
+      "total": "Totaal",
+      "due": "Vervaldatum",
+      "status": "Status",
+      "actions": "Acties"
+    },
+    "status": {
+      "draft": "Concept",
+      "open": "Wacht op betaling",
+      "paid": "Betaald",
+      "void": "Geannuleerd",
+      "uncollectible": "Oninbaar"
+    },
+    "action": {
+      "issue": "Uitgeven",
+      "markPaid": "Markeren als betaald",
+      "void": "Annuleren",
+      "delete": "Verwijderen"
+    },
+    "toast": {
+      "created": "Factuur opgeslagen als concept.",
+      "sent": "Factuur aan de klant uitgegeven.",
+      "paid": "Betaling vastgelegd.",
+      "voided": "Factuur geannuleerd.",
+      "deleted": "Conceptfactuur verwijderd."
+    },
+    "form": {
+      "title": "Nieuwe factuur",
+      "name": "Factuurtitel",
+      "client": "Klant",
+      "selectClient": "Kies een klant",
+      "fromQuote": "Maken vanuit een geaccepteerde offerte",
+      "fromQuoteNone": "— Vanaf nul beginnen —",
+      "fromQuoteHint": "Regels en totalen worden overgenomen uit de gekozen offerte.",
+      "untitled": "Offerte zonder titel",
+      "lineItems": "Regels",
+      "description": "Omschrijving",
+      "qty": "Aantal",
+      "unitPrice": "Stukprijs",
+      "addLine": "Regel toevoegen",
+      "removeLine": "Regel verwijderen",
+      "discount": "Korting",
+      "tax": "Btw",
+      "due": "Vervaldatum",
+      "notes": "Notities",
+      "subtotal": "Subtotaal",
+      "total": "Totaal",
+      "saveDraft": "Concept opslaan",
+      "needLine": "Voeg minstens één regel met omschrijving toe.",
+      "error": "Er is iets misgegaan. Probeer het opnieuw."
+    }
+  },
+  "clientInvoices": {
+    "title": "Facturen",
+    "subtitle": "Bekijk facturen van uw bureau en volg wat er betaald is.",
+    "empty": "U hebt nog geen facturen.",
+    "untitled": "Factuur",
+    "overdue": "Achterstallig",
+    "item": "Regel",
+    "qty": "Aantal",
+    "unit": "Stuk",
+    "lineTotal": "Totaal",
+    "issued": "Uitgegeven",
+    "due": "Vervaldatum",
+    "paidOn": "Betaald",
+    "payNote": "Neem voor de betaling contact op met uw projectleider."
+  },
+  "workspace": {
+    "desktopOnly": {
+      "title": "De standeditor heeft een groter scherm nodig",
+      "body": "De 3D-editor is gebouwd voor een muis en een breed scherm — meubilair slepen, selectie met een kader en het eigenschappenpaneel hebben ruimte nodig. Dat zeggen we liever dan u een onbruikbaar scherm te geven.",
+      "requirement": "Vereist een venster van minstens {{width}} px breed. Een laptop of desktop volstaat; een tablet in liggende stand ook.",
+      "back": "Terug naar dashboard"
     }
   }
 }

@@ -471,7 +471,10 @@
       "reports": "Report",
       "messages": "Messaggi",
       "calendar": "Calendario",
-      "settings": "Impostazioni"
+      "settings": "Impostazioni",
+      "quotes": "Preventivi",
+      "invoices": "Fatture",
+      "pipeline": "Pipeline commerciale"
     },
     "common": {
       "cancel": "Annulla",
@@ -616,7 +619,10 @@
         "showMore": "Show {{count}} more",
         "showLess": "Show less",
         "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured"
+        "emailProviderNotConfigured": "email provider is not configured",
+        "code": "Codice",
+        "link": "Link",
+        "copyCode": "Copia il codice di invito per {{email}}"
       },
       "invite": {
         "title": "Invita manager",
@@ -789,7 +795,9 @@
         "reminderSent": "Promemoria in coda per {{name}} — notifica creata",
         "reminderError": "Non è stato possibile inviare il promemoria",
         "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}"
+        "ratingUpdated": "Rating updated to {{rating}}",
+        "inviteCodeCopied": "Codice di invito copiato",
+        "inviteCodeCopyError": "Impossibile copiare il codice di invito"
       },
       "error": {
         "rating": "Failed to update rating"
@@ -963,7 +971,9 @@
         "openWorkspace": "Apri area di lavoro",
         "editClient": "Modifica cliente",
         "viewDetails": "Visualizza dettagli",
-        "archive": "Archivia cliente"
+        "archive": "Archivia cliente",
+        "reviewAndAssign": "Esamina e assegna",
+        "rejectRequest": "Rifiuta richiesta"
       },
       "toast": {
         "added": "{{name}} aggiunto ai clienti.",
@@ -977,7 +987,10 @@
         "archiveError": "Impossibile rimuovere il cliente.",
         "openingWorkspace": "Apertura dell'area stand per {{name}}.",
         "defaultClient": "Cliente",
-        "unassigned": "Non assegnato"
+        "unassigned": "Non assegnato",
+        "approved": "{{client}} approvato e assegnato a {{manager}}. Il progetto iniziale è pronto.",
+        "rejected": "La registrazione di {{client}} è stata rifiutata.",
+        "rejectError": "Non è stato possibile rifiutare la registrazione del cliente."
       },
       "addDialog": {
         "title": "Aggiungi cliente",
@@ -1013,6 +1026,19 @@
         "pm": "PM",
         "exhibition": "Esposizione",
         "status": "Stato"
+      },
+      "approveDialog": {
+        "title": "Approva e assegna il cliente",
+        "desc": "Esamina {{name}} e scegli il project manager che seguirà l'account.",
+        "result": "L'approvazione crea in un solo passaggio il progetto cliente, l'area di lavoro dello stand e gli accessi di PM e cliente.",
+        "submit": "Approva e crea progetto"
+      },
+      "rejectDialog": {
+        "title": "Rifiuta la richiesta del cliente",
+        "desc": "Rifiuta {{name}} e registra una motivazione per la decisione.",
+        "reason": "Motivo",
+        "placeholder": "Spiega cosa deve essere corretto prima che il cliente si registri di nuovo.",
+        "submit": "Rifiuta richiesta"
       }
     },
     "projects": {
@@ -1565,7 +1591,9 @@
       "messages": "Messaggi",
       "tasks": "Attività",
       "reports": "Report",
-      "settings": "Impostazioni"
+      "settings": "Impostazioni",
+      "quotes": "Preventivi",
+      "invoices": "Fatture"
     },
     "common": {
       "noDeadline": "Nessuna scadenza",
@@ -2210,7 +2238,9 @@
       "messages": "Messaggi",
       "approvals": "Approvazioni",
       "documents": "Documenti",
-      "profile": "Profilo"
+      "profile": "Profilo",
+      "quotes": "Preventivi",
+      "invoices": "Fatture"
     },
     "dashboard": {
       "pageTitle": "Dashboard | ENS",
@@ -2875,6 +2905,217 @@
       "genericError": "Qualcosa è andato storto. Riprova.",
       "qrAlt": "Codice QR per la configurazione a due fattori",
       "scanHint": "Scansiona con la tua app di autenticazione"
+    }
+  },
+  "getQuote": {
+    "pageTitle": "Richiedi un preventivo | ENS",
+    "title": "Richiedi un preventivo",
+    "subtitle": "Parlaci della tua fiera e del tuo stand. Il nostro team ti risponde entro un giorno lavorativo.",
+    "fields": {
+      "company": "Azienda",
+      "name": "Il tuo nome",
+      "email": "Email aziendale",
+      "phone": "Telefono",
+      "exhibition": "Fiera / evento",
+      "boothSize": "Dimensioni dello stand",
+      "budget": "Budget",
+      "timeline": "Tempistiche",
+      "message": "Dettagli del progetto"
+    },
+    "placeholders": {
+      "exhibition": "es. CES 2027, Hannover Messe",
+      "boothSize": "es. 6 × 3 m",
+      "timeline": "es. Q1 2027",
+      "message": "Sistemi, lati aperti, requisiti irrinunciabili, linee guida del brand…",
+      "select": "Seleziona un intervallo"
+    },
+    "validation": {
+      "company": "Inserisci il nome della tua azienda.",
+      "name": "Inserisci il tuo nome.",
+      "email": "Inserisci un indirizzo email valido."
+    },
+    "submit": "Invia richiesta",
+    "disclaimer": "Inviando accetti la nostra",
+    "privacyLink": "Informativa sulla privacy",
+    "error": "Non è stato possibile inviare la richiesta. Riprova.",
+    "success": {
+      "title": "Richiesta ricevuta",
+      "body": "Grazie: la tua richiesta per lo stand è arrivata. Il nostro team la esaminerà e ti contatterà entro un giorno lavorativo.",
+      "back": "Torna alla home"
+    }
+  },
+  "quotes": {
+    "title": "Preventivi",
+    "subtitle": "Crea un preventivo da un progetto di stand e invialo al cliente per l'approvazione.",
+    "new": "Nuovo preventivo",
+    "empty": "Ancora nessun preventivo. Creane uno da inviare a un cliente.",
+    "col": {
+      "number": "Numero",
+      "title": "Titolo",
+      "total": "Totale",
+      "status": "Stato",
+      "actions": "Azioni"
+    },
+    "status": {
+      "draft": "Bozza",
+      "sent": "Inviato",
+      "viewed": "Visualizzato",
+      "accepted": "Accettato",
+      "rejected": "Rifiutato",
+      "expired": "Scaduto",
+      "revised": "Revisionato"
+    },
+    "action": {
+      "send": "Invia",
+      "delete": "Elimina"
+    },
+    "toast": {
+      "created": "Preventivo salvato come bozza.",
+      "sent": "Preventivo inviato al cliente."
+    },
+    "form": {
+      "title": "Nuovo preventivo",
+      "name": "Titolo del preventivo",
+      "client": "Cliente",
+      "selectClient": "Seleziona un cliente",
+      "lineItems": "Voci",
+      "description": "Descrizione",
+      "qty": "Qtà",
+      "unitPrice": "Prezzo unitario",
+      "addLine": "Aggiungi voce",
+      "removeLine": "Rimuovi voce",
+      "discount": "Sconto",
+      "tax": "IVA",
+      "notes": "Note",
+      "subtotal": "Subtotale",
+      "total": "Totale",
+      "saveDraft": "Salva bozza",
+      "needLine": "Aggiungi almeno una voce con descrizione.",
+      "error": "Qualcosa è andato storto. Riprova."
+    }
+  },
+  "clientQuotes": {
+    "title": "Preventivi",
+    "subtitle": "Consulta i preventivi preparati dalla tua agenzia e accettali o rifiutali.",
+    "empty": "Non hai ancora preventivi.",
+    "untitled": "Preventivo stand",
+    "item": "Voce",
+    "qty": "Qtà",
+    "unit": "Unitario",
+    "lineTotal": "Totale",
+    "accept": "Accetta preventivo",
+    "decline": "Rifiuta",
+    "acceptedNote": "Hai accettato questo preventivo.",
+    "declinedNote": "Hai rifiutato questo preventivo.",
+    "error": "Qualcosa è andato storto. Riprova.",
+    "toast": {
+      "accepted": "Preventivo accettato. La tua agenzia è stata avvisata.",
+      "rejected": "Preventivo rifiutato."
+    }
+  },
+  "pipeline": {
+    "title": "Pipeline commerciale",
+    "subtitle": "Segui ogni lead dal primo contatto alla trattativa vinta.",
+    "openValue": "Valore aperto · {{count}} lead",
+    "emptyColumn": "Nessun lead in questa fase.",
+    "edit": "Modifica lead",
+    "moveStage": "Sposta nella fase",
+    "won": "Vinta",
+    "dealValue": "Valore della trattativa",
+    "followUp": "Prossimo follow-up",
+    "error": "Qualcosa è andato storto. Riprova.",
+    "toast": {
+      "won": "{{company}} spostata su vinta e inviata per l'approvazione del cliente."
+    },
+    "stage": {
+      "new": "Nuovo",
+      "contacted": "Contattato",
+      "qualified": "Qualificato",
+      "proposal": "Proposta",
+      "won": "Vinta",
+      "lost": "Persa"
+    }
+  },
+  "invoices": {
+    "title": "Fatture",
+    "subtitle": "Emetti fatture ai clienti, monitora i pagamenti e trasforma i preventivi accettati in fatture.",
+    "new": "Nuova fattura",
+    "empty": "Ancora nessuna fattura. Creane una da zero o da un preventivo accettato.",
+    "col": {
+      "number": "Numero",
+      "title": "Titolo",
+      "total": "Totale",
+      "due": "Scadenza",
+      "status": "Stato",
+      "actions": "Azioni"
+    },
+    "status": {
+      "draft": "Bozza",
+      "open": "In attesa di pagamento",
+      "paid": "Pagata",
+      "void": "Annullata",
+      "uncollectible": "Inesigibile"
+    },
+    "action": {
+      "issue": "Emetti",
+      "markPaid": "Segna come pagata",
+      "void": "Annulla",
+      "delete": "Elimina"
+    },
+    "toast": {
+      "created": "Fattura salvata come bozza.",
+      "sent": "Fattura emessa al cliente.",
+      "paid": "Pagamento registrato.",
+      "voided": "Fattura annullata.",
+      "deleted": "Bozza di fattura eliminata."
+    },
+    "form": {
+      "title": "Nuova fattura",
+      "name": "Titolo della fattura",
+      "client": "Cliente",
+      "selectClient": "Seleziona un cliente",
+      "fromQuote": "Crea da un preventivo accettato",
+      "fromQuoteNone": "— Parti da zero —",
+      "fromQuoteHint": "Voci e totali saranno copiati dal preventivo selezionato.",
+      "untitled": "Preventivo senza titolo",
+      "lineItems": "Voci",
+      "description": "Descrizione",
+      "qty": "Qtà",
+      "unitPrice": "Prezzo unitario",
+      "addLine": "Aggiungi voce",
+      "removeLine": "Rimuovi voce",
+      "discount": "Sconto",
+      "tax": "IVA",
+      "due": "Data di scadenza",
+      "notes": "Note",
+      "subtotal": "Subtotale",
+      "total": "Totale",
+      "saveDraft": "Salva bozza",
+      "needLine": "Aggiungi almeno una voce con descrizione.",
+      "error": "Qualcosa è andato storto. Riprova."
+    }
+  },
+  "clientInvoices": {
+    "title": "Fatture",
+    "subtitle": "Consulta le fatture della tua agenzia e tieni traccia di quanto è stato pagato.",
+    "empty": "Non hai ancora fatture.",
+    "untitled": "Fattura",
+    "overdue": "Scaduta",
+    "item": "Voce",
+    "qty": "Qtà",
+    "unit": "Unitario",
+    "lineTotal": "Totale",
+    "issued": "Emessa",
+    "due": "Scadenza",
+    "paidOn": "Pagata",
+    "payNote": "Per organizzare il pagamento contatta il tuo project manager."
+  },
+  "workspace": {
+    "desktopOnly": {
+      "title": "L'editor dello stand richiede uno schermo più grande",
+      "body": "L'editor 3D è pensato per mouse e una finestra ampia: trascinare gli arredi, la selezione a riquadro e l'ispettore delle proprietà hanno bisogno di spazio. Preferiamo dirtelo piuttosto che darti uno schermo inutilizzabile.",
+      "requirement": "Richiede una finestra larga almeno {{width}} px. Un portatile o un desktop vanno bene; anche un tablet in orizzontale.",
+      "back": "Torna alla dashboard"
     }
   }
 }

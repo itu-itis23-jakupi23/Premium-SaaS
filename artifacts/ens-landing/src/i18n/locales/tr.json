@@ -471,7 +471,10 @@
       "reports": "Raporlar",
       "messages": "Mesajlar",
       "calendar": "Takvim",
-      "settings": "Ayarlar"
+      "settings": "Ayarlar",
+      "quotes": "Teklifler",
+      "invoices": "Faturalar",
+      "pipeline": "Satış Hattı"
     },
     "common": {
       "cancel": "İptal",
@@ -616,7 +619,10 @@
         "showMore": "Show {{count}} more",
         "showLess": "Show less",
         "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured"
+        "emailProviderNotConfigured": "email provider is not configured",
+        "code": "Kod",
+        "link": "Bağlantı",
+        "copyCode": "{{email}} için davet kodunu kopyala"
       },
       "invite": {
         "title": "Yönetici Davet Et",
@@ -789,7 +795,9 @@
         "reminderSent": "{{name}} için hatırlatıcı kuyruğa alındı — bildirim oluşturuldu",
         "reminderError": "Hatırlatıcı gönderilemedi",
         "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}"
+        "ratingUpdated": "Rating updated to {{rating}}",
+        "inviteCodeCopied": "Davet kodu kopyalandı",
+        "inviteCodeCopyError": "Davet kodu kopyalanamadı"
       },
       "error": {
         "rating": "Failed to update rating"
@@ -963,7 +971,9 @@
         "openWorkspace": "Çalışma Alanını Aç",
         "editClient": "Müşteriyi Düzenle",
         "viewDetails": "Müşteri Detaylarını Gör",
-        "archive": "Müşteriyi Arşivle"
+        "archive": "Müşteriyi Arşivle",
+        "reviewAndAssign": "İncele ve ata",
+        "rejectRequest": "Talebi reddet"
       },
       "toast": {
         "added": "{{name}} müşterilere eklendi.",
@@ -977,7 +987,10 @@
         "archiveError": "Müşteri kaldırılamadı.",
         "openingWorkspace": "{{name}} için stant çalışma alanı açılıyor.",
         "defaultClient": "Müşteri",
-        "unassigned": "Atanmamış"
+        "unassigned": "Atanmamış",
+        "approved": "{{client}} onaylandı ve {{manager}} yöneticisine atandı. Başlangıç projesi hazır.",
+        "rejected": "{{client}} kaydı reddedildi.",
+        "rejectError": "Müşteri kaydı reddedilemedi."
       },
       "addDialog": {
         "title": "Müşteri Ekle",
@@ -1013,6 +1026,19 @@
         "pm": "PM",
         "exhibition": "Sergi",
         "status": "Durum"
+      },
+      "approveDialog": {
+        "title": "Müşteriyi onayla ve ata",
+        "desc": "{{name}} kaydını inceleyin ve hesabı üstlenecek Proje Müdürünü seçin.",
+        "result": "Onay; müşteri projesini, stant çalışma alanını ve PM/müşteri erişimini tek adımda oluşturur.",
+        "submit": "Onayla ve proje oluştur"
+      },
+      "rejectDialog": {
+        "title": "Müşteri talebini reddet",
+        "desc": "{{name}} kaydını reddedin ve karar için bir gerekçe kaydedin.",
+        "reason": "Gerekçe",
+        "placeholder": "Müşteri tekrar kayıt olmadan önce nelerin düzeltilmesi gerektiğini açıklayın.",
+        "submit": "Talebi reddet"
       }
     },
     "projects": {
@@ -1565,7 +1591,9 @@
       "messages": "Mesajlar",
       "tasks": "Görevler",
       "reports": "Raporlar",
-      "settings": "Ayarlar"
+      "settings": "Ayarlar",
+      "quotes": "Teklifler",
+      "invoices": "Faturalar"
     },
     "common": {
       "noDeadline": "Son tarih yok",
@@ -2210,7 +2238,9 @@
       "messages": "Mesajlar",
       "approvals": "Onaylar",
       "documents": "Belgeler",
-      "profile": "Profil"
+      "profile": "Profil",
+      "quotes": "Teklifler",
+      "invoices": "Faturalar"
     },
     "dashboard": {
       "pageTitle": "Gösterge Paneli | ENS",
@@ -2875,6 +2905,217 @@
       "genericError": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
       "qrAlt": "İki adımlı kurulum için QR kodu",
       "scanHint": "Kimlik doğrulama uygulamanızla tarayın"
+    }
+  },
+  "getQuote": {
+    "pageTitle": "Teklif Alın | ENS",
+    "title": "Teklif alın",
+    "subtitle": "Fuarınız ve standınız hakkında bilgi verin. Ekibimiz bir iş günü içinde size dönüş yapacaktır.",
+    "fields": {
+      "company": "Şirket",
+      "name": "Adınız",
+      "email": "Kurumsal e-posta",
+      "phone": "Telefon",
+      "exhibition": "Fuar / etkinlik",
+      "boothSize": "Stant ölçüsü",
+      "budget": "Bütçe",
+      "timeline": "Zaman planı",
+      "message": "Proje detayları"
+    },
+    "placeholders": {
+      "exhibition": "örn. CES 2027, Hannover Messe",
+      "boothSize": "örn. 6 × 3 m",
+      "timeline": "örn. 2027 1. çeyrek",
+      "message": "Sistemler, açık cepheler, olmazsa olmaz özellikler, marka kılavuzu…",
+      "select": "Bir aralık seçin"
+    },
+    "validation": {
+      "company": "Lütfen şirket adınızı girin.",
+      "name": "Lütfen adınızı girin.",
+      "email": "Lütfen geçerli bir e-posta adresi girin."
+    },
+    "submit": "Talep gönder",
+    "disclaimer": "Göndererek şunu kabul etmiş olursunuz:",
+    "privacyLink": "Gizlilik Politikası",
+    "error": "Talebiniz gönderilemedi. Lütfen tekrar deneyin.",
+    "success": {
+      "title": "Talep alındı",
+      "body": "Teşekkürler — stant talebiniz bize ulaştı. Ekibimiz inceleyip bir iş günü içinde sizinle iletişime geçecek.",
+      "back": "Ana sayfaya dön"
+    }
+  },
+  "quotes": {
+    "title": "Teklifler",
+    "subtitle": "Bir stant tasarımından teklif oluşturun ve onay için müşterinize gönderin.",
+    "new": "Yeni teklif",
+    "empty": "Henüz teklif yok. Müşteriye göndermek için ilk teklifinizi oluşturun.",
+    "col": {
+      "number": "Numara",
+      "title": "Başlık",
+      "total": "Toplam",
+      "status": "Durum",
+      "actions": "İşlemler"
+    },
+    "status": {
+      "draft": "Taslak",
+      "sent": "Gönderildi",
+      "viewed": "Görüntülendi",
+      "accepted": "Kabul edildi",
+      "rejected": "Reddedildi",
+      "expired": "Süresi doldu",
+      "revised": "Revize edildi"
+    },
+    "action": {
+      "send": "Gönder",
+      "delete": "Sil"
+    },
+    "toast": {
+      "created": "Teklif taslak olarak kaydedildi.",
+      "sent": "Teklif müşteriye gönderildi."
+    },
+    "form": {
+      "title": "Yeni teklif",
+      "name": "Teklif başlığı",
+      "client": "Müşteri",
+      "selectClient": "Müşteri seçin",
+      "lineItems": "Kalemler",
+      "description": "Açıklama",
+      "qty": "Adet",
+      "unitPrice": "Birim fiyat",
+      "addLine": "Kalem ekle",
+      "removeLine": "Kalemi kaldır",
+      "discount": "İndirim",
+      "tax": "Vergi",
+      "notes": "Notlar",
+      "subtotal": "Ara toplam",
+      "total": "Toplam",
+      "saveDraft": "Taslağı kaydet",
+      "needLine": "Açıklaması olan en az bir kalem ekleyin.",
+      "error": "Bir sorun oluştu. Lütfen tekrar deneyin."
+    }
+  },
+  "clientQuotes": {
+    "title": "Teklifler",
+    "subtitle": "Ajansınızın hazırladığı teklifleri inceleyin, kabul edin veya reddedin.",
+    "empty": "Henüz teklifiniz yok.",
+    "untitled": "Stant teklifi",
+    "item": "Kalem",
+    "qty": "Adet",
+    "unit": "Birim",
+    "lineTotal": "Toplam",
+    "accept": "Teklifi kabul et",
+    "decline": "Reddet",
+    "acceptedNote": "Bu teklifi kabul ettiniz.",
+    "declinedNote": "Bu teklifi reddettiniz.",
+    "error": "Bir sorun oluştu. Lütfen tekrar deneyin.",
+    "toast": {
+      "accepted": "Teklif kabul edildi. Ajansınız bilgilendirildi.",
+      "rejected": "Teklif reddedildi."
+    }
+  },
+  "pipeline": {
+    "title": "Satış Hattı",
+    "subtitle": "Her fırsatı ilk temastan kazanılan işe kadar takip edin.",
+    "openValue": "Açık değer · {{count}} fırsat",
+    "emptyColumn": "Bu aşamada fırsat yok.",
+    "edit": "Fırsatı düzenle",
+    "moveStage": "Aşamaya taşı",
+    "won": "Kazanıldı",
+    "dealValue": "Fırsat değeri",
+    "followUp": "Sonraki takip",
+    "error": "Bir sorun oluştu. Lütfen tekrar deneyin.",
+    "toast": {
+      "won": "{{company}} kazanıldı olarak taşındı ve müşteri onayına gönderildi."
+    },
+    "stage": {
+      "new": "Yeni",
+      "contacted": "İletişim kuruldu",
+      "qualified": "Nitelikli",
+      "proposal": "Teklif",
+      "won": "Kazanıldı",
+      "lost": "Kaybedildi"
+    }
+  },
+  "invoices": {
+    "title": "Faturalar",
+    "subtitle": "Müşterilere fatura kesin, ödemeleri izleyin ve kabul edilen teklifleri faturaya dönüştürün.",
+    "new": "Yeni fatura",
+    "empty": "Henüz fatura yok. Sıfırdan veya kabul edilmiş bir tekliften oluşturun.",
+    "col": {
+      "number": "Numara",
+      "title": "Başlık",
+      "total": "Toplam",
+      "due": "Vade",
+      "status": "Durum",
+      "actions": "İşlemler"
+    },
+    "status": {
+      "draft": "Taslak",
+      "open": "Ödeme bekliyor",
+      "paid": "Ödendi",
+      "void": "İptal",
+      "uncollectible": "Tahsil edilemez"
+    },
+    "action": {
+      "issue": "Kes",
+      "markPaid": "Ödendi işaretle",
+      "void": "İptal et",
+      "delete": "Sil"
+    },
+    "toast": {
+      "created": "Fatura taslak olarak kaydedildi.",
+      "sent": "Fatura müşteriye kesildi.",
+      "paid": "Ödeme kaydedildi.",
+      "voided": "Fatura iptal edildi.",
+      "deleted": "Taslak fatura silindi."
+    },
+    "form": {
+      "title": "Yeni fatura",
+      "name": "Fatura başlığı",
+      "client": "Müşteri",
+      "selectClient": "Müşteri seçin",
+      "fromQuote": "Kabul edilmiş bir tekliften oluştur",
+      "fromQuoteNone": "— Sıfırdan başla —",
+      "fromQuoteHint": "Kalemler ve toplamlar seçilen tekliften kopyalanacak.",
+      "untitled": "Başlıksız teklif",
+      "lineItems": "Kalemler",
+      "description": "Açıklama",
+      "qty": "Adet",
+      "unitPrice": "Birim fiyat",
+      "addLine": "Kalem ekle",
+      "removeLine": "Kalemi kaldır",
+      "discount": "İndirim",
+      "tax": "Vergi",
+      "due": "Vade tarihi",
+      "notes": "Notlar",
+      "subtotal": "Ara toplam",
+      "total": "Toplam",
+      "saveDraft": "Taslağı kaydet",
+      "needLine": "Açıklaması olan en az bir kalem ekleyin.",
+      "error": "Bir sorun oluştu. Lütfen tekrar deneyin."
+    }
+  },
+  "clientInvoices": {
+    "title": "Faturalar",
+    "subtitle": "Ajansınızdan gelen faturaları görüntüleyin ve ödenenleri takip edin.",
+    "empty": "Henüz faturanız yok.",
+    "untitled": "Fatura",
+    "overdue": "Gecikmiş",
+    "item": "Kalem",
+    "qty": "Adet",
+    "unit": "Birim",
+    "lineTotal": "Toplam",
+    "issued": "Kesildi",
+    "due": "Vade",
+    "paidOn": "Ödendi",
+    "payNote": "Ödeme için lütfen proje müdürünüzle iletişime geçin."
+  },
+  "workspace": {
+    "desktopOnly": {
+      "title": "Stant editörü daha geniş bir ekran gerektiriyor",
+      "body": "3D editör fare ve geniş bir görüntü alanı için tasarlandı — mobilya sürükleme, çoklu seçim ve özellik paneli çalışmak için yere ihtiyaç duyar. Size bozuk bir ekran vermektense bunu söylemeyi tercih ederiz.",
+      "requirement": "En az {{width}} piksel genişliğinde bir görüntü alanı gerekir. Dizüstü veya masaüstü uygundur; yatay moddaki tablet de olur.",
+      "back": "Panele dön"
     }
   }
 }

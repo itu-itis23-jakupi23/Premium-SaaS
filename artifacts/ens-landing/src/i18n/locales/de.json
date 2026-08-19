@@ -471,7 +471,10 @@
       "reports": "Berichte",
       "messages": "Nachrichten",
       "calendar": "Kalender",
-      "settings": "Einstellungen"
+      "settings": "Einstellungen",
+      "quotes": "Angebote",
+      "invoices": "Rechnungen",
+      "pipeline": "Vertriebs-Pipeline"
     },
     "common": {
       "cancel": "Abbrechen",
@@ -616,7 +619,10 @@
         "showMore": "Show {{count}} more",
         "showLess": "Show less",
         "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured"
+        "emailProviderNotConfigured": "email provider is not configured",
+        "code": "Code",
+        "link": "Link",
+        "copyCode": "Einladungscode für {{email}} kopieren"
       },
       "invite": {
         "title": "Manager einladen",
@@ -789,7 +795,9 @@
         "reminderSent": "Erinnerung für {{name}} in der Warteschlange — Benachrichtigung erstellt",
         "reminderError": "Erinnerung konnte nicht gesendet werden",
         "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}"
+        "ratingUpdated": "Rating updated to {{rating}}",
+        "inviteCodeCopied": "Einladungscode kopiert",
+        "inviteCodeCopyError": "Einladungscode konnte nicht kopiert werden"
       },
       "error": {
         "rating": "Failed to update rating"
@@ -963,7 +971,9 @@
         "openWorkspace": "Arbeitsbereich öffnen",
         "editClient": "Kunden bearbeiten",
         "viewDetails": "Kundendetails anzeigen",
-        "archive": "Kunden archivieren"
+        "archive": "Kunden archivieren",
+        "reviewAndAssign": "Prüfen und zuweisen",
+        "rejectRequest": "Anfrage ablehnen"
       },
       "toast": {
         "added": "{{name}} zu Kunden hinzugefügt.",
@@ -977,7 +987,10 @@
         "archiveError": "Kunde konnte nicht entfernt werden.",
         "openingWorkspace": "Stand-Arbeitsbereich für {{name}} wird geöffnet.",
         "defaultClient": "Kunde",
-        "unassigned": "Nicht zugewiesen"
+        "unassigned": "Nicht zugewiesen",
+        "approved": "{{client}} freigegeben und {{manager}} zugewiesen. Das Startprojekt ist bereit.",
+        "rejected": "Registrierung von {{client}} wurde abgelehnt.",
+        "rejectError": "Die Kundenregistrierung konnte nicht abgelehnt werden."
       },
       "addDialog": {
         "title": "Kunden hinzufügen",
@@ -1013,6 +1026,19 @@
         "pm": "PM",
         "exhibition": "Ausstellung",
         "status": "Status"
+      },
+      "approveDialog": {
+        "title": "Kunden freigeben und zuweisen",
+        "desc": "Prüfen Sie {{name}} und wählen Sie den Projektleiter, der das Konto übernimmt.",
+        "result": "Die Freigabe erstellt Kundenprojekt, Standarbeitsbereich sowie PM- und Kundenzugang in einem Schritt.",
+        "submit": "Freigeben und Projekt erstellen"
+      },
+      "rejectDialog": {
+        "title": "Kundenanfrage ablehnen",
+        "desc": "Lehnen Sie {{name}} ab und halten Sie einen Grund für die Entscheidung fest.",
+        "reason": "Grund",
+        "placeholder": "Erklären Sie, was korrigiert werden muss, bevor sich der Kunde erneut registriert.",
+        "submit": "Anfrage ablehnen"
       }
     },
     "projects": {
@@ -1565,7 +1591,9 @@
       "messages": "Nachrichten",
       "tasks": "Aufgaben",
       "reports": "Berichte",
-      "settings": "Einstellungen"
+      "settings": "Einstellungen",
+      "quotes": "Angebote",
+      "invoices": "Rechnungen"
     },
     "common": {
       "noDeadline": "Kein Termin",
@@ -2210,7 +2238,9 @@
       "messages": "Nachrichten",
       "approvals": "Genehmigungen",
       "documents": "Dokumente",
-      "profile": "Profil"
+      "profile": "Profil",
+      "quotes": "Angebote",
+      "invoices": "Rechnungen"
     },
     "dashboard": {
       "pageTitle": "Dashboard | ENS",
@@ -2875,6 +2905,217 @@
       "genericError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
       "qrAlt": "QR-Code für die Zwei-Faktor-Einrichtung",
       "scanHint": "Mit Ihrer Authenticator-App scannen"
+    }
+  },
+  "getQuote": {
+    "pageTitle": "Angebot anfordern | ENS",
+    "title": "Angebot anfordern",
+    "subtitle": "Erzählen Sie uns von Ihrer Messe und Ihrem Stand. Unser Team meldet sich innerhalb eines Werktags.",
+    "fields": {
+      "company": "Unternehmen",
+      "name": "Ihr Name",
+      "email": "Geschäftliche E-Mail",
+      "phone": "Telefon",
+      "exhibition": "Messe / Veranstaltung",
+      "boothSize": "Standgröße",
+      "budget": "Budget",
+      "timeline": "Zeitplan",
+      "message": "Projektdetails"
+    },
+    "placeholders": {
+      "exhibition": "z. B. CES 2027, Hannover Messe",
+      "boothSize": "z. B. 6 × 3 m",
+      "timeline": "z. B. Q1 2027",
+      "message": "Systeme, offene Seiten, unverzichtbare Funktionen, Markenrichtlinien…",
+      "select": "Bereich auswählen"
+    },
+    "validation": {
+      "company": "Bitte geben Sie Ihren Firmennamen ein.",
+      "name": "Bitte geben Sie Ihren Namen ein.",
+      "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+    },
+    "submit": "Anfrage senden",
+    "disclaimer": "Mit dem Absenden stimmen Sie zu:",
+    "privacyLink": "Datenschutzerklärung",
+    "error": "Ihre Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+    "success": {
+      "title": "Anfrage eingegangen",
+      "body": "Danke — Ihre Standanfrage ist bei uns. Unser Team prüft sie und meldet sich innerhalb eines Werktags.",
+      "back": "Zurück zur Startseite"
+    }
+  },
+  "quotes": {
+    "title": "Angebote",
+    "subtitle": "Erstellen Sie aus einem Standentwurf ein Angebot und senden Sie es Ihrem Kunden zur Freigabe.",
+    "new": "Neues Angebot",
+    "empty": "Noch keine Angebote. Erstellen Sie Ihr erstes Angebot für einen Kunden.",
+    "col": {
+      "number": "Nummer",
+      "title": "Titel",
+      "total": "Gesamt",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "sent": "Gesendet",
+      "viewed": "Angesehen",
+      "accepted": "Angenommen",
+      "rejected": "Abgelehnt",
+      "expired": "Abgelaufen",
+      "revised": "Überarbeitet"
+    },
+    "action": {
+      "send": "Senden",
+      "delete": "Löschen"
+    },
+    "toast": {
+      "created": "Angebot als Entwurf gespeichert.",
+      "sent": "Angebot an den Kunden gesendet."
+    },
+    "form": {
+      "title": "Neues Angebot",
+      "name": "Angebotstitel",
+      "client": "Kunde",
+      "selectClient": "Kunden auswählen",
+      "lineItems": "Positionen",
+      "description": "Beschreibung",
+      "qty": "Menge",
+      "unitPrice": "Einzelpreis",
+      "addLine": "Position hinzufügen",
+      "removeLine": "Position entfernen",
+      "discount": "Rabatt",
+      "tax": "Steuer",
+      "notes": "Notizen",
+      "subtotal": "Zwischensumme",
+      "total": "Gesamt",
+      "saveDraft": "Entwurf speichern",
+      "needLine": "Fügen Sie mindestens eine Position mit Beschreibung hinzu.",
+      "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    }
+  },
+  "clientQuotes": {
+    "title": "Angebote",
+    "subtitle": "Prüfen Sie die Angebote Ihrer Agentur und nehmen Sie sie an oder lehnen Sie sie ab.",
+    "empty": "Sie haben noch keine Angebote.",
+    "untitled": "Standangebot",
+    "item": "Position",
+    "qty": "Menge",
+    "unit": "Einzeln",
+    "lineTotal": "Gesamt",
+    "accept": "Angebot annehmen",
+    "decline": "Ablehnen",
+    "acceptedNote": "Sie haben dieses Angebot angenommen.",
+    "declinedNote": "Sie haben dieses Angebot abgelehnt.",
+    "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "toast": {
+      "accepted": "Angebot angenommen. Ihre Agentur wurde benachrichtigt.",
+      "rejected": "Angebot abgelehnt."
+    }
+  },
+  "pipeline": {
+    "title": "Vertriebs-Pipeline",
+    "subtitle": "Verfolgen Sie jeden Lead vom Erstkontakt bis zum gewonnenen Auftrag.",
+    "openValue": "Offener Wert · {{count}} Leads",
+    "emptyColumn": "Keine Leads in dieser Phase.",
+    "edit": "Lead bearbeiten",
+    "moveStage": "In Phase verschieben",
+    "won": "Gewonnen",
+    "dealValue": "Auftragswert",
+    "followUp": "Nächste Nachfassaktion",
+    "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "toast": {
+      "won": "{{company}} wurde auf gewonnen gesetzt und zur Kundenfreigabe gesendet."
+    },
+    "stage": {
+      "new": "Neu",
+      "contacted": "Kontaktiert",
+      "qualified": "Qualifiziert",
+      "proposal": "Angebot",
+      "won": "Gewonnen",
+      "lost": "Verloren"
+    }
+  },
+  "invoices": {
+    "title": "Rechnungen",
+    "subtitle": "Stellen Sie Kunden Rechnungen aus, verfolgen Sie Zahlungen und machen Sie aus angenommenen Angeboten Rechnungen.",
+    "new": "Neue Rechnung",
+    "empty": "Noch keine Rechnungen. Erstellen Sie eine neu oder aus einem angenommenen Angebot.",
+    "col": {
+      "number": "Nummer",
+      "title": "Titel",
+      "total": "Gesamt",
+      "due": "Fällig",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "open": "Zahlung ausstehend",
+      "paid": "Bezahlt",
+      "void": "Storniert",
+      "uncollectible": "Uneinbringlich"
+    },
+    "action": {
+      "issue": "Ausstellen",
+      "markPaid": "Als bezahlt markieren",
+      "void": "Stornieren",
+      "delete": "Löschen"
+    },
+    "toast": {
+      "created": "Rechnung als Entwurf gespeichert.",
+      "sent": "Rechnung an den Kunden ausgestellt.",
+      "paid": "Zahlung erfasst.",
+      "voided": "Rechnung storniert.",
+      "deleted": "Rechnungsentwurf gelöscht."
+    },
+    "form": {
+      "title": "Neue Rechnung",
+      "name": "Rechnungstitel",
+      "client": "Kunde",
+      "selectClient": "Kunden auswählen",
+      "fromQuote": "Aus einem angenommenen Angebot erstellen",
+      "fromQuoteNone": "— Neu beginnen —",
+      "fromQuoteHint": "Positionen und Summen werden aus dem gewählten Angebot übernommen.",
+      "untitled": "Angebot ohne Titel",
+      "lineItems": "Positionen",
+      "description": "Beschreibung",
+      "qty": "Menge",
+      "unitPrice": "Einzelpreis",
+      "addLine": "Position hinzufügen",
+      "removeLine": "Position entfernen",
+      "discount": "Rabatt",
+      "tax": "Steuer",
+      "due": "Fälligkeitsdatum",
+      "notes": "Notizen",
+      "subtotal": "Zwischensumme",
+      "total": "Gesamt",
+      "saveDraft": "Entwurf speichern",
+      "needLine": "Fügen Sie mindestens eine Position mit Beschreibung hinzu.",
+      "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    }
+  },
+  "clientInvoices": {
+    "title": "Rechnungen",
+    "subtitle": "Sehen Sie Rechnungen Ihrer Agentur ein und verfolgen Sie, was bezahlt ist.",
+    "empty": "Sie haben noch keine Rechnungen.",
+    "untitled": "Rechnung",
+    "overdue": "Überfällig",
+    "item": "Position",
+    "qty": "Menge",
+    "unit": "Einzeln",
+    "lineTotal": "Gesamt",
+    "issued": "Ausgestellt",
+    "due": "Fällig",
+    "paidOn": "Bezahlt",
+    "payNote": "Für die Zahlungsabwicklung wenden Sie sich bitte an Ihren Projektleiter."
+  },
+  "workspace": {
+    "desktopOnly": {
+      "title": "Der Standeditor braucht einen größeren Bildschirm",
+      "body": "Der 3D-Editor ist für Maus und großen Viewport gebaut — Möbel ziehen, Mehrfachauswahl und der Eigenschaften-Inspektor brauchen Platz. Das sagen wir Ihnen lieber, als Ihnen einen kaputten Bildschirm zu zeigen.",
+      "requirement": "Erfordert einen Viewport von mindestens {{width}} px Breite. Laptop oder Desktop funktionieren; ein Tablet im Querformat auch.",
+      "back": "Zurück zum Dashboard"
     }
   }
 }

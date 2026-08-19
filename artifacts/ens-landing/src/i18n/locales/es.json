@@ -471,7 +471,10 @@
       "reports": "Informes",
       "messages": "Mensajes",
       "calendar": "Calendario",
-      "settings": "Ajustes"
+      "settings": "Ajustes",
+      "quotes": "Presupuestos",
+      "invoices": "Facturas",
+      "pipeline": "Embudo de ventas"
     },
     "common": {
       "cancel": "Cancelar",
@@ -616,7 +619,10 @@
         "showMore": "Show {{count}} more",
         "showLess": "Show less",
         "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured"
+        "emailProviderNotConfigured": "email provider is not configured",
+        "code": "Código",
+        "link": "Enlace",
+        "copyCode": "Copiar el código de invitación de {{email}}"
       },
       "invite": {
         "title": "Invitar manager",
@@ -789,7 +795,9 @@
         "reminderSent": "Recordatorio en cola para {{name}} — notificación creada",
         "reminderError": "No se pudo enviar el recordatorio",
         "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}"
+        "ratingUpdated": "Rating updated to {{rating}}",
+        "inviteCodeCopied": "Código de invitación copiado",
+        "inviteCodeCopyError": "No se pudo copiar el código de invitación"
       },
       "error": {
         "rating": "Failed to update rating"
@@ -963,7 +971,9 @@
         "openWorkspace": "Abrir espacio de trabajo",
         "editClient": "Editar cliente",
         "viewDetails": "Ver detalles",
-        "archive": "Archivar cliente"
+        "archive": "Archivar cliente",
+        "reviewAndAssign": "Revisar y asignar",
+        "rejectRequest": "Rechazar solicitud"
       },
       "toast": {
         "added": "{{name}} añadido a clientes.",
@@ -977,7 +987,10 @@
         "archiveError": "El cliente no pudo ser eliminado.",
         "openingWorkspace": "Abriendo el espacio de trabajo del stand de {{name}}.",
         "defaultClient": "Cliente",
-        "unassigned": "Sin asignar"
+        "unassigned": "Sin asignar",
+        "approved": "{{client}} aprobado y asignado a {{manager}}. El proyecto inicial está listo.",
+        "rejected": "El registro de {{client}} fue rechazado.",
+        "rejectError": "No se pudo rechazar el registro del cliente."
       },
       "addDialog": {
         "title": "Añadir cliente",
@@ -1013,6 +1026,19 @@
         "pm": "GP",
         "exhibition": "Exposición",
         "status": "Estado"
+      },
+      "approveDialog": {
+        "title": "Aprobar y asignar cliente",
+        "desc": "Revise a {{name}} y seleccione el responsable de proyecto que llevará la cuenta.",
+        "result": "La aprobación crea el proyecto del cliente, el espacio de trabajo del stand y los accesos de responsable y cliente en un solo paso.",
+        "submit": "Aprobar y crear proyecto"
+      },
+      "rejectDialog": {
+        "title": "Rechazar solicitud de cliente",
+        "desc": "Rechace a {{name}} y registre un motivo para la decisión.",
+        "reason": "Motivo",
+        "placeholder": "Explique qué debe corregirse antes de que el cliente vuelva a registrarse.",
+        "submit": "Rechazar solicitud"
       }
     },
     "projects": {
@@ -1565,7 +1591,9 @@
       "messages": "Mensajes",
       "tasks": "Tareas",
       "reports": "Informes",
-      "settings": "Configuración"
+      "settings": "Configuración",
+      "quotes": "Presupuestos",
+      "invoices": "Facturas"
     },
     "common": {
       "noDeadline": "Sin fecha límite",
@@ -2210,7 +2238,9 @@
       "messages": "Mensajes",
       "approvals": "Aprobaciones",
       "documents": "Documentos",
-      "profile": "Perfil"
+      "profile": "Perfil",
+      "quotes": "Presupuestos",
+      "invoices": "Facturas"
     },
     "dashboard": {
       "pageTitle": "Panel | ENS",
@@ -2875,6 +2905,217 @@
       "genericError": "Algo salió mal. Inténtalo de nuevo.",
       "qrAlt": "Código QR para la configuración de dos factores",
       "scanHint": "Escanéalo con tu app de autenticación"
+    }
+  },
+  "getQuote": {
+    "pageTitle": "Solicitar presupuesto | ENS",
+    "title": "Solicitar presupuesto",
+    "subtitle": "Cuéntenos sobre su feria y su stand. Nuestro equipo le responderá en un día laborable.",
+    "fields": {
+      "company": "Empresa",
+      "name": "Su nombre",
+      "email": "Correo corporativo",
+      "phone": "Teléfono",
+      "exhibition": "Feria / evento",
+      "boothSize": "Tamaño del stand",
+      "budget": "Presupuesto",
+      "timeline": "Plazos",
+      "message": "Detalles del proyecto"
+    },
+    "placeholders": {
+      "exhibition": "p. ej. CES 2027, Hannover Messe",
+      "boothSize": "p. ej. 6 × 3 m",
+      "timeline": "p. ej. T1 2027",
+      "message": "Sistemas, lados abiertos, requisitos imprescindibles, manual de marca…",
+      "select": "Seleccione un rango"
+    },
+    "validation": {
+      "company": "Introduzca el nombre de su empresa.",
+      "name": "Introduzca su nombre.",
+      "email": "Introduzca una dirección de correo válida."
+    },
+    "submit": "Enviar solicitud",
+    "disclaimer": "Al enviar, acepta nuestra",
+    "privacyLink": "Política de privacidad",
+    "error": "No se pudo enviar su solicitud. Inténtelo de nuevo.",
+    "success": {
+      "title": "Solicitud recibida",
+      "body": "Gracias: hemos recibido su consulta de stand. Nuestro equipo la revisará y le contactará en un día laborable.",
+      "back": "Volver al inicio"
+    }
+  },
+  "quotes": {
+    "title": "Presupuestos",
+    "subtitle": "Cree un presupuesto a partir de un diseño de stand y envíelo a su cliente para su aprobación.",
+    "new": "Nuevo presupuesto",
+    "empty": "Aún no hay presupuestos. Cree el primero para enviarlo a un cliente.",
+    "col": {
+      "number": "Número",
+      "title": "Título",
+      "total": "Total",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "status": {
+      "draft": "Borrador",
+      "sent": "Enviado",
+      "viewed": "Visto",
+      "accepted": "Aceptado",
+      "rejected": "Rechazado",
+      "expired": "Caducado",
+      "revised": "Revisado"
+    },
+    "action": {
+      "send": "Enviar",
+      "delete": "Eliminar"
+    },
+    "toast": {
+      "created": "Presupuesto guardado como borrador.",
+      "sent": "Presupuesto enviado al cliente."
+    },
+    "form": {
+      "title": "Nuevo presupuesto",
+      "name": "Título del presupuesto",
+      "client": "Cliente",
+      "selectClient": "Seleccionar cliente",
+      "lineItems": "Líneas",
+      "description": "Descripción",
+      "qty": "Cant.",
+      "unitPrice": "Precio unitario",
+      "addLine": "Añadir línea",
+      "removeLine": "Quitar línea",
+      "discount": "Descuento",
+      "tax": "Impuestos",
+      "notes": "Notas",
+      "subtotal": "Subtotal",
+      "total": "Total",
+      "saveDraft": "Guardar borrador",
+      "needLine": "Añada al menos una línea con descripción.",
+      "error": "Algo ha salido mal. Inténtelo de nuevo."
+    }
+  },
+  "clientQuotes": {
+    "title": "Presupuestos",
+    "subtitle": "Revise los presupuestos preparados por su agencia y acéptelos o recházelos.",
+    "empty": "Todavía no tiene presupuestos.",
+    "untitled": "Presupuesto de stand",
+    "item": "Concepto",
+    "qty": "Cant.",
+    "unit": "Unitario",
+    "lineTotal": "Total",
+    "accept": "Aceptar presupuesto",
+    "decline": "Rechazar",
+    "acceptedNote": "Ha aceptado este presupuesto.",
+    "declinedNote": "Ha rechazado este presupuesto.",
+    "error": "Algo ha salido mal. Inténtelo de nuevo.",
+    "toast": {
+      "accepted": "Presupuesto aceptado. Su agencia ha sido notificada.",
+      "rejected": "Presupuesto rechazado."
+    }
+  },
+  "pipeline": {
+    "title": "Embudo de ventas",
+    "subtitle": "Siga cada oportunidad desde el primer contacto hasta el cierre.",
+    "openValue": "Valor abierto · {{count}} oportunidades",
+    "emptyColumn": "No hay oportunidades en esta etapa.",
+    "edit": "Editar oportunidad",
+    "moveStage": "Mover a etapa",
+    "won": "Ganada",
+    "dealValue": "Valor de la operación",
+    "followUp": "Próximo seguimiento",
+    "error": "Algo ha salido mal. Inténtelo de nuevo.",
+    "toast": {
+      "won": "{{company}} pasó a ganada y se envió para aprobación del cliente."
+    },
+    "stage": {
+      "new": "Nueva",
+      "contacted": "Contactada",
+      "qualified": "Cualificada",
+      "proposal": "Propuesta",
+      "won": "Ganada",
+      "lost": "Perdida"
+    }
+  },
+  "invoices": {
+    "title": "Facturas",
+    "subtitle": "Emita facturas a clientes, controle los cobros y convierta presupuestos aceptados en facturas.",
+    "new": "Nueva factura",
+    "empty": "Aún no hay facturas. Cree una desde cero o desde un presupuesto aceptado.",
+    "col": {
+      "number": "Número",
+      "title": "Título",
+      "total": "Total",
+      "due": "Vencimiento",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "status": {
+      "draft": "Borrador",
+      "open": "Pendiente de pago",
+      "paid": "Pagada",
+      "void": "Anulada",
+      "uncollectible": "Incobrable"
+    },
+    "action": {
+      "issue": "Emitir",
+      "markPaid": "Marcar pagada",
+      "void": "Anular",
+      "delete": "Eliminar"
+    },
+    "toast": {
+      "created": "Factura guardada como borrador.",
+      "sent": "Factura emitida al cliente.",
+      "paid": "Pago registrado.",
+      "voided": "Factura anulada.",
+      "deleted": "Borrador de factura eliminado."
+    },
+    "form": {
+      "title": "Nueva factura",
+      "name": "Título de la factura",
+      "client": "Cliente",
+      "selectClient": "Seleccionar cliente",
+      "fromQuote": "Crear desde un presupuesto aceptado",
+      "fromQuoteNone": "— Empezar de cero —",
+      "fromQuoteHint": "Las líneas y los totales se copiarán del presupuesto seleccionado.",
+      "untitled": "Presupuesto sin título",
+      "lineItems": "Líneas",
+      "description": "Descripción",
+      "qty": "Cant.",
+      "unitPrice": "Precio unitario",
+      "addLine": "Añadir línea",
+      "removeLine": "Quitar línea",
+      "discount": "Descuento",
+      "tax": "Impuestos",
+      "due": "Fecha de vencimiento",
+      "notes": "Notas",
+      "subtotal": "Subtotal",
+      "total": "Total",
+      "saveDraft": "Guardar borrador",
+      "needLine": "Añada al menos una línea con descripción.",
+      "error": "Algo ha salido mal. Inténtelo de nuevo."
+    }
+  },
+  "clientInvoices": {
+    "title": "Facturas",
+    "subtitle": "Consulte las facturas de su agencia y controle lo que ya está pagado.",
+    "empty": "Todavía no tiene facturas.",
+    "untitled": "Factura",
+    "overdue": "Vencida",
+    "item": "Concepto",
+    "qty": "Cant.",
+    "unit": "Unitario",
+    "lineTotal": "Total",
+    "issued": "Emitida",
+    "due": "Vencimiento",
+    "paidOn": "Pagada",
+    "payNote": "Para gestionar el pago, contacte con su responsable de proyecto."
+  },
+  "workspace": {
+    "desktopOnly": {
+      "title": "El editor de stands necesita una pantalla más grande",
+      "body": "El editor 3D está pensado para ratón y una ventana amplia: arrastrar mobiliario, la selección por marco y el inspector de propiedades necesitan espacio. Preferimos decírselo antes que darle una pantalla inservible.",
+      "requirement": "Requiere una ventana de al menos {{width}} px de ancho. Un portátil o un ordenador de sobremesa sirven; una tableta en horizontal también.",
+      "back": "Volver al panel"
     }
   }
 }

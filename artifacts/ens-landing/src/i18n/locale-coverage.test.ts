@@ -3,21 +3,26 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 /**
- * Locale coverage for the public marketing surface.
+ * Locale coverage.
  *
  * Regression guard for a real failure: every non-English locale was missing
  * 123 of the 165 `home.*` keys, so switching language left roughly two thirds
  * of the home page in English via `fallbackLng`. The switcher looked broken
- * even though it worked — the translations simply were not there.
+ * even though it worked — the translations simply were not there. A second
+ * round of 187 keys covering invoices, quotes, the sales pipeline and the
+ * public quote form had the same problem in the authenticated dashboards.
  *
- * `home.*`, `common.*` and `nav.*` are what an anonymous visitor reads before
- * logging in, so they are held at full parity with English. The authenticated
- * dashboards are deliberately not covered here yet; see the `KNOWN_GAPS` note.
+ * All ten locales are now held at full parity with en.json, so a new English
+ * string fails this suite until it is translated everywhere. `home.*`,
+ * `common.*` and `nav.*` are additionally checked on their own, so a failure
+ * on the marketing surface — the part an anonymous visitor sees — names itself
+ * rather than hiding in a list of several hundred keys.
  */
 
 const LOCALES = ["de", "fr", "es", "it", "pt", "nl", "tr", "zh", "ja", "ar"] as const;
 
-/** Namespaces a logged-out visitor can see. These must be fully translated. */
+/** Namespaces a logged-out visitor can see. Called out separately so a failure
+ *  names the marketing surface explicitly, which is the highest-impact gap. */
 const PUBLIC_PREFIXES = ["home.", "common.", "nav."];
 
 function load(code: string): Record<string, unknown> {
@@ -36,6 +41,16 @@ const english = flatten(load("en"));
 const publicKeys = english.filter((key) => PUBLIC_PREFIXES.some((p) => key.startsWith(p)));
 
 describe("locale coverage", () => {
+  it.each(LOCALES)("%s translates every key in en.json", (code) => {
+    // Full parity, not just the public surface. The authenticated dashboards
+    // (invoices, quotes, pipeline, getQuote) were English-only for a long time;
+    // this keeps them from drifting back.
+    const present = new Set(flatten(load(code)));
+    const missing = english.filter((key) => !present.has(key));
+    expect(missing, `${code}.json is missing ${missing.length} of ${english.length} keys`)
+      .toEqual([]);
+  });
+
   it("has public keys to check", () => {
     // Guards the guard: a typo in PUBLIC_PREFIXES would make every case vacuous.
     expect(publicKeys.length).toBeGreaterThan(150);
@@ -57,7 +72,7 @@ describe("locale coverage", () => {
 
     // A translation that drops {{percent}} or ${{amount}} renders a broken
     // string at runtime rather than failing loudly, so assert on it here.
-    const withPlaceholders = publicKeys.filter((key) => {
+    const withPlaceholders = english.filter((key) => {
       const value = read(key);
       return typeof value === "string" && /\{\{\s*\w+\s*\}\}/.test(value);
     });
@@ -90,7 +105,7 @@ describe("locale coverage", () => {
       }, root);
 
     const en = load("en");
-    const strings = publicKeys.filter((key) => typeof read(key, locale) === "string");
+    const strings = english.filter((key) => typeof read(key, locale) === "string");
     const identical = strings.filter((key) => read(key, locale) === read(key, en));
     const ratio = identical.length / Math.max(1, strings.length);
     expect(ratio, `${code}: ${identical.length}/${strings.length} strings identical to English`)

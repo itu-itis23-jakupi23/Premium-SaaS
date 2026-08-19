@@ -471,7 +471,10 @@
       "reports": "Rapports",
       "messages": "Messages",
       "calendar": "Calendrier",
-      "settings": "Paramètres"
+      "settings": "Paramètres",
+      "quotes": "Devis",
+      "invoices": "Factures",
+      "pipeline": "Pipeline commercial"
     },
     "common": {
       "cancel": "Annuler",
@@ -616,7 +619,10 @@
         "showMore": "Show {{count}} more",
         "showLess": "Show less",
         "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured"
+        "emailProviderNotConfigured": "email provider is not configured",
+        "code": "Code",
+        "link": "Lien",
+        "copyCode": "Copier le code d'invitation pour {{email}}"
       },
       "invite": {
         "title": "Inviter un manager",
@@ -789,7 +795,9 @@
         "reminderSent": "Rappel en attente pour {{name}} — notification créée",
         "reminderError": "Le rappel n'a pas pu être envoyé",
         "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}"
+        "ratingUpdated": "Rating updated to {{rating}}",
+        "inviteCodeCopied": "Code d'invitation copié",
+        "inviteCodeCopyError": "Impossible de copier le code d'invitation"
       },
       "error": {
         "rating": "Failed to update rating"
@@ -963,7 +971,9 @@
         "openWorkspace": "Ouvrir l'espace de travail",
         "editClient": "Modifier le client",
         "viewDetails": "Voir les détails",
-        "archive": "Archiver le client"
+        "archive": "Archiver le client",
+        "reviewAndAssign": "Examiner et affecter",
+        "rejectRequest": "Refuser la demande"
       },
       "toast": {
         "added": "{{name}} ajouté aux clients.",
@@ -977,7 +987,10 @@
         "archiveError": "Le client n'a pas pu être supprimé.",
         "openingWorkspace": "Ouverture de l'espace stand pour {{name}}.",
         "defaultClient": "Client",
-        "unassigned": "Non assigné"
+        "unassigned": "Non assigné",
+        "approved": "{{client}} validé et affecté à {{manager}}. Le projet initial est prêt.",
+        "rejected": "L'inscription de {{client}} a été refusée.",
+        "rejectError": "L'inscription du client n'a pas pu être refusée."
       },
       "addDialog": {
         "title": "Ajouter un client",
@@ -1013,6 +1026,19 @@
         "pm": "GP",
         "exhibition": "Exposition",
         "status": "Statut"
+      },
+      "approveDialog": {
+        "title": "Valider et affecter le client",
+        "desc": "Examinez {{name}} et choisissez le chef de projet qui suivra le compte.",
+        "result": "La validation crée en une étape le projet client, l'espace de travail du stand et les accès chef de projet / client.",
+        "submit": "Valider et créer le projet"
+      },
+      "rejectDialog": {
+        "title": "Refuser la demande client",
+        "desc": "Refusez {{name}} et consignez un motif pour cette décision.",
+        "reason": "Motif",
+        "placeholder": "Expliquez ce qui doit être corrigé avant que le client ne s'inscrive à nouveau.",
+        "submit": "Refuser la demande"
       }
     },
     "projects": {
@@ -1565,7 +1591,9 @@
       "messages": "Messages",
       "tasks": "Tâches",
       "reports": "Rapports",
-      "settings": "Paramètres"
+      "settings": "Paramètres",
+      "quotes": "Devis",
+      "invoices": "Factures"
     },
     "common": {
       "noDeadline": "Pas d'échéance",
@@ -2210,7 +2238,9 @@
       "messages": "Messages",
       "approvals": "Approbations",
       "documents": "Documents",
-      "profile": "Profil"
+      "profile": "Profil",
+      "quotes": "Devis",
+      "invoices": "Factures"
     },
     "dashboard": {
       "pageTitle": "Tableau de bord | ENS",
@@ -2875,6 +2905,217 @@
       "genericError": "Une erreur s’est produite. Veuillez réessayer.",
       "qrAlt": "Code QR pour la configuration à deux facteurs",
       "scanHint": "Scannez avec votre application d’authentification"
+    }
+  },
+  "getQuote": {
+    "pageTitle": "Demander un devis | ENS",
+    "title": "Demander un devis",
+    "subtitle": "Parlez-nous de votre salon et de votre stand. Notre équipe vous répond sous un jour ouvré.",
+    "fields": {
+      "company": "Société",
+      "name": "Votre nom",
+      "email": "E-mail professionnel",
+      "phone": "Téléphone",
+      "exhibition": "Salon / événement",
+      "boothSize": "Taille du stand",
+      "budget": "Budget",
+      "timeline": "Calendrier",
+      "message": "Détails du projet"
+    },
+    "placeholders": {
+      "exhibition": "ex. CES 2027, Hannover Messe",
+      "boothSize": "ex. 6 × 3 m",
+      "timeline": "ex. T1 2027",
+      "message": "Systèmes, côtés ouverts, fonctions indispensables, charte graphique…",
+      "select": "Choisir une fourchette"
+    },
+    "validation": {
+      "company": "Veuillez saisir le nom de votre société.",
+      "name": "Veuillez saisir votre nom.",
+      "email": "Veuillez saisir une adresse e-mail valide."
+    },
+    "submit": "Envoyer la demande",
+    "disclaimer": "En envoyant, vous acceptez notre",
+    "privacyLink": "Politique de confidentialité",
+    "error": "Votre demande n'a pas pu être envoyée. Veuillez réessayer.",
+    "success": {
+      "title": "Demande reçue",
+      "body": "Merci — votre demande de stand nous est parvenue. Notre équipe l'examine et vous recontacte sous un jour ouvré.",
+      "back": "Retour à l'accueil"
+    }
+  },
+  "quotes": {
+    "title": "Devis",
+    "subtitle": "Créez un devis à partir d'une conception de stand et envoyez-le à votre client pour validation.",
+    "new": "Nouveau devis",
+    "empty": "Aucun devis pour le moment. Créez votre premier devis à envoyer à un client.",
+    "col": {
+      "number": "Numéro",
+      "title": "Titre",
+      "total": "Total",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "sent": "Envoyé",
+      "viewed": "Consulté",
+      "accepted": "Accepté",
+      "rejected": "Refusé",
+      "expired": "Expiré",
+      "revised": "Révisé"
+    },
+    "action": {
+      "send": "Envoyer",
+      "delete": "Supprimer"
+    },
+    "toast": {
+      "created": "Devis enregistré comme brouillon.",
+      "sent": "Devis envoyé au client."
+    },
+    "form": {
+      "title": "Nouveau devis",
+      "name": "Titre du devis",
+      "client": "Client",
+      "selectClient": "Sélectionner un client",
+      "lineItems": "Lignes",
+      "description": "Description",
+      "qty": "Qté",
+      "unitPrice": "Prix unitaire",
+      "addLine": "Ajouter une ligne",
+      "removeLine": "Supprimer la ligne",
+      "discount": "Remise",
+      "tax": "TVA",
+      "notes": "Notes",
+      "subtotal": "Sous-total",
+      "total": "Total",
+      "saveDraft": "Enregistrer le brouillon",
+      "needLine": "Ajoutez au moins une ligne avec une description.",
+      "error": "Une erreur est survenue. Veuillez réessayer."
+    }
+  },
+  "clientQuotes": {
+    "title": "Devis",
+    "subtitle": "Consultez les devis préparés par votre agence et acceptez-les ou refusez-les.",
+    "empty": "Vous n'avez encore aucun devis.",
+    "untitled": "Devis de stand",
+    "item": "Article",
+    "qty": "Qté",
+    "unit": "Unitaire",
+    "lineTotal": "Total",
+    "accept": "Accepter le devis",
+    "decline": "Refuser",
+    "acceptedNote": "Vous avez accepté ce devis.",
+    "declinedNote": "Vous avez refusé ce devis.",
+    "error": "Une erreur est survenue. Veuillez réessayer.",
+    "toast": {
+      "accepted": "Devis accepté. Votre agence a été prévenue.",
+      "rejected": "Devis refusé."
+    }
+  },
+  "pipeline": {
+    "title": "Pipeline commercial",
+    "subtitle": "Suivez chaque piste du premier contact à l'affaire gagnée.",
+    "openValue": "Valeur en cours · {{count}} pistes",
+    "emptyColumn": "Aucune piste à cette étape.",
+    "edit": "Modifier la piste",
+    "moveStage": "Déplacer vers l'étape",
+    "won": "Gagnée",
+    "dealValue": "Valeur de l'affaire",
+    "followUp": "Prochaine relance",
+    "error": "Une erreur est survenue. Veuillez réessayer.",
+    "toast": {
+      "won": "{{company}} passée en gagnée et envoyée pour validation client."
+    },
+    "stage": {
+      "new": "Nouvelle",
+      "contacted": "Contactée",
+      "qualified": "Qualifiée",
+      "proposal": "Proposition",
+      "won": "Gagnée",
+      "lost": "Perdue"
+    }
+  },
+  "invoices": {
+    "title": "Factures",
+    "subtitle": "Facturez vos clients, suivez les paiements et transformez les devis acceptés en factures.",
+    "new": "Nouvelle facture",
+    "empty": "Aucune facture pour le moment. Créez-en une de zéro ou depuis un devis accepté.",
+    "col": {
+      "number": "Numéro",
+      "title": "Titre",
+      "total": "Total",
+      "due": "Échéance",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "open": "En attente de paiement",
+      "paid": "Payée",
+      "void": "Annulée",
+      "uncollectible": "Irrécouvrable"
+    },
+    "action": {
+      "issue": "Émettre",
+      "markPaid": "Marquer payée",
+      "void": "Annuler",
+      "delete": "Supprimer"
+    },
+    "toast": {
+      "created": "Facture enregistrée comme brouillon.",
+      "sent": "Facture émise au client.",
+      "paid": "Paiement enregistré.",
+      "voided": "Facture annulée.",
+      "deleted": "Brouillon de facture supprimé."
+    },
+    "form": {
+      "title": "Nouvelle facture",
+      "name": "Titre de la facture",
+      "client": "Client",
+      "selectClient": "Sélectionner un client",
+      "fromQuote": "Créer depuis un devis accepté",
+      "fromQuoteNone": "— Partir de zéro —",
+      "fromQuoteHint": "Les lignes et les totaux seront copiés depuis le devis sélectionné.",
+      "untitled": "Devis sans titre",
+      "lineItems": "Lignes",
+      "description": "Description",
+      "qty": "Qté",
+      "unitPrice": "Prix unitaire",
+      "addLine": "Ajouter une ligne",
+      "removeLine": "Supprimer la ligne",
+      "discount": "Remise",
+      "tax": "TVA",
+      "due": "Date d'échéance",
+      "notes": "Notes",
+      "subtotal": "Sous-total",
+      "total": "Total",
+      "saveDraft": "Enregistrer le brouillon",
+      "needLine": "Ajoutez au moins une ligne avec une description.",
+      "error": "Une erreur est survenue. Veuillez réessayer."
+    }
+  },
+  "clientInvoices": {
+    "title": "Factures",
+    "subtitle": "Consultez les factures de votre agence et suivez ce qui a été payé.",
+    "empty": "Vous n'avez encore aucune facture.",
+    "untitled": "Facture",
+    "overdue": "En retard",
+    "item": "Article",
+    "qty": "Qté",
+    "unit": "Unitaire",
+    "lineTotal": "Total",
+    "issued": "Émise",
+    "due": "Échéance",
+    "paidOn": "Payée",
+    "payNote": "Pour organiser le paiement, contactez votre chef de projet."
+  },
+  "workspace": {
+    "desktopOnly": {
+      "title": "L'éditeur de stand nécessite un écran plus grand",
+      "body": "L'éditeur 3D est conçu pour une souris et un grand écran — glisser du mobilier, la sélection par rectangle et l'inspecteur de propriétés ont besoin de place. Nous préférons vous le dire plutôt que vous livrer un écran inutilisable.",
+      "requirement": "Nécessite une fenêtre d'au moins {{width}} px de large. Un portable ou un fixe convient ; une tablette en paysage aussi.",
+      "back": "Retour au tableau de bord"
     }
   }
 }

@@ -471,7 +471,10 @@
       "reports": "报告",
       "messages": "消息",
       "calendar": "日历",
-      "settings": "设置"
+      "settings": "设置",
+      "quotes": "报价单",
+      "invoices": "发票",
+      "pipeline": "销售管道"
     },
     "common": {
       "cancel": "取消",
@@ -616,7 +619,10 @@
         "showMore": "Show {{count}} more",
         "showLess": "Show less",
         "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured"
+        "emailProviderNotConfigured": "email provider is not configured",
+        "code": "邀请码",
+        "link": "链接",
+        "copyCode": "复制 {{email}} 的邀请码"
       },
       "invite": {
         "title": "邀请经理",
@@ -789,7 +795,9 @@
         "reminderSent": "{{name}} 的提醒已加入队列 — 通知已创建",
         "reminderError": "无法发送提醒",
         "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}"
+        "ratingUpdated": "Rating updated to {{rating}}",
+        "inviteCodeCopied": "邀请码已复制",
+        "inviteCodeCopyError": "无法复制邀请码"
       },
       "error": {
         "rating": "Failed to update rating"
@@ -963,7 +971,9 @@
         "openWorkspace": "打开工作区",
         "editClient": "编辑客户",
         "viewDetails": "查看客户详情",
-        "archive": "归档客户"
+        "archive": "归档客户",
+        "reviewAndAssign": "审核并分配",
+        "rejectRequest": "拒绝申请"
       },
       "toast": {
         "added": "{{name}} 已添加到客户列表。",
@@ -977,7 +987,10 @@
         "archiveError": "无法删除客户。",
         "openingWorkspace": "正在打开 {{name}} 的展位工作区。",
         "defaultClient": "客户",
-        "unassigned": "未分配"
+        "unassigned": "未分配",
+        "approved": "{{client}} 已通过审核并分配给 {{manager}}，初始项目已就绪。",
+        "rejected": "{{client}} 的注册申请已被拒绝。",
+        "rejectError": "无法拒绝该客户注册申请。"
       },
       "addDialog": {
         "title": "添加客户",
@@ -1013,6 +1026,19 @@
         "pm": "PM",
         "exhibition": "展览",
         "status": "状态"
+      },
+      "approveDialog": {
+        "title": "审核并分配客户",
+        "desc": "审核 {{name}}，并选择负责该客户的项目经理。",
+        "result": "审核通过将一次性创建客户项目、展台工作区，以及项目经理和客户的访问权限。",
+        "submit": "通过并创建项目"
+      },
+      "rejectDialog": {
+        "title": "拒绝客户申请",
+        "desc": "拒绝 {{name}}，并记录本次决定的原因。",
+        "reason": "原因",
+        "placeholder": "说明客户再次注册前需要修正的内容。",
+        "submit": "拒绝申请"
       }
     },
     "projects": {
@@ -1565,7 +1591,9 @@
       "messages": "消息",
       "tasks": "任务",
       "reports": "报告",
-      "settings": "设置"
+      "settings": "设置",
+      "quotes": "报价单",
+      "invoices": "发票"
     },
     "common": {
       "noDeadline": "无截止日期",
@@ -2210,7 +2238,9 @@
       "messages": "消息",
       "approvals": "审批",
       "documents": "文件",
-      "profile": "个人资料"
+      "profile": "个人资料",
+      "quotes": "报价单",
+      "invoices": "发票"
     },
     "dashboard": {
       "pageTitle": "仪表板 | ENS",
@@ -2875,6 +2905,217 @@
       "genericError": "出了点问题。请重试。",
       "qrAlt": "用于双重验证设置的二维码",
       "scanHint": "使用你的身份验证器应用扫描"
+    }
+  },
+  "getQuote": {
+    "pageTitle": "获取报价 | ENS",
+    "title": "获取报价",
+    "subtitle": "请告诉我们您的展会和展台需求。我们的团队将在一个工作日内回复。",
+    "fields": {
+      "company": "公司",
+      "name": "您的姓名",
+      "email": "企业邮箱",
+      "phone": "电话",
+      "exhibition": "展会 / 活动",
+      "boothSize": "展台面积",
+      "budget": "预算",
+      "timeline": "时间安排",
+      "message": "项目详情"
+    },
+    "placeholders": {
+      "exhibition": "例如 CES 2027、汉诺威工业博览会",
+      "boothSize": "例如 6 × 3 米",
+      "timeline": "例如 2027 年第一季度",
+      "message": "系统、开放面、必备功能、品牌规范……",
+      "select": "请选择区间"
+    },
+    "validation": {
+      "company": "请输入公司名称。",
+      "name": "请输入您的姓名。",
+      "email": "请输入有效的邮箱地址。"
+    },
+    "submit": "提交需求",
+    "disclaimer": "提交即表示您同意我们的",
+    "privacyLink": "隐私政策",
+    "error": "提交失败，请重试。",
+    "success": {
+      "title": "已收到需求",
+      "body": "感谢您——我们已收到展台需求。团队将进行评估，并在一个工作日内与您联系。",
+      "back": "返回首页"
+    }
+  },
+  "quotes": {
+    "title": "报价单",
+    "subtitle": "基于展台设计生成报价单，并发送给客户确认。",
+    "new": "新建报价",
+    "empty": "暂无报价单。创建第一份报价发送给客户。",
+    "col": {
+      "number": "编号",
+      "title": "标题",
+      "total": "合计",
+      "status": "状态",
+      "actions": "操作"
+    },
+    "status": {
+      "draft": "草稿",
+      "sent": "已发送",
+      "viewed": "已查看",
+      "accepted": "已接受",
+      "rejected": "已拒绝",
+      "expired": "已过期",
+      "revised": "已修订"
+    },
+    "action": {
+      "send": "发送",
+      "delete": "删除"
+    },
+    "toast": {
+      "created": "报价已保存为草稿。",
+      "sent": "报价已发送给客户。"
+    },
+    "form": {
+      "title": "新建报价",
+      "name": "报价标题",
+      "client": "客户",
+      "selectClient": "选择客户",
+      "lineItems": "明细项",
+      "description": "说明",
+      "qty": "数量",
+      "unitPrice": "单价",
+      "addLine": "添加明细",
+      "removeLine": "删除明细",
+      "discount": "折扣",
+      "tax": "税额",
+      "notes": "备注",
+      "subtotal": "小计",
+      "total": "合计",
+      "saveDraft": "保存草稿",
+      "needLine": "请至少添加一条带说明的明细。",
+      "error": "出现问题，请重试。"
+    }
+  },
+  "clientQuotes": {
+    "title": "报价单",
+    "subtitle": "查看代理商为您准备的报价，并选择接受或拒绝。",
+    "empty": "您还没有报价单。",
+    "untitled": "展台报价",
+    "item": "项目",
+    "qty": "数量",
+    "unit": "单价",
+    "lineTotal": "合计",
+    "accept": "接受报价",
+    "decline": "拒绝",
+    "acceptedNote": "您已接受此报价。",
+    "declinedNote": "您已拒绝此报价。",
+    "error": "出现问题，请重试。",
+    "toast": {
+      "accepted": "报价已接受，已通知您的代理商。",
+      "rejected": "报价已拒绝。"
+    }
+  },
+  "pipeline": {
+    "title": "销售管道",
+    "subtitle": "跟踪每个商机，从首次接触到成交。",
+    "openValue": "在谈金额 · {{count}} 个商机",
+    "emptyColumn": "此阶段暂无商机。",
+    "edit": "编辑商机",
+    "moveStage": "移至阶段",
+    "won": "已赢单",
+    "dealValue": "商机金额",
+    "followUp": "下次跟进",
+    "error": "出现问题，请重试。",
+    "toast": {
+      "won": "{{company}} 已标记为赢单并提交客户审批。"
+    },
+    "stage": {
+      "new": "新建",
+      "contacted": "已联系",
+      "qualified": "已确认意向",
+      "proposal": "方案报价",
+      "won": "已赢单",
+      "lost": "已流失"
+    }
+  },
+  "invoices": {
+    "title": "发票",
+    "subtitle": "向客户开具发票、跟踪回款，并将已接受的报价转为账单。",
+    "new": "新建发票",
+    "empty": "暂无发票。可新建，或从已接受的报价生成。",
+    "col": {
+      "number": "编号",
+      "title": "标题",
+      "total": "合计",
+      "due": "到期日",
+      "status": "状态",
+      "actions": "操作"
+    },
+    "status": {
+      "draft": "草稿",
+      "open": "待付款",
+      "paid": "已付款",
+      "void": "已作废",
+      "uncollectible": "无法收回"
+    },
+    "action": {
+      "issue": "开具",
+      "markPaid": "标记已付",
+      "void": "作废",
+      "delete": "删除"
+    },
+    "toast": {
+      "created": "发票已保存为草稿。",
+      "sent": "发票已开具给客户。",
+      "paid": "已记录付款。",
+      "voided": "发票已作废。",
+      "deleted": "草稿发票已删除。"
+    },
+    "form": {
+      "title": "新建发票",
+      "name": "发票标题",
+      "client": "客户",
+      "selectClient": "选择客户",
+      "fromQuote": "从已接受的报价创建",
+      "fromQuoteNone": "— 从空白开始 —",
+      "fromQuoteHint": "明细与合计将从所选报价复制。",
+      "untitled": "未命名报价",
+      "lineItems": "明细项",
+      "description": "说明",
+      "qty": "数量",
+      "unitPrice": "单价",
+      "addLine": "添加明细",
+      "removeLine": "删除明细",
+      "discount": "折扣",
+      "tax": "税额",
+      "due": "到期日",
+      "notes": "备注",
+      "subtotal": "小计",
+      "total": "合计",
+      "saveDraft": "保存草稿",
+      "needLine": "请至少添加一条带说明的明细。",
+      "error": "出现问题，请重试。"
+    }
+  },
+  "clientInvoices": {
+    "title": "发票",
+    "subtitle": "查看代理商开具的发票，并跟踪付款情况。",
+    "empty": "您还没有发票。",
+    "untitled": "发票",
+    "overdue": "已逾期",
+    "item": "项目",
+    "qty": "数量",
+    "unit": "单价",
+    "lineTotal": "合计",
+    "issued": "开具日期",
+    "due": "到期日",
+    "paidOn": "付款日期",
+    "payNote": "如需安排付款，请联系您的项目经理。"
+  },
+  "workspace": {
+    "desktopOnly": {
+      "title": "展台编辑器需要更大的屏幕",
+      "body": "3D 编辑器是为鼠标和宽屏设计的——拖放家具、框选以及属性面板都需要足够的空间。与其给您一个无法使用的界面，我们更愿意先说明这一点。",
+      "requirement": "需要至少 {{width}} 像素宽的视口。笔记本或台式机均可；横屏平板也可以。",
+      "back": "返回仪表板"
     }
   }
 }
