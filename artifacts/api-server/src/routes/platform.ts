@@ -824,90 +824,9 @@ router.delete(
   },
 );
 
-interface ServerExhibition {
-  id: string;
-  name: string;
-  venue?: string;
-  city?: string;
-  startDate?: string | null;
-  endDate?: string | null;
-  status: "Draft" | "Active" | "Closed";
-  createdAt: string;
-}
-
-const tenantExhibitionsStore = new Map<string, ServerExhibition[]>();
-
-router.get(
-  "/platform/exhibitions",
-  requireRoles(["admin", "owner", "chief", "pm", "client"]),
-  async (req, res) => {
-    const organization = req.tenant!;
-    const stored = tenantExhibitionsStore.get(organization.id) || [];
-    const projectsList = await getProjects(organization.id, 500, req.auth!);
-    const projectExhibitions = Array.from(
-      new Set(projectsList.map((p) => p.exhibition || p.name).filter(Boolean)),
-    );
-
-    const existingNames = new Set(stored.map((e) => e.name));
-    const combined = [...stored];
-    for (const name of projectExhibitions) {
-      if (!existingNames.has(name)) {
-        combined.push({
-          id: `exhibition-${name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
-          name,
-          status: "Active",
-          createdAt: new Date().toISOString(),
-        });
-        existingNames.add(name);
-      }
-    }
-
-    res.json({ exhibitions: combined });
-  },
-);
-
-router.post(
-  "/platform/exhibitions",
-  requireRoles(["admin", "owner", "chief", "pm"]),
-  async (req, res) => {
-    const organization = req.tenant!;
-    const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
-
-    if (!name) {
-      res.status(400).json({ error: "Exhibition name is required" });
-      return;
-    }
-
-    const venue =
-      typeof req.body?.venue === "string" ? req.body.venue.trim() : "";
-    const city = typeof req.body?.city === "string" ? req.body.city.trim() : "";
-    const startDate =
-      typeof req.body?.startDate === "string" ? req.body.startDate : null;
-    const endDate =
-      typeof req.body?.endDate === "string" ? req.body.endDate : null;
-    const status =
-      req.body?.status === "Draft" || req.body?.status === "Closed"
-        ? req.body.status
-        : "Active";
-
-    const currentList = tenantExhibitionsStore.get(organization.id) || [];
-    const newEx: ServerExhibition = {
-      id: `exhibition-${Date.now()}`,
-      name,
-      venue,
-      city,
-      startDate,
-      endDate,
-      status,
-      createdAt: new Date().toISOString(),
-    };
-
-    const updatedList = [newEx, ...currentList.filter((e) => e.name !== name)];
-    tenantExhibitionsStore.set(organization.id, updatedList);
-
-    res.json({ exhibition: newEx, exhibitions: updatedList });
-  },
-);
+// Exhibitions moved to routes/exhibitions.ts, backed by the `exhibitions`
+// table. The previous implementation kept them in a per-process Map, so any
+// show created here was lost on restart and invisible to other instances.
 
 router.get(
   "/platform/clients",

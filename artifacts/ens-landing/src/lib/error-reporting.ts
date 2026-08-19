@@ -6,10 +6,10 @@
  * never reach a boundary — event handlers, async callbacks, rejected promises
  * — were not captured at all.
  *
- * Like the API-side module, this is a seam rather than a vendor integration.
- * Point `VITE_ERROR_REPORT_URL` at a collector to start delivering; with
- * nothing configured it logs and no-ops, which is the current behaviour made
- * explicit.
+ * Delivery defaults to the first-party collector (`/client-errors` on the API,
+ * derived from `VITE_API_BASE_URL`), so browser crashes reach the team's logs
+ * with no external monitoring vendor. Set `VITE_ERROR_REPORT_URL` to override
+ * the destination (e.g. a Sentry ingest URL).
  *
  * Constraints, because monitoring must never make a bad page worse:
  *
@@ -21,7 +21,15 @@
  *   - Rate limited, so a render loop cannot flood the collector.
  */
 
-const REPORT_URL = import.meta.env.VITE_ERROR_REPORT_URL as string | undefined;
+const EXPLICIT_REPORT_URL = import.meta.env.VITE_ERROR_REPORT_URL as string | undefined;
+const API_BASE_URL = (
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "http://localhost:5000/api"
+).replace(/\/+$/, "");
+// Default to the app's own collector; an explicit env var overrides it.
+const REPORT_URL =
+  EXPLICIT_REPORT_URL && EXPLICIT_REPORT_URL.length > 0
+    ? EXPLICIT_REPORT_URL
+    : `${API_BASE_URL}/client-errors`;
 
 /** Maximum reports per page load. A render loop can produce thousands. */
 const MAX_REPORTS_PER_SESSION = 20;
