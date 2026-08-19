@@ -301,7 +301,25 @@ let FASCIA_COLOR = _P.get('fasciaColor') || '#ffffff';
 let placedItems = [];
 let rooms = [];
 let FASCIA_ENABLED = _P.get('fascia') !== '0';
-let FASCIA_OPTION = 'full';
+// Read from the query string like every other render setting, so the option
+// can be previewed and tested standalone; postMessage still overrides it.
+let FASCIA_OPTION = (function () {
+  const v = String(_P.get('fasciaOption') || '').toLowerCase();
+  return (v === 'classic' || v === 'full' || v === 'custom') ? v : 'full';
+})();
+/**
+ * Width in metres of the centred ("classic") fascia sign.
+ *
+ * Zero means "derive from the stand": 38% of the stand width, clamped to
+ * 2.15-3.4 m. Set FASCIA_SIGN_WIDTH_M (via the fasciaSignWidthM message field)
+ * to pin an exact width, e.g. 2 for a 2 m sign. The 'full' option ignores this
+ * and spans the whole rail.
+ */
+let FASCIA_SIGN_WIDTH_M = parseFloat(_P.get('fasciaSignWidthM') || '0') || 0;
+function fasciaSignWidthM(standWidth) {
+  if (FASCIA_SIGN_WIDTH_M > 0) return Math.max(0.4, Math.min(FASCIA_SIGN_WIDTH_M, standWidth));
+  return Math.min(Math.max(standWidth * 0.38, 2.15), 3.4);
+}
 let LIGHTING_PRESET = 'exhibition';
 let pins = [];
 let pinMode = false;
@@ -2018,17 +2036,58 @@ function drawCatalogDropPreview() {
 // Global flag set during drag so the SVG renderer can highlight collisions.
 let dragHasCollision = false;
 
+/**
+ * Fascia assembly, ported from the ENS reference renderer
+ * (booth_designer_pro/app/static/workspace/engine/booth_render_core.js —
+ * getSystemProfile + addOpenSideFascia).
+ *
+ * ENS builds the fascia as three stacked parts rather than one thick board:
+ *
+ *      top rail     0.07   (0.09 maxima)
+ *      MDF body     0.11   (0.145)
+ *      bottom rail  0.07   (0.09)
+ *                          = 0.25 total (0.325 maxima)
+ *
+ * and mounts the sign as a separate plate standing proud of the body:
+ *
+ *   plateOffset = railD/2 + frameBump + bodyD/2 + signT/2 + signGap
+ *
+ * The stack is scaled to the configured fascia height (FH) so an existing
+ * stand keeps its overall dimensions.
+ */
+const ENS_FASCIA = {
+  octanorm: { railH: 0.07, railD: 0.02, bodyH: 0.11,  bodyD: 0.006, bump: 0.02,  signGap: 0.012, signScale: 0.44, signMax: 2.8, signH: 0.30 },
+  maxima:   { railH: 0.09, railD: 0.05, bodyH: 0.145, bodyD: 0.018, bump: 0.016, signGap: 0.016, signScale: 0.54, signMax: 3.2, signH: 0.38 },
+};
+const ENS_SIGN_THICKNESS = 0.018;
+
+function ensFasciaProfile() {
+  const b = ENS_FASCIA[columnStyle === 'maxima' ? 'maxima' : 'octanorm'];
+  const k = FH / (b.railH * 2 + b.bodyH);   // scale reference stack to FH
+  return {
+    railH: b.railH * k, bodyH: b.bodyH * k,
+    // ENS mounts a 0.30 sign on a 0.25 band (1.2x, overhanging). Our FH is
+    // already 0.30 by default, so the reference height is used unscaled and
+    // capped to the band: the plate reads as fitted rather than oversized.
+    signH: Math.min(b.signH, FH),
+    railD: b.railD, bodyD: b.bodyD, bump: b.bump,
+    signGap: b.signGap, signScale: b.signScale, signMax: b.signMax,
+    signT: ENS_SIGN_THICKNESS,
+  };
+}
+
 function buildFascia() {
   if (!FASCIA_ENABLED) return;
+  const P = ensFasciaProfile();
   const assemblyTop = BH + FH;
-  const railH = 0.045;
-  const boardH = FASCIA_OPTION === 'custom' ? Math.max(0.26, FH - railH) : Math.max(0.24, FH - railH);
-  const yB = Math.max(BH, assemblyTop - boardH - railH * 0.35);
-  const yT = Math.min(assemblyTop - railH * 0.25, yB + boardH);
+  const railH = P.railH;
+  const boardH = P.bodyH;
+  const yB = BH + railH;                 // MDF body sits between the two rails
+  const yT = yB + boardH;
   const boardFill = 'url(#fascia)';
   const fasciaMeta = FASCIA_OPTION === 'full' ? 'Full wrap mounted fascia board' : (FASCIA_OPTION === 'custom' ? 'Custom mounted fascia board' : 'Mounted fascia board');
-  const boardDepth = FASCIA_OPTION === 'custom' ? 0.038 : 0.032;
-  const rail = 0.036;
+  const boardDepth = P.bodyD;
+  const rail = P.railD;
   const offset = EX * 0.5;
 
   function getFasciaOverride(side) {
@@ -2113,16 +2172,50 @@ function buildFascia() {
     });
   }
 
+  /**
+   * Sign board geometry, matching the ENS reference renderer
+   * (booth_render_core.js -> addOpenSideFascia).
+   *
+   * The board is a real mounted plate that stands proud of the fascia body,
+   * not a rectangle painted onto it. Reference offsets:
+   *   plateOffset = railT/2 + frameBump + mdfT/2 + signT/2 + signGap ~= 54 mm
+   * with an 18 mm thick board. Ours previously stood only 4 mm proud, which
+   * read as an inset panel rather than a fitted board.
+   *
+   * `span` is the length of the rail this board is mounted on.
+   */
+  function signBoardGeometry(span) {
+    const full = FASCIA_OPTION === 'full';
+    const width = full
+      ? Math.max(0.6, span - 0.04)
+      : (FASCIA_SIGN_WIDTH_M > 0
+          ? Math.max(0.4, Math.min(FASCIA_SIGN_WIDTH_M, span - 0.04))
+          : Math.min(Math.max(span * P.signScale, 1.8), Math.min(P.signMax, Math.max(0.6, span - 0.2))));
+    // Taller than the old plate so it reads as a fitted board, still inside
+    // the fascia assembly so the booth silhouette is unchanged.
+    // Reference plate is taller than the MDF body and overhangs it.
+    const height = P.signH;
+    const plateOffset = P.railD / 2 + P.bump + P.bodyD / 2 + P.signT / 2 + P.signGap;
+    return {
+      width,
+      height,
+      near: plateOffset - P.signT / 2,
+      far: plateOffset + P.signT / 2,
+      textGap: plateOffset + P.signT / 2 + P.signGap,
+    };
+  }
+
   function addFrontBackNamePlate(side, exteriorZ, outward) {
     if (!hasMountedNamePlate(side)) return;
-    const signW = Math.min(Math.max(BW * 0.38, 2.15), Math.max(2.15, BW - 1.55));
-    const signH = Math.min(Math.max(boardH * 0.52, 0.145), boardH - 0.115);
+    const geo = signBoardGeometry(BW);
+    const signW = geo.width;
+    const signH = geo.height;
     const x0 = -signW / 2;
     const x1 = signW / 2;
-    const y0 = yB + (boardH - signH) * 0.50;
+    const y0 = BH + (FH - signH) * 0.50;   // centred on the whole assembly
     const y1 = y0 + signH;
-    const z0 = exteriorZ + outward * 0.004;
-    const z1 = exteriorZ + outward * 0.024;
+    const z0 = exteriorZ + outward * geo.near;
+    const z1 = exteriorZ + outward * geo.far;
     pushBox([x0, y0, Math.min(z0, z1)], [x1, y1, Math.max(z0, z1)], {
       fill: '#fbfcfd',
       isFascia: side,
@@ -2132,21 +2225,22 @@ function buildFascia() {
       softEdge: true,
       renderOrder: 0.64
     });
-    const faceZ = exteriorZ + outward * 0.028;
+    const faceZ = exteriorZ + outward * geo.textGap;
     addSignFace([[x0,y0,faceZ],[x1,y0,faceZ],[x1,y1,faceZ],[x0,y1,faceZ]], [0,0,outward], side);
   }
 
   function addSideNamePlate(side, exteriorX, outward) {
     if (!hasMountedNamePlate(side)) return;
     const usableDepth = Math.max(0.8, BD - offset * 2);
-    const signW = Math.min(Math.max(usableDepth * 0.52, 1.15), Math.max(1.15, usableDepth - 0.34));
-    const signH = Math.min(Math.max(boardH * 0.52, 0.145), boardH - 0.115);
+    const geo = signBoardGeometry(usableDepth);
+    const signW = geo.width;
+    const signH = geo.height;
     const z0 = BD * 0.5 - signW * 0.5;
     const z1 = BD * 0.5 + signW * 0.5;
-    const y0 = yB + (boardH - signH) * 0.50;
+    const y0 = BH + (FH - signH) * 0.50;   // centred on the whole assembly
     const y1 = y0 + signH;
-    const x0 = exteriorX + outward * 0.004;
-    const x1 = exteriorX + outward * 0.024;
+    const x0 = exteriorX + outward * geo.near;
+    const x1 = exteriorX + outward * geo.far;
     pushBox([Math.min(x0, x1), y0, z0], [Math.max(x0, x1), y1, z1], {
       fill: '#fbfcfd',
       isFascia: side,
@@ -2156,7 +2250,7 @@ function buildFascia() {
       softEdge: true,
       renderOrder: 0.64
     });
-    const faceX = exteriorX + outward * 0.028;
+    const faceX = exteriorX + outward * geo.textGap;
     addSignFace([[faceX,y0,z0],[faceX,y0,z1],[faceX,y1,z1],[faceX,y1,z0]], [outward,0,0], side);
   }
 
@@ -2695,19 +2789,49 @@ function renderBooth() {
           container.appendChild(t);
         };
 
-        const addCenteredNamePlate = (plateW, plateFill, plateStroke, textColor) => {
+        /**
+         * Sign plate on a fascia board.
+         *
+         * `plateW` is the sign width in METRES and is honoured — it used to be
+         * accepted and then ignored, which is why the "Standard" and "Full
+         * length" fascia options rendered identically despite a price
+         * difference.
+         *
+         * fullBleed (the "full" option) draws no plate outline at all: the
+         * fascia board is already the white band, so the sign is simply large
+         * centred type running the length of the rail. Adding an inset
+         * rectangle on top of it is what produced the "rail inside a rail"
+         * look.
+         */
+        const addCenteredNamePlate = (plateW, plateFill, plateStroke, textColor, opts) => {
+          const fullBleed = !!(opts && opts.fullBleed);
           const faceWm = Math.hypot(face.pts[1][0] - face.pts[0][0], face.pts[1][2] - face.pts[0][2]);
-          addPoly([uvP(0.018,0.08), uvP(0.982,0.08), uvP(0.982,0.92), uvP(0.018,0.92)], 'rgba(255,255,255,0)', null, plateStroke || '#c7ccd4', 1.25);
-          addPoly([uvP(0.025,0.84), uvP(0.975,0.84), uvP(0.975,0.90), uvP(0.025,0.90)], 'rgba(255,255,255,0.42)', 0.8);
-          addPoly([uvP(0.025,0.10), uvP(0.975,0.10), uvP(0.975,0.15), uvP(0.025,0.15)], 'rgba(120,128,138,0.10)', 0.75);
           const label = String(face.signLabel || COMPANY_NAME || 'Company Name').slice(0, 40);
+
+          // Horizontal half-extent of the sign, as a fraction of this face.
+          const requestedW = Number(plateW) > 0 ? Number(plateW) : faceWm;
+          const halfU = fullBleed
+            ? 0.5
+            : Math.max(0.06, Math.min(0.49, requestedW / Math.max(0.001, faceWm) / 2));
+          const u0 = 0.5 - halfU, u1 = 0.5 + halfU;
+          const widthU = u1 - u0;
+
+          if (!fullBleed) {
+            addPoly([uvP(u0,0.08), uvP(u1,0.08), uvP(u1,0.92), uvP(u0,0.92)],
+                    plateFill || 'rgba(255,255,255,0)', null, plateStroke || '#c7ccd4', 1.25);
+          }
+
           const scale = Math.max(0.08, Math.min(0.45, Number(face.signScale) || 0.2));
-          const fs = Math.max(9, Math.min(28, screenH * Math.max(0.52, scale * 3.1), screenW/Math.max(5,label.length)*1.65, faceWm * 16));
+          const fs = fullBleed
+            ? Math.max(10, Math.min(44, screenH * 0.60, (screenW * widthU) / Math.max(5, label.length) * 1.85))
+            : Math.max(9, Math.min(28, screenH * Math.max(0.52, scale * 3.1),
+                                   (screenW * widthU) / Math.max(5, label.length) * 1.65, faceWm * 16));
           addText(pM.x, pM.y + fs*0.34, label, fs.toFixed(1), face.signColor || textColor || '#4b5563');
         };
 
         if (FASCIA_OPTION === 'classic') {
-          addCenteredNamePlate(Math.min(Math.max(BW * 0.38, 2.15), 3.4), '#fbfcfd', '#c7ccd4', '#4b5563');
+          // Centred plate at a real width: 38% of the stand, clamped to 2.15-3.4 m.
+          addCenteredNamePlate(fasciaSignWidthM(BW), '#fbfcfd', '#c7ccd4', '#4b5563');
 
         } else if (FASCIA_OPTION === 'custom') {
           // Custom: oval / stadium-shaped sign plate (Movetech-style)
@@ -2741,7 +2865,8 @@ function renderBooth() {
           addText(pM.x, pM.y + fs*0.36, label, fs.toFixed(1), face.signColor || '#14213d');
 
         } else {
-          addCenteredNamePlate(Math.min(Math.max(BW * 0.38, 2.15), 3.4), '#fbfcfd', '#c7ccd4', '#4b5563');
+          // 'full' — edge-to-edge band, no inset plate, large centred type.
+          addCenteredNamePlate(BW, null, null, '#23262c', { fullBleed: true });
         }
       }
     }
@@ -3516,6 +3641,7 @@ window.addEventListener('message', (e) => {
   if (d.rooms != null) rooms = Array.isArray(d.rooms) ? d.rooms : [];
   if (d.fasciaEnabled != null) FASCIA_ENABLED = d.fasciaEnabled !== false;
   if (d.fasciaOption != null) FASCIA_OPTION = String(d.fasciaOption || 'classic');
+  if (d.fasciaSignWidthM != null) FASCIA_SIGN_WIDTH_M = Math.max(0, parseFloat(d.fasciaSignWidthM) || 0);
   if (d.lightingPreset != null) {
     LIGHTING_PRESET = String(d.lightingPreset || 'exhibition');
     applyLightingPreset();
