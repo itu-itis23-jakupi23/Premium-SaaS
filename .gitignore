@@ -62,3 +62,5 @@ Thumbs.db
 .cache/
 .local/
 .release-evidence/
+artifacts/ens-landing/.dev-data-backup-*/
+backups/pg-*.sql
