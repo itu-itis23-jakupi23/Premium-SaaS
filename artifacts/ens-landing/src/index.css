@@ -567,6 +567,21 @@ html[data-compact="true"] .py-6 {
   z-index: 1;
 }
 
+/*
+ * Overlays that belong to a landing page but render outside it.
+ *
+ * The rule above lifts landing content above the fixed ::before frame, and it
+ * beats Tailwind's positioning utilities on specificity. A fixed overlay
+ * rendered as a direct child is therefore silently stripped of its positioning
+ * — which is what broke the mobile nav drawer. Such overlays are portalled to
+ * <body> instead, and pick up the landing design language through this class
+ * rather than by being inside the subtree.
+ */
+.ens-landing-overlay button.rounded-full,
+.ens-landing-overlay a.rounded-full {
+  border-radius: 2px !important;
+}
+
 .ens-platform-landing > header {
   position: fixed;
   z-index: 50;

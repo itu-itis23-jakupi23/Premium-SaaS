@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { ENSLogo } from '@/components/ENSLogo';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
@@ -194,7 +195,26 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Mobile Navigation Drawer ── */}
+      {/*
+        Mobile navigation drawer.
+
+        Portalled to <body> on purpose. `.ens-platform-landing::before` paints a
+        fixed decorative frame at z-index 0, and
+        `.ens-platform-landing > :not(header)` lifts every content section above
+        it with `position: relative; z-index: 1`. That selector has specificity
+        0,1,1 and so beat Tailwind's `.fixed` (0,1,0) on this drawer: it lost
+        fixed positioning, `h-full` collapsed against a zero-height parent, and
+        the panel rendered as an unstyled transparent overlay the hero
+        intercepted taps through. Mobile navigation was unusable.
+
+        Rendering outside `.ens-platform-landing` makes the drawer structurally
+        immune to that rule and to any future selector added under it, and
+        matches how every other overlay here already behaves — Radix dialogs,
+        toasts, popovers and tooltips all portal to body. The
+        `ens-landing-overlay` class carries over the one landing style the
+        drawer still needs (square button corners); see index.css.
+      */}
+      {typeof document !== 'undefined' && createPortal(
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
@@ -202,7 +222,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 md:hidden"
+            className="ens-landing-overlay fixed inset-0 z-40 md:hidden"
           >
             <div aria-hidden="true" className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
             <motion.div
@@ -259,7 +279,8 @@ export default function Home() {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body)}
 
       {/* Hero Section */}
       <section className="ens-landing-hero ens-landing-hero-client relative pt-40 pb-0 md:pt-52 overflow-hidden">
