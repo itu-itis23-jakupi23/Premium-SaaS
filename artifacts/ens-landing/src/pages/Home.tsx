@@ -325,7 +325,7 @@ export default function Home() {
 
       {/* Hero Stats (floating) — illustrative, not live data (CS-09) */}
       <div className="container mx-auto px-6 mb-20 relative z-20">
-        <p className="text-center text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-3" data-testid="label-hero-stats-illustrative">
+        <p className="text-center text-[10px] uppercase tracking-widest text-muted-foreground mb-3" data-testid="label-hero-stats-illustrative">
           {t('home.stats.illustrative')}
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -358,7 +358,7 @@ export default function Home() {
       {/* ── Capabilities Strip ─────────────────────────────────── */}
       <div className="container mx-auto px-6 mb-8 relative z-20">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 py-6 border-y border-border/30">
-          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 flex-shrink-0">
+          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex-shrink-0">
             {t('home.trustedBy')}
           </span>
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
@@ -370,7 +370,7 @@ export default function Home() {
               t('home.capabilityItems.approvals'),
               t('home.capabilityItems.languages'),
             ].map((name) => (
-              <span key={name} className="text-sm font-bold text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors tracking-wide whitespace-nowrap">
+              <span key={name} className="text-sm font-bold text-muted-foreground hover:text-muted-foreground transition-colors tracking-wide whitespace-nowrap">
                 {name}
               </span>
             ))}
@@ -645,7 +645,7 @@ export default function Home() {
                 <ul className="space-y-3 flex-1">
                   {item.points.map((point, j) => (
                     <li key={j} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-primary/60 flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
                       {point}
                     </li>
                   ))}
@@ -675,7 +675,7 @@ export default function Home() {
             <p className="text-muted-foreground">
               {t('home.showcase.subheading')}
             </p>
-            <p className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground/60" data-testid="label-showcase-illustrative">
+            <p className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground" data-testid="label-showcase-illustrative">
               {t('home.showcase.illustrative')}
             </p>
           </motion.div>
@@ -879,7 +879,7 @@ export default function Home() {
 
             {/* Platform — anchors to real sections of this page */}
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('home.footer.platform')}</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">{t('home.footer.platform')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 {[
                   { label: t('nav.features'), id: 'features' },
@@ -898,7 +898,7 @@ export default function Home() {
 
             {/* Legal — routed documents */}
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('home.footer.legal')}</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">{t('home.footer.legal')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 {[
                   { label: t('home.footer.privacy'), slug: 'privacy' },
@@ -916,7 +916,7 @@ export default function Home() {
 
             {/* Support */}
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('home.footer.support')}</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">{t('home.footer.support')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 <li>
                   <a href={SALES_CONTACT_HREF} className="hover:text-foreground transition-colors">{t('home.footer.contact')}</a>

@@ -124,13 +124,13 @@ function HeroDashboardPreview() {
             <div className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
           </div>
           <div className="flex-1 flex justify-center">
-            <div className="text-[11px] font-mono text-muted-foreground/60 bg-background/40 px-3 py-0.5 rounded border border-border/30">
+            <div className="text-[11px] font-mono text-muted-foreground bg-background/40 px-3 py-0.5 rounded border border-border/30">
               ens.io / chief / dashboard
             </div>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-[10px] text-muted-foreground/60">Live</span>
+            <span className="text-[10px] text-muted-foreground">Live</span>
           </div>
         </div>
 
@@ -147,7 +147,7 @@ function HeroDashboardPreview() {
             ].map((item, i) => (
               <div key={i}
                 className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium
-                  ${item.active ? 'bg-primary/12 text-primary' : 'text-muted-foreground/60'}`}>
+                  ${item.active ? 'bg-primary/12 text-primary' : 'text-muted-foreground'}`}>
                 <item.icon className="w-3 h-3 flex-shrink-0" />
                 {item.label}
               </div>
@@ -155,7 +155,7 @@ function HeroDashboardPreview() {
           </div>
           {/* Main */}
           <div className="flex-1 p-4 overflow-hidden">
-            <div className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest mb-3">Overview</div>
+            <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Overview</div>
             <div className="grid grid-cols-3 gap-2.5 mb-4">
               {[
                 { label: 'Active Projects', val: '12', change: '+2', color: 'text-primary',     bg: 'bg-primary/8'      },
@@ -163,21 +163,21 @@ function HeroDashboardPreview() {
                 { label: 'Active PMs',      val: '7',  change: '0',  color: 'text-blue-400',    bg: 'bg-blue-500/8'    },
               ].map((c, i) => (
                 <div key={i} className={`rounded-xl border border-border/40 p-2.5 ${c.bg}`}>
-                  <div className="text-[9px] text-muted-foreground/60 mb-1">{c.label}</div>
+                  <div className="text-[9px] text-muted-foreground mb-1">{c.label}</div>
                   <div className={`text-xl font-black leading-none ${c.color}`}>{c.val}</div>
-                  <div className="text-[9px] text-muted-foreground/50 mt-0.5">
+                  <div className="text-[9px] text-muted-foreground mt-0.5">
                     <span className={c.change.startsWith('+') ? 'text-green-400' : c.change.startsWith('-') ? 'text-red-400' : ''}>{c.change}</span> this week
                   </div>
                 </div>
               ))}
             </div>
-            <div className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-widest mb-2">Active Projects</div>
+            <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Active Projects</div>
             <div className="space-y-1.5">
               {projects.map((p, i) => (
                 <div key={i} className="flex items-center gap-2.5 bg-muted/15 rounded-lg px-3 py-1.5 border border-border/20">
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] font-semibold truncate">{p.name}</div>
-                    <div className="text-[9px] text-muted-foreground/50">PM: {p.pm}</div>
+                    <div className="text-[9px] text-muted-foreground">PM: {p.pm}</div>
                   </div>
                   <div className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${p.badge}`}>{p.status}</div>
                   <div className="w-14 h-1 bg-muted rounded-full overflow-hidden flex-shrink-0">
@@ -382,7 +382,7 @@ export default function TeamLanding() {
                     <h3 className="text-2xl font-black">{t('team.roles.chiefTitle')}</h3>
                   </div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-primary/60 group-hover:text-primary group-hover:translate-x-1 transition-all mt-1" />
+                <ArrowRight className="w-5 h-5 text-primary group-hover:text-primary group-hover:translate-x-1 transition-all mt-1" />
               </div>
 
               <p className="text-muted-foreground mb-8 leading-relaxed">
@@ -619,7 +619,7 @@ export default function TeamLanding() {
                           />
                         ))}
                       </div>
-                      <div className="text-[10px] text-muted-foreground/60 mt-1">Design sessions — last 10 days</div>
+                      <div className="text-[10px] text-muted-foreground mt-1">Design sessions — last 10 days</div>
                     </div>
                   </div>
                 </motion.div>
@@ -705,7 +705,7 @@ export default function TeamLanding() {
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${ROLE_BADGE[step.role]}`}>
                     <step.icon className="w-5 h-5" />
                   </div>
-                  <div className="text-[10px] font-bold text-muted-foreground/50">{String(i + 1).padStart(2, '0')}</div>
+                  <div className="text-[10px] font-bold text-muted-foreground">{String(i + 1).padStart(2, '0')}</div>
                 </div>
                 <div className="flex-1 min-w-0 pt-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -780,7 +780,7 @@ export default function TeamLanding() {
             </div>
 
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-primary/60 mb-4">{t('team.footer.chiefManager')}</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-4">{t('team.footer.chiefManager')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 {[t('team.footer.dashboard'), t('team.footer.wsMonitor'), t('team.footer.teamMgmt'), t('team.footer.clientPortfolio'), t('team.footer.reports'), t('team.footer.settings')].map(l => (
                   <li key={l}><button onClick={() => navigate('/login?returnTo=%2Fchief')} className="hover:text-foreground transition-colors text-left">{l}</button></li>
@@ -798,7 +798,7 @@ export default function TeamLanding() {
             </div>
 
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('team.footer.resources')}</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">{t('team.footer.resources')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 {[
                   { label: t('team.footer.docs'), href: 'mailto:it@ens.io?subject=Documentation%20access' },
@@ -820,7 +820,7 @@ export default function TeamLanding() {
           <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <span className="text-xs text-muted-foreground">{t('common.copyright', { year: new Date().getFullYear() })}</span>
-              <span className="text-xs text-muted-foreground/40">{t('common.internalOnly')}</span>
+              <span className="text-xs text-muted-foreground">{t('common.internalOnly')}</span>
             </div>
             <div className="flex gap-6 text-xs text-muted-foreground">
               <a href="/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">{t('team.footer.privacy')}</a>

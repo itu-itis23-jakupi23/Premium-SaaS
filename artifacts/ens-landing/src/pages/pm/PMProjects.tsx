@@ -968,7 +968,7 @@ function ProjectKanban({ projects, isLoading, locale, stageBusy, onDetails, onSt
             })}
 
             {!isLoading && !cards.length && (
-              <div className="rounded-lg border-2 border-dashed border-border/30 py-8 text-center text-[10px] text-muted-foreground/60">
+              <div className="rounded-lg border-2 border-dashed border-border/30 py-8 text-center text-[10px] text-muted-foreground">
                 {t("pm.projects.kanban.empty")}
               </div>
             )}

@@ -192,7 +192,7 @@ export function StaffGateway({ children }: { children: ReactNode }) {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="space-y-1.5">
-                <Label htmlFor="access-code" className="text-foreground/80 text-xs font-semibold uppercase tracking-wider">Access Code</Label>
+                <Label htmlFor="access-code" className="text-foreground text-xs font-semibold uppercase tracking-wider">Access Code</Label>
                 <div className="relative">
                   <Input
                     ref={inputRef}
@@ -204,7 +204,7 @@ export function StaffGateway({ children }: { children: ReactNode }) {
                     disabled={isLocked}
                     autoComplete="off"
                     spellCheck={false}
-                    className="pr-10 bg-background/50 border-border/60 focus:border-primary/50 focus:ring-primary/20 placeholder:text-muted-foreground/50"
+                    className="pr-10 bg-background/50 border-border/60 focus:border-primary/50 focus:ring-primary/20 placeholder:text-muted-foreground"
                   />
                   <button
                     type="button"

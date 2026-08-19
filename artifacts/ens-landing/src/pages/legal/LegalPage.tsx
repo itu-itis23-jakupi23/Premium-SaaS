@@ -93,7 +93,7 @@ export default function LegalPage({ slug }: { slug: string }) {
         </div>
 
         <nav className="mt-16 pt-8 border-t border-border/50">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">
             Other legal documents
           </p>
           <ul className="flex flex-wrap gap-x-6 gap-y-2">

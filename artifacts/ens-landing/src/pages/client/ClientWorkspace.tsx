@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { CurrencySwitcher, useCurrency } from "@/lib/currency";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
@@ -107,6 +108,12 @@ export default function ClientWorkspace() {
   const [showVersions, setShowVersions] = useState(false);
   const [showChangeDlg, setShowChangeDlg] = useState(false);
   const [showSubscriptionDlg, setShowSubscriptionDlg] = useState(false);
+  // Both dialogs declare aria-modal; without a trap that claim is false for
+  // keyboard users, who can tab back into the page behind them.
+  const changeDlgRef = useRef<HTMLDivElement>(null);
+  const subscriptionDlgRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(changeDlgRef, showChangeDlg, () => setShowChangeDlg(false));
+  useFocusTrap(subscriptionDlgRef, showSubscriptionDlg, () => setShowSubscriptionDlg(false));
   const [changeText, setChangeText] = useState("");
   const [approved, setApproved] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
@@ -2325,6 +2332,7 @@ export default function ClientWorkspace() {
             aria-hidden="true"
           />
           <div
+            ref={changeDlgRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="change-dlg-title"
@@ -2445,6 +2453,7 @@ export default function ClientWorkspace() {
             aria-hidden="true"
           />
           <div
+            ref={subscriptionDlgRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="subscription-dlg-title"

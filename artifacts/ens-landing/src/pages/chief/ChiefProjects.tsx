@@ -738,21 +738,21 @@ export default function ChiefProjects() {
             })}
             <div className="ml-auto flex items-center gap-5">
               <div className="flex items-center gap-1.5">
-                <AlertCircle className={cn("h-3.5 w-3.5 shrink-0", urgentCount ? "text-red-500" : "text-muted-foreground/30")} aria-hidden="true" />
-                <span className={cn("text-[11px] font-semibold tabular-nums", urgentCount ? "text-red-500" : "text-muted-foreground/50")}>{urgentCount}</span>
-                <span className="text-[11px] text-muted-foreground/60">{t("chief.projects.metric.highRisk")}</span>
+                <AlertCircle className={cn("h-3.5 w-3.5 shrink-0", urgentCount ? "text-red-500" : "text-muted-foreground")} aria-hidden="true" />
+                <span className={cn("text-[11px] font-semibold tabular-nums", urgentCount ? "text-red-500" : "text-muted-foreground")}>{urgentCount}</span>
+                <span className="text-[11px] text-muted-foreground">{t("chief.projects.metric.highRisk")}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className={cn("text-[11px] font-semibold tabular-nums", waitingCount ? "text-amber-500" : "text-muted-foreground/50")}>{waitingCount}</span>
-                <span className="text-[11px] text-muted-foreground/60">{t("chief.projects.metric.waiting")}</span>
+                <span className={cn("text-[11px] font-semibold tabular-nums", waitingCount ? "text-amber-500" : "text-muted-foreground")}>{waitingCount}</span>
+                <span className="text-[11px] text-muted-foreground">{t("chief.projects.metric.waiting")}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className={cn("text-[11px] font-semibold tabular-nums", statusCounts.Delayed ? "text-orange-500" : "text-muted-foreground/50")}>{statusCounts.Delayed}</span>
-                <span className="text-[11px] text-muted-foreground/60">{t("chief.projects.metric.delayed")}</span>
+                <span className={cn("text-[11px] font-semibold tabular-nums", statusCounts.Delayed ? "text-orange-500" : "text-muted-foreground")}>{statusCounts.Delayed}</span>
+                <span className="text-[11px] text-muted-foreground">{t("chief.projects.metric.delayed")}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] font-semibold tabular-nums text-foreground">{pagination.total}</span>
-                <span className="text-[11px] text-muted-foreground/60">{t("chief.projects.metric.matching")}</span>
+                <span className="text-[11px] text-muted-foreground">{t("chief.projects.metric.matching")}</span>
               </div>
             </div>
           </div>
@@ -856,7 +856,7 @@ export default function ChiefProjects() {
                     </div>
                   ))}
                   {!cards.length && !isLoading && (
-                    <div className="rounded-lg border-2 border-dashed border-border/30 py-8 text-center text-[10px] text-muted-foreground/60">
+                    <div className="rounded-lg border-2 border-dashed border-border/30 py-8 text-center text-[10px] text-muted-foreground">
                       {t("chief.projects.kanban.empty")}
                     </div>
                   )}
@@ -929,7 +929,7 @@ export default function ChiefProjects() {
             {!isLoading && filtered.map((project) => {
               const ws = wsMap.get(project.id);
               const dotCls  = ws ? (WS_DOT[ws.status]  ?? "bg-muted-foreground") : "bg-muted-foreground/30";
-              const textCls = ws ? (WS_TEXT[ws.status] ?? "text-muted-foreground") : "text-muted-foreground/50";
+              const textCls = ws ? (WS_TEXT[ws.status] ?? "text-muted-foreground") : "text-muted-foreground";
               return (
                 <div
                   key={project.id}
@@ -967,7 +967,7 @@ export default function ChiefProjects() {
                     <p className="truncate text-[11px] text-muted-foreground">{project.client || "Unassigned client"}</p>
 
                     {ws?.currentAction && (
-                      <div className="flex items-center gap-1.5 text-[10px] text-primary/80">
+                      <div className="flex items-center gap-1.5 text-[10px] text-primary">
                         <Activity className="h-3 w-3 shrink-0" aria-hidden="true" />
                         <span className="truncate">{ws.currentAction}</span>
                       </div>
@@ -1043,7 +1043,7 @@ export default function ChiefProjects() {
               </Button>
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground/60 text-right">
+          <p className="text-[11px] text-muted-foreground text-right">
             {t("chief.projects.footer.note", { count: filtered.length })}
           </p>
         </>)}
@@ -1072,7 +1072,7 @@ export default function ChiefProjects() {
             {exhibitions.length === 0 ? (
               <div className="rounded-lg border-2 border-dashed border-border/50 py-16 text-center">
                 <p className="text-sm font-semibold text-muted-foreground">No exhibitions yet</p>
-                <p className="mt-1 text-xs text-muted-foreground/70">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Create your first exhibition to organize client booth projects under a single event.
                 </p>
                 <button
@@ -1107,12 +1107,12 @@ export default function ChiefProjects() {
                         <p className="text-xs text-muted-foreground">{[ex.venue, ex.city].filter(Boolean).join(" · ")}</p>
                       )}
                       {(ex.opensAt || ex.closesAt) && (
-                        <p className="text-[10px] text-muted-foreground/70">
+                        <p className="text-[10px] text-muted-foreground">
                           {ex.opensAt ? new Date(ex.opensAt).toLocaleDateString() : "—"}
                           {ex.closesAt ? ` → ${new Date(ex.closesAt).toLocaleDateString()}` : ""}
                         </p>
                       )}
-                      <p className="text-[10px] text-muted-foreground/60">
+                      <p className="text-[10px] text-muted-foreground">
                         {projects.filter((p) => p.exhibition === ex.name).length} project(s) linked
                       </p>
                       <p className="mt-1 text-[10px] font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1662,7 +1662,7 @@ export default function ChiefProjects() {
                       <div className="flex-1 overflow-y-auto">
                         {exManagers.length === 0 ? (
                           <div className="m-4 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                            <Users className="mx-auto mb-2 h-6 w-6 text-muted-foreground/40" />
+                            <Users className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
                             No managers assigned yet
                           </div>
                         ) : (
@@ -1747,7 +1747,7 @@ export default function ChiefProjects() {
                                       {c.boothWidthM && c.boothDepthM ? `${c.boothWidthM} × ${c.boothDepthM} m` : "—"}
                                     </p>
                                     {c.preferredSystem && (
-                                      <p className="text-[9px] uppercase tracking-wide text-muted-foreground/60">{c.preferredSystem}</p>
+                                      <p className="text-[9px] uppercase tracking-wide text-muted-foreground">{c.preferredSystem}</p>
                                     )}
                                   </td>
                                   <td className="px-3 py-2.5">
@@ -1869,7 +1869,7 @@ function ProjectCard({
         </span>
       </div>
 
-      <p className="mb-1.5 truncate text-[10px] font-semibold text-foreground/80">{project.client || "—"}</p>
+      <p className="mb-1.5 truncate text-[10px] font-semibold text-foreground">{project.client || "—"}</p>
 
       {/* Live workspace status — shown when PM has an active workspace */}
       {ws ? (
@@ -1878,7 +1878,7 @@ function ProjectCard({
           <span className={cn("text-[9.5px] font-semibold", WS_TEXT[ws.status] ?? "text-muted-foreground")}>
             {ws.status}
           </span>
-          <span className="text-[9px] text-muted-foreground/60">· {wsAge(ws.lastActionMins)}</span>
+          <span className="text-[9px] text-muted-foreground">· {wsAge(ws.lastActionMins)}</span>
         </div>
       ) : project.waitDays > 0 ? (
         <div className="mb-2 flex items-center gap-1 text-[9.5px] text-red-500">
@@ -1995,10 +1995,10 @@ function ProjectRow({
           <div className="flex items-center gap-1.5">
             <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", WS_DOT[ws.status] ?? "bg-muted-foreground")} />
             <span className={cn("text-[10px] font-semibold", WS_TEXT[ws.status] ?? "text-muted-foreground")}>{ws.status}</span>
-            <span className="text-[10px] text-muted-foreground/50">· {wsAge(ws.lastActionMins)}</span>
+            <span className="text-[10px] text-muted-foreground">· {wsAge(ws.lastActionMins)}</span>
           </div>
         ) : (
-          <span className="text-[10px] text-muted-foreground/40">—</span>
+          <span className="text-[10px] text-muted-foreground">—</span>
         )}
       </TableCell>
       <TableCell>

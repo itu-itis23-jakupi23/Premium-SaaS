@@ -604,7 +604,7 @@ export default function PMTasks() {
                       );
                     })}
                     {colTasks.length === 0 && (
-                      <div className="border-2 border-dashed border-border/40 rounded-lg py-6 text-center text-[11px] font-mono text-muted-foreground/50">
+                      <div className="border-2 border-dashed border-border/40 rounded-lg py-6 text-center text-[11px] font-mono text-muted-foreground">
                         {t("pm.tasks.noTasks")}
                       </div>
                     )}
@@ -641,7 +641,7 @@ export default function PMTasks() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="create-task-title"
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background border rounded-lg p-6 z-50 w-[420px] shadow-2xl"
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background border rounded-lg p-6 z-50 w-[420px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl"
           >
             <div className="flex items-center justify-between mb-4">
               <h2 id="create-task-title" className="font-bold text-base">{t("pm.tasks.modal.title")}</h2>

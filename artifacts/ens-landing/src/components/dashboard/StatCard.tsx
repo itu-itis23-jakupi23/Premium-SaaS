@@ -96,12 +96,12 @@ export function StatCard({ label, value, icon: Icon, trend, trendUp, className, 
               {trend}
             </span>
             {/^[+-]/.test(trend) && (
-              <span className="text-[11px] text-muted-foreground/80">{t("common.vsLastMonth")}</span>
+              <span className="text-[11px] text-muted-foreground">{t("common.vsLastMonth")}</span>
             )}
           </div>
         )}
         {href && (
-          <p className="mt-1 text-[10px] font-medium text-muted-foreground/60">{t("common.clickToView")}</p>
+          <p className="mt-1 text-[10px] font-medium text-muted-foreground">{t("common.clickToView")}</p>
         )}
       </CardContent>
     </Card>

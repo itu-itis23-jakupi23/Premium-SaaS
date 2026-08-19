@@ -565,7 +565,7 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
                       <span className="font-mono text-xs text-foreground font-semibold">
                         {showPassword ? "EnsDev2026!" : "••••••••"}
                       </span>
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-[10px] font-semibold text-primary hover:text-primary/80 hover:underline transition-colors">
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-[10px] font-semibold text-primary hover:text-primary hover:underline transition-colors">
                         {showPassword ? "Hide" : "Show"}
                       </button>
                     </div>

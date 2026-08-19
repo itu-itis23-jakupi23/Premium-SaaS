@@ -434,7 +434,7 @@ function YearView({
                   exs.map((ex) => (
                     <div key={ex.id} className="flex items-center gap-1.5 text-xs">
                       <span className={cn("h-1.5 w-1.5 flex-shrink-0 rounded-full", STATUS_DOT[ex.status])} />
-                      <span className="truncate text-foreground/80">{ex.name}</span>
+                      <span className="truncate text-foreground">{ex.name}</span>
                     </div>
                   ))
                 )}
@@ -563,7 +563,7 @@ function MonthView({
                       "flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium transition-colors",
                       isToday
                         ? "bg-primary text-primary-foreground"
-                        : "text-foreground/70 group-hover:bg-muted group-hover:text-foreground",
+                        : "text-foreground group-hover:bg-muted group-hover:text-foreground",
                     )}
                   >
                     {day}
@@ -623,7 +623,7 @@ function MonthView({
                   <p className="flex items-center gap-1.5"><Building2 className="h-3 w-3" aria-hidden="true" />{ex.client}</p>
                   <p className="flex items-center gap-1.5"><User className="h-3 w-3" aria-hidden="true" />{ex.pm}</p>
                   <p className="flex items-center gap-1.5"><MapPin className="h-3 w-3" aria-hidden="true" />{ex.location}</p>
-                  <p className="text-foreground/50">
+                  <p className="text-foreground">
                     {formatIso(ex.startDate, i18n.language)} – {formatIso(ex.endDate, i18n.language)}
                   </p>
                 </div>

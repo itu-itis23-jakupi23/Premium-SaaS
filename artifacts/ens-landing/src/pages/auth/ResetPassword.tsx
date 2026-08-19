@@ -250,7 +250,7 @@ export default function ResetPassword() {
                 className={`flex items-center gap-2 transition-colors ${ok ? 'text-green-500' : ''}`}
               >
                 <CheckCircle2
-                  className={`h-3 w-3 ${ok ? 'text-green-500' : 'text-muted-foreground/40'}`}
+                  className={`h-3 w-3 ${ok ? 'text-green-500' : 'text-muted-foreground'}`}
                   aria-hidden="true"
                 />
                 {t(`auth.resetPassword.${key}`)}

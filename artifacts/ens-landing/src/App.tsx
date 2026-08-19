@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, type ComponentType, type ReactElement } from "react";
 import { X } from "lucide-react";
+import { MotionConfig } from "framer-motion";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -510,6 +511,14 @@ function App() {
   );
 
   return (
+    /*
+      reducedMotion="user" makes every framer-motion animation in the app
+      honour prefers-reduced-motion. The marketing pages drive their entrances
+      through motion variants, so the CSS-only rules in index.css never reached
+      them - a visitor asking for less motion still got the full staggered
+      hero, whileInView reveals and cursor field.
+    */
+    <MotionConfig reducedMotion="user">
     <ThemeProvider attribute="class" defaultTheme="dark" storageKey={THEME_STORAGE_KEY} enableSystem disableTransitionOnChange>
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
@@ -521,6 +530,7 @@ function App() {
         </QueryClientProvider>
       </AuthProvider>
     </ThemeProvider>
+    </MotionConfig>
   );
 }
 

@@ -704,7 +704,7 @@ function MessageDrawer({
                                         <span className="min-w-0 flex-1 truncate">{file.name}</span>
                                         <span className={cn(
                                           "shrink-0 font-mono text-[10px]",
-                                          item.isMe ? "text-primary-foreground/70" : "text-muted-foreground",
+                                          item.isMe ? "text-primary-foreground" : "text-muted-foreground",
                                         )}>
                                           {formatFileSize(file.size)}
                                         </span>
@@ -712,7 +712,7 @@ function MessageDrawer({
                                     ))}
                                   </div>
                                 )}
-                                <div className={cn("mt-1 text-[10px]", item.isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                <div className={cn("mt-1 text-[10px]", item.isMe ? "text-primary-foreground" : "text-muted-foreground")}>
                                   {item.time}
                                 </div>
                               </div>

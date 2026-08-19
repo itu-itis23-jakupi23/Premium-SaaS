@@ -1617,7 +1617,7 @@ function ManagerCard({
                     "rounded transition-colors disabled:cursor-wait hover:scale-110 active:scale-95",
                     Math.round(manager.rating) >= star
                       ? "text-yellow-500"
-                      : "text-muted-foreground/30 hover:text-yellow-400",
+                      : "text-muted-foreground hover:text-yellow-400",
                   )}
                 >
                   <Star className="h-3.5 w-3.5 fill-current" />

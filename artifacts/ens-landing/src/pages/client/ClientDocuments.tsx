@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useTranslation } from "react-i18next";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -83,6 +84,10 @@ export default function ClientDocuments() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [preview, setPreview] = useState<DisplayDoc | null>(null);
+  // aria-modal without a focus trap hides the page from assistive tech while
+  // letting keyboard focus walk straight back out into it.
+  const previewRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(previewRef, !!preview, () => setPreview(null));
 
   useEffect(() => {
     document.title = t("client.documents.pageTitle");
@@ -327,10 +332,11 @@ export default function ClientDocuments() {
             aria-hidden="true"
           />
           <div
+            ref={previewRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="preview-modal-title"
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background border rounded-xl p-6 z-50 w-[520px] shadow-2xl"
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background border rounded-xl p-6 z-50 w-[520px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl"
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -372,7 +378,7 @@ export default function ClientDocuments() {
               {preview.type === "image" ? (
                 <div className="text-center">
                   <Image
-                    className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50"
+                    className="h-12 w-12 mx-auto mb-2 text-muted-foreground"
                     aria-hidden="true"
                   />
                   <p className="text-xs font-mono text-muted-foreground">
@@ -382,7 +388,7 @@ export default function ClientDocuments() {
               ) : (
                 <div className="text-center">
                   <FileText
-                    className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50"
+                    className="h-12 w-12 mx-auto mb-2 text-muted-foreground"
                     aria-hidden="true"
                   />
                   <p className="text-xs font-mono text-muted-foreground">

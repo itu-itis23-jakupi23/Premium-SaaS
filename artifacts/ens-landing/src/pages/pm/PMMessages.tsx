@@ -409,10 +409,10 @@ export default function PMMessages() {
               /* No exhibition selected */
               <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center p-8">
                 <div className="w-12 h-12 rounded-full bg-muted/40 flex items-center justify-center">
-                  <Search aria-hidden="true" className="h-5 w-5 text-muted-foreground/50" />
+                  <Search aria-hidden="true" className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <p className="text-sm font-semibold text-muted-foreground">{t("pm.messages.selectExhibitionHint", { defaultValue: "Select an exhibition" })}</p>
-                <p className="text-xs text-muted-foreground/70">{t("pm.messages.selectExhibitionSub", { defaultValue: "Choose an exhibition from the left to message your chief or client." })}</p>
+                <p className="text-xs text-muted-foreground">{t("pm.messages.selectExhibitionSub", { defaultValue: "Choose an exhibition from the left to message your chief or client." })}</p>
               </div>
 
             ) : !contactType ? (
@@ -643,7 +643,7 @@ export default function PMMessages() {
                       onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void sendMessage(); } }}
                       placeholder={t("pm.messages.inputPlaceholder")}
                       data-testid="input-message"
-                      className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground/60"
+                      className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground"
                     />
                     {inputText && (
                       <button onClick={() => setInputText("")} aria-label={t("pm.common.cancel")} className="p-1 text-muted-foreground hover:text-foreground">

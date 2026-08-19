@@ -82,7 +82,7 @@ export function DesktopOnlyGuard({
           {t('workspace.desktopOnly.body')}
         </p>
 
-        <p className="mb-8 text-xs text-muted-foreground/80">
+        <p className="mb-8 text-xs text-muted-foreground">
           {t('workspace.desktopOnly.requirement', { width: EDITOR_MIN_WIDTH_PX })}
         </p>
 
