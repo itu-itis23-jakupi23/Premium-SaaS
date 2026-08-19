@@ -180,7 +180,7 @@ export default function Home() {
             <Button variant="ghost" className="rounded-full px-5 font-semibold" onClick={() => navigate('/login')} data-testid="btn-nav-login">
               {t('common.logIn')}
             </Button>
-            <Button className="rounded-full px-6 font-semibold shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)] transition-all" onClick={() => navigate('/login')} data-testid="btn-nav-start">
+            <Button className="rounded-full px-6 font-semibold shadow-[0_0_20px_rgba(109,40,217,0.3)] hover:shadow-[0_0_30px_rgba(109,40,217,0.5)] transition-all" onClick={() => navigate('/signup?returnTo=/client')} data-testid="btn-nav-start">
               {t('common.startDesigning')}
             </Button>
           </nav>
@@ -252,7 +252,7 @@ export default function Home() {
                   {t('common.logIn')}
                 </Button>
                 <Button className="w-full rounded-full h-11 font-semibold shadow-[0_0_15px_rgba(109,40,217,0.3)]"
-                  onClick={() => { navigate('/login'); setMobileMenuOpen(false); }}>
+                  onClick={() => { navigate('/signup?returnTo=/client'); setMobileMenuOpen(false); }}>
                   {t('common.startDesigning')}
                 </Button>
               </div>
@@ -293,7 +293,7 @@ export default function Home() {
                 <Button size="lg" onClick={() => navigate('/get-quote')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold shadow-[0_0_20px_rgba(109,40,217,0.4)] hover:shadow-[0_0_35px_rgba(109,40,217,0.6)] transition-all gap-2" data-testid="btn-hero-quote">
                   {t('common.requestQuote')} <ChevronRight className="w-4 h-4" />
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border-border/80 hover:bg-muted/50" data-testid="btn-hero-cta1">
+                <Button size="lg" variant="outline" onClick={() => navigate('/signup?returnTo=/client')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border-border/80 hover:bg-muted/50" data-testid="btn-hero-cta1">
                   {t('common.startDesigning')}
                 </Button>
               </motion.div>
@@ -798,7 +798,7 @@ export default function Home() {
                   <Button
                     variant={p.recommended ? 'default' : 'outline'}
                     className={`mt-auto w-full rounded-xl h-12 font-bold ${p.recommended ? 'shadow-lg shadow-primary/20' : ''}`}
-                    onClick={() => navigate('/signup')}
+                    onClick={() => navigate('/signup?returnTo=/client')}
                   >
                     {t('home.billing.getStarted')}
                   </Button>
@@ -826,7 +826,7 @@ export default function Home() {
               {t('home.cta.subheading')}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              <Button size="lg" onClick={() => navigate('/login')} className="rounded-full px-12 h-16 text-lg font-bold shadow-[0_0_30px_rgba(109,40,217,0.5)]">
+              <Button size="lg" onClick={() => navigate('/signup?returnTo=/client')} className="rounded-full px-12 h-16 text-lg font-bold shadow-[0_0_30px_rgba(109,40,217,0.5)]">
                 {t('common.getAccess')}
               </Button>
               <Button variant="outline" size="lg" asChild className="rounded-full px-12 h-16 text-lg font-bold border-border">

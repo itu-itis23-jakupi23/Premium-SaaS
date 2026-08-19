@@ -16,6 +16,21 @@ export type RequestPortal = 'staff' | 'client';
  * Identifies which authentication cookie namespace an API request belongs to.
  * Explicit staff/client builds are authoritative. The path fallback keeps the
  * combined local build usable without relying on ports or referrer parsing.
+ *
+ * STOPGAP — `/signup` depends on the `returnTo` query parameter below to
+ * resolve to the client portal in the combined ("all") build, which is what the
+ * Dockerfile ships. `/signup` is not under `/client/`, so it falls through to
+ * the `'staff'` default and renders the invitation-only staff flow: a cold
+ * visitor gets a form asking for a Chief Manager's invitation code, with no
+ * email or password fields. Every public signup link in `Home.tsx` therefore
+ * points at `/signup?returnTo=/client`, and a bare `/signup` is still a dead
+ * end for marketing traffic.
+ *
+ * The real fix is to make this function resolve `'client'` for `/signup` in
+ * combined builds. That is deliberately NOT done here: this function decides
+ * the auth cookie namespace, so changing it moves which cookie a signup writes,
+ * and it needs its own change with test coverage. Tracked separately. Do not
+ * "tidy" the query-param dependency away without doing that work first.
  */
 export function getRequestPortal(): RequestPortal {
   if (PORTAL_MODE === 'staff' || PORTAL_MODE === 'client') return PORTAL_MODE;
