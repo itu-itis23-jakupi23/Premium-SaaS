@@ -49,7 +49,6 @@ import {
   Bell,
   Camera,
   CheckCircle2,
-  Copy,
   Download,
   Globe,
   Laptop,
@@ -66,6 +65,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FEATURE_TWO_FACTOR } from "@/lib/feature-flags";
+import { TwoFactorSettings } from "@/components/settings/TwoFactorSettings";
 
 type ThemeMode = "light" | "dark" | "system";
 type AvatarTone = "primary" | "blue" | "green" | "amber";
@@ -388,14 +388,6 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
     }
   }
 
-  function copyRecoveryCodes() {
-    navigator.clipboard.writeText(recoveryCodes.join("\n")).then(() => {
-      showToast(t("chief.settings.security.toast.codesCopied"));
-    }).catch(() => {
-      showToast(t("chief.settings.security.toast.clipboardError"));
-    });
-  }
-
   async function endSession(id: string) {
     const session = sessions.find((item) => item.id === id);
     if (!session || session.current) return;
@@ -683,49 +675,7 @@ export default function ChiefSettings({ role = "chief", sectionLabel = roleLabel
                   </Button>
                 </div>
 
-                {/*
-                  AU-04 / AX-06: two-factor is not implemented. This block is
-                  hidden in production builds rather than shown disabled,
-                  because the badge reports a security posture from a persisted
-                  flag and would claim protection that does not exist.
-                */}
-                {FEATURE_TWO_FACTOR && (
-                  <div className="flex flex-col gap-4 border-t pt-6 md:flex-row md:items-center md:justify-between" data-testid="settings-two-factor">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">{t("chief.settings.security.twoFactor.title")}</p>
-                        <Badge variant={twoFactorEnabled ? "default" : "outline"}>
-                          {twoFactorEnabled ? t("chief.settings.security.twoFactor.enabled") : t("chief.settings.security.twoFactor.disabled")}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{t("chief.settings.security.twoFactor.description")}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" disabled>
-                        <Lock className="mr-2 h-4 w-4" aria-hidden="true" /> {t("chief.settings.security.twoFactor.enable")}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {FEATURE_TWO_FACTOR && twoFactorEnabled && recoveryCodes.length > 0 && (
-                  <div className="rounded-lg border bg-background/40 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <p className="text-sm font-medium">{t("chief.settings.security.recoveryCodes.title")}</p>
-                      <Button variant="outline" size="sm" onClick={copyRecoveryCodes}>
-                        <Copy className="mr-2 h-3 w-3" aria-hidden="true" /> {t("chief.settings.security.recoveryCodes.copyAll")}
-                      </Button>
-                    </div>
-                    <p className="mb-3 text-xs text-muted-foreground">
-                      {t("chief.settings.security.recoveryCodes.description")}
-                    </p>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {recoveryCodes.map((code) => (
-                        <code key={code} className="rounded-md bg-muted px-3 py-2 text-xs font-mono">{code}</code>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {FEATURE_TWO_FACTOR && <TwoFactorSettings />}
 
                 <div className="space-y-3 border-t pt-6">
                   <div className="flex flex-wrap items-center justify-between gap-3">

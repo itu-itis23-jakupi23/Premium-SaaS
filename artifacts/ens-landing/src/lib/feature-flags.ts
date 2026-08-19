@@ -24,7 +24,9 @@ export const SHOW_UNFINISHED_FEATURES =
 /**
  * Two-factor authentication (AU-04).
  *
- * Set this to true only when enrolment, challenge, and recovery are actually
- * implemented and tested end to end — not when the UI exists.
+ * Now implemented end to end: TOTP enrolment + one-time backup codes
+ * (artifacts/api-server/src/lib/totp.ts + /auth/2fa/* routes), a login challenge
+ * step, and a real settings panel (components/settings/TwoFactorSettings.tsx).
+ * The status badge reflects server-verified state, so it is safe in production.
  */
-export const FEATURE_TWO_FACTOR = SHOW_UNFINISHED_FEATURES;
+export const FEATURE_TWO_FACTOR = true;

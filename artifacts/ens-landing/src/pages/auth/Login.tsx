@@ -17,8 +17,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Spinner } from '@/components/ui/spinner';
-import { Eye, EyeOff, Lock, AlertTriangle } from 'lucide-react';
-import { useAuth, getRoleDashboard, type UserRole } from '@/contexts/AuthContext';
+import { Eye, EyeOff, Lock, AlertTriangle, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { useAuth, getRoleDashboard, isTwoFactorChallenge, type UserRole } from '@/contexts/AuthContext';
 import { getPortalForbiddenMessage, isRoleAllowedInPortal } from '@/lib/portal';
 
 const LOCK_KEY = 'ens-login-lock';
@@ -85,6 +85,10 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
+  // Second-factor challenge state — set once the password step reports 2FA is required.
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [twoFactorError, setTwoFactorError] = useState('');
 
   useEffect(() => {
     document.title = t('auth.login.pageTitle');
@@ -147,17 +151,25 @@ export default function Login() {
     setError('');
 
     try {
-      const loggedInUser = await auth.login({
+      const result = await auth.login({
         email: values.email,
         password: values.password,
       });
-      if (!isRoleAllowedInPortal(loggedInUser.role)) {
+      // Account has 2FA — switch to the code step instead of completing the login.
+      if (isTwoFactorChallenge(result)) {
+        localStorage.removeItem(LOCK_KEY);
+        setChallengeToken(result.challengeToken);
+        setTwoFactorCode('');
+        setTwoFactorError('');
+        return;
+      }
+      if (!isRoleAllowedInPortal(result.role)) {
         await auth.logout();
-        setError(getPortalForbiddenMessage(loggedInUser.role));
+        setError(getPortalForbiddenMessage(result.role));
         return;
       }
       localStorage.removeItem(LOCK_KEY);
-      navigate(getPostLoginPath(loggedInUser.role));
+      navigate(getPostLoginPath(result.role));
     } catch (err) {
       const newState = recordFailedAttempt();
       if (newState.lockedUntil) setTimeLeft(LOCKOUT_MS);
@@ -167,7 +179,100 @@ export default function Login() {
     }
   }
 
+  async function onSubmitTwoFactor(event: React.FormEvent) {
+    event.preventDefault();
+    if (!challengeToken) return;
+    const code = twoFactorCode.trim();
+    if (!code) {
+      setTwoFactorError(t('auth.login.twoFactor.required'));
+      return;
+    }
+    setIsSubmitting(true);
+    setTwoFactorError('');
+    try {
+      const loggedInUser = await auth.completeTwoFactorLogin(challengeToken, code);
+      if (!isRoleAllowedInPortal(loggedInUser.role)) {
+        await auth.logout();
+        setChallengeToken(null);
+        setError(getPortalForbiddenMessage(loggedInUser.role));
+        return;
+      }
+      navigate(getPostLoginPath(loggedInUser.role));
+    } catch (err) {
+      setTwoFactorError(err instanceof Error ? err.message : t('auth.login.twoFactor.invalid'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function cancelTwoFactor() {
+    setChallengeToken(null);
+    setTwoFactorCode('');
+    setTwoFactorError('');
+    setIsSubmitting(false);
+  }
+
   const isLocked = timeLeft > 0;
+
+  if (challengeToken) {
+    return (
+      <AuthLayout
+        title={t('auth.login.twoFactor.title')}
+        description={t('auth.login.twoFactor.description')}
+      >
+        {twoFactorError && (
+          <div
+            role="alert"
+            className="mb-4 flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4"
+          >
+            <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <p className="text-sm text-red-400">{twoFactorError}</p>
+          </div>
+        )}
+
+        <form onSubmit={onSubmitTwoFactor} className="space-y-4">
+          <div className="flex justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <ShieldCheck className="h-6 w-6 text-primary" aria-hidden="true" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="twofactor-code" className="text-sm font-medium">
+              {t('auth.login.twoFactor.codeLabel')}
+            </label>
+            <Input
+              id="twofactor-code"
+              inputMode="text"
+              autoComplete="one-time-code"
+              autoFocus
+              placeholder="123456"
+              value={twoFactorCode}
+              onChange={(e) => setTwoFactorCode(e.target.value)}
+              className="text-center text-lg tracking-[0.3em]"
+              data-testid="input-2fa-code"
+            />
+            <p className="text-xs text-muted-foreground">{t('auth.login.twoFactor.hint')}</p>
+          </div>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting || !twoFactorCode.trim()}
+            data-testid="button-verify-2fa"
+          >
+            {isSubmitting ? <Spinner className="h-4 w-4" /> : t('auth.login.twoFactor.verify')}
+          </Button>
+          <button
+            type="button"
+            onClick={cancelTwoFactor}
+            className="flex w-full items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3 w-3" aria-hidden="true" />
+            {t('auth.login.twoFactor.back')}
+          </button>
+        </form>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout

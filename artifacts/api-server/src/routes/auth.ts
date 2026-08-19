@@ -8,12 +8,25 @@ import { createRefreshToken, hashToken, signAccessToken, verifyAccessToken } fro
 import {
   getAuthContext,
   getAuthCookieNames,
+  requireAuth,
   toUiRole,
   type AuthContext,
   type AuthCookieRequest,
   type AuthRole,
 } from "../middlewares/session";
 import { sendPasswordResetEmail } from "../lib/email";
+import {
+  decryptSecret,
+  encryptSecret,
+  generateBackupCodes,
+  generateTotpSecret,
+  hashBackupCode,
+  issueChallengeToken,
+  totpAuthUri,
+  verifyBackupCode,
+  verifyChallengeToken,
+  verifyTotp,
+} from "../lib/totp";
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const REFRESH_TOKEN_TTL_DAYS = 30;
 
@@ -22,6 +35,60 @@ const router: IRouter = Router();
 async function queryRows<T>(statement: SQL) {
   const result = await db.execute(statement);
   return (result as unknown as { rows: T[] }).rows;
+}
+
+// ── Two-factor (TOTP) state stored in users.metadata.twoFactor ────────────────
+interface StoredTwoFactor {
+  enabled: boolean;
+  secret?: string; // AES-GCM encrypted base32 secret (when enabled)
+  pendingSecret?: string; // encrypted secret awaiting first verification
+  backupCodes: string[]; // remaining unused, hashed
+  enrolledAt?: string;
+}
+
+function readTwoFactor(metadata: Record<string, unknown> | null | undefined): StoredTwoFactor {
+  const raw = (metadata ?? {})["twoFactor"];
+  if (!raw || typeof raw !== "object") return { enabled: false, backupCodes: [] };
+  const tf = raw as Record<string, unknown>;
+  return {
+    enabled: tf.enabled === true,
+    secret: typeof tf.secret === "string" ? tf.secret : undefined,
+    pendingSecret: typeof tf.pendingSecret === "string" ? tf.pendingSecret : undefined,
+    backupCodes: Array.isArray(tf.backupCodes)
+      ? tf.backupCodes.filter((code): code is string => typeof code === "string")
+      : [],
+    enrolledAt: typeof tf.enrolledAt === "string" ? tf.enrolledAt : undefined,
+  };
+}
+
+async function persistTwoFactor(userId: string, next: StoredTwoFactor) {
+  const rows = await queryRows<{ metadata: Record<string, unknown> }>(
+    sql`select metadata from users where id = ${userId}::uuid limit 1`,
+  );
+  const metadata = rows[0]?.metadata ?? {};
+  const accountSettings =
+    metadata.accountSettings && typeof metadata.accountSettings === "object"
+      ? (metadata.accountSettings as Record<string, unknown>)
+      : {};
+  const security =
+    accountSettings.security && typeof accountSettings.security === "object"
+      ? (accountSettings.security as Record<string, unknown>)
+      : {};
+  const nextMetadata = {
+    ...metadata,
+    twoFactor: next,
+    // Mirror into the existing account-settings shape so the settings screen and
+    // any consumer of security.twoFactorEnabled stay consistent.
+    accountSettings: {
+      ...accountSettings,
+      security: { ...security, twoFactorEnabled: next.enabled },
+    },
+  };
+  await db.execute(sql`
+    update users
+    set metadata = ${JSON.stringify(nextMetadata)}::jsonb, updated_at = now()
+    where id = ${userId}::uuid
+  `);
 }
 
 // ── Login rate limiting (DB-backed, works across processes/replicas) ──────────
@@ -122,6 +189,19 @@ router.post("/auth/login", async (req, res) => {
     return;
   }
 
+  // Password is correct — if the account has 2FA enabled, stop here and hand back
+  // a short-lived challenge token. No session cookie is issued until the second
+  // factor is verified at /auth/login/2fa.
+  const twoFactor = readTwoFactor(account.metadata);
+  if (twoFactor.enabled && twoFactor.secret) {
+    await clearLoginAttempts(rateLimitKey);
+    res.json({
+      twoFactorRequired: true,
+      challengeToken: issueChallengeToken(account.userId, account.organizationId),
+    });
+    return;
+  }
+
   const auth = await createSession({
     userId: account.userId,
     userName: account.name,
@@ -148,6 +228,191 @@ router.post("/auth/login", async (req, res) => {
   await auditAuthEvent(account.organizationId, account.userId, "auth_login", "signed in");
   await clearLoginAttempts(rateLimitKey);
   res.json(authResponse(auth.context));
+});
+
+// ── Complete a 2FA login: verify the TOTP (or a backup) code, then issue the session ──
+router.post("/auth/login/2fa", async (req, res) => {
+  const body = (req.body ?? {}) as { challengeToken?: unknown; code?: unknown };
+  const challengeToken = typeof body.challengeToken === "string" ? body.challengeToken : "";
+  const code = typeof body.code === "string" ? body.code.trim() : "";
+
+  const challenge = verifyChallengeToken(challengeToken);
+  if (!challenge || !code) {
+    res.status(401).json({
+      error: { code: "invalid_2fa_challenge", message: "Your verification session expired. Please sign in again." },
+    });
+    return;
+  }
+
+  // Rate-limit the second factor per account+IP so a stolen password + challenge
+  // token can't be used to brute-force the 6-digit code within the token window.
+  const twoFactorRateKey = `2fa:${challenge.userId}:${req.ip ?? "unknown"}`;
+  const rl = await checkLoginRateLimit(twoFactorRateKey);
+  if (rl.blocked) {
+    res.set("Retry-After", String(rl.retryAfterSeconds));
+    res.status(429).json({
+      error: { code: "too_many_requests", message: "Too many verification attempts. Please sign in again shortly." },
+    });
+    return;
+  }
+
+  const account = await findLoginAccountById(challenge.userId);
+  const twoFactor = account ? readTwoFactor(account.metadata) : null;
+  if (!account || !twoFactor?.enabled || !twoFactor.secret) {
+    res.status(401).json({
+      error: { code: "invalid_2fa_challenge", message: "Two-factor authentication is not active for this account." },
+    });
+    return;
+  }
+
+  const secret = decryptSecret(twoFactor.secret);
+  let verified = Boolean(secret && verifyTotp(secret, code));
+  let consumedBackupCode = false;
+
+  // Fall back to single-use backup codes when the authenticator code doesn't match.
+  if (!verified && twoFactor.backupCodes.length > 0) {
+    const remaining: string[] = [];
+    for (const hashed of twoFactor.backupCodes) {
+      if (!consumedBackupCode && verifyBackupCode(code, hashed)) {
+        consumedBackupCode = true;
+        continue; // drop the used code
+      }
+      remaining.push(hashed);
+    }
+    if (consumedBackupCode) {
+      verified = true;
+      await persistTwoFactor(account.userId, { ...twoFactor, backupCodes: remaining });
+    }
+  }
+
+  if (!verified) {
+    await recordFailedLogin(twoFactorRateKey);
+    res.status(401).json({
+      error: { code: "invalid_2fa_code", message: "That verification code is incorrect or expired." },
+    });
+    return;
+  }
+
+  await clearLoginAttempts(twoFactorRateKey);
+
+  const auth = await createSession({
+    userId: account.userId,
+    userName: account.name,
+    userEmail: account.email,
+    role: account.role,
+    avatarUrl: avatarField(account.metadata, "avatarUrl"),
+    avatarTone: avatarField(account.metadata, "avatarTone") || "primary",
+    organizationId: account.organizationId,
+    organizationName: account.organizationName,
+    organizationSlug: account.organizationSlug,
+    organizationPlan: account.organizationPlan,
+    userAgent: req.header("user-agent") ?? null,
+    ipAddress: req.ip,
+  });
+
+  setAuthCookies(res, req, auth.accessToken, auth.refreshToken);
+  await db.execute(sql`
+    update users set last_login_at = now(), updated_at = now() where id = ${account.userId}::uuid
+  `);
+  await auditAuthEvent(
+    account.organizationId,
+    account.userId,
+    "auth_login",
+    consumedBackupCode ? "signed in (2FA backup code)" : "signed in (2FA)",
+  );
+  res.json(authResponse(auth.context));
+});
+
+// ── Begin 2FA enrollment: generate a secret, return it + otpauth URI for the QR ──
+router.post("/auth/2fa/setup", requireAuth, async (req, res) => {
+  const auth = req.auth!;
+  const current = readTwoFactor(await getMetadataForUser(auth.user.id));
+  if (current.enabled) {
+    res.status(409).json({ error: { code: "2fa_already_enabled", message: "Two-factor is already enabled." } });
+    return;
+  }
+
+  const secret = generateTotpSecret();
+  await persistTwoFactor(auth.user.id, {
+    enabled: false,
+    secret: current.secret,
+    pendingSecret: encryptSecret(secret),
+    backupCodes: [],
+  });
+
+  res.json({
+    secret,
+    otpauthUri: totpAuthUri(secret, auth.user.email),
+  });
+});
+
+// ── Confirm enrollment: verify the first code, activate, return one-time backup codes ──
+router.post("/auth/2fa/enable", requireAuth, async (req, res) => {
+  const auth = req.auth!;
+  const code = typeof (req.body?.code) === "string" ? String(req.body.code).trim() : "";
+  const current = readTwoFactor(await getMetadataForUser(auth.user.id));
+
+  if (current.enabled) {
+    res.status(409).json({ error: { code: "2fa_already_enabled", message: "Two-factor is already enabled." } });
+    return;
+  }
+  if (!current.pendingSecret) {
+    res.status(400).json({ error: { code: "2fa_not_started", message: "Start two-factor setup first." } });
+    return;
+  }
+
+  const secret = decryptSecret(current.pendingSecret);
+  if (!secret || !verifyTotp(secret, code)) {
+    res.status(400).json({ error: { code: "invalid_2fa_code", message: "That code is incorrect. Try again." } });
+    return;
+  }
+
+  const backupCodes = generateBackupCodes();
+  await persistTwoFactor(auth.user.id, {
+    enabled: true,
+    secret: current.pendingSecret,
+    backupCodes: backupCodes.map(hashBackupCode),
+    enrolledAt: new Date().toISOString(),
+  });
+  await auditAuthEvent(auth.organization.id, auth.user.id, "auth_2fa_enabled", "enabled two-factor authentication");
+
+  res.json({ enabled: true, backupCodes });
+});
+
+// ── Disable 2FA: requires a valid TOTP or backup code ──
+router.post("/auth/2fa/disable", requireAuth, async (req, res) => {
+  const auth = req.auth!;
+  const code = typeof (req.body?.code) === "string" ? String(req.body.code).trim() : "";
+  const current = readTwoFactor(await getMetadataForUser(auth.user.id));
+
+  if (!current.enabled || !current.secret) {
+    res.json({ enabled: false });
+    return;
+  }
+
+  const secret = decryptSecret(current.secret);
+  const codeValid =
+    (secret && verifyTotp(secret, code)) ||
+    current.backupCodes.some((hashed) => verifyBackupCode(code, hashed));
+  if (!codeValid) {
+    res.status(400).json({ error: { code: "invalid_2fa_code", message: "Enter a valid code to disable two-factor." } });
+    return;
+  }
+
+  await persistTwoFactor(auth.user.id, { enabled: false, backupCodes: [] });
+  await auditAuthEvent(auth.organization.id, auth.user.id, "auth_2fa_disabled", "disabled two-factor authentication");
+  res.json({ enabled: false });
+});
+
+// ── Current 2FA status for the settings screen ──
+router.get("/auth/2fa/status", requireAuth, async (req, res) => {
+  const auth = req.auth!;
+  const current = readTwoFactor(await getMetadataForUser(auth.user.id));
+  res.json({
+    enabled: current.enabled,
+    pending: Boolean(current.pendingSecret) && !current.enabled,
+    backupCodesRemaining: current.enabled ? current.backupCodes.length : 0,
+  });
 });
 
 router.post("/auth/signup", async (req, res) => {
@@ -532,6 +797,52 @@ async function createSession(input: {
       },
     } satisfies AuthContext,
   };
+}
+
+async function getMetadataForUser(userId: string): Promise<Record<string, unknown>> {
+  const rows = await queryRows<{ metadata: Record<string, unknown> }>(
+    sql`select metadata from users where id = ${userId}::uuid limit 1`,
+  );
+  return rows[0]?.metadata ?? {};
+}
+
+type LoginAccount = {
+  userId: string;
+  email: string;
+  name: string;
+  passwordHash: string | null;
+  role: AuthRole;
+  metadata: Record<string, unknown>;
+  organizationId: string;
+  organizationName: string;
+  organizationSlug: string;
+  organizationPlan: string;
+};
+
+async function findLoginAccountById(userId: string): Promise<LoginAccount | null> {
+  const rows = await queryRows<LoginAccount>(sql`
+    select
+      u.id::text as "userId",
+      u.email,
+      u.name,
+      u.password_hash as "passwordHash",
+      m.role::text as role,
+      u.metadata,
+      o.id::text as "organizationId",
+      o.name as "organizationName",
+      o.slug as "organizationSlug",
+      o.plan as "organizationPlan"
+    from users u
+    join memberships m on m.user_id = u.id
+    join organizations o on o.id = m.organization_id
+    where u.id = ${userId}::uuid
+      and u.disabled_at is null
+      and u.deleted_at is null
+      and o.deleted_at is null
+      and m.status::text = 'active'
+    limit 1
+  `);
+  return rows[0] ?? null;
 }
 
 async function findLoginAccount(email: string, organizationSlug: string | null) {

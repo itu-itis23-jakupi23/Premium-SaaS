@@ -684,11 +684,23 @@ export default function Signup() {
                   />
                   <div className="text-xs text-muted-foreground leading-relaxed select-none">
                     {t('auth.signup.termsLabel')}{' '}
-                    <a href="#" className="text-primary hover:underline font-medium">
+                    <a
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline font-medium"
+                      data-testid="link-terms"
+                    >
                       {t('auth.signup.termsOfService')}
                     </a>
                     {' '}{t('auth.signup.and')}{' '}
-                    <a href="#" className="text-primary hover:underline font-medium">
+                    <a
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline font-medium"
+                      data-testid="link-privacy"
+                    >
                       {t('auth.signup.privacyPolicy')}
                     </a>
                   </div>

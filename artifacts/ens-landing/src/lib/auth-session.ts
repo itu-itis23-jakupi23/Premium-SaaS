@@ -31,8 +31,18 @@ export async function fetchWithSessionRefresh(
 ): Promise<Response> {
   const portal = getRequestPortal();
   const requestInit = withPortalHeaders(init, portal);
-  const response = await fetch(`${apiBaseUrl}${path}`, requestInit);
   const requestPath = path.split(/[?#]/, 1)[0];
+
+  // Once the session is known-expired, stop hitting protected endpoints: each
+  // real request would return 401 (which the browser logs as a console error)
+  // and trigger another failed refresh. Short-circuit with a synthetic 401 so
+  // the caller still handles it, but without the network noise. Auth endpoints
+  // (login/refresh/…) must still go through so the user can sign back in.
+  if (expiredPortals.has(portal) && !NON_REFRESHABLE_AUTH_PATHS.has(requestPath)) {
+    return new Response(null, { status: 401, statusText: "Session expired" });
+  }
+
+  const response = await fetch(`${apiBaseUrl}${path}`, requestInit);
 
   if (response.status !== 401) {
     if (response.ok && requestPath === "/auth/me") resetSessionExpiry(portal);

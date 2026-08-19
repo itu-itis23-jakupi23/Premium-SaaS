@@ -21,11 +21,23 @@ export interface AuthUser {
   clientStatus?: string;
 }
 
+export interface TwoFactorChallenge {
+  twoFactorRequired: true;
+  challengeToken: string;
+}
+
+export type LoginResult = AuthUser | TwoFactorChallenge;
+
+export function isTwoFactorChallenge(result: LoginResult): result is TwoFactorChallenge {
+  return (result as TwoFactorChallenge).twoFactorRequired === true;
+}
+
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<AuthUser>;
+  login: (credentials: LoginCredentials) => Promise<LoginResult>;
+  completeTwoFactorLogin: (challengeToken: string, code: string) => Promise<AuthUser>;
   signup: (input: SignupInput) => Promise<AuthUser>;
   refresh: () => Promise<AuthUser | null>;
   logout: () => Promise<void>;
@@ -128,6 +140,9 @@ const AuthContext = createContext<AuthContextValue>({
   login: async () => {
     throw new Error('AuthProvider is not mounted');
   },
+  completeTwoFactorLogin: async () => {
+    throw new Error('AuthProvider is not mounted');
+  },
   signup: async () => {
     throw new Error('AuthProvider is not mounted');
   },
@@ -196,19 +211,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (credentials: LoginCredentials) => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResult> => {
     if (USE_MOCK_API) {
       const nextUser = mockLogin(credentials);
       setUser(nextUser);
       return nextUser;
     }
 
-    const response = await request<AuthResponse>('/auth/login', {
+    const response = await request<AuthResponse & Partial<TwoFactorChallenge>>('/auth/login', {
       method: 'POST',
       // Login accounts are globally unique by email. Only constrain the
       // organization when the caller explicitly supplies one; otherwise a
       // build-time tenant default can reject valid users from another org.
       body: JSON.stringify(credentials),
+    });
+    // The account has 2FA enabled — the password step passed but no session is
+    // issued yet. Hand the challenge back to the caller to collect the code.
+    if (response.twoFactorRequired && response.challengeToken) {
+      return { twoFactorRequired: true, challengeToken: response.challengeToken };
+    }
+    const nextUser = requireAuthUser(response);
+    resetSessionExpiry();
+    setUser(nextUser);
+    persistCurrentUser(nextUser);
+    return nextUser;
+  }, []);
+
+  const completeTwoFactorLogin = useCallback(async (challengeToken: string, code: string) => {
+    const response = await request<AuthResponse>('/auth/login/2fa', {
+      method: 'POST',
+      body: JSON.stringify({ challengeToken, code }),
     });
     const nextUser = requireAuthUser(response);
     resetSessionExpiry();
@@ -273,7 +305,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, signup, refresh, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, completeTwoFactorLogin, signup, refresh, logout }}>
       {children}
     </AuthContext.Provider>
   );
