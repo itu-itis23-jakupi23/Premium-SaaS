@@ -44,6 +44,7 @@ const Signup = lazyPage(() => import("@/pages/auth/Signup"));
 const ForgotPassword = lazyPage(() => import("@/pages/auth/ForgotPassword"));
 const ResetPassword = lazyPage(() => import("@/pages/auth/ResetPassword"));
 const LegalPage = lazyPage(() => import("@/pages/legal/LegalPage"));
+const GetQuote = lazyPage(() => import("@/pages/GetQuote"));
 
 const INCLUDE_STAFF_ROUTES = import.meta.env.VITE_PORTAL !== "client";
 const INCLUDE_CLIENT_ROUTES = import.meta.env.VITE_PORTAL !== "staff";
@@ -89,6 +90,13 @@ function createStaffRoutes() {
   const ChiefMessages = lazyPage(() => import("@/pages/chief/ChiefMessages"));
   const ChiefSettings = lazyPage(() => import("@/pages/chief/ChiefSettings"));
   const ChiefCalendar = lazyPage(() => import("@/pages/chief/ChiefCalendar"));
+  const ChiefPipeline = lazyPage(() => import("@/pages/chief/ChiefPipeline"));
+  const StaffQuotes = lazyPage(() => import("@/pages/staff/Quotes"));
+  const ChiefQuotes = () => <StaffQuotes role="chief" />;
+  const PMQuotes = () => <StaffQuotes role="pm" />;
+  const StaffInvoices = lazyPage(() => import("@/pages/staff/Invoices"));
+  const ChiefInvoices = () => <StaffInvoices role="chief" />;
+  const PMInvoices = () => <StaffInvoices role="pm" />;
 
   const PMDashboard = lazyPage(() => import("@/pages/pm/PMDashboard"));
   const PMCalendar = lazyPage(() => import("@/pages/pm/PMCalendar"));
@@ -115,174 +123,295 @@ function createStaffRoutes() {
     return (
       <>
       <StaffRoutePreloader />
-      <ErrorBoundary label="Chief Dashboard">
+      {/*
+        Every child of this <Switch> must be a <Route> carrying its own `path`.
+        wouter parses a missing path as "*", so any wrapper element placed
+        directly in a Switch matches every location and shadows the routes
+        after it. Error boundaries therefore live inside each route's render
+        function rather than around it — which also scopes a boundary to the
+        route that actually matched instead of mounting it for every location.
+      */}
+      <Switch>
         <Route path="/chief">
-          {(params) => <ProtectedRoute component={ChiefDashboard} allowedRoles={["chief"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Chief Dashboard">
+              <ProtectedRoute component={ChiefDashboard} allowedRoles={["chief"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="Chief Clients">
         <Route path="/chief/clients">
-          {(params) => <ProtectedRoute component={ChiefClients} allowedRoles={["chief"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Chief Clients">
+              <ProtectedRoute component={ChiefClients} allowedRoles={["chief"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="Chief Managers">
         <Route path="/chief/managers">
-          {(params) => <ProtectedRoute component={ChiefManagers} allowedRoles={["chief"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Chief Managers">
+              <ProtectedRoute component={ChiefManagers} allowedRoles={["chief"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="Chief Projects">
         <Route path="/chief/projects">
-          {(params) => <ProtectedRoute component={ChiefProjects} allowedRoles={["chief"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Chief Projects">
+              <ProtectedRoute component={ChiefProjects} allowedRoles={["chief"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <Route path="/chief/workspace-monitor">
-        {() => <RedirectTo href="/chief/workspace" />}
-      </Route>
-      <ErrorBoundary label="Chief Booth Workspace">
+        <Route path="/chief/pipeline">
+          {() => (
+            <ErrorBoundary label="Chief Pipeline">
+              <ProtectedRoute component={ChiefPipeline} allowedRoles={["chief"]} />
+            </ErrorBoundary>
+          )}
+        </Route>
+        <Route path="/chief/quotes">
+          {() => (
+            <ErrorBoundary label="Chief Quotes">
+              <ProtectedRoute component={ChiefQuotes} allowedRoles={["chief"]} />
+            </ErrorBoundary>
+          )}
+        </Route>
+        <Route path="/chief/invoices">
+          {() => (
+            <ErrorBoundary label="Chief Invoices">
+              <ProtectedRoute component={ChiefInvoices} allowedRoles={["chief"]} />
+            </ErrorBoundary>
+          )}
+        </Route>
+        <Route path="/chief/workspace-monitor">
+          {() => <RedirectTo href="/chief/workspace" />}
+        </Route>
         <Route path="/chief/workspace">
-          {(params) => <ProtectedRoute component={PMWorkspace} allowedRoles={["chief", "pm"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Chief Booth Workspace">
+              <ProtectedRoute component={PMWorkspace} allowedRoles={["chief", "pm"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="Chief Reports">
         <Route path="/chief/reports">
-          {(params) => <ProtectedRoute component={ChiefReports} allowedRoles={["chief"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Chief Reports">
+              <ProtectedRoute component={ChiefReports} allowedRoles={["chief"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="Chief Messages">
         <Route path="/chief/messages">
-          {(params) => <ProtectedRoute component={ChiefMessages} allowedRoles={["chief"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Chief Messages">
+              <ProtectedRoute component={ChiefMessages} allowedRoles={["chief"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="Chief Settings">
         <Route path="/chief/settings">
-          {(params) => <ProtectedRoute component={ChiefSettings} allowedRoles={["chief"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Chief Settings">
+              <ProtectedRoute component={ChiefSettings} allowedRoles={["chief"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="Chief Calendar">
         <Route path="/chief/calendar">
-          {(params) => <ProtectedRoute component={ChiefCalendar} allowedRoles={["chief"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Chief Calendar">
+              <ProtectedRoute component={ChiefCalendar} allowedRoles={["chief"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
 
-      <ErrorBoundary label="PM Dashboard">
         <Route path="/pm">
-          {(params) => <ProtectedRoute component={PMDashboard} allowedRoles={["pm"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="PM Dashboard">
+              <ProtectedRoute component={PMDashboard} allowedRoles={["pm"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="PM Calendar">
         <Route path="/pm/calendar">
-          {(params) => <ProtectedRoute component={PMCalendar} allowedRoles={["pm"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="PM Calendar">
+              <ProtectedRoute component={PMCalendar} allowedRoles={["pm"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="PM Clients">
         <Route path="/pm/clients">
-          {(params) => <ProtectedRoute component={PMClients} allowedRoles={["pm"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="PM Clients">
+              <ProtectedRoute component={PMClients} allowedRoles={["pm"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="PM Projects">
         <Route path="/pm/projects">
-          {(params) => <ProtectedRoute component={PMProjects} allowedRoles={["pm"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="PM Projects">
+              <ProtectedRoute component={PMProjects} allowedRoles={["pm"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="PM Workspace">
+        <Route path="/pm/quotes">
+          {() => (
+            <ErrorBoundary label="PM Quotes">
+              <ProtectedRoute component={PMQuotes} allowedRoles={["pm"]} />
+            </ErrorBoundary>
+          )}
+        </Route>
+        <Route path="/pm/invoices">
+          {() => (
+            <ErrorBoundary label="PM Invoices">
+              <ProtectedRoute component={PMInvoices} allowedRoles={["pm"]} />
+            </ErrorBoundary>
+          )}
+        </Route>
         {/* WS-18: the 3D editor has no touch or small-viewport design. */}
         <Route path="/pm/workspace">
           {(params) => (
-            <DesktopOnlyGuard>
-              <ProtectedRoute component={PMWorkspace} allowedRoles={["pm"]} params={params} />
-            </DesktopOnlyGuard>
+            <ErrorBoundary label="PM Workspace">
+              <DesktopOnlyGuard>
+                <ProtectedRoute component={PMWorkspace} allowedRoles={["pm"]} params={params} />
+              </DesktopOnlyGuard>
+            </ErrorBoundary>
           )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="PM Requests">
         <Route path="/pm/requests">
-          {(params) => <ProtectedRoute component={PMRequests} allowedRoles={["pm"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="PM Requests">
+              <ProtectedRoute component={PMRequests} allowedRoles={["pm"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="PM Messages">
         <Route path="/pm/messages">
-          {(params) => <ProtectedRoute component={PMMessages} allowedRoles={["pm"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="PM Messages">
+              <ProtectedRoute component={PMMessages} allowedRoles={["pm"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="PM Tasks">
         <Route path="/pm/tasks">
-          {(params) => <ProtectedRoute component={PMTasks} allowedRoles={["pm"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="PM Tasks">
+              <ProtectedRoute component={PMTasks} allowedRoles={["pm"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="PM Reports">
         <Route path="/pm/reports">
-          {(params) => <ProtectedRoute component={PMReports} allowedRoles={["pm"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="PM Reports">
+              <ProtectedRoute component={PMReports} allowedRoles={["pm"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="PM Settings">
         <Route path="/pm/settings">
-          {(params) => <ProtectedRoute component={PMSettings} allowedRoles={["pm"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="PM Settings">
+              <ProtectedRoute component={PMSettings} allowedRoles={["pm"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
+        <Route>{() => <NotFound />}</Route>
+      </Switch>
       </>
     );
   };
 }
 
-function createStaffPublicRoutes() {
+/**
+ * The public PM-invitation page.
+ *
+ * Returns the page itself, not a <Route>. A <Switch> child must carry its own
+ * `path` prop: wouter parses a missing path as "*", so any wrapper element
+ * placed directly in a Switch matches every location and shadows every route
+ * declared after it — which is how the NotFound route below went dead.
+ * The caller registers this behind an explicit <Route path="/pm/join">.
+ */
+function createStaffPublicPage() {
   const PMJoin = lazyPage(() => import("@/pages/pm/PMJoin"));
 
-  return function StaffPublicRoutes() {
-    return <Route path="/pm/join">{() => <PMJoin />}</Route>;
+  return function StaffPublicPage() {
+    return <PMJoin />;
   };
 }
 
 function createClientRoutes() {
   const ClientDashboard = lazyPage(() => import("@/pages/client/ClientDashboard"));
   const ClientProjects = lazyPage(() => import("@/pages/client/ClientProjects"));
+  const ClientQuotes = lazyPage(() => import("@/pages/client/ClientQuotes"));
+  const ClientInvoices = lazyPage(() => import("@/pages/client/ClientInvoices"));
   const ClientWorkspace = lazyPage(() => import("@/pages/client/ClientWorkspace"));
   const ClientMessages = lazyPage(() => import("@/pages/client/ClientMessages"));
   const ClientDocuments = lazyPage(() => import("@/pages/client/ClientDocuments"));
   const ClientProfile = lazyPage(() => import("@/pages/client/ClientProfile"));
 
+  // See the note in createStaffRoutes: every Switch child must carry a `path`.
   return function ClientRoutes() {
     return (
-      <>
-      <ErrorBoundary label="Client Dashboard">
+      <Switch>
         <Route path="/client">
-          {(params) => <ProtectedRoute component={ClientDashboard} allowedRoles={["client"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Client Dashboard">
+              <ProtectedRoute component={ClientDashboard} allowedRoles={["client"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="Client Projects">
         <Route path="/client/projects">
-          {(params) => <ProtectedRoute component={ClientProjects} allowedRoles={["client"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Client Projects">
+              <ProtectedRoute component={ClientProjects} allowedRoles={["client"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="Client Workspace">
+        <Route path="/client/quotes">
+          {(params) => (
+            <ErrorBoundary label="Client Quotes">
+              <ProtectedRoute component={ClientQuotes} allowedRoles={["client"]} params={params} />
+            </ErrorBoundary>
+          )}
+        </Route>
+        <Route path="/client/invoices">
+          {(params) => (
+            <ErrorBoundary label="Client Invoices">
+              <ProtectedRoute component={ClientInvoices} allowedRoles={["client"]} params={params} />
+            </ErrorBoundary>
+          )}
+        </Route>
         <Route path="/client/workspace">
-          {(params) => <ProtectedRoute component={ClientWorkspace} allowedRoles={["client"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Client Workspace">
+              <ProtectedRoute component={ClientWorkspace} allowedRoles={["client"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="Client Messages">
         <Route path="/client/messages">
-          {(params) => <ProtectedRoute component={ClientMessages} allowedRoles={["client"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Client Messages">
+              <ProtectedRoute component={ClientMessages} allowedRoles={["client"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <Route path="/client/approvals">
-        {() => <RedirectTo href="/client/workspace" />}
-      </Route>
-      <ErrorBoundary label="Client Documents">
+        <Route path="/client/approvals">
+          {() => <RedirectTo href="/client/workspace" />}
+        </Route>
         <Route path="/client/documents">
-          {(params) => <ProtectedRoute component={ClientDocuments} allowedRoles={["client"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Client Documents">
+              <ProtectedRoute component={ClientDocuments} allowedRoles={["client"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      <ErrorBoundary label="Client Profile">
         <Route path="/client/profile">
-          {(params) => <ProtectedRoute component={ClientProfile} allowedRoles={["client"]} params={params} />}
+          {(params) => (
+            <ErrorBoundary label="Client Profile">
+              <ProtectedRoute component={ClientProfile} allowedRoles={["client"]} params={params} />
+            </ErrorBoundary>
+          )}
         </Route>
-      </ErrorBoundary>
-      </>
+        <Route>{() => <NotFound />}</Route>
+      </Switch>
     );
   };
 }
 
 const StaffRoutes = INCLUDE_STAFF_ROUTES ? createStaffRoutes() : EmptyRoutes;
-const StaffPublicRoutes = INCLUDE_STAFF_ROUTES ? createStaffPublicRoutes() : EmptyRoutes;
+const StaffPublicPage = INCLUDE_STAFF_ROUTES ? createStaffPublicPage() : EmptyRoutes;
 const ClientRoutes = INCLUDE_CLIENT_ROUTES ? createClientRoutes() : EmptyRoutes;
 
 function Router() {
@@ -339,8 +468,11 @@ function Router() {
         <Route key={slug} path={`/${slug}`}>{() => <LegalPage slug={slug} />}</Route>
       ))}
 
+      {/* Public lead intake — "Request a quote", no authentication */}
+      <Route path="/get-quote">{() => <GetQuote />}</Route>
+
       {/* PM invitation join — accessible without authentication */}
-      {showStaff && <StaffPublicRoutes />}
+      {showStaff && <Route path="/pm/join">{() => <StaffPublicPage />}</Route>}
 
       <Route>{() => <NotFound />}</Route>
     </Switch>
