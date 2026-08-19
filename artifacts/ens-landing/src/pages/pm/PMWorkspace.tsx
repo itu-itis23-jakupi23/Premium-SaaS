@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { CurrencySwitcher, formatMoneyUSD, useCurrency } from "@/lib/currency";
-import { useTranslation } from "react-i18next";
+import { CurrencySwitcher, useCurrency } from "@/lib/currency";
 import { Link } from "wouter";
 import { Booth3D } from "@/components/workspace/Booth3D";
 import type { BoothSystem } from "@/components/workspace/BoothCanvas";
@@ -21,8 +20,8 @@ import {
 } from "@/lib/platform-api";
 import {
   ChevronLeft, Undo2, Redo2, Save, Camera, History, Send,
-  Maximize2, Search, Plus, ChevronDown, Trash2, Download,
-  Square, LayoutTemplate, Lightbulb, Layers, Map, Box, X,
+  Maximize2, Plus, Trash2,
+  Square, Layers, Map, X,
   CheckCircle2, Package, StickyNote, Settings2, Copy, MessageSquare, ImagePlus, Lock, Unlock,
 } from "lucide-react";
 import {
@@ -31,484 +30,65 @@ import {
   snapItemCoordinate,
   ROOM_SNAP_M,
   ROOM_DIMENSION_SNAP_M,
-  ITEM_WALL_CLEARANCE_M,
   DUPLICATE_OFFSET_M,
 } from "@/lib/workspace-transform";
+// Data model (types + static Sedef furniture catalog) lives in a dedicated
+// module so this file carries workspace behaviour, not static data.
+import {
+  ROOM_SIDE_OPTIONS,
+  type FasciaOption,
+  type LightingPreset,
+  type DoorPosition,
+  type DoorSide,
+  type DoorSwing,
+  type RoomWallFinish,
+  type RoomGraphicFit,
+  type RoomTemplateKey,
+  type BoothState,
+  type WorkspacePlacedItem,
+  type WorkspaceRoom,
+  type PanelOverride,
+  type Note,
+  type Snapshot,
+  type WSData,
+  type SaveStatus,
+  type FeedbackFilter,
+  type CatItem,
+  type FurnitureCategory,
+} from "./workspace-model";
+// Static config (palette, finishes, pricing, catalog) lives in a data module.
+import {
+  C, MONO, UI, furnitureCategoryFor, CATALOG, ITEM_PROPS,
+  catalogItemProps, ENS_MODEL_URLS, KNOWN_CATALOG_IDS, THEMES, WALL_FINISHES, FRAME_FINISHES,
+  FASCIA_FINISHES, CARPETS, NOTE_COLORS, FASCIA_OPTIONS, LIGHTING_PRESETS,
+  ROOM_TEMPLATES,
+} from "./workspace-constants";
+// Leaf presentational components live in a dedicated UI module.
+import {
+  Hairline, MonoLabel, PropBlock, formatUsd, DimInput, Swatch, OpenSidesPlan, Toast,
+} from "./workspace-ui";
+import { WorkspaceProjectPicker } from "./WorkspaceProjectPicker";
+import { WorkspaceSnapshotDialog } from "./WorkspaceSnapshotDialog";
+import { WorkspaceCatalogPanel } from "./WorkspaceCatalogPanel";
 
-// ── Palette ────────────────────────────────────────────────────────
-const C = {
-  bg:    'var(--workspace-bg, #f3f1ec)',
-  panel: 'var(--workspace-panel, #ffffff)',
-  panel0:'var(--workspace-panel-e0, rgba(255,255,255,0.88))',
-  ink:   'var(--workspace-ink, #181613)',
-  hair:  'var(--workspace-hair, #d8d3c9)',
-  blue:  'var(--workspace-blue, #1d4ed8)',
-  orange:'var(--workspace-orange, #c2410c)',
-  green: 'var(--workspace-green, #2f7d3a)',
-  muted: 'var(--workspace-muted, #6b6560)',
-  bgHover:'var(--workspace-bg-hover, #ece9e3)'
-} as const;
-const MONO = 'var(--app-font-mono)';
-const UI   = 'var(--app-font-samsung)';
-
-// ── Types ──────────────────────────────────────────────────────────
-type FasciaOption = 'classic' | 'full' | 'custom';
-type LightingPreset = 'neutral' | 'exhibition' | 'accent' | 'spotlight' | 'ambient';
-type DoorPosition = 'left' | 'center' | 'right';
-type DoorSide = 'front' | 'back' | 'left' | 'right';
-type DoorSwing = 'left-in' | 'right-in' | 'left-out' | 'right-out';
-type RoomWallFinish = 'white' | 'frosted' | 'glass' | 'dark';
-type RoomGraphicFit = 'cover' | 'contain' | 'stretch';
-type RoomTemplateKey = 'storage' | 'meeting' | 'utility';
-const ROOM_SIDE_OPTIONS:{value:DoorSide;label:string}[] = [
-  {value:'front',label:'Front wall'},
-  {value:'back',label:'Back wall'},
-  {value:'left',label:'Left wall'},
-  {value:'right',label:'Right wall'},
-];
-interface BoothState { width:number; depth:number; height:number; system:BoothSystem; companyName:string; openFront:boolean; openBack:boolean; openLeft:boolean; openRight:boolean; fasciaEnabled:boolean; fasciaOption:FasciaOption; }
-interface WorkspacePlacedItem { id:string; catalogId:string; name:string; sku:string; qty:number; w:number; d:number; h:number; color:string; weight:number; x:number; z:number; rotation:number; rotationX?:number; rotationY?:number; rotationZ?:number; locked?:boolean; kind:'furniture'|'light'|'structure'|'fascia'|'asset'; shape?:CatItem['shape']; modelUrl?:string; source?:string; }
-interface WorkspaceRoom { id:string; name:string; width:number; depth:number; height:number; x:number; z:number; hasDoor:boolean; hasCeiling:boolean; doorSide:DoorSide; doorWidth:number; doorPosition:DoorPosition; doorSwing:DoorSwing; doorOpen:boolean; wallFinish:RoomWallFinish; floorColor:string; locked:boolean; designImageUrl?:string; designImageName?:string; designOpacity?:number; designWall:DoorSide; designFit:RoomGraphicFit; }
-interface PanelOverride { color?:string; brandText?:string; brandColor?:string; brandScale?:number; designImageUrl?:string; designImageName?:string; designOpacity?:number; }
-interface Note { id:string; text:string; color:string; createdAt:string; }
-interface Snapshot { id:string; name:string; data:WSData; createdAt:string; }
-interface WSData { booth:BoothState; themeIdx:number; wallFinishIdx:number; frameFinishIdx:number; fasciaFinishIdx:number; carpetIdx:number; lightingPreset:LightingPreset; placedItems:WorkspacePlacedItem[]; rooms:WorkspaceRoom[]; notes:Note[]; panelOverrides:Record<string,PanelOverride>; frontSupportPositions:number[]; suppressedDefaultPositions:number[]; }
-type SaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';
-type FeedbackFilter = 'open' | 'all' | 'resolved';
-
-// ── Catalog ────────────────────────────────────────────────────────
-interface CatItem { id:string; name:string; sku:string; dim:string; inStand:number; icon:React.ElementType; family?:string; price?:number; stock?:number; lowStockAt?:number; shape?:'round_table'|'rect_table'|'counter'|'shelf'|'wall_shelf'|'cabinet'|'cube'|'chair'|'bar_stool'|'light'|'rail_light'|'box'; modelUrl?:string; furnitureCategory?:FurnitureCategory; }
-type FurnitureCategory = 'all' | 'chairs' | 'stools' | 'seating' | 'tables' | 'storage' | 'shelves' | 'appliances' | 'lighting' | 'decor' | 'parts';
-const SEDEF_FURNITURE_ITEMS: Omit<CatItem,'icon'>[] = [
-  {id:'sedef-149', name:'PLASTIK HARE SANDALYE - PLASTIC CHAIR', sku:'149', dim:'0.55 x 0.55 x 0.85', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'chair', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/149%20PLASTIK%20HARE%20SANDALYE%20-%20PLASTIC%20CHAIR.glb'},
-  {id:'sedef-221', name:'PANEL - PANEL', sku:'221', dim:'1.00 x 0.08 x 2.50', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/221%20PANEL%20-%20PANEL.glb'},
-  {id:'sedef-224', name:'RAF - SHELF', sku:'224', dim:'1.00 x 0.30 x 0.08', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'shelf', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/224%20RAF%20-%20SHELF.glb'},
-  {id:'sedef-231', name:'AHSAP KAPI - WOODEN DOOR', sku:'231', dim:'0.90 x 0.08 x 2.10', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/231%20AHSAP%20KAPI%20-%20WOODEN%20DOOR.glb'},
-  {id:'sedef-250-b', name:'AHSAP SANDALYE BEYAZ - WHITE WOOD CHAIR', sku:'250-B', dim:'0.55 x 0.55 x 0.85', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'chair', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/250-B%20AHSAP%20SANDALYE%20BEYAZ%20-%20WHITE%20WOOD%20CHAIR.glb'},
-  {id:'sedef-255-b', name:'DERI BAR SANDALYESI - LEATHER BAR CHAIR', sku:'255-B', dim:'0.50 x 0.50 x 1.05', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'bar_stool', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/255-B%20DERI%20BAR%20SANDALYESI%20-%20LEATHER%20BAR%20CHAIR.glb'},
-  {id:'sedef-255-s', name:'AVEA DERI BAR TABURESI SIYAH - BLACK LEATHER BAR STOOL', sku:'255-S', dim:'0.50 x 0.50 x 1.05', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'bar_stool', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/255-S%20AVEA%20DERI%20BAR%20TABURESI%20SIYAH%20-%20BLACK%20LEATHER%20BAR%20STOOL.glb'},
-  {id:'sedef-307', name:'Z BAR TABURESI - Z BAR STOOL', sku:'307', dim:'0.45 x 0.45 x 1.00', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'bar_stool', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/307%20Z%20BAR%20TABURESI%20-%20Z%20BAR%20STOOL.glb'},
-  {id:'sedef-309', name:'DERI SANDALYE - LEATHER CHAIR', sku:'309', dim:'0.55 x 0.55 x 0.85', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'chair', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/309%20DERI%20SANDALYE%20-%20LEATHER%20CHAIR.glb'},
-  {id:'sedef-312-s', name:'TEK KISILIK KOLTUK SIYAH - ARMCHAIR BLACK', sku:'312-S', dim:'0.90 x 0.85 x 0.80', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'chair', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/312-S%20TEK%20KISILIK%20KOLTUK%20SIYAH%20-%20ARMCHAIR%20BLACK.glb'},
-  {id:'sedef-313-s', name:'CIFT KISILIK KOLTUK SIYAH - DOUBLE SOFA BLACK', sku:'313-S', dim:'1.55 x 0.85 x 0.80', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/313-S%20CIFT%20KISILIK%20KOLTUK%20SIYAH%20-%20DOUBLE%20SOFA%20BLACK.glb'},
-  {id:'sedef-315', name:'VESTIYER - CLOTHES RACK', sku:'315', dim:'0.75 x 0.45 x 1.75', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/315%20VESTIYER%20-%20CLOTHES%20RACK.glb'},
-  {id:'sedef-316-k', name:'DERI PUF KIRMIZI - LEATHER POUFFE RED', sku:'316-K', dim:'0.45 x 0.45 x 0.45', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'cube', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/316-K%20DERI%20PUF%20KIRMIZI%20-%20LEATHER%20POUFFE%20RED.glb'},
-  {id:'sedef-318', name:'COP KOVASI - WASTE BIN', sku:'318', dim:'0.32 x 0.32 x 0.70', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/318%20COP%20KOVASI%20-%20WASTE%20BIN.glb'},
-  {id:'sedef-321', name:'BITKI - PLANT', sku:'321', dim:'0.55 x 0.55 x 1.30', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/321%20BITKI%20-%20PLANT.glb'},
-  {id:'sedef-326-s', name:'OFIS SANDALYESI - OFFICE CHAIR', sku:'326-S', dim:'0.60 x 0.60 x 0.90', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'chair', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/326-S%20OFIS%20SANDALYESI%20-%20OFFICE%20CHAIR.glb'},
-  {id:'sedef-401', name:'TV - TV', sku:'401', dim:'1.10 x 0.08 x 0.65', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/401%20TV%20-%20TV.glb'},
-  {id:'sedef-406', name:'DIZUSTU BILGISAYAR - LAPTOP', sku:'406', dim:'0.36 x 0.25 x 0.04', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/406%20DIZUSTU%20BILGISAYAR%20-%20LAPTOP.glb'},
-  {id:'sedef-411', name:'BUZDOLABI - REFRIGERATOR', sku:'411', dim:'0.65 x 0.65 x 1.45', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'cabinet', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/411%20BUZDOLABI%20-%20REFRIGERATOR.glb'},
-  {id:'sedef-412', name:'SEBIL - WATER FOUNTAIN', sku:'412', dim:'0.38 x 0.38 x 1.15', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/412%20SEBIL%20-%20WATER%20FOUNTAIN.glb'},
-  {id:'sedef-413', name:'BROSURLUK - BROCHURE RACK', sku:'413', dim:'0.45 x 0.38 x 1.45', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'shelf', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/413%20BROSURLUK%20-%20BROCHURE%20RACK.glb'},
-  {id:'sedef-417', name:'100 W 3 RENKLI LAMBA - 100 W 3-COLORED LAMP', sku:'417', dim:'0.18 x 0.18 x 0.28', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'rail_light', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/417%20100%20W%203%20RENKLI%20LAMBA%20-%20100%20W%203-COLORED%20LAMP.glb'},
-  {id:'sedef-418', name:'100 W GRI PROJEKTOR - 100 W SPOTLIGHT LAMP', sku:'418', dim:'0.22 x 0.18 x 0.26', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'rail_light', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/418%20100%20W%20GRI%20PROJEKTOR%20-%20100%20W%20SPOTLIGHT%20LAMP.glb'},
-  {id:'sedef-419', name:'100 W LED KOLLU PROJEKTOR - 100 W SPOTLIGHT LAMP', sku:'419', dim:'0.22 x 0.18 x 0.26', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'rail_light', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/419%20100%20W%20LED%20KOLLU%20PROJEKTOR%20-%20100%20W%20SPOTLIGHT%20LAMP.glb'},
-  {id:'sedef-422', name:'MESRUBAT DOLABI - DRINK REFRIGERATOR', sku:'422', dim:'0.70 x 0.65 x 1.60', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'cabinet', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/422%20MESRUBAT%20DOLABI%20-%20DRINK%20REFRIGERATOR.glb'},
-  {id:'sedef-431', name:'AHSAP CICEKLIK - WOOD FLORAL', sku:'431', dim:'0.70 x 0.35 x 0.75', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'box', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/431%20AHSAP%20CICEKLIK%20-%20WOOD%20FLORAL.glb'},
-  {id:'sedef-440', name:'EVYE DOLAPLI - SINK CABINET', sku:'440', dim:'0.85 x 0.60 x 0.90', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'cabinet', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/440%20EVYE%20DOLAPLI%20-%20SINK%20CABINET.glb'},
-  {id:'sedef-447', name:'BUYUK BUZDOLABI - LARGE REFRIGERATOR', sku:'447', dim:'0.75 x 0.70 x 1.85', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'cabinet', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/447%20BUYUK%20BUZDOLABI%20-%20LARGE%20REFRIGERATOR.glb'},
-  {id:'sedef-513', name:'TEL BAR SANDALYESI - WIRE BLACK BAR CHAIR', sku:'513', dim:'0.50 x 0.50 x 1.05', inStand:0, family:'Sedef Refined Furniture', price:0, stock:99, shape:'bar_stool', modelUrl:'/ens-workspace-assets/sedef_remaining_furniture_refined_v2/glb_models/513%20TEL%20BAR%20SANDALYESI%20-%20WIRE%20BLACK%20BAR%20CHAIR.glb'},
-];
-const FURNITURE_CATEGORY_ORDER: FurnitureCategory[] = ['all','chairs','stools','seating','tables','storage','shelves','appliances','lighting','decor','parts'];
-function furnitureCategoryFor(item: Pick<CatItem,'name'|'sku'|'shape'>): FurnitureCategory {
-  const text = `${item.name} ${item.sku}`.toLowerCase();
-  if (item.shape === 'bar_stool' || text.includes('tabure') || text.includes('bar stool') || text.includes('bar chair')) return 'stools';
-  if (item.shape === 'chair' || text.includes('sandalye') || text.includes('chair')) {
-    if (text.includes('koltuk') || text.includes('armchair') || text.includes('sofa')) return 'seating';
-    return 'chairs';
-  }
-  if (text.includes('koltuk') || text.includes('sofa') || text.includes('puf') || text.includes('pouffe')) return 'seating';
-  if (item.shape === 'round_table' || item.shape === 'rect_table' || text.includes('masa') || text.includes('table')) return 'tables';
-  if (item.shape === 'shelf' || item.shape === 'wall_shelf' || text.includes('raf') || text.includes('shelf') || text.includes('brosurluk') || text.includes('brochure')) return 'shelves';
-  if (text.includes('buzdolabi') || text.includes('refrigerator') || text.includes('sebil') || text.includes('water fountain') || text.includes('evye') || text.includes('sink')) return 'appliances';
-  if (item.shape === 'cabinet' || text.includes('dolap') || text.includes('cabinet') || text.includes('rack')) return 'storage';
-  if (item.shape === 'rail_light' || item.shape === 'light' || text.includes('lamba') || text.includes('lamp') || text.includes('spotlight')) return 'lighting';
-  if (text.includes('bitki') || text.includes('plant') || text.includes('ciceklik') || text.includes('floral')) return 'decor';
-  return 'parts';
-}
-const SEDEF_ITEM_PROPS: Record<string,{w:number;d:number;h:number;color:string;weight:number}> = Object.fromEntries(
-  SEDEF_FURNITURE_ITEMS.map(item => {
-    const [w,d,h] = item.dim.split(' x ').map(Number);
-    return [item.id, {w:w || 0.8, d:d || 0.8, h:h || 0.8, color:'#d9d2c5', weight:12}];
-  })
-) as Record<string,{w:number;d:number;h:number;color:string;weight:number}>;
-const CATALOG: Record<string,CatItem[]> = {
-  Structure: [
-    {id:'s1',name:'Solid Wall',sku:'OCT-SW-100',dim:'1.0 × 2.5',inStand:6,icon:Square},
-    {id:'s2',name:'Glass Wall',sku:'OCT-GW-100',dim:'1.0 × 2.5',inStand:2,icon:Square},
-    {id:'s3',name:'Curved Wall',sku:'OCT-CW-100',dim:'1.0 × 2.5',inStand:0,icon:Square},
-    {id:'s4',name:'Header Beam',sku:'OCT-HB-200',dim:'2.0 × 0.85',inStand:0,icon:LayoutTemplate},
-  ],
-  Fascia: [
-    {id:'f1',name:'Std Fascia',sku:'FAS-STD-01',dim:'1.0 × 0.3',inStand:6,icon:LayoutTemplate},
-    {id:'f2',name:'Corner Fascia',sku:'FAS-COR-01',dim:'0.3 × 0.3',inStand:4,icon:LayoutTemplate},
-  ],
-  Furniture: SEDEF_FURNITURE_ITEMS.map(item => ({...item, icon:Box, furnitureCategory: furnitureCategoryFor(item)})),
-  Lighting: [
-    {id:'417',name:'Spotlight',sku:'417',dim:'0.18 x 0.18 x 0.28',inStand:4,icon:Lightbulb,family:'Rail Lights',price:15,stock:12,lowStockAt:4,shape:'rail_light'},
-    {id:'418',name:'Floodlight',sku:'418',dim:'0.22 x 0.18 x 0.26',inStand:0,icon:Lightbulb,family:'Rail Lights',price:18,stock:6,lowStockAt:2,shape:'rail_light'},
-    {id:'fascia_light',name:'Fascia Light',sku:'fascia_light',dim:'0.32 x 0.14 x 0.14',inStand:0,icon:Lightbulb,family:'Fascia Lights',price:12,stock:8,lowStockAt:2,shape:'rail_light'},
-  ],
-};
-
-const ITEM_PROPS: Record<string,{w:number;d:number;h:number;color:string;weight:number}> = {
-  s1:{w:1.0,d:0.08,h:2.5,color:'#4a90d9',weight:28}, s2:{w:1.0,d:0.05,h:2.5,color:'#7bb8f0',weight:22},
-  s3:{w:1.0,d:0.08,h:2.5,color:'#6bb0e8',weight:26}, s4:{w:2.0,d:0.15,h:0.85,color:'#5580c0',weight:18},
-  f1:{w:1.0,d:0.15,h:0.3,color:'#8868ee',weight:8},   f2:{w:0.3,d:0.3,h:0.3,color:'#9878f0',weight:5},
-  l1:{w:0.15,d:0.15,h:0.3,color:'#d4af37',weight:2},  l2:{w:1.0,d:0.05,h:0.1,color:'#c8a020',weight:1},
-  l3:{w:0.4,d:0.3,h:0.5,color:'#b89018',weight:3},
-  '417':{w:0.18,d:0.18,h:0.28,color:'#2b3037',weight:2}, '418':{w:0.22,d:0.18,h:0.26,color:'#313740',weight:2.5},
-  fascia_light:{w:0.32,d:0.14,h:0.14,color:'#dce3ea',weight:1.8},
-  ...SEDEF_ITEM_PROPS,
-};
-
-function catalogItemProps(item:CatItem) {
-  const registered = ITEM_PROPS[item.id];
-  if (registered) return registered;
-  const dimensions = (item.dim.match(/\d+(?:\.\d+)?/g) ?? [])
-    .map(value => Number.parseFloat(value))
-    .filter(Number.isFinite);
-  return {
-    w: Math.max(0.06, dimensions[0] || 0.5),
-    d: Math.max(0.06, dimensions[1] || 0.5),
-    h: Math.max(0.06, dimensions[2] || 0.8),
-    color: '#888888',
-    weight: 10,
-  };
-}
-
-const ENS_MODEL_URLS: Record<string,string> = {};
-const KNOWN_CATALOG_IDS = new Set(Object.values(CATALOG).flat().map(item => item.id));
-
-const THEMES  = [{label:'Charcoal',color:'#3b3e44'},{label:'White',color:'#dde0e4'},{label:'Walnut',color:'#7a4a2a'},{label:'Navy',color:'#1a2640'}];
-const WALL_FINISHES = [{label:'White Laminate',color:'#f8fafc'},{label:'Cool Grey',color:'#dfe4ea'},{label:'Warm Ivory',color:'#f3eadc'},{label:'Graphite',color:'#9aa1aa'}];
-const FRAME_FINISHES = [{label:'Anodized',color:'#b8bdc3'},{label:'Black',color:'#3d4249'},{label:'Champagne',color:'#c7b99a'},{label:'White',color:'#e4e7eb'}];
-const FASCIA_FINISHES = [{label:'White',color:'#ffffff'},{label:'Ice Grey',color:'#eef2f7'},{label:'Warm White',color:'#fff7ed'},{label:'Graphite',color:'#d2d7de'}];
-const CARPETS = [{label:'Black',color:'#1a1a1a'},{label:'Bone',color:'#dde0e4'},{label:'Gray',color:'#7a7e84'},{label:'Navy',color:'#1a2640'},{label:'Forest',color:'#1e3a28'},{label:'Terracotta',color:'#5a2316'}];
-const NOTE_COLORS = ['#1d4ed8','#c2410c','#2f7d3a','#7c3aed','#b45309'];
-const CAT_TOTAL: Record<string,number> = { Structure:4, Fascia:2, Furniture:SEDEF_FURNITURE_ITEMS.length, Lighting:3 };
-const FASCIA_OPTIONS: {value:FasciaOption; label:string; price:number; minWidth:number; note:string; boardMm:number}[] = [
-  {value:'classic', label:'Standard rail sign', price:1200, minWidth:2, note:'Front and rear fascia integrated into the top rail.', boardMm:110},
-  {value:'full', label:'Full length rail sign', price:1800, minWidth:2, note:'Longer rail-integrated fascia with continuous front/rear branding.', boardMm:110},
-  {value:'custom', label:'Custom oval fascia', price:2500, minWidth:3, note:'Custom face board for wider stands; text is required.', boardMm:140},
-];
-const LIGHTING_PRESETS: {value:LightingPreset; label:string}[] = [
-  {value:'neutral', label:'Neutral'},
-  {value:'exhibition', label:'Exhibition'},
-  {value:'accent', label:'Accent'},
-  {value:'spotlight', label:'Spotlight'},
-  {value:'ambient', label:'Ambient'},
-];
-const STRUCT_UNIT_PRICE: Record<string,number> = { post:95, rail:42, panel:85, fascia:120, foot:28 };
-const ROOM_UNIT_PRICE = { profile:42, panel:85, door:240, floor:35, ceiling:55, graphic:45 } as const;
-const ROOM_TEMPLATES:{value:RoomTemplateKey;label:string;name:string;width:number;depth:number;hasCeiling:boolean}[] = [
-  {value:'storage',label:'Storage 2 x 1 m',name:'Storage room',width:2,depth:1,hasCeiling:false},
-  {value:'meeting',label:'Meeting 3 x 2 m',name:'Meeting room',width:3,depth:2,hasCeiling:true},
-  {value:'utility',label:'Utility 1 x 1 m',name:'Utility room',width:1,depth:1,hasCeiling:true},
-];
-
-// ── Sub-components ─────────────────────────────────────────────────
-function Hairline({margin=16}:{margin?:number}) { return <div style={{height:1,background:C.hair,margin:`0 -${margin}px`}}/>; }
-function MonoLabel({children,right}:{children:React.ReactNode;right?:React.ReactNode}) {
-  return <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:7}}><span style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,letterSpacing:'0.1em',color:C.muted,textTransform:'uppercase'}}>{children}</span>{right&&<span style={{fontFamily:MONO,fontSize:9,color:C.muted}}>{right}</span>}</div>;
-}
-function PropBlock({label,right,children}:{label:string;right?:React.ReactNode;children:React.ReactNode}) {
-  return <div style={{padding:'12px 0'}}><MonoLabel right={right}>{label}</MonoLabel>{children}</div>;
-}
-function formatUsd(value:number) {
-  // Values are USD internally; rendering converts to the selected display
-  // currency (components consuming useCurrency re-render on switch).
-  return formatMoneyUSD(value);
-}
-function DimInput({label,value,min,max,step,onChange,disabled=false}:{label:string;value:number;min:number;max:number;step:number;onChange:(v:number)=>void;disabled?:boolean}) {
-  return (<div>
-    <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:3}}>{label}</label>
-    <div style={{position:'relative'}}>
-      <input type="number" id={`dim-${label.toLowerCase().replace(/\s+/g,'-')}`} name={`dim-${label.toLowerCase().replace(/\s+/g,'-')}`} min={min} max={max} step={step} value={value} disabled={disabled}
-        onChange={e=>{if(disabled)return;const n=parseFloat(e.target.value);if(!isNaN(n)&&n>=min&&n<=max)onChange(n);}}
-        style={{width:'100%',height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:disabled?'#f2f0eb':C.bg,fontFamily:MONO,fontSize:12.5,fontWeight:600,color:disabled?C.muted:C.ink,paddingLeft:8,paddingRight:22,boxSizing:'border-box',outline:'none',cursor:disabled?'not-allowed':'text'}}/>
-      <span style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',fontFamily:MONO,fontSize:9,color:C.muted}}>m</span>
-    </div>
-  </div>);
-}
-function Swatch({color,active,onClick,size=28,title}:{color:string;active:boolean;onClick:()=>void;size?:number;title?:string}) {
-  const light=color==='#dde0e4';
-  return (<button onClick={onClick} title={title??color} style={{width:size,height:size,borderRadius:4,background:color,cursor:'pointer',flexShrink:0,border:`${active?2:1}px solid ${active?C.ink:C.hair}`,position:'relative'}}>
-    {active&&<span style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke={light?C.ink:'#fff'} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg></span>}
-  </button>);
-}
-function catalogPreviewUrl(item: CatItem) {
-  if (!item.modelUrl) return '';
-  const filename = decodeURIComponent(item.modelUrl.split('/').pop() || '').replace(/\.glb$/i, ' - preview.png');
-  return `/ens-workspace-assets/sedef_remaining_furniture_refined_v2/previews/${encodeURIComponent(filename)}`;
-}
-function CatalogImagePreview({item,active}:{item:CatItem;active:boolean}) {
-  const previewUrl = catalogPreviewUrl(item);
-  return (
-    <div style={{width:'100%',height:62,border:`1px solid ${active?C.ink:'rgba(156,163,175,0.32)'}`,borderRadius:4,background:active?'#f8fafc':'#ffffff',overflow:'hidden',display:'grid',placeItems:'center'}}>
-      {previewUrl ? (
-        <img src={previewUrl} alt={`${item.name} preview`} loading="lazy" style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',display:'block',transform:'scale(1.18)'}}/>
-      ) : (
-        <Box size={18} color={C.muted}/>
-      )}
-    </div>
-  );
-}
-function CatalogPreview({item,active}:{item:CatItem;active:boolean}) {
-  const props = catalogItemProps(item);
-  const color = props.color;
-  const stroke = active ? C.ink : '#9ca3af';
-  const shape = item.shape ?? 'box';
-  if (item.modelUrl) return <CatalogImagePreview item={item} active={active}/>;
-  return (
-    <svg viewBox="0 0 72 46" width="100%" height="46" aria-hidden="true" style={{display:'block'}}>
-      <rect x="1" y="1" width="70" height="44" rx="4" fill={active?'rgba(24,22,19,0.05)':'rgba(255,255,255,0.48)'} stroke="rgba(156,163,175,0.32)"/>
-      {shape==='round_table'&&<>
-        <ellipse cx="36" cy="19" rx="18" ry="10" fill={color} stroke={stroke} strokeWidth="1"/>
-        <rect x="34" y="20" width="4" height="14" rx="1" fill="#565b63"/>
-        <ellipse cx="36" cy="36" rx="12" ry="3" fill="#565b63" opacity="0.65"/>
-      </>}
-      {shape==='rect_table'&&<>
-        <rect x="18" y="14" width="36" height="14" rx="2" fill={color} stroke={stroke} strokeWidth="1"/>
-        {[22,48].map(x=><rect key={x} x={x} y="27" width="4" height="12" rx="1" fill="#565b63"/>)}
-      </>}
-      {shape==='counter'&&<>
-        <rect x="14" y="16" width="44" height="20" rx="2" fill={color} stroke={stroke} strokeWidth="1"/>
-        <rect x="18" y="13" width="36" height="6" rx="2" fill="#fff" stroke="rgba(80,80,80,0.2)"/>
-      </>}
-      {(shape==='shelf'||shape==='cabinet')&&<>
-        <rect x="20" y="8" width="32" height="30" rx="2" fill={color} stroke={stroke} strokeWidth="1"/>
-        {[17,26,34].map(y=><line key={y} x1="22" y1={y} x2="50" y2={y} stroke="#fff" strokeWidth="2" opacity="0.85"/>)}
-      </>}
-      {shape==='cube'&&<>
-        <rect x="24" y="14" width="24" height="24" rx="2" fill={color} stroke={stroke} strokeWidth="1"/>
-        <path d="M24 14 L31 9 H55 L48 14" fill="rgba(255,255,255,0.45)" stroke={stroke} strokeWidth="0.8"/>
-        <path d="M48 14 L55 9 V33 L48 38" fill="rgba(0,0,0,0.08)" stroke={stroke} strokeWidth="0.8"/>
-      </>}
-      {shape==='chair'&&<>
-        <path d="M21 29 L24 17 Q36 10 48 17 L51 29 Z" fill={color} stroke={stroke} strokeWidth="1"/>
-        <rect x="24" y="28" width="24" height="8" rx="2" fill={color} stroke={stroke} strokeWidth="1"/>
-        {[27,45].map(x=><line key={x} x1={x} y1="36" x2={x-2} y2="41" stroke="#565b63" strokeWidth="2"/>)}
-      </>}
-      {shape==='bar_stool'&&<>
-        <ellipse cx="36" cy="18" rx="14" ry="7" fill={color} stroke={stroke} strokeWidth="1"/>
-        <rect x="34" y="19" width="4" height="16" rx="1" fill="#565b63"/>
-        <ellipse cx="36" cy="37" rx="12" ry="3" fill="#565b63" opacity="0.75"/>
-      </>}
-      {(shape==='light'||shape==='rail_light')&&<>
-        <rect x="28" y="10" width="16" height="10" rx="3" fill="#303741" stroke={stroke} strokeWidth="1"/>
-        <path d="M26 21 H46 L40 36 H32 Z" fill={color} opacity="0.38"/>
-        <ellipse cx="36" cy="21" rx="11" ry="5" fill={color} stroke={stroke} strokeWidth="1"/>
-      </>}
-      {shape==='wall_shelf'&&<>
-        <rect x="16" y="20" width="40" height="6" rx="1" fill={color} stroke={stroke} strokeWidth="1"/>
-        {[24,48].map(x=><path key={x} d={`M${x} 26 L${x-5} 36 H${x+5} Z`} fill="#9aa1aa" opacity="0.8"/>)}
-      </>}
-      {shape==='box'&&<rect x="22" y="12" width="28" height="24" rx="2" fill={color} stroke={stroke} strokeWidth="1"/>}
-    </svg>
-  );
-}
-function OpenSidesPlan({openFront,openBack,openLeft,openRight}:{openFront:boolean;openBack:boolean;openLeft:boolean;openRight:boolean}) {
-  const open=(on:boolean)=>({stroke:on?C.orange:C.ink,strokeDasharray:on?'5 3.5':undefined});
-  return (<svg width="188" height="116" viewBox="0 0 188 116" style={{fontFamily:MONO}}>
-    <line x1="30" y1="24" x2="158" y2="24" strokeWidth="2" {...open(openBack)}/>
-    <line x1="30" y1="24" x2="30" y2="92" strokeWidth="2" {...open(openLeft)}/>
-    <line x1="158" y1="24" x2="158" y2="92" strokeWidth="2" {...open(openRight)}/>
-    <line x1="30" y1="92" x2="158" y2="92" strokeWidth="2" {...open(openFront)}/>
-    <text x="94" y="62" textAnchor="middle" fontSize="18" fill={C.muted} opacity={0.18} fontWeight="700">T</text>
-    <text x="94" y="15" textAnchor="middle" fontSize="7.5" fill={openBack?C.orange:C.muted}>BACK</text>
-    <text x="94" y="110" textAnchor="middle" fontSize="7.5" fill={openFront?C.orange:C.muted}>FRONT{openFront?" · OPEN":""}</text>
-    <text x="16" y="60" textAnchor="middle" fontSize="7.5" fill={openLeft?C.orange:C.muted} transform="rotate(-90,16,60)">LEFT</text>
-    <text x="172" y="60" textAnchor="middle" fontSize="7.5" fill={openRight?C.orange:C.muted} transform="rotate(90,172,60)">RIGHT</text>
-  </svg>);
-}
-// ── Toast ──────────────────────────────────────────────────────────
-function Toast({msg,onClose}:{msg:string;onClose:()=>void}) {
-  useEffect(()=>{const t=setTimeout(onClose,3000);return()=>clearTimeout(t);},[onClose]);
-  return (<div style={{position:'fixed',bottom:48,left:'50%',transform:'translateX(-50%)',background:C.ink,color:'#fff',fontFamily:UI,fontSize:12,fontWeight:600,padding:'10px 20px',borderRadius:6,zIndex:1000,display:'flex',alignItems:'center',gap:8,boxShadow:'0 4px 20px rgba(0,0,0,0.3)',whiteSpace:'nowrap'}}>
-    <CheckCircle2 size={14} style={{color:'#6ee7b7'}}/>{msg}
-  </div>);
-}
 
 // ── Initial state ──────────────────────────────────────────────────
 const INITIAL_BOOTH: BoothState = {width:6,depth:3,height:2.5,system:'octanorm',companyName:'TECHCORP INDUSTRIES',openFront:true,openBack:false,openLeft:false,openRight:false,fasciaEnabled:true,fasciaOption:'full'};
 const INITIAL_WS: WSData = {booth:INITIAL_BOOTH,themeIdx:0,wallFinishIdx:0,frameFinishIdx:0,fasciaFinishIdx:0,carpetIdx:0,lightingPreset:'exhibition',placedItems:[],rooms:[],notes:[],panelOverrides:{},frontSupportPositions:[],suppressedDefaultPositions:[]};
 
-function itemPositionBounds(w:number, d:number, booth:BoothState) {
-  const clearance = ITEM_WALL_CLEARANCE_M;
-  const minX = Math.min(booth.width / 2, w / 2 + clearance);
-  const maxX = Math.max(minX, booth.width - w / 2 - clearance);
-  const minZ = Math.min(booth.depth / 2, d / 2 + clearance);
-  const maxZ = Math.max(minZ, booth.depth - d / 2 - clearance);
-  return { minX, maxX, minZ, maxZ };
-}
-
-type PlacementIssue = { itemId:string; message:string };
-type Rect2D = { x0:number; x1:number; z0:number; z1:number };
-
-function rotatedItemFootprint(item:WorkspacePlacedItem) {
-  const radians = ((Number(item.rotationY ?? item.rotation) || 0) * Math.PI) / 180;
-  const cos = Math.abs(Math.cos(radians));
-  const sin = Math.abs(Math.sin(radians));
-  return {
-    width: item.w * cos + item.d * sin,
-    depth: item.w * sin + item.d * cos,
-  };
-}
-
-function positionBoundsForItem(item:WorkspacePlacedItem, booth:BoothState) {
-  const footprint = rotatedItemFootprint(item);
-  return itemPositionBounds(footprint.width, footprint.depth, booth);
-}
-
-function itemRect(item:WorkspacePlacedItem, pad = 0.03): Rect2D {
-  const footprint = rotatedItemFootprint(item);
-  return {
-    x0: item.x - footprint.width / 2 - pad,
-    x1: item.x + footprint.width / 2 + pad,
-    z0: item.z - footprint.depth / 2 - pad,
-    z1: item.z + footprint.depth / 2 + pad,
-  };
-}
-
-function roomRect(room:WorkspaceRoom, pad = 0.03): Rect2D {
-  return {
-    x0: room.x - room.width / 2 - pad,
-    x1: room.x + room.width / 2 + pad,
-    z0: room.z - room.depth / 2 - pad,
-    z1: room.z + room.depth / 2 + pad,
-  };
-}
-
-function rectsOverlap(a:Rect2D, b:Rect2D) {
-  return a.x0 < b.x1 && a.x1 > b.x0 && a.z0 < b.z1 && a.z1 > b.z0;
-}
-
-function rectInside(inner:Rect2D, outer:Rect2D, tolerance = 0.001) {
-  return inner.x0 >= outer.x0 - tolerance
-    && inner.x1 <= outer.x1 + tolerance
-    && inner.z0 >= outer.z0 - tolerance
-    && inner.z1 <= outer.z1 + tolerance;
-}
-
-function roomInteriorRect(room:WorkspaceRoom):Rect2D {
-  const clearance = 0.12;
-  const outer = roomRect(room, 0);
-  return {
-    x0: Math.min(room.x, outer.x0 + clearance),
-    x1: Math.max(room.x, outer.x1 - clearance),
-    z0: Math.min(room.z, outer.z0 + clearance),
-    z1: Math.max(room.z, outer.z1 - clearance),
-  };
-}
-
-function roomDoorAxisCenter(room:WorkspaceRoom) {
-  const usesDepth = room.doorSide === 'left' || room.doorSide === 'right';
-  const span = usesDepth ? room.depth : room.width;
-  const start = usesDepth ? room.z - room.depth / 2 : room.x - room.width / 2;
-  const sectionCount = Math.max(1, Math.floor(span));
-  const sectionWidth = span / sectionCount;
-  const index = room.doorPosition === 'left' ? 0 : room.doorPosition === 'right' ? sectionCount - 1 : Math.round((sectionCount - 1) / 2);
-  return start + sectionWidth * (index + 0.5);
-}
-
-function roomDoorClearanceRect(room:WorkspaceRoom):Rect2D|null {
-  if(!room.hasDoor) return null;
-  const center = roomDoorAxisCenter(room);
-  const halfOpening = room.doorWidth / 2 + 0.08;
-  const swingDepth = Math.max(0.75, room.doorWidth + 0.12);
-  const outer = roomRect(room, 0);
-  if(room.doorSide === 'back') return {x0:center-halfOpening,x1:center+halfOpening,z0:outer.z0-0.06,z1:outer.z0+swingDepth};
-  if(room.doorSide === 'left') return {x0:outer.x0-0.06,x1:outer.x0+swingDepth,z0:center-halfOpening,z1:center+halfOpening};
-  if(room.doorSide === 'right') return {x0:outer.x1-swingDepth,x1:outer.x1+0.06,z0:center-halfOpening,z1:center+halfOpening};
-  return {x0:center-halfOpening,x1:center+halfOpening,z0:outer.z1-swingDepth,z1:outer.z1+0.06};
-}
-
-function roomItemConflict(itemBounds:Rect2D, room:WorkspaceRoom):'wall'|'door'|null {
-  if(!rectsOverlap(itemBounds, roomRect(room, 0))) return null;
-  if(!rectInside(itemBounds, roomInteriorRect(room))) return 'wall';
-  const doorClearance = roomDoorClearanceRect(room);
-  return doorClearance && rectsOverlap(itemBounds, doorClearance) ? 'door' : null;
-}
-
-function roomPlacementIssue(candidate:WorkspaceRoom, allRooms:WorkspaceRoom[], items:WorkspacePlacedItem[]) {
-  for(const other of allRooms) {
-    if(other.id === candidate.id) continue;
-    if(rectsOverlap(roomRect(candidate, 0.04), roomRect(other, 0.04))) return `Overlaps ${other.name}`;
-  }
-  for(const item of items.filter(isFloorPlacedItem)) {
-    const conflict = roomItemConflict(itemRect(item), candidate);
-    if(conflict === 'wall') return `${item.name} crosses a room wall`;
-    if(conflict === 'door') return `${item.name} blocks the door clearance`;
-  }
-  return '';
-}
-
-function findAvailableRoomPlacement(room:WorkspaceRoom, rooms:WorkspaceRoom[], items:WorkspacePlacedItem[], booth:BoothState) {
-  const minX = room.width / 2;
-  const maxX = Math.max(minX, booth.width - room.width / 2);
-  const minZ = room.depth / 2;
-  const maxZ = Math.max(minZ, booth.depth - room.depth / 2);
-  const candidates:{x:number;z:number}[] = [
-    {x:minX,z:minZ}, {x:maxX,z:minZ}, {x:minX,z:maxZ}, {x:maxX,z:maxZ},
-    {x:booth.width/2,z:booth.depth/2},
-  ];
-  for(let z=minZ;z<=maxZ+0.001;z+=0.5) {
-    for(let x=minX;x<=maxX+0.001;x+=0.5) candidates.push({x:snapNumber(x),z:snapNumber(z)});
-  }
-  for(const position of candidates) {
-    const candidate = {...room,...position};
-    if(!roomPlacementIssue(candidate, rooms, items)) return candidate;
-  }
-  return null;
-}
-
-function isFloorPlacedItem(item:WorkspacePlacedItem) {
-  return (item.kind === 'furniture' || item.kind === 'asset') && item.shape !== 'wall_shelf' && item.shape !== 'light' && item.shape !== 'rail_light';
-}
-
-function placementIssuesFor(items:WorkspacePlacedItem[], rooms:WorkspaceRoom[], booth:BoothState, frontSupports:number[]): PlacementIssue[] {
-  const issues: PlacementIssue[] = [];
-  const floorItems = items.filter(isFloorPlacedItem);
-  const seen = new Set<string>();
-  const addIssue = (itemId:string, message:string) => {
-    const key = `${itemId}:${message}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    issues.push({ itemId, message });
-  };
-
-  for (let i = 0; i < floorItems.length; i += 1) {
-    const a = floorItems[i];
-    const aRect = itemRect(a);
-    for (let j = i + 1; j < floorItems.length; j += 1) {
-      const b = floorItems[j];
-      if (!rectsOverlap(aRect, itemRect(b))) continue;
-      addIssue(a.id, `Overlaps ${b.name}`);
-      addIssue(b.id, `Overlaps ${a.name}`);
-    }
-    for (const room of rooms) {
-      const conflict = roomItemConflict(aRect, room);
-      if (conflict === 'wall') addIssue(a.id, `Crosses ${room.name} wall`);
-      if (conflict === 'door') addIssue(a.id, `Blocks ${room.name} door clearance`);
-    }
-    const bounds = itemPositionBounds(rotatedItemFootprint(a).width, rotatedItemFootprint(a).depth, booth);
-    if (a.x < bounds.minX || a.x > bounds.maxX || a.z < bounds.minZ || a.z > bounds.maxZ) {
-      addIssue(a.id, 'Outside the usable booth floor');
-    }
-    for (const supportX of frontSupports) {
-      const supportLane: Rect2D = {
-        x0: supportX - 0.12,
-        x1: supportX + 0.12,
-        z0: 0,
-        z1: booth.depth,
-      };
-      if (rectsOverlap(aRect, supportLane)) addIssue(a.id, 'Blocks a structural support rail');
-    }
-  }
-  return issues;
-}
+// Placement/collision geometry lives in ./workspace-geometry (pure, testable).
+import {
+  itemPositionBounds,
+  rotatedItemFootprint,
+  positionBoundsForItem,
+  roomPlacementIssue,
+  findAvailableRoomPlacement,
+  placementIssuesFor,
+  availableRoomWallSides,
+  type PlacementIssue,
+} from "./workspace-geometry";
+import { structuralBom, roomBom, catalogItemFor, quoteTotals } from "./workspace-bom";
+import { WorkspaceBomPanel } from "./WorkspaceBomPanel";
 
 function normalizeDoorPosition(value:unknown): DoorPosition {
   return value === 'left' || value === 'right' ? value : 'center';
@@ -524,16 +104,6 @@ function normalizeDoorSwing(value:unknown): DoorSwing {
 
 function normalizeRoomWallFinish(value:unknown): RoomWallFinish {
   return value === 'frosted' || value === 'glass' || value === 'dark' ? value : 'white';
-}
-
-function availableRoomWallSides(width:number,depth:number,x:number,z:number,booth:BoothState):DoorSide[] {
-  const tolerance = 0.02;
-  return ROOM_SIDE_OPTIONS.map(option=>option.value).filter(side=>{
-    if(side==='back') return z-depth/2 > tolerance;
-    if(side==='front') return z+depth/2 < booth.depth-tolerance;
-    if(side==='left') return x-width/2 > tolerance;
-    return x+width/2 < booth.width-tolerance;
-  });
 }
 
 function normalizeRoomGraphicFit(value:unknown): RoomGraphicFit {
@@ -816,7 +386,6 @@ function workspaceSnapshots(record: ProjectWorkspace): Snapshot[] {
 
 // ── Main ──────────────────────────────────────────────────────────
 export default function PMWorkspace() {
-  const { t } = useTranslation();
   useCurrency(); // subscribe so money renders update when display currency changes
   const [ws,    setWS]    = useState<WSData>(INITIAL_WS);
   const histStackRef      = useRef<WSData[]>([INITIAL_WS]);
@@ -1630,62 +1199,16 @@ export default function PMWorkspace() {
     ])
   );
 
-  // ── BOM structural auto-calc ─────────────────────────────────
-  const isMax = booth.system==='maxima';
-  const mod   = isMax?2:1;
-  const cols  = Math.ceil(booth.width/mod)+1;
-  const rows  = Math.ceil(booth.depth/mod)+1;
-  const rl    = isMax?1:2;
-  const wallPanelQty =
-    (booth.openFront ? 0 : cols - 1) +
-    (booth.openBack ? 0 : cols - 1) +
-    (booth.openLeft ? 0 : rows - 1) +
-    (booth.openRight ? 0 : rows - 1);
-  const fasciaBoardQty = booth.fasciaEnabled ? (booth.fasciaOption === 'classic' ? (cols-1)*2 : (cols-1)*2 + Math.ceil(booth.depth/mod)*2) : 0;
-  const structItems = [
-    {name:'Upright Post',   sku:`${isMax?'MAX':'OCT'}-UP-01`, qty:cols*rows,                          unit:'ea',weight:4.5,unitPrice:STRUCT_UNIT_PRICE.post},
-    {name:'Horizontal Rail',sku:`${isMax?'MAX':'OCT'}-HR-01`, qty:(cols-1)*rows*rl+(rows-1)*cols*rl, unit:'ea',weight:2.2,unitPrice:STRUCT_UNIT_PRICE.rail},
-    {name:'Wall Panel',     sku:`${isMax?'MAX':'OCT'}-WP-01`, qty:Math.max(0,wallPanelQty),           unit:'ea',weight:3.8,unitPrice:STRUCT_UNIT_PRICE.panel},
-    {name:'Fascia Board',   sku:`FAS-${booth.fasciaOption.toUpperCase()}-01`, qty:fasciaBoardQty,     unit:'ea',weight:1.4,unitPrice:STRUCT_UNIT_PRICE.fascia},
-    {name:'Base Foot',      sku:`${isMax?'MAX':'OCT'}-BF-01`, qty:cols*rows,                          unit:'ea',weight:1.2,unitPrice:STRUCT_UNIT_PRICE.foot},
-  ];
-  const roomItems = rooms.flatMap(room=>{
-    const wallSides = availableRoomWallSides(room.width,room.depth,room.x,room.z,booth);
-    const wallLengths = wallSides.map(side=>({side,length:side==='front'||side==='back'?room.width:room.depth}));
-    const doorIsBuilt = room.hasDoor && wallSides.includes(room.doorSide);
-    const panelQty = wallLengths.reduce((total,wall)=>{
-      const opening = doorIsBuilt&&wall.side===room.doorSide ? room.doorWidth : 0;
-      return total + Math.ceil(Math.max(0,wall.length-opening));
-    },0);
-    const totalWallLength = wallLengths.reduce((total,wall)=>total+wall.length,0);
-    const verticalCount = wallLengths.reduce((total,wall)=>total+Math.ceil(wall.length)+1,0);
-    const doorHeight = Math.min(2.1,room.height*0.88);
-    const profileLength = Math.round((totalWallLength*2 + verticalCount*room.height + (doorIsBuilt?doorHeight*2+room.doorWidth:0))*10)/10;
-    const floorArea = Math.round(room.width*room.depth*10)/10;
-    const graphicSpan = room.designWall==='front'||room.designWall==='back' ? room.width : room.depth;
-    const graphicArea = Math.round(Math.max(0,graphicSpan-0.16)*Math.max(0,room.height-0.28)*10)/10;
-    const finishMultiplier = room.wallFinish==='glass'?1.5:room.wallFinish==='frosted'?1.35:room.wallFinish==='dark'?1.1:1;
-    return [
-      {roomId:room.id,roomName:room.name,name:'Room Frame Profile',sku:'ROOM-PROFILE-01',qty:profileLength,unit:'lm',weight:0.95,unitPrice:ROOM_UNIT_PRICE.profile,notes:`${wallSides.join(', ')||'shared shell'} walls`},
-      {roomId:room.id,roomName:room.name,name:`${room.wallFinish} Room Wall Panel`,sku:`ROOM-WALL-${room.wallFinish.toUpperCase()}`,qty:panelQty,unit:'ea',weight:3.8,unitPrice:Math.round(ROOM_UNIT_PRICE.panel*finishMultiplier),notes:`${room.height.toFixed(1)} m high`},
-      ...(doorIsBuilt?[{roomId:room.id,roomName:room.name,name:'Room Door Kit',sku:'ROOM-DOOR-01',qty:1,unit:'kit',weight:18,unitPrice:ROOM_UNIT_PRICE.door,notes:`${room.doorSide} / ${room.doorWidth.toFixed(2)} m / ${room.doorSwing}`}]:[]),
-      {roomId:room.id,roomName:room.name,name:'Room Floor Finish',sku:'ROOM-FLOOR-01',qty:floorArea,unit:'m2',weight:1.5,unitPrice:ROOM_UNIT_PRICE.floor,notes:room.floorColor},
-      ...(room.hasCeiling?[{roomId:room.id,roomName:room.name,name:'Room Ceiling Panel',sku:'ROOM-CEILING-01',qty:floorArea,unit:'m2',weight:4.5,unitPrice:ROOM_UNIT_PRICE.ceiling,notes:`${room.width} x ${room.depth} m`}]:[]),
-      ...(room.designImageUrl?[{roomId:room.id,roomName:room.name,name:'Printed Room Wall Graphic',sku:'ROOM-GRAPHIC-01',qty:graphicArea,unit:'m2',weight:0.2,unitPrice:ROOM_UNIT_PRICE.graphic,notes:`${room.designWall} wall / ${room.designFit}`}]:[]),
-    ].filter(item=>item.qty>0);
-  });
-  const structWeight = structItems.reduce((a,s)=>a+s.qty*s.weight,0);
-  const structSubtotal = structItems.reduce((a,s)=>a+s.qty*s.unitPrice,0);
-  const roomWeight = roomItems.reduce((a,s)=>a+s.qty*s.weight,0);
-  const roomSubtotal = roomItems.reduce((a,s)=>a+s.qty*s.unitPrice,0);
-  const catalogItemFor = (catalogId:string) => Object.values(CATALOG).reduce<CatItem | undefined>((found, items) => found || items.find(item => item.id === catalogId), undefined);
-  const placedSubtotal = placedItems.reduce((sum,item)=>sum+(catalogItemFor(item.catalogId)?.price || 0)*item.qty,0);
-  const unpricedItems = placedItems.filter(item => !catalogItemFor(item.catalogId)?.price).length;
-  const fasciaSubtotal = booth.fasciaEnabled ? fasciaMeta.price : 0;
-  const quoteSubtotal = structSubtotal + roomSubtotal + placedSubtotal + fasciaSubtotal;
-  const quoteAllowance = quoteSubtotal * 0.1;
-  const quoteTotal = quoteSubtotal + quoteAllowance;
-  quoteTotalCentsRef.current = Math.round(quoteTotal * 100);
+  // ── BOM + quote totals (pure math in ./workspace-bom) ────────────
+  const structItems = useMemo(() => structuralBom(booth), [booth]);
+  const roomItems = useMemo(() => roomBom(rooms, booth), [rooms, booth]);
+  const totals = useMemo(
+    () => quoteTotals({ structItems, roomItems, placedItems, fasciaSubtotal: booth.fasciaEnabled ? fasciaMeta.price : 0 }),
+    [structItems, roomItems, placedItems, booth.fasciaEnabled, fasciaMeta.price],
+  );
+  // Only the values the shell itself still needs — the BOM panel reads `totals`.
+  const { structWeight, roomWeight, fasciaSubtotal, quoteAllowance, quoteTotal } = totals;
+  quoteTotalCentsRef.current = totals.quoteTotalCents;
   const csvCell = (value:string|number) => `"${String(value).replace(/"/g,'""')}"`;
   const exportBomCsv = () => {
     const rows = [
@@ -1838,88 +1361,14 @@ export default function PMWorkspace() {
   },[pickerProjects, pickerSearch]);
 
   if(showProjectPicker) {
-    const STATUS_DOT: Record<string,string> = {'In Design':C.blue,'Under Review':'#c2410c','Approved':C.green,'Completed':'#6b6560','Pending':C.orange};
     return (
-      <div style={{display:'flex',flexDirection:'column',height:'100vh',background:C.bg,color:C.ink,fontFamily:UI,overflow:'hidden'}}>
-        {/* Header */}
-        <header style={{height:46,borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',gap:10,padding:'0 16px',background:C.panel,flexShrink:0}}>
-          <Link href="/pm">
-            <button style={{background:'none',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:4,color:C.muted,padding:'4px 6px',borderRadius:4}}>
-              <ChevronLeft size={13}/><span style={{fontFamily:MONO,fontSize:10}}>Back</span>
-            </button>
-          </Link>
-          <div style={{width:1,height:18,background:C.hair}}/>
-          <span style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',color:C.muted}}>Select Project Workspace</span>
-        </header>
-
-        {/* Body */}
-        <div style={{flex:1,overflow:'auto',padding:'32px 40px'}}>
-          <div style={{maxWidth:900,margin:'0 auto'}}>
-            {/* Title */}
-            <div style={{marginBottom:28}}>
-              <h1 style={{fontSize:22,fontWeight:800,letterSpacing:'-0.03em',margin:'0 0 6px',color:C.ink}}>Choose a Project</h1>
-              <p style={{fontFamily:MONO,fontSize:10.5,color:C.muted,margin:0}}>Select a project to open its 3D booth workspace</p>
-            </div>
-
-            {/* Search */}
-            <div style={{position:'relative',marginBottom:22}}>
-              <Search size={13} style={{position:'absolute',left:11,top:'50%',transform:'translateY(-50%)',color:C.muted,pointerEvents:'none'}}/>
-              <input
-                value={pickerSearch} onChange={e=>setPickerSearch(e.target.value)}
-                placeholder="Search projects, clients…"
-                autoFocus
-                style={{width:'100%',height:38,paddingLeft:34,paddingRight:12,border:`1px solid ${C.hair}`,borderRadius:5,background:C.panel,fontFamily:UI,fontSize:13,color:C.ink,outline:'none',boxSizing:'border-box'}}
-              />
-            </div>
-
-            {/* Projects grid */}
-            {isPickerLoading ? (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:12}}>
-                {[1,2,3,4,5,6].map(i=>(
-                  <div key={i} style={{height:120,borderRadius:6,background:`${C.hair}50`,animation:'pulse 1.5s ease-in-out infinite'}}/>
-                ))}
-              </div>
-            ) : filteredPickerProjects.length === 0 ? (
-              <div style={{textAlign:'center',padding:'60px 0',color:C.muted,fontFamily:MONO,fontSize:10}}>
-                {pickerSearch ? `No projects match "${pickerSearch}"` : 'No projects found'}
-              </div>
-            ) : (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:12}}>
-                {filteredPickerProjects.map(project=>(
-                  <button key={project.id} onClick={()=>selectProject(project)}
-                    style={{background:C.panel,border:`1px solid ${C.hair}`,borderRadius:6,padding:'16px',cursor:'pointer',textAlign:'left',transition:'box-shadow 0.12s,border-color 0.12s',display:'flex',flexDirection:'column',gap:8}}
-                    onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor=C.blue;(e.currentTarget as HTMLElement).style.boxShadow=`0 0 0 3px ${C.blue}18`;}}
-                    onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor=C.hair;(e.currentTarget as HTMLElement).style.boxShadow='none';}}>
-                    {/* Row 1: name + status dot */}
-                    <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:8}}>
-                      <span style={{fontSize:13,fontWeight:700,color:C.ink,lineHeight:1.3,flex:1,textAlign:'left'}}>{project.name}</span>
-                      <span style={{width:8,height:8,borderRadius:'50%',background:STATUS_DOT[project.status]??C.muted,flexShrink:0,marginTop:4}}/>
-                    </div>
-                    {/* Row 2: client + system */}
-                    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                      <span style={{fontFamily:MONO,fontSize:9,color:C.muted,background:C.bg,borderRadius:3,padding:'2px 6px',border:`1px solid ${C.hair}`}}>{project.client}</span>
-                      <span style={{fontFamily:MONO,fontSize:9,color:C.muted,background:C.bg,borderRadius:3,padding:'2px 6px',border:`1px solid ${C.hair}`}}>{project.system}</span>
-                      <span style={{fontFamily:MONO,fontSize:9,color:C.muted,background:C.bg,borderRadius:3,padding:'2px 6px',border:`1px solid ${C.hair}`}}>{project.dimensions}</span>
-                    </div>
-                    {/* Row 3: progress bar */}
-                    <div>
-                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                        <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em'}}>{project.status}</span>
-                        <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted}}>{project.progress}%</span>
-                      </div>
-                      <div style={{height:3,borderRadius:2,background:`${C.hair}80`,overflow:'hidden'}}>
-                        <div style={{height:'100%',width:`${project.progress}%`,background:C.blue,borderRadius:2,transition:'width 0.3s'}}/>
-                      </div>
-                    </div>
-                    {/* Row 4: open workspace label */}
-                    <div style={{fontFamily:MONO,fontSize:9,color:C.blue,letterSpacing:'0.04em',textAlign:'right'}}>Open Workspace →</div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <WorkspaceProjectPicker
+        search={pickerSearch}
+        onSearch={setPickerSearch}
+        isLoading={isPickerLoading}
+        projects={filteredPickerProjects}
+        onSelect={selectProject}
+      />
     );
   }
 
@@ -1994,140 +1443,29 @@ export default function PMWorkspace() {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Left — Component Catalog ────────────────────────── */}
-        {!previewMode&&<aside style={{width:240,borderRight:`1px solid ${C.hair}`,background:C.panel,display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
-          <div style={{padding:'8px 14px',borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-            <span style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,letterSpacing:'0.12em',color:C.muted,textTransform:'uppercase'}}>§ Components</span>
-            <span style={{fontFamily:MONO,fontSize:9.5,color:C.muted}}>{Object.values(visibleCatalog).reduce((a,b)=>a+b.length,0)} items</span>
-          </div>
-
-          <div style={{padding:'8px 10px',borderBottom:`1px solid ${C.hair}`,flexShrink:0}}>
-            <div style={{position:'relative'}}>
-              <Search size={11} style={{position:'absolute',left:8,top:'50%',transform:'translateY(-50%)',color:C.muted}}/>
-              <input id="furniture-search" name="furniture-search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search items, SKUs…"
-                style={{width:'100%',height:28,paddingLeft:26,paddingRight:32,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:UI,fontSize:11.5,color:C.ink,outline:'none',boxSizing:'border-box'}}/>
-              <span style={{position:'absolute',right:7,top:'50%',transform:'translateY(-50%)',fontFamily:MONO,fontSize:8.5,color:C.muted,border:`1px solid ${C.hair}`,borderRadius:3,padding:'1px 4px',lineHeight:1.2}}>⌘K</span>
-            </div>
-          </div>
-
-          <div style={{flex:1,overflowY:'auto'}}>
-            {Object.entries(filteredCatalog).map(([cat,items])=>{
-              const isOpen = openCats.has(cat);
-              return (
-                <div key={cat} style={{borderBottom:`1px solid ${C.hair}`}}>
-                  <button onClick={()=>setOpenCats(prev=>{const s=new Set(prev);if(s.has(cat)){s.delete(cat);}else{s.add(cat);}return s;})}
-                    style={{width:'100%',background:'none',border:'none',cursor:'pointer',padding:'7px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',textAlign:'left'}}>
-                    <span style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,letterSpacing:'0.07em',textTransform:'uppercase',color:C.ink}}>
-                      {cat} · {String(CAT_TOTAL[cat]??items.length).padStart(2,'0')}
-                    </span>
-                    <ChevronDown size={11} style={{color:C.muted,transform:isOpen?'rotate(0deg)':'rotate(-90deg)',transition:'transform 0.15s',flexShrink:0}}/>
-                  </button>
-
-                  {isOpen&&(
-                    <div style={{padding:'8px 10px 10px',display:'flex',flexDirection:'column',gap:7}}>
-                      {cat === 'Furniture'&&(
-                        <div style={{display:'flex',gap:5,overflowX:'auto',paddingBottom:2,marginBottom:1}}>
-                          {FURNITURE_CATEGORY_ORDER.filter(category => (furnitureCategoryCounts.get(category) || 0) > 0).map(category=>{
-                            const active = activeFurnitureCategory === category;
-                            return (
-                              <button key={category} type="button" onClick={()=>setActiveFurnitureCategory(category)}
-                                style={{height:24,whiteSpace:'nowrap',border:`1px solid ${active?C.blue:C.hair}`,borderRadius:4,background:active?`${C.blue}12`:C.bg,color:active?C.blue:C.muted,cursor:'pointer',fontFamily:MONO,fontSize:8.5,fontWeight:active?700:600,padding:'0 7px',display:'flex',alignItems:'center',gap:5,flexShrink:0}}>
-                                <span>{t(`pm.workspace.furnitureCategory.${category}`)}</span>
-                                <span style={{opacity:0.75}}>{furnitureCategoryCounts.get(category)}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {items.map(item=>{
-                        const isActive = activeId===item.id;
-                        const isDragging = draggedCatalogItem?.id===item.id;
-                        const canDragToFloor = cat === 'Furniture';
-                        const placedCount = placedItems.filter(p=>p.catalogId===item.id).reduce((sum,p)=>sum+p.qty,0);
-                        const placed   = placedCount > 0;
-                        const hasCount = item.inStand>0;
-                        const stockLimit = item.stock;
-                        const remaining = stockLimit == null ? null : Math.max(0, stockLimit - placedCount);
-                        const isOut = remaining === 0;
-                        const isLow = remaining != null && remaining > 0 && remaining <= (item.lowStockAt ?? 2);
-                        const availability = remaining == null ? 'Available' : isOut ? 'Out of stock' : isLow ? `${remaining} left` : `${remaining} available`;
-                        return (
-                          <div key={item.id}
-                            data-catalog-item-id={item.id}
-                            data-catalog-draggable={canDragToFloor&&!isOut?'true':'false'}
-                            draggable={canDragToFloor&&!isOut}
-                            onDragStart={(event)=>beginCatalogDrag(event,item)}
-                            onDragEnd={endCatalogDrag}
-                            onClick={()=>{
-                              if(isOut||catalogDragWasActiveRef.current) return;
-                              addItem(item);
-                            }}
-                            title={canDragToFloor&&!isOut?'Drag onto the booth floor or click to add':undefined}
-                            style={{position:'relative',opacity:isOut?0.58:1,background:isDragging?`${C.green}12`:isActive?'#f0ecff':placed?`${C.blue}08`:C.bg,border:`1px ${isActive||isDragging?'solid':hasCount?'solid':'dashed'} ${isDragging?C.green:isActive?C.ink:placed?C.blue:C.hair}`,borderRadius:5,padding:7,cursor:isOut?'not-allowed':canDragToFloor?'grab':'pointer',display:'grid',gridTemplateColumns:'72px 1fr',gap:8,textAlign:'left',transition:'all 0.1s',alignItems:'center'}}>
-                            {placed&&(
-                              <div style={{position:'absolute',top:3,right:3,background:C.blue,borderRadius:2,padding:'1px 4px'}}>
-                                <span style={{fontFamily:MONO,fontSize:8,color:'#fff',fontWeight:700}}>x{placedCount}</span>
-                              </div>
-                            )}
-                            {!placed&&hasCount&&(
-                              <span style={{position:'absolute',top:3,right:3,fontFamily:MONO,fontSize:8,color:C.blue,fontWeight:700}}>×{item.inStand}</span>
-                            )}
-                            <CatalogPreview item={item} active={isActive}/>
-                            <span style={{minWidth:0,display:'flex',flexDirection:'column',gap:3}}>
-                              <span style={{fontSize:11.5,fontWeight:700,color:C.ink,lineHeight:1.15,wordBreak:'break-word'}}>{item.name}</span>
-                              <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted,display:'flex',gap:5,flexWrap:'wrap'}}>
-                                <span>{item.sku}</span>
-                                {item.family&&<span>/ {item.family}</span>}
-                              </span>
-                              <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted}}>{item.dim} m</span>
-                              {item.price!=null&&<span style={{fontFamily:MONO,fontSize:8.5,color:C.green,fontWeight:700}}>USD {item.price.toLocaleString()}</span>}
-                              <span style={{fontFamily:MONO,fontSize:8.5,color:isOut?C.orange:isLow?'#8a6b20':C.muted,fontWeight:isOut||isLow?700:500}}>
-                                {availability}
-                              </span>
-                              <span style={{display:'flex',alignItems:'center',gap:5,marginTop:2}}>
-                                <button type="button" disabled={!placed} onClick={(event)=>{event.stopPropagation();removeCatalogItem(item.id);}}
-                                  style={{width:24,height:22,border:`1px solid ${C.hair}`,borderRadius:4,background:placed?C.panel:C.bg,color:placed?C.ink:C.muted,cursor:placed?'pointer':'not-allowed',fontFamily:MONO,fontSize:13,lineHeight:1,opacity:placed?1:0.45}}>−</button>
-                                <span style={{minWidth:24,textAlign:'center',fontFamily:MONO,fontSize:9.5,fontWeight:700,color:C.ink}}>{placedCount}</span>
-                                <button type="button" disabled={isOut} onClick={(event)=>{event.stopPropagation();addItem(item);}}
-                                  style={{width:24,height:22,border:`1px solid ${isOut?C.hair:C.blue}`,borderRadius:4,background:isOut?C.bg:`${C.blue}12`,color:isOut?C.muted:C.blue,cursor:isOut?'not-allowed':'pointer',fontFamily:MONO,fontSize:13,lineHeight:1,opacity:isOut?0.5:1}}>+</button>
-                              </span>
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Placed items summary */}
-          {placedItems.length>0&&(
-            <div style={{padding:'8px 14px',borderTop:`1px solid ${C.hair}`,background:C.bg,flexShrink:0}}>
-              <div style={{fontFamily:MONO,fontSize:9,color:C.muted,marginBottom:4}}>PLACED IN STAND</div>
-              {placedItems.map(p=>{
-                const issues = placementIssueByItem.get(p.id) || [];
-                return (
-                <div key={p.id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
-                  <div style={{width:8,height:8,borderRadius:2,background:issues.length?C.orange:p.color,flexShrink:0}} title={issues.map(issue=>issue.message).join(', ')}/>
-                  <span style={{fontFamily:MONO,fontSize:9,flex:1,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
-                  {issues.length>0&&<span title={issues.map(issue=>issue.message).join(', ')} style={{fontFamily:MONO,fontSize:8,color:C.orange,border:`1px solid ${C.orange}40`,borderRadius:3,padding:'1px 4px',background:`${C.orange}10`}}>CHECK</span>}
-                  <span style={{fontFamily:MONO,fontSize:9,color:C.muted}}>×{p.qty}</span>
-                  <button
-                    type="button"
-                    title={`Remove ${p.name}`}
-                    aria-label={`Remove ${p.name}`}
-                    data-workspace-remove-item={p.id}
-                    onClick={()=>removeItem(p.id)}
-                    style={{background:'none',border:'none',cursor:'pointer',padding:2,color:C.muted,display:'flex'}}
-                  >
-                    <Trash2 size={10}/>
-                  </button>
-                </div>
-              );})}
-            </div>
-          )}
-        </aside>}
+        {!previewMode&&(
+          <WorkspaceCatalogPanel
+            visibleCatalog={visibleCatalog}
+            filteredCatalog={filteredCatalog}
+            search={search}
+            onSearch={setSearch}
+            openCats={openCats}
+            onToggleCat={(cat)=>setOpenCats(prev=>{const s=new Set(prev);if(s.has(cat)){s.delete(cat);}else{s.add(cat);}return s;})}
+            activeFurnitureCategory={activeFurnitureCategory}
+            onFurnitureCategory={setActiveFurnitureCategory}
+            furnitureCategoryCounts={furnitureCategoryCounts}
+            activeId={activeId}
+            draggedCatalogItem={draggedCatalogItem}
+            placedItems={placedItems}
+            placementIssueByItem={placementIssueByItem}
+            onBeginDrag={beginCatalogDrag}
+            onEndDrag={endCatalogDrag}
+            onAddItem={addItem}
+            onRemoveCatalogItem={removeCatalogItem}
+            onRemoveItem={removeItem}
+            catalogDragWasActiveRef={catalogDragWasActiveRef}
+          />
+        )}
 
         {/* ── Center — Canvas (Booth3D iframe renderer) ────────── */}
         <main style={{flex:1,position:'relative',overflow:'hidden',backgroundColor:C.bg,
@@ -2560,7 +1898,7 @@ export default function PMWorkspace() {
                 </div>
                 <div style={{display:'flex',flexDirection:'column',gap:8}}>
                   {rooms.map((room,index)=>(
-                    <div key={room.id} data-workspace-room-editor={room.id} onClick={()=>setActiveRoomId(room.id)} style={{border:`1px solid ${activeRoomId===room.id?C.blue:C.hair}`,borderRadius:5,background:activeRoomId===room.id?`${C.blue}08`:C.bg,padding:9}}>
+                    <div key={room.id} data-workspace-room-editor={room.id} onClick={()=>setActiveRoomId(room.id)} onFocusCapture={()=>setActiveRoomId(room.id)} style={{border:`1px solid ${activeRoomId===room.id?C.blue:C.hair}`,borderRadius:5,background:activeRoomId===room.id?`${C.blue}08`:C.bg,padding:9}}>
                       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
                         <input value={room.name} onChange={e=>updateRoom(room.id,{name:e.target.value})}
                           style={{flex:1,minWidth:0,height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,fontFamily:UI,fontSize:12,fontWeight:700,color:C.ink,paddingLeft:7,outline:'none'}}/>
@@ -2621,7 +1959,7 @@ export default function PMWorkspace() {
                             </label>
                           </div>
                           <div style={{height:54,marginTop:7,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
-                            <img src={room.designImageUrl} alt="" style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
+                            <img src={room.designImageUrl} alt={`${room.name || 'Room'} wall design`} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
                           </div>
                           <div style={{display:'grid',gridTemplateColumns:'62px 1fr',gap:7,alignItems:'center',marginTop:7}}>
                             <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
@@ -2742,7 +2080,9 @@ export default function PMWorkspace() {
                   {([['openFront','Front'],['openBack','Back'],['openLeft','Left'],['openRight','Right']] as [keyof BoothState,string][]).map(([key,label])=>{
                     const on=!!booth[key];
                     return (<label key={key} style={{display:'flex',alignItems:'center',gap:7,cursor:'pointer',padding:'5px 4px'}}>
-                      <div onClick={()=>set(key,!on)} style={{width:14,height:14,borderRadius:3,flexShrink:0,border:`1px solid ${on?C.blue:C.hair}`,background:on?C.blue:'transparent',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+                      <input type="checkbox" checked={on} onChange={()=>set(key,!on)} aria-label={`Open ${label} side`}
+                        style={{position:'absolute',width:1,height:1,padding:0,margin:-1,overflow:'hidden',clip:'rect(0,0,0,0)',whiteSpace:'nowrap',border:0}}/>
+                      <div aria-hidden="true" style={{width:14,height:14,borderRadius:3,flexShrink:0,border:`1px solid ${on?C.blue:C.hair}`,background:on?C.blue:'transparent',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
                         {on&&<svg width="9" height="9" viewBox="0 0 9 9"><polyline points="1,4.5 3.5,7 8,2" stroke="#fff" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                       </div>
                       <span style={{fontSize:12,color:on?C.blue:C.ink}}>{label}</span>
@@ -2822,7 +2162,7 @@ export default function PMWorkspace() {
                     </label>
                     {activePanelOverride.designImageUrl&&<>
                       <div style={{height:62,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
-                        <img src={activePanelOverride.designImageUrl} alt="" style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
+                        <img src={activePanelOverride.designImageUrl} alt={activePanelOverride.designImageName ? `Panel graphic: ${activePanelOverride.designImageName}` : 'Panel graphic preview'} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
                       </div>
                       <div style={{display:'grid',gridTemplateColumns:'72px 1fr',gap:8,alignItems:'center',marginTop:9}}>
                         <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
@@ -2890,7 +2230,7 @@ export default function PMWorkspace() {
                       </label>
                       {activeFasciaOverride.designImageUrl&&<>
                         <div style={{height:62,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
-                          <img src={activeFasciaOverride.designImageUrl} alt="" style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
+                          <img src={activeFasciaOverride.designImageUrl} alt={activeFasciaOverride.designImageName ? `Fascia design: ${activeFasciaOverride.designImageName}` : 'Fascia design preview'} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
                         </div>
                         <div style={{display:'grid',gridTemplateColumns:'72px 1fr',gap:8,alignItems:'center',marginTop:9}}>
                           <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
@@ -2924,127 +2264,18 @@ export default function PMWorkspace() {
 
           {/* BOM Tab */}
           {activeTab==='bom'&&(
-            <div style={{flex:1,overflowY:'auto',padding:'0 16px'}}>
-              <div style={{padding:'10px 0',borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
-                <div>
-                  <div style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:'0.08em'}}>BOM Export</div>
-                  <div style={{fontFamily:MONO,fontSize:8.5,color:C.muted,marginTop:2}}>{structItems.reduce((a,s)=>a+s.qty,0) + totalParts} parts / {roomItems.length} room lines / {formatUsd(quoteTotal)}</div>
-                </div>
-                <div style={{display:'flex',gap:6,flexShrink:0}}>
-                  <button onClick={exportBomCsv}
-                    style={{height:30,border:`1px solid ${C.blue}`,borderRadius:4,background:`${C.blue}10`,color:C.blue,cursor:'pointer',display:'flex',alignItems:'center',gap:6,fontFamily:MONO,fontSize:9,fontWeight:700,padding:'0 9px',whiteSpace:'nowrap'}}>
-                    <Download size={11}/> CSV
-                  </button>
-                  <button onClick={exportProductionChecklist}
-                    style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',gap:6,fontFamily:MONO,fontSize:9,fontWeight:700,padding:'0 9px',whiteSpace:'nowrap'}}>
-                    <Download size={11}/> TXT
-                  </button>
-                </div>
-              </div>
-              <div style={{padding:'12px 0',borderBottom:`1px solid ${C.hair}`}}>
-                <MonoLabel right={`${structWeight.toFixed(0)} kg`}>§ Structural</MonoLabel>
-                {structItems.map((s,i)=>(
-                  <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'4px 0',borderBottom:`1px solid ${C.hair}28`}}>
-                    <div>
-                      <div style={{fontSize:11,fontWeight:600,color:C.ink}}>{s.name}</div>
-                      <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{s.sku} / {formatUsd(s.unitPrice)} {s.unit}</div>
-                    </div>
-                    <div style={{textAlign:'right'}}>
-                      <div style={{fontFamily:MONO,fontSize:11,fontWeight:700,color:C.ink}}>×{s.qty}</div>
-                      <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{(s.qty*s.weight).toFixed(0)} kg / {formatUsd(s.qty*s.unitPrice)}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {roomItems.length>0&&(
-                <div style={{padding:'12px 0',borderBottom:`1px solid ${C.hair}`}}>
-                  <MonoLabel right={`${roomWeight.toFixed(0)} kg`}>Room Materials</MonoLabel>
-                  {roomItems.map((item,index)=>(
-                    <button key={`${item.roomId}-${item.sku}-${index}`} type="button" onClick={()=>{setActiveRoomId(item.roomId);setActivePlacedId('');setActiveTab('props');}}
-                      style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:'5px 0',border:0,borderBottom:`1px solid ${C.hair}28`,background:'transparent',cursor:'pointer',textAlign:'left'}}>
-                      <div style={{minWidth:0}}>
-                        <div style={{fontSize:11,fontWeight:600,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.roomName} - {item.name}</div>
-                        <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{item.sku} / {item.notes}</div>
-                      </div>
-                      <div style={{textAlign:'right',flexShrink:0}}>
-                        <div style={{fontFamily:MONO,fontSize:10,fontWeight:700,color:C.ink}}>{item.qty} {item.unit}</div>
-                        <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{formatUsd(item.qty*item.unitPrice)}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {placedItems.length>0&&(
-                <div style={{padding:'12px 0',borderBottom:`1px solid ${C.hair}`}}>
-                  <MonoLabel right={`${totalWeight.toFixed(0)} kg`}>§ Placed Items</MonoLabel>
-                  {placedItems.map(p=>{
-                    const issues = placementIssueByItem.get(p.id) || [];
-                    return (
-                    <div key={p.id} onClick={()=>{setActivePlacedId(p.id);setActiveRoomId('');}} style={{padding:'7px 0',borderBottom:`1px solid ${issues.length?C.orange:C.hair}28`,background:issues.length?`${C.orange}08`:activePlacedId===p.id?`${C.orange}12`:'transparent',cursor:'pointer'}}>
-                      <div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <div style={{width:10,height:10,borderRadius:2,background:issues.length?C.orange:p.color,flexShrink:0}}/>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:11,fontWeight:600,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
-                          <div style={{fontFamily:MONO,fontSize:8,color:issues.length?C.orange:C.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{issues.length ? issues.map(issue=>issue.message).join(' / ') : `${p.sku} / ${p.kind} / ${catalogItemFor(p.catalogId)?.price ? formatUsd(catalogItemFor(p.catalogId)?.price || 0) : 'Unpriced'}${p.modelUrl ? ` / ${p.modelUrl}` : ''}`}</div>
-                        </div>
-                        <div style={{fontFamily:MONO,fontSize:9,fontWeight:700,color:C.ink,whiteSpace:'nowrap'}}>{catalogItemFor(p.catalogId)?.price ? formatUsd((catalogItemFor(p.catalogId)?.price || 0)*p.qty) : 'TBD'}</div>
-                        <button onClick={(event)=>{event.stopPropagation();updateItem(p.id,{locked:!p.locked});}} title={p.locked?'Unlock item':'Lock item'} style={{width:24,height:24,border:`1px solid ${p.locked?C.blue:C.hair}`,borderRadius:4,background:p.locked?`${C.blue}12`:C.bg,color:p.locked?C.blue:C.muted,cursor:'pointer',display:'grid',placeItems:'center',flexShrink:0}}>
-                          {p.locked?<Lock size={10}/>:<Unlock size={10}/>}</button>
-                        <button onClick={(event)=>{event.stopPropagation();duplicateItem(p.id);}} title="Duplicate item" style={{width:24,height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center',flexShrink:0}}>
-                          <Copy size={10}/>
-                        </button>
-                        <button onClick={(event)=>{event.stopPropagation();removeItem(p.id);}} title="Remove item" style={{width:24,height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center',flexShrink:0}}>
-                          <Trash2 size={10}/>
-                        </button>
-                      </div>
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:5,marginTop:6}}>
-                        <DimInput label="X" value={p.x} min={positionBoundsForItem(p,booth).minX} max={positionBoundsForItem(p,booth).maxX} step={0.05} onChange={v=>updateItemTransform(p.id,{x:v})}/>
-                        <DimInput label="Z" value={p.z} min={positionBoundsForItem(p,booth).minZ} max={positionBoundsForItem(p,booth).maxZ} step={0.05} onChange={v=>updateItemTransform(p.id,{z:v})}/>
-                        <div>
-                          <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:3}}>Yaw</label>
-                          <button onClick={(event)=>{event.stopPropagation();rotateItem(p.id,90);}}
-                            style={{width:'100%',height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',fontFamily:MONO,fontSize:11,color:C.ink}}>
-                            {Number(p.rotationY ?? p.rotation)} deg
-                          </button>
-                        </div>
-                      </div>
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:5,marginTop:5}}>
-                        <DimInput label="Rot X" value={Number(p.rotationX) || 0} min={-180} max={180} step={15} onChange={v=>updateItemTransform(p.id,{rotationX:v})}/>
-                        <DimInput label="Rot Y" value={Number(p.rotationY ?? p.rotation) || 0} min={0} max={345} step={15} onChange={v=>updateItemTransform(p.id,{rotation:v,rotationY:v})}/>
-                        <DimInput label="Rot Z" value={Number(p.rotationZ) || 0} min={-180} max={180} step={15} onChange={v=>updateItemTransform(p.id,{rotationZ:v})}/>
-                      </div>
-                    </div>
-                  );})}
-                </div>
-              )}
-              <div style={{padding:'12px 0'}}>
-                <MonoLabel>§ Totals</MonoLabel>
-                {[
-                  {label:'Structural Parts', value:`${structItems.reduce((a,s)=>a+s.qty,0)}`},
-                  {label:'Room Material Lines',value:`${roomItems.length}`},
-                  {label:'Placed Items',      value:`${totalParts}`},
-                  {label:'Structure Estimate',value:formatUsd(structSubtotal)},
-                  {label:'Room Estimate',     value:formatUsd(roomSubtotal)},
-                  {label:'Placed Estimate',   value:unpricedItems?`${formatUsd(placedSubtotal)} + ${unpricedItems} TBD`:formatUsd(placedSubtotal)},
-                  {label:'Fascia Option',     value:booth.fasciaEnabled?formatUsd(fasciaSubtotal):'Off'},
-                  {label:'Quote Allowance',   value:formatUsd(quoteAllowance)},
-                  {label:'Quote Total',       value:formatUsd(quoteTotal)},
-                  {label:'Total Weight',      value:`${(structWeight+roomWeight+totalWeight).toFixed(0)} kg`},
-                  {label:'Floor Area',        value:`${floorArea} m²`},
-                  {label:'System',            value:booth.system==='maxima'?'Maxima (2 m)':'Octanorm (1 m)'},
-                ].map(row=>(
-                  <div key={row.label} style={{display:'flex',justifyContent:'space-between',padding:'4px 0'}}>
-                    <span style={{fontFamily:MONO,fontSize:9.5,color:C.muted}}>{row.label}</span>
-                    <span style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,color:C.ink}}>{row.value}</span>
-                  </div>
-                ))}
-              </div>
-              {placedItems.length===0&&rooms.length===0&&(
-                <div style={{padding:'20px 0',textAlign:'center',color:C.muted,fontFamily:MONO,fontSize:9.5}}>
-                  Click catalog items to add<br/>them to your Bill of Materials
-                </div>
-              )}
-            </div>
+            <WorkspaceBomPanel
+              booth={booth} rooms={rooms} placedItems={placedItems}
+              structItems={structItems} roomItems={roomItems} totals={totals}
+              totalParts={totalParts} totalWeight={totalWeight} floorArea={floorArea}
+              placementIssueByItem={placementIssueByItem} activePlacedId={activePlacedId}
+              onExportCsv={exportBomCsv} onExportChecklist={exportProductionChecklist}
+              onSelectRoom={roomId=>{setActiveRoomId(roomId);setActivePlacedId('');setActiveTab('props');}}
+              onSelectPlaced={id=>{setActivePlacedId(id);setActiveRoomId('');}}
+              onToggleLock={(id,locked)=>updateItem(id,{locked})}
+              onDuplicate={duplicateItem} onRemove={removeItem}
+              onTransform={updateItemTransform} onRotate={rotateItem}
+            />
           )}
 
           {/* Notes Tab */}
@@ -3190,7 +2421,7 @@ export default function PMWorkspace() {
       {/* ── Send to Client Dialog ─────────────────────────────────── */}
       {showSendDlg&&(
         <>
-          <div style={{position:'fixed',inset:0,background:'rgba(24,22,19,0.5)',zIndex:200}} onClick={()=>{ setShowSendDlg(false); setSendConfirmed(false); }}/>
+          <div aria-hidden="true" style={{position:'fixed',inset:0,background:'rgba(24,22,19,0.5)',zIndex:200}} onClick={()=>{ setShowSendDlg(false); setSendConfirmed(false); }}/>
           <div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:C.panel,border:`1px solid ${C.hair}`,borderRadius:8,padding:28,zIndex:201,width:420,boxShadow:'0 8px 40px rgba(0,0,0,0.18)'}}>
             {!sendConfirmed?(
               <>
@@ -3243,20 +2474,12 @@ export default function PMWorkspace() {
 
       {/* ── Snapshot Dialog ───────────────────────────────────────── */}
       {showSnapDlg&&(
-        <>
-          <div style={{position:'fixed',inset:0,background:'rgba(24,22,19,0.45)',zIndex:200}} onClick={()=>setShowSnapDlg(false)}/>
-          <div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:C.panel,border:`1px solid ${C.hair}`,borderRadius:8,padding:24,zIndex:201,width:340,boxShadow:'0 8px 40px rgba(0,0,0,0.18)'}}>
-            <h3 style={{fontSize:14,fontWeight:700,margin:'0 0 14px',display:'flex',alignItems:'center',gap:8}}><Camera size={15} style={{color:C.blue}}/> Save Snapshot</h3>
-            <input id="snapshot-name" name="snapshot-name" value={snapName} onChange={e=>setSnapName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&createSnapshot()}
-              placeholder="e.g. v2 — After client review"
-              autoFocus
-              style={{width:'100%',height:36,border:`1px solid ${C.hair}`,borderRadius:5,background:C.bg,fontFamily:UI,fontSize:13,color:C.ink,paddingLeft:10,boxSizing:'border-box',outline:'none',marginBottom:12}}/>
-            <div style={{display:'flex',gap:8}}>
-              <button onClick={()=>setShowSnapDlg(false)} style={{flex:1,height:36,background:'none',border:`1px solid ${C.hair}`,borderRadius:5,cursor:'pointer',fontFamily:UI,fontSize:12,color:C.ink}}>Cancel</button>
-              <button onClick={createSnapshot} disabled={!snapName.trim()} style={{flex:2,height:36,background:C.blue,border:'none',color:'#fff',borderRadius:5,cursor:snapName.trim()?'pointer':'not-allowed',fontFamily:UI,fontSize:12,fontWeight:700,opacity:snapName.trim()?1:0.5}}>Save Snapshot</button>
-            </div>
-          </div>
-        </>
+        <WorkspaceSnapshotDialog
+          name={snapName}
+          onName={setSnapName}
+          onSave={createSnapshot}
+          onClose={()=>setShowSnapDlg(false)}
+        />
       )}
 
       {/* ── Toast ────────────────────────────────────────────────────── */}

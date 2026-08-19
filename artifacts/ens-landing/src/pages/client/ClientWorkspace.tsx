@@ -45,53 +45,12 @@ const C = {
   green: 'var(--workspace-green, #2f7d3a)',
   muted: 'var(--workspace-muted, #6b6560)',
 } as const;
-const MONO = 'var(--app-font-mono)';
-const UI   = 'var(--app-font-samsung)';
-
-const CATALOG_GROUP_ORDER = ["Structure", "Furniture", "Lighting", "Fascia"] as const;
-const THEME_COLORS = ["#3b3e44", "#dde0e4", "#7a4a2a", "#1a2640"];
-const WALL_COLORS = ["#f8fafc", "#dfe4ea", "#f3eadc", "#9aa1aa"];
-const FRAME_COLORS = ["#b8bdc3", "#3d4249", "#c7b99a", "#e4e7eb"];
-const FASCIA_COLORS = ["#ffffff", "#eef2f7", "#fff7ed", "#d2d7de"];
-const CARPET_COLORS = [
-  "#1a1a1a",
-  "#dde0e4",
-  "#7a7e84",
-  "#1a2640",
-  "#1e3a28",
-  "#5a2316",
-];
-
-interface Comment {
-  id: string | number;
-  user: string;
-  initials: string;
-  text: string;
-  time: string;
-  type?: "comment" | "change" | "pin";
-  status?: "open" | "resolved";
-  partId?: string;
-}
-interface PinAnnotation {
-  id: string | number;
-  x: number;
-  y: number;
-  z?: number;
-  text: string;
-  num: number;
-  status?: "open" | "resolved";
-  partId?: string;
-}
-const INITIAL_COMMENTS: Comment[] = [];
-const VERSIONS = [
-  { label: "v2.4 — Latest (Current)", value: "2.4" },
-  { label: "v2.3 — May 12", value: "2.3" },
-  { label: "v2.2 — May 10", value: "2.2" },
-  { label: "v1.0 — Initial", value: "1.0" },
-];
-
-type RightTab = "thread" | "approvals" | "pins";
-type FeedbackFilter = "open" | "all" | "resolved";
+// Static config + types live in a dedicated data module.
+import {
+  MONO, UI, CATALOG_GROUP_ORDER, THEME_COLORS, WALL_COLORS, FRAME_COLORS, FASCIA_COLORS,
+  CARPET_COLORS, INITIAL_COMMENTS, VERSIONS,
+  type Comment, type PinAnnotation, type RightTab, type FeedbackFilter,
+} from "./client-workspace-model";
 
 function MonoLabel({ children }: { children: React.ReactNode }) {
   return (

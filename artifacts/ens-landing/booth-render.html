@@ -3561,6 +3561,7 @@ window.parent.postMessage({ type: 'boothRendererReady' }, '*');
 <script type="module">
 import * as THREE from '/src/workspace/three-proxy.ts';
 import { GLTFLoader } from '/src/workspace/gltf-loader-proxy.ts';
+import { MeshoptDecoder } from '/src/workspace/meshopt-decoder-proxy.ts';
 
 const canvas = document.getElementById('glbCanvas');
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
@@ -3574,6 +3575,10 @@ renderer.shadowMap.type = THREE.PCFShadowMap;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
 const loader = new GLTFLoader();
+// Enables loading meshopt-compressed GLBs (EXT_meshopt_compression). The decoder
+// is only invoked for models that declare the extension, so uncompressed assets
+// keep loading unchanged.
+loader.setMeshoptDecoder(MeshoptDecoder);
 const modelCache = new Map();
 const modelNodes = new Map();
 const helpers = new Map();
