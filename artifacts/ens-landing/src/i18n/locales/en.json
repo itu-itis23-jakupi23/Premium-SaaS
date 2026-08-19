@@ -539,7 +539,12 @@
           "On-site Training"
         ]
       }
-    ]
+    ],
+    "features": {
+      "heading": "Everything you need to",
+      "headingAccent": "design and deliver",
+      "subheading": "One platform for the whole job — from the first wall to final sign-off."
+    }
   },
   "team": {
     "hero": {
@@ -575,7 +580,9 @@
     },
     "workflow": {
       "heading": "The ENS",
-      "headingAccent": "production workflow"
+      "headingAccent": "production workflow",
+      "badge": "How it runs",
+      "subheading": "Every stage from brief to build, with each handover tracked and owned."
     },
     "footer": {
       "tagline": "Purpose-built management tools for exhibition professionals — from initial brief to production-ready documentation.",

@@ -12,7 +12,8 @@
     "internalOnly": "Solo uso interno",
     "vsLastMonth": "vs mes anterior",
     "clickToView": "Haga clic para ver →",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "requestQuote": "Solicitar presupuesto"
   },
   "nav": {
     "features": "Funciones",
@@ -36,7 +37,8 @@
       "boothDimensions": "Dimensiones del stand",
       "approvalStatus": "Estado de aprobación",
       "furnitureCount": "Recuento de mobiliario",
-      "pending": "Pendiente"
+      "pending": "Pendiente",
+      "illustrative": "Proyecto de ejemplo — cifras ilustrativas"
     },
     "pricing": {
       "heading": "Niveles de precios",
@@ -79,7 +81,234 @@
       "bullet1": "Tres portales: dirección, jefes de proyecto y clientes",
       "bullet2": "Tu propio catálogo de mobiliario y precios",
       "bullet3": "Aprobaciones, revisiones y facturas con seguimiento automático"
-    }
+    },
+    "features": {
+      "heading": "Todo lo que necesita para",
+      "headingAccent": "diseñar y entregar",
+      "subheading": "Una sola plataforma para todo el trabajo: desde la primera pared hasta la aprobación final."
+    },
+    "dimensionLabel": "ENS / PLATAFORMA DE EXPOSITORES",
+    "systemComparison": {
+      "heading": "Comparativa de sistemas",
+      "subheading": "Elija el sistema que encaja con la marca y el presupuesto de su cliente."
+    },
+    "systems": {
+      "octanorm": {
+        "name": "OCTANORM",
+        "desc": "El estándar mundial del stand modular. Estructura práctica, eficiente y muy personalizable.",
+        "features": [
+          "Sistema de ranura de 4 mm",
+          "Perfil de aluminio",
+          "Flexibilidad modular",
+          "Paneles estándar"
+        ]
+      },
+      "maxima": {
+        "name": "MAXIMA",
+        "desc": "Sistema arquitectónico premium para una presencia potente. Grandes luces y acabados lisos y sin juntas.",
+        "features": [
+          "Grandes luces",
+          "Geometría limpia",
+          "Gráficas premium",
+          "Iluminación integrada"
+        ]
+      }
+    },
+    "featureCards": [
+      {
+        "title": "Espacio de trabajo 3D",
+        "desc": "Editor interactivo en tiempo real con control de perspectiva."
+      },
+      {
+        "title": "Compatibilidad con Octanorm",
+        "desc": "Lógica de ajuste modular nativa para paredes de sistema estándar."
+      },
+      {
+        "title": "Compatibilidad con Maxima",
+        "desc": "Luces arquitectónicas y componentes estructurales premium."
+      },
+      {
+        "title": "Colocación de mobiliario",
+        "desc": "Ajuste inteligente a superficies para mesas, sillas y expositores."
+      },
+      {
+        "title": "Colaboración con el cliente",
+        "desc": "Ciclo de comentarios en directo entre responsables y clientes."
+      },
+      {
+        "title": "Instantáneas del espacio",
+        "desc": "Guarde estados de diseño y alterne entre ellos al instante."
+      },
+      {
+        "title": "Historial de versiones",
+        "desc": "Siga los cambios a lo largo de todo el ciclo de diseño."
+      },
+      {
+        "title": "Flujo de aprobación",
+        "desc": "Proceso de aprobación simplificado para diseños estructurales."
+      },
+      {
+        "title": "Gestión de proyectos",
+        "desc": "Panel completo para seguir varias ferias a la vez."
+      },
+      {
+        "title": "Supervisión en directo",
+        "desc": "Los directores pueden supervisar todos los espacios activos."
+      }
+    ],
+    "workflow": {
+      "heading": "Del briefing al montaje en 7 pasos",
+      "subheading": "El flujo de trabajo más eficiente del sector ferial.",
+      "steps": [
+        {
+          "title": "Briefing inicial",
+          "desc": "Definir objetivos de la feria, superficie y requisitos de marca."
+        },
+        {
+          "title": "Configuración del espacio",
+          "desc": "Cree un proyecto e introduzca las medidas base del stand."
+        },
+        {
+          "title": "Construcción 3D",
+          "desc": "Levante paredes, frontales y elementos estructurales con Octanorm o Maxima."
+        },
+        {
+          "title": "Mobiliario y estilo",
+          "desc": "Arrastre y suelte elementos de nuestra amplia biblioteca en su espacio."
+        },
+        {
+          "title": "Revisión del cliente",
+          "desc": "Comparta un enlace en directo para que el cliente explore el stand en su navegador."
+        },
+        {
+          "title": "Ciclo de revisiones",
+          "desc": "Realice ajustes en tiempo real según los comentarios del cliente."
+        },
+        {
+          "title": "Aprobación final",
+          "desc": "Obtenga la validación estructural y exporte la documentación de producción."
+        }
+      ]
+    },
+    "team": {
+      "heading": "Pensado para todo el equipo",
+      "subheading": "Cada rol tiene su propia experiencia. Sin hojas de cálculo compartidas ni correos perdidos.",
+      "roles": [
+        {
+          "role": "Director",
+          "headline": "Visibilidad total sobre cada proyecto.",
+          "points": [
+            "Supervisión en directo de todos los stands activos",
+            "Ranking de rendimiento de responsables y seguimiento de ingresos",
+            "Asignación y reasignación de responsables con un clic",
+            "Informes exportables — Excel o PDF, en cualquier rango de fechas"
+          ]
+        },
+        {
+          "role": "Responsable de proyecto",
+          "headline": "Diseñe el stand, gestione al cliente.",
+          "points": [
+            "Editor 3D de arrastrar y soltar con más de 30 modelos GLB reales",
+            "Sistemas Octanorm y Maxima con ajuste de paredes",
+            "Historial de versiones y captura de instantáneas con un clic",
+            "Tablero de tareas integrado (Por hacer / En curso / Bloqueado / Hecho)"
+          ]
+        },
+        {
+          "role": "Cliente",
+          "headline": "Revise y apruebe con todo el contexto.",
+          "points": [
+            "Vista 3D de solo lectura de cada versión del diseño",
+            "Fije comentarios directamente sobre el stand",
+            "Apruebe o solicite una revisión con una sola acción",
+            "Centro documental para todos los archivos y contratos"
+          ]
+        }
+      ]
+    },
+    "showcase": {
+      "heading": "Vea cada rol en acción",
+      "subheading": "Del centro de mando del director a la revisión de diseño del cliente: cada pantalla está hecha para su usuario.",
+      "previewCaption": "Vista previa de la interfaz del espacio de trabajo",
+      "illustrative": "Las cifras mostradas son un ejemplo ilustrativo",
+      "cards": [
+        {
+          "title": "Panel del director",
+          "role": "Director",
+          "badge": "Centro de mando",
+          "metrics": [
+            "6 proyectos activos",
+            "3 retrasados — acción requerida",
+            "₺2,4 M de presupuesto controlado"
+          ]
+        },
+        {
+          "title": "Constructor de espacios del responsable",
+          "role": "Responsable de proyecto",
+          "badge": "Diseño 3D",
+          "metrics": [
+            "Stand Octanorm de 8×6 m",
+            "Mobiliario colocado: 12 elementos",
+            "v2.4 → pendiente de aprobación"
+          ]
+        },
+        {
+          "title": "Portal de revisión del cliente",
+          "role": "Cliente",
+          "badge": "Solo lectura",
+          "metrics": [
+            "Diseño v2.4 — pendiente de aprobación",
+            "Revisiones: 1 / 2",
+            "Marcadores y comentarios activados"
+          ]
+        }
+      ],
+      "percentComplete": "{{percent}} % completado",
+      "previewAlt": "El espacio de trabajo con una lista de componentes Octanorm, un stand en estructura alámbrica sobre la rejilla de montaje y un panel de propiedades de pared con ancho y alto en milímetros."
+    },
+    "billing": {
+      "monthly": "Mensual",
+      "annual": "Anual",
+      "saveBadge": "Ahorre un 20 %",
+      "perMonthAnnual": "/mes · facturado anualmente",
+      "savePerYear": "Ahorre ${{amount}} al año",
+      "getStarted": "Empezar",
+      "contactSales": "Contactar con ventas"
+    },
+    "pricingTiers": [
+      {
+        "tier": "Starter",
+        "features": [
+          "5 proyectos activos",
+          "Sistema Octanorm",
+          "Biblioteca de mobiliario estándar",
+          "2 GB de almacenamiento",
+          "Soporte por correo"
+        ]
+      },
+      {
+        "tier": "Professional",
+        "features": [
+          "Proyectos ilimitados",
+          "Octanorm y Maxima",
+          "Biblioteca de mobiliario completa",
+          "Enlaces de revisión para clientes",
+          "Soporte prioritario",
+          "Analíticas avanzadas"
+        ]
+      },
+      {
+        "tier": "Enterprise",
+        "features": [
+          "Enlaces de cliente de marca blanca",
+          "Importación de objetos propios",
+          "Acceso completo a la API",
+          "Gestor de éxito dedicado",
+          "SLA del 99,9 %",
+          "Formación presencial"
+        ]
+      }
+    ]
   },
   "team": {
     "hero": {
@@ -115,7 +344,9 @@
     },
     "workflow": {
       "heading": "El flujo de trabajo",
-      "headingAccent": "de producción ENS"
+      "headingAccent": "de producción ENS",
+      "badge": "Cómo funciona",
+      "subheading": "Cada etapa, del briefing al montaje, con cada entrega registrada y con responsable."
     },
     "footer": {
       "tagline": "Herramientas de gestión diseñadas para profesionales de exposiciones — desde el briefing inicial hasta la documentación lista para producción.",

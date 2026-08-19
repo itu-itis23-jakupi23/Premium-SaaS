@@ -12,7 +12,8 @@
     "internalOnly": "Nur für interne Nutzung",
     "vsLastMonth": "vs. letzten Monat",
     "clickToView": "Klicken zum Anzeigen →",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "requestQuote": "Angebot anfordern"
   },
   "nav": {
     "features": "Funktionen",
@@ -36,7 +37,8 @@
       "boothDimensions": "Standmaße",
       "approvalStatus": "Genehmigungsstatus",
       "furnitureCount": "Möbelanzahl",
-      "pending": "Ausstehend"
+      "pending": "Ausstehend",
+      "illustrative": "Beispielprojekt — illustrative Zahlen"
     },
     "pricing": {
       "heading": "Preismodelle",
@@ -79,7 +81,234 @@
       "bullet1": "Drei Portale: Leitung, Projektmanager und Kunden",
       "bullet2": "Eigener Möbelkatalog und eigene Preise",
       "bullet3": "Freigaben, Revisionen und Rechnungen automatisch verfolgt"
-    }
+    },
+    "features": {
+      "heading": "Alles, was Sie zum",
+      "headingAccent": "Entwerfen und Liefern brauchen",
+      "subheading": "Eine Plattform für die gesamte Arbeit — von der ersten Wand bis zur finalen Freigabe."
+    },
+    "dimensionLabel": "ENS / AUSSTELLER-PLATTFORM",
+    "systemComparison": {
+      "heading": "Systemvergleich",
+      "subheading": "Wählen Sie das System, das zur Marke und zum Budget Ihres Kunden passt."
+    },
+    "systems": {
+      "octanorm": {
+        "name": "OCTANORM",
+        "desc": "Der weltweite Standard für modulare Messestände. Praktisch, effizient und in hohem Maße anpassbar.",
+        "features": [
+          "4-mm-Nutsystem",
+          "Aluminiumprofil",
+          "Modulare Flexibilität",
+          "Standardpaneele"
+        ]
+      },
+      "maxima": {
+        "name": "MAXIMA",
+        "desc": "Premium-Architektursystem für starke Präsenz. Große Spannweiten und glatte, fugenlose Oberflächen.",
+        "features": [
+          "Große Spannweiten",
+          "Klare Geometrie",
+          "Premium-Grafiken",
+          "Integrierte Beleuchtung"
+        ]
+      }
+    },
+    "featureCards": [
+      {
+        "title": "3D-Standarbeitsbereich",
+        "desc": "Interaktiver Echtzeit-Editor mit Perspektivsteuerung."
+      },
+      {
+        "title": "Octanorm-Unterstützung",
+        "desc": "Native modulare Rasterlogik für Standardsystemwände."
+      },
+      {
+        "title": "Maxima-Unterstützung",
+        "desc": "Architektonische Spannweiten und hochwertige Tragelemente."
+      },
+      {
+        "title": "Möbelplatzierung",
+        "desc": "Intelligentes Einrasten auf Flächen für Tische, Stühle und Regale."
+      },
+      {
+        "title": "Kundenzusammenarbeit",
+        "desc": "Direkter Feedback-Kreislauf zwischen Projektleitern und Kunden."
+      },
+      {
+        "title": "Arbeitsbereich-Snapshots",
+        "desc": "Entwurfsstände sichern und sofort zwischen ihnen wechseln."
+      },
+      {
+        "title": "Versionsverlauf",
+        "desc": "Änderungen über den gesamten Entwurfszyklus nachverfolgen."
+      },
+      {
+        "title": "Freigabeprozess",
+        "desc": "Schlanker Freigabeprozess für konstruktive Entwürfe."
+      },
+      {
+        "title": "Projektmanagement",
+        "desc": "Umfassendes Dashboard zur Steuerung mehrerer Messen."
+      },
+      {
+        "title": "Live-Überwachung",
+        "desc": "Geschäftsführer können alle aktiven Arbeitsbereiche einsehen."
+      }
+    ],
+    "workflow": {
+      "heading": "Vom Briefing zum Aufbau in 7 Schritten",
+      "subheading": "Der effizienteste Ablauf der Messebaubranche.",
+      "steps": [
+        {
+          "title": "Erstes Briefing",
+          "desc": "Messeziele, Standfläche und Markenanforderungen festlegen."
+        },
+        {
+          "title": "Arbeitsbereich einrichten",
+          "desc": "Neues Projekt anlegen und die Grundmaße des Standes eingeben."
+        },
+        {
+          "title": "3D-Konstruktion",
+          "desc": "Wände, Blenden und Tragelemente mit Octanorm oder Maxima aufbauen."
+        },
+        {
+          "title": "Möblierung & Gestaltung",
+          "desc": "Objekte aus unserer umfangreichen Bibliothek per Drag-and-drop einfügen."
+        },
+        {
+          "title": "Kundenprüfung",
+          "desc": "Einen Live-Link teilen, damit Kunden den Stand im Browser erkunden."
+        },
+        {
+          "title": "Revisionsschleife",
+          "desc": "Anpassungen in Echtzeit auf Basis des Kundenfeedbacks vornehmen."
+        },
+        {
+          "title": "Endgültige Freigabe",
+          "desc": "Konstruktive Freigabe einholen und Unterlagen für die Fertigung exportieren."
+        }
+      ]
+    },
+    "team": {
+      "heading": "Für das gesamte Team gebaut",
+      "subheading": "Jede Rolle erhält eine eigene Oberfläche. Keine geteilten Tabellen, keine verlorenen E-Mails.",
+      "roles": [
+        {
+          "role": "Geschäftsführer",
+          "headline": "Volle Transparenz über alle Projekte.",
+          "points": [
+            "Live-Überwachung aller aktiven Stände",
+            "Leistungsranking der Projektleiter und Umsatzverfolgung",
+            "Zuweisung und Neuzuweisung von Projektleitern per Klick",
+            "Exportierbare Berichte — Excel oder PDF, beliebiger Zeitraum"
+          ]
+        },
+        {
+          "role": "Projektleiter",
+          "headline": "Den Stand entwerfen, den Kunden betreuen.",
+          "points": [
+            "Drag-and-drop-3D-Editor mit über 30 echten GLB-Möbelmodellen",
+            "Octanorm- und Maxima-Systeme mit Wandrasterung",
+            "Versionsverlauf und Snapshot-Aufnahme per Klick",
+            "Integriertes Aufgabenboard (Offen / In Arbeit / Blockiert / Erledigt)"
+          ]
+        },
+        {
+          "role": "Kunde",
+          "headline": "Mit vollem Kontext prüfen und freigeben.",
+          "points": [
+            "Schreibgeschützte 3D-Ansicht jeder Entwurfsversion",
+            "Kommentare direkt am Stand anheften",
+            "Mit einer Aktion freigeben oder Revision anfordern",
+            "Dokumentenbereich für alle hochgeladenen Dateien und Verträge"
+          ]
+        }
+      ]
+    },
+    "showcase": {
+      "heading": "Jede Rolle in Aktion",
+      "subheading": "Von der Kommandozentrale der Geschäftsführung bis zur Entwurfsprüfung des Kunden — jeder Bildschirm ist für seinen Nutzer gebaut.",
+      "previewCaption": "Oberflächenvorschau des Standarbeitsbereichs",
+      "illustrative": "Die gezeigten Zahlen sind ein illustratives Beispiel",
+      "cards": [
+        {
+          "title": "Geschäftsführer-Dashboard",
+          "role": "Geschäftsführer",
+          "badge": "Kommandozentrale",
+          "metrics": [
+            "6 aktive Projekte",
+            "3 verzögert — Handlung erforderlich",
+            "₺2,4 Mio. Budget verfolgt"
+          ]
+        },
+        {
+          "title": "Standaufbau des Projektleiters",
+          "role": "Projektleiter",
+          "badge": "3D-Entwurf",
+          "metrics": [
+            "Octanorm-Stand 8×6 m",
+            "Platzierte Möbel: 12 Stück",
+            "v2.4 → Freigabe ausstehend"
+          ]
+        },
+        {
+          "title": "Kunden-Prüfportal",
+          "role": "Kunde",
+          "badge": "Schreibgeschützt",
+          "metrics": [
+            "Entwurf v2.4 — Freigabe ausstehend",
+            "Revisionen: 1 / 2",
+            "Pins & Kommentare aktiviert"
+          ]
+        }
+      ],
+      "percentComplete": "{{percent}} % abgeschlossen",
+      "previewAlt": "Der Standarbeitsbereich mit einer Octanorm-Komponentenliste, einem Drahtgittermodell des Standes im Aufbauraster und einem Eigenschaftsfenster für Wandpaneele mit Breite und Höhe in Millimetern."
+    },
+    "billing": {
+      "monthly": "Monatlich",
+      "annual": "Jährlich",
+      "saveBadge": "20 % sparen",
+      "perMonthAnnual": "/Monat · jährliche Abrechnung",
+      "savePerYear": "${{amount}} pro Jahr sparen",
+      "getStarted": "Loslegen",
+      "contactSales": "Vertrieb kontaktieren"
+    },
+    "pricingTiers": [
+      {
+        "tier": "Starter",
+        "features": [
+          "5 aktive Projekte",
+          "Octanorm-System",
+          "Standard-Möbelbibliothek",
+          "2 GB Speicher",
+          "E-Mail-Support"
+        ]
+      },
+      {
+        "tier": "Professional",
+        "features": [
+          "Unbegrenzte Projekte",
+          "Octanorm & Maxima",
+          "Vollständige Möbelbibliothek",
+          "Kunden-Prüflinks",
+          "Priorisierter Support",
+          "Erweiterte Analysen"
+        ]
+      },
+      {
+        "tier": "Enterprise",
+        "features": [
+          "White-Label-Kundenlinks",
+          "Import eigener Objekte",
+          "Voller API-Zugriff",
+          "Persönlicher Success Manager",
+          "99,9 % SLA",
+          "Schulung vor Ort"
+        ]
+      }
+    ]
   },
   "team": {
     "hero": {
@@ -115,7 +344,9 @@
     },
     "workflow": {
       "heading": "Der ENS",
-      "headingAccent": "Produktions-Workflow"
+      "headingAccent": "Produktions-Workflow",
+      "badge": "So läuft es ab",
+      "subheading": "Jede Phase vom Briefing bis zum Aufbau, mit nachverfolgter und klar zugeordneter Übergabe."
     },
     "footer": {
       "tagline": "Maßgeschneiderte Management-Tools für Messeprofis — vom ersten Briefing bis zur produktionsfertigen Dokumentation.",

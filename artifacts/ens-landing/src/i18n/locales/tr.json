@@ -12,7 +12,8 @@
     "internalOnly": "Yalnızca dahili kullanım",
     "vsLastMonth": "geçen aya kıyasla",
     "clickToView": "Görüntülemek için tıklayın →",
-    "cancel": "İptal"
+    "cancel": "İptal",
+    "requestQuote": "Teklif Alın"
   },
   "nav": {
     "features": "Özellikler",
@@ -36,7 +37,8 @@
       "boothDimensions": "Stand Boyutları",
       "approvalStatus": "Onay Durumu",
       "furnitureCount": "Mobilya Sayısı",
-      "pending": "Beklemede"
+      "pending": "Beklemede",
+      "illustrative": "Örnek proje — temsilî değerler"
     },
     "pricing": {
       "heading": "Fiyat Planları",
@@ -79,6 +81,233 @@
       "bullet1": "Üç portal: yönetici, proje yöneticileri ve müşteriler",
       "bullet2": "Kendi mobilya kataloğunuz ve fiyatlarınız",
       "bullet3": "Onaylar, revizyonlar ve faturalar otomatik takip edilir"
+    },
+    "dimensionLabel": "ENS / KATILIMCI PLATFORMU",
+    "systemComparison": {
+      "heading": "Sistem Karşılaştırması",
+      "subheading": "Müşterinizin markasına ve bütçesine uyan sistemi seçin."
+    },
+    "systems": {
+      "octanorm": {
+        "name": "OCTANORM",
+        "desc": "Modüler fuar standlarının dünya standardı. Pratik, verimli ve yüksek oranda özelleştirilebilir yapı.",
+        "features": [
+          "4 mm Kanal Sistemi",
+          "Alüminyum Profil",
+          "Modüler Esneklik",
+          "Standart Paneller"
+        ]
+      },
+      "maxima": {
+        "name": "MAXIMA",
+        "desc": "Güçlü bir kurumsal duruş için premium mimari sistem. Geniş açıklıklar ve pürüzsüz, derzsiz yüzeyler.",
+        "features": [
+          "Geniş Açıklıklar",
+          "Sade Geometri",
+          "Premium Görseller",
+          "Entegre Aydınlatma"
+        ]
+      }
+    },
+    "featureCards": [
+      {
+        "title": "3D Stant Çalışma Alanı",
+        "desc": "Perspektif kontrollü, gerçek zamanlı etkileşimli editör."
+      },
+      {
+        "title": "Octanorm Desteği",
+        "desc": "Standart sistem duvarları için yerleşik modüler kenetlenme mantığı."
+      },
+      {
+        "title": "Maxima Desteği",
+        "desc": "Mimari açıklıklar ve premium taşıyıcı bileşenler."
+      },
+      {
+        "title": "Mobilya Yerleşimi",
+        "desc": "Masa, sandalye ve raflar için akıllı yüzey kenetlenmesi."
+      },
+      {
+        "title": "Müşteri İş Birliği",
+        "desc": "Yöneticiler ve müşteriler arasında canlı geri bildirim döngüsü."
+      },
+      {
+        "title": "Çalışma Alanı Anlık Görüntüleri",
+        "desc": "Tasarım durumlarını kaydedin ve aralarında anında geçiş yapın."
+      },
+      {
+        "title": "Sürüm Geçmişi",
+        "desc": "Tasarımın tüm yaşam döngüsü boyunca değişiklikleri izleyin."
+      },
+      {
+        "title": "Onay Akışı",
+        "desc": "Yapısal tasarımlar için sadeleştirilmiş onay süreci."
+      },
+      {
+        "title": "Proje Yönetimi",
+        "desc": "Birden fazla fuarı izlemek için kapsamlı gösterge paneli."
+      },
+      {
+        "title": "Canlı İzleme",
+        "desc": "Genel müdürler tüm aktif çalışma alanlarını izleyebilir."
+      }
+    ],
+    "workflow": {
+      "heading": "Brifingden Üretime 7 Adımda",
+      "subheading": "Fuarcılık sektörünün en verimli iş akışı.",
+      "steps": [
+        {
+          "title": "İlk Brifing",
+          "desc": "Fuar hedeflerini, alan büyüklüğünü ve marka gereksinimlerini belirleyin."
+        },
+        {
+          "title": "Çalışma Alanı Kurulumu",
+          "desc": "Yeni bir proje oluşturun ve standın temel ölçülerini girin."
+        },
+        {
+          "title": "3D Kurgu",
+          "desc": "Octanorm veya Maxima ile duvarları, alınlıkları ve taşıyıcı öğeleri kurun."
+        },
+        {
+          "title": "Mobilya ve Tasarım",
+          "desc": "Geniş kütüphanemizden ürünleri sürükleyip alanınıza bırakın."
+        },
+        {
+          "title": "Müşteri İncelemesi",
+          "desc": "Müşterilerin standı tarayıcıda gezebilmesi için canlı bağlantı paylaşın."
+        },
+        {
+          "title": "Revizyon Döngüsü",
+          "desc": "Müşteri geri bildirimlerine göre gerçek zamanlı düzenleme yapın."
+        },
+        {
+          "title": "Nihai Onay",
+          "desc": "Yapısal onayı alın ve üretim için dokümantasyonu dışa aktarın."
+        }
+      ]
+    },
+    "team": {
+      "heading": "Tüm Ekip İçin Tasarlandı",
+      "subheading": "Her rol kendine özel bir deneyim alır. Ortak tablolar yok, kaybolan e-postalar yok.",
+      "roles": [
+        {
+          "role": "Genel Müdür",
+          "headline": "Her projede tam görünürlük.",
+          "points": [
+            "Tüm aktif standlar için canlı çalışma alanı izleme",
+            "Proje müdürü performans sıralaması ve ciro takibi",
+            "Tek tıkla yönetici atama ve yeniden atama",
+            "Dışa aktarılabilir raporlar — Excel veya PDF, istediğiniz tarih aralığında"
+          ]
+        },
+        {
+          "role": "Proje Müdürü",
+          "headline": "Standı tasarlayın, müşteriyi yönetin.",
+          "points": [
+            "30+ gerçek GLB mobilya modeliyle sürükle-bırak 3D editör",
+            "Duvar kenetlemeli Octanorm ve Maxima taşıyıcı sistemleri",
+            "Sürüm geçmişi ve tek tıkla anlık görüntü alma",
+            "Entegre görev panosu (Yapılacak / Devam Ediyor / Engellendi / Tamamlandı)"
+          ]
+        },
+        {
+          "role": "Müşteri",
+          "headline": "Tüm bağlamıyla inceleyin ve onaylayın.",
+          "points": [
+            "Her tasarım sürümünün salt okunur 3D görünümü",
+            "Yorumları doğrudan stant görünümüne iğneleyin",
+            "Tek işlemle onaylayın veya revizyon isteyin",
+            "Yüklenen tüm dosya ve sözleşmeler için doküman merkezi"
+          ]
+        }
+      ]
+    },
+    "showcase": {
+      "heading": "Her Rolü İş Başında Görün",
+      "subheading": "Genel müdürün komuta merkezinden müşterinin tasarım incelemesine kadar her ekran kendi kullanıcısı için tasarlandı.",
+      "previewCaption": "Stant çalışma alanının arayüz önizlemesi",
+      "illustrative": "Gösterilen değerler temsilî bir örnektir",
+      "cards": [
+        {
+          "title": "Genel Müdür Paneli",
+          "role": "Genel Müdür",
+          "badge": "Komuta Merkezi",
+          "metrics": [
+            "6 Aktif Proje",
+            "3 Gecikmiş — İşlem Gerekiyor",
+            "₺2,4M Bütçe Takibi"
+          ]
+        },
+        {
+          "title": "PM Çalışma Alanı Kurgusu",
+          "role": "Proje Müdürü",
+          "badge": "3D Tasarım",
+          "metrics": [
+            "Octanorm 8×6 m Stant",
+            "Yerleştirilen mobilya: 12 adet",
+            "v2.4 → Genel Müdür Onayı Bekliyor"
+          ]
+        },
+        {
+          "title": "Müşteri İnceleme Portalı",
+          "role": "Müşteri",
+          "badge": "Salt Okunur Görünüm",
+          "metrics": [
+            "Tasarım v2.4 — Onay Bekliyor",
+            "Revizyon: 1 / 2",
+            "İğne ve yorumlar açık"
+          ]
+        }
+      ],
+      "percentComplete": "%{{percent}} tamamlandı",
+      "previewAlt": "Octanorm bileşen listesini, kurgu ızgarası üzerinde tel kafes bir standı ve genişlik ile yüksekliği milimetre cinsinden gösteren duvar paneli özellik panelini gösteren stant çalışma alanı."
+    },
+    "billing": {
+      "monthly": "Aylık",
+      "annual": "Yıllık",
+      "saveBadge": "%20 tasarruf",
+      "perMonthAnnual": "/ay · yıllık faturalandırılır",
+      "savePerYear": "Yılda ${{amount}} tasarruf",
+      "getStarted": "Başlayın",
+      "contactSales": "Satışla İletişime Geçin"
+    },
+    "pricingTiers": [
+      {
+        "tier": "Başlangıç",
+        "features": [
+          "5 Aktif Proje",
+          "Octanorm Sistemi",
+          "Standart Mobilya Kütüphanesi",
+          "2 GB Depolama",
+          "E-posta Desteği"
+        ]
+      },
+      {
+        "tier": "Profesyonel",
+        "features": [
+          "Sınırsız Proje",
+          "Octanorm ve Maxima",
+          "Tam Mobilya Kütüphanesi",
+          "Müşteri İnceleme Bağlantıları",
+          "Öncelikli Destek",
+          "Gelişmiş Analitik"
+        ]
+      },
+      {
+        "tier": "Kurumsal",
+        "features": [
+          "Beyaz Etiketli Müşteri Bağlantıları",
+          "Özel Nesne İçe Aktarma",
+          "Tam API Erişimi",
+          "Özel Müşteri Başarı Yöneticisi",
+          "%99,9 SLA",
+          "Yerinde Eğitim"
+        ]
+      }
+    ],
+    "features": {
+      "heading": "Tasarlamak ve teslim etmek için",
+      "headingAccent": "ihtiyacınız olan her şey",
+      "subheading": "İlk duvardan nihai onaya kadar tüm iş için tek platform."
     }
   },
   "team": {
@@ -115,7 +344,9 @@
     },
     "workflow": {
       "heading": "ENS",
-      "headingAccent": "üretim iş akışı"
+      "headingAccent": "üretim iş akışı",
+      "badge": "Nasıl işliyor",
+      "subheading": "Brifingden üretime her aşama, her devir teslim takip edilir ve sahiplenilir."
     },
     "footer": {
       "tagline": "Fuar profesyonelleri için özel yönetim araçları — ilk brifingden üretime hazır belgelere kadar.",

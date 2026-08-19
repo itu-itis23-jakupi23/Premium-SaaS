@@ -12,7 +12,8 @@
     "internalOnly": "Alleen intern gebruik",
     "vsLastMonth": "vs vorige maand",
     "clickToView": "Klik om te bekijken →",
-    "cancel": "Annuleren"
+    "cancel": "Annuleren",
+    "requestQuote": "Offerte aanvragen"
   },
   "nav": {
     "features": "Functies",
@@ -36,7 +37,8 @@
       "boothDimensions": "Standafmetingen",
       "approvalStatus": "Goedkeuringsstatus",
       "furnitureCount": "Meubelaantal",
-      "pending": "In behandeling"
+      "pending": "In behandeling",
+      "illustrative": "Voorbeeldproject — illustratieve cijfers"
     },
     "pricing": {
       "heading": "Prijsniveaus",
@@ -79,7 +81,234 @@
       "bullet1": "Drie portalen: leiding, projectmanagers en klanten",
       "bullet2": "Uw eigen meubelcatalogus en prijzen",
       "bullet3": "Goedkeuringen, revisies en facturen automatisch gevolgd"
-    }
+    },
+    "features": {
+      "heading": "Alles wat u nodig hebt om te",
+      "headingAccent": "ontwerpen en opleveren",
+      "subheading": "Eén platform voor het hele traject — van de eerste wand tot de definitieve goedkeuring."
+    },
+    "dimensionLabel": "ENS / EXPOSANTENPLATFORM",
+    "systemComparison": {
+      "heading": "Systeemvergelijking",
+      "subheading": "Kies het systeem dat past bij het merk en het budget van uw klant."
+    },
+    "systems": {
+      "octanorm": {
+        "name": "OCTANORM",
+        "desc": "De wereldstandaard voor modulaire beursstands. Praktisch, efficiënt en zeer aanpasbaar.",
+        "features": [
+          "4 mm groefsysteem",
+          "Aluminium profiel",
+          "Modulaire flexibiliteit",
+          "Standaardpanelen"
+        ]
+      },
+      "maxima": {
+        "name": "MAXIMA",
+        "desc": "Premium architectonisch systeem voor een sterke uitstraling. Grote overspanningen en gladde, naadloze afwerking.",
+        "features": [
+          "Grote overspanningen",
+          "Strakke geometrie",
+          "Premium beeldmateriaal",
+          "Geïntegreerde verlichting"
+        ]
+      }
+    },
+    "featureCards": [
+      {
+        "title": "3D-werkruimte",
+        "desc": "Interactieve realtime-editor met perspectiefbediening."
+      },
+      {
+        "title": "Octanorm-ondersteuning",
+        "desc": "Ingebouwde modulaire uitlijnlogica voor standaard systeemwanden."
+      },
+      {
+        "title": "Maxima-ondersteuning",
+        "desc": "Architectonische overspanningen en premium constructiedelen."
+      },
+      {
+        "title": "Meubelplaatsing",
+        "desc": "Slim uitlijnen op oppervlakken voor tafels, stoelen en rekken."
+      },
+      {
+        "title": "Samenwerking met de klant",
+        "desc": "Directe feedbacklus tussen projectleiders en klanten."
+      },
+      {
+        "title": "Momentopnamen van de werkruimte",
+        "desc": "Leg ontwerpstadia vast en wissel er direct tussen."
+      },
+      {
+        "title": "Versiegeschiedenis",
+        "desc": "Volg wijzigingen gedurende de hele ontwerpcyclus."
+      },
+      {
+        "title": "Goedkeuringsproces",
+        "desc": "Gestroomlijnd goedkeuringsproces voor constructieve ontwerpen."
+      },
+      {
+        "title": "Projectbeheer",
+        "desc": "Volledig dashboard om meerdere beurzen te volgen."
+      },
+      {
+        "title": "Live monitoring",
+        "desc": "Directeuren kunnen alle actieve werkruimtes volgen."
+      }
+    ],
+    "workflow": {
+      "heading": "Van briefing tot opbouw in 7 stappen",
+      "subheading": "De efficiëntste werkwijze in de beursbouw.",
+      "steps": [
+        {
+          "title": "Eerste briefing",
+          "desc": "Beursdoelen, vloeroppervlak en merkeisen vastleggen."
+        },
+        {
+          "title": "Werkruimte instellen",
+          "desc": "Maak een project aan en voer de basismaten van de stand in."
+        },
+        {
+          "title": "3D-opbouw",
+          "desc": "Bouw wanden, fascia's en constructiedelen met Octanorm of Maxima."
+        },
+        {
+          "title": "Meubilair en styling",
+          "desc": "Sleep items uit onze uitgebreide bibliotheek naar uw ruimte."
+        },
+        {
+          "title": "Klantbeoordeling",
+          "desc": "Deel een live link zodat klanten de stand in hun browser kunnen bekijken."
+        },
+        {
+          "title": "Revisieronde",
+          "desc": "Pas realtime aan op basis van feedback en verzoeken van de klant."
+        },
+        {
+          "title": "Definitieve goedkeuring",
+          "desc": "Verkrijg constructieve goedkeuring en exporteer de productiedocumentatie."
+        }
+      ]
+    },
+    "team": {
+      "heading": "Gebouwd voor het hele team",
+      "subheading": "Elke rol krijgt een eigen omgeving. Geen gedeelde spreadsheets, geen verdwenen e-mails.",
+      "roles": [
+        {
+          "role": "Directeur",
+          "headline": "Volledig zicht op elk project.",
+          "points": [
+            "Live monitoring van alle actieve stands",
+            "Prestatieranglijst van projectleiders en omzetregistratie",
+            "Projectleiders toewijzen en opnieuw toewijzen met één klik",
+            "Exporteerbare rapporten — Excel of PDF, elke periode"
+          ]
+        },
+        {
+          "role": "Projectleider",
+          "headline": "Ontwerp de stand, begeleid de klant.",
+          "points": [
+            "Sleep-en-neerzet 3D-editor met meer dan 30 echte GLB-meubelmodellen",
+            "Octanorm- en Maxima-systemen met wanduitlijning",
+            "Versiegeschiedenis en momentopname met één klik",
+            "Geïntegreerd takenbord (Te doen / Bezig / Geblokkeerd / Klaar)"
+          ]
+        },
+        {
+          "role": "Klant",
+          "headline": "Beoordeel en keur goed met volledige context.",
+          "points": [
+            "Alleen-lezen 3D-weergave van elke ontwerpversie",
+            "Zet opmerkingen rechtstreeks op de stand vast",
+            "Keur goed of vraag een revisie aan met één handeling",
+            "Documentcentrum voor alle geüploade bestanden en contracten"
+          ]
+        }
+      ]
+    },
+    "showcase": {
+      "heading": "Zie elke rol in actie",
+      "subheading": "Van de commandocentrale van de directeur tot de ontwerpbeoordeling van de klant — elk scherm is gemaakt voor zijn gebruiker.",
+      "previewCaption": "Interfacevoorbeeld van de standwerkruimte",
+      "illustrative": "De getoonde cijfers zijn een illustratief voorbeeld",
+      "cards": [
+        {
+          "title": "Directeursdashboard",
+          "role": "Directeur",
+          "badge": "Commandocentrale",
+          "metrics": [
+            "6 actieve projecten",
+            "3 vertraagd — actie vereist",
+            "₺2,4 mln budget gevolgd"
+          ]
+        },
+        {
+          "title": "Werkruimtebouwer projectleider",
+          "role": "Projectleider",
+          "badge": "3D-ontwerp",
+          "metrics": [
+            "Octanorm-stand 8×6 m",
+            "Geplaatst meubilair: 12 stuks",
+            "v2.4 → wacht op goedkeuring"
+          ]
+        },
+        {
+          "title": "Beoordelingsportaal voor klanten",
+          "role": "Klant",
+          "badge": "Alleen-lezen",
+          "metrics": [
+            "Ontwerp v2.4 — wacht op goedkeuring",
+            "Revisies: 1 / 2",
+            "Pins en opmerkingen ingeschakeld"
+          ]
+        }
+      ],
+      "percentComplete": "{{percent}}% voltooid",
+      "previewAlt": "De standwerkruimte met een Octanorm-componentenlijst, een draadmodel van de stand op het opbouwraster en een eigenschappenpaneel voor wandpanelen met breedte en hoogte in millimeters."
+    },
+    "billing": {
+      "monthly": "Maandelijks",
+      "annual": "Jaarlijks",
+      "saveBadge": "Bespaar 20%",
+      "perMonthAnnual": "/maand · jaarlijks gefactureerd",
+      "savePerYear": "Bespaar ${{amount}} per jaar",
+      "getStarted": "Aan de slag",
+      "contactSales": "Neem contact op met sales"
+    },
+    "pricingTiers": [
+      {
+        "tier": "Starter",
+        "features": [
+          "5 actieve projecten",
+          "Octanorm-systeem",
+          "Standaard meubelbibliotheek",
+          "2 GB opslag",
+          "Ondersteuning via e-mail"
+        ]
+      },
+      {
+        "tier": "Professional",
+        "features": [
+          "Onbeperkt aantal projecten",
+          "Octanorm en Maxima",
+          "Volledige meubelbibliotheek",
+          "Beoordelingslinks voor klanten",
+          "Prioritaire ondersteuning",
+          "Geavanceerde analyses"
+        ]
+      },
+      {
+        "tier": "Enterprise",
+        "features": [
+          "White-label klantlinks",
+          "Import van eigen objecten",
+          "Volledige API-toegang",
+          "Toegewijde succesmanager",
+          "99,9% SLA",
+          "Training op locatie"
+        ]
+      }
+    ]
   },
   "team": {
     "hero": {
@@ -115,7 +344,9 @@
     },
     "workflow": {
       "heading": "De ENS",
-      "headingAccent": "productieworkflow"
+      "headingAccent": "productieworkflow",
+      "badge": "Zo werkt het",
+      "subheading": "Elke fase van briefing tot opbouw, met elke overdracht vastgelegd en toegewezen."
     },
     "footer": {
       "tagline": "Speciaal gebouwde beheertools voor tentoonstellingsprofessionals — van eerste briefing tot productieklare documentatie.",
