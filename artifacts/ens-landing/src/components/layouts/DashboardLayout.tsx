@@ -1,6 +1,6 @@
 import { startTransition, useEffect, useState } from "react";
-import type { ElementType, MouseEvent, ReactNode } from "react";
-import { motion } from "framer-motion";
+import type { ElementType, MouseEvent, ReactNode, KeyboardEvent as ReactKeyboardEvent } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,11 +27,14 @@ import {
   Plus,
   ArrowRight,
   ChevronUp,
+  Receipt,
+  CreditCard,
+  KanbanSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -72,8 +75,11 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
   chief: [
     { icon: LayoutDashboard, labelKey: "chief.nav.dashboard",  href: "/chief" },
     { icon: Users,           labelKey: "chief.nav.clients",    href: "/chief/clients" },
+    { icon: KanbanSquare,    labelKey: "chief.nav.pipeline",   href: "/chief/pipeline" },
     { icon: UserSquare2,     labelKey: "chief.nav.managers",   href: "/chief/managers" },
     { icon: Briefcase,       labelKey: "chief.nav.projects",   href: "/chief/projects" },
+    { icon: Receipt,         labelKey: "chief.nav.quotes",     href: "/chief/quotes" },
+    { icon: CreditCard,      labelKey: "chief.nav.invoices",   href: "/chief/invoices" },
     { icon: CalendarDays,    labelKey: "chief.nav.calendar",   href: "/chief/calendar" },
     { icon: MessageSquare,   labelKey: "chief.nav.messages",   href: "/chief/messages" },
     { icon: Settings,        labelKey: "chief.nav.settings",   href: "/chief/settings" },
@@ -82,6 +88,8 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
     { icon: LayoutDashboard, labelKey: "pm.nav.dashboard",  href: "/pm" },
     { icon: Users,           labelKey: "pm.nav.myClients",  href: "/pm/clients" },
     { icon: Briefcase,       labelKey: "pm.nav.projects",   href: "/pm/projects" },
+    { icon: Receipt,         labelKey: "pm.nav.quotes",     href: "/pm/quotes" },
+    { icon: CreditCard,      labelKey: "pm.nav.invoices",   href: "/pm/invoices" },
     { icon: CalendarDays,    labelKey: "pm.nav.calendar",   href: "/pm/calendar" },
     { icon: MessageSquare,   labelKey: "pm.nav.messages",   href: "/pm/messages" },
     { icon: Layers,          labelKey: "pm.nav.tasks",      href: "/pm/tasks" },
@@ -90,6 +98,8 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
   client: [
     { icon: LayoutDashboard, labelKey: "client.nav.dashboard",  href: "/client" },
     { icon: FolderOpen,      labelKey: "client.nav.projects",   href: "/client/projects" },
+    { icon: Receipt,         labelKey: "client.nav.quotes",     href: "/client/quotes" },
+    { icon: CreditCard,      labelKey: "client.nav.invoices",   href: "/client/invoices" },
     { icon: Layers,          labelKey: "client.nav.workspace",  href: "/client/workspace" },
     { icon: MessageSquare,   labelKey: "client.nav.messages",   href: "/client/messages" },
     { icon: FileText,        labelKey: "client.nav.documents",  href: "/client/documents" },
@@ -100,7 +110,9 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const { t, i18n } = useTranslation();
   const isRtl = i18n.language === "ar";
+  const prefersReducedMotion = useReducedMotion();
   const [location, navigate] = useLocation();
+  const routeKey = location.split("?")[0];
   // Phones start with the icon rail; desktop starts expanded.
   const [isCollapsed, setIsCollapsed] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches,
@@ -114,6 +126,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const accountHref = role === "client" ? "/client/profile" : role === "pm" ? "/pm/settings" : "/chief/settings";
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState("");
+  // Highlighted row in the command palette, for arrow-key navigation.
+  const [cmdActiveIndex, setCmdActiveIndex] = useState(0);
 
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -121,6 +135,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
+        setCmdActiveIndex(0);
         setCmdPaletteOpen((open) => !open);
       }
     }
@@ -134,6 +149,12 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
+  // Keep the highlighted command-palette row scrolled into view as it changes.
+  useEffect(() => {
+    if (!cmdPaletteOpen || cmdActiveIndex < 0) return;
+    document.getElementById(`cmd-item-${cmdActiveIndex}`)?.scrollIntoView({ block: "nearest" });
+  }, [cmdActiveIndex, cmdPaletteOpen]);
 
   useEffect(() => {
     let mounted = true;
@@ -279,6 +300,45 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       });
       setUnreadNotifications(0);
       cachedUnreadNotificationsByUser[cacheKey] = 0;
+    }
+  }
+
+  // ── Command palette: unified, filtered action list + keyboard navigation ──
+  const cmdQ = cmdQuery.trim().toLowerCase();
+  const cmdNavItems = items.filter((item) => !cmdQ || t(item.labelKey).toLowerCase().includes(cmdQ));
+  const cmdQuickActions = [
+    { label: "New Exhibition", icon: Plus, href: "/chief/projects" },
+    { label: "Invite Project Manager", icon: UserSquare2, href: "/chief/managers" },
+    { label: "Messages & Direct Chat", icon: MessageSquare, href: `/${role}/messages` },
+    { label: "Calendar & Schedule", icon: CalendarDays, href: `/${role}/calendar` },
+  ].filter((act) => !cmdQ || act.label.toLowerCase().includes(cmdQ));
+  const cmdFlatCount = cmdNavItems.length + cmdQuickActions.length;
+  const cmdActiveIdx = cmdFlatCount === 0 ? -1 : Math.min(cmdActiveIndex, cmdFlatCount - 1);
+
+  function runCmdIndex(idx: number) {
+    if (idx < 0) return;
+    setCmdPaletteOpen(false);
+    setCmdQuery("");
+    if (idx < cmdNavItems.length) {
+      const href = cmdNavItems[idx].href;
+      void preloadPortalRoute(href)?.catch(() => undefined);
+      navigate(href);
+    } else {
+      navigate(cmdQuickActions[idx - cmdNavItems.length].href);
+    }
+  }
+
+  function onCmdKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
+    if (cmdFlatCount === 0) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setCmdActiveIndex((i) => (Math.max(0, i) + 1) % cmdFlatCount);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setCmdActiveIndex((i) => (Math.max(0, i) - 1 + cmdFlatCount) % cmdFlatCount);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      runCmdIndex(cmdActiveIdx);
     }
   }
 
@@ -433,23 +493,36 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           {/* Ambient Glow Gradient */}
           <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 h-96 w-full max-w-5xl bg-primary/5 blur-3xl rounded-full" aria-hidden="true" />
 
-          <div className="relative z-10 mx-auto max-w-7xl">
+          <motion.div
+            key={routeKey}
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-10 mx-auto max-w-7xl"
+          >
             {children}
-          </div>
+          </motion.div>
         </main>
       </div>
 
       {/* ── Global ⌘K Command Palette Dialog ── */}
       <Dialog open={cmdPaletteOpen} onOpenChange={setCmdPaletteOpen}>
         <DialogContent className="max-w-xl overflow-hidden p-0 gap-0 border-border bg-card/95 backdrop-blur-xl shadow-2xl">
+          <DialogTitle className="sr-only">{t("layout.commandPalette.title")}</DialogTitle>
+          <DialogDescription className="sr-only">{t("layout.commandPalette.description")}</DialogDescription>
           <div className="flex items-center border-b px-4 py-3 bg-muted/30">
             <Search className="mr-3 h-4 w-4 shrink-0 text-primary" />
             <Input
               value={cmdQuery}
-              onChange={(e) => setCmdQuery(e.target.value)}
+              onChange={(e) => { setCmdQuery(e.target.value); setCmdActiveIndex(0); }}
+              onKeyDown={onCmdKeyDown}
               placeholder="Search pages, projects, actions..."
               className="h-8 border-0 bg-transparent px-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground"
               autoFocus
+              role="combobox"
+              aria-expanded
+              aria-controls="cmd-listbox"
+              aria-activedescendant={cmdActiveIdx >= 0 ? `cmd-item-${cmdActiveIdx}` : undefined}
             />
             <kbd className="ml-2 inline-flex items-center rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
               ESC
@@ -457,66 +530,73 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           </div>
 
           <ScrollArea className="max-h-[360px] p-2">
-            <div className="space-y-1">
-              <p className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                Navigation &amp; Pages
-              </p>
-              {items
-                .filter((item) => !cmdQuery || t(item.labelKey).toLowerCase().includes(cmdQuery.toLowerCase()))
-                .map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.href}
-                      type="button"
-                      onClick={() => {
-                        setCmdPaletteOpen(false);
-                        setCmdQuery("");
-                        void preloadPortalRoute(item.href)?.catch(() => undefined);
-                        navigate(item.href);
-                      }}
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-xs transition-colors hover:bg-primary/10 hover:text-primary group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                        <span className="font-medium">{t(item.labelKey)}</span>
-                      </div>
-                      <ArrowRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  );
-                })}
+            <div className="space-y-1" role="listbox" id="cmd-listbox" aria-label={t("layout.commandPalette.title")}>
+              {cmdNavItems.length > 0 && (
+                <p className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                  Navigation &amp; Pages
+                </p>
+              )}
+              {cmdNavItems.map((item, i) => {
+                const Icon = item.icon;
+                const active = cmdActiveIdx === i;
+                return (
+                  <button
+                    key={item.href}
+                    id={`cmd-item-${i}`}
+                    role="option"
+                    aria-selected={active}
+                    type="button"
+                    onMouseMove={() => setCmdActiveIndex(i)}
+                    onClick={() => runCmdIndex(i)}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-xs transition-colors group",
+                      active ? "bg-primary/10 text-primary" : "hover:bg-primary/10 hover:text-primary",
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={cn("h-4 w-4 transition-colors", active ? "text-primary" : "text-muted-foreground group-hover:text-primary")} />
+                      <span className="font-medium">{t(item.labelKey)}</span>
+                    </div>
+                    <ArrowRight className={cn("h-3.5 w-3.5 transition-opacity", active ? "opacity-100" : "opacity-0 group-hover:opacity-100")} />
+                  </button>
+                );
+              })}
 
-              <p className="mt-3 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                Quick Actions
-              </p>
-              {[
-                { label: "New Exhibition", icon: Plus, href: "/chief/projects" },
-                { label: "Invite Project Manager", icon: UserSquare2, href: "/chief/managers" },
-                { label: "Messages & Direct Chat", icon: MessageSquare, href: `/${role}/messages` },
-                { label: "Calendar & Schedule", icon: CalendarDays, href: `/${role}/calendar` },
-              ]
-                .filter((act) => !cmdQuery || act.label.toLowerCase().includes(cmdQuery.toLowerCase()))
-                .map((act, i) => {
-                  const ActIcon = act.icon;
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => {
-                        setCmdPaletteOpen(false);
-                        setCmdQuery("");
-                        navigate(act.href);
-                      }}
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors hover:bg-muted/80 group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <ActIcon className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{act.label}</span>
-                      </div>
-                      <span className="text-[10px] font-mono text-muted-foreground">Jump →</span>
-                    </button>
-                  );
-                })}
+              {cmdQuickActions.length > 0 && (
+                <p className="mt-3 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                  Quick Actions
+                </p>
+              )}
+              {cmdQuickActions.map((act, j) => {
+                const ActIcon = act.icon;
+                const idx = cmdNavItems.length + j;
+                const active = cmdActiveIdx === idx;
+                return (
+                  <button
+                    key={act.label}
+                    id={`cmd-item-${idx}`}
+                    role="option"
+                    aria-selected={active}
+                    type="button"
+                    onMouseMove={() => setCmdActiveIndex(idx)}
+                    onClick={() => runCmdIndex(idx)}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors group",
+                      active ? "bg-primary/10 text-primary" : "hover:bg-muted/80",
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <ActIcon className="h-4 w-4 text-primary" />
+                      <span className="font-medium">{act.label}</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-muted-foreground">Jump →</span>
+                  </button>
+                );
+              })}
+
+              {cmdFlatCount === 0 && (
+                <p className="px-3 py-6 text-center text-xs text-muted-foreground">No matches for “{cmdQuery}”.</p>
+              )}
             </div>
           </ScrollArea>
         </DialogContent>

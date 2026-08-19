@@ -1,3 +1,4 @@
+import { motion, useReducedMotion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { ENSLogo } from "@/components/ENSLogo";
 
@@ -8,9 +9,15 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children, title, description }: AuthLayoutProps) {
+  const prefersReducedMotion = useReducedMotion();
   return (
     <div className="w-full">
-      <div className="w-full max-w-md mx-auto px-4">
+      <motion.div
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 12, scale: 0.985 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-md mx-auto px-4"
+      >
         <div className="flex flex-col items-center mb-6">
           <div className="mb-4">
             <ENSLogo size="md" showTagline href="/" />
@@ -30,7 +37,7 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
         <div className="mt-5 text-center text-xs text-muted-foreground">
           &copy; {new Date().getFullYear()} ENS Exhibition Network Service. All rights reserved.
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

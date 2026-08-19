@@ -204,7 +204,7 @@ export default function Home() {
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-40 md:hidden"
           >
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+            <div aria-hidden="true" className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
             <motion.div
               initial={{ x: drawerOffscreen }}
               animate={{ x: 0 }}
@@ -290,11 +290,11 @@ export default function Home() {
               </motion.p>
               
               <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-                <Button size="lg" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold shadow-[0_0_20px_rgba(109,40,217,0.4)] hover:shadow-[0_0_35px_rgba(109,40,217,0.6)] transition-all gap-2" data-testid="btn-hero-cta1">
-                  {t('common.startDesigning')} <ChevronRight className="w-4 h-4" />
+                <Button size="lg" onClick={() => navigate('/get-quote')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold shadow-[0_0_20px_rgba(109,40,217,0.4)] hover:shadow-[0_0_35px_rgba(109,40,217,0.6)] transition-all gap-2" data-testid="btn-hero-quote">
+                  {t('common.requestQuote')} <ChevronRight className="w-4 h-4" />
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => scrollTo('showcase')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border-border/80 hover:bg-muted/50" data-testid="btn-hero-cta2">
-                  {t('common.watchDemo')}
+                <Button size="lg" variant="outline" onClick={() => navigate('/login')} className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold border-border/80 hover:bg-muted/50" data-testid="btn-hero-cta1">
+                  {t('common.startDesigning')}
                 </Button>
               </motion.div>
             </motion.div>

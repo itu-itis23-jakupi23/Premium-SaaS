@@ -800,8 +800,14 @@ export default function TeamLanding() {
             <div>
               <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">{t('team.footer.resources')}</div>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                {[t('team.footer.docs'), t('team.footer.training'), t('team.footer.releaseNotes'), t('team.footer.systemStatus'), t('team.footer.itSupport')].map(l => (
-                  <li key={l}><a href="#" className="hover:text-foreground transition-colors">{l}</a></li>
+                {[
+                  { label: t('team.footer.docs'), href: 'mailto:it@ens.io?subject=Documentation%20access' },
+                  { label: t('team.footer.training'), href: 'mailto:it@ens.io?subject=Training%20request' },
+                  { label: t('team.footer.releaseNotes'), href: 'mailto:it@ens.io?subject=Release%20notes' },
+                  { label: t('team.footer.systemStatus'), href: 'mailto:it@ens.io?subject=System%20status' },
+                  { label: t('team.footer.itSupport'), href: 'mailto:it@ens.io?subject=IT%20support' },
+                ].map(({ label, href }) => (
+                  <li key={label}><a href={href} className="hover:text-foreground transition-colors">{label}</a></li>
                 ))}
               </ul>
               <div className="mt-6 p-3 rounded-xl bg-primary/5 border border-primary/15">
@@ -817,8 +823,8 @@ export default function TeamLanding() {
               <span className="text-xs text-muted-foreground/40">{t('common.internalOnly')}</span>
             </div>
             <div className="flex gap-6 text-xs text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">{t('team.footer.privacy')}</a>
-              <a href="#" className="hover:text-foreground transition-colors">{t('team.footer.security')}</a>
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">{t('team.footer.privacy')}</a>
+              <a href="/security" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">{t('team.footer.security')}</a>
               <button onClick={() => navigate('/login')} className="hover:text-foreground transition-colors">{t('common.signIn')}</button>
             </div>
           </div>
