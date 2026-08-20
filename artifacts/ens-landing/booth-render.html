@@ -177,6 +177,9 @@
         <line x1="0" y1="0" x2="180" y2="0" stroke="rgba(20,22,26,0.07)" stroke-width="0.7"/>
         <line x1="0" y1="0" x2="0" y2="180" stroke="rgba(20,22,26,0.07)" stroke-width="0.7"/>
       </pattern>
+      <filter id="ground-shadow" x="-25%" y="-60%" width="150%" height="220%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="9" />
+      </filter>
       <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5">
         <stop offset="0%" stop-color="rgba(20,22,26,0.35)"/>
         <stop offset="65%" stop-color="rgba(20,22,26,0.08)"/>
@@ -293,6 +296,25 @@ const EX = 0.04;                                           // profile thickness 
 let COMPANY_NAME = decodeURIComponent(_P.get('name') || 'Company Name');
 let PANELS_BACK = Math.max(1, Math.round(BW));
 let PANELS_SIDE = Math.max(1, Math.round(BD));
+/**
+ * Legibility of the stand against the studio background.
+ *
+ * The stand is near-white (#f8fafc) on a near-white backdrop (#eef0f2): a
+ * measured 1.09:1. Panel seams were drawn at rgba(120,124,130,0.11) and 0.2px,
+ * an eleven-percent hairline, so individual panels could not be counted by eye
+ * and the whole stand dissolved into the floor.
+ *
+ * These raise edge definition and drop a contact shadow, without touching the
+ * stand's own colours. `legibility` in the query string picks an intensity so
+ * the levels can be compared side by side: soft | normal | strong.
+ */
+const LEGIBILITY_LEVELS = {
+  soft:   { seam: 'rgba(96,102,110,0.20)', seamW: 0.34, ground: 0.30 },
+  normal: { seam: 'rgba(88,95,104,0.32)',  seamW: 0.46, ground: 0.42 },
+  strong: { seam: 'rgba(72,79,88,0.46)',   seamW: 0.62, ground: 0.55 },
+};
+const LEGIBILITY = LEGIBILITY_LEVELS[_P.get('legibility')] || LEGIBILITY_LEVELS.normal;
+
 let CARPET_COLOR = _P.get('carpet') || '#3b3e44';
 let WALL_COLOR = _P.get('wall') || '#f8fafc';
 let FRAME_COLOR = _P.get('frame') || '#b8bdc3';
@@ -2370,6 +2392,25 @@ function buildFloor() {
     tilePoly.setAttribute('points', path); tilePoly.setAttribute('fill', 'url(#tile)');
     tilePoly.setAttribute('opacity', '0.5'); g.appendChild(tilePoly);
   }
+  // Contact shadow under the stand footprint. Without it a near-white stand on
+  // a near-white floor has no visual anchor and reads as floating.
+  const shadowPad = 0.16;
+  const shadowVerts = [
+    [-BW/2 - shadowPad, 0.004, 0 - shadowPad],
+    [ BW/2 + shadowPad, 0.004, 0 - shadowPad],
+    [ BW/2 + shadowPad, 0.004, BD + shadowPad],
+    [-BW/2 - shadowPad, 0.004, BD + shadowPad],
+  ].map(project);
+  if (shadowVerts.every(Boolean)) {
+    const sp = document.createElementNS(SVG_NS, 'polygon');
+    sp.setAttribute('points', shadowVerts.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' '));
+    sp.setAttribute('fill', 'rgba(24,28,34,1)');
+    sp.setAttribute('filter', 'url(#ground-shadow)');
+    sp.setAttribute('opacity', String(LEGIBILITY.ground));
+    sp.setAttribute('pointer-events', 'none');
+    g.appendChild(sp);
+  }
+
   const carpetVerts = [
     [-BW/2 + EX*1.2, 0.018, 0 + EX*1.2],
     [ BW/2 - EX*1.2, 0.018, 0 + EX*1.2],
@@ -2732,8 +2773,8 @@ function renderBooth() {
       const edge = document.createElementNS(SVG_NS, 'polygon');
       edge.setAttribute('points', points);
       edge.setAttribute('fill', 'none');
-      edge.setAttribute('stroke', face.softEdge ? 'rgba(120,124,130,0.11)' : (face.isAlu ? 'rgba(80,85,92,0.55)' : 'rgba(170,175,182,0.42)'));
-      edge.setAttribute('stroke-width', face.softEdge ? '0.2' : (face.isAlu ? '0.5' : '0.4'));
+      edge.setAttribute('stroke', face.softEdge ? LEGIBILITY.seam : (face.isAlu ? 'rgba(80,85,92,0.55)' : 'rgba(170,175,182,0.42)'));
+      edge.setAttribute('stroke-width', face.softEdge ? String(LEGIBILITY.seamW) : (face.isAlu ? '0.5' : '0.4'));
       edge.setAttribute('stroke-linejoin', 'round');
       edge.setAttribute('pointer-events', 'none');
       container.appendChild(edge);
