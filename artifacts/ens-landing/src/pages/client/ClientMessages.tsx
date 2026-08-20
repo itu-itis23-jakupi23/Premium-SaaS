@@ -211,7 +211,6 @@ export default function ClientMessages() {
                     type="button"
                     onClick={() => setActiveId(contact.id)}
                     className={`w-full p-4 cursor-pointer transition-colors text-left ${selected ? "bg-primary/5 border-l-4 border-primary" : "hover:bg-muted/50"}`}
-                    role="listitem"
                   >
                     <div className="flex gap-3">
                       <Avatar aria-hidden="true">
