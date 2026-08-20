@@ -11,15 +11,15 @@ import {
  * belongs to, so its behaviour is security-relevant and easy to change by
  * accident.
  *
- * It is also the cause of a live defect: `/signup` is not under `/client/`, so
- * in the combined ("all") build it falls through to the `staff` default and
- * renders the invitation-only staff form — a visitor arriving from the
+ * `/signup` used to fall through to the `staff` default in the combined build
+ * and render the invitation-only staff form — a visitor arriving from the
  * marketing page got an invitation-code field and no email/password inputs.
- * The current workaround is `?returnTo=/client` on every public signup link.
+ * It now resolves to `client` directly; `?returnTo=/client` still works but is
+ * no longer required.
  *
- * These tests pin the behaviour that workaround depends on, so the planned fix
- * (resolving `client` for `/signup` directly) can be made with the blast radius
- * visible rather than guessed at.
+ * The cases below pin every branch of the resolution order, including the ones
+ * that must NOT change: the staff invitation route, explicit role opt-in, and
+ * the dev-port and build-mode short circuits.
  */
 
 const originalWindow = (globalThis as { window?: unknown }).window;
@@ -68,10 +68,40 @@ describe("getRequestPortal", () => {
     expect(getRequestPortal()).toBe("client");
   });
 
-  it("documents the defect: a bare /signup still resolves to staff", () => {
-    // Not the desired behaviour — this asserts the bug so the fix that changes
-    // it is deliberate and this test is updated alongside it.
+  it("resolves a bare /signup to the client portal", () => {
+    // Public signup is client signup. This used to fall through to the staff
+    // default and render the invitation-only form - an invitation-code field
+    // and no email or password input.
     withLocation("/signup");
+    expect(getRequestPortal()).toBe("client");
+  });
+
+  it("keeps the staff invitation-code entry point on an explicit role", () => {
+    // Signup.tsx still offers a staff branch for someone holding a code but
+    // not the /pm/join link, so staff can opt back in explicitly.
+    withLocation("/signup", "?role=pm");
+    expect(getRequestPortal()).toBe("staff");
+    withLocation("/signup", "?role=chief");
+    expect(getRequestPortal()).toBe("staff");
+    withLocation("/signup", "?role=CHIEF");
+    expect(getRequestPortal()).toBe("staff");
+  });
+
+  it("ignores a client or unknown role on /signup", () => {
+    withLocation("/signup", "?role=client");
+    expect(getRequestPortal()).toBe("client");
+    withLocation("/signup", "?role=banana");
+    expect(getRequestPortal()).toBe("client");
+  });
+
+  it("leaves the staff invitation route alone", () => {
+    // Invitations are emailed as /pm/join?token=..., which must stay staff.
+    withLocation("/pm/join", "?token=abc123");
+    expect(getRequestPortal()).toBe("staff");
+  });
+
+  it("does not treat /signup-like paths as signup", () => {
+    withLocation("/signup-complete");
     expect(getRequestPortal()).toBe("staff");
   });
 
