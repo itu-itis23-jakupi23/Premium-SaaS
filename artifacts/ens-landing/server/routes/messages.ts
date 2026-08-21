@@ -33,6 +33,7 @@ interface CoreProject {
   pm: string;
   managerId?: string | null;
   agency?: string;
+  exhibition?: string;
 }
 
 interface AuthUser {
@@ -206,6 +207,33 @@ async function contactsFor(actor: Actor) {
   return [...staff, ...clientContacts].filter(Boolean).filter(uniqueContact).map(toContact);
 }
 
+function scopeKey(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "general";
+}
+
+/**
+ * Describes which project a conversation is pinned to, in the same shape the
+ * production backend returns (`{ exhibitionKey, exhibitionName, projectId,
+ * isScoped }`). This store used to answer with just `{ conversationId,
+ * messages }`, so anything reading `scope` off the response worked against the
+ * real API and got `undefined` here.
+ */
+function conversationScope(projectId: string, projects: CoreProject[] | undefined) {
+  const project = projectId === "general"
+    ? null
+    : projects?.find((item) => item.id === projectId) ?? null;
+  if (!project) {
+    return { exhibitionKey: "general", exhibitionName: null, projectId: null, isScoped: false };
+  }
+  const exhibitionName = project.exhibition || project.name;
+  return {
+    exhibitionKey: scopeKey(exhibitionName),
+    exhibitionName,
+    projectId: project.id,
+    isScoped: true,
+  };
+}
+
 function conversationIdFor(a: string, b: string, _projectId = "general") {
   const projectId = _projectId.trim() || "general";
   return `conv:${[canonicalPersonId(a), canonicalPersonId(b)].sort().join(":")}:${projectId}`;
@@ -363,6 +391,31 @@ function clientForActor(clients: CoreClient[], actor: Actor) {
     ?? null;
 }
 
+/**
+ * Resolves an incoming contact id to the id this store files conversations
+ * under.
+ *
+ * A client contact is addressed here by its *client record* id ("client-..."),
+ * but the account behind it has a separate auth user id ("user-..."), and the
+ * production backend is user-centric and answers to that one. A caller holding
+ * an id that came from the auth API - a signup response, an invitation - was
+ * refused with a 404 here even though the contact was perfectly reachable.
+ *
+ * Accepting the user id as an alias is not enough on its own: `conversationIdFor`
+ * builds the thread key out of this id, so the two spellings would file one
+ * conversation under two keys and each side would see half of it. Collapsing to
+ * the client record id keeps already-stored threads readable.
+ */
+async function resolveContactId(contactId: string, clients: CoreClient[]) {
+  const canonical = canonicalPersonId(contactId);
+  if (clients.some((client) => canonicalPersonId(client.id) === canonical)) return contactId;
+  const authStore = await readAuthStore();
+  const user = authStore.users.find((item) => item.id === contactId && item.role === "client");
+  if (!user) return contactId;
+  const email = user.email.trim().toLowerCase();
+  return clients.find((client) => client.contactEmail.trim().toLowerCase() === email)?.id ?? contactId;
+}
+
 function contactIdentity(actor: Actor, clients: CoreClient[]) {
   if (actor.role !== "client") return actor.id;
   return clientForActor(clients, actor)?.id ?? actor.id;
@@ -501,13 +554,14 @@ router.get("/:contactId", async (req, res) => {
   }
   const projectId = typeof req.query.projectId === "string" ? req.query.projectId : "general";
   const coreStore = await readCoreStore();
+  const contactId = await resolveContactId(req.params.contactId, coreStore.clients);
   if (projectId === "general") {
-    if (!(await canMessage(actor, req.params.contactId))) return res.status(404).json({ error: "Contact was not found." });
-  } else if (!(await canAccessProjectThread(actor, req.params.contactId, projectId, coreStore))) {
+    if (!(await canMessage(actor, contactId))) return res.status(404).json({ error: "Contact was not found." });
+  } else if (!(await canAccessProjectThread(actor, contactId, projectId, coreStore))) {
     return res.status(404).json({ error: "This conversation is not available for the selected project." });
   }
   const actorIdentity = contactIdentity(actor, coreStore.clients);
-  const conversationId = conversationIdFor(actorIdentity, req.params.contactId, projectId);
+  const conversationId = conversationIdFor(actorIdentity, contactId, projectId);
   const store = await readStore();
   const messages = store.messages
     .filter((message) => message.conversationId === conversationId)
@@ -518,7 +572,7 @@ router.get("/:contactId", async (req, res) => {
       isMe: message.senderUserId === canonicalPersonId(actorIdentity),
       time: formatTime(message.createdAt),
     }));
-  res.json({ conversationId, messages });
+  res.json({ conversationId, scope: conversationScope(projectId, coreStore.projects), messages });
 });
 
 router.post("/:contactId", async (req, res) => {
@@ -537,9 +591,10 @@ router.post("/:contactId", async (req, res) => {
   if (!body && !attachments.length) return res.status(400).json({ error: "Message text or attachment is required." });
 
   const coreStore = await readCoreStore();
+  const contactId = await resolveContactId(req.params.contactId, coreStore.clients);
   if (projectId === "general") {
-    if (!(await canMessage(actor, req.params.contactId))) return res.status(404).json({ error: "Contact was not found." });
-  } else if (!(await canAccessProjectThread(actor, req.params.contactId, projectId, coreStore))) {
+    if (!(await canMessage(actor, contactId))) return res.status(404).json({ error: "Contact was not found." });
+  } else if (!(await canAccessProjectThread(actor, contactId, projectId, coreStore))) {
     return res.status(404).json({ error: "This conversation is not available for the selected project." });
   }
   const actorIdentity = contactIdentity(actor, coreStore.clients);
@@ -553,7 +608,7 @@ router.post("/:contactId", async (req, res) => {
     const missingOrForbidden = attachments.find((attachment) => !allowedAttachmentIds.has(attachment.id));
     if (missingOrForbidden) return res.status(403).json({ error: "Attachment is not available to this sender." });
   }
-  const conversationId = conversationIdFor(actorIdentity, req.params.contactId, projectId);
+  const conversationId = conversationIdFor(actorIdentity, contactId, projectId);
   const now = new Date().toISOString();
   const message: StoredMessage = {
     id: `msg-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,

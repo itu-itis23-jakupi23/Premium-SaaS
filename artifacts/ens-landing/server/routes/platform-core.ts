@@ -475,18 +475,72 @@ const projectUpdatePayloadSchema = z.object({
 const projectStagePayloadSchema = z.object({
   stage: z.string().trim().min(1).max(80),
 });
-const clientPayloadSchema = z.object({
-  name: z.string().trim().min(1).max(160),
+/**
+ * Client create/update payloads.
+ *
+ * The canonical field names are the ones in lib/api-zod (`createClientSchema`
+ * and `updateClientSchema`), which the production backend parses:
+ * `companyName`, `contactName`, `contactEmail`. This dev store originally
+ * invented its own `name` / `company` / `email` vocabulary, so a payload that
+ * this backend accepted was rejected outright by the real API - creating a
+ * client worked locally and 400'd in production.
+ *
+ * Both spellings are accepted here and collapsed by `normalizeClientPayload`,
+ * so older callers keep working. The required/optional split mirrors the shared
+ * schemas exactly: create needs only a company name, update also needs a
+ * contact name. Being stricter than production would be as misleading as being
+ * looser - either way local behaviour would stop predicting the real thing.
+ */
+const clientPayloadFields = {
+  companyName: z.string().trim().min(1).max(180).optional(),
+  contactEmail: z.string().trim().email().max(255).optional(),
+  // Legacy dev-only spellings, still accepted.
+  name: z.string().trim().min(1).max(160).optional(),
   company: z.string().trim().max(160).optional(),
-  email: z.string().trim().email().max(254),
-  exhibition: z.string().trim().max(160).optional(),
+  email: z.string().trim().email().max(254).optional(),
+  exhibition: z.string().trim().max(180).optional(),
   boothWidthM: z.number().finite().min(1).max(50).nullable().optional(),
   boothDepthM: z.number().finite().min(1).max(50).nullable().optional(),
   preferredSystem: z.string().trim().max(120).optional(),
   venueCity: z.string().trim().max(120).optional(),
   targetDate: z.string().trim().max(40).nullable().optional(),
   intakeNotes: z.string().trim().max(2000).optional(),
-});
+};
+
+const hasCompany = (data: { companyName?: string; company?: string; name?: string }) =>
+  Boolean(data.companyName || data.company || data.name);
+
+const clientCreatePayloadSchema = z
+  .object({ ...clientPayloadFields, contactName: z.string().trim().min(1).max(160).optional() })
+  .refine(hasCompany, { message: "Required", path: ["companyName"] });
+
+const clientUpdatePayloadSchema = z
+  .object({ ...clientPayloadFields, contactName: z.string().trim().min(1).max(160).optional() })
+  .refine(hasCompany, { message: "Required", path: ["companyName"] })
+  .refine((data) => Boolean(data.contactName || data.name), {
+    message: "Required",
+    path: ["contactName"],
+  });
+
+/** Collapses the canonical and legacy spellings into one shape. */
+function normalizeClientPayload(data: {
+  companyName?: string;
+  contactName?: string;
+  contactEmail?: string;
+  name?: string;
+  company?: string;
+  email?: string;
+}) {
+  const contactName = (data.contactName || data.name || "").trim();
+  // Production falls back to the company name when no contact is given
+  // (`contactName: input.value.contactName ?? input.value.companyName`).
+  const companyName = (data.companyName || data.company || contactName).trim();
+  return {
+    companyName,
+    contactName: contactName || companyName,
+    contactEmail: (data.contactEmail || data.email || "").trim().toLowerCase(),
+  };
+}
 const clientAccessPayloadSchema = z.object({
   email: z.string().trim().email().max(254),
   name: z.string().trim().min(2).max(120).optional(),
@@ -497,7 +551,13 @@ const clientStatusPayloadSchema = z.object({
 const taskPayloadSchema = z.object({
   title: z.string().trim().min(1).max(200),
   projectId: z.string().trim().min(1).nullable(),
-  priority: z.enum(["High", "Medium", "Low"]),
+  // lib/api-zod's pmTaskSchema is the contract the real API enforces:
+  // low | normal | high | urgent, lowercase, backed by the `task_priority`
+  // Postgres enum. This store used to accept only the display spellings
+  // ("High"/"Medium"/"Low"), which is what production *returns* - so the PM
+  // task form worked locally and 400'd against the real backend. Both are
+  // accepted now and stored as the display label via `taskPriorityLabel`.
+  priority: z.enum(["low", "normal", "high", "urgent", "High", "Medium", "Low"]),
   deadline: z.string().trim().max(40),
   status: z.enum(["todo", "in_progress", "blocked", "done"]),
   notes: z.string().trim().max(2000).optional(),
@@ -1461,6 +1521,28 @@ function statusParam(status: string) {
   return "pending";
 }
 
+/**
+ * Title-cases a stored label, mirroring `toTitle` in the production backend,
+ * which title-cases `status`, `health`, `system` and `standType` on the way
+ * out. This dev store keeps display-ready values instead ("In Design",
+ * "On Track", "Octanorm"), so incoming enum values are normalised on write.
+ */
+/** Mirrors `taskPriorityLabel` in the production backend. */
+function taskPriorityLabel(priority: string): PmTaskPriority {
+  const normalized = priority.toLowerCase();
+  if (normalized === "urgent" || normalized === "high") return "High";
+  if (normalized === "low") return "Low";
+  return "Medium";
+}
+
+function toTitle(value: string) {
+  return value
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
 function stageToStatus(stage: string) {
   const normalized = stage.toLowerCase().replace(/[\s-]+/g, "_");
   if (normalized === "closed" || normalized === "complete" || normalized === "completed") return "Completed";
@@ -1986,16 +2068,26 @@ router.post("/projects", async (req, res) => {
     client: parsed.data.client?.trim() || "Unassigned client",
     pm: assignedManager === "Unassigned" ? "Unassigned" : assignedManager,
     managerId: actor.role === "pm" ? actor.id : parsed.data.managerId ?? null,
-    status: assignedManager === "Unassigned" ? "Pending" : "In Design",
+    // New projects enter at the planning intake stage, matching the production
+    // backend, which creates every project at `planning` regardless of who
+    // files it and title-cases that to "Planning" on the way out.
+    //
+    // A PM-filed project used to jump straight to "In Design" while
+    // `addProjectLifecycle` below still recorded the opening stage as "brief" -
+    // the status and the lifecycle history disagreed, and the intake step
+    // disappeared. Assignment still advances it: `advanceProjectAfterAssignment`
+    // moves "Planning" to "In Design". Derived from the stage so the two
+    // cannot drift apart again.
+    status: stageToStatus("brief"),
     health: "On Track",
     progress: 0,
     deadline: parsed.data.deadline || null,
-    system: parsed.data.system,
+    system: toTitle(parsed.data.system),
     dimensions: `${parsed.data.widthM} x ${parsed.data.depthM} m`,
     exhibition: parsed.data.exhibition?.trim() || parsed.data.name,
-    standType: parsed.data.system,
+    standType: toTitle(parsed.data.system),
     description: "",
-    pipelineStage: assignedManager === "Unassigned" ? "brief" : "design",
+    pipelineStage: "brief",
     lifecycleHistory: [],
     lastUpdate: "Just now",
   };
@@ -2060,10 +2152,10 @@ router.put("/projects/:projectId", async (req, res) => {
     advanceProjectAfterAssignment(project);
   }
   project.deadline = parsed.data.deadline || null;
-  project.system = parsed.data.system;
+  project.system = toTitle(parsed.data.system);
   project.dimensions = `${parsed.data.widthM} x ${parsed.data.depthM} m`;
   project.exhibition = parsed.data.exhibition || parsed.data.name;
-  project.standType = parsed.data.system;
+  project.standType = toTitle(parsed.data.system);
   project.description = parsed.data.description ?? project.description;
   project.lastUpdate = "Just now";
   const workspace = store.workspaces?.[project.id];
@@ -2121,17 +2213,18 @@ router.get("/clients", async (req, res) => {
 });
 
 router.post("/clients", async (req, res) => {
-  const parsed = validateBody(clientPayloadSchema, req.body);
+  const parsed = validateBody(clientCreatePayloadSchema, req.body);
   if (!parsed.success) return badRequest(res, parsed.error);
   const store = await readStore();
   const actor = await actorFromReq(req, "pm");
   if (!requireRole(res, actor, ["pm", "chief"])) return;
+  const contact = normalizeClientPayload(parsed.data);
   const client: Client = {
     id: `c-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
-    name: parsed.data.company || parsed.data.name,
-    company: parsed.data.company || parsed.data.name,
-    contactName: parsed.data.name,
-    contactEmail: parsed.data.email.toLowerCase(),
+    name: contact.companyName,
+    company: contact.companyName,
+    contactName: contact.contactName,
+    contactEmail: contact.contactEmail,
     projectId: null,
     pm: actor.role === "pm" ? actor.name : "Unassigned",
     exhibition: parsed.data.exhibition || "New Exhibition",
@@ -2160,7 +2253,7 @@ router.post("/clients", async (req, res) => {
 });
 
 router.put("/clients/:clientId", async (req, res) => {
-  const parsed = validateBody(clientPayloadSchema, req.body);
+  const parsed = validateBody(clientUpdatePayloadSchema, req.body);
   if (!parsed.success) return badRequest(res, parsed.error);
   const store = await readStore();
   const actor = await actorFromReq(req, "pm");
@@ -2168,10 +2261,12 @@ router.put("/clients/:clientId", async (req, res) => {
   const client = store.clients.find((item) => item.id === req.params.clientId);
   if (!client) return res.status(404).json({ error: "Client not found." });
   if (!canAccessClient(actor, client)) return res.status(403).json({ error: "Forbidden." });
-  client.name = parsed.data.company || parsed.data.name;
-  client.company = parsed.data.company || parsed.data.name;
-  client.contactName = parsed.data.name;
-  client.contactEmail = parsed.data.email.toLowerCase();
+  const contact = normalizeClientPayload(parsed.data);
+  client.name = contact.companyName;
+  client.company = contact.companyName;
+  client.contactName = contact.contactName;
+  // An omitted email must not blank an existing one.
+  client.contactEmail = contact.contactEmail || client.contactEmail;
   client.exhibition = parsed.data.exhibition || client.exhibition;
   client.boothWidthM = parsed.data.boothWidthM ?? client.boothWidthM;
   client.boothDepthM = parsed.data.boothDepthM ?? client.boothDepthM;
@@ -2249,7 +2344,7 @@ router.post("/tasks", async (req, res) => {
     client: project?.client ?? "",
     project: project?.name ?? "",
     projectId: parsed.data.projectId,
-    priority: parsed.data.priority,
+    priority: taskPriorityLabel(parsed.data.priority),
     deadline: parsed.data.deadline,
     col: parsed.data.status,
     notes: parsed.data.notes || undefined,
@@ -2278,7 +2373,7 @@ router.patch("/tasks/:taskId", async (req, res) => {
     task.client = project.client;
     task.project = project.name;
   }
-  if (parsed.data.priority !== undefined) task.priority = parsed.data.priority;
+  if (parsed.data.priority !== undefined) task.priority = taskPriorityLabel(parsed.data.priority);
   if (parsed.data.deadline !== undefined) task.deadline = parsed.data.deadline;
   if (parsed.data.status !== undefined) task.col = parsed.data.status;
   if (parsed.data.notes !== undefined) task.notes = parsed.data.notes || undefined;

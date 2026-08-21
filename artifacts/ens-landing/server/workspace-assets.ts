@@ -45,7 +45,18 @@ export async function saveWorkspaceAsset(input: WorkspaceAssetInput) {
   await fs.writeFile(path.join(targetDir, fileName), buffer);
   return {
     id: assetId,
-    url: `/workspace-assets/${encodeURIComponent(projectSlug)}/${encodeURIComponent(fileName)}`,
+    // Echo the validated data URL back, exactly as the production backend does
+    // (artifacts/api-server/src/routes/workspace.ts). The caller writes this
+    // straight into workspace state as `designImageUrl`, and production's
+    // `normalizeRoomDesignImageUrl` keeps data URLs *only* - it returns
+    // undefined for anything else. Returning the on-disk path here therefore
+    // produced workspaces whose panel and room images silently vanished the
+    // moment the same project was opened against the real API.
+    //
+    // The file is still written above and still served from `storagePath`, so
+    // workspaces already holding a /workspace-assets/... URL keep resolving.
+    url: input.dataUrl,
+    storagePath: `/workspace-assets/${encodeURIComponent(projectSlug)}/${encodeURIComponent(fileName)}`,
     mimeType,
     size: buffer.length,
     originalName: input.originalName || fileName,

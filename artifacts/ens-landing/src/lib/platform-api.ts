@@ -176,6 +176,19 @@ export interface PlatformClientSummary {
 export type PmTaskColumn = "todo" | "in_progress" | "blocked" | "done";
 export type PmTaskPriority = "High" | "Medium" | "Low";
 
+/**
+ * The UI speaks the display vocabulary ("High" / "Medium" / "Low"), which is
+ * also what the API *returns* (`taskPriorityLabel` in the backend). What the
+ * API *accepts* is the lowercase `task_priority` enum from lib/api-zod's
+ * pmTaskSchema, so the send direction has to be mapped - posting "Medium"
+ * failed with an enum error and there is no "medium" on the API side at all.
+ */
+const TASK_PRIORITY_TO_API: Record<PmTaskPriority, "low" | "normal" | "high"> = {
+  High: "high",
+  Medium: "normal",
+  Low: "low",
+};
+
 export interface PmTask {
   id: string;
   title: string;
@@ -1074,7 +1087,10 @@ export async function createPmTask(input: {
     saveMockPmTasks([...mockPmTasksStore(), newTask]);
     return mockTaskBoard();
   }
-  return apiJson<PmTaskBoard>("/platform/tasks", input);
+  return apiJson<PmTaskBoard>("/platform/tasks", {
+    ...input,
+    priority: TASK_PRIORITY_TO_API[input.priority],
+  });
 }
 
 export async function updatePmTask(taskId: string, input: Partial<{
@@ -1105,7 +1121,14 @@ export async function updatePmTask(taskId: string, input: Partial<{
     saveMockPmTasks(updated);
     return mockTaskBoard();
   }
-  return apiPatch<PmTaskBoard>(`/platform/tasks/${taskId}`, input);
+  return apiPatch<PmTaskBoard>(`/platform/tasks/${taskId}`, {
+    ...input,
+    // Only remap when the caller is actually changing the priority; a patch
+    // that omits it must keep omitting it rather than sending undefined.
+    ...(input.priority !== undefined && {
+      priority: TASK_PRIORITY_TO_API[input.priority],
+    }),
+  });
 }
 
 export async function deletePmTask(taskId: string) {
@@ -1237,10 +1260,16 @@ export async function createPlatformClient(input: {
       ],
     };
   }
+  // Field names come from lib/api-zod's createClientSchema, which the API
+  // parses. Sending name/company/email instead made the real backend reject
+  // this with "Client company name is required" - the dev backend happened to
+  // accept that spelling, so client creation only ever failed in production.
+  // `company` is optional in the form, so fall back to the contact name rather
+  // than sending an empty companyName, which fails the min(1) check.
   return apiJson<{ clients: PlatformClient[] }>("/platform/clients", {
-    name: input.name,
-    company: input.company,
-    email: input.email,
+    companyName: input.company || input.name,
+    contactName: input.name,
+    contactEmail: input.email,
     exhibition: input.exhibition,
   });
 }
@@ -1269,10 +1298,11 @@ export async function updatePlatformClient(clientId: string, input: {
       ),
     };
   }
+  // Matches lib/api-zod's updateClientSchema - see createPlatformClient above.
   return apiJsonWithMethod<{ ok: boolean; clients: PlatformClient[] }>("PUT", `/platform/clients/${clientId}`, {
-    name: input.name,
-    company: input.company,
-    email: input.email,
+    companyName: input.company || input.name,
+    contactName: input.name,
+    contactEmail: input.email,
     exhibition: input.exhibition,
   });
 }
