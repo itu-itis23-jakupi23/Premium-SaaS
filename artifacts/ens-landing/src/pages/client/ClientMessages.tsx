@@ -201,32 +201,41 @@ export default function ClientMessages() {
             </div>
           </div>
           <ScrollArea className="flex-1">
+            {isLoading && <div className="p-4 text-sm text-muted-foreground">Loading...</div>}
+            {/*
+              `role="list"` has required owned elements: every child has to
+              be a listitem. These entries were buttons sitting directly in
+              the list, so assistive technology saw a list containing no
+              items at all - and the loading placeholder was a non-item child
+              too, so it moved out. `divide-y` styles direct children, so the
+              separators between conversations are unchanged.
+            */}
             <div className="divide-y" role="list" aria-label={t("client.messages.contactListLabel")}>
-              {isLoading && <div className="p-4 text-sm text-muted-foreground">Loading...</div>}
               {!isLoading && filteredContacts.map((contact) => {
                 const selected = active?.id === contact.id;
                 return (
-                  <button
-                    key={contact.id}
-                    type="button"
-                    onClick={() => setActiveId(contact.id)}
-                    className={`w-full p-4 cursor-pointer transition-colors text-left ${selected ? "bg-primary/5 border-l-4 border-primary" : "hover:bg-muted/50"}`}
-                  >
-                    <div className="flex gap-3">
-                      <Avatar aria-hidden="true">
-                        <AvatarFallback className={selected ? "bg-primary/10 text-primary" : ""}>
-                          {contact.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "PM"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 overflow-hidden">
-                        <div className="flex justify-between items-center mb-1">
-                          <p className="text-sm font-bold truncate">{contact.name}</p>
-                          <span className="text-[10px] text-muted-foreground">{contact.time}</span>
+                  <div key={contact.id} role="listitem">
+                    <button
+                      type="button"
+                      onClick={() => setActiveId(contact.id)}
+                      className={`w-full p-4 cursor-pointer transition-colors text-left ${selected ? "bg-primary/5 border-l-4 border-primary" : "hover:bg-muted/50"}`}
+                    >
+                      <div className="flex gap-3">
+                        <Avatar aria-hidden="true">
+                          <AvatarFallback className={selected ? "bg-primary/10 text-primary" : ""}>
+                            {contact.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "PM"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 overflow-hidden">
+                          <div className="flex justify-between items-center mb-1">
+                            <p className="text-sm font-bold truncate">{contact.name}</p>
+                            <span className="text-[10px] text-muted-foreground">{contact.time}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">{contact.lastMessage}</p>
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">{contact.lastMessage}</p>
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                 );
               })}
             </div>
