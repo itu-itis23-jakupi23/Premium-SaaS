@@ -75,6 +75,12 @@ onlyBuiltDependencies:
   - unrs-resolver
 
 overrides:
+  # recharts pulls lodash transitively. 4.17.23 carries a high-severity
+  # code-injection advisory via _.template (GHSA-r5fr-rjxr-66jc), patched
+  # in 4.18.0. recharts has no release that moves off it, and this is the
+  # only high-severity finding that actually reaches the browser bundle -
+  # it failed the security:audit gate in CI.
+  lodash@<4.18.0: '>=4.18.0'
   # drizzle-kit uses esbuild internally on an older version that's vulnerable, this overrides it
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   esbuild: "0.27.3"
