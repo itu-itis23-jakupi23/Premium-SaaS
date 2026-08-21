@@ -291,7 +291,7 @@ export default function ClientDocuments() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                             <button
                               onClick={() => setPreview(doc)}
                               aria-label={t("client.documents.actions.preview", { name: doc.name })}

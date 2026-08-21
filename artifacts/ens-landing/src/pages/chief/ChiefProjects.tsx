@@ -1907,7 +1907,7 @@ function ProjectCard({
           <User className="h-2.5 w-2.5" aria-hidden="true" />
           <span className="truncate">{project.pm}</span>
         </div>
-        <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
           {stageIndex > 0 && (
             <button
               disabled={isMoving}

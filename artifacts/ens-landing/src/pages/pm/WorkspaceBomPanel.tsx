@@ -140,8 +140,8 @@ export function WorkspaceBomPanel({
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:5,marginTop:6}}>
                 <DimInput label="X" value={p.x} min={positionBoundsForItem(p,booth).minX} max={positionBoundsForItem(p,booth).maxX} step={0.05} onChange={v=>onTransform(p.id,{x:v})}/>
                 <DimInput label="Z" value={p.z} min={positionBoundsForItem(p,booth).minZ} max={positionBoundsForItem(p,booth).maxZ} step={0.05} onChange={v=>onTransform(p.id,{z:v})}/>
-                <div>
-                  <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:3}}>Yaw</label>
+                <div role="group" aria-labelledby={`yaw-${p.id}`}>
+                  <span id={`yaw-${p.id}`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:3}}>Yaw</span>
                   <button onClick={(event)=>{event.stopPropagation();onRotate(p.id,90);}}
                     style={{width:'100%',height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',fontFamily:MONO,fontSize:11,color:C.ink}}>
                     {Number(p.rotationY ?? p.rotation)} deg

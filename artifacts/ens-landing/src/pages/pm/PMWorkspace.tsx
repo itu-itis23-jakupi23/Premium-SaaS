@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo, useId } from "react";
 import { CurrencySwitcher, useCurrency } from "@/lib/currency";
 import { Link } from "wouter";
 import { Booth3D } from "@/components/workspace/Booth3D";
@@ -387,6 +387,11 @@ function workspaceSnapshots(record: ProjectWorkspace): Snapshot[] {
 // ── Main ──────────────────────────────────────────────────────────
 export default function PMWorkspace() {
   useCurrency(); // subscribe so money renders update when display currency changes
+  // Base for the ids that tie each control to its <label>, following the
+  // DimInput pattern in workspace-ui.tsx. These panels captioned their inputs
+  // with floating <label> elements that pointed at nothing, so a screen reader
+  // announced "slider" with no indication of what it adjusted.
+  const uid = useId();
   const [ws,    setWS]    = useState<WSData>(INITIAL_WS);
   const histStackRef      = useRef<WSData[]>([INITIAL_WS]);
   const histIdxRef        = useRef(0);
@@ -1801,8 +1806,8 @@ export default function PMWorkspace() {
               </div>
               {activeFrontSupportIndex>=0&&(
                 <div style={{marginTop:8}}>
-                  <label style={{fontFamily:MONO,fontSize:8.5,color:C.muted,textTransform:'uppercase',letterSpacing:'0.06em',display:'block',marginBottom:4}}>Support X position</label>
-                  <input type="range" min={0.45} max={Math.max(0.45,booth.width-0.45)} step={0.05}
+                  <label htmlFor={`${uid}-support-x`} style={{fontFamily:MONO,fontSize:8.5,color:C.muted,textTransform:'uppercase',letterSpacing:'0.06em',display:'block',marginBottom:4}}>Support X position</label>
+                  <input id={`${uid}-support-x`} type="range" min={0.45} max={Math.max(0.45,booth.width-0.45)} step={0.05}
                     value={activeFrontSupportPositions[activeFrontSupportIndex] ?? 3}
                     onChange={e=>updateFrontSupportPosition(activeFrontSupportIndex, Number(e.target.value))}
                     style={{width:'100%',accentColor:C.blue}}/>
@@ -1847,8 +1852,8 @@ export default function PMWorkspace() {
                 </div>
                 <DimInput label="Height" value={booth.height} min={1.5} max={6} step={1} onChange={v=>set('height',v)}/>
                 <div style={{marginTop:8}}>
-                  <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:3}}>System</label>
-                  <select value={booth.system} onChange={e=>set('system',e.target.value as BoothSystem)}
+                  <label htmlFor={`${uid}-system`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:3}}>System</label>
+                  <select id={`${uid}-system`} value={booth.system} onChange={e=>set('system',e.target.value as BoothSystem)}
                     style={{width:'100%',height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:UI,fontSize:12,color:C.ink,paddingLeft:8,boxSizing:'border-box',outline:'none',cursor:'pointer'}}>
                     <option value="octanorm">Octanorm (1 m module)</option>
                     <option value="maxima">Maxima (2 m module)</option>
@@ -1933,7 +1938,7 @@ export default function PMWorkspace() {
                         </label>
                       </div>
                       <div style={{marginTop:7}}>
-                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Room wall image</label>
+                        <span style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Room wall image</span>
                         <label style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,fontFamily:MONO,fontSize:9,fontWeight:800,padding:'0 8px',overflow:'hidden'}}>
                           <ImagePlus size={12}/>
                           <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{room.designImageName || 'Upload room wall image'}</span>
@@ -1962,8 +1967,8 @@ export default function PMWorkspace() {
                             <img src={room.designImageUrl} alt={`${room.name || 'Room'} wall design`} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
                           </div>
                           <div style={{display:'grid',gridTemplateColumns:'62px 1fr',gap:7,alignItems:'center',marginTop:7}}>
-                            <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
-                            <input type="range" min={0.15} max={1} step={0.05} value={room.designOpacity ?? 1} onChange={e=>updateRoom(room.id,{designOpacity:Number(e.target.value)})}
+                            <label htmlFor={`${uid}-room-${room.id}-opacity`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
+                            <input id={`${uid}-room-${room.id}-opacity`} type="range" min={0.15} max={1} step={0.05} value={room.designOpacity ?? 1} onChange={e=>updateRoom(room.id,{designOpacity:Number(e.target.value)})}
                               style={{width:'100%',accentColor:C.blue}}/>
                           </div>
                           <button onClick={()=>updateRoom(room.id,{designImageUrl:undefined,designImageName:undefined,designOpacity:undefined})}
@@ -1973,8 +1978,8 @@ export default function PMWorkspace() {
                         </>}
                       </div>
                       <div style={{marginTop:7}}>
-                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Snap target</label>
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:4}}>
+                        <span id={`${uid}-snap-target`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Snap target</span>
+                        <div role="group" aria-labelledby={`${uid}-snap-target`} style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:4}}>
                           {([
                             ['back-left','Back L'],
                             ['back','Back'],
@@ -1997,8 +2002,8 @@ export default function PMWorkspace() {
                         </div>
                       </div>
                       <div style={{marginTop:7}}>
-                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Door wall & width</label>
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr) 76px',gap:4}}>
+                        <span id={`${uid}-door-wall`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Door wall & width</span>
+                        <div role="group" aria-labelledby={`${uid}-door-wall`} style={{display:'grid',gridTemplateColumns:'repeat(4,1fr) 76px',gap:4}}>
                           {(['front','back','left','right'] as DoorSide[]).map(side=>(
                             <button key={side} onClick={()=>updateRoom(room.id,{doorSide:side,hasDoor:true})}
                               style={{height:26,border:`1px solid ${room.doorSide===side&&room.hasDoor?C.orange:C.hair}`,borderRadius:4,background:room.doorSide===side&&room.hasDoor?`${C.orange}12`:C.panel,color:room.doorSide===side&&room.hasDoor?C.orange:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:7.5,textTransform:'uppercase'}}>
@@ -2014,8 +2019,8 @@ export default function PMWorkspace() {
                         </div>
                       </div>
                       <div style={{marginTop:7}}>
-                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Door position</label>
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:4}}>
+                        <span id={`${uid}-door-position`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Door position</span>
+                        <div role="group" aria-labelledby={`${uid}-door-position`} style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:4}}>
                           {(['left','center','right'] as DoorPosition[]).map(position=>(
                             <button key={position} onClick={()=>updateRoom(room.id,{doorPosition:position,hasDoor:true})}
                               style={{height:24,border:`1px solid ${room.doorPosition===position&&room.hasDoor?C.orange:C.hair}`,borderRadius:4,background:room.doorPosition===position&&room.hasDoor?`${C.orange}12`:C.panel,color:room.doorPosition===position&&room.hasDoor?C.orange:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:8.5,textTransform:'uppercase'}}>
@@ -2025,8 +2030,8 @@ export default function PMWorkspace() {
                         </div>
                       </div>
                       <div style={{marginTop:7}}>
-                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Door swing</label>
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:4}}>
+                        <span id={`${uid}-door-swing`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Door swing</span>
+                        <div role="group" aria-labelledby={`${uid}-door-swing`} style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:4}}>
                           {([
                             ['left-in','L in'],
                             ['right-in','R in'],
@@ -2133,20 +2138,20 @@ export default function PMWorkspace() {
                   </PropBlock>
                   <Hairline/>
                   <PropBlock label="Brand / Sticker" right={activePanelOverride.brandText ? 'Applied' : 'None'}>
-                    <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Text</label>
-                    <input value={activePanelOverride.brandText || ''} onChange={e=>updatePanelOverride(activePanel.id,{brandText:e.target.value.slice(0,40)})}
+                    <label htmlFor={`${uid}-panel-text`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Text</label>
+                    <input id={`${uid}-panel-text`} value={activePanelOverride.brandText || ''} onChange={e=>updatePanelOverride(activePanel.id,{brandText:e.target.value.slice(0,40)})}
                       placeholder="Company logo, product name, sticker"
                       style={{width:'100%',height:32,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:UI,fontSize:12,color:C.ink,paddingLeft:9,boxSizing:'border-box',outline:'none'}}/>
                     <div style={{display:'grid',gridTemplateColumns:'72px 1fr',gap:8,marginTop:9,alignItems:'center'}}>
-                      <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Color</label>
+                      <label htmlFor={`${uid}-panel-color`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Color</label>
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <input type="color" value={activePanelOverride.brandColor || '#111827'} onChange={e=>updatePanelOverride(activePanel.id,{brandColor:e.target.value})}
+                        <input id={`${uid}-panel-color`} type="color" value={activePanelOverride.brandColor || '#111827'} onChange={e=>updatePanelOverride(activePanel.id,{brandColor:e.target.value})}
                           style={{width:34,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',padding:2}}/>
                         <input value={activePanelOverride.brandColor || '#111827'} onChange={e=>updatePanelOverride(activePanel.id,{brandColor:e.target.value})}
                           style={{flex:1,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:MONO,fontSize:10.5,color:C.ink,paddingLeft:8,outline:'none'}}/>
                       </div>
-                      <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Scale</label>
-                      <input type="range" min={0.08} max={0.45} step={0.01} value={activePanelOverride.brandScale ?? 0.15} onChange={e=>updatePanelOverride(activePanel.id,{brandScale:Number(e.target.value)})}
+                      <label htmlFor={`${uid}-panel-scale`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Scale</label>
+                      <input id={`${uid}-panel-scale`} type="range" min={0.08} max={0.45} step={0.01} value={activePanelOverride.brandScale ?? 0.15} onChange={e=>updatePanelOverride(activePanel.id,{brandScale:Number(e.target.value)})}
                         style={{width:'100%',accentColor:C.blue}}/>
                     </div>
                     <div style={{marginTop:8,fontFamily:MONO,fontSize:8.5,color:C.muted}}>
@@ -2165,8 +2170,8 @@ export default function PMWorkspace() {
                         <img src={activePanelOverride.designImageUrl} alt={activePanelOverride.designImageName ? `Panel graphic: ${activePanelOverride.designImageName}` : 'Panel graphic preview'} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
                       </div>
                       <div style={{display:'grid',gridTemplateColumns:'72px 1fr',gap:8,alignItems:'center',marginTop:9}}>
-                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
-                        <input type="range" min={0.15} max={1} step={0.05} value={activePanelOverride.designOpacity ?? 1} onChange={e=>updatePanelOverride(activePanel.id,{designOpacity:Number(e.target.value)})}
+                        <label htmlFor={`${uid}-panel-design-opacity`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
+                        <input id={`${uid}-panel-design-opacity`} type="range" min={0.15} max={1} step={0.05} value={activePanelOverride.designOpacity ?? 1} onChange={e=>updatePanelOverride(activePanel.id,{designOpacity:Number(e.target.value)})}
                           style={{width:'100%',accentColor:C.blue}}/>
                       </div>
                       <button onClick={()=>updatePanelOverride(activePanel.id,{designImageUrl:'',designImageName:'',designOpacity:undefined})}
@@ -2207,20 +2212,20 @@ export default function PMWorkspace() {
                     </PropBlock>
                     <Hairline/>
                     <PropBlock label="Fascia Graphics" right={activeFasciaOverride.designImageUrl ? 'Image' : activeFasciaOverride.brandText ? 'Text' : 'None'}>
-                      <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Text / logo wordmark</label>
-                      <input value={activeFasciaOverride.brandText || ''} disabled={!activeFasciaId} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandText:e.target.value.slice(0,40)})}
+                      <label htmlFor={`${uid}-fascia-text`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Text / logo wordmark</label>
+                      <input id={`${uid}-fascia-text`} value={activeFasciaOverride.brandText || ''} disabled={!activeFasciaId} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandText:e.target.value.slice(0,40)})}
                         placeholder={activeFasciaId === 'fascia-front' ? booth.companyName : 'Brand / fascia text'}
                         style={{width:'100%',height:32,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:UI,fontSize:12,color:C.ink,paddingLeft:9,boxSizing:'border-box',outline:'none'}}/>
                       <div style={{display:'grid',gridTemplateColumns:'72px 1fr',gap:8,marginTop:9,alignItems:'center'}}>
-                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Color</label>
+                        <label htmlFor={`${uid}-fascia-color`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Color</label>
                         <div style={{display:'flex',alignItems:'center',gap:8}}>
-                          <input type="color" value={activeFasciaOverride.brandColor || '#23262c'} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandColor:e.target.value})}
+                          <input id={`${uid}-fascia-color`} type="color" value={activeFasciaOverride.brandColor || '#23262c'} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandColor:e.target.value})}
                             style={{width:34,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',padding:2}}/>
                           <input value={activeFasciaOverride.brandColor || '#23262c'} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandColor:e.target.value})}
                             style={{flex:1,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:MONO,fontSize:10.5,color:C.ink,paddingLeft:8,outline:'none'}}/>
                         </div>
-                        <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Scale</label>
-                        <input type="range" min={0.08} max={0.45} step={0.01} value={activeFasciaOverride.brandScale ?? 0.2} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandScale:Number(e.target.value)})}
+                        <label htmlFor={`${uid}-fascia-scale`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Scale</label>
+                        <input id={`${uid}-fascia-scale`} type="range" min={0.08} max={0.45} step={0.01} value={activeFasciaOverride.brandScale ?? 0.2} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandScale:Number(e.target.value)})}
                           style={{width:'100%',accentColor:C.blue}}/>
                       </div>
                       <label style={{height:34,marginTop:10,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:7,fontFamily:MONO,fontSize:9.5,fontWeight:800,padding:'0 10px',overflow:'hidden'}}>
@@ -2233,8 +2238,8 @@ export default function PMWorkspace() {
                           <img src={activeFasciaOverride.designImageUrl} alt={activeFasciaOverride.designImageName ? `Fascia design: ${activeFasciaOverride.designImageName}` : 'Fascia design preview'} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
                         </div>
                         <div style={{display:'grid',gridTemplateColumns:'72px 1fr',gap:8,alignItems:'center',marginTop:9}}>
-                          <label style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
-                          <input type="range" min={0.15} max={1} step={0.05} value={activeFasciaOverride.designOpacity ?? 1} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{designOpacity:Number(e.target.value)})}
+                          <label htmlFor={`${uid}-fascia-design-opacity`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
+                          <input id={`${uid}-fascia-design-opacity`} type="range" min={0.15} max={1} step={0.05} value={activeFasciaOverride.designOpacity ?? 1} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{designOpacity:Number(e.target.value)})}
                             style={{width:'100%',accentColor:C.blue}}/>
                         </div>
                         <button onClick={()=>activeFasciaId&&updatePanelOverride(activeFasciaId,{designImageUrl:'',designImageName:'',designOpacity:undefined})}

@@ -73,14 +73,16 @@ export default tseslint.config(
       // chief-or-pm, not an ARIA role. Limit the check to real DOM elements.
       "jsx-a11y/aria-role": ["error", { ignoreNonDOM: true }],
 
-      // The 3D workspace inspector uses <label> as a styled caption above its
-      // controls without associating them, and its list rows are divs with
-      // click handlers and no keyboard path. Both are real, both sit inside the
-      // desktop-only booth editor, and fixing them means restructuring JSX in a
-      // 2,400-line file that cannot be exercised without an authenticated
-      // session and a live workspace. Scoped off here rather than suppressed
-      // line by line, so the count stays visible. Tracked as AX-01/AX-02.
-      // Every other file is held to the full rule set.
+      // AX-01, closed: the workspace inspector's captions are associated with
+      // their controls now, and the ones that captioned a group of buttons
+      // rather than a single control became role="group" + aria-labelledby.
+      //
+      // depth 3 because the rule searches only two levels deep by default and
+      // several labels nest their text one level further -
+      // <label><span><span>{t(...)}</span></span></label>. Those were reported
+      // as "must have accessible text" while being perfectly well labelled at
+      // runtime; the fix was to configure the rule, not to change the markup.
+      "jsx-a11y/label-has-associated-control": ["error", { depth: 3 }],
 
       // Deliberately off. The rule targets autofocus on page load, which is
       // disorienting. Every use here is the first field of a dialog that the
@@ -91,16 +93,35 @@ export default tseslint.config(
     },
   },
   {
+    // AX-02. Five elements carry a click handler without a keyboard listener on
+    // the same element. Each was checked individually and four of them already
+    // have a keyboard path the rule cannot see:
+    //
+    //   PMWorkspace / WorkspaceBomPanel - the row also has onFocusCapture, so
+    //   focusing any child selects it. The click is the mouse equivalent.
+    //   Adding onKeyDown here would hijack Enter and Space inside the row's
+    //   own text input.
+    //
+    //   WorkspaceCatalogPanel - the card duplicates a dedicated +/- button
+    //   pair that is always visible and always focusable. Click-the-card is a
+    //   shortcut, not the only way in. The wrapper cannot take role="button"
+    //   because those buttons are inside it.
+    //
+    //   PMClients - the div's only handler is stopPropagation, guarding the row
+    //   click from its action buttons. It has no behaviour to key-activate.
+    //
+    // ClientWorkspace is the one genuine gap: pins are placed at pointer
+    // coordinates on the 3D canvas, and there is no keyboard equivalent. That
+    // needs a product decision about how a keyboard user places a pin, so it
+    // stays listed here rather than being papered over.
     files: [
       "artifacts/ens-landing/src/pages/pm/PMWorkspace.tsx",
       "artifacts/ens-landing/src/pages/pm/WorkspaceBomPanel.tsx",
       "artifacts/ens-landing/src/pages/pm/WorkspaceCatalogPanel.tsx",
       "artifacts/ens-landing/src/pages/pm/PMClients.tsx",
-      "artifacts/ens-landing/src/pages/chief/ChiefManagers.tsx",
       "artifacts/ens-landing/src/pages/client/ClientWorkspace.tsx",
     ],
     rules: {
-      "jsx-a11y/label-has-associated-control": "off",
       "jsx-a11y/click-events-have-key-events": "off",
       "jsx-a11y/no-static-element-interactions": "off",
     },

@@ -230,7 +230,7 @@ export default function PMClients() {
                       </td>
                       <td className="px-3 py-2.5">
                         <div
-                          className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
