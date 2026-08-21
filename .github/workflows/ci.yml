@@ -1,8 +1,14 @@
 name: CI
 
+# Runs on every branch, not just main.
+#
+# Restricting push builds to main/master meant feature branches were never
+# validated: work could sit for dozens of commits with typecheck, lint, tests,
+# both portal builds and every release gate unverified, and problems only
+# surfaced once they had already reached the default branch. The jobs need no
+# secrets - Postgres comes from a service container - so they run anywhere.
 on:
   push:
-    branches: [main, master]
   pull_request:
 
 jobs:
