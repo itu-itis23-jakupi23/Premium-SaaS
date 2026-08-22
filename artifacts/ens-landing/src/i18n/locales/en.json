@@ -2276,7 +2276,8 @@
       "newChatHint": "Select a contact to start a new thread",
       "newChatNoMatch": "No contacts match your search.",
       "newChatAllAdded": "All contacts are already in your conversations.",
-      "uploadingAttachment": "Uploading attachment..."
+      "uploadingAttachment": "Uploading attachment...",
+      "undecryptable": "Message can't be read"
     },
     "requests": {
       "title": "Revision Requests",

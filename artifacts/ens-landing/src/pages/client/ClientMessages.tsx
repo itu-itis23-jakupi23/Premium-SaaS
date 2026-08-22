@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Paperclip, Search, X } from "lucide-react";
+import { Send, Paperclip, Search, X, Lock } from "lucide-react";
 import {
   getConversationMessages,
   getMessageContacts,
@@ -288,7 +288,15 @@ export default function ClientMessages() {
                     </Avatar>
                     <div className={`flex flex-col ${msg.isMe ? "items-end" : "items-start"}`}>
                       <div className={`p-4 rounded-2xl text-sm ${msg.isMe ? "bg-primary text-primary-foreground rounded-tr-none shadow-lg shadow-primary/20" : "bg-muted border rounded-tl-none"}`}>
-                        {msg.text && <p className="whitespace-pre-wrap">{msg.text}</p>}
+                        {msg.undecryptable ? (
+                          // Not message text - see PMMessages for the reasoning.
+                          <p className="flex items-center gap-1.5 text-xs italic opacity-70">
+                            <Lock aria-hidden="true" className="h-3 w-3 shrink-0" />
+                            {t("pm.messages.undecryptable")}
+                          </p>
+                        ) : msg.text ? (
+                          <p className="whitespace-pre-wrap">{msg.text}</p>
+                        ) : null}
                         {Boolean(msg.attachments?.length) && (
                           <div className={msg.text ? "mt-2 space-y-1.5" : "space-y-1.5"}>
                             {msg.attachments?.map((attachment) => (

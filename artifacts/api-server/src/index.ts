@@ -1,3 +1,6 @@
+// Must stay first: ES imports evaluate in order, and everything below reads
+// process.env as it loads. See lib/load-env.ts for why this matters.
+import "./lib/load-env";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { errorReportingConfigured, installProcessErrorHandlers } from "./lib/error-reporting";

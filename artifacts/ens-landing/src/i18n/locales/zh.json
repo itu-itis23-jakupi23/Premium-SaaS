@@ -2041,7 +2041,8 @@
       "newChatHint": "选择一位联系人以开始新会话",
       "newChatNoMatch": "没有联系人符合您的搜索。",
       "newChatAllAdded": "所有联系人都已在您的会话中。",
-      "uploadingAttachment": "Uploading attachment..."
+      "uploadingAttachment": "Uploading attachment...",
+      "undecryptable": "无法读取此消息"
     },
     "requests": {
       "title": "修改申请",

@@ -2041,7 +2041,8 @@
       "newChatHint": "Yeni bir konuşma başlatmak için bir kişi seçin",
       "newChatNoMatch": "Aramanızla eşleşen kişi yok.",
       "newChatAllAdded": "Tüm kişiler zaten konuşmalarınızda.",
-      "uploadingAttachment": "Uploading attachment..."
+      "uploadingAttachment": "Uploading attachment...",
+      "undecryptable": "Mesaj okunamıyor"
     },
     "requests": {
       "title": "Revizyon Talepleri",

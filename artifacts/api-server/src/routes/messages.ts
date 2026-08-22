@@ -7,7 +7,7 @@ import path from "node:path";
 import { db } from "@workspace/db";
 import { requireAuth, requireRoles, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
-import { decryptMessageBody, decryptMessageBytes, encryptMessageBody, encryptMessageBytes } from "../lib/messageCrypto";
+import { decryptMessageBody, decryptMessageBytes, encryptMessageBody, isUndecryptableBody, encryptMessageBytes } from "../lib/messageCrypto";
 
 const router = Router();
 
@@ -665,10 +665,14 @@ async function markConversationRead(auth: AuthContext, conversationId: string) {
 function toMessage(row: MessageRow, currentUserId: string) {
   const body = decryptMessageBody(row.body);
   const attachments = messageAttachments(row.attachments);
+  // Flagged rather than left to look like message text, so the client can show
+  // it as what it is: a message that exists but cannot be read back.
+  const undecryptable = isUndecryptableBody(body);
   return {
     id: row.id,
     body,
     text: body,
+    undecryptable,
     attachments,
     senderUserId: row.senderUserId,
     isMe: row.senderUserId === currentUserId,

@@ -2041,7 +2041,8 @@
       "newChatHint": "連絡先を選ぶと新しいスレッドを開始できます",
       "newChatNoMatch": "検索条件に一致する連絡先はありません。",
       "newChatAllAdded": "すべての連絡先がすでにスレッドにあります。",
-      "uploadingAttachment": "Uploading attachment..."
+      "uploadingAttachment": "Uploading attachment...",
+      "undecryptable": "メッセージを表示できません"
     },
     "requests": {
       "title": "修正依頼",

@@ -2041,7 +2041,8 @@
       "newChatHint": "Wählen Sie einen Kontakt, um ein neues Gespräch zu beginnen",
       "newChatNoMatch": "Keine Kontakte entsprechen Ihrer Suche.",
       "newChatAllAdded": "Alle Kontakte sind bereits in Ihren Gesprächen.",
-      "uploadingAttachment": "Uploading attachment..."
+      "uploadingAttachment": "Uploading attachment...",
+      "undecryptable": "Nachricht nicht lesbar"
     },
     "requests": {
       "title": "Änderungsanfragen",

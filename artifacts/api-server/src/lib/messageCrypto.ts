@@ -17,12 +17,29 @@ export function encryptMessageBody(body: string) {
   return `${PREFIX}${iv.toString("base64url")}.${tag.toString("base64url")}.${ciphertext.toString("base64url")}`;
 }
 
+/**
+ * Marker returned when a stored message cannot be decrypted with the current
+ * key. Exported so callers can tell "this is the message text" from "this text
+ * is standing in for a message we cannot read" - returning the placeholder as
+ * an ordinary body made an unreadable message look like one somebody typed.
+ *
+ * This is not recoverable. AES-GCM with the wrong key is not a soft failure:
+ * if MESSAGE_ENCRYPTION_KEY changed after a message was written, that message
+ * is gone. Keep the key stable, and set it explicitly rather than relying on
+ * the development fallback, which makes the key depend on the environment.
+ */
+export const UNDECRYPTABLE_BODY = "[Encrypted message unavailable]";
+
+export function isUndecryptableBody(body: string) {
+  return body === UNDECRYPTABLE_BODY;
+}
+
 export function decryptMessageBody(body: string) {
   if (!body.startsWith(PREFIX)) return body;
 
   try {
     const [ivRaw, tagRaw, ciphertextRaw] = body.slice(PREFIX.length).split(".");
-    if (!ivRaw || !tagRaw || !ciphertextRaw) return "[Encrypted message unavailable]";
+    if (!ivRaw || !tagRaw || !ciphertextRaw) return UNDECRYPTABLE_BODY;
 
     const decipher = createDecipheriv("aes-256-gcm", messageEncryptionKey(), Buffer.from(ivRaw, "base64url"));
     decipher.setAuthTag(Buffer.from(tagRaw, "base64url"));
@@ -32,7 +49,7 @@ export function decryptMessageBody(body: string) {
     ]);
     return plaintext.toString("utf8");
   } catch {
-    return "[Encrypted message unavailable]";
+    return UNDECRYPTABLE_BODY;
   }
 }
 

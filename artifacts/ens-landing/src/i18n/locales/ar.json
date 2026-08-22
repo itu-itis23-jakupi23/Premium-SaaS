@@ -2041,7 +2041,8 @@
       "newChatHint": "اختر جهة اتصال لبدء محادثة جديدة",
       "newChatNoMatch": "لا توجد جهات اتصال تطابق بحثك.",
       "newChatAllAdded": "جميع جهات الاتصال موجودة بالفعل في محادثاتك.",
-      "uploadingAttachment": "Uploading attachment..."
+      "uploadingAttachment": "Uploading attachment...",
+      "undecryptable": "تعذّر قراءة الرسالة"
     },
     "requests": {
       "title": "طلبات المراجعة",

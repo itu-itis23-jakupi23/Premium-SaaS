@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Search, Send, Paperclip, MoreVertical, Phone, Video, CheckCheck, X,
   Mail, Copy, UserRound, Building2, ChevronLeft,
+  Lock,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -567,9 +568,19 @@ export default function PMMessages() {
                           "max-w-[72%] rounded-2xl px-4 py-2.5 text-sm shadow-sm",
                           msg.isMe ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-card border border-border rounded-tl-none",
                         )}>
-                          {msg.text && !(msg.text === "[Attachment]" && msg.attachments?.length) && (
+                          {msg.undecryptable ? (
+                            // Not message text: the row exists but was written
+                            // under an encryption key the server no longer has,
+                            // so there is nothing to show. Rendering it as
+                            // ordinary text made it look like something the
+                            // sender had typed.
+                            <p className="flex items-center gap-1.5 text-xs italic opacity-70">
+                              <Lock aria-hidden="true" className="h-3 w-3 shrink-0" />
+                              {t("pm.messages.undecryptable")}
+                            </p>
+                          ) : msg.text && !(msg.text === "[Attachment]" && msg.attachments?.length) ? (
                             <p className="whitespace-pre-wrap">{msg.text}</p>
-                          )}
+                          ) : null}
                           {Boolean(msg.attachments?.length) && (
                             <div className={cn("space-y-1.5", msg.text && msg.text !== "[Attachment]" ? "mt-2" : "")}>
                               {msg.attachments?.map((item) => (

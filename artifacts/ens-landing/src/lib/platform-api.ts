@@ -596,6 +596,12 @@ export interface DirectMessage {
   id: string;
   body: string;
   text: string;
+  /**
+   * The message exists but cannot be read back: it was encrypted under a key
+   * the server no longer has. `text` then holds a placeholder rather than
+   * anything anybody typed, so it must not be rendered as message content.
+   */
+  undecryptable?: boolean;
   attachments?: DirectMessageAttachment[];
   senderUserId: string;
   isMe: boolean;

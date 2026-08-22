@@ -2041,7 +2041,8 @@
       "newChatHint": "Selecteer een contact om een nieuw gesprek te starten",
       "newChatNoMatch": "Geen contacten komen overeen met je zoekopdracht.",
       "newChatAllAdded": "Alle contacten staan al in je gesprekken.",
-      "uploadingAttachment": "Uploading attachment..."
+      "uploadingAttachment": "Uploading attachment...",
+      "undecryptable": "Bericht niet leesbaar"
     },
     "requests": {
       "title": "Revisieaanvragen",
