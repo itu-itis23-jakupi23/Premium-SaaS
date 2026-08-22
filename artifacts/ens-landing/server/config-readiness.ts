@@ -22,7 +22,11 @@ export function apiJsonLimit() {
 }
 
 export function assetStorageProvider() {
-  return (process.env.ASSET_STORAGE_PROVIDER || "local").trim().toLowerCase();
+  // STORAGE_PROVIDER is the name the production backend validates in
+  // api-server/src/lib/env.ts and reads in lib/storage.ts. This used to read
+  // ASSET_STORAGE_PROVIDER, which nothing ever sets, so the readiness panel
+  // reported storage as unconfigured no matter how the deployment was set up.
+  return (process.env.STORAGE_PROVIDER || "local").trim().toLowerCase();
 }
 
 export function configReadiness() {

@@ -62,6 +62,9 @@ jobs:
       - name: Check workspace transform constants
         run: pnpm run workspace:transform
 
+      - name: Check booth renderer parses
+        run: pnpm run booth:render
+
       - name: Typecheck libraries
         run: pnpm run typecheck
 

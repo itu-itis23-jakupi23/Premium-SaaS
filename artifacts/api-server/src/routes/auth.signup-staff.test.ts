@@ -80,10 +80,7 @@ describe("POST /api/auth/signup-staff", () => {
       setupKey: "the-real-key",
     });
 
-    if (response.status !== 201) {
-      console.error("[debug] signup-staff 500 body:", JSON.stringify(response.body));
-    }
-    expect(response.status).toBe(201);
+    expect(response.status, JSON.stringify(response.body)).toBe(201);
     expect(response.body.user.role).toBe("chief");
     createdOrgId = response.body.organization?.id ?? null;
     expect(createdOrgId).toBeTruthy();
