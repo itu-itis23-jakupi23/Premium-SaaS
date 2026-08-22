@@ -680,9 +680,7 @@ export default function ChiefProjects() {
                 className="h-8 text-xs"
                 onClick={() => { setExhibitionForm({ name: "", venue: "", city: "", startDate: "", endDate: "" }); setExhibitionCreateError(""); setExhibitionCreateOpen(true); }}
               >
-                <Plus className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                Add Exhibition
-              </Button>
+                <Plus className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />{t("chief.projects.addExhibition")}</Button>
             )}
           </div>
         </PageHeader>
@@ -715,9 +713,7 @@ export default function ChiefProjects() {
               type="button"
               onClick={() => { setIsLoading(true); void reloadProjects().finally(() => setIsLoading(false)); }}
               className="rounded-md border border-red-500/30 px-3 py-1 text-xs font-semibold hover:bg-red-500/10 transition-colors"
-            >
-              Retry
-            </button>
+            >{t("chief.projects.retry")}</button>
           </div>
         )}
 
@@ -988,10 +984,8 @@ export default function ChiefProjects() {
                       <button
                         onClick={() => openEdit(project)}
                         className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label="Reassign PM"
-                      >
-                        Reassign
-                      </button>
+                        aria-label={t("chief.projects.reassignPm")}
+                      >{t("chief.projects.reassign")}</button>
                       <button
                         onClick={() => navigate(`/chief/workspace?projectId=${encodeURIComponent(project.id)}`)}
                         onPointerEnter={() => { void preloadPortalRoute("/chief/workspace")?.catch(() => undefined); }}
@@ -1008,9 +1002,7 @@ export default function ChiefProjects() {
               );
             })}
             {!isLoading && filtered.length === 0 && (
-              <div className="col-span-full py-16 text-center text-sm text-muted-foreground">
-                No projects match the current filters.
-              </div>
+              <div className="col-span-full py-16 text-center text-sm text-muted-foreground">{t("chief.projects.noProjectsMatch")}</div>
             )}
           </div>
         )}
@@ -1055,23 +1047,23 @@ export default function ChiefProjects() {
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border bg-card/60 p-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total exhibitions</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t("chief.projects.exhibitions.total")}</p>
                 <p className="mt-2 text-2xl font-bold">{exhibitions.length}</p>
-                <p className="mt-1 text-xs text-muted-foreground">Each exhibition groups client booth projects.</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t("chief.projects.exhibitions.totalHint")}</p>
               </div>
               <div className="rounded-lg border bg-card/60 p-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Active</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t("chief.projects.exhibitions.active")}</p>
                 <p className="mt-2 text-2xl font-bold">{exhibitions.filter((e) => isActiveExhibition(e.status)).length}</p>
               </div>
               <div className="rounded-lg border bg-card/60 p-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Draft / Closed</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t("chief.projects.exhibitions.draftClosed")}</p>
                 <p className="mt-2 text-2xl font-bold">{exhibitions.filter((e) => !isActiveExhibition(e.status)).length}</p>
               </div>
             </div>
 
             {exhibitions.length === 0 ? (
               <div className="rounded-lg border-2 border-dashed border-border/50 py-16 text-center">
-                <p className="text-sm font-semibold text-muted-foreground">No exhibitions yet</p>
+                <p className="text-sm font-semibold text-muted-foreground">{t("chief.projects.exhibitions.empty")}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Create your first exhibition to organize client booth projects under a single event.
                 </p>
@@ -1079,9 +1071,7 @@ export default function ChiefProjects() {
                   onClick={() => { setExhibitionForm({ name: "", venue: "", city: "", startDate: "", endDate: "" }); setExhibitionCreateOpen(true); }}
                   className="mt-4 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
                 >
-                  <Plus className="inline-block h-3 w-3 mr-1.5" aria-hidden="true" />
-                  Add first exhibition
-                </button>
+                  <Plus className="inline-block h-3 w-3 mr-1.5" aria-hidden="true" />{t("chief.projects.exhibitions.addFirst")}</button>
               </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -1136,14 +1126,14 @@ export default function ChiefProjects() {
         >
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>New Exhibition</DialogTitle>
+              <DialogTitle>{t("chief.projects.exhibitions.new")}</DialogTitle>
               <DialogDescription>
                 Add an exhibition to group client booth projects under a single event. Projects appear automatically when clients register.
               </DialogDescription>
             </DialogHeader>
             <div className="mt-2 grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="ex-name">Exhibition name <span className="text-red-500">*</span></Label>
+                <Label htmlFor="ex-name">{t("chief.projects.exhibitions.nameLabel")}<span className="text-red-500">*</span></Label>
                 <Input
                   id="ex-name"
                   value={exhibitionForm.name}
@@ -1154,12 +1144,12 @@ export default function ChiefProjects() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="ex-venue">Venue</Label>
+                  <Label htmlFor="ex-venue">{t("chief.projects.exhibitions.venueLabel")}</Label>
                   <Input
                     id="ex-venue"
                     value={exhibitionForm.venue}
                     onChange={(e) => setExhibitionForm((f) => ({ ...f, venue: e.target.value }))}
-                    placeholder="Convention Center"
+                    placeholder={t("chief.projects.exhibitions.venuePlaceholder")}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -1168,13 +1158,13 @@ export default function ChiefProjects() {
                     id="ex-city"
                     value={exhibitionForm.city}
                     onChange={(e) => setExhibitionForm((f) => ({ ...f, city: e.target.value }))}
-                    placeholder="Las Vegas, NV"
+                    placeholder={t("chief.projects.exhibitions.cityPlaceholder")}
                   />
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="ex-start">Start date</Label>
+                  <Label htmlFor="ex-start">{t("chief.projects.exhibitions.startDate")}</Label>
                   <Input
                     id="ex-start"
                     type="date"
@@ -1183,7 +1173,7 @@ export default function ChiefProjects() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="ex-end">End date</Label>
+                  <Label htmlFor="ex-end">{t("chief.projects.exhibitions.endDate")}</Label>
                   <Input
                     id="ex-end"
                     type="date"
@@ -1203,9 +1193,7 @@ export default function ChiefProjects() {
                 variant="outline"
                 onClick={() => setExhibitionCreateOpen(false)}
                 disabled={isCreatingExhibition}
-              >
-                Cancel
-              </Button>
+              >{t("common.cancel")}</Button>
               <Button
                 onClick={createExhibition}
                 disabled={isCreatingExhibition || !exhibitionForm.name.trim()}
@@ -1213,7 +1201,7 @@ export default function ChiefProjects() {
                 {isCreatingExhibition ? (
                   <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" aria-hidden="true" />Creating…</>
                 ) : (
-                  <><Plus className="mr-2 h-3.5 w-3.5" aria-hidden="true" />Create Exhibition</>
+                  <><Plus className="mr-2 h-3.5 w-3.5" aria-hidden="true" />{t("chief.projects.exhibitions.create")}</>
                 )}
               </Button>
             </DialogFooter>
@@ -1413,7 +1401,7 @@ export default function ChiefProjects() {
         >
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>New Exhibition / Project</DialogTitle>
+              <DialogTitle>{t("chief.projects.exhibitions.newProject")}</DialogTitle>
               <DialogDescription>
                 Create an exhibition shell first, or attach a registered client to create the company project.
               </DialogDescription>
@@ -1421,16 +1409,16 @@ export default function ChiefProjects() {
 
             <div className="mt-2 grid gap-4">
               <div className="grid gap-2">
-                <Label>Registered client</Label>
+                <Label>{t("chief.projects.exhibitions.registeredClient")}</Label>
                 <Select
                   value={createForm.clientId || "none"}
                   onValueChange={selectCreateClient}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select registered client" />
+                    <SelectValue placeholder={t("chief.projects.exhibitions.selectClient")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No client yet - create exhibition shell</SelectItem>
+                    <SelectItem value="none">{t("chief.projects.exhibitions.noClientYet")}</SelectItem>
                     {clientOptions.map((client) => (
                       <SelectItem key={client.id} value={client.id}>
                         {client.name}{client.exhibition ? ` - ${client.exhibition}` : ""}
@@ -1473,14 +1461,12 @@ export default function ChiefProjects() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="create-client">
-                    Client / company
-                  </Label>
+                  <Label htmlFor="create-client">{t("chief.projects.exhibitions.clientCompany")}</Label>
                   <Input
                     id="create-client"
                     value={createForm.client}
                     onChange={(e) => setCreateForm((f) => ({ ...f, client: e.target.value }))}
-                    placeholder="Optional until assigned"
+                    placeholder={t("chief.projects.exhibitions.optionalUntilAssigned")}
                   />
                 </div>
               </div>
@@ -1654,17 +1640,15 @@ export default function ChiefProjects() {
                       <div className="border-b px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-primary" aria-hidden="true" />
-                          <p className="text-sm font-semibold">Project Managers</p>
+                          <p className="text-sm font-semibold">{t("chief.projects.exhibitions.projectManagers")}</p>
                           <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">{exManagers.length}</span>
                         </div>
-                        <p className="mt-0.5 text-xs text-muted-foreground">Assigned to this exhibition</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{t("chief.projects.exhibitions.assignedToExhibition")}</p>
                       </div>
                       <div className="flex-1 overflow-y-auto">
                         {exManagers.length === 0 ? (
                           <div className="m-4 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                            <Users className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
-                            No managers assigned yet
-                          </div>
+                            <Users className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />{t("chief.projects.exhibitions.noManagers")}</div>
                         ) : (
                           exManagers.map((m) => (
                             <div key={m.id} className="flex items-center gap-3 border-b border-border/40 px-4 py-3">
@@ -1693,7 +1677,7 @@ export default function ChiefProjects() {
                         <div className="flex flex-wrap items-center gap-3">
                           <div className="flex items-center gap-2">
                             <Users className="h-4 w-4 text-primary" aria-hidden="true" />
-                            <p className="text-sm font-semibold">Clients</p>
+                            <p className="text-sm font-semibold">{t("chief.projects.exhibitions.clients")}</p>
                             <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">{exClients.length}</span>
                           </div>
                           <div className="relative ml-auto w-full max-w-xs">
@@ -1701,7 +1685,7 @@ export default function ChiefProjects() {
                             <input
                               value={detailClientSearch}
                               onChange={(e) => setDetailClientSearch(e.target.value)}
-                              placeholder="Search by any detail…"
+                              placeholder={t("chief.projects.exhibitions.searchPlaceholder")}
                               className="h-8 w-full rounded-md border bg-background pl-8 pr-3 text-xs outline-none focus:border-primary"
                             />
                           </div>
@@ -1710,20 +1694,16 @@ export default function ChiefProjects() {
 
                       <div className="flex-1 overflow-auto">
                         {exClients.length === 0 ? (
-                          <div className="m-8 rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">
-                            No clients registered for this exhibition yet.
-                          </div>
+                          <div className="m-8 rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">{t("chief.projects.exhibitions.noClientsRegistered")}</div>
                         ) : searchedClients.length === 0 ? (
-                          <div className="m-8 py-8 text-center text-sm text-muted-foreground">
-                            No clients match your search.
-                          </div>
+                          <div className="m-8 py-8 text-center text-sm text-muted-foreground">{t("chief.projects.exhibitions.noClientsMatch")}</div>
                         ) : (
                           <table className="w-full min-w-[560px]">
                             <thead className="sticky top-0 z-10 border-b bg-muted/30">
                               <tr>
-                                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Client</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Contact</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Booth</th>
+                                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t("chief.projects.exhibitions.colClient")}</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t("chief.projects.exhibitions.colContact")}</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t("chief.projects.exhibitions.colBooth")}</th>
                                 <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">PM</th>
                               </tr>
                             </thead>
