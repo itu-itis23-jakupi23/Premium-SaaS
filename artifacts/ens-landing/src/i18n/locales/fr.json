@@ -562,21 +562,21 @@
       "pieShare": "Share",
       "workflow": {
         "title": "Assignment control",
-        "desc": "New accounts and unassigned work that need Chief action.",
+        "desc": "Nouveaux comptes et tâches non attribuées nécessitant une décision.",
         "openAssignments": "Open assignments",
         "pendingAccounts": "Pending accounts",
-        "pendingAccountsDetail": "Client accounts awaiting review",
-        "pendingAccountsClear": "No accounts pending",
+        "pendingAccountsDetail": "Comptes clients en attente d'examen",
+        "pendingAccountsClear": "Aucun compte en attente",
         "newPMs": "New PMs",
-        "newPMsClear": "No PM accounts waiting",
+        "newPMsClear": "Aucun compte chef de projet en attente",
         "unassignedClients": "Unassigned clients",
-        "unassignedClientsClear": "All clients assigned",
+        "unassignedClientsClear": "Tous les clients sont attribués",
         "unassignedProjects": "Unassigned projects",
-        "unassignedProjectsClear": "All projects assigned",
+        "unassignedProjectsClear": "Tous les projets sont attribués",
         "stalledApprovals": "Stalled approvals",
-        "stalledApprovalsClear": "No stale approvals",
+        "stalledApprovalsClear": "Aucune validation en retard",
         "overloadedPMs": "Overloaded PMs",
-        "overloadedPMsClear": "Capacity looks stable"
+        "overloadedPMsClear": "La charge reste stable"
       }
     },
     "managers": {
@@ -616,10 +616,10 @@
         "copyLink": "Copier le lien d'invitation pour {{email}}",
         "resend": "Renvoyer l'invitation à {{email}}",
         "revoke": "Révoquer l'invitation pour {{email}}",
-        "showMore": "Show {{count}} more",
+        "showMore": "Afficher {{count}} de plus",
         "showLess": "Show less",
-        "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured",
+        "emailFailed": "E-mail non envoyé",
+        "emailProviderNotConfigured": "le fournisseur d'e-mail n'est pas configuré",
         "code": "Code",
         "link": "Lien",
         "copyCode": "Copier le code d'invitation pour {{email}}"
@@ -674,7 +674,7 @@
         "searchClients": "Search clients...",
         "searchProjects": "Search projects...",
         "loading": "Loading assignments...",
-        "showing": "{{total}} total / showing {{start}}-{{end}}",
+        "showing": "{{total}} au total / affichage {{start}}-{{end}}",
         "previous": "Previous",
         "next": "Next",
         "page": "Page {{page}}"
@@ -689,7 +689,7 @@
         "urgent": "urgent",
         "ratingNew": "Nouveau",
         "ratingNA": "N/A",
-        "capacityDetail": "Capacity: {{projects}}/{{maxProjects}} active projects · {{clients}}/{{maxClients}} clients"
+        "capacityDetail": "Charge : {{projects}}/{{maxProjects}} projets actifs · {{clients}}/{{maxClients}} clients"
       },
       "table": {
         "manager": "Manager",
@@ -749,10 +749,10 @@
           "assignmentsSaved": "Modifications des affectations enregistrées.",
           "rebalanced": "{{project}} déplacé de {{from}} vers {{to}}.",
           "reminded": "Rappel in-app en attente pour {{name}} — {{count}} élément(s) prioritaire(s).",
-          "ratingUpdated": "Rating set to {{rating}}"
+          "ratingUpdated": "Note fixée à {{rating}}"
         },
         "justNow": "À l'instant",
-        "exportExcel": "Export as Excel",
+        "exportExcel": "Exporter en Excel",
         "collapse": "Collapse",
         "expand": "Expand"
       },
@@ -794,13 +794,13 @@
         "rebalanceDone": "Charge de travail rééquilibrée",
         "reminderSent": "Rappel en attente pour {{name}} — notification créée",
         "reminderError": "Le rappel n'a pas pu être envoyé",
-        "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}",
+        "rebalanceAllLoaded": "Tous les autres chefs de projet actifs sont à pleine charge (≥ 85 %). Envisagez un recrutement ou un ajustement des délais.",
+        "ratingUpdated": "Note mise à jour à {{rating}}",
         "inviteCodeCopied": "Code d'invitation copié",
         "inviteCodeCopyError": "Impossible de copier le code d'invitation"
       },
       "error": {
-        "rating": "Failed to update rating"
+        "rating": "Échec de la mise à jour de la note"
       }
     },
     "reports": {
@@ -1158,19 +1158,19 @@
         "updated": "{{name}} mis à jour",
         "openMonitor": "Ouverture de l'espace stand pour {{name}}",
         "moved": "{{name}} déplacé vers {{stage}}",
-        "created": "Project \"{{name}}\" created.",
-        "exported": "Projects exported to Excel."
+        "created": "Projet « {{name}} » créé.",
+        "exported": "Projets exportés vers Excel."
       },
       "validate": {
         "required": "Le nom du projet et le client sont obligatoires.",
         "dimensions": "Largeur et profondeur doivent être entre 1 et 100 mètres."
       },
-      "exportTooltip": "Export project list to Excel",
+      "exportTooltip": "Exporter la liste des projets vers Excel",
       "export": "Export",
       "newProject": "New Project",
       "create": {
         "title": "New Project",
-        "description": "Fill in the details below to create a new exhibition project.",
+        "description": "Renseignez les informations ci-dessous pour créer un nouveau projet de salon.",
         "creating": "Creating…",
         "confirm": "Create Project"
       },
@@ -1357,7 +1357,7 @@
         "joinedSession": "Session moniteur rejointe pour {{name}}",
         "reassigned": "{{name}} réassigné à {{pm}}"
       },
-      "refreshedJustNow": "Refreshed just now",
+      "refreshedJustNow": "Actualisé à l'instant",
       "refreshedSecondsAgo": "{{s}}s ago",
       "refreshedMinutesAgo": "{{m}}m ago"
     },
@@ -1494,8 +1494,8 @@
           "signOutOthers": "Déconnecter les autres",
           "signOut": "Déconnecter",
           "current": "actuel",
-          "loading": "Loading active sessions...",
-          "empty": "No active sessions were returned by the server."
+          "loading": "Chargement des sessions actives…",
+          "empty": "Le serveur n'a renvoyé aucune session active."
         },
         "toast": {
           "passwordSaved": "Mot de passe mis à jour",
@@ -1555,44 +1555,44 @@
       },
       "readiness": {
         "title": "Production readiness",
-        "desc": "Real deployment checks for database, email, auth, app URL, and workspace asset storage.",
+        "desc": "Vérifications réelles du déploiement : base de données, e-mail, authentification, URL de l'application et stockage des fichiers d'espace de travail.",
         "ready": "Ready",
         "notReady": "Not ready",
         "refresh": "Refresh",
         "mode": "Mode",
-        "apiJsonLimit": "API JSON limit",
+        "apiJsonLimit": "Limite JSON de l'API",
         "assetStorage": "Asset storage",
         "unknown": "Unknown",
         "blockingWarnings": "Blocking warnings",
-        "noWarnings": "No blocking production warnings reported by the backend.",
+        "noWarnings": "Aucun avertissement bloquant signalé par le backend.",
         "checks": {
           "databaseConfigured": {
             "title": "Hosted database",
-            "desc": "DATABASE_URL is configured"
+            "desc": "DATABASE_URL est configurée"
           },
           "emailConfigured": {
             "title": "Transactional email",
-            "desc": "RESEND_API_KEY and RESEND_FROM are configured"
+            "desc": "RESEND_API_KEY et RESEND_FROM sont configurés"
           },
           "appUrlConfigured": {
-            "title": "Public app URL",
-            "desc": "APP_URL is an absolute URL"
+            "title": "URL publique de l'application",
+            "desc": "APP_URL est une URL absolue"
           },
           "staffAccessConfigured": {
-            "title": "Staff access gate",
-            "desc": "Staff/chief signup key is not a placeholder"
+            "title": "Contrôle d'accès du personnel",
+            "desc": "La clé d'inscription n'est pas un espace réservé"
           },
           "authSecretConfigured": {
             "title": "Auth secret",
-            "desc": "AUTH_SECRET is not a placeholder"
+            "desc": "AUTH_SECRET n'est pas un espace réservé"
           },
           "assetStorageConfigured": {
-            "title": "Workspace asset storage",
-            "desc": "Uploaded logos and panel images use durable storage"
+            "title": "Stockage des fichiers d'espace de travail",
+            "desc": "Les logos et images de panneaux téléversés utilisent un stockage durable"
           },
           "productionMode": {
             "title": "Production mode",
-            "desc": "NODE_ENV is production"
+            "desc": "NODE_ENV vaut production"
           }
         }
       }
@@ -1682,7 +1682,7 @@
         "completed": "Terminé",
         "workspaceFiles": "Fichiers d'espace de travail",
         "managedTrend": "Managed clients",
-        "liveTrend": "Live & In Progress",
+        "liveTrend": "En ligne et en cours",
         "needsAttention": "Needs attention",
         "allClear": "All clear",
         "deliveredTrend": "Successfully delivered",
@@ -1710,10 +1710,10 @@
         "activeWorkspaces": "Espaces de travail actifs",
         "activeWorkspacesDesc": "Des designs de stands sont disponibles pour édition.",
         "openWorkspace": "Ouvrir l'espace de travail",
-        "noDelays": "No projects are currently delayed",
-        "noPending": "Approval queue is empty",
+        "noDelays": "Aucun projet n'est en retard actuellement",
+        "noPending": "La file de validation est vide",
         "completedProjects": "Completed Projects",
-        "completedProjectsDesc": "Projects successfully delivered to clients",
+        "completedProjectsDesc": "Projets livrés aux clients avec succès",
         "viewCompleted": "View completed"
       },
       "recentActivity": {
@@ -1721,13 +1721,13 @@
         "loading": "Chargement de l'activité...",
         "empty": "Aucun événement d'activité enregistré pour l'instant."
       },
-      "exported": "Dashboard exported to Excel.",
+      "exported": "Tableau de bord exporté vers Excel.",
       "export": "Export",
       "charts": {
         "activity": "Project Activity",
-        "activityDesc": "Daily project updates over the last 7 days",
+        "activityDesc": "Mises à jour quotidiennes des 7 derniers jours",
         "status": "Project Status",
-        "statusDesc": "{{count}} projects tracked"
+        "statusDesc": "{{count}} projets suivis"
       },
       "retry": "Retry"
     },
@@ -1786,20 +1786,20 @@
         "width": "Largeur (m)",
         "depth": "Profondeur (m)",
         "submit": "Créer le projet",
-        "dimensionsInvalid": "Width and depth must be between 1 and 100 meters.",
-        "deadlineInvalid": "Deadline must be today or later.",
-        "nameClientRequired": "Name and client are required."
+        "dimensionsInvalid": "La largeur et la profondeur doivent être comprises entre 1 et 100 mètres.",
+        "deadlineInvalid": "L'échéance doit être aujourd'hui ou plus tard.",
+        "nameClientRequired": "Le nom et le client sont obligatoires."
       },
       "toast": {
         "created": "Projet \"{{name}}\" enregistré.",
         "createError": "Impossible de créer le projet.",
-        "stageUpdated": "{{name}} moved to {{stage}}.",
-        "stageError": "Project stage could not be saved.",
+        "stageUpdated": "{{name}} est passé à l'étape {{stage}}.",
+        "stageError": "L'étape du projet n'a pas pu être enregistrée.",
         "edited": "\"{{name}}\" updated.",
-        "editError": "Could not save changes.",
+        "editError": "Impossible d'enregistrer les modifications.",
         "deleted": "\"{{name}}\" deleted.",
-        "deleteError": "Could not delete project.",
-        "exported": "Projects exported to Excel."
+        "deleteError": "Impossible de supprimer le projet.",
+        "exported": "Projets exportés vers Excel."
       },
       "stage": {
         "intake": "Intake",
@@ -1811,22 +1811,22 @@
       "detail": {
         "stage": "Stage: {{stage}}",
         "description": "Description",
-        "noDescription": "No project description has been saved yet.",
+        "noDescription": "Aucune description de projet n'a encore été enregistrée.",
         "lifecycle": "Lifecycle",
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "No stage changes have been recorded yet."
+        "noHistory": "Aucun changement d'étape n'a encore été enregistré."
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} projects"
+        "showing": "Affichage de {{start}}-{{end}} sur {{total}} projets"
       },
-      "exportTooltip": "Export to Excel",
+      "exportTooltip": "Exporter vers Excel",
       "export": "Export",
       "sortBy": "Sort by",
       "delete": {
         "title": "Delete project?",
-        "warning": "This project and all associated data will be permanently removed.",
+        "warning": "Ce projet et toutes les données associées seront définitivement supprimés.",
         "confirm": "Delete"
       },
       "kanban": {
@@ -1864,13 +1864,13 @@
         "openWorkspace": "Ouvrir l'espace de travail",
         "openWorkspaceFor": "Ouvrir l'espace de travail pour {{name}}",
         "toggleExpand": "Afficher/masquer les détails de {{name}}",
-        "noWorkspace": "No project workspace is available",
-        "openDetails": "Open details for {{name}}",
+        "noWorkspace": "Aucun espace de travail de projet n'est disponible",
+        "openDetails": "Ouvrir la fiche de {{name}}",
         "viewProject": "View project",
         "message": "Message",
         "messageClient": "Message {{name}}",
-        "sendWorkspace": "Send Workspace Link",
-        "sendBill": "Send Bill of Everything"
+        "sendWorkspace": "Envoyer le lien de l'espace de travail",
+        "sendBill": "Envoyer le récapitulatif complet"
       },
       "detail": {
         "clientDetails": "Détails du client",
@@ -1880,26 +1880,26 @@
         "dataSource": "Données clients et projets en direct",
         "contact": "Contact",
         "linkedProject": "Linked Project",
-        "noLinkedProject": "No linked project",
-        "workspaceReady": "Project workspace link is available.",
-        "workspaceMissing": "No project workspace is linked to this client yet.",
-        "changeStatus": "Change client status",
+        "noLinkedProject": "Aucun projet lié",
+        "workspaceReady": "Le lien vers l'espace de travail du projet est disponible.",
+        "workspaceMissing": "Aucun espace de travail de projet n'est encore lié à ce client.",
+        "changeStatus": "Modifier le statut du client",
         "tabs": {
           "overview": "Overview",
           "credentials": "Credentials",
           "billing": "Billing"
         },
         "credentials": {
-          "title": "Account & Security",
+          "title": "Compte et sécurité",
           "accountId": "Account ID",
-          "role": "Portal Access Role",
+          "role": "Rôle d'accès au portail",
           "username": "Username/Email",
           "password": "Password",
           "showPassword": "Show Password",
-          "mfa": "MFA Security Status",
+          "mfa": "État de sécurité MFA",
           "mfaDisabled": "MFA Disabled",
-          "session": "Active Session info",
-          "webSession": "Web Browser (Chrome/Windows)"
+          "session": "Session active",
+          "webSession": "Navigateur web (Chrome/Windows)"
         },
         "billing": {
           "title": "Project Billing",
@@ -1908,13 +1908,13 @@
           "outstanding": "Outstanding",
           "status": "Invoice Status",
           "statusPartial": "Partial Payment",
-          "sendSuccess": "Bill successfully sent to client!",
-          "linkSendSuccess": "Workspace link successfully sent to client!",
-          "detailSource": "Project finance module & contracts"
+          "sendSuccess": "Le récapitulatif a bien été envoyé au client.",
+          "linkSendSuccess": "Le lien de l'espace de travail a bien été envoyé au client.",
+          "detailSource": "Module financier du projet et contrats"
         }
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} clients"
+        "showing": "Affichage de {{start}}-{{end}} sur {{total}} clients"
       }
     },
     "tasks": {
@@ -1950,17 +1950,17 @@
       "toast": {
         "moved": "\"{{title}}\" → {{col}}",
         "created": "Tâche créée : \"{{title}}\"",
-        "movedClean": "\"{{title}}\" moved to {{col}}",
-        "loadError": "Could not load tasks.",
-        "deleted": "Task deleted: \"{{title}}\"",
-        "createError": "Could not create task.",
-        "updateError": "Could not update task.",
-        "deleteError": "Could not delete task.",
-        "deadlineInvalid": "Choose a valid deadline.",
-        "deadlinePast": "Deadline cannot be in the past.",
-        "notesTooLong": "Task notes must be under 4000 characters.",
-        "titleRequired": "Task title is required.",
-        "projectRequired": "A project is required.",
+        "movedClean": "« {{title}} » a été déplacée vers {{col}}",
+        "loadError": "Impossible de charger les tâches.",
+        "deleted": "Tâche supprimée : « {{title}} »",
+        "createError": "Impossible de créer la tâche.",
+        "updateError": "Impossible de mettre à jour la tâche.",
+        "deleteError": "Impossible de supprimer la tâche.",
+        "deadlineInvalid": "Choisissez une échéance valide.",
+        "deadlinePast": "L'échéance ne peut pas être dans le passé.",
+        "notesTooLong": "Les notes de tâche doivent faire moins de 4000 caractères.",
+        "titleRequired": "Un titre de tâche est obligatoire.",
+        "projectRequired": "Un projet est obligatoire.",
         "updated": "Task updated."
       },
       "modal": {
@@ -1975,18 +1975,18 @@
         "submit": "Créer la tâche",
         "select": "Sélectionner…",
         "notes": "Notes",
-        "notesPlaceholder": "Add context, blockers, or reminder details..."
+        "notesPlaceholder": "Ajoutez du contexte, des blocages ou des rappels…"
       },
-      "noProjects": "No assigned projects are available for task creation.",
+      "noProjects": "Aucun projet attribué n'est disponible pour créer une tâche.",
       "reminder": {
-        "dueSoon": "Due in {{count}}d"
+        "dueSoon": "Échéance dans {{count}} j"
       },
       "edit": {
         "title": "Edit task"
       },
       "confirmDelete": {
         "title": "Delete task?",
-        "body": "This task will be permanently removed and cannot be recovered."
+        "body": "Cette tâche sera définitivement supprimée et ne pourra pas être récupérée."
       }
     },
     "messages": {
@@ -2009,13 +2009,13 @@
         "videoReady": "Ouverture de la vidéo avec {{name}}…",
         "optionsOpened": "Menu d'options ouvert.",
         "attachmentOpened": "Sélecteur de pièce jointe ouvert.",
-        "callRequestOpened": "Call request opened for {{name}}.",
-        "videoRequestOpened": "Video request opened for {{name}}.",
-        "attachmentSelected": "{{name}} attached as a message reference.",
-        "attachmentTooLarge": "Choose a file under 10 MB.",
-        "contextCopied": "Thread context copied.",
-        "contextCopyError": "Thread context could not be copied.",
-        "attachmentUploadError": "Attachment could not be uploaded."
+        "callRequestOpened": "Demande d'appel ouverte pour {{name}}.",
+        "videoRequestOpened": "Demande de visio ouverte pour {{name}}.",
+        "attachmentSelected": "{{name}} a été joint comme référence au message.",
+        "attachmentTooLarge": "Choisissez un fichier de moins de 10 Mo.",
+        "contextCopied": "Contexte de la conversation copié.",
+        "contextCopyError": "Impossible de copier le contexte de la conversation.",
+        "attachmentUploadError": "La pièce jointe n'a pas pu être téléversée."
       },
       "actions": {
         "call": "Démarrer un appel vocal",
@@ -2024,23 +2024,23 @@
         "attach": "Joindre un fichier",
         "send": "Envoyer le message",
         "email": "Email contact",
-        "copyContext": "Copy thread context",
-        "clearAttachment": "Remove attachment reference"
+        "copyContext": "Copier le contexte de la conversation",
+        "clearAttachment": "Retirer la référence de pièce jointe"
       },
-      "loadProjectsError": "Could not load project scopes.",
+      "loadProjectsError": "Impossible de charger les périmètres de projet.",
       "projectScope": "Project scope",
-      "noProjectScopes": "No assigned projects. Messages will use a general thread.",
+      "noProjectScopes": "Aucun projet attribué. Les messages utiliseront un fil général.",
       "allExhibitions": "All exhibitions",
       "allContacts": "{{count}} contacts",
       "generalThread": "General thread",
-      "scopedTo": "Scoped to {{project}}",
-      "attachmentDraft": "Attachment reference: {{name}}",
+      "scopedTo": "Rattaché à {{project}}",
+      "attachmentDraft": "Référence de pièce jointe : {{name}}",
       "attachmentFallback": "Attachment",
       "newConversation": "New conversation",
-      "newChatSearchPlaceholder": "Find a contact…",
-      "newChatHint": "Select a contact to start a new thread",
-      "newChatNoMatch": "No contacts match your search.",
-      "newChatAllAdded": "All contacts are already in your conversations.",
+      "newChatSearchPlaceholder": "Trouver un contact…",
+      "newChatHint": "Sélectionnez un contact pour démarrer une conversation",
+      "newChatNoMatch": "Aucun contact ne correspond à votre recherche.",
+      "newChatAllAdded": "Tous les contacts figurent déjà dans vos conversations.",
       "uploadingAttachment": "Uploading attachment..."
     },
     "requests": {
@@ -2082,26 +2082,26 @@
         "pending": "Demande en attente",
         "replySent": "Réponse envoyée"
       },
-      "loadError": "Revision requests could not be loaded.",
-      "statusError": "Request status could not be saved.",
-      "replyError": "Reply could not be saved.",
+      "loadError": "Impossible de charger les demandes de révision.",
+      "statusError": "Le statut de la demande n'a pas pu être enregistré.",
+      "replyError": "La réponse n'a pas pu être enregistrée.",
       "searchPlaceholder": "Search requests...",
       "history": {
         "title": "Request history",
         "meta": "{{actor}} / {{time}}",
-        "empty": "No request history has been recorded yet."
+        "empty": "Aucun historique de demande n'a encore été enregistré."
       },
       "detail": {
         "request": "Request",
         "replies": "Replies",
-        "noReplies": "No replies yet."
+        "noReplies": "Pas encore de réponse."
       },
       "confirmDecline": {
-        "title": "Decline this request?",
-        "body": "The client will see this request marked as Declined. This action cannot be undone."
+        "title": "Refuser cette demande ?",
+        "body": "Le client verra cette demande comme refusée. Cette action est irréversible."
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} requests"
+        "showing": "Affichage de {{start}}-{{end}} sur {{total}} demandes"
       }
     },
     "reports": {
@@ -2148,28 +2148,28 @@
       },
       "toast": {
         "exporting": "Export démarré…",
-        "exported": "Excel report exported"
+        "exported": "Rapport Excel exporté"
       },
-      "loadError": "Report data could not be loaded.",
-      "loading": "Loading report data...",
-      "empty": "No report data has been recorded for this period."
+      "loadError": "Impossible de charger les données du rapport.",
+      "loading": "Chargement des données du rapport…",
+      "empty": "Aucune donnée de rapport n'a été enregistrée pour cette période."
     },
     "join": {
-      "pageTitle": "Join the Team",
-      "pageSubtitle": "Complete your profile to activate your Project Manager account.",
+      "pageTitle": "Rejoindre l'équipe",
+      "pageSubtitle": "Complétez votre profil pour activer votre compte chef de projet.",
       "inviteConfirmed": "Invitation confirmed",
-      "joiningAs": "Joining as a <bold>Project Manager</bold> with email <email>{{email}}</email>",
+      "joiningAs": "Vous rejoignez l'équipe en tant que <bold>chef de projet</bold> avec l'adresse <email>{{email}}</email>",
       "form": {
         "fullName": "Full Name",
-        "fullNamePlaceholder": "Your full name",
+        "fullNamePlaceholder": "Votre nom complet",
         "password": "Password",
-        "passwordPlaceholder": "At least 8 characters",
+        "passwordPlaceholder": "Au moins 8 caractères",
         "confirmPassword": "Confirm Password",
-        "confirmPasswordPlaceholder": "Re-enter your password",
+        "confirmPasswordPlaceholder": "Saisissez à nouveau votre mot de passe",
         "showPassword": "Show password",
         "hidePassword": "Hide password",
-        "passwordMismatch": "Passwords do not match.",
-        "submit": "Create My Account",
+        "passwordMismatch": "Les mots de passe ne correspondent pas.",
+        "submit": "Créer mon compte",
         "submitting": "Creating Account…"
       },
       "strength": {
@@ -2179,21 +2179,21 @@
         "strong": "Strong"
       },
       "error": {
-        "title": "Invitation Not Valid",
-        "noToken": "No invitation token found in the URL. Please use the link from your invitation email.",
-        "invalidToken": "This invitation link is not valid.",
-        "contact": "If you believe this is a mistake, please contact your administrator to resend the invitation.",
+        "title": "Invitation non valide",
+        "noToken": "Aucun jeton d'invitation n'a été trouvé dans l'URL. Utilisez le lien de votre e-mail d'invitation.",
+        "invalidToken": "Ce lien d'invitation n'est pas valide.",
+        "contact": "Si vous pensez qu'il s'agit d'une erreur, demandez à votre administrateur de renvoyer l'invitation.",
         "adminEmail": "admin@ens-agency.com",
-        "goToLogin": "Go to Login",
-        "nameRequired": "Please enter your full name.",
-        "passwordTooShort": "Password must be at least 8 characters.",
-        "passwordMismatch": "Passwords do not match.",
-        "generic": "Something went wrong. Please try again."
+        "goToLogin": "Aller à la connexion",
+        "nameRequired": "Veuillez saisir votre nom complet.",
+        "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
+        "passwordMismatch": "Les mots de passe ne correspondent pas.",
+        "generic": "Une erreur s'est produite. Veuillez réessayer."
       },
       "success": {
         "title": "Account Created!",
-        "body": "Welcome to the ENS team, {{name}}! Your account is ready. You'll be redirected to the login page in a moment.",
-        "goToLogin": "Go to Login Now"
+        "body": "Bienvenue dans l'équipe ENS, {{name}} ! Votre compte est prêt. Vous allez être redirigé vers la page de connexion.",
+        "goToLogin": "Aller à la connexion"
       }
     },
     "workspace": {
@@ -2201,7 +2201,7 @@
         "all": "All",
         "chairs": "Chairs",
         "stools": "Bar stools",
-        "seating": "Sofas & poufs",
+        "seating": "Canapés et poufs",
         "tables": "Tables",
         "storage": "Storage",
         "shelves": "Shelves",
@@ -2219,19 +2219,19 @@
       "nextMonth": "Next month",
       "searchPlaceholder": "Search events…",
       "today": "Today",
-      "eventsThisMonth": "events this month",
+      "eventsThisMonth": "événements ce mois-ci",
       "addToDay": "Add",
-      "noEventsDay": "No events scheduled for this day.",
-      "upcomingThisMonth": "Events This Month",
-      "noEvents": "No events match the current filters.",
+      "noEventsDay": "Aucun événement n'est prévu pour ce jour.",
+      "upcomingThisMonth": "Événements du mois",
+      "noEvents": "Aucun événement ne correspond aux filtres actuels.",
       "error": {
-        "load": "Failed to load calendar",
-        "nameRequired": "Name is required",
-        "startRequired": "Start date is required",
-        "endRequired": "End date is required",
-        "endBeforeStart": "End date must be on or after start date",
-        "save": "Failed to save",
-        "delete": "Failed to delete"
+        "load": "Échec du chargement du calendrier",
+        "nameRequired": "Le nom est obligatoire",
+        "startRequired": "La date de début est obligatoire",
+        "endRequired": "La date de fin est obligatoire",
+        "endBeforeStart": "La date de fin doit être égale ou postérieure à la date de début",
+        "save": "Échec de l'enregistrement",
+        "delete": "Échec de la suppression"
       },
       "filter": {
         "all": "All",
@@ -2242,17 +2242,17 @@
       },
       "create": {
         "title": "Add Event",
-        "description": "Add an exhibition or deadline to your calendar.",
+        "description": "Ajoutez un salon ou une échéance à votre calendrier.",
         "confirm": "Create Event"
       },
       "edit": {
         "title": "Edit Event",
-        "description": "Update event details.",
+        "description": "Mettre à jour les détails de l'événement.",
         "confirm": "Save Changes"
       },
       "delete": {
         "title": "Delete Event",
-        "description": "Remove \"{{name}}\" from the calendar?",
+        "description": "Retirer « {{name}} » du calendrier ?",
         "confirm": "Delete"
       },
       "form": {
@@ -2320,15 +2320,15 @@
         "reviewRequired": "Révision requise",
         "noReview": "Aucune révision en attente"
       },
-      "waitingTitle": "Waiting for Chief assignment",
-      "waitingDesc": "Your account is in the system. The Chief Manager needs to assign a project manager and project before your workspace unlocks.",
+      "waitingTitle": "En attente d'affectation par la direction",
+      "waitingDesc": "Votre compte est enregistré. La direction doit affecter un chef de projet et un projet avant que votre espace de travail ne soit accessible.",
       "messageTeamBtn": "Message team",
-      "reviewTitle": "Booth design ready for review",
-      "reviewDesc": "The latest design for {{name}} has been shared with you. Open the workspace to inspect it, approve it, or request changes.",
+      "reviewTitle": "Projet de stand prêt à être examiné",
+      "reviewDesc": "Le dernier projet pour {{name}} vous a été transmis. Ouvrez l'espace de travail pour l'examiner, le valider ou demander des modifications.",
       "openWorkspaceBtn": "Open Workspace",
       "reviewApprovalBtn": "Review Approval",
-      "workspaceLocked": "Workspace locked until assignment",
-      "workspaceLockedDesc": "You will be notified when your project manager is assigned."
+      "workspaceLocked": "Espace de travail verrouillé jusqu'à l'affectation",
+      "workspaceLockedDesc": "Vous serez averti dès que votre chef de projet sera désigné."
     },
     "approvals": {
       "pageTitle": "Approbations | ENS",
@@ -2456,11 +2456,11 @@
         "send": "Envoyer le message"
       },
       "error": {
-        "contacts": "Could not load message contacts.",
-        "messages": "Could not load messages.",
-        "attachmentTooLarge": "Attachment is too large. Maximum file size is 25 MB."
+        "contacts": "Impossible de charger les contacts de messagerie.",
+        "messages": "Impossible de charger les messages.",
+        "attachmentTooLarge": "La pièce jointe est trop volumineuse. La taille maximale est de 25 Mo."
       },
-      "noMessages": "No messages yet.",
+      "noMessages": "Pas encore de messages.",
       "uploading": "Uploading attachment..."
     },
     "projects": {
@@ -2495,8 +2495,8 @@
         "heading": "Chronologie du projet",
         "defaultLabel": "Projet créé — design en cours",
         "defaultDate": "Récemment",
-        "movedFromTo": "Moved from {{from}} to {{to}}",
-        "movedTo": "Moved to {{to}}"
+        "movedFromTo": "Passé de {{from}} à {{to}}",
+        "movedTo": "Passé à {{to}}"
       },
       "action": {
         "viewDesign": "Voir le design",
@@ -2505,9 +2505,9 @@
         "documents": "Documents",
         "messagePm": "Contacter le chef de projet"
       },
-      "loadError": "Could not load your assigned projects.",
-      "emptyTitle": "No assigned projects yet",
-      "emptyDesc": "Your exhibition registration is in the system. A Chief Manager or Project Manager needs to assign a project before it appears here."
+      "loadError": "Impossible de charger vos projets attribués.",
+      "emptyTitle": "Aucun projet attribué pour le moment",
+      "emptyDesc": "Votre inscription au salon est enregistrée. La direction ou un chef de projet doit attribuer un projet avant qu'il n'apparaisse ici."
     },
     "profile": {
       "pageTitle": "Paramètres du profil | ENS",
@@ -2706,35 +2706,35 @@
         "fullscreen": "Plein écran"
       },
       "unassigned": {
-        "title": "Workspace waiting for assignment",
-        "body": "Your account exists, but the Chief Manager has not assigned a project manager and booth project yet. You'll get access as soon as your account is set up.",
-        "backBtn": "Back to Dashboard"
+        "title": "Espace de travail en attente d'affectation",
+        "body": "Votre compte existe, mais la direction n'a pas encore affecté de chef de projet ni de projet de stand. Vous y aurez accès dès que votre compte sera configuré.",
+        "backBtn": "Retour au tableau de bord"
       },
       "revisions": {
-        "counter": "Revisions: {{count}} / {{limit}}",
+        "counter": "Révisions : {{count}} / {{limit}}",
         "upgradeBtn": "Upgrade Revisions",
-        "exhaustedTitle": "Revision limit reached",
-        "exhaustedBody": "You have used all included arrangement rounds. Upgrade your plan to unlock more revisions.",
+        "exhaustedTitle": "Limite de révisions atteinte",
+        "exhaustedBody": "Vous avez utilisé toutes les révisions incluses. Passez à une offre supérieure pour en débloquer davantage.",
         "upgradeDialog": {
-          "title": "Upgrade Revisions Plan",
-          "subtitle": "Choose a plan to unlock more revision rounds.",
+          "title": "Faire évoluer l'offre de révisions",
+          "subtitle": "Choisissez une offre pour débloquer plus de révisions.",
           "starter": {
             "name": "Starter",
-            "description": "Adds 3 extra client revision rounds",
+            "description": "Ajoute 3 révisions client supplémentaires",
             "price": "$2.99"
           },
           "pro": {
             "name": "Pro",
-            "description": "Adds 8 extra revision rounds",
+            "description": "Ajoute 8 révisions supplémentaires",
             "price": "$9.99"
           },
           "unlimited": {
             "name": "Unlimited",
-            "description": "Unlimited revision rounds",
+            "description": "Révisions illimitées",
             "price": "$11.99"
           },
           "cancelBtn": "Cancel",
-          "continueBtn": "Continue to checkout"
+          "continueBtn": "Passer au paiement"
         }
       },
       "feedbackFilter": {
@@ -2748,12 +2748,12 @@
         "reopen": "Reopen",
         "resolve": "Resolve"
       },
-      "backToDashboard": "Back to Dashboard"
+      "backToDashboard": "Retour au tableau de bord"
     },
     "pendingApproval": {
       "title": "Pending Approval",
-      "body": "Hi {{firstName}}, your account has been created and is waiting for your agency to review and approve it. You'll have full access once they do.",
-      "emailNote": "You'll receive an email notification when your account is activated."
+      "body": "Bonjour {{firstName}}, votre compte a été créé et attend l'examen et la validation de votre agence. Vous aurez alors un accès complet.",
+      "emailNote": "Vous recevrez un e-mail dès que votre compte sera activé."
     }
   },
   "notFound": {

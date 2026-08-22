@@ -562,21 +562,21 @@
       "pieShare": "Share",
       "workflow": {
         "title": "Assignment control",
-        "desc": "New accounts and unassigned work that need Chief action.",
+        "desc": "需要总监处理的新账户和未分配工作。",
         "openAssignments": "Open assignments",
         "pendingAccounts": "Pending accounts",
-        "pendingAccountsDetail": "Client accounts awaiting review",
-        "pendingAccountsClear": "No accounts pending",
+        "pendingAccountsDetail": "等待审核的客户账户",
+        "pendingAccountsClear": "没有待处理账户",
         "newPMs": "New PMs",
-        "newPMsClear": "No PM accounts waiting",
+        "newPMsClear": "没有等待中的项目经理账户",
         "unassignedClients": "Unassigned clients",
-        "unassignedClientsClear": "All clients assigned",
+        "unassignedClientsClear": "所有客户均已分配",
         "unassignedProjects": "Unassigned projects",
-        "unassignedProjectsClear": "All projects assigned",
+        "unassignedProjectsClear": "所有项目均已分配",
         "stalledApprovals": "Stalled approvals",
-        "stalledApprovalsClear": "No stale approvals",
+        "stalledApprovalsClear": "没有逾期审批",
         "overloadedPMs": "Overloaded PMs",
-        "overloadedPMsClear": "Capacity looks stable"
+        "overloadedPMsClear": "工作负荷保持稳定"
       }
     },
     "managers": {
@@ -616,10 +616,10 @@
         "copyLink": "复制 {{email}} 的邀请链接",
         "resend": "重新发送邀请至 {{email}}",
         "revoke": "撤销 {{email}} 的邀请",
-        "showMore": "Show {{count}} more",
+        "showMore": "再显示 {{count}} 条",
         "showLess": "Show less",
-        "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured",
+        "emailFailed": "邮件未发送",
+        "emailProviderNotConfigured": "邮件服务商尚未配置",
         "code": "邀请码",
         "link": "链接",
         "copyCode": "复制 {{email}} 的邀请码"
@@ -674,7 +674,7 @@
         "searchClients": "Search clients...",
         "searchProjects": "Search projects...",
         "loading": "Loading assignments...",
-        "showing": "{{total}} total / showing {{start}}-{{end}}",
+        "showing": "共 {{total}} 条 / 显示 {{start}}-{{end}}",
         "previous": "Previous",
         "next": "Next",
         "page": "Page {{page}}"
@@ -689,7 +689,7 @@
         "urgent": "紧急",
         "ratingNew": "新",
         "ratingNA": "暂无",
-        "capacityDetail": "Capacity: {{projects}}/{{maxProjects}} active projects · {{clients}}/{{maxClients}} clients"
+        "capacityDetail": "负荷：{{projects}}/{{maxProjects}} 个进行中项目 · {{clients}}/{{maxClients}} 位客户"
       },
       "table": {
         "manager": "经理",
@@ -749,10 +749,10 @@
           "assignmentsSaved": "分配更改已保存。",
           "rebalanced": "{{project}} 已从 {{from}} 转移至 {{to}}。",
           "reminded": "已为 {{name}} 排队发送应用内提醒 — {{count}} 个优先事项。",
-          "ratingUpdated": "Rating set to {{rating}}"
+          "ratingUpdated": "评分已设为 {{rating}}"
         },
         "justNow": "刚刚",
-        "exportExcel": "Export as Excel",
+        "exportExcel": "导出为 Excel",
         "collapse": "Collapse",
         "expand": "Expand"
       },
@@ -794,13 +794,13 @@
         "rebalanceDone": "工作负载已重新平衡",
         "reminderSent": "{{name}} 的提醒已加入队列 — 通知已创建",
         "reminderError": "无法发送提醒",
-        "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}",
+        "rebalanceAllLoaded": "其他所有在岗项目经理均已满负荷（≥85%）。建议增聘人手或调整工期。",
+        "ratingUpdated": "评分已更新为 {{rating}}",
         "inviteCodeCopied": "邀请码已复制",
         "inviteCodeCopyError": "无法复制邀请码"
       },
       "error": {
-        "rating": "Failed to update rating"
+        "rating": "评分更新失败"
       }
     },
     "reports": {
@@ -1158,19 +1158,19 @@
         "updated": "{{name}} 已更新",
         "openMonitor": "正在打开 {{name}} 的展位工作区",
         "moved": "{{name}} 已移至 {{stage}}",
-        "created": "Project \"{{name}}\" created.",
-        "exported": "Projects exported to Excel."
+        "created": "项目“{{name}}”已创建。",
+        "exported": "项目已导出至 Excel。"
       },
       "validate": {
         "required": "项目名称和客户为必填项。",
         "dimensions": "宽度和深度必须在 1 到 100 米之间。"
       },
-      "exportTooltip": "Export project list to Excel",
+      "exportTooltip": "将项目列表导出至 Excel",
       "export": "Export",
       "newProject": "New Project",
       "create": {
         "title": "New Project",
-        "description": "Fill in the details below to create a new exhibition project.",
+        "description": "填写以下信息以创建新的展会项目。",
         "creating": "Creating…",
         "confirm": "Create Project"
       },
@@ -1357,7 +1357,7 @@
         "joinedSession": "已加入 {{name}} 的监控会话",
         "reassigned": "{{name}} 已重新分配给 {{pm}}"
       },
-      "refreshedJustNow": "Refreshed just now",
+      "refreshedJustNow": "刚刚刷新",
       "refreshedSecondsAgo": "{{s}}s ago",
       "refreshedMinutesAgo": "{{m}}m ago"
     },
@@ -1494,8 +1494,8 @@
           "signOutOthers": "退出其他会话",
           "signOut": "退出登录",
           "current": "当前",
-          "loading": "Loading active sessions...",
-          "empty": "No active sessions were returned by the server."
+          "loading": "正在加载活动会话…",
+          "empty": "服务器未返回任何活动会话。"
         },
         "toast": {
           "passwordSaved": "密码已更新",
@@ -1555,44 +1555,44 @@
       },
       "readiness": {
         "title": "Production readiness",
-        "desc": "Real deployment checks for database, email, auth, app URL, and workspace asset storage.",
+        "desc": "针对数据库、邮件、身份验证、应用地址和工作区文件存储的真实部署检查。",
         "ready": "Ready",
         "notReady": "Not ready",
         "refresh": "Refresh",
         "mode": "Mode",
-        "apiJsonLimit": "API JSON limit",
+        "apiJsonLimit": "API JSON 上限",
         "assetStorage": "Asset storage",
         "unknown": "Unknown",
         "blockingWarnings": "Blocking warnings",
-        "noWarnings": "No blocking production warnings reported by the backend.",
+        "noWarnings": "后端未报告任何阻断性生产警告。",
         "checks": {
           "databaseConfigured": {
             "title": "Hosted database",
-            "desc": "DATABASE_URL is configured"
+            "desc": "已配置 DATABASE_URL"
           },
           "emailConfigured": {
             "title": "Transactional email",
-            "desc": "RESEND_API_KEY and RESEND_FROM are configured"
+            "desc": "已配置 RESEND_API_KEY 和 RESEND_FROM"
           },
           "appUrlConfigured": {
-            "title": "Public app URL",
-            "desc": "APP_URL is an absolute URL"
+            "title": "对外应用地址",
+            "desc": "APP_URL 是绝对地址"
           },
           "staffAccessConfigured": {
-            "title": "Staff access gate",
-            "desc": "Staff/chief signup key is not a placeholder"
+            "title": "员工访问门禁",
+            "desc": "注册密钥不是占位值"
           },
           "authSecretConfigured": {
             "title": "Auth secret",
-            "desc": "AUTH_SECRET is not a placeholder"
+            "desc": "AUTH_SECRET 不是占位值"
           },
           "assetStorageConfigured": {
-            "title": "Workspace asset storage",
-            "desc": "Uploaded logos and panel images use durable storage"
+            "title": "工作区文件存储",
+            "desc": "上传的标志和展板图片使用持久化存储"
           },
           "productionMode": {
             "title": "Production mode",
-            "desc": "NODE_ENV is production"
+            "desc": "NODE_ENV 为 production"
           }
         }
       }
@@ -1682,7 +1682,7 @@
         "completed": "已完成",
         "workspaceFiles": "工作区文件",
         "managedTrend": "Managed clients",
-        "liveTrend": "Live & In Progress",
+        "liveTrend": "进行中与在展",
         "needsAttention": "Needs attention",
         "allClear": "All clear",
         "deliveredTrend": "Successfully delivered",
@@ -1710,10 +1710,10 @@
         "activeWorkspaces": "活跃工作区",
         "activeWorkspacesDesc": "展台设计可供编辑。",
         "openWorkspace": "打开工作区",
-        "noDelays": "No projects are currently delayed",
-        "noPending": "Approval queue is empty",
+        "noDelays": "目前没有延期的项目",
+        "noPending": "审批队列为空",
         "completedProjects": "Completed Projects",
-        "completedProjectsDesc": "Projects successfully delivered to clients",
+        "completedProjectsDesc": "已成功交付给客户的项目",
         "viewCompleted": "View completed"
       },
       "recentActivity": {
@@ -1721,13 +1721,13 @@
         "loading": "正在加载活动...",
         "empty": "尚未记录任何活动事件。"
       },
-      "exported": "Dashboard exported to Excel.",
+      "exported": "仪表板已导出至 Excel。",
       "export": "Export",
       "charts": {
         "activity": "Project Activity",
-        "activityDesc": "Daily project updates over the last 7 days",
+        "activityDesc": "过去 7 天的每日项目更新",
         "status": "Project Status",
-        "statusDesc": "{{count}} projects tracked"
+        "statusDesc": "已跟踪 {{count}} 个项目"
       },
       "retry": "Retry"
     },
@@ -1786,20 +1786,20 @@
         "width": "宽度 (m)",
         "depth": "深度 (m)",
         "submit": "创建项目",
-        "dimensionsInvalid": "Width and depth must be between 1 and 100 meters.",
-        "deadlineInvalid": "Deadline must be today or later.",
-        "nameClientRequired": "Name and client are required."
+        "dimensionsInvalid": "宽度和深度必须在 1 到 100 米之间。",
+        "deadlineInvalid": "截止日期必须为今天或之后。",
+        "nameClientRequired": "名称和客户为必填项。"
       },
       "toast": {
         "created": "项目「{{name}}」已保存。",
         "createError": "无法创建项目。",
-        "stageUpdated": "{{name}} moved to {{stage}}.",
-        "stageError": "Project stage could not be saved.",
+        "stageUpdated": "{{name}} 已移至 {{stage}}。",
+        "stageError": "项目阶段保存失败。",
         "edited": "\"{{name}}\" updated.",
-        "editError": "Could not save changes.",
+        "editError": "更改保存失败。",
         "deleted": "\"{{name}}\" deleted.",
-        "deleteError": "Could not delete project.",
-        "exported": "Projects exported to Excel."
+        "deleteError": "项目删除失败。",
+        "exported": "项目已导出至 Excel。"
       },
       "stage": {
         "intake": "Intake",
@@ -1811,22 +1811,22 @@
       "detail": {
         "stage": "Stage: {{stage}}",
         "description": "Description",
-        "noDescription": "No project description has been saved yet.",
+        "noDescription": "尚未保存项目说明。",
         "lifecycle": "Lifecycle",
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "No stage changes have been recorded yet."
+        "noHistory": "尚未记录任何阶段变更。"
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} projects"
+        "showing": "显示第 {{start}}-{{end}} 项，共 {{total}} 个项目"
       },
-      "exportTooltip": "Export to Excel",
+      "exportTooltip": "导出至 Excel",
       "export": "Export",
       "sortBy": "Sort by",
       "delete": {
         "title": "Delete project?",
-        "warning": "This project and all associated data will be permanently removed.",
+        "warning": "此项目及其全部关联数据将被永久删除。",
         "confirm": "Delete"
       },
       "kanban": {
@@ -1864,13 +1864,13 @@
         "openWorkspace": "打开工作区",
         "openWorkspaceFor": "为 {{name}} 打开工作区",
         "toggleExpand": "展开/折叠 {{name}} 的详情",
-        "noWorkspace": "No project workspace is available",
-        "openDetails": "Open details for {{name}}",
+        "noWorkspace": "没有可用的项目工作区",
+        "openDetails": "打开 {{name}} 的详情",
         "viewProject": "View project",
         "message": "Message",
         "messageClient": "Message {{name}}",
-        "sendWorkspace": "Send Workspace Link",
-        "sendBill": "Send Bill of Everything"
+        "sendWorkspace": "发送工作区链接",
+        "sendBill": "发送完整清单"
       },
       "detail": {
         "clientDetails": "客户详情",
@@ -1880,26 +1880,26 @@
         "dataSource": "实时客户与项目记录",
         "contact": "Contact",
         "linkedProject": "Linked Project",
-        "noLinkedProject": "No linked project",
-        "workspaceReady": "Project workspace link is available.",
-        "workspaceMissing": "No project workspace is linked to this client yet.",
-        "changeStatus": "Change client status",
+        "noLinkedProject": "未关联项目",
+        "workspaceReady": "项目工作区链接已就绪。",
+        "workspaceMissing": "该客户尚未关联任何项目工作区。",
+        "changeStatus": "更改客户状态",
         "tabs": {
           "overview": "Overview",
           "credentials": "Credentials",
           "billing": "Billing"
         },
         "credentials": {
-          "title": "Account & Security",
+          "title": "账户与安全",
           "accountId": "Account ID",
-          "role": "Portal Access Role",
+          "role": "门户访问角色",
           "username": "Username/Email",
           "password": "Password",
           "showPassword": "Show Password",
-          "mfa": "MFA Security Status",
+          "mfa": "MFA 安全状态",
           "mfaDisabled": "MFA Disabled",
-          "session": "Active Session info",
-          "webSession": "Web Browser (Chrome/Windows)"
+          "session": "活动会话",
+          "webSession": "网页浏览器（Chrome/Windows）"
         },
         "billing": {
           "title": "Project Billing",
@@ -1908,13 +1908,13 @@
           "outstanding": "Outstanding",
           "status": "Invoice Status",
           "statusPartial": "Partial Payment",
-          "sendSuccess": "Bill successfully sent to client!",
-          "linkSendSuccess": "Workspace link successfully sent to client!",
-          "detailSource": "Project finance module & contracts"
+          "sendSuccess": "清单已成功发送给客户。",
+          "linkSendSuccess": "工作区链接已成功发送给客户。",
+          "detailSource": "项目财务模块与合同"
         }
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} clients"
+        "showing": "显示第 {{start}}-{{end}} 项，共 {{total}} 位客户"
       }
     },
     "tasks": {
@@ -1950,17 +1950,17 @@
       "toast": {
         "moved": "「{{title}}」→ {{col}}",
         "created": "任务已创建：「{{title}}」",
-        "movedClean": "\"{{title}}\" moved to {{col}}",
-        "loadError": "Could not load tasks.",
-        "deleted": "Task deleted: \"{{title}}\"",
-        "createError": "Could not create task.",
-        "updateError": "Could not update task.",
-        "deleteError": "Could not delete task.",
-        "deadlineInvalid": "Choose a valid deadline.",
-        "deadlinePast": "Deadline cannot be in the past.",
-        "notesTooLong": "Task notes must be under 4000 characters.",
-        "titleRequired": "Task title is required.",
-        "projectRequired": "A project is required.",
+        "movedClean": "“{{title}}”已移至{{col}}",
+        "loadError": "任务加载失败。",
+        "deleted": "任务已删除：“{{title}}”",
+        "createError": "任务创建失败。",
+        "updateError": "任务更新失败。",
+        "deleteError": "任务删除失败。",
+        "deadlineInvalid": "请选择有效的截止日期。",
+        "deadlinePast": "截止日期不能早于今天。",
+        "notesTooLong": "任务备注需少于 4000 个字符。",
+        "titleRequired": "任务标题为必填项。",
+        "projectRequired": "必须选择一个项目。",
         "updated": "Task updated."
       },
       "modal": {
@@ -1975,18 +1975,18 @@
         "submit": "创建任务",
         "select": "选择…",
         "notes": "Notes",
-        "notesPlaceholder": "Add context, blockers, or reminder details..."
+        "notesPlaceholder": "补充背景、阻碍或提醒事项…"
       },
-      "noProjects": "No assigned projects are available for task creation.",
+      "noProjects": "没有可用于创建任务的已分配项目。",
       "reminder": {
-        "dueSoon": "Due in {{count}}d"
+        "dueSoon": "{{count}} 天后到期"
       },
       "edit": {
         "title": "Edit task"
       },
       "confirmDelete": {
         "title": "Delete task?",
-        "body": "This task will be permanently removed and cannot be recovered."
+        "body": "此任务将被永久删除且无法恢复。"
       }
     },
     "messages": {
@@ -2009,13 +2009,13 @@
         "videoReady": "正在与 {{name}} 开启视频…",
         "optionsOpened": "选项菜单已打开。",
         "attachmentOpened": "附件选择器已打开。",
-        "callRequestOpened": "Call request opened for {{name}}.",
-        "videoRequestOpened": "Video request opened for {{name}}.",
-        "attachmentSelected": "{{name}} attached as a message reference.",
-        "attachmentTooLarge": "Choose a file under 10 MB.",
-        "contextCopied": "Thread context copied.",
-        "contextCopyError": "Thread context could not be copied.",
-        "attachmentUploadError": "Attachment could not be uploaded."
+        "callRequestOpened": "已为 {{name}} 发起通话请求。",
+        "videoRequestOpened": "已为 {{name}} 发起视频请求。",
+        "attachmentSelected": "{{name}} 已作为消息引用附加。",
+        "attachmentTooLarge": "请选择小于 10 MB 的文件。",
+        "contextCopied": "会话背景已复制。",
+        "contextCopyError": "会话背景复制失败。",
+        "attachmentUploadError": "附件上传失败。"
       },
       "actions": {
         "call": "开始语音通话",
@@ -2024,23 +2024,23 @@
         "attach": "附加文件",
         "send": "发送消息",
         "email": "Email contact",
-        "copyContext": "Copy thread context",
-        "clearAttachment": "Remove attachment reference"
+        "copyContext": "复制会话背景",
+        "clearAttachment": "移除附件引用"
       },
-      "loadProjectsError": "Could not load project scopes.",
+      "loadProjectsError": "项目范围加载失败。",
       "projectScope": "Project scope",
-      "noProjectScopes": "No assigned projects. Messages will use a general thread.",
+      "noProjectScopes": "没有已分配的项目，消息将使用通用会话。",
       "allExhibitions": "All exhibitions",
       "allContacts": "{{count}} contacts",
       "generalThread": "General thread",
-      "scopedTo": "Scoped to {{project}}",
-      "attachmentDraft": "Attachment reference: {{name}}",
+      "scopedTo": "关联至 {{project}}",
+      "attachmentDraft": "附件引用：{{name}}",
       "attachmentFallback": "Attachment",
       "newConversation": "New conversation",
-      "newChatSearchPlaceholder": "Find a contact…",
-      "newChatHint": "Select a contact to start a new thread",
-      "newChatNoMatch": "No contacts match your search.",
-      "newChatAllAdded": "All contacts are already in your conversations.",
+      "newChatSearchPlaceholder": "查找联系人…",
+      "newChatHint": "选择一位联系人以开始新会话",
+      "newChatNoMatch": "没有联系人符合您的搜索。",
+      "newChatAllAdded": "所有联系人都已在您的会话中。",
       "uploadingAttachment": "Uploading attachment..."
     },
     "requests": {
@@ -2082,26 +2082,26 @@
         "pending": "申请设为待处理",
         "replySent": "回复已发送"
       },
-      "loadError": "Revision requests could not be loaded.",
-      "statusError": "Request status could not be saved.",
-      "replyError": "Reply could not be saved.",
+      "loadError": "修改请求加载失败。",
+      "statusError": "请求状态保存失败。",
+      "replyError": "回复保存失败。",
       "searchPlaceholder": "Search requests...",
       "history": {
         "title": "Request history",
         "meta": "{{actor}} / {{time}}",
-        "empty": "No request history has been recorded yet."
+        "empty": "尚未记录任何请求历史。"
       },
       "detail": {
         "request": "Request",
         "replies": "Replies",
-        "noReplies": "No replies yet."
+        "noReplies": "暂无回复。"
       },
       "confirmDecline": {
-        "title": "Decline this request?",
-        "body": "The client will see this request marked as Declined. This action cannot be undone."
+        "title": "拒绝此请求？",
+        "body": "客户将看到此请求被标记为已拒绝。此操作无法撤销。"
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} requests"
+        "showing": "显示第 {{start}}-{{end}} 项，共 {{total}} 条请求"
       }
     },
     "reports": {
@@ -2148,28 +2148,28 @@
       },
       "toast": {
         "exporting": "导出已开始…",
-        "exported": "Excel report exported"
+        "exported": "Excel 报表已导出"
       },
-      "loadError": "Report data could not be loaded.",
-      "loading": "Loading report data...",
-      "empty": "No report data has been recorded for this period."
+      "loadError": "报表数据加载失败。",
+      "loading": "正在加载报表数据…",
+      "empty": "本期未记录任何报表数据。"
     },
     "join": {
-      "pageTitle": "Join the Team",
-      "pageSubtitle": "Complete your profile to activate your Project Manager account.",
+      "pageTitle": "加入团队",
+      "pageSubtitle": "完善您的资料以激活项目经理账户。",
       "inviteConfirmed": "Invitation confirmed",
-      "joiningAs": "Joining as a <bold>Project Manager</bold> with email <email>{{email}}</email>",
+      "joiningAs": "您将以 <bold>项目经理</bold> 身份加入，邮箱为 <email>{{email}}</email>",
       "form": {
         "fullName": "Full Name",
-        "fullNamePlaceholder": "Your full name",
+        "fullNamePlaceholder": "您的姓名",
         "password": "Password",
-        "passwordPlaceholder": "At least 8 characters",
+        "passwordPlaceholder": "至少 8 个字符",
         "confirmPassword": "Confirm Password",
-        "confirmPasswordPlaceholder": "Re-enter your password",
+        "confirmPasswordPlaceholder": "请再次输入密码",
         "showPassword": "Show password",
         "hidePassword": "Hide password",
-        "passwordMismatch": "Passwords do not match.",
-        "submit": "Create My Account",
+        "passwordMismatch": "两次输入的密码不一致。",
+        "submit": "创建我的账户",
         "submitting": "Creating Account…"
       },
       "strength": {
@@ -2179,21 +2179,21 @@
         "strong": "Strong"
       },
       "error": {
-        "title": "Invitation Not Valid",
-        "noToken": "No invitation token found in the URL. Please use the link from your invitation email.",
-        "invalidToken": "This invitation link is not valid.",
-        "contact": "If you believe this is a mistake, please contact your administrator to resend the invitation.",
+        "title": "邀请无效",
+        "noToken": "网址中未找到邀请令牌。请使用邀请邮件中的链接。",
+        "invalidToken": "此邀请链接无效。",
+        "contact": "如果您认为这是误报，请联系管理员重新发送邀请。",
         "adminEmail": "admin@ens-agency.com",
-        "goToLogin": "Go to Login",
-        "nameRequired": "Please enter your full name.",
-        "passwordTooShort": "Password must be at least 8 characters.",
-        "passwordMismatch": "Passwords do not match.",
-        "generic": "Something went wrong. Please try again."
+        "goToLogin": "前往登录",
+        "nameRequired": "请输入您的姓名。",
+        "passwordTooShort": "密码至少需要 8 个字符。",
+        "passwordMismatch": "两次输入的密码不一致。",
+        "generic": "出了点问题，请重试。"
       },
       "success": {
         "title": "Account Created!",
-        "body": "Welcome to the ENS team, {{name}}! Your account is ready. You'll be redirected to the login page in a moment.",
-        "goToLogin": "Go to Login Now"
+        "body": "欢迎加入 ENS 团队，{{name}}！您的账户已就绪，稍后将跳转至登录页面。",
+        "goToLogin": "立即前往登录"
       }
     },
     "workspace": {
@@ -2201,7 +2201,7 @@
         "all": "All",
         "chairs": "Chairs",
         "stools": "Bar stools",
-        "seating": "Sofas & poufs",
+        "seating": "沙发与坐墩",
         "tables": "Tables",
         "storage": "Storage",
         "shelves": "Shelves",
@@ -2219,19 +2219,19 @@
       "nextMonth": "Next month",
       "searchPlaceholder": "Search events…",
       "today": "Today",
-      "eventsThisMonth": "events this month",
+      "eventsThisMonth": "本月活动",
       "addToDay": "Add",
-      "noEventsDay": "No events scheduled for this day.",
-      "upcomingThisMonth": "Events This Month",
-      "noEvents": "No events match the current filters.",
+      "noEventsDay": "当天没有安排任何活动。",
+      "upcomingThisMonth": "本月活动",
+      "noEvents": "没有活动符合当前筛选条件。",
       "error": {
-        "load": "Failed to load calendar",
-        "nameRequired": "Name is required",
-        "startRequired": "Start date is required",
-        "endRequired": "End date is required",
-        "endBeforeStart": "End date must be on or after start date",
-        "save": "Failed to save",
-        "delete": "Failed to delete"
+        "load": "日历加载失败",
+        "nameRequired": "名称为必填项",
+        "startRequired": "开始日期为必填项",
+        "endRequired": "结束日期为必填项",
+        "endBeforeStart": "结束日期必须不早于开始日期",
+        "save": "保存失败",
+        "delete": "删除失败"
       },
       "filter": {
         "all": "All",
@@ -2242,17 +2242,17 @@
       },
       "create": {
         "title": "Add Event",
-        "description": "Add an exhibition or deadline to your calendar.",
+        "description": "将展会或截止日期添加到您的日历。",
         "confirm": "Create Event"
       },
       "edit": {
         "title": "Edit Event",
-        "description": "Update event details.",
+        "description": "更新活动详情。",
         "confirm": "Save Changes"
       },
       "delete": {
         "title": "Delete Event",
-        "description": "Remove \"{{name}}\" from the calendar?",
+        "description": "从日历中移除“{{name}}”？",
         "confirm": "Delete"
       },
       "form": {
@@ -2320,15 +2320,15 @@
         "reviewRequired": "需要审核",
         "noReview": "无待审核"
       },
-      "waitingTitle": "Waiting for Chief assignment",
-      "waitingDesc": "Your account is in the system. The Chief Manager needs to assign a project manager and project before your workspace unlocks.",
+      "waitingTitle": "等待总监分配",
+      "waitingDesc": "您的账户已进入系统。总监需要指派项目经理和项目后，您的工作区才会解锁。",
       "messageTeamBtn": "Message team",
-      "reviewTitle": "Booth design ready for review",
-      "reviewDesc": "The latest design for {{name}} has been shared with you. Open the workspace to inspect it, approve it, or request changes.",
+      "reviewTitle": "展台设计已可审阅",
+      "reviewDesc": "{{name}} 的最新设计已与您共享。打开工作区即可查看、批准或提出修改意见。",
       "openWorkspaceBtn": "Open Workspace",
       "reviewApprovalBtn": "Review Approval",
-      "workspaceLocked": "Workspace locked until assignment",
-      "workspaceLockedDesc": "You will be notified when your project manager is assigned."
+      "workspaceLocked": "工作区在分配前锁定",
+      "workspaceLockedDesc": "指派项目经理后我们会通知您。"
     },
     "approvals": {
       "pageTitle": "审批 | ENS",
@@ -2456,11 +2456,11 @@
         "send": "发送消息"
       },
       "error": {
-        "contacts": "Could not load message contacts.",
-        "messages": "Could not load messages.",
-        "attachmentTooLarge": "Attachment is too large. Maximum file size is 25 MB."
+        "contacts": "消息联系人加载失败。",
+        "messages": "消息加载失败。",
+        "attachmentTooLarge": "附件过大，单个文件最大为 25 MB。"
       },
-      "noMessages": "No messages yet.",
+      "noMessages": "暂无消息。",
       "uploading": "Uploading attachment..."
     },
     "projects": {
@@ -2495,8 +2495,8 @@
         "heading": "项目时间线",
         "defaultLabel": "项目已创建 — 设计进行中",
         "defaultDate": "最近",
-        "movedFromTo": "Moved from {{from}} to {{to}}",
-        "movedTo": "Moved to {{to}}"
+        "movedFromTo": "从 {{from}} 移至 {{to}}",
+        "movedTo": "已移至 {{to}}"
       },
       "action": {
         "viewDesign": "查看设计",
@@ -2505,9 +2505,9 @@
         "documents": "文档",
         "messagePm": "联系项目经理"
       },
-      "loadError": "Could not load your assigned projects.",
-      "emptyTitle": "No assigned projects yet",
-      "emptyDesc": "Your exhibition registration is in the system. A Chief Manager or Project Manager needs to assign a project before it appears here."
+      "loadError": "无法加载分配给您的项目。",
+      "emptyTitle": "暂无分配的项目",
+      "emptyDesc": "您的展会报名已进入系统。需由总监或项目经理指派项目后，才会显示在此处。"
     },
     "profile": {
       "pageTitle": "个人资料设置 | ENS",
@@ -2706,35 +2706,35 @@
         "fullscreen": "全屏"
       },
       "unassigned": {
-        "title": "Workspace waiting for assignment",
-        "body": "Your account exists, but the Chief Manager has not assigned a project manager and booth project yet. You'll get access as soon as your account is set up.",
-        "backBtn": "Back to Dashboard"
+        "title": "工作区等待分配",
+        "body": "您的账户已存在，但总监尚未指派项目经理和展台项目。账户设置完成后您即可访问。",
+        "backBtn": "返回仪表板"
       },
       "revisions": {
-        "counter": "Revisions: {{count}} / {{limit}}",
+        "counter": "修改次数：{{count}} / {{limit}}",
         "upgradeBtn": "Upgrade Revisions",
-        "exhaustedTitle": "Revision limit reached",
-        "exhaustedBody": "You have used all included arrangement rounds. Upgrade your plan to unlock more revisions.",
+        "exhaustedTitle": "已达修改次数上限",
+        "exhaustedBody": "您已用完套餐内的全部调整轮次。升级套餐即可解锁更多修改次数。",
         "upgradeDialog": {
-          "title": "Upgrade Revisions Plan",
-          "subtitle": "Choose a plan to unlock more revision rounds.",
+          "title": "升级修改套餐",
+          "subtitle": "选择套餐以解锁更多修改轮次。",
           "starter": {
             "name": "Starter",
-            "description": "Adds 3 extra client revision rounds",
+            "description": "增加 3 次客户修改轮次",
             "price": "$2.99"
           },
           "pro": {
             "name": "Pro",
-            "description": "Adds 8 extra revision rounds",
+            "description": "增加 8 次修改轮次",
             "price": "$9.99"
           },
           "unlimited": {
             "name": "Unlimited",
-            "description": "Unlimited revision rounds",
+            "description": "不限修改轮次",
             "price": "$11.99"
           },
           "cancelBtn": "Cancel",
-          "continueBtn": "Continue to checkout"
+          "continueBtn": "继续结算"
         }
       },
       "feedbackFilter": {
@@ -2748,12 +2748,12 @@
         "reopen": "Reopen",
         "resolve": "Resolve"
       },
-      "backToDashboard": "Back to Dashboard"
+      "backToDashboard": "返回仪表板"
     },
     "pendingApproval": {
       "title": "Pending Approval",
-      "body": "Hi {{firstName}}, your account has been created and is waiting for your agency to review and approve it. You'll have full access once they do.",
-      "emailNote": "You'll receive an email notification when your account is activated."
+      "body": "{{firstName}} 您好，您的账户已创建，正等待您的代理机构审核批准。通过后即可获得完整权限。",
+      "emailNote": "账户激活后，您将收到邮件通知。"
     }
   },
   "notFound": {

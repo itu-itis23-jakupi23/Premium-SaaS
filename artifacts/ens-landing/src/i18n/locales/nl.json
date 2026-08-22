@@ -27,8 +27,8 @@
   "home": {
     "hero": {
       "badge": "Het 3D-designstudio voor de tentoonstellingsindustrie",
-      "titlePart1": "Ontwerp beursstandsn in",
-      "titlePart2": "Real-Time 3D",
+      "titlePart1": "Ontwerp beursstanden in",
+      "titlePart2": "realtime 3D",
       "subtitle": "Bouw, pas aan en beheer Octanorm- en Maxima-stands direct in uw browser. Professionele tools voor serieuze tentoonstellingsontwerpers."
     },
     "trustedBy": "Gebouwd voor echte standproductie",
@@ -562,21 +562,21 @@
       "pieShare": "Share",
       "workflow": {
         "title": "Assignment control",
-        "desc": "New accounts and unassigned work that need Chief action.",
+        "desc": "Nieuwe accounts en niet-toegewezen werk waarvoor een beslissing nodig is.",
         "openAssignments": "Open assignments",
         "pendingAccounts": "Pending accounts",
-        "pendingAccountsDetail": "Client accounts awaiting review",
-        "pendingAccountsClear": "No accounts pending",
+        "pendingAccountsDetail": "Klantaccounts wachten op beoordeling",
+        "pendingAccountsClear": "Geen openstaande accounts",
         "newPMs": "New PMs",
-        "newPMsClear": "No PM accounts waiting",
+        "newPMsClear": "Geen wachtende projectmanageraccounts",
         "unassignedClients": "Unassigned clients",
-        "unassignedClientsClear": "All clients assigned",
+        "unassignedClientsClear": "Alle klanten toegewezen",
         "unassignedProjects": "Unassigned projects",
-        "unassignedProjectsClear": "All projects assigned",
+        "unassignedProjectsClear": "Alle projecten toegewezen",
         "stalledApprovals": "Stalled approvals",
-        "stalledApprovalsClear": "No stale approvals",
+        "stalledApprovalsClear": "Geen achterstallige goedkeuringen",
         "overloadedPMs": "Overloaded PMs",
-        "overloadedPMsClear": "Capacity looks stable"
+        "overloadedPMsClear": "De bezetting blijft stabiel"
       }
     },
     "managers": {
@@ -616,10 +616,10 @@
         "copyLink": "Uitnodigingslink kopiëren voor {{email}}",
         "resend": "Uitnodiging opnieuw sturen naar {{email}}",
         "revoke": "Uitnodiging intrekken voor {{email}}",
-        "showMore": "Show {{count}} more",
+        "showMore": "Nog {{count}} tonen",
         "showLess": "Show less",
-        "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured",
+        "emailFailed": "E-mail niet verzonden",
+        "emailProviderNotConfigured": "e-mailprovider is niet geconfigureerd",
         "code": "Code",
         "link": "Link",
         "copyCode": "Uitnodigingscode voor {{email}} kopiëren"
@@ -674,7 +674,7 @@
         "searchClients": "Search clients...",
         "searchProjects": "Search projects...",
         "loading": "Loading assignments...",
-        "showing": "{{total}} total / showing {{start}}-{{end}}",
+        "showing": "{{total}} totaal / weergegeven {{start}}-{{end}}",
         "previous": "Previous",
         "next": "Next",
         "page": "Page {{page}}"
@@ -689,7 +689,7 @@
         "urgent": "urgent",
         "ratingNew": "Nieuw",
         "ratingNA": "N/B",
-        "capacityDetail": "Capacity: {{projects}}/{{maxProjects}} active projects · {{clients}}/{{maxClients}} clients"
+        "capacityDetail": "Bezetting: {{projects}}/{{maxProjects}} actieve projecten · {{clients}}/{{maxClients}} klanten"
       },
       "table": {
         "manager": "Manager",
@@ -749,10 +749,10 @@
           "assignmentsSaved": "Wijzigingen in toewijzingen opgeslagen.",
           "rebalanced": "{{project}} verplaatst van {{from}} naar {{to}}.",
           "reminded": "In-app herinnering in wachtrij voor {{name}} — {{count}} prioriteitsitem(s).",
-          "ratingUpdated": "Rating set to {{rating}}"
+          "ratingUpdated": "Beoordeling ingesteld op {{rating}}"
         },
         "justNow": "Zojuist",
-        "exportExcel": "Export as Excel",
+        "exportExcel": "Exporteren als Excel",
         "collapse": "Collapse",
         "expand": "Expand"
       },
@@ -794,13 +794,13 @@
         "rebalanceDone": "Werkdruk herverdeeld",
         "reminderSent": "Herinnering in wachtrij voor {{name}} — melding aangemaakt",
         "reminderError": "De herinnering kon niet worden verzonden",
-        "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}",
+        "rebalanceAllLoaded": "Alle andere actieve projectmanagers zitten aan hun limiet (≥85%). Overweeg extra mensen of ruimere planningen.",
+        "ratingUpdated": "Beoordeling bijgewerkt naar {{rating}}",
         "inviteCodeCopied": "Uitnodigingscode gekopieerd",
         "inviteCodeCopyError": "Uitnodigingscode kon niet worden gekopieerd"
       },
       "error": {
-        "rating": "Failed to update rating"
+        "rating": "Beoordeling kon niet worden bijgewerkt"
       }
     },
     "reports": {
@@ -1158,19 +1158,19 @@
         "updated": "{{name}} bijgewerkt",
         "openMonitor": "Standwerkruimte voor {{name}} wordt geopend",
         "moved": "{{name}} verplaatst naar {{stage}}",
-        "created": "Project \"{{name}}\" created.",
-        "exported": "Projects exported to Excel."
+        "created": "Project ‘{{name}}’ aangemaakt.",
+        "exported": "Projecten geëxporteerd naar Excel."
       },
       "validate": {
         "required": "Projectnaam en klant zijn verplicht.",
         "dimensions": "Breedte en diepte moeten tussen 1 en 100 meter liggen."
       },
-      "exportTooltip": "Export project list to Excel",
+      "exportTooltip": "Projectlijst exporteren naar Excel",
       "export": "Export",
       "newProject": "New Project",
       "create": {
         "title": "New Project",
-        "description": "Fill in the details below to create a new exhibition project.",
+        "description": "Vul de gegevens hieronder in om een nieuw beursproject aan te maken.",
         "creating": "Creating…",
         "confirm": "Create Project"
       },
@@ -1357,7 +1357,7 @@
         "joinedSession": "Monitorsessie voor {{name}} gestart",
         "reassigned": "{{name}} hertoegewezen aan {{pm}}"
       },
-      "refreshedJustNow": "Refreshed just now",
+      "refreshedJustNow": "Zojuist vernieuwd",
       "refreshedSecondsAgo": "{{s}}s ago",
       "refreshedMinutesAgo": "{{m}}m ago"
     },
@@ -1494,8 +1494,8 @@
           "signOutOthers": "Anderen afmelden",
           "signOut": "Afmelden",
           "current": "huidig",
-          "loading": "Loading active sessions...",
-          "empty": "No active sessions were returned by the server."
+          "loading": "Actieve sessies laden…",
+          "empty": "De server heeft geen actieve sessies teruggegeven."
         },
         "toast": {
           "passwordSaved": "Wachtwoord bijgewerkt",
@@ -1555,44 +1555,44 @@
       },
       "readiness": {
         "title": "Production readiness",
-        "desc": "Real deployment checks for database, email, auth, app URL, and workspace asset storage.",
+        "desc": "Echte deploymentcontroles voor database, e-mail, authenticatie, app-URL en opslag van werkruimtebestanden.",
         "ready": "Ready",
         "notReady": "Not ready",
         "refresh": "Refresh",
         "mode": "Mode",
-        "apiJsonLimit": "API JSON limit",
+        "apiJsonLimit": "API-JSON-limiet",
         "assetStorage": "Asset storage",
         "unknown": "Unknown",
         "blockingWarnings": "Blocking warnings",
-        "noWarnings": "No blocking production warnings reported by the backend.",
+        "noWarnings": "De backend meldt geen blokkerende productiewaarschuwingen.",
         "checks": {
           "databaseConfigured": {
             "title": "Hosted database",
-            "desc": "DATABASE_URL is configured"
+            "desc": "DATABASE_URL is geconfigureerd"
           },
           "emailConfigured": {
             "title": "Transactional email",
-            "desc": "RESEND_API_KEY and RESEND_FROM are configured"
+            "desc": "RESEND_API_KEY en RESEND_FROM zijn geconfigureerd"
           },
           "appUrlConfigured": {
-            "title": "Public app URL",
-            "desc": "APP_URL is an absolute URL"
+            "title": "Publieke app-URL",
+            "desc": "APP_URL is een absolute URL"
           },
           "staffAccessConfigured": {
-            "title": "Staff access gate",
-            "desc": "Staff/chief signup key is not a placeholder"
+            "title": "Toegangspoort voor medewerkers",
+            "desc": "De registratiesleutel is geen tijdelijke waarde"
           },
           "authSecretConfigured": {
             "title": "Auth secret",
-            "desc": "AUTH_SECRET is not a placeholder"
+            "desc": "AUTH_SECRET is geen tijdelijke waarde"
           },
           "assetStorageConfigured": {
-            "title": "Workspace asset storage",
-            "desc": "Uploaded logos and panel images use durable storage"
+            "title": "Opslag van werkruimtebestanden",
+            "desc": "Geüploade logo's en paneelafbeeldingen gebruiken duurzame opslag"
           },
           "productionMode": {
             "title": "Production mode",
-            "desc": "NODE_ENV is production"
+            "desc": "NODE_ENV staat op production"
           }
         }
       }
@@ -1682,7 +1682,7 @@
         "completed": "Voltooid",
         "workspaceFiles": "Werkruimtebestanden",
         "managedTrend": "Managed clients",
-        "liveTrend": "Live & In Progress",
+        "liveTrend": "Live en onderhanden",
         "needsAttention": "Needs attention",
         "allClear": "All clear",
         "deliveredTrend": "Successfully delivered",
@@ -1710,10 +1710,10 @@
         "activeWorkspaces": "Actieve werkruimten",
         "activeWorkspacesDesc": "Standontwerpen zijn beschikbaar voor bewerking.",
         "openWorkspace": "Werkruimte openen",
-        "noDelays": "No projects are currently delayed",
-        "noPending": "Approval queue is empty",
+        "noDelays": "Er lopen momenteel geen projecten achter",
+        "noPending": "De goedkeuringswachtrij is leeg",
         "completedProjects": "Completed Projects",
-        "completedProjectsDesc": "Projects successfully delivered to clients",
+        "completedProjectsDesc": "Projecten die succesvol aan klanten zijn opgeleverd",
         "viewCompleted": "View completed"
       },
       "recentActivity": {
@@ -1721,13 +1721,13 @@
         "loading": "Activiteit laden...",
         "empty": "Er zijn nog geen activiteitsgebeurtenissen geregistreerd."
       },
-      "exported": "Dashboard exported to Excel.",
+      "exported": "Dashboard geëxporteerd naar Excel.",
       "export": "Export",
       "charts": {
         "activity": "Project Activity",
-        "activityDesc": "Daily project updates over the last 7 days",
+        "activityDesc": "Dagelijkse projectupdates van de afgelopen 7 dagen",
         "status": "Project Status",
-        "statusDesc": "{{count}} projects tracked"
+        "statusDesc": "{{count}} projecten gevolgd"
       },
       "retry": "Retry"
     },
@@ -1786,20 +1786,20 @@
         "width": "Breedte (m)",
         "depth": "Diepte (m)",
         "submit": "Project aanmaken",
-        "dimensionsInvalid": "Width and depth must be between 1 and 100 meters.",
-        "deadlineInvalid": "Deadline must be today or later.",
-        "nameClientRequired": "Name and client are required."
+        "dimensionsInvalid": "Breedte en diepte moeten tussen 1 en 100 meter liggen.",
+        "deadlineInvalid": "De deadline moet vandaag of later zijn.",
+        "nameClientRequired": "Naam en klant zijn verplicht."
       },
       "toast": {
         "created": "Project \"{{name}}\" opgeslagen.",
         "createError": "Project kon niet worden aangemaakt.",
-        "stageUpdated": "{{name}} moved to {{stage}}.",
-        "stageError": "Project stage could not be saved.",
+        "stageUpdated": "{{name}} is verplaatst naar {{stage}}.",
+        "stageError": "De projectfase kon niet worden opgeslagen.",
         "edited": "\"{{name}}\" updated.",
-        "editError": "Could not save changes.",
+        "editError": "Wijzigingen konden niet worden opgeslagen.",
         "deleted": "\"{{name}}\" deleted.",
-        "deleteError": "Could not delete project.",
-        "exported": "Projects exported to Excel."
+        "deleteError": "Het project kon niet worden verwijderd.",
+        "exported": "Projecten geëxporteerd naar Excel."
       },
       "stage": {
         "intake": "Intake",
@@ -1811,22 +1811,22 @@
       "detail": {
         "stage": "Stage: {{stage}}",
         "description": "Description",
-        "noDescription": "No project description has been saved yet.",
+        "noDescription": "Er is nog geen projectomschrijving opgeslagen.",
         "lifecycle": "Lifecycle",
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "No stage changes have been recorded yet."
+        "noHistory": "Er zijn nog geen fasewijzigingen vastgelegd."
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} projects"
+        "showing": "{{start}}-{{end}} van {{total}} projecten weergegeven"
       },
-      "exportTooltip": "Export to Excel",
+      "exportTooltip": "Exporteren naar Excel",
       "export": "Export",
       "sortBy": "Sort by",
       "delete": {
         "title": "Delete project?",
-        "warning": "This project and all associated data will be permanently removed.",
+        "warning": "Dit project en alle bijbehorende gegevens worden definitief verwijderd.",
         "confirm": "Delete"
       },
       "kanban": {
@@ -1864,13 +1864,13 @@
         "openWorkspace": "Werkruimte openen",
         "openWorkspaceFor": "Werkruimte openen voor {{name}}",
         "toggleExpand": "Details van {{name}} in-/uitklappen",
-        "noWorkspace": "No project workspace is available",
-        "openDetails": "Open details for {{name}}",
+        "noWorkspace": "Er is geen projectwerkruimte beschikbaar",
+        "openDetails": "Details van {{name}} openen",
         "viewProject": "View project",
         "message": "Message",
         "messageClient": "Message {{name}}",
-        "sendWorkspace": "Send Workspace Link",
-        "sendBill": "Send Bill of Everything"
+        "sendWorkspace": "Werkruimtelink versturen",
+        "sendBill": "Volledig overzicht versturen"
       },
       "detail": {
         "clientDetails": "Klantgegevens",
@@ -1880,26 +1880,26 @@
         "dataSource": "Live klant- en projectgegevens",
         "contact": "Contact",
         "linkedProject": "Linked Project",
-        "noLinkedProject": "No linked project",
-        "workspaceReady": "Project workspace link is available.",
-        "workspaceMissing": "No project workspace is linked to this client yet.",
-        "changeStatus": "Change client status",
+        "noLinkedProject": "Geen gekoppeld project",
+        "workspaceReady": "De link naar de projectwerkruimte is beschikbaar.",
+        "workspaceMissing": "Er is nog geen projectwerkruimte aan deze klant gekoppeld.",
+        "changeStatus": "Klantstatus wijzigen",
         "tabs": {
           "overview": "Overview",
           "credentials": "Credentials",
           "billing": "Billing"
         },
         "credentials": {
-          "title": "Account & Security",
+          "title": "Account en beveiliging",
           "accountId": "Account ID",
-          "role": "Portal Access Role",
+          "role": "Toegangsrol portaal",
           "username": "Username/Email",
           "password": "Password",
           "showPassword": "Show Password",
-          "mfa": "MFA Security Status",
+          "mfa": "MFA-beveiligingsstatus",
           "mfaDisabled": "MFA Disabled",
-          "session": "Active Session info",
-          "webSession": "Web Browser (Chrome/Windows)"
+          "session": "Actieve sessie",
+          "webSession": "Webbrowser (Chrome/Windows)"
         },
         "billing": {
           "title": "Project Billing",
@@ -1908,13 +1908,13 @@
           "outstanding": "Outstanding",
           "status": "Invoice Status",
           "statusPartial": "Partial Payment",
-          "sendSuccess": "Bill successfully sent to client!",
-          "linkSendSuccess": "Workspace link successfully sent to client!",
-          "detailSource": "Project finance module & contracts"
+          "sendSuccess": "Het overzicht is naar de klant verstuurd.",
+          "linkSendSuccess": "De werkruimtelink is naar de klant verstuurd.",
+          "detailSource": "Projectfinanciën en contracten"
         }
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} clients"
+        "showing": "{{start}}-{{end}} van {{total}} klanten weergegeven"
       }
     },
     "tasks": {
@@ -1950,17 +1950,17 @@
       "toast": {
         "moved": "\"{{title}}\" → {{col}}",
         "created": "Taak aangemaakt: \"{{title}}\"",
-        "movedClean": "\"{{title}}\" moved to {{col}}",
-        "loadError": "Could not load tasks.",
-        "deleted": "Task deleted: \"{{title}}\"",
-        "createError": "Could not create task.",
-        "updateError": "Could not update task.",
-        "deleteError": "Could not delete task.",
-        "deadlineInvalid": "Choose a valid deadline.",
-        "deadlinePast": "Deadline cannot be in the past.",
-        "notesTooLong": "Task notes must be under 4000 characters.",
-        "titleRequired": "Task title is required.",
-        "projectRequired": "A project is required.",
+        "movedClean": "‘{{title}}’ is verplaatst naar {{col}}",
+        "loadError": "Taken konden niet worden geladen.",
+        "deleted": "Taak verwijderd: ‘{{title}}’",
+        "createError": "De taak kon niet worden aangemaakt.",
+        "updateError": "De taak kon niet worden bijgewerkt.",
+        "deleteError": "De taak kon niet worden verwijderd.",
+        "deadlineInvalid": "Kies een geldige deadline.",
+        "deadlinePast": "De deadline kan niet in het verleden liggen.",
+        "notesTooLong": "Taaknotities mogen maximaal 4000 tekens bevatten.",
+        "titleRequired": "Een taaktitel is verplicht.",
+        "projectRequired": "Een project is verplicht.",
         "updated": "Task updated."
       },
       "modal": {
@@ -1975,18 +1975,18 @@
         "submit": "Taak aanmaken",
         "select": "Selecteren…",
         "notes": "Notes",
-        "notesPlaceholder": "Add context, blockers, or reminder details..."
+        "notesPlaceholder": "Voeg context, blokkades of herinneringen toe…"
       },
-      "noProjects": "No assigned projects are available for task creation.",
+      "noProjects": "Er zijn geen toegewezen projecten beschikbaar om een taak aan te maken.",
       "reminder": {
-        "dueSoon": "Due in {{count}}d"
+        "dueSoon": "Over {{count}} d"
       },
       "edit": {
         "title": "Edit task"
       },
       "confirmDelete": {
         "title": "Delete task?",
-        "body": "This task will be permanently removed and cannot be recovered."
+        "body": "Deze taak wordt definitief verwijderd en kan niet worden hersteld."
       }
     },
     "messages": {
@@ -2009,13 +2009,13 @@
         "videoReady": "Video openen met {{name}}…",
         "optionsOpened": "Optiemenu geopend.",
         "attachmentOpened": "Bestandsselectie geopend.",
-        "callRequestOpened": "Call request opened for {{name}}.",
-        "videoRequestOpened": "Video request opened for {{name}}.",
-        "attachmentSelected": "{{name}} attached as a message reference.",
-        "attachmentTooLarge": "Choose a file under 10 MB.",
-        "contextCopied": "Thread context copied.",
-        "contextCopyError": "Thread context could not be copied.",
-        "attachmentUploadError": "Attachment could not be uploaded."
+        "callRequestOpened": "Belverzoek geopend voor {{name}}.",
+        "videoRequestOpened": "Videoverzoek geopend voor {{name}}.",
+        "attachmentSelected": "{{name}} is toegevoegd als berichtverwijzing.",
+        "attachmentTooLarge": "Kies een bestand kleiner dan 10 MB.",
+        "contextCopied": "Gesprekscontext gekopieerd.",
+        "contextCopyError": "Gesprekscontext kon niet worden gekopieerd.",
+        "attachmentUploadError": "De bijlage kon niet worden geüpload."
       },
       "actions": {
         "call": "Spraakgesprek starten",
@@ -2024,23 +2024,23 @@
         "attach": "Bestand bijvoegen",
         "send": "Bericht verzenden",
         "email": "Email contact",
-        "copyContext": "Copy thread context",
-        "clearAttachment": "Remove attachment reference"
+        "copyContext": "Gesprekscontext kopiëren",
+        "clearAttachment": "Bijlageverwijzing verwijderen"
       },
-      "loadProjectsError": "Could not load project scopes.",
+      "loadProjectsError": "Projectbereiken konden niet worden geladen.",
       "projectScope": "Project scope",
-      "noProjectScopes": "No assigned projects. Messages will use a general thread.",
+      "noProjectScopes": "Geen toegewezen projecten. Berichten gebruiken een algemeen gesprek.",
       "allExhibitions": "All exhibitions",
       "allContacts": "{{count}} contacts",
       "generalThread": "General thread",
-      "scopedTo": "Scoped to {{project}}",
-      "attachmentDraft": "Attachment reference: {{name}}",
+      "scopedTo": "Gekoppeld aan {{project}}",
+      "attachmentDraft": "Bijlageverwijzing: {{name}}",
       "attachmentFallback": "Attachment",
       "newConversation": "New conversation",
-      "newChatSearchPlaceholder": "Find a contact…",
-      "newChatHint": "Select a contact to start a new thread",
-      "newChatNoMatch": "No contacts match your search.",
-      "newChatAllAdded": "All contacts are already in your conversations.",
+      "newChatSearchPlaceholder": "Een contact zoeken…",
+      "newChatHint": "Selecteer een contact om een nieuw gesprek te starten",
+      "newChatNoMatch": "Geen contacten komen overeen met je zoekopdracht.",
+      "newChatAllAdded": "Alle contacten staan al in je gesprekken.",
       "uploadingAttachment": "Uploading attachment..."
     },
     "requests": {
@@ -2082,26 +2082,26 @@
         "pending": "Aanvraag in behandeling",
         "replySent": "Reactie verzonden"
       },
-      "loadError": "Revision requests could not be loaded.",
-      "statusError": "Request status could not be saved.",
-      "replyError": "Reply could not be saved.",
+      "loadError": "Wijzigingsverzoeken konden niet worden geladen.",
+      "statusError": "De status van het verzoek kon niet worden opgeslagen.",
+      "replyError": "Het antwoord kon niet worden opgeslagen.",
       "searchPlaceholder": "Search requests...",
       "history": {
         "title": "Request history",
         "meta": "{{actor}} / {{time}}",
-        "empty": "No request history has been recorded yet."
+        "empty": "Er is nog geen verzoekgeschiedenis vastgelegd."
       },
       "detail": {
         "request": "Request",
         "replies": "Replies",
-        "noReplies": "No replies yet."
+        "noReplies": "Nog geen antwoorden."
       },
       "confirmDecline": {
-        "title": "Decline this request?",
-        "body": "The client will see this request marked as Declined. This action cannot be undone."
+        "title": "Dit verzoek afwijzen?",
+        "body": "De klant ziet dit verzoek als afgewezen. Deze actie kan niet ongedaan worden gemaakt."
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} requests"
+        "showing": "{{start}}-{{end}} van {{total}} verzoeken weergegeven"
       }
     },
     "reports": {
@@ -2148,28 +2148,28 @@
       },
       "toast": {
         "exporting": "Export gestart…",
-        "exported": "Excel report exported"
+        "exported": "Excel-rapport geëxporteerd"
       },
-      "loadError": "Report data could not be loaded.",
-      "loading": "Loading report data...",
-      "empty": "No report data has been recorded for this period."
+      "loadError": "Rapportgegevens konden niet worden geladen.",
+      "loading": "Rapportgegevens laden…",
+      "empty": "Voor deze periode zijn geen rapportgegevens vastgelegd."
     },
     "join": {
-      "pageTitle": "Join the Team",
-      "pageSubtitle": "Complete your profile to activate your Project Manager account.",
+      "pageTitle": "Sluit je aan bij het team",
+      "pageSubtitle": "Vul je profiel aan om je projectmanageraccount te activeren.",
       "inviteConfirmed": "Invitation confirmed",
-      "joiningAs": "Joining as a <bold>Project Manager</bold> with email <email>{{email}}</email>",
+      "joiningAs": "Je sluit je aan als <bold>projectmanager</bold> met het e-mailadres <email>{{email}}</email>",
       "form": {
         "fullName": "Full Name",
-        "fullNamePlaceholder": "Your full name",
+        "fullNamePlaceholder": "Je volledige naam",
         "password": "Password",
-        "passwordPlaceholder": "At least 8 characters",
+        "passwordPlaceholder": "Minimaal 8 tekens",
         "confirmPassword": "Confirm Password",
-        "confirmPasswordPlaceholder": "Re-enter your password",
+        "confirmPasswordPlaceholder": "Voer je wachtwoord nogmaals in",
         "showPassword": "Show password",
         "hidePassword": "Hide password",
-        "passwordMismatch": "Passwords do not match.",
-        "submit": "Create My Account",
+        "passwordMismatch": "De wachtwoorden komen niet overeen.",
+        "submit": "Mijn account aanmaken",
         "submitting": "Creating Account…"
       },
       "strength": {
@@ -2179,21 +2179,21 @@
         "strong": "Strong"
       },
       "error": {
-        "title": "Invitation Not Valid",
-        "noToken": "No invitation token found in the URL. Please use the link from your invitation email.",
-        "invalidToken": "This invitation link is not valid.",
-        "contact": "If you believe this is a mistake, please contact your administrator to resend the invitation.",
+        "title": "Uitnodiging ongeldig",
+        "noToken": "Er is geen uitnodigingstoken in de URL gevonden. Gebruik de link uit je uitnodigingsmail.",
+        "invalidToken": "Deze uitnodigingslink is niet geldig.",
+        "contact": "Denk je dat dit een vergissing is? Vraag je beheerder de uitnodiging opnieuw te sturen.",
         "adminEmail": "admin@ens-agency.com",
-        "goToLogin": "Go to Login",
-        "nameRequired": "Please enter your full name.",
-        "passwordTooShort": "Password must be at least 8 characters.",
-        "passwordMismatch": "Passwords do not match.",
-        "generic": "Something went wrong. Please try again."
+        "goToLogin": "Naar het inloggen",
+        "nameRequired": "Vul je volledige naam in.",
+        "passwordTooShort": "Het wachtwoord moet minstens 8 tekens bevatten.",
+        "passwordMismatch": "De wachtwoorden komen niet overeen.",
+        "generic": "Er is iets misgegaan. Probeer het opnieuw."
       },
       "success": {
         "title": "Account Created!",
-        "body": "Welcome to the ENS team, {{name}}! Your account is ready. You'll be redirected to the login page in a moment.",
-        "goToLogin": "Go to Login Now"
+        "body": "Welkom bij het ENS-team, {{name}}! Je account staat klaar. Je wordt zo doorgestuurd naar de inlogpagina.",
+        "goToLogin": "Nu naar het inloggen"
       }
     },
     "workspace": {
@@ -2201,7 +2201,7 @@
         "all": "All",
         "chairs": "Chairs",
         "stools": "Bar stools",
-        "seating": "Sofas & poufs",
+        "seating": "Banken en poefs",
         "tables": "Tables",
         "storage": "Storage",
         "shelves": "Shelves",
@@ -2219,19 +2219,19 @@
       "nextMonth": "Next month",
       "searchPlaceholder": "Search events…",
       "today": "Today",
-      "eventsThisMonth": "events this month",
+      "eventsThisMonth": "evenementen deze maand",
       "addToDay": "Add",
-      "noEventsDay": "No events scheduled for this day.",
-      "upcomingThisMonth": "Events This Month",
-      "noEvents": "No events match the current filters.",
+      "noEventsDay": "Er staan geen evenementen gepland voor deze dag.",
+      "upcomingThisMonth": "Evenementen deze maand",
+      "noEvents": "Geen evenementen voldoen aan de huidige filters.",
       "error": {
-        "load": "Failed to load calendar",
-        "nameRequired": "Name is required",
-        "startRequired": "Start date is required",
-        "endRequired": "End date is required",
-        "endBeforeStart": "End date must be on or after start date",
-        "save": "Failed to save",
-        "delete": "Failed to delete"
+        "load": "Kalender kon niet worden geladen",
+        "nameRequired": "Naam is verplicht",
+        "startRequired": "Startdatum is verplicht",
+        "endRequired": "Einddatum is verplicht",
+        "endBeforeStart": "De einddatum moet op of na de startdatum liggen",
+        "save": "Opslaan mislukt",
+        "delete": "Verwijderen mislukt"
       },
       "filter": {
         "all": "All",
@@ -2242,17 +2242,17 @@
       },
       "create": {
         "title": "Add Event",
-        "description": "Add an exhibition or deadline to your calendar.",
+        "description": "Voeg een beurs of deadline toe aan je kalender.",
         "confirm": "Create Event"
       },
       "edit": {
         "title": "Edit Event",
-        "description": "Update event details.",
+        "description": "Werk de evenementgegevens bij.",
         "confirm": "Save Changes"
       },
       "delete": {
         "title": "Delete Event",
-        "description": "Remove \"{{name}}\" from the calendar?",
+        "description": "‘{{name}}’ uit de kalender verwijderen?",
         "confirm": "Delete"
       },
       "form": {
@@ -2320,15 +2320,15 @@
         "reviewRequired": "Review vereist",
         "noReview": "Geen review in behandeling"
       },
-      "waitingTitle": "Waiting for Chief assignment",
-      "waitingDesc": "Your account is in the system. The Chief Manager needs to assign a project manager and project before your workspace unlocks.",
+      "waitingTitle": "Wacht op toewijzing door de directie",
+      "waitingDesc": "Je account staat in het systeem. De directie moet nog een projectmanager en project toewijzen voordat je werkruimte wordt vrijgegeven.",
       "messageTeamBtn": "Message team",
-      "reviewTitle": "Booth design ready for review",
-      "reviewDesc": "The latest design for {{name}} has been shared with you. Open the workspace to inspect it, approve it, or request changes.",
+      "reviewTitle": "Standontwerp klaar voor beoordeling",
+      "reviewDesc": "Het laatste ontwerp voor {{name}} is met je gedeeld. Open de werkruimte om het te bekijken, goed te keuren of wijzigingen aan te vragen.",
       "openWorkspaceBtn": "Open Workspace",
       "reviewApprovalBtn": "Review Approval",
-      "workspaceLocked": "Workspace locked until assignment",
-      "workspaceLockedDesc": "You will be notified when your project manager is assigned."
+      "workspaceLocked": "Werkruimte vergrendeld tot toewijzing",
+      "workspaceLockedDesc": "Je krijgt bericht zodra je projectmanager is toegewezen."
     },
     "approvals": {
       "pageTitle": "Goedkeuringen | ENS",
@@ -2456,11 +2456,11 @@
         "send": "Bericht verzenden"
       },
       "error": {
-        "contacts": "Could not load message contacts.",
-        "messages": "Could not load messages.",
-        "attachmentTooLarge": "Attachment is too large. Maximum file size is 25 MB."
+        "contacts": "Berichtcontacten konden niet worden geladen.",
+        "messages": "Berichten konden niet worden geladen.",
+        "attachmentTooLarge": "De bijlage is te groot. De maximale bestandsgrootte is 25 MB."
       },
-      "noMessages": "No messages yet.",
+      "noMessages": "Nog geen berichten.",
       "uploading": "Uploading attachment..."
     },
     "projects": {
@@ -2495,8 +2495,8 @@
         "heading": "Projecttijdlijn",
         "defaultLabel": "Project aangemaakt — ontwerp in uitvoering",
         "defaultDate": "Recent",
-        "movedFromTo": "Moved from {{from}} to {{to}}",
-        "movedTo": "Moved to {{to}}"
+        "movedFromTo": "Verplaatst van {{from}} naar {{to}}",
+        "movedTo": "Verplaatst naar {{to}}"
       },
       "action": {
         "viewDesign": "Ontwerp bekijken",
@@ -2505,9 +2505,9 @@
         "documents": "Documenten",
         "messagePm": "PM berichten"
       },
-      "loadError": "Could not load your assigned projects.",
-      "emptyTitle": "No assigned projects yet",
-      "emptyDesc": "Your exhibition registration is in the system. A Chief Manager or Project Manager needs to assign a project before it appears here."
+      "loadError": "Je toegewezen projecten konden niet worden geladen.",
+      "emptyTitle": "Nog geen toegewezen projecten",
+      "emptyDesc": "Je beursinschrijving staat in het systeem. De directie of een projectmanager moet nog een project toewijzen voordat het hier verschijnt."
     },
     "profile": {
       "pageTitle": "Profielinstellingen | ENS",
@@ -2706,35 +2706,35 @@
         "fullscreen": "Volledig scherm"
       },
       "unassigned": {
-        "title": "Workspace waiting for assignment",
-        "body": "Your account exists, but the Chief Manager has not assigned a project manager and booth project yet. You'll get access as soon as your account is set up.",
-        "backBtn": "Back to Dashboard"
+        "title": "Werkruimte wacht op toewijzing",
+        "body": "Je account bestaat, maar de directie heeft nog geen projectmanager en standproject toegewezen. Je krijgt toegang zodra je account is ingericht.",
+        "backBtn": "Terug naar dashboard"
       },
       "revisions": {
-        "counter": "Revisions: {{count}} / {{limit}}",
+        "counter": "Revisies: {{count}} / {{limit}}",
         "upgradeBtn": "Upgrade Revisions",
-        "exhaustedTitle": "Revision limit reached",
-        "exhaustedBody": "You have used all included arrangement rounds. Upgrade your plan to unlock more revisions.",
+        "exhaustedTitle": "Revisielimiet bereikt",
+        "exhaustedBody": "Je hebt alle inbegrepen revisierondes gebruikt. Upgrade je abonnement voor extra rondes.",
         "upgradeDialog": {
-          "title": "Upgrade Revisions Plan",
-          "subtitle": "Choose a plan to unlock more revision rounds.",
+          "title": "Revisieabonnement upgraden",
+          "subtitle": "Kies een abonnement voor extra revisierondes.",
           "starter": {
             "name": "Starter",
-            "description": "Adds 3 extra client revision rounds",
+            "description": "Voegt 3 extra klantrevisierondes toe",
             "price": "$2.99"
           },
           "pro": {
             "name": "Pro",
-            "description": "Adds 8 extra revision rounds",
+            "description": "Voegt 8 extra revisierondes toe",
             "price": "$9.99"
           },
           "unlimited": {
             "name": "Unlimited",
-            "description": "Unlimited revision rounds",
+            "description": "Onbeperkte revisierondes",
             "price": "$11.99"
           },
           "cancelBtn": "Cancel",
-          "continueBtn": "Continue to checkout"
+          "continueBtn": "Doorgaan naar afrekenen"
         }
       },
       "feedbackFilter": {
@@ -2748,12 +2748,12 @@
         "reopen": "Reopen",
         "resolve": "Resolve"
       },
-      "backToDashboard": "Back to Dashboard"
+      "backToDashboard": "Terug naar dashboard"
     },
     "pendingApproval": {
       "title": "Pending Approval",
-      "body": "Hi {{firstName}}, your account has been created and is waiting for your agency to review and approve it. You'll have full access once they do.",
-      "emailNote": "You'll receive an email notification when your account is activated."
+      "body": "Hallo {{firstName}}, je account is aangemaakt en wacht op beoordeling en goedkeuring door je bureau. Daarna heb je volledige toegang.",
+      "emailNote": "Je ontvangt een e-mail zodra je account is geactiveerd."
     }
   },
   "notFound": {

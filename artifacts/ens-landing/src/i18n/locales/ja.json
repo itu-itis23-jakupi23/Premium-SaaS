@@ -562,21 +562,21 @@
       "pieShare": "Share",
       "workflow": {
         "title": "Assignment control",
-        "desc": "New accounts and unassigned work that need Chief action.",
+        "desc": "統括の対応が必要な新規アカウントと未割り当ての作業です。",
         "openAssignments": "Open assignments",
         "pendingAccounts": "Pending accounts",
-        "pendingAccountsDetail": "Client accounts awaiting review",
-        "pendingAccountsClear": "No accounts pending",
+        "pendingAccountsDetail": "確認待ちの顧客アカウント",
+        "pendingAccountsClear": "保留中のアカウントはありません",
         "newPMs": "New PMs",
-        "newPMsClear": "No PM accounts waiting",
+        "newPMsClear": "待機中のPMアカウントはありません",
         "unassignedClients": "Unassigned clients",
-        "unassignedClientsClear": "All clients assigned",
+        "unassignedClientsClear": "すべての顧客が割り当て済みです",
         "unassignedProjects": "Unassigned projects",
-        "unassignedProjectsClear": "All projects assigned",
+        "unassignedProjectsClear": "すべての案件が割り当て済みです",
         "stalledApprovals": "Stalled approvals",
-        "stalledApprovalsClear": "No stale approvals",
+        "stalledApprovalsClear": "滞留している承認はありません",
         "overloadedPMs": "Overloaded PMs",
-        "overloadedPMsClear": "Capacity looks stable"
+        "overloadedPMsClear": "稼働状況は安定しています"
       }
     },
     "managers": {
@@ -616,10 +616,10 @@
         "copyLink": "{{email}} への招待リンクをコピー",
         "resend": "{{email}} に招待を再送信",
         "revoke": "{{email}} の招待を取り消す",
-        "showMore": "Show {{count}} more",
+        "showMore": "さらに{{count}}件表示",
         "showLess": "Show less",
-        "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured",
+        "emailFailed": "メールを送信できませんでした",
+        "emailProviderNotConfigured": "メール送信サービスが設定されていません",
         "code": "コード",
         "link": "リンク",
         "copyCode": "{{email}} の招待コードをコピー"
@@ -674,7 +674,7 @@
         "searchClients": "Search clients...",
         "searchProjects": "Search projects...",
         "loading": "Loading assignments...",
-        "showing": "{{total}} total / showing {{start}}-{{end}}",
+        "showing": "全{{total}}件 / {{start}}-{{end}}件を表示",
         "previous": "Previous",
         "next": "Next",
         "page": "Page {{page}}"
@@ -689,7 +689,7 @@
         "urgent": "緊急",
         "ratingNew": "新規",
         "ratingNA": "なし",
-        "capacityDetail": "Capacity: {{projects}}/{{maxProjects}} active projects · {{clients}}/{{maxClients}} clients"
+        "capacityDetail": "稼働状況: 進行中の案件 {{projects}}/{{maxProjects}} · 顧客 {{clients}}/{{maxClients}}"
       },
       "table": {
         "manager": "マネージャー",
@@ -749,10 +749,10 @@
           "assignmentsSaved": "アサインの変更を保存しました。",
           "rebalanced": "{{project}} を {{from}} から {{to}} に移動しました。",
           "reminded": "{{name}} へのアプリ内リマインダーをキューに追加しました — 優先項目 {{count}} 件。",
-          "ratingUpdated": "Rating set to {{rating}}"
+          "ratingUpdated": "評価を{{rating}}に設定しました"
         },
         "justNow": "たった今",
-        "exportExcel": "Export as Excel",
+        "exportExcel": "Excelで書き出す",
         "collapse": "Collapse",
         "expand": "Expand"
       },
@@ -794,13 +794,13 @@
         "rebalanceDone": "ワークロードを再分配しました",
         "reminderSent": "{{name}} へのリマインダーがキューに追加されました — 通知が作成されました",
         "reminderError": "リマインダーを送信できませんでした",
-        "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}",
+        "rebalanceAllLoaded": "他の稼働中プロジェクトマネージャーはすべて上限（85%以上）です。増員か日程の調整をご検討ください。",
+        "ratingUpdated": "評価を{{rating}}に更新しました",
         "inviteCodeCopied": "招待コードをコピーしました",
         "inviteCodeCopyError": "招待コードをコピーできませんでした"
       },
       "error": {
-        "rating": "Failed to update rating"
+        "rating": "評価を更新できませんでした"
       }
     },
     "reports": {
@@ -1158,19 +1158,19 @@
         "updated": "{{name}} を更新しました",
         "openMonitor": "{{name}}のブースワークスペースを開いています",
         "moved": "{{name}} を {{stage}} に移動しました",
-        "created": "Project \"{{name}}\" created.",
-        "exported": "Projects exported to Excel."
+        "created": "案件「{{name}}」を作成しました。",
+        "exported": "案件をExcelに書き出しました。"
       },
       "validate": {
         "required": "プロジェクト名とクライアントは必須です。",
         "dimensions": "幅と奥行きは 1〜100 メートルの間で入力してください。"
       },
-      "exportTooltip": "Export project list to Excel",
+      "exportTooltip": "案件一覧をExcelに書き出す",
       "export": "Export",
       "newProject": "New Project",
       "create": {
         "title": "New Project",
-        "description": "Fill in the details below to create a new exhibition project.",
+        "description": "以下の項目を入力して新しい展示会案件を作成します。",
         "creating": "Creating…",
         "confirm": "Create Project"
       },
@@ -1357,7 +1357,7 @@
         "joinedSession": "{{name}} のモニターセッションに参加しました",
         "reassigned": "{{name}} を {{pm}} に再割当しました"
       },
-      "refreshedJustNow": "Refreshed just now",
+      "refreshedJustNow": "たった今更新しました",
       "refreshedSecondsAgo": "{{s}}s ago",
       "refreshedMinutesAgo": "{{m}}m ago"
     },
@@ -1494,8 +1494,8 @@
           "signOutOthers": "他のセッションをサインアウト",
           "signOut": "サインアウト",
           "current": "現在",
-          "loading": "Loading active sessions...",
-          "empty": "No active sessions were returned by the server."
+          "loading": "アクティブなセッションを読み込んでいます…",
+          "empty": "サーバーからアクティブなセッションは返されませんでした。"
         },
         "toast": {
           "passwordSaved": "パスワードを更新しました",
@@ -1555,44 +1555,44 @@
       },
       "readiness": {
         "title": "Production readiness",
-        "desc": "Real deployment checks for database, email, auth, app URL, and workspace asset storage.",
+        "desc": "データベース、メール、認証、アプリURL、ワークスペースのファイル保存先に対する実際のデプロイ確認です。",
         "ready": "Ready",
         "notReady": "Not ready",
         "refresh": "Refresh",
         "mode": "Mode",
-        "apiJsonLimit": "API JSON limit",
+        "apiJsonLimit": "API JSON の上限",
         "assetStorage": "Asset storage",
         "unknown": "Unknown",
         "blockingWarnings": "Blocking warnings",
-        "noWarnings": "No blocking production warnings reported by the backend.",
+        "noWarnings": "バックエンドから本番環境を妨げる警告は報告されていません。",
         "checks": {
           "databaseConfigured": {
             "title": "Hosted database",
-            "desc": "DATABASE_URL is configured"
+            "desc": "DATABASE_URL が設定されています"
           },
           "emailConfigured": {
             "title": "Transactional email",
-            "desc": "RESEND_API_KEY and RESEND_FROM are configured"
+            "desc": "RESEND_API_KEY と RESEND_FROM が設定されています"
           },
           "appUrlConfigured": {
-            "title": "Public app URL",
-            "desc": "APP_URL is an absolute URL"
+            "title": "公開アプリURL",
+            "desc": "APP_URL が絶対URLです"
           },
           "staffAccessConfigured": {
-            "title": "Staff access gate",
-            "desc": "Staff/chief signup key is not a placeholder"
+            "title": "スタッフのアクセス制限",
+            "desc": "登録キーが仮の値ではありません"
           },
           "authSecretConfigured": {
             "title": "Auth secret",
-            "desc": "AUTH_SECRET is not a placeholder"
+            "desc": "AUTH_SECRET が仮の値ではありません"
           },
           "assetStorageConfigured": {
-            "title": "Workspace asset storage",
-            "desc": "Uploaded logos and panel images use durable storage"
+            "title": "ワークスペースのファイル保存先",
+            "desc": "アップロードしたロゴやパネル画像は永続ストレージに保存されます"
           },
           "productionMode": {
             "title": "Production mode",
-            "desc": "NODE_ENV is production"
+            "desc": "NODE_ENV が production です"
           }
         }
       }
@@ -1682,7 +1682,7 @@
         "completed": "完了",
         "workspaceFiles": "ワークスペースファイル",
         "managedTrend": "Managed clients",
-        "liveTrend": "Live & In Progress",
+        "liveTrend": "公開中・進行中",
         "needsAttention": "Needs attention",
         "allClear": "All clear",
         "deliveredTrend": "Successfully delivered",
@@ -1710,10 +1710,10 @@
         "activeWorkspaces": "アクティブなワークスペース",
         "activeWorkspacesDesc": "ブースデザインが編集可能です。",
         "openWorkspace": "ワークスペースを開く",
-        "noDelays": "No projects are currently delayed",
-        "noPending": "Approval queue is empty",
+        "noDelays": "遅延している案件はありません",
+        "noPending": "承認待ちはありません",
         "completedProjects": "Completed Projects",
-        "completedProjectsDesc": "Projects successfully delivered to clients",
+        "completedProjectsDesc": "顧客への納品が完了した案件",
         "viewCompleted": "View completed"
       },
       "recentActivity": {
@@ -1721,13 +1721,13 @@
         "loading": "アクティビティを読み込み中...",
         "empty": "まだアクティビティイベントは記録されていません。"
       },
-      "exported": "Dashboard exported to Excel.",
+      "exported": "ダッシュボードをExcelに書き出しました。",
       "export": "Export",
       "charts": {
         "activity": "Project Activity",
-        "activityDesc": "Daily project updates over the last 7 days",
+        "activityDesc": "直近7日間の案件更新状況",
         "status": "Project Status",
-        "statusDesc": "{{count}} projects tracked"
+        "statusDesc": "{{count}}件の案件を追跡中"
       },
       "retry": "Retry"
     },
@@ -1786,20 +1786,20 @@
         "width": "幅 (m)",
         "depth": "奥行 (m)",
         "submit": "プロジェクトを作成",
-        "dimensionsInvalid": "Width and depth must be between 1 and 100 meters.",
-        "deadlineInvalid": "Deadline must be today or later.",
-        "nameClientRequired": "Name and client are required."
+        "dimensionsInvalid": "幅と奥行きは1〜100メートルの範囲で入力してください。",
+        "deadlineInvalid": "期限は本日以降の日付にしてください。",
+        "nameClientRequired": "名称と顧客は必須です。"
       },
       "toast": {
         "created": "プロジェクト「{{name}}」を保存しました。",
         "createError": "プロジェクトを作成できませんでした。",
-        "stageUpdated": "{{name}} moved to {{stage}}.",
-        "stageError": "Project stage could not be saved.",
+        "stageUpdated": "{{name}}を{{stage}}に移動しました。",
+        "stageError": "案件のフェーズを保存できませんでした。",
         "edited": "\"{{name}}\" updated.",
-        "editError": "Could not save changes.",
+        "editError": "変更を保存できませんでした。",
         "deleted": "\"{{name}}\" deleted.",
-        "deleteError": "Could not delete project.",
-        "exported": "Projects exported to Excel."
+        "deleteError": "案件を削除できませんでした。",
+        "exported": "案件をExcelに書き出しました。"
       },
       "stage": {
         "intake": "Intake",
@@ -1811,22 +1811,22 @@
       "detail": {
         "stage": "Stage: {{stage}}",
         "description": "Description",
-        "noDescription": "No project description has been saved yet.",
+        "noDescription": "案件の説明はまだ保存されていません。",
         "lifecycle": "Lifecycle",
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "No stage changes have been recorded yet."
+        "noHistory": "フェーズの変更履歴はまだありません。"
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} projects"
+        "showing": "{{total}}件中 {{start}}-{{end}}件を表示"
       },
-      "exportTooltip": "Export to Excel",
+      "exportTooltip": "Excelに書き出す",
       "export": "Export",
       "sortBy": "Sort by",
       "delete": {
         "title": "Delete project?",
-        "warning": "This project and all associated data will be permanently removed.",
+        "warning": "この案件と関連するすべてのデータが完全に削除されます。",
         "confirm": "Delete"
       },
       "kanban": {
@@ -1864,13 +1864,13 @@
         "openWorkspace": "ワークスペースを開く",
         "openWorkspaceFor": "{{name}} のワークスペースを開く",
         "toggleExpand": "{{name}} の詳細を展開/折りたたむ",
-        "noWorkspace": "No project workspace is available",
-        "openDetails": "Open details for {{name}}",
+        "noWorkspace": "利用できる案件ワークスペースがありません",
+        "openDetails": "{{name}}の詳細を開く",
         "viewProject": "View project",
         "message": "Message",
         "messageClient": "Message {{name}}",
-        "sendWorkspace": "Send Workspace Link",
-        "sendBill": "Send Bill of Everything"
+        "sendWorkspace": "ワークスペースのリンクを送信",
+        "sendBill": "全体明細を送信"
       },
       "detail": {
         "clientDetails": "クライアント詳細",
@@ -1880,26 +1880,26 @@
         "dataSource": "クライアントとプロジェクトのライブデータ",
         "contact": "Contact",
         "linkedProject": "Linked Project",
-        "noLinkedProject": "No linked project",
-        "workspaceReady": "Project workspace link is available.",
-        "workspaceMissing": "No project workspace is linked to this client yet.",
-        "changeStatus": "Change client status",
+        "noLinkedProject": "紐づく案件がありません",
+        "workspaceReady": "案件ワークスペースのリンクが利用できます。",
+        "workspaceMissing": "この顧客にはまだ案件ワークスペースが紐づいていません。",
+        "changeStatus": "顧客ステータスを変更",
         "tabs": {
           "overview": "Overview",
           "credentials": "Credentials",
           "billing": "Billing"
         },
         "credentials": {
-          "title": "Account & Security",
+          "title": "アカウントとセキュリティ",
           "accountId": "Account ID",
-          "role": "Portal Access Role",
+          "role": "ポータルのアクセス権限",
           "username": "Username/Email",
           "password": "Password",
           "showPassword": "Show Password",
-          "mfa": "MFA Security Status",
+          "mfa": "多要素認証の状態",
           "mfaDisabled": "MFA Disabled",
-          "session": "Active Session info",
-          "webSession": "Web Browser (Chrome/Windows)"
+          "session": "アクティブなセッション",
+          "webSession": "ウェブブラウザー（Chrome/Windows）"
         },
         "billing": {
           "title": "Project Billing",
@@ -1908,13 +1908,13 @@
           "outstanding": "Outstanding",
           "status": "Invoice Status",
           "statusPartial": "Partial Payment",
-          "sendSuccess": "Bill successfully sent to client!",
-          "linkSendSuccess": "Workspace link successfully sent to client!",
-          "detailSource": "Project finance module & contracts"
+          "sendSuccess": "明細を顧客に送信しました。",
+          "linkSendSuccess": "ワークスペースのリンクを顧客に送信しました。",
+          "detailSource": "案件の財務モジュールと契約"
         }
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} clients"
+        "showing": "{{total}}件中 {{start}}-{{end}}件を表示"
       }
     },
     "tasks": {
@@ -1950,17 +1950,17 @@
       "toast": {
         "moved": "「{{title}}」→ {{col}}",
         "created": "タスクを作成：「{{title}}」",
-        "movedClean": "\"{{title}}\" moved to {{col}}",
-        "loadError": "Could not load tasks.",
-        "deleted": "Task deleted: \"{{title}}\"",
-        "createError": "Could not create task.",
-        "updateError": "Could not update task.",
-        "deleteError": "Could not delete task.",
-        "deadlineInvalid": "Choose a valid deadline.",
-        "deadlinePast": "Deadline cannot be in the past.",
-        "notesTooLong": "Task notes must be under 4000 characters.",
-        "titleRequired": "Task title is required.",
-        "projectRequired": "A project is required.",
+        "movedClean": "「{{title}}」を{{col}}に移動しました",
+        "loadError": "タスクを読み込めませんでした。",
+        "deleted": "タスクを削除しました：「{{title}}」",
+        "createError": "タスクを作成できませんでした。",
+        "updateError": "タスクを更新できませんでした。",
+        "deleteError": "タスクを削除できませんでした。",
+        "deadlineInvalid": "有効な期限を選択してください。",
+        "deadlinePast": "期限を過去の日付にはできません。",
+        "notesTooLong": "タスクのメモは4000文字以内にしてください。",
+        "titleRequired": "タスク名は必須です。",
+        "projectRequired": "案件の選択は必須です。",
         "updated": "Task updated."
       },
       "modal": {
@@ -1975,18 +1975,18 @@
         "submit": "タスクを作成",
         "select": "選択…",
         "notes": "Notes",
-        "notesPlaceholder": "Add context, blockers, or reminder details..."
+        "notesPlaceholder": "背景・障害・リマインドを追加…"
       },
-      "noProjects": "No assigned projects are available for task creation.",
+      "noProjects": "タスクを作成できる担当案件がありません。",
       "reminder": {
-        "dueSoon": "Due in {{count}}d"
+        "dueSoon": "あと{{count}}日"
       },
       "edit": {
         "title": "Edit task"
       },
       "confirmDelete": {
         "title": "Delete task?",
-        "body": "This task will be permanently removed and cannot be recovered."
+        "body": "このタスクは完全に削除され、元に戻すことはできません。"
       }
     },
     "messages": {
@@ -2009,13 +2009,13 @@
         "videoReady": "{{name}} とのビデオを開始中…",
         "optionsOpened": "オプションメニューを開きました。",
         "attachmentOpened": "添付ファイル選択を開きました。",
-        "callRequestOpened": "Call request opened for {{name}}.",
-        "videoRequestOpened": "Video request opened for {{name}}.",
-        "attachmentSelected": "{{name}} attached as a message reference.",
-        "attachmentTooLarge": "Choose a file under 10 MB.",
-        "contextCopied": "Thread context copied.",
-        "contextCopyError": "Thread context could not be copied.",
-        "attachmentUploadError": "Attachment could not be uploaded."
+        "callRequestOpened": "{{name}}への通話リクエストを開きました。",
+        "videoRequestOpened": "{{name}}へのビデオリクエストを開きました。",
+        "attachmentSelected": "{{name}}をメッセージの参照として添付しました。",
+        "attachmentTooLarge": "10 MB未満のファイルを選択してください。",
+        "contextCopied": "スレッドの内容をコピーしました。",
+        "contextCopyError": "スレッドの内容をコピーできませんでした。",
+        "attachmentUploadError": "添付ファイルをアップロードできませんでした。"
       },
       "actions": {
         "call": "音声通話を開始",
@@ -2024,23 +2024,23 @@
         "attach": "ファイルを添付",
         "send": "メッセージを送信",
         "email": "Email contact",
-        "copyContext": "Copy thread context",
-        "clearAttachment": "Remove attachment reference"
+        "copyContext": "スレッドの内容をコピー",
+        "clearAttachment": "添付の参照を削除"
       },
-      "loadProjectsError": "Could not load project scopes.",
+      "loadProjectsError": "案件のスコープを読み込めませんでした。",
       "projectScope": "Project scope",
-      "noProjectScopes": "No assigned projects. Messages will use a general thread.",
+      "noProjectScopes": "担当案件がありません。メッセージは全体スレッドで扱われます。",
       "allExhibitions": "All exhibitions",
       "allContacts": "{{count}} contacts",
       "generalThread": "General thread",
-      "scopedTo": "Scoped to {{project}}",
-      "attachmentDraft": "Attachment reference: {{name}}",
+      "scopedTo": "{{project}}に紐づく",
+      "attachmentDraft": "添付の参照：{{name}}",
       "attachmentFallback": "Attachment",
       "newConversation": "New conversation",
-      "newChatSearchPlaceholder": "Find a contact…",
-      "newChatHint": "Select a contact to start a new thread",
-      "newChatNoMatch": "No contacts match your search.",
-      "newChatAllAdded": "All contacts are already in your conversations.",
+      "newChatSearchPlaceholder": "連絡先を検索…",
+      "newChatHint": "連絡先を選ぶと新しいスレッドを開始できます",
+      "newChatNoMatch": "検索条件に一致する連絡先はありません。",
+      "newChatAllAdded": "すべての連絡先がすでにスレッドにあります。",
       "uploadingAttachment": "Uploading attachment..."
     },
     "requests": {
@@ -2082,26 +2082,26 @@
         "pending": "依頼を保留に設定しました",
         "replySent": "返信を送信しました"
       },
-      "loadError": "Revision requests could not be loaded.",
-      "statusError": "Request status could not be saved.",
-      "replyError": "Reply could not be saved.",
+      "loadError": "修正リクエストを読み込めませんでした。",
+      "statusError": "リクエストの状態を保存できませんでした。",
+      "replyError": "返信を保存できませんでした。",
       "searchPlaceholder": "Search requests...",
       "history": {
         "title": "Request history",
         "meta": "{{actor}} / {{time}}",
-        "empty": "No request history has been recorded yet."
+        "empty": "リクエストの履歴はまだ記録されていません。"
       },
       "detail": {
         "request": "Request",
         "replies": "Replies",
-        "noReplies": "No replies yet."
+        "noReplies": "まだ返信はありません。"
       },
       "confirmDecline": {
-        "title": "Decline this request?",
-        "body": "The client will see this request marked as Declined. This action cannot be undone."
+        "title": "このリクエストを却下しますか？",
+        "body": "顧客にはこのリクエストが却下として表示されます。この操作は取り消せません。"
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} requests"
+        "showing": "{{total}}件中 {{start}}-{{end}}件を表示"
       }
     },
     "reports": {
@@ -2148,28 +2148,28 @@
       },
       "toast": {
         "exporting": "エクスポートを開始しました…",
-        "exported": "Excel report exported"
+        "exported": "Excelレポートを書き出しました"
       },
-      "loadError": "Report data could not be loaded.",
-      "loading": "Loading report data...",
-      "empty": "No report data has been recorded for this period."
+      "loadError": "レポートのデータを読み込めませんでした。",
+      "loading": "レポートのデータを読み込んでいます…",
+      "empty": "この期間に記録されたレポートデータはありません。"
     },
     "join": {
-      "pageTitle": "Join the Team",
-      "pageSubtitle": "Complete your profile to activate your Project Manager account.",
+      "pageTitle": "チームに参加",
+      "pageSubtitle": "プロフィールを入力してプロジェクトマネージャーのアカウントを有効化してください。",
       "inviteConfirmed": "Invitation confirmed",
-      "joiningAs": "Joining as a <bold>Project Manager</bold> with email <email>{{email}}</email>",
+      "joiningAs": "<email>{{email}}</email> のアドレスで <bold>プロジェクトマネージャー</bold> として参加します",
       "form": {
         "fullName": "Full Name",
-        "fullNamePlaceholder": "Your full name",
+        "fullNamePlaceholder": "氏名",
         "password": "Password",
-        "passwordPlaceholder": "At least 8 characters",
+        "passwordPlaceholder": "8文字以上",
         "confirmPassword": "Confirm Password",
-        "confirmPasswordPlaceholder": "Re-enter your password",
+        "confirmPasswordPlaceholder": "パスワードをもう一度入力",
         "showPassword": "Show password",
         "hidePassword": "Hide password",
-        "passwordMismatch": "Passwords do not match.",
-        "submit": "Create My Account",
+        "passwordMismatch": "パスワードが一致しません。",
+        "submit": "アカウントを作成",
         "submitting": "Creating Account…"
       },
       "strength": {
@@ -2179,21 +2179,21 @@
         "strong": "Strong"
       },
       "error": {
-        "title": "Invitation Not Valid",
-        "noToken": "No invitation token found in the URL. Please use the link from your invitation email.",
-        "invalidToken": "This invitation link is not valid.",
-        "contact": "If you believe this is a mistake, please contact your administrator to resend the invitation.",
+        "title": "招待が無効です",
+        "noToken": "URLに招待トークンが見つかりません。招待メールのリンクをご利用ください。",
+        "invalidToken": "この招待リンクは無効です。",
+        "contact": "誤りだと思われる場合は、管理者に招待の再送を依頼してください。",
         "adminEmail": "admin@ens-agency.com",
-        "goToLogin": "Go to Login",
-        "nameRequired": "Please enter your full name.",
-        "passwordTooShort": "Password must be at least 8 characters.",
-        "passwordMismatch": "Passwords do not match.",
-        "generic": "Something went wrong. Please try again."
+        "goToLogin": "ログインへ",
+        "nameRequired": "氏名を入力してください。",
+        "passwordTooShort": "パスワードは8文字以上で入力してください。",
+        "passwordMismatch": "パスワードが一致しません。",
+        "generic": "問題が発生しました。もう一度お試しください。"
       },
       "success": {
         "title": "Account Created!",
-        "body": "Welcome to the ENS team, {{name}}! Your account is ready. You'll be redirected to the login page in a moment.",
-        "goToLogin": "Go to Login Now"
+        "body": "ENSチームへようこそ、{{name}}さん。アカウントの準備ができました。まもなくログインページへ移動します。",
+        "goToLogin": "今すぐログインへ"
       }
     },
     "workspace": {
@@ -2201,7 +2201,7 @@
         "all": "All",
         "chairs": "Chairs",
         "stools": "Bar stools",
-        "seating": "Sofas & poufs",
+        "seating": "ソファ・スツール",
         "tables": "Tables",
         "storage": "Storage",
         "shelves": "Shelves",
@@ -2219,19 +2219,19 @@
       "nextMonth": "Next month",
       "searchPlaceholder": "Search events…",
       "today": "Today",
-      "eventsThisMonth": "events this month",
+      "eventsThisMonth": "今月の予定",
       "addToDay": "Add",
-      "noEventsDay": "No events scheduled for this day.",
-      "upcomingThisMonth": "Events This Month",
-      "noEvents": "No events match the current filters.",
+      "noEventsDay": "この日に予定されている行事はありません。",
+      "upcomingThisMonth": "今月の予定",
+      "noEvents": "現在のフィルターに一致する予定はありません。",
       "error": {
-        "load": "Failed to load calendar",
-        "nameRequired": "Name is required",
-        "startRequired": "Start date is required",
-        "endRequired": "End date is required",
-        "endBeforeStart": "End date must be on or after start date",
-        "save": "Failed to save",
-        "delete": "Failed to delete"
+        "load": "カレンダーを読み込めませんでした",
+        "nameRequired": "名称は必須です",
+        "startRequired": "開始日は必須です",
+        "endRequired": "終了日は必須です",
+        "endBeforeStart": "終了日は開始日と同日以降にしてください",
+        "save": "保存できませんでした",
+        "delete": "削除できませんでした"
       },
       "filter": {
         "all": "All",
@@ -2242,17 +2242,17 @@
       },
       "create": {
         "title": "Add Event",
-        "description": "Add an exhibition or deadline to your calendar.",
+        "description": "展示会や期限をカレンダーに追加します。",
         "confirm": "Create Event"
       },
       "edit": {
         "title": "Edit Event",
-        "description": "Update event details.",
+        "description": "予定の詳細を更新します。",
         "confirm": "Save Changes"
       },
       "delete": {
         "title": "Delete Event",
-        "description": "Remove \"{{name}}\" from the calendar?",
+        "description": "「{{name}}」をカレンダーから削除しますか？",
         "confirm": "Delete"
       },
       "form": {
@@ -2320,15 +2320,15 @@
         "reviewRequired": "レビュー必要",
         "noReview": "保留中のレビューなし"
       },
-      "waitingTitle": "Waiting for Chief assignment",
-      "waitingDesc": "Your account is in the system. The Chief Manager needs to assign a project manager and project before your workspace unlocks.",
+      "waitingTitle": "統括による割り当て待ち",
+      "waitingDesc": "アカウントは登録済みです。ワークスペースが開くには、統括がプロジェクトマネージャーと案件を割り当てる必要があります。",
       "messageTeamBtn": "Message team",
-      "reviewTitle": "Booth design ready for review",
-      "reviewDesc": "The latest design for {{name}} has been shared with you. Open the workspace to inspect it, approve it, or request changes.",
+      "reviewTitle": "ブースデザインの確認をお願いします",
+      "reviewDesc": "{{name}}の最新デザインが共有されました。ワークスペースを開いて確認・承認、または修正のご依頼ができます。",
       "openWorkspaceBtn": "Open Workspace",
       "reviewApprovalBtn": "Review Approval",
-      "workspaceLocked": "Workspace locked until assignment",
-      "workspaceLockedDesc": "You will be notified when your project manager is assigned."
+      "workspaceLocked": "割り当てまでワークスペースはロック中です",
+      "workspaceLockedDesc": "担当プロジェクトマネージャーが決まりましたらお知らせします。"
     },
     "approvals": {
       "pageTitle": "承認 | ENS",
@@ -2456,11 +2456,11 @@
         "send": "メッセージを送信"
       },
       "error": {
-        "contacts": "Could not load message contacts.",
-        "messages": "Could not load messages.",
-        "attachmentTooLarge": "Attachment is too large. Maximum file size is 25 MB."
+        "contacts": "メッセージの連絡先を読み込めませんでした。",
+        "messages": "メッセージを読み込めませんでした。",
+        "attachmentTooLarge": "添付ファイルが大きすぎます。上限は25 MBです。"
       },
-      "noMessages": "No messages yet.",
+      "noMessages": "まだメッセージはありません。",
       "uploading": "Uploading attachment..."
     },
     "projects": {
@@ -2495,8 +2495,8 @@
         "heading": "プロジェクトタイムライン",
         "defaultLabel": "プロジェクト作成済み — デザイン進行中",
         "defaultDate": "最近",
-        "movedFromTo": "Moved from {{from}} to {{to}}",
-        "movedTo": "Moved to {{to}}"
+        "movedFromTo": "{{from}}から{{to}}に変更",
+        "movedTo": "{{to}}に変更"
       },
       "action": {
         "viewDesign": "デザインを見る",
@@ -2505,9 +2505,9 @@
         "documents": "ドキュメント",
         "messagePm": "PMに連絡"
       },
-      "loadError": "Could not load your assigned projects.",
-      "emptyTitle": "No assigned projects yet",
-      "emptyDesc": "Your exhibition registration is in the system. A Chief Manager or Project Manager needs to assign a project before it appears here."
+      "loadError": "担当案件を読み込めませんでした。",
+      "emptyTitle": "割り当てられた案件はまだありません",
+      "emptyDesc": "展示会のお申し込みは登録済みです。統括またはプロジェクトマネージャーが案件を割り当てるとここに表示されます。"
     },
     "profile": {
       "pageTitle": "プロフィール設定 | ENS",
@@ -2706,35 +2706,35 @@
         "fullscreen": "全画面"
       },
       "unassigned": {
-        "title": "Workspace waiting for assignment",
-        "body": "Your account exists, but the Chief Manager has not assigned a project manager and booth project yet. You'll get access as soon as your account is set up.",
-        "backBtn": "Back to Dashboard"
+        "title": "ワークスペースは割り当て待ちです",
+        "body": "アカウントは存在しますが、統括がプロジェクトマネージャーとブース案件をまだ割り当てていません。設定が完了しだいご利用いただけます。",
+        "backBtn": "ダッシュボードに戻る"
       },
       "revisions": {
-        "counter": "Revisions: {{count}} / {{limit}}",
+        "counter": "修正回数: {{count}} / {{limit}}",
         "upgradeBtn": "Upgrade Revisions",
-        "exhaustedTitle": "Revision limit reached",
-        "exhaustedBody": "You have used all included arrangement rounds. Upgrade your plan to unlock more revisions.",
+        "exhaustedTitle": "修正回数の上限に達しました",
+        "exhaustedBody": "プランに含まれる修正回数をすべて使い切りました。アップグレードすると追加できます。",
         "upgradeDialog": {
-          "title": "Upgrade Revisions Plan",
-          "subtitle": "Choose a plan to unlock more revision rounds.",
+          "title": "修正プランをアップグレード",
+          "subtitle": "修正回数を追加するプランをお選びください。",
           "starter": {
             "name": "Starter",
-            "description": "Adds 3 extra client revision rounds",
+            "description": "顧客修正を3回分追加します",
             "price": "$2.99"
           },
           "pro": {
             "name": "Pro",
-            "description": "Adds 8 extra revision rounds",
+            "description": "修正を8回分追加します",
             "price": "$9.99"
           },
           "unlimited": {
             "name": "Unlimited",
-            "description": "Unlimited revision rounds",
+            "description": "修正回数は無制限です",
             "price": "$11.99"
           },
           "cancelBtn": "Cancel",
-          "continueBtn": "Continue to checkout"
+          "continueBtn": "お支払いに進む"
         }
       },
       "feedbackFilter": {
@@ -2748,12 +2748,12 @@
         "reopen": "Reopen",
         "resolve": "Resolve"
       },
-      "backToDashboard": "Back to Dashboard"
+      "backToDashboard": "ダッシュボードに戻る"
     },
     "pendingApproval": {
       "title": "Pending Approval",
-      "body": "Hi {{firstName}}, your account has been created and is waiting for your agency to review and approve it. You'll have full access once they do.",
-      "emailNote": "You'll receive an email notification when your account is activated."
+      "body": "{{firstName}}さん、アカウントを作成しました。担当代理店の確認と承認をお待ちください。承認後にすべての機能をご利用いただけます。",
+      "emailNote": "アカウントが有効になりましたらメールでお知らせします。"
     }
   },
   "notFound": {

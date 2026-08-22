@@ -562,21 +562,21 @@
       "pieShare": "Share",
       "workflow": {
         "title": "Assignment control",
-        "desc": "New accounts and unassigned work that need Chief action.",
+        "desc": "حسابات جديدة وأعمال غير مُسندة تحتاج إلى قرار.",
         "openAssignments": "Open assignments",
         "pendingAccounts": "Pending accounts",
-        "pendingAccountsDetail": "Client accounts awaiting review",
-        "pendingAccountsClear": "No accounts pending",
+        "pendingAccountsDetail": "حسابات عملاء بانتظار المراجعة",
+        "pendingAccountsClear": "لا توجد حسابات معلّقة",
         "newPMs": "New PMs",
-        "newPMsClear": "No PM accounts waiting",
+        "newPMsClear": "لا توجد حسابات مديري مشاريع بالانتظار",
         "unassignedClients": "Unassigned clients",
-        "unassignedClientsClear": "All clients assigned",
+        "unassignedClientsClear": "تم إسناد جميع العملاء",
         "unassignedProjects": "Unassigned projects",
-        "unassignedProjectsClear": "All projects assigned",
+        "unassignedProjectsClear": "تم إسناد جميع المشاريع",
         "stalledApprovals": "Stalled approvals",
-        "stalledApprovalsClear": "No stale approvals",
+        "stalledApprovalsClear": "لا توجد موافقات متأخرة",
         "overloadedPMs": "Overloaded PMs",
-        "overloadedPMsClear": "Capacity looks stable"
+        "overloadedPMsClear": "حجم العمل مستقر"
       }
     },
     "managers": {
@@ -616,10 +616,10 @@
         "copyLink": "نسخ رابط الدعوة لـ {{email}}",
         "resend": "إعادة إرسال الدعوة إلى {{email}}",
         "revoke": "سحب الدعوة لـ {{email}}",
-        "showMore": "Show {{count}} more",
+        "showMore": "عرض {{count}} إضافية",
         "showLess": "Show less",
-        "emailFailed": "Email not sent",
-        "emailProviderNotConfigured": "email provider is not configured",
+        "emailFailed": "لم يتم إرسال البريد",
+        "emailProviderNotConfigured": "مزوّد البريد غير مُهيّأ",
         "code": "الرمز",
         "link": "الرابط",
         "copyCode": "نسخ رمز الدعوة الخاص بـ {{email}}"
@@ -674,7 +674,7 @@
         "searchClients": "Search clients...",
         "searchProjects": "Search projects...",
         "loading": "Loading assignments...",
-        "showing": "{{total}} total / showing {{start}}-{{end}}",
+        "showing": "الإجمالي {{total}} / المعروض {{start}}-{{end}}",
         "previous": "Previous",
         "next": "Next",
         "page": "Page {{page}}"
@@ -689,7 +689,7 @@
         "urgent": "عاجل",
         "ratingNew": "جديد",
         "ratingNA": "لا يوجد",
-        "capacityDetail": "Capacity: {{projects}}/{{maxProjects}} active projects · {{clients}}/{{maxClients}} clients"
+        "capacityDetail": "الحِمل: {{projects}}/{{maxProjects}} مشروعًا نشطًا · {{clients}}/{{maxClients}} عميلًا"
       },
       "table": {
         "manager": "المدير",
@@ -749,10 +749,10 @@
           "assignmentsSaved": "تم حفظ تغييرات التعيين.",
           "rebalanced": "تم نقل {{project}} من {{from}} إلى {{to}}.",
           "reminded": "تمت إضافة تذكير داخل التطبيق لـ {{name}} إلى قائمة الانتظار — {{count}} عنصر ذو أولوية.",
-          "ratingUpdated": "Rating set to {{rating}}"
+          "ratingUpdated": "تم ضبط التقييم على {{rating}}"
         },
         "justNow": "الآن",
-        "exportExcel": "Export as Excel",
+        "exportExcel": "تصدير كملف Excel",
         "collapse": "Collapse",
         "expand": "Expand"
       },
@@ -794,13 +794,13 @@
         "rebalanceDone": "تمت إعادة توازن عبء العمل",
         "reminderSent": "التذكير في قائمة الانتظار لـ {{name}} — تم إنشاء الإشعار",
         "reminderError": "تعذّر إرسال التذكير",
-        "rebalanceAllLoaded": "All other active managers are at capacity (≥85%). Consider hiring or adjusting timelines.",
-        "ratingUpdated": "Rating updated to {{rating}}",
+        "rebalanceAllLoaded": "جميع مديري المشاريع النشطين الآخرين بلغوا الطاقة القصوى (‏85% فأكثر). ننصح بالتوظيف أو تعديل الجداول الزمنية.",
+        "ratingUpdated": "تم تحديث التقييم إلى {{rating}}",
         "inviteCodeCopied": "تم نسخ رمز الدعوة",
         "inviteCodeCopyError": "تعذّر نسخ رمز الدعوة"
       },
       "error": {
-        "rating": "Failed to update rating"
+        "rating": "تعذّر تحديث التقييم"
       }
     },
     "reports": {
@@ -1158,19 +1158,19 @@
         "updated": "تم تحديث {{name}}",
         "openMonitor": "جارٍ فتح مساحة عمل الجناح لـ {{name}}",
         "moved": "تم نقل {{name}} إلى {{stage}}",
-        "created": "Project \"{{name}}\" created.",
-        "exported": "Projects exported to Excel."
+        "created": "تم إنشاء المشروع «{{name}}».",
+        "exported": "تم تصدير المشاريع إلى Excel."
       },
       "validate": {
         "required": "اسم المشروع والعميل مطلوبان.",
         "dimensions": "يجب أن يكون العرض والعمق بين 1 و 100 متر."
       },
-      "exportTooltip": "Export project list to Excel",
+      "exportTooltip": "تصدير قائمة المشاريع إلى Excel",
       "export": "Export",
       "newProject": "New Project",
       "create": {
         "title": "New Project",
-        "description": "Fill in the details below to create a new exhibition project.",
+        "description": "املأ البيانات التالية لإنشاء مشروع معرض جديد.",
         "creating": "Creating…",
         "confirm": "Create Project"
       },
@@ -1357,7 +1357,7 @@
         "joinedSession": "تم الانضمام إلى جلسة مراقبة {{name}}",
         "reassigned": "تم إعادة تعيين {{name}} إلى {{pm}}"
       },
-      "refreshedJustNow": "Refreshed just now",
+      "refreshedJustNow": "تم التحديث للتو",
       "refreshedSecondsAgo": "{{s}}s ago",
       "refreshedMinutesAgo": "{{m}}m ago"
     },
@@ -1494,8 +1494,8 @@
           "signOutOthers": "تسجيل خروج الآخرين",
           "signOut": "تسجيل الخروج",
           "current": "الحالية",
-          "loading": "Loading active sessions...",
-          "empty": "No active sessions were returned by the server."
+          "loading": "جارٍ تحميل الجلسات النشطة…",
+          "empty": "لم يُرجع الخادم أي جلسات نشطة."
         },
         "toast": {
           "passwordSaved": "تم تحديث كلمة المرور",
@@ -1555,44 +1555,44 @@
       },
       "readiness": {
         "title": "Production readiness",
-        "desc": "Real deployment checks for database, email, auth, app URL, and workspace asset storage.",
+        "desc": "فحوصات نشر فعلية لقاعدة البيانات والبريد والمصادقة وعنوان التطبيق وتخزين ملفات مساحة العمل.",
         "ready": "Ready",
         "notReady": "Not ready",
         "refresh": "Refresh",
         "mode": "Mode",
-        "apiJsonLimit": "API JSON limit",
+        "apiJsonLimit": "حد JSON في الواجهة البرمجية",
         "assetStorage": "Asset storage",
         "unknown": "Unknown",
         "blockingWarnings": "Blocking warnings",
-        "noWarnings": "No blocking production warnings reported by the backend.",
+        "noWarnings": "لم يُبلّغ الخادم عن أي تحذيرات إنتاج معطِّلة.",
         "checks": {
           "databaseConfigured": {
             "title": "Hosted database",
-            "desc": "DATABASE_URL is configured"
+            "desc": "تم ضبط DATABASE_URL"
           },
           "emailConfigured": {
             "title": "Transactional email",
-            "desc": "RESEND_API_KEY and RESEND_FROM are configured"
+            "desc": "تم ضبط RESEND_API_KEY و RESEND_FROM"
           },
           "appUrlConfigured": {
-            "title": "Public app URL",
-            "desc": "APP_URL is an absolute URL"
+            "title": "عنوان التطبيق العام",
+            "desc": "‏APP_URL عنوان مطلق"
           },
           "staffAccessConfigured": {
-            "title": "Staff access gate",
-            "desc": "Staff/chief signup key is not a placeholder"
+            "title": "بوابة وصول الموظفين",
+            "desc": "مفتاح التسجيل ليس قيمة مؤقتة"
           },
           "authSecretConfigured": {
             "title": "Auth secret",
-            "desc": "AUTH_SECRET is not a placeholder"
+            "desc": "‏AUTH_SECRET ليس قيمة مؤقتة"
           },
           "assetStorageConfigured": {
-            "title": "Workspace asset storage",
-            "desc": "Uploaded logos and panel images use durable storage"
+            "title": "تخزين ملفات مساحة العمل",
+            "desc": "الشعارات وصور اللوحات المرفوعة تُحفظ في تخزين دائم"
           },
           "productionMode": {
             "title": "Production mode",
-            "desc": "NODE_ENV is production"
+            "desc": "‏NODE_ENV يساوي production"
           }
         }
       }
@@ -1682,7 +1682,7 @@
         "completed": "مكتمل",
         "workspaceFiles": "ملفات مساحة العمل",
         "managedTrend": "Managed clients",
-        "liveTrend": "Live & In Progress",
+        "liveTrend": "قائم وقيد التنفيذ",
         "needsAttention": "Needs attention",
         "allClear": "All clear",
         "deliveredTrend": "Successfully delivered",
@@ -1710,10 +1710,10 @@
         "activeWorkspaces": "مساحات عمل نشطة",
         "activeWorkspacesDesc": "تصاميم الجناح متاحة للتعديل.",
         "openWorkspace": "فتح مساحة العمل",
-        "noDelays": "No projects are currently delayed",
-        "noPending": "Approval queue is empty",
+        "noDelays": "لا توجد مشاريع متأخرة حاليًا",
+        "noPending": "قائمة الموافقات فارغة",
         "completedProjects": "Completed Projects",
-        "completedProjectsDesc": "Projects successfully delivered to clients",
+        "completedProjectsDesc": "مشاريع سُلّمت للعملاء بنجاح",
         "viewCompleted": "View completed"
       },
       "recentActivity": {
@@ -1721,13 +1721,13 @@
         "loading": "جار تحميل النشاط...",
         "empty": "لم يتم تسجيل أي أحداث نشاط بعد."
       },
-      "exported": "Dashboard exported to Excel.",
+      "exported": "تم تصدير لوحة المعلومات إلى Excel.",
       "export": "Export",
       "charts": {
         "activity": "Project Activity",
-        "activityDesc": "Daily project updates over the last 7 days",
+        "activityDesc": "تحديثات المشاريع اليومية خلال آخر 7 أيام",
         "status": "Project Status",
-        "statusDesc": "{{count}} projects tracked"
+        "statusDesc": "يجري تتبّع {{count}} مشروعًا"
       },
       "retry": "Retry"
     },
@@ -1786,20 +1786,20 @@
         "width": "العرض (م)",
         "depth": "العمق (م)",
         "submit": "إنشاء مشروع",
-        "dimensionsInvalid": "Width and depth must be between 1 and 100 meters.",
-        "deadlineInvalid": "Deadline must be today or later.",
-        "nameClientRequired": "Name and client are required."
+        "dimensionsInvalid": "يجب أن يتراوح العرض والعمق بين 1 و100 متر.",
+        "deadlineInvalid": "يجب أن يكون الموعد النهائي اليوم أو بعده.",
+        "nameClientRequired": "الاسم والعميل حقلان مطلوبان."
       },
       "toast": {
         "created": "تم حفظ المشروع «{{name}}».",
         "createError": "تعذر إنشاء المشروع.",
-        "stageUpdated": "{{name}} moved to {{stage}}.",
-        "stageError": "Project stage could not be saved.",
+        "stageUpdated": "تم نقل {{name}} إلى {{stage}}.",
+        "stageError": "تعذّر حفظ مرحلة المشروع.",
         "edited": "\"{{name}}\" updated.",
-        "editError": "Could not save changes.",
+        "editError": "تعذّر حفظ التغييرات.",
         "deleted": "\"{{name}}\" deleted.",
-        "deleteError": "Could not delete project.",
-        "exported": "Projects exported to Excel."
+        "deleteError": "تعذّر حذف المشروع.",
+        "exported": "تم تصدير المشاريع إلى Excel."
       },
       "stage": {
         "intake": "Intake",
@@ -1811,22 +1811,22 @@
       "detail": {
         "stage": "Stage: {{stage}}",
         "description": "Description",
-        "noDescription": "No project description has been saved yet.",
+        "noDescription": "لم يُحفظ أي وصف للمشروع بعد.",
         "lifecycle": "Lifecycle",
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "No stage changes have been recorded yet."
+        "noHistory": "لم تُسجّل أي تغييرات في المراحل بعد."
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} projects"
+        "showing": "عرض {{start}}-{{end}} من {{total}} مشروعًا"
       },
-      "exportTooltip": "Export to Excel",
+      "exportTooltip": "تصدير إلى Excel",
       "export": "Export",
       "sortBy": "Sort by",
       "delete": {
         "title": "Delete project?",
-        "warning": "This project and all associated data will be permanently removed.",
+        "warning": "سيُحذف هذا المشروع وكل البيانات المرتبطة به نهائيًا.",
         "confirm": "Delete"
       },
       "kanban": {
@@ -1864,13 +1864,13 @@
         "openWorkspace": "فتح مساحة العمل",
         "openWorkspaceFor": "فتح مساحة العمل لـ {{name}}",
         "toggleExpand": "توسيع/طي تفاصيل {{name}}",
-        "noWorkspace": "No project workspace is available",
-        "openDetails": "Open details for {{name}}",
+        "noWorkspace": "لا تتوفر مساحة عمل للمشروع",
+        "openDetails": "فتح تفاصيل {{name}}",
         "viewProject": "View project",
         "message": "Message",
         "messageClient": "Message {{name}}",
-        "sendWorkspace": "Send Workspace Link",
-        "sendBill": "Send Bill of Everything"
+        "sendWorkspace": "إرسال رابط مساحة العمل",
+        "sendBill": "إرسال البيان الكامل"
       },
       "detail": {
         "clientDetails": "تفاصيل العميل",
@@ -1880,26 +1880,26 @@
         "dataSource": "سجلات العملاء والمشاريع المباشرة",
         "contact": "Contact",
         "linkedProject": "Linked Project",
-        "noLinkedProject": "No linked project",
-        "workspaceReady": "Project workspace link is available.",
-        "workspaceMissing": "No project workspace is linked to this client yet.",
-        "changeStatus": "Change client status",
+        "noLinkedProject": "لا يوجد مشروع مرتبط",
+        "workspaceReady": "رابط مساحة عمل المشروع متاح.",
+        "workspaceMissing": "لم تُربط أي مساحة عمل بهذا العميل بعد.",
+        "changeStatus": "تغيير حالة العميل",
         "tabs": {
           "overview": "Overview",
           "credentials": "Credentials",
           "billing": "Billing"
         },
         "credentials": {
-          "title": "Account & Security",
+          "title": "الحساب والأمان",
           "accountId": "Account ID",
-          "role": "Portal Access Role",
+          "role": "دور الوصول إلى البوابة",
           "username": "Username/Email",
           "password": "Password",
           "showPassword": "Show Password",
-          "mfa": "MFA Security Status",
+          "mfa": "حالة أمان المصادقة متعددة العوامل",
           "mfaDisabled": "MFA Disabled",
-          "session": "Active Session info",
-          "webSession": "Web Browser (Chrome/Windows)"
+          "session": "الجلسة النشطة",
+          "webSession": "متصفّح الويب (Chrome/Windows)"
         },
         "billing": {
           "title": "Project Billing",
@@ -1908,13 +1908,13 @@
           "outstanding": "Outstanding",
           "status": "Invoice Status",
           "statusPartial": "Partial Payment",
-          "sendSuccess": "Bill successfully sent to client!",
-          "linkSendSuccess": "Workspace link successfully sent to client!",
-          "detailSource": "Project finance module & contracts"
+          "sendSuccess": "تم إرسال البيان إلى العميل بنجاح.",
+          "linkSendSuccess": "تم إرسال رابط مساحة العمل إلى العميل بنجاح.",
+          "detailSource": "وحدة تمويل المشروع والعقود"
         }
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} clients"
+        "showing": "عرض {{start}}-{{end}} من {{total}} عميلًا"
       }
     },
     "tasks": {
@@ -1950,17 +1950,17 @@
       "toast": {
         "moved": "«{{title}}» → {{col}}",
         "created": "تم إنشاء المهمة: «{{title}}»",
-        "movedClean": "\"{{title}}\" moved to {{col}}",
-        "loadError": "Could not load tasks.",
-        "deleted": "Task deleted: \"{{title}}\"",
-        "createError": "Could not create task.",
-        "updateError": "Could not update task.",
-        "deleteError": "Could not delete task.",
-        "deadlineInvalid": "Choose a valid deadline.",
-        "deadlinePast": "Deadline cannot be in the past.",
-        "notesTooLong": "Task notes must be under 4000 characters.",
-        "titleRequired": "Task title is required.",
-        "projectRequired": "A project is required.",
+        "movedClean": "تم نقل «{{title}}» إلى {{col}}",
+        "loadError": "تعذّر تحميل المهام.",
+        "deleted": "تم حذف المهمة: «{{title}}»",
+        "createError": "تعذّر إنشاء المهمة.",
+        "updateError": "تعذّر تحديث المهمة.",
+        "deleteError": "تعذّر حذف المهمة.",
+        "deadlineInvalid": "اختر موعدًا نهائيًا صالحًا.",
+        "deadlinePast": "لا يمكن أن يكون الموعد النهائي في الماضي.",
+        "notesTooLong": "يجب أن تقل ملاحظات المهمة عن 4000 حرف.",
+        "titleRequired": "عنوان المهمة مطلوب.",
+        "projectRequired": "اختيار مشروع مطلوب.",
         "updated": "Task updated."
       },
       "modal": {
@@ -1975,18 +1975,18 @@
         "submit": "إنشاء مهمة",
         "select": "اختر…",
         "notes": "Notes",
-        "notesPlaceholder": "Add context, blockers, or reminder details..."
+        "notesPlaceholder": "أضف السياق أو المعوّقات أو تذكيرًا…"
       },
-      "noProjects": "No assigned projects are available for task creation.",
+      "noProjects": "لا توجد مشاريع مُسندة متاحة لإنشاء مهمة.",
       "reminder": {
-        "dueSoon": "Due in {{count}}d"
+        "dueSoon": "خلال {{count}} يوم"
       },
       "edit": {
         "title": "Edit task"
       },
       "confirmDelete": {
         "title": "Delete task?",
-        "body": "This task will be permanently removed and cannot be recovered."
+        "body": "ستُحذف هذه المهمة نهائيًا ولا يمكن استرجاعها."
       }
     },
     "messages": {
@@ -2009,13 +2009,13 @@
         "videoReady": "جار فتح الفيديو مع {{name}}…",
         "optionsOpened": "تم فتح قائمة الخيارات.",
         "attachmentOpened": "تم فتح منتقي المرفقات.",
-        "callRequestOpened": "Call request opened for {{name}}.",
-        "videoRequestOpened": "Video request opened for {{name}}.",
-        "attachmentSelected": "{{name}} attached as a message reference.",
-        "attachmentTooLarge": "Choose a file under 10 MB.",
-        "contextCopied": "Thread context copied.",
-        "contextCopyError": "Thread context could not be copied.",
-        "attachmentUploadError": "Attachment could not be uploaded."
+        "callRequestOpened": "تم فتح طلب اتصال مع {{name}}.",
+        "videoRequestOpened": "تم فتح طلب مكالمة فيديو مع {{name}}.",
+        "attachmentSelected": "تم إرفاق {{name}} كمرجع للرسالة.",
+        "attachmentTooLarge": "اختر ملفًا أصغر من 10 ميغابايت.",
+        "contextCopied": "تم نسخ سياق المحادثة.",
+        "contextCopyError": "تعذّر نسخ سياق المحادثة.",
+        "attachmentUploadError": "تعذّر رفع المرفق."
       },
       "actions": {
         "call": "بدء مكالمة صوتية",
@@ -2024,23 +2024,23 @@
         "attach": "إرفاق ملف",
         "send": "إرسال الرسالة",
         "email": "Email contact",
-        "copyContext": "Copy thread context",
-        "clearAttachment": "Remove attachment reference"
+        "copyContext": "نسخ سياق المحادثة",
+        "clearAttachment": "إزالة مرجع المرفق"
       },
-      "loadProjectsError": "Could not load project scopes.",
+      "loadProjectsError": "تعذّر تحميل نطاقات المشاريع.",
       "projectScope": "Project scope",
-      "noProjectScopes": "No assigned projects. Messages will use a general thread.",
+      "noProjectScopes": "لا توجد مشاريع مُسندة. ستستخدم الرسائل محادثة عامة.",
       "allExhibitions": "All exhibitions",
       "allContacts": "{{count}} contacts",
       "generalThread": "General thread",
-      "scopedTo": "Scoped to {{project}}",
-      "attachmentDraft": "Attachment reference: {{name}}",
+      "scopedTo": "ضمن نطاق {{project}}",
+      "attachmentDraft": "مرجع المرفق: {{name}}",
       "attachmentFallback": "Attachment",
       "newConversation": "New conversation",
-      "newChatSearchPlaceholder": "Find a contact…",
-      "newChatHint": "Select a contact to start a new thread",
-      "newChatNoMatch": "No contacts match your search.",
-      "newChatAllAdded": "All contacts are already in your conversations.",
+      "newChatSearchPlaceholder": "ابحث عن جهة اتصال…",
+      "newChatHint": "اختر جهة اتصال لبدء محادثة جديدة",
+      "newChatNoMatch": "لا توجد جهات اتصال تطابق بحثك.",
+      "newChatAllAdded": "جميع جهات الاتصال موجودة بالفعل في محادثاتك.",
       "uploadingAttachment": "Uploading attachment..."
     },
     "requests": {
@@ -2082,26 +2082,26 @@
         "pending": "تم تعيين الطلب معلقاً",
         "replySent": "تم إرسال الرد"
       },
-      "loadError": "Revision requests could not be loaded.",
-      "statusError": "Request status could not be saved.",
-      "replyError": "Reply could not be saved.",
+      "loadError": "تعذّر تحميل طلبات التعديل.",
+      "statusError": "تعذّر حفظ حالة الطلب.",
+      "replyError": "تعذّر حفظ الرد.",
       "searchPlaceholder": "Search requests...",
       "history": {
         "title": "Request history",
         "meta": "{{actor}} / {{time}}",
-        "empty": "No request history has been recorded yet."
+        "empty": "لم يُسجّل أي سجل للطلبات بعد."
       },
       "detail": {
         "request": "Request",
         "replies": "Replies",
-        "noReplies": "No replies yet."
+        "noReplies": "لا توجد ردود بعد."
       },
       "confirmDecline": {
-        "title": "Decline this request?",
-        "body": "The client will see this request marked as Declined. This action cannot be undone."
+        "title": "هل تريد رفض هذا الطلب؟",
+        "body": "سيظهر هذا الطلب للعميل بحالة مرفوض. لا يمكن التراجع عن هذا الإجراء."
       },
       "paging": {
-        "showing": "Showing {{start}}-{{end}} of {{total}} requests"
+        "showing": "عرض {{start}}-{{end}} من {{total}} طلبًا"
       }
     },
     "reports": {
@@ -2148,28 +2148,28 @@
       },
       "toast": {
         "exporting": "جارٍ بدء التصدير…",
-        "exported": "Excel report exported"
+        "exported": "تم تصدير تقرير Excel"
       },
-      "loadError": "Report data could not be loaded.",
-      "loading": "Loading report data...",
-      "empty": "No report data has been recorded for this period."
+      "loadError": "تعذّر تحميل بيانات التقرير.",
+      "loading": "جارٍ تحميل بيانات التقرير…",
+      "empty": "لم تُسجّل أي بيانات تقرير لهذه الفترة."
     },
     "join": {
-      "pageTitle": "Join the Team",
-      "pageSubtitle": "Complete your profile to activate your Project Manager account.",
+      "pageTitle": "الانضمام إلى الفريق",
+      "pageSubtitle": "أكمل ملفك الشخصي لتفعيل حساب مدير المشروع.",
       "inviteConfirmed": "Invitation confirmed",
-      "joiningAs": "Joining as a <bold>Project Manager</bold> with email <email>{{email}}</email>",
+      "joiningAs": "أنت تنضم بصفة <bold>مدير مشروع</bold> بالبريد <email>{{email}}</email>",
       "form": {
         "fullName": "Full Name",
-        "fullNamePlaceholder": "Your full name",
+        "fullNamePlaceholder": "اسمك الكامل",
         "password": "Password",
-        "passwordPlaceholder": "At least 8 characters",
+        "passwordPlaceholder": "8 أحرف على الأقل",
         "confirmPassword": "Confirm Password",
-        "confirmPasswordPlaceholder": "Re-enter your password",
+        "confirmPasswordPlaceholder": "أعد إدخال كلمة المرور",
         "showPassword": "Show password",
         "hidePassword": "Hide password",
-        "passwordMismatch": "Passwords do not match.",
-        "submit": "Create My Account",
+        "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+        "submit": "إنشاء حسابي",
         "submitting": "Creating Account…"
       },
       "strength": {
@@ -2179,21 +2179,21 @@
         "strong": "Strong"
       },
       "error": {
-        "title": "Invitation Not Valid",
-        "noToken": "No invitation token found in the URL. Please use the link from your invitation email.",
-        "invalidToken": "This invitation link is not valid.",
-        "contact": "If you believe this is a mistake, please contact your administrator to resend the invitation.",
+        "title": "الدعوة غير صالحة",
+        "noToken": "لم يُعثر على رمز دعوة في الرابط. يُرجى استخدام الرابط الوارد في بريد الدعوة.",
+        "invalidToken": "رابط الدعوة هذا غير صالح.",
+        "contact": "إذا كنت ترى أن هذا خطأ، فاطلب من المسؤول إعادة إرسال الدعوة.",
         "adminEmail": "admin@ens-agency.com",
-        "goToLogin": "Go to Login",
-        "nameRequired": "Please enter your full name.",
-        "passwordTooShort": "Password must be at least 8 characters.",
-        "passwordMismatch": "Passwords do not match.",
-        "generic": "Something went wrong. Please try again."
+        "goToLogin": "الانتقال إلى تسجيل الدخول",
+        "nameRequired": "يُرجى إدخال اسمك الكامل.",
+        "passwordTooShort": "يجب ألا تقل كلمة المرور عن 8 أحرف.",
+        "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+        "generic": "حدث خطأ ما. يُرجى المحاولة مرة أخرى."
       },
       "success": {
         "title": "Account Created!",
-        "body": "Welcome to the ENS team, {{name}}! Your account is ready. You'll be redirected to the login page in a moment.",
-        "goToLogin": "Go to Login Now"
+        "body": "أهلًا بك في فريق ENS يا {{name}}! حسابك جاهز، وسيتم تحويلك إلى صفحة تسجيل الدخول بعد قليل.",
+        "goToLogin": "الانتقال الآن إلى تسجيل الدخول"
       }
     },
     "workspace": {
@@ -2201,7 +2201,7 @@
         "all": "All",
         "chairs": "Chairs",
         "stools": "Bar stools",
-        "seating": "Sofas & poufs",
+        "seating": "كنب ومقاعد بلا ظهر",
         "tables": "Tables",
         "storage": "Storage",
         "shelves": "Shelves",
@@ -2219,19 +2219,19 @@
       "nextMonth": "Next month",
       "searchPlaceholder": "Search events…",
       "today": "Today",
-      "eventsThisMonth": "events this month",
+      "eventsThisMonth": "فعالية هذا الشهر",
       "addToDay": "Add",
-      "noEventsDay": "No events scheduled for this day.",
-      "upcomingThisMonth": "Events This Month",
-      "noEvents": "No events match the current filters.",
+      "noEventsDay": "لا توجد فعاليات مجدولة في هذا اليوم.",
+      "upcomingThisMonth": "فعاليات هذا الشهر",
+      "noEvents": "لا توجد فعاليات تطابق عوامل التصفية الحالية.",
       "error": {
-        "load": "Failed to load calendar",
-        "nameRequired": "Name is required",
-        "startRequired": "Start date is required",
-        "endRequired": "End date is required",
-        "endBeforeStart": "End date must be on or after start date",
-        "save": "Failed to save",
-        "delete": "Failed to delete"
+        "load": "تعذّر تحميل التقويم",
+        "nameRequired": "الاسم مطلوب",
+        "startRequired": "تاريخ البدء مطلوب",
+        "endRequired": "تاريخ الانتهاء مطلوب",
+        "endBeforeStart": "يجب أن يكون تاريخ الانتهاء في يوم البدء أو بعده",
+        "save": "تعذّر الحفظ",
+        "delete": "تعذّر الحذف"
       },
       "filter": {
         "all": "All",
@@ -2242,17 +2242,17 @@
       },
       "create": {
         "title": "Add Event",
-        "description": "Add an exhibition or deadline to your calendar.",
+        "description": "أضف معرضًا أو موعدًا نهائيًا إلى تقويمك.",
         "confirm": "Create Event"
       },
       "edit": {
         "title": "Edit Event",
-        "description": "Update event details.",
+        "description": "تحديث تفاصيل الفعالية.",
         "confirm": "Save Changes"
       },
       "delete": {
         "title": "Delete Event",
-        "description": "Remove \"{{name}}\" from the calendar?",
+        "description": "هل تريد إزالة «{{name}}» من التقويم؟",
         "confirm": "Delete"
       },
       "form": {
@@ -2320,15 +2320,15 @@
         "reviewRequired": "مراجعة مطلوبة",
         "noReview": "لا توجد مراجعة معلقة"
       },
-      "waitingTitle": "Waiting for Chief assignment",
-      "waitingDesc": "Your account is in the system. The Chief Manager needs to assign a project manager and project before your workspace unlocks.",
+      "waitingTitle": "بانتظار الإسناد من الإدارة",
+      "waitingDesc": "حسابك مُسجّل في النظام. على الإدارة إسناد مدير مشروع ومشروع قبل أن تُفتح مساحة عملك.",
       "messageTeamBtn": "Message team",
-      "reviewTitle": "Booth design ready for review",
-      "reviewDesc": "The latest design for {{name}} has been shared with you. Open the workspace to inspect it, approve it, or request changes.",
+      "reviewTitle": "تصميم الجناح جاهز للمراجعة",
+      "reviewDesc": "تمت مشاركة أحدث تصميم لـ {{name}} معك. افتح مساحة العمل لمعاينته أو اعتماده أو طلب تعديلات.",
       "openWorkspaceBtn": "Open Workspace",
       "reviewApprovalBtn": "Review Approval",
-      "workspaceLocked": "Workspace locked until assignment",
-      "workspaceLockedDesc": "You will be notified when your project manager is assigned."
+      "workspaceLocked": "مساحة العمل مقفلة حتى الإسناد",
+      "workspaceLockedDesc": "سنُعلمك فور إسناد مدير المشروع الخاص بك."
     },
     "approvals": {
       "pageTitle": "الموافقات | ENS",
@@ -2456,11 +2456,11 @@
         "send": "إرسال الرسالة"
       },
       "error": {
-        "contacts": "Could not load message contacts.",
-        "messages": "Could not load messages.",
-        "attachmentTooLarge": "Attachment is too large. Maximum file size is 25 MB."
+        "contacts": "تعذّر تحميل جهات اتصال الرسائل.",
+        "messages": "تعذّر تحميل الرسائل.",
+        "attachmentTooLarge": "المرفق كبير جدًا. الحد الأقصى لحجم الملف 25 ميغابايت."
       },
-      "noMessages": "No messages yet.",
+      "noMessages": "لا توجد رسائل بعد.",
       "uploading": "Uploading attachment..."
     },
     "projects": {
@@ -2495,8 +2495,8 @@
         "heading": "الجدول الزمني للمشروع",
         "defaultLabel": "تم إنشاء المشروع — التصميم جارٍ",
         "defaultDate": "مؤخراً",
-        "movedFromTo": "Moved from {{from}} to {{to}}",
-        "movedTo": "Moved to {{to}}"
+        "movedFromTo": "نُقل من {{from}} إلى {{to}}",
+        "movedTo": "نُقل إلى {{to}}"
       },
       "action": {
         "viewDesign": "عرض التصميم",
@@ -2505,9 +2505,9 @@
         "documents": "المستندات",
         "messagePm": "مراسلة مدير المشروع"
       },
-      "loadError": "Could not load your assigned projects.",
-      "emptyTitle": "No assigned projects yet",
-      "emptyDesc": "Your exhibition registration is in the system. A Chief Manager or Project Manager needs to assign a project before it appears here."
+      "loadError": "تعذّر تحميل المشاريع المُسندة إليك.",
+      "emptyTitle": "لا توجد مشاريع مُسندة بعد",
+      "emptyDesc": "تسجيلك في المعرض موجود في النظام. على الإدارة أو أحد مديري المشاريع إسناد مشروع قبل أن يظهر هنا."
     },
     "profile": {
       "pageTitle": "إعدادات الملف الشخصي | ENS",
@@ -2706,35 +2706,35 @@
         "fullscreen": "ملء الشاشة"
       },
       "unassigned": {
-        "title": "Workspace waiting for assignment",
-        "body": "Your account exists, but the Chief Manager has not assigned a project manager and booth project yet. You'll get access as soon as your account is set up.",
-        "backBtn": "Back to Dashboard"
+        "title": "مساحة العمل بانتظار الإسناد",
+        "body": "حسابك موجود، لكن الإدارة لم تُسند بعد مدير مشروع ومشروع جناح. ستحصل على الصلاحية فور إعداد حسابك.",
+        "backBtn": "العودة إلى لوحة المعلومات"
       },
       "revisions": {
-        "counter": "Revisions: {{count}} / {{limit}}",
+        "counter": "التعديلات: {{count}} / {{limit}}",
         "upgradeBtn": "Upgrade Revisions",
-        "exhaustedTitle": "Revision limit reached",
-        "exhaustedBody": "You have used all included arrangement rounds. Upgrade your plan to unlock more revisions.",
+        "exhaustedTitle": "بلغت الحد الأقصى للتعديلات",
+        "exhaustedBody": "لقد استخدمت كل جولات التعديل المشمولة. رقِّ باقتك للحصول على جولات إضافية.",
         "upgradeDialog": {
-          "title": "Upgrade Revisions Plan",
-          "subtitle": "Choose a plan to unlock more revision rounds.",
+          "title": "ترقية باقة التعديلات",
+          "subtitle": "اختر باقة للحصول على جولات تعديل إضافية.",
           "starter": {
             "name": "Starter",
-            "description": "Adds 3 extra client revision rounds",
+            "description": "تضيف 3 جولات تعديل للعميل",
             "price": "$2.99"
           },
           "pro": {
             "name": "Pro",
-            "description": "Adds 8 extra revision rounds",
+            "description": "تضيف 8 جولات تعديل",
             "price": "$9.99"
           },
           "unlimited": {
             "name": "Unlimited",
-            "description": "Unlimited revision rounds",
+            "description": "جولات تعديل غير محدودة",
             "price": "$11.99"
           },
           "cancelBtn": "Cancel",
-          "continueBtn": "Continue to checkout"
+          "continueBtn": "المتابعة إلى الدفع"
         }
       },
       "feedbackFilter": {
@@ -2748,12 +2748,12 @@
         "reopen": "Reopen",
         "resolve": "Resolve"
       },
-      "backToDashboard": "Back to Dashboard"
+      "backToDashboard": "العودة إلى لوحة المعلومات"
     },
     "pendingApproval": {
       "title": "Pending Approval",
-      "body": "Hi {{firstName}}, your account has been created and is waiting for your agency to review and approve it. You'll have full access once they do.",
-      "emailNote": "You'll receive an email notification when your account is activated."
+      "body": "مرحبًا {{firstName}}، تم إنشاء حسابك وهو بانتظار مراجعة وكالتك والموافقة عليه. ستحصل على صلاحية كاملة بعد ذلك.",
+      "emailNote": "ستصلك رسالة بريد إلكتروني عند تفعيل حسابك."
     }
   },
   "notFound": {

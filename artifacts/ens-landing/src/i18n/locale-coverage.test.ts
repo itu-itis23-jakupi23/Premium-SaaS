@@ -40,6 +40,19 @@ function flatten(value: unknown, prefix = ""): string[] {
 const english = flatten(load("en"));
 const publicKeys = english.filter((key) => PUBLIC_PREFIXES.some((p) => key.startsWith(p)));
 
+/** Brand names, formats and codes that are the same in every language. */
+const ALWAYS_IDENTICAL =
+  /^(ENS|Octanorm|Maxima|OCTANORM|MAXIMA|CRM|PDF|CSV|XLSX|3D|2D|SKU|BOM|GDPR)$/i;
+
+const en = load("en");
+
+function read(path: string, root: unknown): unknown {
+  return path.split(".").reduce<unknown>((node, part) => {
+    if (node === null || typeof node !== "object") return undefined;
+    return (node as Record<string, unknown>)[part];
+  }, root);
+}
+
 describe("locale coverage", () => {
   it.each(LOCALES)("%s translates every key in en.json", (code) => {
     // Full parity, not just the public surface. The authenticated dashboards
@@ -91,6 +104,32 @@ describe("locale coverage", () => {
         .sort();
       expect(names, `${code} ${key} placeholder mismatch`).toEqual(englishNames);
     }
+  });
+
+  it("has no key that is English in every single locale", () => {
+    // The two guards above have a blind spot between them, and 186 keys lived
+    // in it. Parity checks that a key *exists* in each locale - copying en.json
+    // verbatim satisfies it. The ratio check catches a whole file left in
+    // English, but trips only above 50%, so a namespace or two slipping through
+    // untranslated stays well under the line.
+    //
+    // A phrase that is byte-identical across all ten locales was never
+    // translated in any of them. Single words are excluded because real
+    // cognates exist ("Total", "Status", "Budget"), as are strings whose only
+    // content is a placeholder, like "{{from}} -> {{to}}".
+    const locales = LOCALES.map(load);
+    const untranslated = english.filter((key) => {
+      const source = read(key, en);
+      if (typeof source !== "string") return false;
+      const words = source.replace(/\{\{[^}]*\}\}/g, " ");
+      if (!/[A-Za-z]{2,}/.test(words)) return false;
+      if (source.trim().split(/\s+/).length < 3) return false;
+      if (ALWAYS_IDENTICAL.test(source.trim())) return false;
+      return locales.every((locale) => read(key, locale) === source);
+    });
+
+    expect(untranslated, `${untranslated.length} key(s) are English in all ten locales`)
+      .toEqual([]);
   });
 
   it.each(LOCALES)("%s has no key left as its own English source text", (code) => {
