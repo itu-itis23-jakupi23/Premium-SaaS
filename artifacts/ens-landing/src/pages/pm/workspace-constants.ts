@@ -27,7 +27,7 @@ export const C = {
 export const MONO = 'var(--app-font-mono)';
 export const UI   = 'var(--app-font-samsung)';
 
-export const FURNITURE_CATEGORY_ORDER: FurnitureCategory[] = ['all','chairs','stools','seating','tables','storage','shelves','appliances','lighting','decor','parts'];
+export const FURNITURE_CATEGORY_ORDER: FurnitureCategory[] = ['all','chairs','stools','seating','tables','counters','displays','storage','shelves','appliances','lighting','decor','parts'];
 export function furnitureCategoryFor(item: Pick<CatItem,'name'|'sku'|'shape'>): FurnitureCategory {
   const text = `${item.name} ${item.sku}`.toLowerCase();
   if (item.shape === 'bar_stool' || text.includes('tabure') || text.includes('bar stool') || text.includes('bar chair')) return 'stools';
@@ -37,6 +37,8 @@ export function furnitureCategoryFor(item: Pick<CatItem,'name'|'sku'|'shape'>): 
   }
   if (text.includes('koltuk') || text.includes('sofa') || text.includes('puf') || text.includes('pouffe')) return 'seating';
   if (item.shape === 'round_table' || item.shape === 'rect_table' || text.includes('masa') || text.includes('table')) return 'tables';
+  if (item.shape === 'counter' || text.includes('banko') || text.includes('counter')) return 'counters';
+  if (item.shape === 'cube' || text.includes('vitrin') || text.includes('showcase') || text.includes('teshir') || text.includes('display')) return 'displays';
   if (item.shape === 'shelf' || item.shape === 'wall_shelf' || text.includes('raf') || text.includes('shelf') || text.includes('brosurluk') || text.includes('brochure')) return 'shelves';
   if (text.includes('buzdolabi') || text.includes('refrigerator') || text.includes('sebil') || text.includes('water fountain') || text.includes('evye') || text.includes('sink')) return 'appliances';
   if (item.shape === 'cabinet' || text.includes('dolap') || text.includes('cabinet') || text.includes('rack')) return 'storage';

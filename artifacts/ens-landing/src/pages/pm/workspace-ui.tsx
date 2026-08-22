@@ -39,7 +39,13 @@ export function Swatch({color,active,onClick,size=28,title}:{color:string;active
   </button>);
 }
 export function catalogPreviewUrl(item: CatItem) {
+  // The ENS catalogue carries its preview path explicitly. Deriving it from the
+  // model filename - as this used to - meant every picture broke the moment a
+  // model was renamed or repointed, silently and with no failing test.
+  if (item.previewUrl) return item.previewUrl;
   if (!item.modelUrl) return '';
+  // Legacy fallback for the older Sedef set, whose previews are named after
+  // their model file rather than stored on the item.
   const filename = decodeURIComponent(item.modelUrl.split('/').pop() || '').replace(/\.glb$/i, ' - preview.png');
   return `/ens-workspace-assets/sedef_remaining_furniture_refined_v2/previews-clean/${encodeURIComponent(filename)}`;
 }
