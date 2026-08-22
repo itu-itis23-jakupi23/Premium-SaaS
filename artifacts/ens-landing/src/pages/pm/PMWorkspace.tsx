@@ -1501,6 +1501,7 @@ export default function PMWorkspace() {
                 catalogId: draggedCatalogItem.id,
                 name: draggedCatalogItem.name,
                 ...catalogItemProps(draggedCatalogItem),
+                shape: draggedCatalogItem.shape,
                 rotationY: 0,
               } : null,
               onItemMove: moveItemLive,

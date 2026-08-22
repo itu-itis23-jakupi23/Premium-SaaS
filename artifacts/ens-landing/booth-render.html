@@ -131,9 +131,9 @@
   <svg class="scene" id="scene" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
     <defs>
       <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%"  stop-color="#f3f4f6"/>
-        <stop offset="60%" stop-color="#dadde1"/>
-        <stop offset="100%" stop-color="#b8bcc1"/>
+        <stop offset="0%"  stop-color="#dde0e5"/>
+        <stop offset="60%" stop-color="#bcc1c8"/>
+        <stop offset="100%" stop-color="#979da5"/>
       </linearGradient>
       <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#bcbfc4"/>
@@ -1847,6 +1847,155 @@ function nearestFreePlacedItemPosition(x, z, w, d) {
   return best;
 }
 
+/* ── Wall mounting constraints ─────────────────────────────────────────────
+ *
+ * Three families of object do not sit on the floor and must not be dragged as
+ * though they did:
+ *
+ *   wall_shelf / shelf  mounted to a wall panel, spanning its full width, and
+ *                       moving one whole panel at a time. A shelf half way
+ *                       across a joint is not buildable.
+ *   rail_light / light  carried on the top beam of a wall frame, sliding
+ *                       horizontally along that beam only.
+ *   everything else     free on the floor, but snapping flush when pushed up
+ *                       against a wall, so a counter can sit against the back
+ *                       wall without a millimetre of daylight behind it.
+ *
+ * The wall runs below mirror the buildWall() calls exactly - same corners, same
+ * panel counts - so a slot computed here lands on the panel that is drawn.
+ * Open sides are skipped: nothing mounts to a wall that is not there.
+ */
+const WALL_MOUNT_GRAB_M = 0.6;   // how near a wall a mounted item must be dropped
+const WALL_FLUSH_RANGE_M = 0.35; // how near a wall ordinary furniture snaps flush
+
+function boothWallRuns() {
+  const runs = [];
+  const visible = (typeof wallsVisible !== 'undefined' && wallsVisible) ? wallsVisible : {};
+  if (visible.back  !== false) runs.push({ name:'back',  axis:'x', from:-BW/2, to:BW/2, fixed:0,     panels:PANELS_BACK, inX:0,  inZ:1  });
+  if (visible.front !== false) runs.push({ name:'front', axis:'x', from:-BW/2, to:BW/2, fixed:BD,    panels:PANELS_BACK, inX:0,  inZ:-1 });
+  if (visible.left  !== false) runs.push({ name:'left',  axis:'z', from:0,     to:BD,   fixed:-BW/2, panels:PANELS_SIDE, inX:1,  inZ:0  });
+  if (visible.right !== false) runs.push({ name:'right', axis:'z', from:0,     to:BD,   fixed:BW/2,  panels:PANELS_SIDE, inX:-1, inZ:0  });
+  return runs;
+}
+
+/** Distance from (x,z) to a wall run, and how far along the run that lands. */
+function wallRunProjection(run, x, z) {
+  const along = run.axis === 'x' ? x : z;
+  const across = run.axis === 'x' ? z : x;
+  const lo = Math.min(run.from, run.to), hi = Math.max(run.from, run.to);
+  const clampedAlong = Math.max(lo, Math.min(hi, along));
+  return {
+    along: clampedAlong,
+    distance: Math.abs(across - run.fixed) + Math.abs(along - clampedAlong),
+  };
+}
+
+/** Panel centres along one wall run, in draw order. */
+function panelSlotsForRun(run) {
+  const span = run.to - run.from;
+  const count = Math.max(1, run.panels);
+  const bay = span / count;
+  const slots = [];
+  for (let i = 0; i < count; i++) {
+    slots.push({ run, index: i, bay: Math.abs(bay), along: run.from + (i + 0.5) * bay });
+  }
+  return slots;
+}
+
+/** Where an item of the given depth sits when mounted on a slot. */
+function slotMountPoint(slot, depth) {
+  const run = slot.run;
+  const inset = Math.max(0.03, (Number(depth) || 0.3) / 2);
+  return run.axis === 'x'
+    ? { x: slot.along, z: run.fixed + run.inZ * inset }
+    : { x: run.fixed + run.inX * inset, z: slot.along };
+}
+
+function nearestPanelSlot(x, z) {
+  let best = null;
+  for (const run of boothWallRuns()) {
+    const projection = wallRunProjection(run, x, z);
+    for (const slot of panelSlotsForRun(run)) {
+      const gap = projection.distance + Math.abs(slot.along - projection.along) * 0.35;
+      if (!best || gap < best.gap) best = { slot, gap, distance: projection.distance };
+    }
+  }
+  return best;
+}
+
+function nearestWallRun(x, z) {
+  let best = null;
+  for (const run of boothWallRuns()) {
+    const projection = wallRunProjection(run, x, z);
+    if (!best || projection.distance < best.distance) {
+      best = { run, along: projection.along, distance: projection.distance };
+    }
+  }
+  return best;
+}
+
+/**
+ * Constrains a dragged item to whatever it is allowed to move along. Returns a
+ * position, or null to leave the caller's floor placement alone. Mutates width
+ * and rotation for shelves, which take the geometry of the panel they land on.
+ */
+function applyWallMountConstraint(item, x, z) {
+  const shape = furnitureShape(item);
+
+  if (shape === 'wall_shelf' || shape === 'shelf') {
+    const hit = nearestPanelSlot(x, z);
+    if (!hit) return null;
+    // A shelf is exactly its panel wide, less a small reveal so the end caps
+    // clear the uprights.
+    item.w = Math.max(0.2, hit.slot.bay - 0.06);
+    item.rotationY = hit.slot.run.axis === 'x' ? 0 : 90;
+    item.mountWall = hit.slot.run.name;
+    item.mountPanel = hit.slot.index;
+    if (!(Number(item.y) > 0)) item.y = Math.min(Math.max(0.9, BH * 0.55), BH - 0.25);
+    return slotMountPoint(hit.slot, item.d);
+  }
+
+  if (shape === 'rail_light' || shape === 'light') {
+    const hit = nearestWallRun(x, z);
+    if (!hit) return null;
+    // Lights ride the top beam: free along the wall, pinned to its height.
+    item.rotationY = hit.run.axis === 'x' ? 0 : 90;
+    item.mountWall = hit.run.name;
+    item.y = BH;
+    const inset = Math.max(0.05, (Number(item.d) || 0.2) / 2);
+    return hit.run.axis === 'x'
+      ? { x: hit.along, z: hit.run.fixed + hit.run.inZ * inset }
+      : { x: hit.run.fixed + hit.run.inX * inset, z: hit.along };
+  }
+
+  // Ordinary furniture: snap flush to a wall when dropped against one.
+  const near = nearestWallRun(x, z);
+  if (!near || near.distance > WALL_FLUSH_RANGE_M) return null;
+  const footprint = rotatedFootprint(item.w, item.d, item.rotationY ?? item.rotation);
+  const half = near.run.axis === 'x' ? footprint.d / 2 : footprint.w / 2;
+  return near.run.axis === 'x'
+    ? { x, z: near.run.fixed + near.run.inZ * half }
+    : { x: near.run.fixed + near.run.inX * half, z };
+}
+
+/**
+ * Keeps a mounted point inside the booth without pulling it off its wall.
+ * The point is already correct across the wall; only the along-wall travel
+ * needs bounding.
+ */
+function clampMountedPoint(point) {
+  return {
+    x: Math.max(-BW / 2, Math.min(BW / 2, Number(point.x) || 0)),
+    z: Math.max(0, Math.min(BD, Number(point.z) || 0)),
+  };
+}
+
+/** True when the item is mounted rather than standing on the floor. */
+function isWallMountedItem(item) {
+  const shape = furnitureShape(item);
+  return shape === 'wall_shelf' || shape === 'shelf' || shape === 'rail_light' || shape === 'light';
+}
+
 function resolvePlacedItemPosition(x, z, w, d) {
   let pos = clampPlacedItemToBooth(x, z, w, d);
   const footprintSize = {
@@ -1991,8 +2140,20 @@ function evaluateCatalogPlacement(data) {
   const floorTolerance = 0.08;
   const overFloor = rawX >= -BW / 2 - floorTolerance && rawX <= BW / 2 + floorTolerance && rawZ >= -floorTolerance && rawZ <= BD + floorTolerance;
   const footprint = rotatedFootprint(w, d, rotationY);
-  const clamped = clampPlacedItemToBooth(rawX, rawZ, footprint.w, footprint.d);
-  const reason = overFloor ? itemCollisionReason(null, clamped.x, clamped.z, w, d, rotationY) : 'Move onto the booth floor';
+
+  // A shelf or a light dropped from the catalogue mounts straight away, so the
+  // preview shows where it will actually land rather than a floor position it
+  // will jump away from on release.
+  const probe = { shape: item.shape, sku: item.sku, name: item.name, w, d, rotationY };
+  const mounted = applyWallMountConstraint(probe, rawX, rawZ);
+  const clamped = mounted
+    ? clampMountedPoint(mounted)
+    : clampPlacedItemToBooth(rawX, rawZ, footprint.w, footprint.d);
+  const reason = !overFloor
+    ? 'Move onto the booth floor'
+    : mounted
+      ? null
+      : itemCollisionReason(null, clamped.x, clamped.z, w, d, rotationY);
   return {
     catalogId,
     name: String(item.name || 'Furniture'),
@@ -3256,10 +3417,24 @@ svgEl.addEventListener('pointermove', (e) => {
       const d = footprint.d;
       const nextX = hit[0] + objectDrag.offsetX + BW / 2;
       const nextZ = hit[2] + objectDrag.offsetZ;
-      const clamped = resolvePlacedItemPosition(-BW / 2 + Math.round(nextX * 20) / 20, Math.round(nextZ * 20) / 20, w, d);
+      const rawX = -BW / 2 + Math.round(nextX * 20) / 20;
+      const rawZ = Math.round(nextZ * 20) / 20;
+
+      // Shelves and lights are mounted, not placed: they follow the wall they
+      // belong to rather than the floor point under the pointer, and a shelf
+      // takes the width of the panel it lands on. Everything else keeps the
+      // floor placement, with a flush snap when pushed against a wall.
+      const mounted = applyWallMountConstraint(item, rawX, rawZ);
+      const clamped = mounted
+        ? clampMountedPoint(mounted)
+        : resolvePlacedItemPosition(rawX, rawZ, w, d);
       item.x = clamped.x + BW / 2;
       item.z = clamped.z;
-      dragHasCollision = checkItemCollision(item.id, clamped.x, clamped.z, item.w, item.d, item.rotationY ?? item.rotation);
+      // A mounted item shares no floor space with anything, so floor collision
+      // does not apply to it.
+      dragHasCollision = isWallMountedItem(item)
+        ? false
+        : checkItemCollision(item.id, clamped.x, clamped.z, item.w, item.d, item.rotationY ?? item.rotation);
       if (!dragHasCollision) {
         objectDrag.lastValidX = item.x;
         objectDrag.lastValidZ = item.z;

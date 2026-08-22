@@ -9,6 +9,10 @@ export interface CatalogDragItem {
   h: number;
   color?: string;
   rotationY?: number;
+  /** Drives the renderer's mounting rules - a shelf lands on a panel and a
+   *  light on the top beam, rather than on the floor under the pointer. Passed
+   *  explicitly because inferring it from the name is guesswork. */
+  shape?: string;
 }
 
 interface CatalogDropState {
