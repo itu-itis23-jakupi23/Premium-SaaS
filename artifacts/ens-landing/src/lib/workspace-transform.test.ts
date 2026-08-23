@@ -20,7 +20,7 @@ import {
 describe("constants", () => {
   it("hold their documented values (guards against silent drift)", () => {
     expect(FURNITURE_SNAP_M).toBe(0.05);
-    expect(ROOM_SNAP_M).toBe(0.5);
+    expect(ROOM_SNAP_M).toBe(0.05);
     expect(ROOM_DIMENSION_SNAP_M).toBe(1);
     expect(ROOM_CORNER_SNAP_M).toBe(0.32);
     expect(ITEM_WALL_CLEARANCE_M).toBe(0);
@@ -49,10 +49,16 @@ describe("clampNumber", () => {
 });
 
 describe("snapNumber", () => {
-  it("snaps to the nearest multiple of the default room grid (0.5 m)", () => {
-    expect(snapNumber(1.2)).toBe(1);
-    expect(snapNumber(1.3)).toBe(1.5);
-    expect(snapNumber(1.75)).toBe(2); // rounds half away from zero via Math.round
+  it("snaps to the nearest multiple of the default room grid (5 cm)", () => {
+    // The default step is ROOM_SNAP_M, which is now 5 cm rather than 50 cm, so
+    // a room can be lined up with the furniture already in the booth.
+    expect(snapNumber(1.23)).toBe(1.25);
+    expect(snapNumber(1.22)).toBe(1.2);
+    expect(snapNumber(1.28)).toBe(1.3);
+    // Deliberately not asserting an exact half-way case: 1.775 / 0.05 is
+    // 35.499999999999996 in binary, so "round half away from zero" is not
+    // observable on a decimal grid and pinning it would test the float, not
+    // the rule.
   });
   it("snaps to a custom step (furniture grid, 5 cm)", () => {
     expect(snapNumber(1.23, FURNITURE_SNAP_M)).toBe(1.25);
@@ -66,7 +72,7 @@ describe("snapNumber", () => {
     expect(Number.isInteger(snapped * 1000)).toBe(true);
   });
   it("snaps negative values symmetrically", () => {
-    expect(snapNumber(-1.3)).toBe(-1.5);
+    expect(snapNumber(-1.23)).toBe(-1.25);
     expect(snapNumber(-1.23, FURNITURE_SNAP_M)).toBe(-1.25);
   });
 });

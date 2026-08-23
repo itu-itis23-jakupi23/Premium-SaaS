@@ -26,15 +26,23 @@
 /** Grid furniture snaps to when dragged or positioned numerically. 5 cm. */
 export const FURNITURE_SNAP_M = 0.05;
 
-/** Grid room origins snap to. 50 cm. */
-export const ROOM_SNAP_M = 0.5;
+/**
+ * Grid room origins snap to. 5 cm, the same grid furniture uses.
+ *
+ * This was 50 cm, which let a room stop only at half-metre stations: it could
+ * rarely be lined up with anything already placed, and a room whose own size
+ * was not a multiple of half a metre could not be pushed tight to a booth edge
+ * except through the corner snap below.
+ */
+export const ROOM_SNAP_M = 0.05;
 
 /** Grid room width/depth snap to. Rooms are built from 1 m wall sections. */
 export const ROOM_DIMENSION_SNAP_M = 1;
 
 /**
  * Distance from a booth edge within which a dragged room jumps flush to it.
- * Larger than ROOM_SNAP_M so corners stay reachable without pixel precision.
+ * Much larger than ROOM_SNAP_M, so a corner is reachable by aim rather than by
+ * pixel precision even though the grid underneath it is fine.
  */
 export const ROOM_CORNER_SNAP_M = 0.32;
 

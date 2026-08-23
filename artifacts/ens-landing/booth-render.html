@@ -1024,6 +1024,37 @@ function buildRooms() {
       ...wallBoxCommon
     });
     }
+
+    // Room walls are built from the same 1 m modules as the booth, so they need
+    // the same uprights between panels. Without them a room read as one blank
+    // slab per side - a plain box dropped into a booth made of panels, which is
+    // not what gets built on site.
+    const roomMullion = EX * 0.85;
+    const roomPostFill = 'url(#alu)';
+    const pushRoomPosts = (side, ax, from, to, fixed) => {
+      const span = Math.abs(to - from);
+      const bays = Math.max(1, Math.round(span));
+      if (bays < 2 && span < 1.6) return;           // a single narrow panel has no joint
+      for (let n = 1; n < bays; n += 1) {
+        const at = from + (to - from) * (n / bays);
+        const lo = at - roomMullion / 2;
+        const hi = at + roomMullion / 2;
+        const common = {
+          fill: roomPostFill,
+          partId: room.id + '-' + side + '-post-' + n,
+          partLabel: label + ' upright',
+          partMeta: meta,
+          ...wallBoxCommon,
+        };
+        if (ax === 'x') pushBox([lo, 0, fixed], [hi, h, fixed + EX], common);
+        else pushBox([fixed, 0, lo], [fixed + EX, h, hi], common);
+      }
+    };
+    if (!skipBack)  pushRoomPosts('back',  'x', x0, x1, z0);
+    if (!skipFront) pushRoomPosts('front', 'x', x0, x1, z1 - EX);
+    if (!skipLeft)  pushRoomPosts('left',  'z', z0, z1, x0);
+    if (!skipRight) pushRoomPosts('right', 'z', z0, z1, x1 - EX);
+
     if (room.hasCeiling) {
       pushBox([x0, h, z0], [x1, h + EX, z1], {
         fill: 'rgba(226,232,240,0.76)',
@@ -3489,8 +3520,11 @@ svgEl.addEventListener('pointermove', (e) => {
       const maxX = BW - w / 2;
       const minZ = d / 2;
       const maxZ = BD - d / 2;
-      let snappedX = Math.max(minX, Math.min(maxX, Math.round(nextX * 2) / 2));
-      let snappedZ = Math.max(minZ, Math.min(maxZ, Math.round(nextZ * 2) / 2));
+      // 5 cm, the same grid furniture uses. A 0.5 m grid meant a room could
+      // only stop at half-metre stations, so it could rarely be lined up with
+      // anything already in the booth.
+      let snappedX = Math.max(minX, Math.min(maxX, Math.round(nextX * 20) / 20));
+      let snappedZ = Math.max(minZ, Math.min(maxZ, Math.round(nextZ * 20) / 20));
       const cornerSnap = 0.32;
       if (Math.abs(nextX - minX) <= cornerSnap) snappedX = minX;
       if (Math.abs(nextX - maxX) <= cornerSnap) snappedX = maxX;
@@ -3566,12 +3600,10 @@ function endPointer(e) {
     } else if (objectDrag.type === 'room') {
       const room = rooms.find(entry => String(entry.id) === String(objectDrag.roomId));
       if (room) {
-        if (dragHasCollision) {
-          room.x = objectDrag.lastValidX;
-          room.z = objectDrag.lastValidZ;
-          buildBoothGeometry();
-          renderAll();
-        }
+        // A room stays where it is put. It used to spring back to its last
+        // non-overlapping position on release, so a room pushed into a corner
+        // that clipped anything at all simply refused to go there. Overlaps
+        // are still drawn in the collision colour while dragging.
         notifyRoomMoved(room);
       }
     } else if (objectDrag.type === 'frontSupport') {
