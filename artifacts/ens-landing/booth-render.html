@@ -1759,7 +1759,7 @@ function buildPlacedItems() {
             x = 0;
             z = 0.05;
           }
-          y = Math.max(0, BH - h);
+          y = Math.max(0, lightRailUnderside() - h);
         }
         // Keep the catalogue's real size. Forcing a 15 cm cube here is what drew
         // the amber block instead of the fixture.
@@ -2029,9 +2029,9 @@ function applyWallMountConstraint(item, x, z) {
     // Lights ride the top beam: free along the wall, pinned to its height.
     item.rotationY = hit.run.axis === 'x' ? 0 : 90;
     item.mountWall = hit.run.name;
-    // Hang the fixture under the beam: its own height below the top, so the
-    // body finishes flush with the rail rather than sitting on top of it.
-    item.y = Math.max(0, BH - (Number(item.h) || 0.28));
+    // Hang the fixture from the ceiling support rail, its own height below the
+    // rail's underside, so it clamps onto the beam the way a real one does.
+    item.y = Math.max(0, lightRailUnderside() - (Number(item.h) || 0.28));
     const inset = Math.max(0.05, (Number(item.d) || 0.2) / 2);
     return hit.run.axis === 'x'
       ? { x: hit.along, z: hit.run.fixed + hit.run.inZ * inset }
@@ -2099,6 +2099,19 @@ function supportSurfaceHeight(x, z, excludeId) {
 }
 
 /**
+ * Underside of the ceiling support rail - the beam a spotlight clamps onto.
+ *
+ * Mirrors buildCeilingSupportRail(): centreline at BH + min(FH * 0.42, 0.13),
+ * profile railW deep. Lights hang from this, not from the top of the wall
+ * panels, which is roughly 100 mm lower and left them sitting under the rail
+ * rather than on it.
+ */
+function lightRailUnderside() {
+  const railW = Math.max(EX * 1.35, 0.055);
+  return BH + Math.min(FH * 0.42, 0.13) - railW / 2;
+}
+
+/**
  * The height an item's base sits at.
  *
  * A stored y is trusted when it is set, but a mounted item must never fall back
@@ -2112,7 +2125,7 @@ function mountedBaseY(item) {
   if (Number.isFinite(stored) && stored > 0) return stored;
   const shape = furnitureShape(item);
   const h = Number(item && item.h) || 0.3;
-  if (shape === 'light' || shape === 'rail_light') return Math.max(0, BH - h);
+  if (shape === 'light' || shape === 'rail_light') return Math.max(0, lightRailUnderside() - h);
   if (shape === 'wall_shelf' || shape === 'shelf') {
     return Math.min(Math.max(0.9, BH * 0.55), Math.max(0, BH - 0.25));
   }
