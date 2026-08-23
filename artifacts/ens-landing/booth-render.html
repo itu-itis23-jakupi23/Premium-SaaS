@@ -1424,7 +1424,11 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
   const topColor = color || '#e8e2d8';
   const legColor = '#50555f';
   if (!isCeilingFixture) pushFurnitureShadow(x, z, w, d, common);
-  if (!isCeilingFixture && item.modelUrl) {
+  // Anything with a GLB draws only an invisible pick-box here; the model is
+  // the thing you see. Ceiling fixtures used to be excluded from this, so a
+  // light with a model drew the amber stand-in block as well as the model -
+  // two lights, one of them a yellow cube.
+  if (item.modelUrl) {
     pushBox([x - w/2, y, z - d/2], [x + w/2, y + Math.max(0.18, h), z + d/2], {
       fill: 'rgba(37,99,235,0.001)',
       partId: id + '-glb-hitbox',
@@ -1729,24 +1733,40 @@ function buildPlacedItems() {
         y = 0;
         seatingCount++;
       } else if (idLower.includes('spotlight') || idLower.includes('light') || idLower.includes('led') || item.kind === 'light') {
+        // A light that has been placed keeps exactly where it was placed. This
+        // branch used to run the auto-arrangement regardless, and then set
+        // y = BH unconditionally - overwriting the height two lines above - so
+        // a light dragged onto a rail was redrawn hanging in the middle of the
+        // booth. The `else` fallback put it at x = 0, z = BD/2, dead centre,
+        // which is exactly where they were turning up.
         const wallPos = lightCount % 3;
         if (hasExplicitPosition) {
-          y = BH + 0.12;
-        } else if (wallPos === 0 && wallsVisible.back) {
-          x = -BW/2 + ((lightCount / 3) + 1) * (BW / 5);
-          z = 0.05;
-        } else if (wallPos === 1 && wallsVisible.left) {
-          x = -BW/2 + 0.05;
-          z = ((lightCount / 3) + 1) * (BD / 5);
-        } else if (wallsVisible.right) {
-          x = BW/2 - 0.05;
-          z = ((lightCount / 3) + 1) * (BD / 5);
+          // Hang under the beam: bottom one fixture-height below the top rail.
+          y = Number.isFinite(Number(item.y)) && Number(item.y) > 0
+            ? Number(item.y)
+            : Math.max(0, BH - h);
         } else {
-          x = 0; z = BD * 0.5;
+          if (wallPos === 0 && wallsVisible.back) {
+            x = -BW/2 + ((lightCount / 3) + 1) * (BW / 5);
+            z = 0.05;
+          } else if (wallPos === 1 && wallsVisible.left) {
+            x = -BW/2 + 0.05;
+            z = ((lightCount / 3) + 1) * (BD / 5);
+          } else if (wallsVisible.right) {
+            x = BW/2 - 0.05;
+            z = ((lightCount / 3) + 1) * (BD / 5);
+          } else {
+            // No wall to hang from: put it on the back rail rather than
+            // stranding it in the middle of the floor.
+            x = 0;
+            z = 0.05;
+          }
+          y = Math.max(0, BH - h);
         }
-        y = BH;
-        w = 0.15; d = 0.15; h = 0.15;
-        color = '#f1c40f';
+        // Keep the catalogue's real size. Forcing a 15 cm cube here is what drew
+        // the amber block instead of the fixture.
+        if (!(w > 0) || !(d > 0) || !(h > 0)) { w = 0.15; d = 0.15; h = 0.15; }
+        color = color || '#f1c40f';
         lightCount++;
       } else if (!hasExplicitPosition) {
         const cols = 2;
@@ -1758,7 +1778,11 @@ function buildPlacedItems() {
         generalCount++;
       }
 
-      const clamped = resolvePlacedItemPosition(x, z, w, d);
+      // Clamp to the booth and nothing more - the fourth and last copy of this
+      // rule. resolvePlacedItemPosition() pushes an item out of the pocket
+      // around every upright and then relocates it, which in this path was
+      // being written straight back onto the item by the sync below.
+      const clamped = clampPlacedItemToBooth(x, z, w, d);
       x = clamped.x;
       z = clamped.z;
       syncCorrectedItemPosition(item, x, z);
@@ -2007,7 +2031,9 @@ function applyWallMountConstraint(item, x, z) {
     // Lights ride the top beam: free along the wall, pinned to its height.
     item.rotationY = hit.run.axis === 'x' ? 0 : 90;
     item.mountWall = hit.run.name;
-    item.y = BH;
+    // Hang the fixture under the beam: its own height below the top, so the
+    // body finishes flush with the rail rather than sitting on top of it.
+    item.y = Math.max(0, BH - (Number(item.h) || 0.28));
     const inset = Math.max(0.05, (Number(item.d) || 0.2) / 2);
     return hit.run.axis === 'x'
       ? { x: hit.along, z: hit.run.fixed + hit.run.inZ * inset }
@@ -2031,6 +2057,8 @@ function applyWallMountConstraint(item, x, z) {
       if (Math.abs(x - target) <= WALL_FLUSH_RANGE_M) { snappedX = target; snapped = true; }
     }
   }
+  // Rest on whatever is underneath, so a laptop dropped on a desk stays on it.
+  item.y = supportSurfaceHeight(snapped ? snappedX : x, snapped ? snappedZ : z, item.id);
   return snapped ? { x: snappedX, z: snappedZ } : null;
 }
 
@@ -2044,6 +2072,32 @@ function clampMountedPoint(point) {
     x: Math.max(-BW / 2, Math.min(BW / 2, Number(point.x) || 0)),
     z: Math.max(0, Math.min(BD, Number(point.z) || 0)),
   };
+}
+
+/**
+ * Height of the highest surface underneath (x, z) that an item could rest on.
+ *
+ * Dropping a laptop onto a table should put it on the table. Without this every
+ * item is grounded at zero, so anything placed over a desk or counter sank
+ * through it onto the carpet.
+ *
+ * Only floor-standing furniture counts as a surface: a wall shelf or a light is
+ * not something else gets stacked on, and an item never supports itself.
+ */
+function supportSurfaceHeight(x, z, excludeId) {
+  let top = 0;
+  for (const other of placedItems) {
+    if (String(other.id) === String(excludeId)) continue;
+    if (isWallMountedItem(other)) continue;
+    const otherX = (Number(other.x) || 0) - BW / 2;
+    const otherZ = Number(other.z) || 0;
+    const foot = rotatedFootprint(other.w, other.d, other.rotationY ?? other.rotation);
+    if (Math.abs(x - otherX) > foot.w / 2) continue;
+    if (Math.abs(z - otherZ) > foot.d / 2) continue;
+    const otherTop = (Number(other.y) || 0) + (Number(other.h) || 0);
+    if (otherTop > top) top = otherTop;
+  }
+  return top;
 }
 
 /** True when the item is mounted rather than standing on the floor. */
@@ -4323,13 +4377,20 @@ window.__updateGlbLayer = async function updateGlbLayer(state) {
       if (typeof syncCorrectedItemPosition === 'function') {
         syncCorrectedItemPosition(item, clamped.x, clamped.z);
       }
-      node.position.set(clamped.x, 0, clamped.z);
+      // Sit the model at its own mount height, not on the floor. This was
+      // hardcoded to 0 and then grounded to 0 below, so a light pinned to the
+      // top beam and a shelf mounted at chest height both rendered on the
+      // carpet - the constraint had put them in the right place and the model
+      // layer dropped them straight back down.
+      const mountY = Number(item.y);
+      const baseY = Number.isFinite(mountY) && mountY > 0 ? mountY : 0;
+      node.position.set(clamped.x, baseY, clamped.z);
       node.rotation.order = 'XYZ';
       node.rotation.x = rotationDeg(item.rotationX);
       node.rotation.y = rotationDeg(item.rotationY ?? item.rotation);
       node.rotation.z = rotationDeg(item.rotationZ);
       node.visible = true;
-      groundModelNode(node, 0);
+      groundModelNode(node, baseY);
 
       let contact = contactShadows.get(id);
       if (!contact) {
