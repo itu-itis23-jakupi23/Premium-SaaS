@@ -48,7 +48,21 @@ interface IframeBoothConfig {
   pinMode?: boolean;
   invalidItemIds?: string[];
   catalogDragItem?: CatalogDragItem | null;
-  onItemMove?: (id: string, patch: { x: number; z: number }) => void;
+  /**
+   * A mounted item changes more than its position: a shelf adopts the width of
+   * its panel, shelves and lights rotate to face their wall, and a light is
+   * pinned to beam height. Everything the renderer changed has to come back,
+   * or React re-renders the old values over it.
+   */
+  onItemMove?: (id: string, patch: {
+    x: number;
+    z: number;
+    w?: number;
+    y?: number;
+    rotationY?: number;
+    mountWall?: string;
+    mountPanel?: number;
+  }) => void;
   onItemSelect?: (id: string | null, partId?: string, detail?: any) => void;
   onItemDelete?: (id: string) => void;
   onItemRotate?: (id: string, patch: { rotationY: number }) => void;
@@ -279,10 +293,20 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
         return;
       }
       if (event.data.type === 'workspaceItemMoved') {
-        bridgeConfig?.onItemMove?.(String(event.data.id), {
-          x: Number(event.data.x),
-          z: Number(event.data.z),
-        });
+        {
+          const data = event.data as Record<string, unknown>;
+          const optionalNumber = (value: unknown) =>
+            Number.isFinite(Number(value)) ? Number(value) : undefined;
+          bridgeConfig?.onItemMove?.(String(data.id), {
+            x: Number(data.x),
+            z: Number(data.z),
+            w: optionalNumber(data.w),
+            y: optionalNumber(data.y),
+            rotationY: optionalNumber(data.rotationY),
+            mountWall: typeof data.mountWall === "string" ? data.mountWall : undefined,
+            mountPanel: optionalNumber(data.mountPanel),
+          });
+        }
         return;
       }
       if (event.data.type === 'workspaceRoomMoved') {

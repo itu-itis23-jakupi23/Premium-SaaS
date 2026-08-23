@@ -959,11 +959,19 @@ export default function PMWorkspace() {
       setToast('Furniture duplicated');
     }
   };
-  const moveItemLive = useCallback((id:string, patch:{x:number;z:number}) => {
+  const moveItemLive = useCallback((id:string, patch:{
+    x:number; z:number; w?:number; y?:number; rotationY?:number;
+    mountWall?:string; mountPanel?:number;
+  }) => {
     markWorkspaceDirty();
+    // Undefined keys would overwrite good values with nothing, and most moves
+    // carry only x and z, so apply what actually arrived.
+    const applied = Object.fromEntries(
+      Object.entries(patch).filter(([, value]) => value !== undefined),
+    );
     setWS(prev=>normalizeWorkspaceData({
       ...prev,
-      placedItems: prev.placedItems.map(item => item.id === id && !item.locked ? {...item, ...patch} : item),
+      placedItems: prev.placedItems.map(item => item.id === id && !item.locked ? {...item, ...applied} : item),
     }));
   },[markWorkspaceDirty]);
 

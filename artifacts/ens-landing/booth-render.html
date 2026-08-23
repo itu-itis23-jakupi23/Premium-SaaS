@@ -1874,13 +1874,16 @@ const WALL_MOUNT_GRAB_M = 0.6;   // how near a wall a mounted item must be dropp
 const WALL_FLUSH_RANGE_M = 0.35; // how near a wall ordinary furniture snaps flush
 
 function boothWallRuns() {
-  const runs = [];
-  const visible = (typeof wallsVisible !== 'undefined' && wallsVisible) ? wallsVisible : {};
-  if (visible.back  !== false) runs.push({ name:'back',  axis:'x', from:-BW/2, to:BW/2, fixed:0,     panels:PANELS_BACK, inX:0,  inZ:1  });
-  if (visible.front !== false) runs.push({ name:'front', axis:'x', from:-BW/2, to:BW/2, fixed:BD,    panels:PANELS_BACK, inX:0,  inZ:-1 });
-  if (visible.left  !== false) runs.push({ name:'left',  axis:'z', from:0,     to:BD,   fixed:-BW/2, panels:PANELS_SIDE, inX:1,  inZ:0  });
-  if (visible.right !== false) runs.push({ name:'right', axis:'z', from:0,     to:BD,   fixed:BW/2,  panels:PANELS_SIDE, inX:-1, inZ:0  });
-  return runs;
+  // All four sides, always. An open side still has its uprights and its top
+  // beam - the frame is what furniture is pushed against and what a light
+  // rides - so skipping sides without panels meant furniture could only be
+  // placed against some edges of the booth and not others.
+  return [
+    { name:'back',  axis:'x', from:-BW/2, to:BW/2, fixed:0,     panels:PANELS_BACK, inX:0,  inZ:1  },
+    { name:'front', axis:'x', from:-BW/2, to:BW/2, fixed:BD,    panels:PANELS_BACK, inX:0,  inZ:-1 },
+    { name:'left',  axis:'z', from:0,     to:BD,   fixed:-BW/2, panels:PANELS_SIDE, inX:1,  inZ:0  },
+    { name:'right', axis:'z', from:0,     to:BD,   fixed:BW/2,  panels:PANELS_SIDE, inX:-1, inZ:0  },
+  ];
 }
 
 /** Distance from (x,z) to a wall run, and how far along the run that lands. */
@@ -3186,11 +3189,21 @@ function canonicalPartId(partId) {
 }
 
 function notifyItemMoved(item) {
+  // Mounting changes more than position: a shelf takes the width of the panel
+  // it lands on, both shelves and lights rotate to face their wall, and a light
+  // is pinned to beam height. Reporting only x and z meant React kept the old
+  // width and rotation and re-rendered them straight back - the item visibly
+  // snapped into place and then jumped out of it again.
   window.parent.postMessage({
     type: 'workspaceItemMoved',
     id: item.id,
     x: Number(item.x || 0),
     z: Number(item.z || 0),
+    w: Number(item.w) || undefined,
+    y: Number.isFinite(Number(item.y)) ? Number(item.y) : undefined,
+    rotationY: Number.isFinite(Number(item.rotationY)) ? Number(item.rotationY) : undefined,
+    mountWall: item.mountWall || undefined,
+    mountPanel: Number.isFinite(Number(item.mountPanel)) ? Number(item.mountPanel) : undefined,
   }, '*');
 }
 
