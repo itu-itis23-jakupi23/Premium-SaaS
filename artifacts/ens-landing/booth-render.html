@@ -1742,9 +1742,7 @@ function buildPlacedItems() {
         const wallPos = lightCount % 3;
         if (hasExplicitPosition) {
           // Hang under the beam: bottom one fixture-height below the top rail.
-          y = Number.isFinite(Number(item.y)) && Number(item.y) > 0
-            ? Number(item.y)
-            : Math.max(0, BH - h);
+          y = mountedBaseY(item);
         } else {
           if (wallPos === 0 && wallsVisible.back) {
             x = -BW/2 + ((lightCount / 3) + 1) * (BW / 5);
@@ -2098,6 +2096,27 @@ function supportSurfaceHeight(x, z, excludeId) {
     if (otherTop > top) top = otherTop;
   }
   return top;
+}
+
+/**
+ * The height an item's base sits at.
+ *
+ * A stored y is trusted when it is set, but a mounted item must never fall back
+ * to the floor: a rail light cannot stand on the carpet and a wall shelf cannot
+ * rest on it, so a missing or zero y for those is derived rather than believed.
+ * Items placed before mounting existed carry y = 0, and reading that literally
+ * is what left lights lying on the floor next to the furniture.
+ */
+function mountedBaseY(item) {
+  const stored = Number(item && item.y);
+  if (Number.isFinite(stored) && stored > 0) return stored;
+  const shape = furnitureShape(item);
+  const h = Number(item && item.h) || 0.3;
+  if (shape === 'light' || shape === 'rail_light') return Math.max(0, BH - h);
+  if (shape === 'wall_shelf' || shape === 'shelf') {
+    return Math.min(Math.max(0.9, BH * 0.55), Math.max(0, BH - 0.25));
+  }
+  return 0;
 }
 
 /** True when the item is mounted rather than standing on the floor. */
@@ -4382,8 +4401,7 @@ window.__updateGlbLayer = async function updateGlbLayer(state) {
       // top beam and a shelf mounted at chest height both rendered on the
       // carpet - the constraint had put them in the right place and the model
       // layer dropped them straight back down.
-      const mountY = Number(item.y);
-      const baseY = Number.isFinite(mountY) && mountY > 0 ? mountY : 0;
+      const baseY = typeof mountedBaseY === 'function' ? mountedBaseY(item) : 0;
       node.position.set(clamped.x, baseY, clamped.z);
       node.rotation.order = 'XYZ';
       node.rotation.x = rotationDeg(item.rotationX);
