@@ -1045,9 +1045,16 @@ function buildRooms() {
           partLabel: label + ' upright',
           partMeta: meta,
           ...wallBoxCommon,
+          // Above the wall slab it sits on, so the upright is drawn after it
+          // rather than fighting it for depth at the same order.
+          renderOrder: 0.0002,
         };
-        if (ax === 'x') pushBox([lo, 0, fixed], [hi, h, fixed + EX], common);
-        else pushBox([fixed, 0, lo], [fixed + EX, h, hi], common);
+        // Stand the upright proud of the wall on both faces. Drawn flush it was
+        // coplanar with the slab, and the painter's algorithm put the wall in
+        // front of it - the posts were there and simply never visible.
+        const proud = EX * 0.45;
+        if (ax === 'x') pushBox([lo, 0, fixed - proud], [hi, h, fixed + EX + proud], common);
+        else pushBox([fixed - proud, 0, lo], [fixed + EX + proud, h, hi], common);
       }
     };
     if (!skipBack)  pushRoomPosts('back',  'x', x0, x1, z0);
@@ -4301,10 +4308,17 @@ window.__updateGlbLayer = async function updateGlbLayer(state) {
       }
       const x = -Number(state.width || 0) / 2 + (Number(item.x) || 0);
       const z = Number(item.z) || 0;
-      const clamped = typeof resolvePlacedItemPosition === 'function'
-        ? resolvePlacedItemPosition(x, z, Number(item.w) || 0.6, Number(item.d) || 0.6)
-        : typeof clampPlacedItemToBooth === 'function'
-          ? clampPlacedItemToBooth(x, z, Number(item.w) || 0.6, Number(item.d) || 0.6)
+      // Keep the model inside the booth and nothing more.
+      //
+      // This used to call resolvePlacedItemPosition(), which pushes an item out
+      // of the 32 cm pocket drawn around every upright and then searches for the
+      // nearest free spot. Posts sit at every panel joint and at all four
+      // corners, so the 3D layer was shoving furniture away from precisely the
+      // places it was being put - on every frame - and syncCorrectedItemPosition
+      // below then wrote that shove back onto the item, which is why furniture
+      // both refused the corners and would not stay where it was dropped.
+      const clamped = typeof clampPlacedItemToBooth === 'function'
+        ? clampPlacedItemToBooth(x, z, Number(item.w) || 0.6, Number(item.d) || 0.6)
         : { x, z };
       if (typeof syncCorrectedItemPosition === 'function') {
         syncCorrectedItemPosition(item, clamped.x, clamped.z);
