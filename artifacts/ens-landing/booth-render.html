@@ -1776,11 +1776,8 @@ function buildPlacedItems() {
         generalCount++;
       }
 
-      // Clamp to the booth and nothing more - the fourth and last copy of this
-      // rule. resolvePlacedItemPosition() pushes an item out of the pocket
-      // around every upright and then relocates it, which in this path was
-      // being written straight back onto the item by the sync below.
-      const clamped = clampPlacedItemToBooth(x, z, w, d);
+      // Drawing must not move what it draws - see placedItemRenderXZ.
+      const clamped = placedItemRenderXZ(item, x, z);
       x = clamped.x;
       z = clamped.z;
       syncCorrectedItemPosition(item, x, z);
@@ -1882,35 +1879,6 @@ function hasStructuralCollision(x, z, w, d) {
   return structuralObstacleZones().some(zone => boxOverlap(footprint, zone, 0.035));
 }
 
-function nearestFreePlacedItemPosition(x, z, w, d) {
-  const clamped = clampPlacedItemToBooth(x, z, w, d);
-  if (!hasStructuralCollision(clamped.x, clamped.z, w, d)) return clamped;
-
-  const step = 0.1;
-  const maxRadius = Math.max(BW, BD);
-  let best = clamped;
-  let bestDist = Infinity;
-  for (let radius = step; radius <= maxRadius; radius += step) {
-    const samples = Math.max(16, Math.ceil(radius * 24));
-    for (let i = 0; i < samples; i++) {
-      const angle = (i / samples) * Math.PI * 2;
-      const candidate = clampPlacedItemToBooth(
-        clamped.x + Math.cos(angle) * radius,
-        clamped.z + Math.sin(angle) * radius,
-        w,
-        d
-      );
-      if (hasStructuralCollision(candidate.x, candidate.z, w, d)) continue;
-      const dist = Math.hypot(candidate.x - clamped.x, candidate.z - clamped.z);
-      if (dist < bestDist) {
-        best = candidate;
-        bestDist = dist;
-      }
-    }
-    if (Number.isFinite(bestDist)) return best;
-  }
-  return best;
-}
 
 /* ── Wall mounting constraints ─────────────────────────────────────────────
  *
@@ -2098,6 +2066,53 @@ function supportSurfaceHeight(x, z, excludeId) {
   return top;
 }
 
+/* resolvePlacedItemPosition() and nearestFreePlacedItemPosition() used to live
+ * here. They pushed an item out of the pocket around every upright and then
+ * searched for the nearest free spot, and they were called from the renderers
+ * as well as from placement - so drawing a booth moved the furniture in it, on
+ * every frame, and wrote the result back. Furniture could not be put in a
+ * corner because a corner has uprights in it.
+ *
+ * Deleted rather than left unused: they read as the obvious thing to call.
+ * Placement goes through resolveDropPosition(); drawing goes through
+ * placedItemRenderXZ(); neither relocates anything.
+ */
+
+/* ── Where a placed item goes ───────────────────────────────────────────────
+ *
+ * Two operations, and only two. They were previously written out at four call
+ * sites between them, which is why fixing placement took four rounds: each fix
+ * was correct and a different copy quietly overrode it on the next frame.
+ *
+ *   resolveDropPosition   what a drag or a drop decides. May change the item -
+ *                         a shelf takes its panel's width, a light its rail
+ *                         height - so it runs only on user interaction.
+ *   placedItemRenderXZ    where an already-placed item draws. Never changes the
+ *                         item. Both renderers call this and nothing else, so
+ *                         drawing a booth can no longer move what is in it.
+ */
+
+/**
+ * Resolves a drag or drop to a final position, applying mounting rules.
+ * Mutates `item` where mounting demands it (width, rotation, height).
+ */
+function resolveDropPosition(item, x, z) {
+  const footprint = rotatedFootprint(item.w, item.d, item.rotationY ?? item.rotation);
+  const mounted = applyWallMountConstraint(item, x, z);
+  return mounted
+    ? clampMountedPoint(mounted)
+    : clampPlacedItemToBooth(x, z, footprint.w, footprint.d);
+}
+
+/**
+ * Where an already-placed item draws: inside the booth, and nowhere else.
+ * Deliberately does not consult obstacles or other items - a renderer that
+ * relocates what it is drawing is how furniture used to slide out of corners.
+ */
+function placedItemRenderXZ(item, x, z) {
+  return clampPlacedItemToBooth(x, z, Number(item.w) || 0.6, Number(item.d) || 0.6);
+}
+
 /**
  * Underside of the ceiling support rail - the beam a spotlight clamps onto.
  *
@@ -2138,33 +2153,6 @@ function isWallMountedItem(item) {
   return shape === 'wall_shelf' || shape === 'shelf' || shape === 'rail_light' || shape === 'light';
 }
 
-function resolvePlacedItemPosition(x, z, w, d) {
-  let pos = clampPlacedItemToBooth(x, z, w, d);
-  const footprintSize = {
-    w: Math.max(0.06, Number(w) || 0.3),
-    d: Math.max(0.06, Number(d) || 0.3),
-  };
-
-  for (let pass = 0; pass < 6; pass++) {
-    let moved = false;
-    const footprint = { x: pos.x, z: pos.z, ...footprintSize };
-    for (const zone of structuralObstacleZones()) {
-      if (!boxOverlap(footprint, zone, 0.035)) continue;
-      const overlapX = (footprint.w / 2) + (zone.w / 2) + 0.04 - Math.abs(footprint.x - zone.x);
-      const overlapZ = (footprint.d / 2) + (zone.d / 2) + 0.04 - Math.abs(footprint.z - zone.z);
-      if (overlapX < overlapZ) {
-        pos.x += (footprint.x >= zone.x ? 1 : -1) * overlapX;
-      } else {
-        pos.z += (footprint.z >= zone.z ? 1 : -1) * overlapZ;
-      }
-      pos = clampPlacedItemToBooth(pos.x, pos.z, w, d);
-      moved = true;
-      break;
-    }
-    if (!moved) return pos;
-  }
-  return nearestFreePlacedItemPosition(pos.x, pos.z, w, d);
-}
 
 function isFloorCollisionItem(item) {
   const kind = String(item && item.kind || 'furniture');
@@ -2287,10 +2275,11 @@ function evaluateCatalogPlacement(data) {
   // preview shows where it will actually land rather than a floor position it
   // will jump away from on release.
   const probe = { shape: item.shape, sku: item.sku, name: item.name, w, d, rotationY };
-  const mounted = applyWallMountConstraint(probe, rawX, rawZ);
-  const clamped = mounted
-    ? clampMountedPoint(mounted)
-    : clampPlacedItemToBooth(rawX, rawZ, footprint.w, footprint.d);
+  const before = { w: probe.w, rotationY: probe.rotationY };
+  const clamped = resolveDropPosition(probe, rawX, rawZ);
+  const mounted = isWallMountedItem(probe)
+    || probe.w !== before.w
+    || probe.rotationY !== before.rotationY;
   // An overlap is worth flagging but must not refuse the placement: a designer
   // putting a counter tight against a post knows what they are drawing better
   // than a collision box does. Only being off the floor blocks a drop.
@@ -3574,18 +3563,10 @@ svgEl.addEventListener('pointermove', (e) => {
       const rawX = -BW / 2 + Math.round(nextX * 20) / 20;
       const rawZ = Math.round(nextZ * 20) / 20;
 
-      // Shelves and lights are mounted, not placed: they follow the wall they
-      // belong to rather than the floor point under the pointer, and a shelf
-      // takes the width of the panel it lands on. Everything else keeps the
-      // floor placement, with a flush snap when pushed against a wall.
-      const mounted = applyWallMountConstraint(item, rawX, rawZ);
-      // Placed exactly where it is dragged. resolvePlacedItemPosition() used to
-      // shove the item out of post pockets and then hunt for the nearest free
-      // spot, so furniture slid away from where it was put. Overlaps are still
-      // reported below, as a warning rather than a correction.
-      const clamped = mounted
-        ? clampMountedPoint(mounted)
-        : clampPlacedItemToBooth(rawX, rawZ, w, d);
+      // Mounting rules and the booth clamp both live in resolveDropPosition.
+      // Shelves follow their panel, lights their rail, everything else keeps
+      // the floor point it was dragged to.
+      const clamped = resolveDropPosition(item, rawX, rawZ);
       item.x = clamped.x + BW / 2;
       item.z = clamped.z;
       // A mounted item shares no floor space with anything, so floor collision
@@ -4394,18 +4375,8 @@ window.__updateGlbLayer = async function updateGlbLayer(state) {
       }
       const x = -Number(state.width || 0) / 2 + (Number(item.x) || 0);
       const z = Number(item.z) || 0;
-      // Keep the model inside the booth and nothing more.
-      //
-      // This used to call resolvePlacedItemPosition(), which pushes an item out
-      // of the 32 cm pocket drawn around every upright and then searches for the
-      // nearest free spot. Posts sit at every panel joint and at all four
-      // corners, so the 3D layer was shoving furniture away from precisely the
-      // places it was being put - on every frame - and syncCorrectedItemPosition
-      // below then wrote that shove back onto the item, which is why furniture
-      // both refused the corners and would not stay where it was dropped.
-      const clamped = typeof clampPlacedItemToBooth === 'function'
-        ? clampPlacedItemToBooth(x, z, Number(item.w) || 0.6, Number(item.d) || 0.6)
-        : { x, z };
+      // Drawing must not move what it draws - see placedItemRenderXZ.
+      const clamped = placedItemRenderXZ(item, x, z);
       if (typeof syncCorrectedItemPosition === 'function') {
         syncCorrectedItemPosition(item, clamped.x, clamped.z);
       }
