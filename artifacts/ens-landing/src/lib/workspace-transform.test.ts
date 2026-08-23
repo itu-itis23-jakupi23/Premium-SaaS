@@ -23,7 +23,7 @@ describe("constants", () => {
     expect(ROOM_SNAP_M).toBe(0.5);
     expect(ROOM_DIMENSION_SNAP_M).toBe(1);
     expect(ROOM_CORNER_SNAP_M).toBe(0.32);
-    expect(ITEM_WALL_CLEARANCE_M).toBe(0.25);
+    expect(ITEM_WALL_CLEARANCE_M).toBe(0);
     expect(DUPLICATE_OFFSET_M).toBe(0.35);
     expect(POSITION_DECIMALS).toBe(3);
   });

@@ -112,11 +112,19 @@ if (failures.length === 0) {
     (v) => `const cornerSnap = ${v}`,
   );
 
+  // A non-zero clearance is written as a floor under the extrusion size, so
+  // the gap is never thinner than the frame itself. Zero cannot be written
+  // that way - Math.max(EX * 6, 0) is EX * 6, not 0 - so it has to be a plain
+  // assignment. The gate checks whichever form the value calls for.
   expectExpression(
     "ITEM_WALL_CLEARANCE_M",
     wallClearance,
-    (v) => new RegExp(`wallClearance\\s*=\\s*Math\\.max\\([^,]*,\\s*${v}(?![0-9])`),
-    (v) => `const wallClearance = Math.max(..., ${v})`,
+    (v) => (Number(v) === 0
+      ? new RegExp(`wallClearance\\s*=\\s*0(?![0-9.])`)
+      : new RegExp(`wallClearance\\s*=\\s*Math\\.max\\([^,]*,\\s*${v}(?![0-9])`)),
+    (v) => (Number(v) === 0
+      ? "const wallClearance = 0"
+      : `const wallClearance = Math.max(..., ${v})`),
   );
 }
 

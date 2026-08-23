@@ -38,8 +38,18 @@ export const ROOM_DIMENSION_SNAP_M = 1;
  */
 export const ROOM_CORNER_SNAP_M = 0.32;
 
-/** Minimum gap kept between furniture and the booth perimeter. */
-export const ITEM_WALL_CLEARANCE_M = 0.25;
+/**
+ * Minimum gap kept between furniture and the booth perimeter.
+ *
+ * Zero: furniture is allowed to sit flush against a wall and into a corner,
+ * because that is where counters, cabinets and showcases actually go. This was
+ * 0.25, which held every item a visible 25 cm off every wall and made corners
+ * unreachable - two walls at once was not expressible at all.
+ *
+ * The renderer encodes the same number; `pnpm run workspace:transform` fails if
+ * the two drift apart, which is how this change was caught mid-edit.
+ */
+export const ITEM_WALL_CLEARANCE_M = 0;
 
 /** Offset applied to a duplicated item so it does not sit exactly on its source. */
 export const DUPLICATE_OFFSET_M = 0.35;
