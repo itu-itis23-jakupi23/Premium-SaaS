@@ -154,6 +154,40 @@ test.describe("Booth mounting rules", () => {
     expect(best!.z, "distance from the back wall").toBeCloseTo(targetZ, 2);
   });
 
+  test("a rotated item still reaches the edge of the carpet", async ({ page }) => {
+    // The render clamp bounds an item against its footprint, and a turned item
+    // has a different one. Using the unrotated width held a 1.0 x 0.55 counter
+    // 0.225 m off the wall whenever it was rotated 90 degrees - and the SVG
+    // path writes that correction back, so it could never be pushed to the
+    // edge no matter how many times you dragged it.
+    const reported = await page.evaluate(
+      () =>
+        new Promise<number | null>((resolve) => {
+          const item = {
+            id: "edge-probe", catalogId: "ens-208", name: "BANKO - COUNTER",
+            kind: "furniture", shape: "counter",
+            w: 1.0, d: 0.55, h: 1.0, x: 5.9, z: 1.5, y: 0, rotationY: 90,
+          };
+          const onMessage = (event: MessageEvent) => {
+            const data = event.data as Record<string, unknown> | null;
+            if (!data || data.type !== "workspaceItemMoved" || data.id !== "edge-probe") return;
+            window.removeEventListener("message", onMessage);
+            resolve(Number(data.x));
+          };
+          window.addEventListener("message", onMessage);
+          window.postMessage({ type: "boothUpdate", placedItems: [item] }, "*");
+          setTimeout(() => {
+            window.removeEventListener("message", onMessage);
+            resolve(null);
+          }, 3000);
+        }),
+    );
+
+    expect(reported, "the renderer did not report a corrected position").not.toBeNull();
+    // Flush against the right wall is half the *rotated* extent from it.
+    expect(reported!).toBeCloseTo(BOOTH_W - 0.55 / 2, 2);
+  });
+
   test("an overlap warns but does not refuse the placement", async ({ page }) => {
     // Uprights stand at every panel joint. Refusing a drop that clips one is
     // what made corners unreachable; a designer putting a counter tight against

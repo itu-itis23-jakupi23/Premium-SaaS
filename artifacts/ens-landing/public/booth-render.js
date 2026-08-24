@@ -1873,7 +1873,14 @@ function resolveDropPosition(item, x, z) {
  * relocates what it is drawing is how furniture used to slide out of corners.
  */
 function placedItemRenderXZ(item, x, z) {
-  return clampPlacedItemToBooth(x, z, Number(item.w) || 0.6, Number(item.d) || 0.6);
+  // Clamp against the *rotated* footprint. Using the raw w and d meant a turned
+  // item was bounded by the wrong axis: a 1.0 x 0.55 counter rotated 90 degrees
+  // occupies 0.55 across x, but was held back as though it occupied 1.0 - a
+  // phantom 0.225 m margin at the edge of the carpet. Worse, the SVG path
+  // writes this result back onto the item, so the margin was re-applied on
+  // every frame and the counter could never be pushed to the edge.
+  const footprint = rotatedFootprint(item.w, item.d, item.rotationY ?? item.rotation);
+  return clampPlacedItemToBooth(x, z, footprint.w, footprint.d);
 }
 
 /**
