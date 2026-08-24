@@ -99,18 +99,46 @@ window.addEventListener('unhandledrejection', (event) => {
   notifyRendererError(event.reason || 'Unhandled renderer promise rejection');
 });
 
+/**
+ * Lighting presets.
+ *
+ * These used to change two backdrop greys and nothing else - "exhibition" and
+ * "spotlight" differed by about three per cent of grey behind the booth - so
+ * choosing one appeared to do nothing at all. They now drive the shading of the
+ * booth itself: how hard the facet shading falls on the SVG geometry, and the
+ * intensity and colour of the three lights the GLB models are lit by.
+ *
+ *   faceShade / itemShade  strength of the darkening on unlit faces, so a
+ *                          spotlight rig reads as high contrast and an ambient
+ *                          one as flat.
+ *   hemi / key / fill      the three.js rig. keyColor and fillColor carry the
+ *                          colour temperature.
+ */
+const LIGHTING_PRESETS = {
+  neutral:    { bg: ['#eef0f2', '#c9ccd0'], faceShade: 0.44, itemShade: 0.22,
+                hemi: 2.6, key: 1.9, fill: 1.40, keyColor: 0xffffff, fillColor: 0xffffff },
+  exhibition: { bg: ['#f3f4f6', '#b8bcc1'], faceShade: 0.55, itemShade: 0.28,
+                hemi: 2.2, key: 2.6, fill: 1.15, keyColor: 0xffffff, fillColor: 0xdbeafe },
+  accent:     { bg: ['#eef2ff', '#c7d2fe'], faceShade: 0.60, itemShade: 0.32,
+                hemi: 1.8, key: 2.9, fill: 1.55, keyColor: 0xf0f6ff, fillColor: 0xc7d2fe },
+  spotlight:  { bg: ['#f8fafc', '#9aa3b0'], faceShade: 0.78, itemShade: 0.46,
+                hemi: 1.1, key: 4.2, fill: 0.45, keyColor: 0xffffff, fillColor: 0xbfd4ee },
+  ambient:    { bg: ['#f4f1ec', '#d8d0c3'], faceShade: 0.32, itemShade: 0.16,
+                hemi: 3.3, key: 1.1, fill: 1.30, keyColor: 0xfff3e0, fillColor: 0xffe9c9 },
+};
+
+/** The rig currently in force. Read by the shading pass and by the GLB layer. */
+let LIGHTING = LIGHTING_PRESETS.exhibition;
+
 function applyLightingPreset() {
+  LIGHTING = LIGHTING_PRESETS[LIGHTING_PRESET] || LIGHTING_PRESETS.exhibition;
   const root = document.documentElement;
-  const presets = {
-    neutral: ['#eef0f2', '#c9ccd0'],
-    exhibition: ['#f3f4f6', '#b8bcc1'],
-    accent: ['#eef2ff', '#c7d2fe'],
-    spotlight: ['#f8fafc', '#aeb6c2'],
-    ambient: ['#f4f1ec', '#d8d0c3'],
-  };
-  const colors = presets[LIGHTING_PRESET] || presets.exhibition;
-  root.style.setProperty('--bg-top', colors[0]);
-  root.style.setProperty('--bg-bot', colors[1]);
+  root.style.setProperty('--bg-top', LIGHTING.bg[0]);
+  root.style.setProperty('--bg-bot', LIGHTING.bg[1]);
+  // The GLB layer owns its own lights. Publish the rig either way: the module
+  // may not have finished loading yet, and it reads this on startup.
+  window.__lightingRig = LIGHTING;
+  if (typeof window.__applyGlbLighting === 'function') window.__applyGlbLighting(LIGHTING);
 }
 
 function normalizeHex(value, fallback) {
@@ -2792,7 +2820,7 @@ function renderBooth() {
     if (!face.signOnly && intensity < 0.98 && !face.noFacetShade) {
       const sh = document.createElementNS(SVG_NS, 'polygon');
       sh.setAttribute('points', points);
-      const alpha = Math.max(0, (1 - intensity)) * (face.isFurniture ? 0.28 : 0.55);
+      const alpha = Math.max(0, (1 - intensity)) * (face.isFurniture ? LIGHTING.itemShade : LIGHTING.faceShade);
       sh.setAttribute('fill', '#000'); sh.setAttribute('opacity', alpha.toFixed(3));
       sh.setAttribute('pointer-events', 'none');
       container.appendChild(sh);

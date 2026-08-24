@@ -339,6 +339,27 @@ scene.add(key);
 const fill = new THREE.DirectionalLight(0xdbeafe, 1.15);
 fill.position.set(4, 3, -5);
 scene.add(fill);
+
+/**
+ * Applies a lighting preset to the GLB rig.
+ *
+ * The presets live in booth-render.js, which owns the SVG shading; this is the
+ * other half. Without it, choosing "spotlight" left every model lit exactly as
+ * "ambient" did, which is most of why the setting looked inert.
+ */
+window.__applyGlbLighting = (rig) => {
+  if (!rig) return;
+  hemi.intensity = Number(rig.hemi) || hemi.intensity;
+  key.intensity = Number(rig.key) || key.intensity;
+  fill.intensity = Number.isFinite(Number(rig.fill)) ? Number(rig.fill) : fill.intensity;
+  if (Number.isFinite(Number(rig.keyColor))) key.color.setHex(Number(rig.keyColor));
+  if (Number.isFinite(Number(rig.fillColor))) fill.color.setHex(Number(rig.fillColor));
+  // Repaint through the same path the rest of the app uses, so the SVG and the
+  // models stay in step.
+  if (typeof window.renderAll === 'function') requestAnimationFrame(() => window.renderAll());
+};
+// The preset may have been applied before this module finished loading.
+if (window.__lightingRig) window.__applyGlbLighting(window.__lightingRig);
 scene.add(shellOccluders);
 
 const shadowMaterial = new THREE.MeshBasicMaterial({
