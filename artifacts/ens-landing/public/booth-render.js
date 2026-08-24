@@ -1504,7 +1504,16 @@ function buildPlacedItems() {
         // which is exactly where they were turning up.
         const wallPos = lightCount % 3;
         if (hasExplicitPosition) {
-          // Hang under the beam: bottom one fixture-height below the top rail.
+          // Re-seat the fixture on the nearest profile every frame. The rails
+          // move when the booth is resized, and a light left on its old
+          // coordinate would be hanging beside one instead of on it. This is
+          // idempotent - a light already on a rail is zero distance from it.
+          const hit = nearestRailRun(x, z);
+          if (hit) {
+            const seat = railMountPoint(hit, d);
+            x = seat.x;
+            z = seat.z;
+          }
           y = mountedBaseY(item);
         } else {
           if (wallPos === 0 && wallsVisible.back) {
@@ -1522,7 +1531,7 @@ function buildPlacedItems() {
             x = 0;
             z = 0.05;
           }
-          y = Math.max(0, lightRailUnderside() - h);
+          y = railLightY();
         }
         // Keep the catalogue's real size. Forcing a 15 cm cube here is what drew
         // the amber block instead of the fixture.
@@ -1722,17 +1731,6 @@ function nearestPanelSlot(x, z) {
   return best;
 }
 
-function nearestWallRun(x, z) {
-  let best = null;
-  for (const run of boothWallRuns()) {
-    const projection = wallRunProjection(run, x, z);
-    if (!best || projection.distance < best.distance) {
-      best = { run, along: projection.along, distance: projection.distance };
-    }
-  }
-  return best;
-}
-
 /**
  * Constrains a dragged item to whatever it is allowed to move along. Returns a
  * position, or null to leave the caller's floor placement alone. Mutates width
@@ -1748,25 +1746,18 @@ function applyWallMountConstraint(item, x, z) {
     // clear the uprights.
     item.w = Math.max(0.2, hit.slot.bay - 0.06);
     item.rotationY = hit.slot.run.axis === 'x' ? 0 : 90;
-    item.mountWall = hit.slot.run.name;
-    item.mountPanel = hit.slot.index;
     if (!(Number(item.y) > 0)) item.y = Math.min(Math.max(0.9, BH * 0.55), BH - 0.25);
     return slotMountPoint(hit.slot, item.d);
   }
 
   if (shape === 'rail_light' || shape === 'light') {
-    const hit = nearestWallRun(x, z);
+    const hit = nearestRailRun(x, z);
     if (!hit) return null;
-    // Lights ride the top beam: free along the wall, pinned to its height.
+    // Lights ride the overhead profile: free to slide along it, pinned to its
+    // height and never anywhere else.
     item.rotationY = hit.run.axis === 'x' ? 0 : 90;
-    item.mountWall = hit.run.name;
-    // Hang the fixture from the ceiling support rail, its own height below the
-    // rail's underside, so it clamps onto the beam the way a real one does.
-    item.y = Math.max(0, lightRailUnderside() - (Number(item.h) || 0.28));
-    const inset = Math.max(0.05, (Number(item.d) || 0.2) / 2);
-    return hit.run.axis === 'x'
-      ? { x: hit.along, z: hit.run.fixed + hit.run.inZ * inset }
-      : { x: hit.run.fixed + hit.run.inX * inset, z: hit.along };
+    item.y = railLightY();
+    return railMountPoint(hit, item.d);
   }
 
   // Ordinary furniture: snap flush to every wall within reach, testing the two
@@ -1892,8 +1883,70 @@ function placedItemRenderXZ(item, x, z) {
  * rather than on it.
  */
 function lightRailUnderside() {
+  // Match what buildCeilingSupportRail actually draws. The box is nudged up by
+  // railW * 0.08, so its underside is railW * 0.42 below the centre line.
   const railW = Math.max(EX * 1.35, 0.055);
-  return BH + Math.min(FH * 0.42, 0.13) - railW / 2;
+  return BH + Math.min(FH * 0.42, 0.13) - railW * 0.42;
+}
+
+/** How far a rail light's bracket rises above the item's own y - see drawItem. */
+const RAIL_LIGHT_BRACKET_RISE = 0.06;
+
+/**
+ * The y a rail light is drawn at.
+ *
+ * The fixture hangs *from* this point rather than standing on it: the bracket
+ * rises above it and the lens drops below. Clamping onto a beam therefore means
+ * putting the bracket top at the beam's underside. Placing the fixture's base
+ * there instead - `underside - h`, the obvious reading - hung every light a
+ * full fixture-height too low, which is most of why they looked stranded in
+ * mid-air rather than fixed to anything.
+ */
+function railLightY() {
+  return Math.max(0, lightRailUnderside() - RAIL_LIGHT_BRACKET_RISE);
+}
+
+/**
+ * Every overhead profile a light can clamp onto.
+ *
+ * Two kinds, and missing the second is what made this look unfixable: the top
+ * beam of each of the four wall frames, and the ceiling support rails, which
+ * cross the booth front to back at the support-column positions. Lights used to
+ * snap to `boothWallRuns()` - the wall lines only - so on a booth whose lighting
+ * belongs on a centre rail there was nothing to clamp to and the fixture
+ * stopped against a wall, nowhere near a rail.
+ */
+function boothRailRuns() {
+  const runs = boothWallRuns().map((run) => ({ ...run, kind: 'beam' }));
+  activeFrontSupportPositions().forEach((value, index) => {
+    // Cross rails have no inward normal - a light sits on the rail, not beside
+    // it - so inX and inZ are zero and the wall inset below vanishes for them.
+    runs.push({
+      name: 'rail-' + index, axis: 'z', from: 0, to: BD,
+      fixed: -BW / 2 + value, inX: 0, inZ: 0, panels: 1, kind: 'rail',
+    });
+  });
+  return runs;
+}
+
+/** The overhead profile nearest (x, z), and how far along it that lands. */
+function nearestRailRun(x, z) {
+  let best = null;
+  for (const run of boothRailRuns()) {
+    const projection = wallRunProjection(run, x, z);
+    if (!best || projection.distance < best.distance) {
+      best = { run, along: projection.along, distance: projection.distance };
+    }
+  }
+  return best;
+}
+
+/** Where a light clamped to `hit` sits, in booth coordinates. */
+function railMountPoint(hit, itemDepth) {
+  const inset = Math.max(0.05, (Number(itemDepth) || 0.2) / 2);
+  return hit.run.axis === 'x'
+    ? { x: hit.along, z: hit.run.fixed + hit.run.inZ * inset }
+    : { x: hit.run.fixed + hit.run.inX * inset, z: hit.along };
 }
 
 /**
@@ -1906,11 +1959,16 @@ function lightRailUnderside() {
  * is what left lights lying on the floor next to the furniture.
  */
 function mountedBaseY(item) {
+  const shape = furnitureShape(item);
+  // A rail light's height is not the designer's to choose - it is wherever the
+  // profile is - so it is derived every time rather than read back. Trusting a
+  // stored y here is the third reason this looked unfixable: every light in an
+  // already-saved booth kept the mid-wall height it was given back when lights
+  // had no rail to hang from, so the mount code computed the right answer and
+  // the draw code threw it away on the very next frame.
+  if (shape === 'light' || shape === 'rail_light') return railLightY();
   const stored = Number(item && item.y);
   if (Number.isFinite(stored) && stored > 0) return stored;
-  const shape = furnitureShape(item);
-  const h = Number(item && item.h) || 0.3;
-  if (shape === 'light' || shape === 'rail_light') return Math.max(0, lightRailUnderside() - h);
   if (shape === 'wall_shelf' || shape === 'shelf') {
     return Math.min(Math.max(0.9, BH * 0.55), Math.max(0, BH - 0.25));
   }
@@ -2066,10 +2124,18 @@ function evaluateCatalogPlacement(data) {
     z: clamped.z,
     boothX: clamped.x,
     boothZ: clamped.z,
-    w,
+    // The *mounted* geometry, not what was dragged. resolveDropPosition widens
+    // a shelf to the panel it lands on, turns it to face the wall, and pins a
+    // light to rail height. Returning the pre-mount values meant a freshly
+    // dropped shelf was stored at catalogue width, rotation 0 and floor height,
+    // so it visibly snapped into place and then jumped back out until the next
+    // move corrected it.
+    w: probe.w,
     d,
     h,
-    rotationY,
+    rotationY: probe.rotationY,
+    y: Number.isFinite(Number(probe.y)) ? Number(probe.y) : undefined,
+    mounted,
     color: String(item.color || '#6b7280'),
   };
 }
@@ -3085,8 +3151,6 @@ function notifyItemMoved(item) {
     w: Number(item.w) || undefined,
     y: Number.isFinite(Number(item.y)) ? Number(item.y) : undefined,
     rotationY: Number.isFinite(Number(item.rotationY)) ? Number(item.rotationY) : undefined,
-    mountWall: item.mountWall || undefined,
-    mountPanel: Number.isFinite(Number(item.mountPanel)) ? Number(item.mountPanel) : undefined,
   }, '*');
 }
 
@@ -3719,6 +3783,10 @@ window.addEventListener('message', (e) => {
       reason: result.reason,
       x: result.x,
       z: result.z,
+      w: result.w,
+      y: result.y,
+      rotationY: result.rotationY,
+      mounted: Boolean(result.mounted),
     }, '*');
     if (e.data.type === 'catalogDragCommit') {
       catalogDropPreview = null;

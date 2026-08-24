@@ -60,8 +60,6 @@ interface IframeBoothConfig {
     w?: number;
     y?: number;
     rotationY?: number;
-    mountWall?: string;
-    mountPanel?: number;
   }) => void;
   onItemSelect?: (id: string | null, partId?: string, detail?: any) => void;
   onItemDelete?: (id: string) => void;
@@ -69,7 +67,15 @@ interface IframeBoothConfig {
   onRoomMove?: (id: string, patch: any) => void;
   onFrontSupportMove?: (positions: number[], suppressedDefaultPositions: number[]) => void;
   onPinRequest?: (partId: string, detail: any) => void;
-  onCatalogItemDrop?: (catalogId: string, position: { x: number; z: number }) => void;
+  onCatalogItemDrop?: (catalogId: string, position: {
+    x: number;
+    z: number;
+    /** Set when the renderer mounted the item, in which case the geometry below is final. */
+    mounted?: boolean;
+    w?: number;
+    y?: number;
+    rotationY?: number;
+  }) => void;
   onCatalogItemDropRejected?: (catalogId: string, reason: string) => void;
 }
 
@@ -275,9 +281,15 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
         const catalogId = String(event.data.catalogId || '');
         if (!catalogId) return;
         if (event.data.valid) {
+          const optional = (value: unknown) =>
+            Number.isFinite(Number(value)) ? Number(value) : undefined;
           bridgeConfig?.onCatalogItemDrop?.(catalogId, {
             x: Number(event.data.x),
             z: Number(event.data.z),
+            mounted: Boolean(event.data.mounted),
+            w: optional(event.data.w),
+            y: optional(event.data.y),
+            rotationY: optional(event.data.rotationY),
           });
         } else {
           bridgeConfig?.onCatalogItemDropRejected?.(
@@ -303,8 +315,6 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
             w: optionalNumber(data.w),
             y: optionalNumber(data.y),
             rotationY: optionalNumber(data.rotationY),
-            mountWall: typeof data.mountWall === "string" ? data.mountWall : undefined,
-            mountPanel: optionalNumber(data.mountPanel),
           });
         }
         return;

@@ -324,6 +324,11 @@ function normalizePlacedItem(raw: unknown, index: number, booth: BoothState): Wo
     weight: Number(item.weight ?? props.weight) || props.weight,
     x: clampNumber(Number(item.x) || booth.width / 2, bounds.minX, bounds.maxX),
     z: clampNumber(Number(item.z) || booth.depth / 2, bounds.minZ, bounds.maxZ),
+    // Mounted items carry a height. This rebuilds every item field by field, so
+    // a field it does not name is discarded - which is what happened to y: the
+    // renderer reported the mounted height on every move and it was thrown away
+    // before it could reach state, so a shelf could never be moved up or down.
+    y: Number.isFinite(Number(item.y)) ? Math.max(0, Number(item.y)) : undefined,
     rotation,
     rotationX: Number(item.rotationX) || 0,
     rotationY,
@@ -776,7 +781,9 @@ export default function PMWorkspace() {
     };
   };
 
-  const addItem = (item:CatItem, requestedPosition?:{x:number;z:number}) => {
+  const addItem = (item:CatItem, requestedPosition?:{
+    x:number; z:number; mounted?:boolean; w?:number; y?:number; rotationY?:number;
+  }) => {
     const placedCount = ws.placedItems.filter(p=>p.catalogId===item.id).reduce((sum,p)=>sum+p.qty,0);
     if(item.stock != null && placedCount >= item.stock) {
       setActiveId(item.id);
@@ -784,12 +791,20 @@ export default function PMWorkspace() {
       return;
     }
     const props = catalogItemProps(item);
-    const bounds = itemPositionBounds(props.w, props.d, ws.booth);
+    // A mounted item arrives with the geometry the renderer gave it - a shelf
+    // widened to its panel, a light pinned to the rail - and with a position
+    // that is already exact. Rounding that to the 5 cm placement grid would
+    // nudge it straight back off the mount it had just been snapped to.
+    const mount = requestedPosition?.mounted ? requestedPosition : null;
+    const width = mount?.w ?? props.w;
+    const bounds = itemPositionBounds(width, props.d, ws.booth);
     const position = requestedPosition
-      ? {
-          x: snapItemCoordinate(requestedPosition.x, bounds.minX, bounds.maxX),
-          z: snapItemCoordinate(requestedPosition.z, bounds.minZ, bounds.maxZ),
-        }
+      ? (mount
+        ? { x: requestedPosition.x, z: requestedPosition.z }
+        : {
+            x: snapItemCoordinate(requestedPosition.x, bounds.minX, bounds.maxX),
+            z: snapItemCoordinate(requestedPosition.z, bounds.minZ, bounds.maxZ),
+          })
       : nextItemPosition(ws, props);
     const modelUrl = item.modelUrl ?? ENS_MODEL_URLS[item.id];
     const newItem:WorkspacePlacedItem = {
@@ -799,10 +814,12 @@ export default function PMWorkspace() {
       sku:item.sku,
       qty:1,
       ...props,
+      w: width,
       ...position,
+      ...(mount?.y != null ? {y: mount.y} : {}),
       rotation:0,
       rotationX:0,
-      rotationY:0,
+      rotationY: mount?.rotationY ?? 0,
       rotationZ:0,
       kind:Object.values(CATALOG.Lighting).some(light => light.id === item.id) ? 'light' : (Object.values(CATALOG.Fascia).some(fascia => fascia.id === item.id) ? 'fascia' : (Object.values(CATALOG.Structure).some(struct => struct.id === item.id) ? 'structure' : 'furniture')),
       shape:item.shape,
@@ -844,7 +861,9 @@ export default function PMWorkspace() {
     setDraggedCatalogItem(null);
     window.setTimeout(() => { catalogDragWasActiveRef.current = false; }, 0);
   };
-  const placeCatalogItemAt = (catalogId:string, position:{x:number;z:number}) => {
+  const placeCatalogItemAt = (catalogId:string, position:{
+    x:number; z:number; mounted?:boolean; w?:number; y?:number; rotationY?:number;
+  }) => {
     const item = Object.values(CATALOG).flat().find(entry => entry.id === catalogId);
     setDraggedCatalogItem(null);
     if(!item) {
@@ -976,7 +995,6 @@ export default function PMWorkspace() {
   };
   const moveItemLive = useCallback((id:string, patch:{
     x:number; z:number; w?:number; y?:number; rotationY?:number;
-    mountWall?:string; mountPanel?:number;
   }) => {
     markWorkspaceDirty();
     // Undefined keys would overwrite good values with nothing, and most moves

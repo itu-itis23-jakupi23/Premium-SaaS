@@ -28,7 +28,7 @@ const BACK_CENTRES = Array.from({ length: BOOTH_W }, (_, i) => i + 0.5);
 /** Panel centres along the left and right walls. */
 const SIDE_CENTRES = Array.from({ length: BOOTH_D }, (_, i) => i + 0.5);
 
-type DropResult = { x: number; z: number; valid: boolean; reason: string | null };
+type DropResult = { x: number; z: number; y: number | null; valid: boolean; reason: string | null };
 
 type DragItem = {
   catalogId: string;
@@ -55,6 +55,7 @@ async function dropAt(page: import("@playwright/test").Page, item: DragItem, xPc
           resolve({
             x: Number(data.x),
             z: Number(data.z),
+            y: Number.isFinite(Number(data.y)) ? Number(data.y) : null,
             valid: Boolean(data.valid),
             reason: typeof data.reason === "string" ? data.reason : null,
           });
@@ -110,26 +111,61 @@ test.describe("Booth mounting rules", () => {
     expect(offCentre, "shelves that missed a panel centre").toEqual([]);
   });
 
-  test("a light always lands against a wall", async ({ page }) => {
-    // Lights ride the top beam of a wall frame. One dropped mid-floor has to
-    // travel to a wall rather than hang in the middle of the booth.
+  test("a light lands on an overhead rail, at the rail's own height", async ({ page }) => {
+    // A booth has two kinds of overhead profile a light can clamp to: the top
+    // beam of each wall frame, and the ceiling support rails that cross the
+    // booth front to back. This test used to assert only the first, which is
+    // why it stayed green while every light in the product hung in mid-air:
+    // lights were being snapped to the wall *lines* and to a height a full
+    // fixture below the beam, and the test agreed with the bug.
+    const { rails, underside } = await page.evaluate(() => {
+      const scope = globalThis as unknown as {
+        activeFrontSupportPositions: () => number[];
+        lightRailUnderside: () => number;
+      };
+      return { rails: scope.activeFrontSupportPositions(), underside: scope.lightRailUnderside() };
+    });
+    expect(underside, "the rail should be overhead on a 2.2 m booth").toBeGreaterThan(2);
+
     const adrift: string[] = [];
+    const wrongHeight: string[] = [];
     let landed = 0;
+    let onRailCount = 0;
 
     for (const [x, y] of floorGrid()) {
       const result = await dropAt(page, LIGHT, x, y);
       if (!result?.valid) continue;
       landed += 1;
-      const onWall =
+
+      // Wall beams sit half the fixture's depth inside the wall line.
+      const onBeam =
         Math.abs(result.z) < 0.12 ||
         Math.abs(result.z - BOOTH_D) < 0.12 ||
         Math.abs(result.x) < 0.12 ||
         Math.abs(result.x - BOOTH_W) < 0.12;
-      if (!onWall) adrift.push(`(${x}, ${y}) -> x=${result.x.toFixed(2)} z=${result.z.toFixed(2)}`);
+      // A cross rail only counts when the light is genuinely out on it rather
+      // than at the point where a rail meets a wall - otherwise wall-only
+      // snapping would satisfy this by accident.
+      const onRail = !onBeam && rails.some((rail) => Math.abs(result.x - rail) < 0.12);
+      if (onRail) onRailCount += 1;
+      if (!onBeam && !onRail) {
+        adrift.push(`(${x}, ${y}) -> x=${result.x.toFixed(2)} z=${result.z.toFixed(2)}`);
+      }
+
+      // The fixture hangs from the profile, so its y sits just under it - not a
+      // whole fixture-height below, and certainly not down at eye level.
+      if (result.y == null || Math.abs(result.y - underside) > 0.1) {
+        wrongHeight.push(`(${x}, ${y}) -> y=${result.y ?? "none"} vs rail ${underside.toFixed(3)}`);
+      }
     }
 
     expect(landed, "the probe grid should reach the floor at all").toBeGreaterThan(4);
-    expect(adrift, "lights that stopped away from every wall").toEqual([]);
+    expect(adrift, "lights that stopped away from every rail and beam").toEqual([]);
+    expect(wrongHeight, "lights that did not hang at rail height").toEqual([]);
+    if (rails.length > 0) {
+      expect(onRailCount, "no light reached a ceiling support rail - they only found walls")
+        .toBeGreaterThan(0);
+    }
   });
 
   test("furniture reaches a corner, flush on both walls at once", async ({ page }) => {
