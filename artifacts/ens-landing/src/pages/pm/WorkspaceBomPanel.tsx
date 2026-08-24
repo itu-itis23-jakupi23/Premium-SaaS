@@ -82,11 +82,11 @@ export function WorkspaceBomPanel({
         <MonoLabel right={`${structWeight.toFixed(0)} kg`}>§ Structural</MonoLabel>
         {structItems.map((s,i)=>(
           <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'4px 0',borderBottom:`1px solid ${C.hair}28`}}>
-            <div>
-              <div style={{fontSize:11,fontWeight:600,color:C.ink}}>{s.name}</div>
-              <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{s.sku} / {formatUsd(s.unitPrice)} {s.unit}</div>
+            <div style={{minWidth:0}}>
+              <div title={s.name} style={{fontSize:11,fontWeight:600,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.name}</div>
+              <div style={{fontFamily:MONO,fontSize:8,color:C.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.sku} / {formatUsd(s.unitPrice)} {s.unit}</div>
             </div>
-            <div style={{textAlign:'right'}}>
+            <div style={{textAlign:'right',flexShrink:0}}>
               <div style={{fontFamily:MONO,fontSize:11,fontWeight:700,color:C.ink}}>×{s.qty}</div>
               <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{(s.qty*s.weight).toFixed(0)} kg / {formatUsd(s.qty*s.unitPrice)}</div>
             </div>
@@ -101,8 +101,8 @@ export function WorkspaceBomPanel({
             <button key={`${item.roomId}-${item.sku}-${index}`} type="button" onClick={()=>onSelectRoom(item.roomId)}
               style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:'5px 0',border:0,borderBottom:`1px solid ${C.hair}28`,background:'transparent',cursor:'pointer',textAlign:'left'}}>
               <div style={{minWidth:0}}>
-                <div style={{fontSize:11,fontWeight:600,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.roomName} - {item.name}</div>
-                <div style={{fontFamily:MONO,fontSize:8,color:C.muted}}>{item.sku} / {item.notes}</div>
+                <div title={`${item.roomName} - ${item.name}`} style={{fontSize:11,fontWeight:600,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.roomName} - {item.name}</div>
+                <div style={{fontFamily:MONO,fontSize:8,color:C.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.sku} / {item.notes}</div>
               </div>
               <div style={{textAlign:'right',flexShrink:0}}>
                 <div style={{fontFamily:MONO,fontSize:10,fontWeight:700,color:C.ink}}>{item.qty} {item.unit}</div>

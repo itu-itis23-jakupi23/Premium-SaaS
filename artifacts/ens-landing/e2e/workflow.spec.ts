@@ -511,6 +511,57 @@ test.describe("Three-role workflow", () => {
     await expect(page.getByText(/^EUR \d[\d,]*$/).last()).toBeVisible();
   });
 
+  test("the inspector rail fits its contents on every tab", async ({ page }) => {
+    // The rail is 281 px wide and carried five labelled tabs needing 303 px, so
+    // the strip overflowed and clipped the last tab together with its unread
+    // feedback badge - a count the PM is meant to act on, hidden off the edge.
+    // Nothing caught it because no test had ever measured the panel.
+    await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
+    await page.goto(`/pm/workspace?projectId=${editorProjectId}`);
+    await page.waitForLoadState("networkidle");
+    await expectBoothRendererHealthy(page, "PM inspector layout workspace");
+
+    for (const tab of ["Properties", "Selection", "BOM", "Notes", "Feedback"]) {
+      await page.getByTitle(tab, { exact: true }).click();
+      await page.waitForTimeout(250);
+
+      const report = await page.evaluate(() => {
+        const aside = [...document.querySelectorAll("aside")].find((el) =>
+          Boolean(el.querySelector('button[title="Properties"]')));
+        if (!aside) return null;
+        const clipped: string[] = [];
+        const scrollers: string[] = [];
+        aside.querySelectorAll("*").forEach((node) => {
+          const el = node as HTMLElement;
+          const style = getComputedStyle(el);
+          // An element that clips on purpose and shows an ellipsis still reports
+          // scrollWidth > clientWidth, so measuring that alone flags every
+          // truncated label. What matters is content that spills out of the
+          // rail, or is cut off with nothing to show it was cut.
+          const spills = style.overflowX === "visible";
+          const cutWithoutEllipsis = style.overflowX !== "visible" && style.textOverflow !== "ellipsis";
+          if (el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 1 && (spills || cutWithoutEllipsis)) {
+            clipped.push(`<${el.tagName.toLowerCase()}> "${(el.textContent || "").trim().slice(0, 28)}" ${el.clientWidth} < ${el.scrollWidth}`);
+          }
+          const overflowY = getComputedStyle(el).overflowY;
+          if ((overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight + 1) {
+            scrollers.push(`<${el.tagName.toLowerCase()}> "${(el.textContent || "").trim().slice(0, 28)}"`);
+          }
+        });
+        return { clipped, scrollers };
+      });
+
+      expect(report, "the inspector rail should be on screen").not.toBeNull();
+      expect(report!.clipped, `content clipped horizontally on the ${tab} tab`).toEqual([]);
+      // One scrolling region per tab. Nesting a second one inside it is what
+      // produces the two side-by-side scrollbars the panel used to show.
+      expect(
+        report!.scrollers.length,
+        `the ${tab} tab should scroll in one place, not ${report!.scrollers.length}`,
+      ).toBeLessThanOrEqual(1);
+    }
+  });
+
   test("PM drags catalogue furniture onto a valid floor position and can undo it", async ({ page }) => {
     await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
     await page.goto(`/pm/workspace?projectId=${editorProjectId}`);

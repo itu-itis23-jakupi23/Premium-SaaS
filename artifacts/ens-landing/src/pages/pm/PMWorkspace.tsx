@@ -1872,7 +1872,7 @@ export default function PMWorkspace() {
         </main>
 
         {/* ── Right — Properties / BOM / Notes ─────────────────── */}
-        {!previewMode&&<aside style={{width:inspectorOpen?282:34,transition:'width 140ms ease',borderLeft:`1px solid ${C.hair}`,background:C.panel,display:'flex',flexDirection:'column',flexShrink:0}}>
+        {!previewMode&&<aside style={{width:inspectorOpen?282:34,transition:'width 110ms cubic-bezier(0.22, 1, 0.36, 1)',borderLeft:`1px solid ${C.hair}`,background:C.panel,display:'flex',flexDirection:'column',flexShrink:0}}>
           {/* Fold control. Stays visible in both states - it is the only way back. */}
           <button type="button" onClick={toggleInspector}
             title={inspectorOpen?'Hide the inspector':'Show the inspector'}
@@ -1896,8 +1896,14 @@ export default function PMWorkspace() {
           <div style={{display:'flex',borderBottom:`1px solid ${C.hair}`,flexShrink:0}}>
             {([['props','Properties',Settings2],['panel','Selection',Square],['bom','BOM',Package],['notes','Notes',StickyNote],['feedback','Feedback',MessageSquare]] as const).map(([k,label,Icon])=>(
               <button key={k} onClick={()=>setActiveTab(k as typeof activeTab)}
-                style={{flex:1,background:activeTab===k?C.panel:'transparent',border:'none',borderBottom:activeTab===k?`2px solid ${C.blue}`:'2px solid transparent',padding:'8px 4px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:4,fontFamily:MONO,fontSize:9,fontWeight:700,letterSpacing:'0.08em',color:activeTab===k?C.blue:C.muted,textTransform:'uppercase'}}>
-                <Icon size={10}/> {label}
+                title={label} aria-label={label}
+                style={{flex:activeTab===k?'1 1 auto':'0 0 auto',minWidth:0,background:activeTab===k?C.panel:'transparent',border:'none',borderBottom:activeTab===k?`2px solid ${C.blue}`:'2px solid transparent',padding:'8px 6px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:4,fontFamily:MONO,fontSize:9,fontWeight:700,letterSpacing:'0.08em',color:activeTab===k?C.blue:C.muted,textTransform:'uppercase',whiteSpace:'nowrap',overflow:'hidden'}}>
+                <Icon size={10}/>
+                {/* Only the open tab carries its label. Five labels want 303 px
+                    in a 281 px rail, so the strip overflowed and cut the last
+                    tab - and its unread badge - clean off the edge. The icons
+                    stay, and every tab keeps an accessible name via title. */}
+                {activeTab===k&&<span>{label}</span>}
                 {k==='feedback'&&openFeedbackCount>0&&<span style={{background:C.orange,color:'#fff',borderRadius:8,padding:'1px 5px',fontSize:8,lineHeight:1}}>{openFeedbackCount}</span>}
               </button>
             ))}
