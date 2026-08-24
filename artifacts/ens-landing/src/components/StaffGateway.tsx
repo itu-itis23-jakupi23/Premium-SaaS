@@ -157,7 +157,7 @@ export function StaffGateway({ children }: { children: ReactNode }) {
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.19, ease: [0.22, 1, 0.36, 1] }}
           className="w-full max-w-sm relative z-10"
         >
           {/* Card — dark, on-brand */}

@@ -23,7 +23,7 @@ export default function NotFound() {
       <motion.main
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-10 text-center px-6 max-w-lg mx-auto"
         id={MAIN_CONTENT_ID}
       >
@@ -37,7 +37,7 @@ export default function NotFound() {
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ delay: 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="text-[140px] font-black leading-none tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground/80 to-foreground/10 select-none mb-4"
         >
           404

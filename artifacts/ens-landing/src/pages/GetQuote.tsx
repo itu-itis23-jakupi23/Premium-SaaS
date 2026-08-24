@@ -71,7 +71,7 @@ export default function GetQuote() {
         <motion.div
           initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.19, ease: [0.22, 1, 0.36, 1] }}
         >
           {submitted ? (
             <Card className="border-border/70 bg-card/85 backdrop-blur-2xl shadow-2xl">

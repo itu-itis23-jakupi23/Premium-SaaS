@@ -20,15 +20,15 @@ const squareVariants: Variants = {
   hover: (sq: SquareDef) => ({
     scale: 1.2,
     opacity: 1,
-    transition: { delay: sq.delay, duration: 0.18, ease: 'easeOut' },
+    transition: { delay: sq.delay, duration: 0.13, ease: 'easeOut' },
   }),
 };
 
 const SQUARES: SquareDef[] = [
   { delay: 0, isLast: false },
-  { delay: 0.04, isLast: false },
-  { delay: 0.08, isLast: false },
-  { delay: 0.13, isLast: true },
+  { delay: 0.03, isLast: false },
+  { delay: 0.05, isLast: false },
+  { delay: 0.08, isLast: true },
 ];
 
 export function ENSLogo({

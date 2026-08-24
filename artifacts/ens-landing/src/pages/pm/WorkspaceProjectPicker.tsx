@@ -68,7 +68,7 @@ export function WorkspaceProjectPicker({
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:12}}>
               {projects.map(project=>(
                 <button key={project.id} onClick={()=>onSelect(project)}
-                  style={{background:C.panel,border:`1px solid ${C.hair}`,borderRadius:6,padding:'16px',cursor:'pointer',textAlign:'left',transition:'box-shadow 0.12s,border-color 0.12s',display:'flex',flexDirection:'column',gap:8}}
+                  style={{background:C.panel,border:`1px solid ${C.hair}`,borderRadius:6,padding:'16px',cursor:'pointer',textAlign:'left',transition:'box-shadow 90ms ease-out,border-color 90ms ease-out',display:'flex',flexDirection:'column',gap:8}}
                   onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor=C.blue;(e.currentTarget as HTMLElement).style.boxShadow=`0 0 0 3px ${C.blue}18`;}}
                   onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor=C.hair;(e.currentTarget as HTMLElement).style.boxShadow='none';}}>
                   {/* Row 1: name + status dot */}
@@ -89,7 +89,7 @@ export function WorkspaceProjectPicker({
                       <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted}}>{project.progress}%</span>
                     </div>
                     <div style={{height:3,borderRadius:2,background:`${C.hair}80`,overflow:'hidden'}}>
-                      <div style={{height:'100%',width:`${project.progress}%`,background:C.blue,borderRadius:2,transition:'width 0.3s'}}/>
+                      <div style={{height:'100%',width:`${project.progress}%`,background:C.blue,borderRadius:2,transition:'width 170ms cubic-bezier(0.22, 1, 0.36, 1)'}}/>
                     </div>
                   </div>
                   {/* Row 4: open workspace label */}

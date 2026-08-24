@@ -497,7 +497,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             key={routeKey}
             initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.17, ease: [0.22, 1, 0.36, 1] }}
             className="relative z-10 mx-auto max-w-7xl"
           >
             {children}

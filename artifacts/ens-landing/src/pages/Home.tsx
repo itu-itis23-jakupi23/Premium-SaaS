@@ -46,7 +46,7 @@ const FADE_UP: Variants = {
     opacity: 1, 
     y: 0, 
     transition: { 
-      duration: 0.6, 
+      duration: 0.32, 
       ease: [0.22, 1, 0.36, 1] 
     } 
   }
@@ -57,7 +57,7 @@ const STAGGER = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
+      staggerChildren: 0.05
     }
   }
 };
@@ -223,7 +223,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.14 }}
             className="ens-landing-overlay fixed inset-0 z-40 md:hidden"
           >
             <div aria-hidden="true" className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
@@ -231,7 +231,7 @@ export default function Home() {
               initial={{ x: drawerOffscreen }}
               animate={{ x: 0 }}
               exit={{ x: drawerOffscreen }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.19, ease: [0.22, 1, 0.36, 1] }}
               className="absolute end-0 top-0 h-full w-80 max-w-[90vw] bg-card/98 backdrop-blur-2xl border-s border-border/60 shadow-2xl flex flex-col"
             >
               <div className="flex items-center justify-between px-6 py-5 border-b border-border/40">
@@ -454,7 +454,7 @@ export default function Home() {
                   fill="none"
                   aria-hidden="true"
                   whileHover={{ scale: 1.06 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.19 }}
                 >
                   {/* Floor */}
                   <polygon points="20,140 120,160 220,140 120,120" stroke="currentColor" strokeWidth="1.2" fill="rgba(59,130,246,0.05)" />
@@ -522,7 +522,7 @@ export default function Home() {
                   fill="none"
                   aria-hidden="true"
                   whileHover={{ scale: 1.06 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.19 }}
                 >
                   {/* Floor plane */}
                   <polygon points="20,148 120,162 220,148 120,134" stroke="currentColor" strokeWidth="1.2" fill="rgba(168,85,247,0.04)" />
