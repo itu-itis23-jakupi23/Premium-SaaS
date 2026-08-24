@@ -715,13 +715,20 @@ export default function PMWorkspace() {
   // from marking newer local changes as saved.
   useEffect(()=>{
     if(!workspaceRecord || isWorkspaceLoading || !hasUnsavedChanges) return;
-    if(saveStatus === 'saving' || saveStatus === 'error') return;
+    if(saveStatus === 'saving') return;
     const projectId = workspaceRecord.project.id;
     const revision = workspaceRevisionRef.current;
     const workspace = ws;
+    // A failed save used to stop autosaving altogether: the effect bailed out
+    // on 'error' and only came back when the next edit reset the status to
+    // dirty. One dropped connection and the rest of the session was saved by
+    // luck - and if the failure landed on the last edit before the designer
+    // walked away, that work was simply gone behind a "Save failed" label.
+    // It now backs off and tries again on its own.
+    const delay = saveStatus === 'error' ? 15000 : 3000;
     const timer = window.setTimeout(()=>{
       void persistWorkspace(projectId, workspace, revision, 'Autosave');
-    },3000);
+    },delay);
     return()=>window.clearTimeout(timer);
   },[hasUnsavedChanges, isWorkspaceLoading, persistWorkspace, saveStatus, workspaceRecord, ws]);
 
@@ -896,6 +903,13 @@ export default function PMWorkspace() {
     if(!latest) return;
     removeItem(latest.id);
   };
+  const undoRef = useRef(undo);
+  undoRef.current = undo;
+  const redoRef = useRef(redo);
+  redoRef.current = redo;
+  const activePlacedIdRef = useRef(activePlacedId);
+  activePlacedIdRef.current = activePlacedId;
+
   const removeItem = (id:string) => {
     if(activePlacedId===id) {
       setActivePlacedId('');
@@ -903,6 +917,51 @@ export default function PMWorkspace() {
     }
     commit(prev=>({...prev,placedItems:prev.placedItems.filter(p=>p.id!==id)}));
   };
+  // ── Keyboard shortcuts ────────────────────────────────────────
+  // The undo button has advertised "Ctrl+Z" since it was written and nothing
+  // ever listened for it: the only keydown handler in the whole workspace was
+  // Enter on the notes field. Shortcuts arrive from two places - this window,
+  // and the renderer, which forwards them because clicking the booth moves
+  // focus into its iframe and the parent stops seeing key events.
+  const runShortcut = useCallback((action:string)=>{
+    if(previewMode) return;
+    if(action === 'undo') { undoRef.current(); return; }
+    if(action === 'redo') { redoRef.current(); return; }
+    if(action === 'delete') {
+      const selected = activePlacedIdRef.current;
+      if(selected) removeItemRef.current(selected);
+      return;
+    }
+    if(action === 'deselect') {
+      setActivePlacedId('');
+      setActiveRoomId('');
+      setSelectionAnchor(null);
+    }
+  },[previewMode]);
+
+  useEffect(()=>{
+    const onKeyDown = (event:KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      // Never take a key away from someone typing.
+      if(target && (target.isContentEditable || ['INPUT','TEXTAREA','SELECT'].includes(target.tagName))) return;
+      const mod = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
+      let action = '';
+      if(mod && key === 'z') action = event.shiftKey ? 'redo' : 'undo';
+      else if(mod && key === 'y') action = 'redo';
+      else if(key === 'delete' || key === 'backspace') action = 'delete';
+      else if(key === 'escape') action = 'deselect';
+      if(!action) return;
+      event.preventDefault();
+      runShortcut(action);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return ()=>window.removeEventListener('keydown', onKeyDown);
+  },[runShortcut]);
+
+  const removeItemRef = useRef(removeItem);
+  removeItemRef.current = removeItem;
+
   const updateItem = (id:string, patch:Partial<WorkspacePlacedItem>) => commit(prev=>normalizeWorkspaceData({
     ...prev,
     placedItems: prev.placedItems.map(item => item.id === id ? {...item, ...patch} : item),
@@ -1566,6 +1625,7 @@ export default function PMWorkspace() {
               } : null,
               onItemMove: moveItemLive,
               onGestureEnd: commitLiveTransform,
+              onShortcut: runShortcut,
               onItemSelect: (id:string|null, partId?:string|null, detail?:{xPct?:number|null;yPct?:number|null;label?:string|null;partType?:string|null;roomId?:string|null})=>{
                 const roomId = detail?.roomId ? String(detail.roomId) : '';
                 if (roomId && rooms.some(room => room.id === roomId)) {

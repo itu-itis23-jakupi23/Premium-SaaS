@@ -35,6 +35,8 @@ export interface BoothConfig3D {
   onItemMove?: (id: string, patch: { x: number; z: number }) => void;
   /** Fired once when a drag of an item, room or support is released. */
   onGestureEnd?: (kind: string) => void;
+  /** Keyboard shortcut pressed while focus was inside the renderer. */
+  onShortcut?: (action: string) => void;
   onItemSelect?: (id: string | null, partId?: string | null, detail?: any) => void;
   onItemDelete?: (id: string) => void;
   onItemRotate?: (id: string, patch: { rotationY: number }) => void;
@@ -99,6 +101,7 @@ export function Booth3D({ config }: { config?: Partial<BoothConfig3D> }) {
       catalogDragItem: cfg.catalogDragItem,
       onItemMove:  cfg.onItemMove,
       onGestureEnd: cfg.onGestureEnd,
+      onShortcut: cfg.onShortcut,
       onItemSelect: cfg.onItemSelect,
       onItemDelete: cfg.onItemDelete,
       onItemRotate: cfg.onItemRotate,

@@ -559,16 +559,6 @@ function buildCeilingSupportRail() {
       renderOrder: 0.33,
     });
   });
-  return;
-  pushBox([-railW / 2, y0 + railW * 0.08, 0], [railW / 2, y1 + railW * 0.08, BD], {
-    fill: 'url(#alu-cap)',
-    isAlu: true,
-    softEdge: true,
-    partId: 'rail-ceiling-cross-left-right',
-    partLabel: 'Ceiling support rail',
-    partMeta: 'Cross support profile · spans booth depth',
-    renderOrder: 0.33,
-  });
 }
 
 function buildRooms() {
@@ -3608,6 +3598,25 @@ svgEl.addEventListener('pointercancel', (e) => {
   pendingClickPart = null;
   endPointer(e);
 });
+// Keyboard shortcuts only reach the parent while focus is outside this iframe,
+// and clicking the booth puts focus inside it - so the canvas forwards them
+// itself. Without this Ctrl+Z stops working the moment you touch the design,
+// which is the moment you are most likely to want it.
+window.addEventListener('keydown', (e) => {
+  const target = e.target;
+  if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
+  const mod = e.ctrlKey || e.metaKey;
+  const key = String(e.key || '').toLowerCase();
+  let action = '';
+  if (mod && key === 'z') action = e.shiftKey ? 'redo' : 'undo';
+  else if (mod && key === 'y') action = 'redo';
+  else if (key === 'delete' || key === 'backspace') action = 'delete';
+  else if (key === 'escape') action = 'deselect';
+  if (!action) return;
+  e.preventDefault();
+  window.parent.postMessage({ type: 'workspaceShortcut', action }, '*');
+});
+
 svgEl.addEventListener('wheel', (e) => {
   e.preventDefault();
   const f = e.deltaY > 0 ? 1.08 : 0.93;

@@ -705,6 +705,68 @@ test.describe("Three-role workflow", () => {
     ).toBeGreaterThan(0.3);
   });
 
+  test("Ctrl+Z works with focus inside the booth", async ({ page }) => {
+    // The undo button advertised Ctrl+Z from the day it was written and nothing
+    // listened for it - the only keydown handler in the workspace was Enter on
+    // the notes field. Forwarding from the renderer is the half that matters:
+    // clicking the booth moves focus into the iframe, so the parent window
+    // stops receiving key events exactly when a designer wants to undo.
+    await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
+    await page.goto(`/pm/workspace?projectId=${editorProjectId}`);
+    await page.waitForLoadState("networkidle");
+    await expectBoothRendererHealthy(page, "PM shortcut workspace");
+
+    const frame = page.frameLocator('iframe[title="Booth Renderer"]');
+    const iframe = page.locator('iframe[title="Booth Renderer"]');
+    const iframeBox = await iframe.boundingBox();
+
+    const countChairs = () =>
+      frame.locator("body").evaluate(() => {
+        const state = (window as typeof window & {
+          __pendingGlbState?: { placedItems?: Array<{ catalogId?: string }> };
+        }).__pendingGlbState;
+        return state?.placedItems?.filter((item) => item.catalogId === "sedef-149").length ?? 0;
+      });
+
+    const source = page.locator('[data-catalog-item-id="sedef-149"]');
+    await source.scrollIntoViewIfNeeded();
+    const sourceBox = await source.boundingBox();
+    const dropPoint = await frame.locator("body").evaluate(() => {
+      const scope = window as typeof window & { project: (p: number[]) => { x: number; y: number } | null };
+      const svg = document.getElementById("scene") as SVGSVGElement;
+      const projected = scope.project([-1.5, 0, 1.5])!;
+      const svgPoint = svg.createSVGPoint();
+      svgPoint.x = projected.x;
+      svgPoint.y = projected.y;
+      const client = svgPoint.matrixTransform(svg.getScreenCTM()!);
+      const rect = svg.getBoundingClientRect();
+      return { x: client.x - rect.left, y: client.y - rect.top };
+    });
+
+    await page.mouse.move(sourceBox!.x + sourceBox!.width / 2, sourceBox!.y + sourceBox!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(sourceBox!.x + sourceBox!.width / 2 + 8, sourceBox!.y + sourceBox!.height / 2 + 8, { steps: 3 });
+    await page.mouse.move(iframeBox!.x + dropPoint.x, iframeBox!.y + dropPoint.y, { steps: 16 });
+    await page.mouse.up();
+    await expect.poll(countChairs, { timeout: 10_000 }).toBe(1);
+
+    // Click the booth so focus really moves into the iframe. Dispatching the
+    // key straight at the frame is not enough - it still lands on the top-level
+    // page, so the parent's own handler answers it and the forwarding path goes
+    // untested. Key events do not cross an iframe boundary, so once focus is
+    // genuinely inside, only the renderer can hear Ctrl+Z.
+    await page.mouse.click(iframeBox!.x + iframeBox!.width / 2, iframeBox!.y + iframeBox!.height * 0.28);
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement?.tagName ?? ""))
+      .toBe("IFRAME");
+
+    await page.keyboard.press("Control+z");
+    await expect.poll(countChairs, { timeout: 10_000 }).toBe(0);
+
+    await page.keyboard.press("Control+Shift+z");
+    await expect.poll(countChairs, { timeout: 10_000 }).toBe(1);
+  });
+
   test("PM furniture deletion clears Three.js state and persists after reload", async ({ page, request }) => {
     await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
     await page.goto(`/pm/workspace?projectId=${editorProjectId}`);

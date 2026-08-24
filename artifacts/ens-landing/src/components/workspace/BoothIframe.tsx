@@ -63,6 +63,8 @@ interface IframeBoothConfig {
   }) => void;
   /** Fired once when a drag of an item, room or support is released. */
   onGestureEnd?: (kind: string) => void;
+  /** Keyboard shortcut pressed while focus was inside the renderer. */
+  onShortcut?: (action: string) => void;
   onItemSelect?: (id: string | null, partId?: string, detail?: any) => void;
   onItemDelete?: (id: string) => void;
   onItemRotate?: (id: string, patch: { rotationY: number }) => void;
@@ -85,7 +87,7 @@ type OptionalIframeConfigKey =
   | 'placedItems' | 'rooms' | 'panelOverrides' | 'frontSupportPositions' | 'suppressedDefaultPositions'
   | 'fasciaOption' | 'lightingPreset' | 'pins' | 'pinMode' | 'invalidItemIds'
   | 'catalogDragItem'
-  | 'onItemMove' | 'onGestureEnd' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove'
+  | 'onItemMove' | 'onGestureEnd' | 'onShortcut' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove'
   | 'onFrontSupportMove' | 'onPinRequest' | 'onCatalogItemDrop' | 'onCatalogItemDropRejected';
 
 type RequiredIframeConfig = Required<Omit<IframeBoothConfig, OptionalIframeConfigKey>> & Pick<IframeBoothConfig, OptionalIframeConfigKey>;
@@ -319,6 +321,10 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
             rotationY: optionalNumber(data.rotationY),
           });
         }
+        return;
+      }
+      if (event.data.type === 'workspaceShortcut') {
+        bridgeConfig?.onShortcut?.(String(event.data.action || ''));
         return;
       }
       if (event.data.type === 'workspaceGestureEnd') {
