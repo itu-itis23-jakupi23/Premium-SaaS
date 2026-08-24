@@ -586,8 +586,8 @@ function buildRooms() {
     const skipFront = z1 >= BD - shellTol;
     const label = room.name || 'Room';
     const meta = `${w.toFixed(1)} x ${d.toFixed(1)} x ${h.toFixed(1)} m`;
-    const roomCommon = { roomId: room.id, softEdge: true, renderOrder: 0.00005 };
-    const wallBoxCommon = { roomId: room.id, renderOrder: 0.00005 };
+    const roomCommon = { roomId: room.id, softEdge: true, renderOrder: 0.24005 };
+    const wallBoxCommon = { roomId: room.id, renderOrder: 0.24005 };
     const wallFinish = ['frosted', 'glass', 'dark'].includes(room.wallFinish) ? room.wallFinish : 'white';
     const wallFill = wallFinish === 'glass'
       ? 'rgba(210,232,245,0.42)'
@@ -808,9 +808,10 @@ function buildRooms() {
           partLabel: label + ' upright',
           partMeta: meta,
           ...wallBoxCommon,
-          // Above the wall slab it sits on, so the upright is drawn after it
-          // rather than fighting it for depth at the same order.
-          renderOrder: 0.0002,
+          // Above the wall slab it sits on. Within the tie window this is
+          // settled by depth and insertion order rather than by the layer
+          // itself, since the upright stands proud of the wall on both faces.
+          renderOrder: 0.24008,
         };
         // Stand the upright proud of the wall on both faces. Drawn flush it was
         // coplanar with the slab, and the painter's algorithm put the wall in
@@ -890,7 +891,7 @@ function buildRooms() {
         partLabel: label + ' wall image',
         partMeta: `Uploaded room wall graphic · ${roomDesignWall} wall · ${roomDesignFit}`,
         roomId: room.id,
-        renderOrder: 0.00006,
+        renderOrder: 0.24006,
       });
     }
     addRoomProfilesAndDoor(room, { x0, x1, z0, z1, h, doorSide, doorCenterX, doorCenterZ, doorW, doorH, label, meta, roomCommon, wallInsetFill, skipLeft, skipRight, skipBack, skipFront });
@@ -908,7 +909,7 @@ function addRoomProfilesAndDoor(room, geom) {
     ...roomCommon,
     isAlu: true,
     softEdge: true,
-    renderOrder: 0.00007,
+    renderOrder: 0.24007,
   };
   const doorOpen = room.doorOpen === true;
   const doorSwing = ['right-in', 'left-out', 'right-out'].includes(room.doorSwing) ? room.doorSwing : 'left-in';
@@ -960,7 +961,7 @@ function addRoomProfilesAndDoor(room, geom) {
       partMeta: 'Room wall infill panel with reveal',
       roomId: room.id,
       softEdge: true,
-      renderOrder: 0.00006,
+      renderOrder: 0.24006,
     });
   }
 
@@ -979,7 +980,7 @@ function addRoomProfilesAndDoor(room, geom) {
       partMeta: 'Room wall infill panel with reveal',
       roomId: room.id,
       softEdge: true,
-      renderOrder: 0.00006,
+      renderOrder: 0.24006,
     });
   }
 
@@ -3516,6 +3517,13 @@ function endPointer(e) {
       }
     } else if (objectDrag.type === 'frontSupport') {
       notifyFrontSupportMoved();
+    }
+    // Tell the workspace the gesture is finished. Every frame of a drag posts
+    // a move and none of them is a commit point, so without this the workspace
+    // has no way to know when a drag ended - which is why dragging an item, a
+    // room or a support was invisible to undo entirely.
+    if (didDrag) {
+      window.parent.postMessage({ type: 'workspaceGestureEnd', kind: objectDrag.type }, '*');
     }
     objectDrag = null;
     dragHasCollision = false;

@@ -413,6 +413,11 @@ export default function PMWorkspace() {
     });
   }, []);
   const [ws,    setWS]    = useState<WSData>(INITIAL_WS);
+  // Mirrors ws for callbacks that need the committed state without taking it
+  // as a dependency - notably the end of a drag, which has to record whatever
+  // the live handlers just wrote.
+  const wsRef             = useRef<WSData>(ws);
+  wsRef.current = ws;
   const histStackRef      = useRef<WSData[]>([INITIAL_WS]);
   const histIdxRef        = useRef(0);
   const workspaceRevisionRef = useRef(0);
@@ -485,20 +490,34 @@ export default function PMWorkspace() {
     setSaveStatus('saved');
   },[]);
 
+  const pushHistory = useCallback((next:WSData)=>{
+    const stack = histStackRef.current.slice(0, histIdxRef.current+1);
+    stack.push(next);
+    if(stack.length>60) stack.shift();
+    histStackRef.current = stack;
+    histIdxRef.current = stack.length-1;
+    setHistIdx(histIdxRef.current);
+    setHistLen(stack.length);
+  },[]);
+
   const commit = useCallback((updater:(prev:WSData)=>WSData)=>{
     markWorkspaceDirty();
     setWS(prev=>{
       const next = updater(prev);
-      const stack = histStackRef.current.slice(0, histIdxRef.current+1);
-      stack.push(next);
-      if(stack.length>60) stack.shift();
-      histStackRef.current = stack;
-      histIdxRef.current = stack.length-1;
-      setHistIdx(histIdxRef.current);
-      setHistLen(stack.length);
+      pushHistory(next);
       return next;
     });
-  },[markWorkspaceDirty]);
+  },[markWorkspaceDirty, pushHistory]);
+
+  // Dragging reports a move on every frame, and none of those frames is a
+  // commit point - so the live handlers write straight to state and skip
+  // history on purpose. This records the finished gesture as one undo step
+  // when the pointer is released. Without it a drag was not merely absent from
+  // history: undo would discard the drag *and* revert the change before it,
+  // losing two edits for one keypress.
+  const commitLiveTransform = useCallback(()=>{
+    pushHistory(wsRef.current);
+  },[pushHistory]);
 
   const undo = () => {
     if(histIdxRef.current<=0) return;
@@ -1546,6 +1565,7 @@ export default function PMWorkspace() {
                 rotationY: 0,
               } : null,
               onItemMove: moveItemLive,
+              onGestureEnd: commitLiveTransform,
               onItemSelect: (id:string|null, partId?:string|null, detail?:{xPct?:number|null;yPct?:number|null;label?:string|null;partType?:string|null;roomId?:string|null})=>{
                 const roomId = detail?.roomId ? String(detail.roomId) : '';
                 if (roomId && rooms.some(room => room.id === roomId)) {
@@ -1897,21 +1917,23 @@ export default function PMWorkspace() {
             {([['props','Properties',Settings2],['panel','Selection',Square],['bom','BOM',Package],['notes','Notes',StickyNote],['feedback','Feedback',MessageSquare]] as const).map(([k,label,Icon])=>(
               <button key={k} onClick={()=>setActiveTab(k as typeof activeTab)}
                 title={label} aria-label={label}
-                style={{flex:activeTab===k?'1 1 auto':'0 0 auto',minWidth:0,background:activeTab===k?C.panel:'transparent',border:'none',borderBottom:activeTab===k?`2px solid ${C.blue}`:'2px solid transparent',padding:'8px 6px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:4,fontFamily:MONO,fontSize:9,fontWeight:700,letterSpacing:'0.08em',color:activeTab===k?C.blue:C.muted,textTransform:'uppercase',whiteSpace:'nowrap',overflow:'hidden'}}>
+                style={{flex:activeTab===k?'1 1 auto':'0 0 auto',minWidth:0,background:activeTab===k?C.panel:'transparent',border:'none',borderBottom:activeTab===k?`2px solid ${C.blue}`:'2px solid transparent',padding:'8px 6px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:MONO,fontSize:9,fontWeight:700,letterSpacing:'0.08em',color:activeTab===k?C.blue:C.muted,textTransform:'uppercase',whiteSpace:'nowrap',overflow:'hidden',transition:`color 110ms ${'ease-out'}, border-color 110ms ease-out, flex-grow 160ms cubic-bezier(0.22, 1, 0.36, 1)`}}>
                 <Icon size={10}/>
-                {/* Only the open tab carries its label. Five labels want 303 px
-                    in a 281 px rail, so the strip overflowed and cut the last
-                    tab - and its unread badge - clean off the edge. The icons
-                    stay, and every tab keeps an accessible name via title. */}
-                {activeTab===k&&<span>{label}</span>}
-                {k==='feedback'&&openFeedbackCount>0&&<span style={{background:C.orange,color:'#fff',borderRadius:8,padding:'1px 5px',fontSize:8,lineHeight:1}}>{openFeedbackCount}</span>}
+                {/* Only the open tab shows its label - five labels want 303 px
+                    in a 281 px rail, so the strip used to overflow and cut the
+                    last tab, and its unread badge, clean off the edge. The
+                    label is always in the DOM and collapses to zero width
+                    instead of unmounting, so it can animate open; every tab
+                    keeps an accessible name through title regardless. */}
+                <span className="ens-tab-label" data-open={activeTab===k}>{label}</span>
+                {k==='feedback'&&openFeedbackCount>0&&<span style={{marginLeft:4,background:C.orange,color:'#fff',borderRadius:8,padding:'1px 5px',fontSize:8,lineHeight:1}}>{openFeedbackCount}</span>}
               </button>
             ))}
           </div>
 
           {/* Properties Tab */}
           {activeTab==='props'&&(
-            <div style={{flex:1,overflowY:'auto',padding:'0 16px'}}>
+            <div className="ens-tab-panel" style={{flex:1,overflowY:'auto',padding:'0 16px'}}>
               <PropBlock label="Stand Configuration" right="metric">
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
                   <DimInput label="Width"  value={booth.width}  min={1} max={40} step={1} onChange={v=>set('width',v)}/>
@@ -2170,7 +2192,7 @@ export default function PMWorkspace() {
 
           {/* Panel Tab */}
           {activeTab==='panel'&&(
-            <div style={{flex:1,overflowY:'auto',padding:'0 16px'}}>
+            <div className="ens-tab-panel" style={{flex:1,overflowY:'auto',padding:'0 16px'}}>
               {!activeShellPart&&(
                 <div style={{padding:'24px 0',textAlign:'center',fontFamily:MONO,fontSize:9.5,color:C.muted,lineHeight:1.6}}>
                   Select a panel, column, rail, fascia, or carpet in the booth to edit its properties.
@@ -2336,6 +2358,7 @@ export default function PMWorkspace() {
 
           {/* BOM Tab */}
           {activeTab==='bom'&&(
+            <div className="ens-tab-panel" style={{flex:1,minHeight:0,display:'flex',flexDirection:'column'}}>
             <WorkspaceBomPanel
               booth={booth} rooms={rooms} placedItems={placedItems}
               structItems={structItems} roomItems={roomItems} totals={totals}
@@ -2348,11 +2371,12 @@ export default function PMWorkspace() {
               onDuplicate={duplicateItem} onRemove={removeItem}
               onTransform={updateItemTransform} onRotate={rotateItem}
             />
+            </div>
           )}
 
           {/* Notes Tab */}
           {activeTab==='notes'&&(
-            <div style={{flex:1,display:'flex',flexDirection:'column'}}>
+            <div className="ens-tab-panel" style={{flex:1,display:'flex',flexDirection:'column'}}>
               <div style={{flex:1,overflowY:'auto',padding:'12px 16px',display:'flex',flexDirection:'column',gap:8}}>
                 {notes.length===0&&(
                   <div style={{padding:'20px 0',textAlign:'center',color:C.muted,fontFamily:MONO,fontSize:9.5}}>
@@ -2390,7 +2414,7 @@ export default function PMWorkspace() {
 
           {/* Feedback Tab */}
           {activeTab==='feedback'&&(
-            <div style={{flex:1,display:'flex',flexDirection:'column',minHeight:0}}>
+            <div className="ens-tab-panel" style={{flex:1,display:'flex',flexDirection:'column',minHeight:0}}>
               <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.hair}`,background:C.bg,flexShrink:0}}>
                 <MonoLabel right={`${openFeedbackCount} open`}>§ Client Feedback</MonoLabel>
                 <div style={{display:'flex',gap:5}}>

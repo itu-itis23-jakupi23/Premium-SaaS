@@ -613,6 +613,98 @@ test.describe("Three-role workflow", () => {
     })).toBe(0);
   });
 
+  test("dragging a placed item is one undo step, and undo puts it back", async ({ page }) => {
+    // Dragging reports a move on every frame and none of them is a commit
+    // point, so the live handlers write straight to state and skip history.
+    // Without a commit on release the drag was not merely missing from
+    // history - undo would throw away the drag *and* revert the edit before
+    // it, losing two changes for one click. The existing catalogue-drag test
+    // undoes an *add*, which goes through commit, so it never covered this.
+    await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
+    await page.goto(`/pm/workspace?projectId=${editorProjectId}`);
+    await page.waitForLoadState("networkidle");
+    await expectBoothRendererHealthy(page, "PM drag undo workspace");
+
+    const frame = page.frameLocator('iframe[title="Booth Renderer"]');
+    const iframe = page.locator('iframe[title="Booth Renderer"]');
+    const iframeBox = await iframe.boundingBox();
+
+    /** Screen position, relative to the iframe, of a point in booth space. */
+    const pointFor = (coords: number[]) =>
+      frame.locator("body").evaluate((_element, booth: number[]) => {
+        const scope = window as typeof window & { project: (p: number[]) => { x: number; y: number } | null };
+        const svg = document.getElementById("scene") as SVGSVGElement;
+        const projected = scope.project(booth);
+        if (!projected || !Number.isFinite(projected.x) || !Number.isFinite(projected.y)) {
+          throw new Error(`point ${JSON.stringify(booth)} projected to ${JSON.stringify(projected)}`);
+        }
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = projected.x;
+        svgPoint.y = projected.y;
+        const client = svgPoint.matrixTransform(svg.getScreenCTM()!);
+        const rect = svg.getBoundingClientRect();
+        return { x: client.x - rect.left, y: client.y - rect.top };
+      }, coords);
+
+    const positionOf = () =>
+      frame.locator("body").evaluate(() => {
+        const state = (window as typeof window & {
+          __pendingGlbState?: { placedItems?: Array<{ catalogId?: string; x?: number; z?: number }> };
+        }).__pendingGlbState;
+        const item = state?.placedItems?.find((entry) => entry.catalogId === "sedef-149");
+        return item ? { x: Number(item.x), z: Number(item.z) } : null;
+      });
+
+    // Place one chair to drag around.
+    const source = page.locator('[data-catalog-item-id="sedef-149"]');
+    await source.scrollIntoViewIfNeeded();
+    const sourceBox = await source.boundingBox();
+    const dropPoint = await pointFor([-1.5, 0, 1.5]);
+    await page.mouse.move(sourceBox!.x + sourceBox!.width / 2, sourceBox!.y + sourceBox!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(sourceBox!.x + sourceBox!.width / 2 + 8, sourceBox!.y + sourceBox!.height / 2 + 8, { steps: 3 });
+    await page.mouse.move(iframeBox!.x + dropPoint.x, iframeBox!.y + dropPoint.y, { steps: 16 });
+    await page.mouse.up();
+    await expect.poll(positionOf, { timeout: 10_000 }).not.toBeNull();
+
+    const placed = (await positionOf())!;
+    // Workspace x runs 0..width; the renderer projects from booth centre.
+    const grab = await pointFor([placed.x - 3, 0.4, placed.z]);
+    const target = await pointFor([1.2, 0.4, 1.6]);
+
+    await page.mouse.move(iframeBox!.x + grab.x, iframeBox!.y + grab.y);
+    await page.mouse.down();
+    await page.mouse.move(iframeBox!.x + target.x, iframeBox!.y + target.y, { steps: 18 });
+    await page.mouse.up();
+
+    await expect
+      .poll(async () => {
+        const now = await positionOf();
+        return now ? Math.abs(now.x - placed.x) + Math.abs(now.z - placed.z) : 0;
+      }, { timeout: 10_000 })
+      .toBeGreaterThan(0.3);
+
+    const moved = (await positionOf())!;
+
+    await page.getByTitle(/Undo \(Ctrl\+Z\)/).click();
+
+    await expect
+      .poll(async () => {
+        const now = await positionOf();
+        return now ? Math.abs(now.x - placed.x) + Math.abs(now.z - placed.z) : 99;
+      }, { timeout: 10_000 })
+      .toBeLessThan(0.05);
+
+    // And the chair is still there - undo restored the position, it did not
+    // roll the placement back as well.
+    const restored = await positionOf();
+    expect(restored, "undo removed the item instead of moving it back").not.toBeNull();
+    expect(
+      Math.abs(moved.x - placed.x) + Math.abs(moved.z - placed.z),
+      "the drag should have moved the chair before undo",
+    ).toBeGreaterThan(0.3);
+  });
+
   test("PM furniture deletion clears Three.js state and persists after reload", async ({ page, request }) => {
     await loginStaffPage(page, PM_EMAIL, PM_PASSWORD, /\/pm/);
     await page.goto(`/pm/workspace?projectId=${editorProjectId}`);

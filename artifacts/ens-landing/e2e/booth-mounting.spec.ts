@@ -224,6 +224,68 @@ test.describe("Booth mounting rules", () => {
     expect(reported!).toBeCloseTo(BOOTH_W - 0.55 / 2, 2);
   });
 
+  test("a room wall is drawn in front of what stands behind it", async ({ page }) => {
+    // The renderer is a painter's algorithm: later in the DOM is nearer the
+    // viewer. Faces sort by renderOrder first, and only fall through to depth
+    // when the gap is under 0.0001. Rooms sat at ~0.00005 while furniture sits
+    // at 0.24, so a room lost on renderOrder before depth was ever consulted -
+    // every wall was painted first and every chair painted straight over it.
+    // The walls read as transparent, which is exactly how it was reported.
+    const order = await page.evaluate(
+      () =>
+        new Promise<{ room: number; item: number } | null>((resolve) => {
+          const onAck = () => {
+            window.removeEventListener("message", onAck);
+            requestAnimationFrame(() => {
+              const faces = [...document.querySelectorAll("[data-pid]")];
+              let room = -1;
+              let item = -1;
+              faces.forEach((face, index) => {
+                const pid = face.getAttribute("data-pid") || "";
+                if (pid.startsWith("occlusion-room")) room = Math.max(room, index);
+                if (pid.startsWith("occlusion-chair")) item = Math.max(item, index);
+              });
+              resolve({ room, item });
+            });
+          };
+          window.addEventListener("message", onAck);
+          window.postMessage({
+            type: "boothUpdate",
+            rooms: [{
+              id: "occlusion-room", name: "Occlusion room",
+              width: 2.4, depth: 1.6, height: 2.4,
+              x: 3, z: 1.5, hasDoor: true, doorSide: "front",
+              doorWidth: 0.9, doorPosition: "center", doorSwing: "left-in",
+              doorOpen: false, hasCeiling: false,
+              wallFinish: "white", floorColor: "#dddddd", locked: false,
+            }],
+            // Standing in the middle of that room, so a wall is between it and
+            // the camera from every angle.
+            placedItems: [{
+              id: "occlusion-chair", catalogId: "sedef-149", name: "CHAIR",
+              kind: "furniture", shape: "chair",
+              w: 0.5, d: 0.45, h: 0.88, x: 3, z: 1.5, y: 0, rotationY: 0,
+            }],
+          }, "*");
+          setTimeout(() => {
+            window.removeEventListener("message", onAck);
+            resolve(null);
+          }, 4000);
+        }),
+    );
+
+    expect(order, "the renderer never acknowledged the update").not.toBeNull();
+    expect(order!.room, "no room faces were drawn at all").toBeGreaterThan(-1);
+    expect(order!.item, "no furniture faces were drawn at all").toBeGreaterThan(-1);
+    // The wall between the camera and the chair is nearer than the chair, so it
+    // must be painted after it. Before the fix no room face was ever painted
+    // after any furniture face, whatever the angle.
+    expect(
+      order!.room,
+      "the room's nearest wall was painted behind the chair standing inside it",
+    ).toBeGreaterThan(order!.item);
+  });
+
   test("an overlap warns but does not refuse the placement", async ({ page }) => {
     // Uprights stand at every panel joint. Refusing a drop that clips one is
     // what made corners unreachable; a designer putting a counter tight against
