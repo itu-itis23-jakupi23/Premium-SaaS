@@ -19,7 +19,7 @@ import {
   type WorkspaceComment,
 } from "@/lib/platform-api";
 import {
-  ChevronLeft, Undo2, Redo2, Save, Camera, History, Send,
+  ChevronLeft, ChevronRight, Undo2, Redo2, Save, Camera, History, Send,
   Maximize2, Plus, Trash2,
   Square, Layers, Map, X,
   CheckCircle2, Package, StickyNote, Settings2, Copy, MessageSquare, ImagePlus, Lock, Unlock,
@@ -392,6 +392,21 @@ export default function PMWorkspace() {
   // with floating <label> elements that pointed at nothing, so a screen reader
   // announced "slider" with no indication of what it adjusted.
   const uid = useId();
+  // The inspector can be folded away to a rail. The 3D view is the point of
+  // this screen and the panel takes 282px of it; on a laptop that is most of
+  // the booth. Remembered per browser so it does not spring back open on every
+  // reload.
+  const [inspectorOpen, setInspectorOpen] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.localStorage.getItem('ens-workspace-inspector') !== 'closed';
+  });
+  const toggleInspector = useCallback(() => {
+    setInspectorOpen(open => {
+      const next = !open;
+      try { window.localStorage.setItem('ens-workspace-inspector', next ? 'open' : 'closed'); } catch { /* private mode */ }
+      return next;
+    });
+  }, []);
   const [ws,    setWS]    = useState<WSData>(INITIAL_WS);
   const histStackRef      = useRef<WSData[]>([INITIAL_WS]);
   const histIdxRef        = useRef(0);
@@ -1839,7 +1854,26 @@ export default function PMWorkspace() {
         </main>
 
         {/* ── Right — Properties / BOM / Notes ─────────────────── */}
-        {!previewMode&&<aside style={{width:282,borderLeft:`1px solid ${C.hair}`,background:C.panel,display:'flex',flexDirection:'column',flexShrink:0}}>
+        {!previewMode&&<aside style={{width:inspectorOpen?282:34,transition:'width 140ms ease',borderLeft:`1px solid ${C.hair}`,background:C.panel,display:'flex',flexDirection:'column',flexShrink:0}}>
+          {/* Fold control. Stays visible in both states - it is the only way back. */}
+          <button type="button" onClick={toggleInspector}
+            title={inspectorOpen?'Hide the inspector':'Show the inspector'}
+            aria-label={inspectorOpen?'Hide the inspector':'Show the inspector'}
+            aria-expanded={inspectorOpen}
+            style={{display:'flex',alignItems:'center',justifyContent:inspectorOpen?'flex-end':'center',
+                    gap:6,padding:inspectorOpen?'6px 8px':'8px 0',background:'transparent',
+                    border:'none',borderBottom:`1px solid ${C.hair}`,cursor:'pointer',
+                    color:C.muted,fontFamily:MONO,fontSize:9,letterSpacing:'0.08em',flexShrink:0}}>
+            {inspectorOpen?<><span>HIDE</span><ChevronRight size={12}/></>:<ChevronLeft size={12}/>}
+          </button>
+          {!inspectorOpen&&(
+            <div style={{writingMode:'vertical-rl',textOrientation:'mixed',padding:'10px 0',
+                         color:C.muted,fontFamily:MONO,fontSize:9,letterSpacing:'0.12em',
+                         textAlign:'center',userSelect:'none'}}>
+              INSPECTOR
+            </div>
+          )}
+          {inspectorOpen&&<>
           {/* Tab bar */}
           <div style={{display:'flex',borderBottom:`1px solid ${C.hair}`,flexShrink:0}}>
             {([['props','Properties',Settings2],['panel','Selection',Square],['bom','BOM',Package],['notes','Notes',StickyNote],['feedback','Feedback',MessageSquare]] as const).map(([k,label,Icon])=>(
@@ -2385,6 +2419,7 @@ export default function PMWorkspace() {
               </div>
             </div>
           )}
+          </>}
         </aside>}
 
         {/* ── History Panel (slide-over) ────────────────────────── */}
