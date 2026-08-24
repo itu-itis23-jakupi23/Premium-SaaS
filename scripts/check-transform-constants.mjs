@@ -26,17 +26,25 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const landingRoot = resolve(root, "artifacts", "ens-landing");
 const modulePath = resolve(landingRoot, "src", "lib", "workspace-transform.ts");
-const rendererPath = resolve(landingRoot, "booth-render.html");
+// The renderer is a page plus the engine it loads. The snapping rules live in
+// the engine, which was lifted out of the page so the app can run under an
+// enforced CSP - so both are read, and either one may carry a rule.
+const rendererPaths = [
+  resolve(landingRoot, "booth-render.html"),
+  resolve(landingRoot, "public", "booth-render.js"),
+];
 
 const failures = [];
 const fail = (message) => failures.push(message);
 
 if (!existsSync(modulePath)) fail("src/lib/workspace-transform.ts is missing");
-if (!existsSync(rendererPath)) fail("booth-render.html is missing");
+for (const path of rendererPaths) {
+  if (!existsSync(path)) fail(`${path.split(/[\\/]/).pop()} is missing`);
+}
 
 if (failures.length === 0) {
   const moduleSource = readFileSync(modulePath, "utf8");
-  const renderer = readFileSync(rendererPath, "utf8");
+  const renderer = rendererPaths.map((path) => readFileSync(path, "utf8")).join("\n");
 
   /** Read `export const NAME = <number>;` out of the module. */
   function constant(name) {
@@ -99,7 +107,7 @@ if (failures.length === 0) {
     const escaped = String(value).replace(".", "\\.");
     if (!buildPattern(escaped).test(renderer)) {
       fail(
-        `${label}: booth-render.html does not contain \`${expression(value)}\`. ` +
+        `${label}: the booth renderer does not contain \`${expression(value)}\`. ` +
           "The renderer and workspace-transform.ts have diverged.",
       );
     }
@@ -134,6 +142,6 @@ if (failures.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    "Transform constant check passed: booth-render.html encodes the same snapping rules as workspace-transform.ts.",
+    "Transform constant check passed: the booth renderer encodes the same snapping rules as workspace-transform.ts.",
   );
 }

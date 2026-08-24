@@ -1,11 +1,12 @@
 /**
  * Booth renderer integrity gate (WS-04).
  *
- * `booth-render.html` drives the entire 3D booth: it is roughly 4,200 lines of
- * inline JavaScript in a standalone HTML file, loaded into an iframe. Because
- * it is HTML rather than a `.ts` module, neither ESLint nor TypeScript sees a
- * single line of it. Every other source file in the repo is parsed by something
- * on every push; this one, the most visible surface in the product, is not.
+ * The booth renderer is a page, `booth-render.html`, plus the engine it loads,
+ * `public/booth-render.js` - roughly 3,700 lines of plain JavaScript that draw
+ * the entire 3D booth inside an iframe. Neither ESLint nor TypeScript reads
+ * either one: the page is HTML, and the engine is a public asset copied
+ * verbatim. Every other source file in the repo is parsed by something on every
+ * push; the most visible surface in the product is not.
  *
  * That gap has already broken it once: an edit left an orphaned `});` behind,
  * and nothing caught it until the renderer failed at runtime, inside an iframe,
@@ -72,12 +73,35 @@ function lineOf(source, index) {
   return source.slice(0, index).split("\n").length;
 }
 
+const scratch = mkdtempSync(join(tmpdir(), "booth-render-"));
 const blocks = scriptBlocks(html);
 if (blocks.length === 0) {
   failures.push("no inline <script> blocks found - has the renderer been restructured?");
 }
 
-const scratch = mkdtempSync(join(tmpdir(), "booth-render-"));
+// The engine itself lives beside the page rather than inside it, so that the
+// app can run under an enforced Content-Security-Policy. It carries the bulk of
+// the renderer, so a gate that only reads the page checks almost nothing.
+const enginePath = resolve(landingRoot, "public", "booth-render.js");
+if (!existsSync(enginePath)) {
+  failures.push("public/booth-render.js is missing - the page loads it as a classic script");
+} else {
+  if (!/<script\s+src=["']\/booth-render\.js["']><\/script>/.test(html)) {
+    failures.push("booth-render.html no longer loads /booth-render.js");
+  }
+  const engineFile = join(scratch, "engine.cjs");
+  writeFileSync(engineFile, readFileSync(enginePath, "utf8"), "utf8");
+  try {
+    execFileSync(process.execPath, ["--check", engineFile], { stdio: "pipe" });
+  } catch (error) {
+    const detail = String(error.stderr ?? error.message)
+      .split("\n")
+      .map((l) => l.replace(engineFile, "public/booth-render.js"))
+      .find((l) => /SyntaxError|Error:/.test(l));
+    failures.push(`public/booth-render.js does not parse: ${detail ?? "unknown syntax error"}`);
+  }
+}
+
 try {
   for (const block of blocks) {
     if (block.unterminated) {
