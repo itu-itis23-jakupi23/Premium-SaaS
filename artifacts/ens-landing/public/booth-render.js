@@ -2479,17 +2479,6 @@ function buildFascia() {
   addSide('right', BW/2 - offset + boardDepth, [1,0,0], BW/2 - offset);
 }
 
-function buildFrontRail() {
-  const T = EX;
-  pushBox(
-    [-BW/2 - T/2, BH - T*0.4, BD - T/2],
-    [ BW/2 + T/2, BH + T*0.4, BD + T/2],
-    { fill:'url(#alu-h)', isAlu:true, partId:'rail-front',
-      partLabel:'Front top rail · entrance beam',
-      partMeta:'40 × 40 mm profile · spans ' + BW.toFixed(1) + ' m' }
-  );
-}
-
 function buildCarpet() {
   faces.push({
     pts: [

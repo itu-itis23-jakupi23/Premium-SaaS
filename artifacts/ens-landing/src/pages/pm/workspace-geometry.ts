@@ -6,7 +6,7 @@ import { ITEM_WALL_CLEARANCE_M, PLAN_MARGIN_M, snapNumber } from "@/lib/workspac
 // shapes. Kept in one module so the placement rules live in one testable place.
 
 export type PlacementIssue = { itemId: string; message: string };
-export type Rect2D = { x0: number; x1: number; z0: number; z1: number };
+type Rect2D = { x0: number; x1: number; z0: number; z1: number };
 
 export function itemPositionBounds(w: number, d: number, booth: BoothState) {
   // The plan around the stand is placeable, not just the footprint - a screen
@@ -36,7 +36,7 @@ export function positionBoundsForItem(item: WorkspacePlacedItem, booth: BoothSta
   return itemPositionBounds(footprint.width, footprint.depth, booth);
 }
 
-export function itemRect(item: WorkspacePlacedItem, pad = 0.03): Rect2D {
+function itemRect(item: WorkspacePlacedItem, pad = 0.03): Rect2D {
   const footprint = rotatedItemFootprint(item);
   return {
     x0: item.x - footprint.width / 2 - pad,
@@ -46,7 +46,7 @@ export function itemRect(item: WorkspacePlacedItem, pad = 0.03): Rect2D {
   };
 }
 
-export function roomRect(room: WorkspaceRoom, pad = 0.03): Rect2D {
+function roomRect(room: WorkspaceRoom, pad = 0.03): Rect2D {
   return {
     x0: room.x - room.width / 2 - pad,
     x1: room.x + room.width / 2 + pad,
@@ -55,18 +55,18 @@ export function roomRect(room: WorkspaceRoom, pad = 0.03): Rect2D {
   };
 }
 
-export function rectsOverlap(a: Rect2D, b: Rect2D) {
+function rectsOverlap(a: Rect2D, b: Rect2D) {
   return a.x0 < b.x1 && a.x1 > b.x0 && a.z0 < b.z1 && a.z1 > b.z0;
 }
 
-export function rectInside(inner: Rect2D, outer: Rect2D, tolerance = 0.001) {
+function rectInside(inner: Rect2D, outer: Rect2D, tolerance = 0.001) {
   return inner.x0 >= outer.x0 - tolerance
     && inner.x1 <= outer.x1 + tolerance
     && inner.z0 >= outer.z0 - tolerance
     && inner.z1 <= outer.z1 + tolerance;
 }
 
-export function roomInteriorRect(room: WorkspaceRoom): Rect2D {
+function roomInteriorRect(room: WorkspaceRoom): Rect2D {
   const clearance = 0.12;
   const outer = roomRect(room, 0);
   return {
@@ -77,7 +77,7 @@ export function roomInteriorRect(room: WorkspaceRoom): Rect2D {
   };
 }
 
-export function roomDoorAxisCenter(room: WorkspaceRoom) {
+function roomDoorAxisCenter(room: WorkspaceRoom) {
   const usesDepth = room.doorSide === 'left' || room.doorSide === 'right';
   const span = usesDepth ? room.depth : room.width;
   const start = usesDepth ? room.z - room.depth / 2 : room.x - room.width / 2;
@@ -87,7 +87,7 @@ export function roomDoorAxisCenter(room: WorkspaceRoom) {
   return start + sectionWidth * (index + 0.5);
 }
 
-export function roomDoorClearanceRect(room: WorkspaceRoom): Rect2D | null {
+function roomDoorClearanceRect(room: WorkspaceRoom): Rect2D | null {
   if (!room.hasDoor) return null;
   const center = roomDoorAxisCenter(room);
   const halfOpening = room.doorWidth / 2 + 0.08;
@@ -99,7 +99,7 @@ export function roomDoorClearanceRect(room: WorkspaceRoom): Rect2D | null {
   return { x0: center - halfOpening, x1: center + halfOpening, z0: outer.z1 - swingDepth, z1: outer.z1 + 0.06 };
 }
 
-export function roomItemConflict(itemBounds: Rect2D, room: WorkspaceRoom): 'wall' | 'door' | null {
+function roomItemConflict(itemBounds: Rect2D, room: WorkspaceRoom): 'wall' | 'door' | null {
   if (!rectsOverlap(itemBounds, roomRect(room, 0))) return null;
   if (!rectInside(itemBounds, roomInteriorRect(room))) return 'wall';
   const doorClearance = roomDoorClearanceRect(room);
@@ -138,7 +138,7 @@ export function findAvailableRoomPlacement(room: WorkspaceRoom, rooms: Workspace
   return null;
 }
 
-export function isFloorPlacedItem(item: WorkspacePlacedItem) {
+function isFloorPlacedItem(item: WorkspacePlacedItem) {
   return (item.kind === 'furniture' || item.kind === 'asset') && item.shape !== 'wall_shelf' && item.shape !== 'light' && item.shape !== 'rail_light';
 }
 

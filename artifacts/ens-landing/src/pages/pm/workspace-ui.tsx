@@ -38,7 +38,7 @@ export function Swatch({color,active,onClick,size=28,title}:{color:string;active
     {active&&<span style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke={light?C.ink:'#fff'} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg></span>}
   </button>);
 }
-export function catalogPreviewUrl(item: CatItem) {
+function catalogPreviewUrl(item: CatItem) {
   // The ENS catalogue carries its preview path explicitly. Deriving it from the
   // model filename - as this used to - meant every picture broke the moment a
   // model was renamed or repointed, silently and with no failing test.
@@ -49,7 +49,7 @@ export function catalogPreviewUrl(item: CatItem) {
   const filename = decodeURIComponent(item.modelUrl.split('/').pop() || '').replace(/\.glb$/i, ' - preview.png');
   return `/ens-workspace-assets/sedef_remaining_furniture_refined_v2/previews-clean/${encodeURIComponent(filename)}`;
 }
-export function CatalogImagePreview({item,active}:{item:CatItem;active:boolean}) {
+function CatalogImagePreview({item,active}:{item:CatItem;active:boolean}) {
   const previewUrl = catalogPreviewUrl(item);
   return (
     <div style={{width:'100%',height:62,border:`1px solid ${active?C.ink:'rgba(156,163,175,0.32)'}`,borderRadius:4,background:active?'#f8fafc':'#ffffff',overflow:'hidden',display:'grid',placeItems:'center'}}>
