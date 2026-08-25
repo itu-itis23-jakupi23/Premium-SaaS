@@ -1181,7 +1181,6 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
   if (!isCeilingFixture) y = Math.max(y, 0.035);
   const common = { partLabel, partMeta, isFurniture: true, itemId: item.id, rotRad: rotation, originX: x, originZ: z, renderOrder: 0.00003 };
   const topColor = color || '#e8e2d8';
-  const legColor = '#50555f';
   if (!isCeilingFixture) pushFurnitureShadow(x, z, w, d, common);
   // Anything with a GLB draws only an invisible pick-box here; the model is
   // the thing you see. Ceiling fixtures used to be excluded from this, so a
@@ -1668,7 +1667,6 @@ function hasStructuralCollision(x, z, w, d) {
  * panel counts - so a slot computed here lands on the panel that is drawn.
  * Open sides are skipped: nothing mounts to a wall that is not there.
  */
-const WALL_MOUNT_GRAB_M = 0.6;   // how near a wall a mounted item must be dropped
 const WALL_FLUSH_RANGE_M = 0.35; // how near a wall ordinary furniture snaps flush
 // Placeable plan around the stand. Mirrors PLAN_MARGIN_M in workspace-transform.ts.
 const PLAN_MARGIN_M = 3;
@@ -2099,7 +2097,6 @@ function evaluateCatalogPlacement(data) {
   const floorTolerance = 0.08;
   const reach = PLAN_MARGIN_M + floorTolerance;
   const overFloor = rawX >= -BW / 2 - reach && rawX <= BW / 2 + reach && rawZ >= -reach && rawZ <= BD + reach;
-  const footprint = rotatedFootprint(w, d, rotationY);
 
   // A shelf or a light dropped from the catalogue mounts straight away, so the
   // preview shows where it will actually land rather than a floor position it
@@ -2233,7 +2230,6 @@ function ensFasciaProfile() {
 function buildFascia() {
   if (!FASCIA_ENABLED) return;
   const P = ensFasciaProfile();
-  const assemblyTop = BH + FH;
   const railH = P.railH;
   const boardH = P.bodyH;
   const yB = BH + railH;                 // MDF body sits between the two rails
@@ -2286,17 +2282,6 @@ function buildFascia() {
     });
   }
 
-  function addBoardFace(pts, normal, side, exterior = true) {
-    faces.push({
-      pts, normal, fill: boardFill, isFascia: exterior ? side : '',
-      signText: false,
-      partId: exterior ? `fascia-${side}` : `fascia-${side}-inner`,
-      partLabel: `Fascia board · ${side}`,
-      partMeta: fasciaMeta + ' · rail integrated · ' + Math.round(boardH * 1000) + ' mm board',
-      softEdge: true,
-      renderOrder: 0.4
-    });
-  }
 
   function addSignFace(pts, normal, side) {
     if (!hasMountedNamePlate(side)) return;
@@ -2408,24 +2393,6 @@ function buildFascia() {
     addSignFace([[faceX,y0,z0],[faceX,y0,z1],[faceX,y1,z1],[faceX,y1,z0]], [outward,0,0], side);
   }
 
-  function addFasciaLight(cx, cy, cz, axis, side) {
-    const lightY0 = cy - 0.035, lightY1 = cy + 0.035;
-    if (axis === 'x') {
-      pushBox([cx - 0.16, lightY0, cz - 0.025], [cx + 0.16, lightY1, cz + 0.025], {
-        fill: '#2f3540', partId: `fascia-light-${side}-${cx.toFixed(1)}`, partLabel: 'Fascia light', partMeta: 'LED wash light · rail mounted', renderOrder: 0.7
-      });
-      pushBox([cx - 0.13, lightY0 - 0.012, cz - 0.032], [cx + 0.13, lightY0 + 0.006, cz + 0.032], {
-        fill: '#fff3b0', partId: `fascia-light-lens-${side}-${cx.toFixed(1)}`, partLabel: 'Fascia light lens', partMeta: 'Warm lens', softEdge: true, renderOrder: 0.8
-      });
-    } else {
-      pushBox([cx - 0.025, lightY0, cz - 0.16], [cx + 0.025, lightY1, cz + 0.16], {
-        fill: '#2f3540', partId: `fascia-light-${side}-${cz.toFixed(1)}`, partLabel: 'Fascia light', partMeta: 'LED wash light · rail mounted', renderOrder: 0.7
-      });
-      pushBox([cx - 0.032, lightY0 - 0.012, cz - 0.13], [cx + 0.032, lightY0 + 0.006, cz + 0.13], {
-        fill: '#fff3b0', partId: `fascia-light-lens-${side}-${cz.toFixed(1)}`, partLabel: 'Fascia light lens', partMeta: 'Warm lens', softEdge: true, renderOrder: 0.8
-      });
-    }
-  }
 
   function addFrontBack(side, z, normal, exteriorZ) {
     const minZ = Math.min(z, exteriorZ) - boardDepth / 2;
@@ -3068,8 +3035,6 @@ function renderBooth() {
           el.setAttribute('pointer-events', 'none');
           container.appendChild(el);
         };
-        const addBand = (u0, u1, v0, v1, col) =>
-          addPoly([uvP(u0,v0), uvP(u1,v0), uvP(u1,v1), uvP(u0,v1)], col||'#2d3038', 0.9);
         let signAngle = Math.atan2(proj[1].y - proj[0].y, proj[1].x - proj[0].x) * 180 / Math.PI;
         if (signAngle > 90) signAngle -= 180;
         if (signAngle < -90) signAngle += 180;
@@ -3517,9 +3482,6 @@ svgEl.addEventListener('pointermove', (e) => {
     if (hit && objectDrag.type === 'item') {
       const item = placedItems.find(entry => String(entry.id) === String(objectDrag.itemId));
       if (!item) return;
-      const footprint = rotatedFootprint(item.w, item.d, item.rotationY ?? item.rotation);
-      const w = footprint.w;
-      const d = footprint.d;
       const nextX = hit[0] + objectDrag.offsetX + BW / 2;
       const nextZ = hit[2] + objectDrag.offsetZ;
       const rawX = -BW / 2 + Math.round(nextX * 20) / 20;
@@ -3817,7 +3779,6 @@ function updateHud() {
   document.getElementById('hud-system').textContent = columnStyle === 'maxima' ? 'Maxima' : 'Octanorm';
   // Determine booth type from open sides
   const openCount = [!wallsVisible.back,!wallsVisible.left,!wallsVisible.right,!wallsVisible.front].filter(Boolean).length;
-  const typeMap = ['Enclosed','Corner','Island'];
   document.getElementById('hud-type').textContent = openCount >= 3 ? 'Island' : openCount === 2 ? 'Corner' : openCount === 1 ? 'Open Side' : 'Enclosed';
 }
 
@@ -3833,7 +3794,7 @@ function placeAnnotations() {
   }
 
   for (const pin of pins) {
-    let px = 0, py = 0, pz = 0;
+    let px, py, pz;
     if (pin.z !== undefined) {
       px = pin.x;
       py = pin.y;

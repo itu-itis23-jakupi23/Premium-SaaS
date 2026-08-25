@@ -14,6 +14,7 @@ const frontendFiles = ["artifacts/ens-landing/src/**/*.{ts,tsx}"];
 const vendoredUiFiles = ["artifacts/ens-landing/src/components/ui/**/*.{ts,tsx}"];
 const backendFiles = ["artifacts/api-server/src/**/*.ts"];
 const scriptFiles = ["scripts/**/*.mjs"];
+const rendererFiles = ["artifacts/ens-landing/public/booth-render.js"];
 
 export default tseslint.config(
   {
@@ -23,7 +24,12 @@ export default tseslint.config(
       "**/playwright-report/**",
       "**/test-results/**",
       ".release-evidence/**",
-      "artifacts/ens-landing/public/**",
+      // Everything under public/ is a copied asset except the booth renderer,
+      // which is 4,000 lines of hand-written JavaScript drawing the most
+      // visible surface in the product. It was ignored here and excluded from
+      // tsconfig's `src/**/*`, so nothing checked it at all - while every other
+      // source file in the repo is parsed by something on every push.
+      "artifacts/ens-landing/public/ens-workspace-assets/**",
       "artifacts/ens-landing/attached_assets/**",
       "attached_assets/**",
     ],
@@ -34,6 +40,30 @@ export default tseslint.config(
     languageOptions: {
       ...eslint.configs.recommended.languageOptions,
       globals: globals.node,
+    },
+  },
+  {
+    ...eslint.configs.recommended,
+    files: rendererFiles,
+    languageOptions: {
+      ...eslint.configs.recommended.languageOptions,
+      // A classic script, not a module: it declares its state at the top level
+      // and the page loads it with a plain <script src>.
+      sourceType: "script",
+      globals: {
+        ...globals.browser,
+        // Handed over by the module script in booth-render.html, which owns the
+        // three.js side of the renderer.
+        THREE: "readonly",
+      },
+    },
+    rules: {
+      ...eslint.configs.recommended.rules,
+      "no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
+      ],
+      "no-console": "off",
     },
   },
   ...tseslint.configs.recommended.map((config) => ({
