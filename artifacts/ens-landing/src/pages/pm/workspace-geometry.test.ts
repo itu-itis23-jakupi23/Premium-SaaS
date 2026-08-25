@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PLAN_MARGIN_M } from "@/lib/workspace-transform";
 import {
   itemPositionBounds,
   rotatedItemFootprint,
@@ -32,10 +33,16 @@ function room(over: Partial<WorkspaceRoom> = {}): WorkspaceRoom {
 }
 
 describe("itemPositionBounds", () => {
-  it("keeps an item within the booth minus wall clearance", () => {
+  it("reaches the plan around the stand, not just its footprint", () => {
+    // A screen, a totem or a counter serving the aisle belongs outside the
+    // walls. The bounds used to stop at the footprint, so those could not be
+    // drawn at all - but they still have to stop somewhere, or an item could be
+    // dragged off the edge of the drawing and never found again.
     const b = itemPositionBounds(1, 1, booth);
-    expect(b.minX).toBeGreaterThan(0);
-    expect(b.maxX).toBeLessThan(booth.width);
+    expect(b.minX, "the plan to the left of the stand is placeable").toBeLessThan(0);
+    expect(b.maxX, "the plan to the right of the stand is placeable").toBeGreaterThan(booth.width);
+    expect(b.minX).toBeGreaterThan(-PLAN_MARGIN_M);
+    expect(b.maxX).toBeLessThan(booth.width + PLAN_MARGIN_M);
     expect(b.minX).toBeLessThanOrEqual(b.maxX);
     expect(b.minZ).toBeLessThanOrEqual(b.maxZ);
   });

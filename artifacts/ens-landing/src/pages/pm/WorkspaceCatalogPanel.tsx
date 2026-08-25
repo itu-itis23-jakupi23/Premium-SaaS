@@ -1,3 +1,4 @@
+import { useCallback, useState } from "react";
 import type { DragEvent, MutableRefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, ChevronDown, Trash2 } from "lucide-react";
@@ -8,7 +9,10 @@ import type { PlacementIssue } from "./workspace-geometry";
 
 // The left "Components" catalog: search, collapsible category groups, furniture
 // sub-filters, per-item add/remove/drag, and a placed-items summary. Presentational
-// — all state and handlers come from PMWorkspace via props.
+// — all state and handlers come from PMWorkspace via props, apart from whether
+// the placed-items list is folded away, which is this panel's own affair.
+
+const PLACED_LIST_KEY = 'ens-workspace-placed-open';
 
 export function WorkspaceCatalogPanel({
   visibleCatalog, filteredCatalog, search, onSearch, openCats, onToggleCat,
@@ -38,6 +42,19 @@ export function WorkspaceCatalogPanel({
   catalogDragWasActiveRef: MutableRefObject<boolean>;
 }) {
   const { t } = useTranslation();
+  // Folded state survives a reload, the way the inspector's does - a designer
+  // who folded this away does not want it back on every page load.
+  const [placedOpen, setPlacedOpen] = useState(() => {
+    try { return window.localStorage.getItem(PLACED_LIST_KEY) !== 'closed'; }
+    catch { return true; }
+  });
+  const togglePlaced = useCallback(() => {
+    setPlacedOpen(open => {
+      const next = !open;
+      try { window.localStorage.setItem(PLACED_LIST_KEY, next ? 'open' : 'closed'); } catch { /* private mode */ }
+      return next;
+    });
+  }, []);
   return (
     <aside style={{width:240,borderRight:`1px solid ${C.hair}`,background:C.panel,display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
       <div style={{padding:'8px 14px',borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
@@ -146,10 +163,24 @@ export function WorkspaceCatalogPanel({
         })}
       </div>
 
-      {/* Placed items summary */}
+      {/* Placed items summary. Folds away: a full stand puts twenty-odd rows
+          here and pushes the catalogue itself off the bottom of the panel. */}
       {placedItems.length>0&&(
         <div style={{padding:'8px 14px',borderTop:`1px solid ${C.hair}`,background:C.bg,flexShrink:0}}>
-          <div style={{fontFamily:MONO,fontSize:9,color:C.muted,marginBottom:4}}>PLACED IN STAND</div>
+          <button
+            type="button"
+            onClick={togglePlaced}
+            aria-expanded={placedOpen}
+            title={placedOpen?'Hide the placed items':'Show the placed items'}
+            style={{width:'100%',display:'flex',alignItems:'center',gap:6,background:'none',border:'none',
+                    padding:0,marginBottom:placedOpen?4:0,cursor:'pointer',fontFamily:MONO,fontSize:9,
+                    color:C.muted,letterSpacing:'0.05em'}}>
+            <ChevronDown size={11} style={{transform:placedOpen?'rotate(0deg)':'rotate(-90deg)',
+                                           transition:'transform 130ms cubic-bezier(0.22, 1, 0.36, 1)',flexShrink:0}}/>
+            <span style={{flex:1,textAlign:'left'}}>PLACED IN STAND</span>
+            <span style={{color:C.ink,fontWeight:700}}>{placedItems.reduce((sum,p)=>sum+p.qty,0)}</span>
+          </button>
+          {placedOpen&&<div style={{maxHeight:186,overflowY:'auto'}}>
           {placedItems.map(p=>{
             const issues = placementIssueByItem.get(p.id) || [];
             return (
@@ -170,6 +201,7 @@ export function WorkspaceCatalogPanel({
               </button>
             </div>
           );})}
+          </div>}
         </div>
       )}
     </aside>

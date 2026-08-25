@@ -1,5 +1,5 @@
 import { ROOM_SIDE_OPTIONS, type BoothState, type DoorSide, type WorkspacePlacedItem, type WorkspaceRoom } from "./workspace-model";
-import { ITEM_WALL_CLEARANCE_M, snapNumber } from "@/lib/workspace-transform";
+import { ITEM_WALL_CLEARANCE_M, PLAN_MARGIN_M, snapNumber } from "@/lib/workspace-transform";
 
 // Pure 2D placement/collision geometry for the booth workspace, split out of
 // PMWorkspace.tsx. No React, no component state — just math on booth/item/room
@@ -9,11 +9,15 @@ export type PlacementIssue = { itemId: string; message: string };
 export type Rect2D = { x0: number; x1: number; z0: number; z1: number };
 
 export function itemPositionBounds(w: number, d: number, booth: BoothState) {
+  // The plan around the stand is placeable, not just the footprint - a screen
+  // or a totem facing the aisle belongs outside the walls, and stopping at the
+  // footprint meant it could not be drawn at all.
   const clearance = ITEM_WALL_CLEARANCE_M;
-  const minX = Math.min(booth.width / 2, w / 2 + clearance);
-  const maxX = Math.max(minX, booth.width - w / 2 - clearance);
-  const minZ = Math.min(booth.depth / 2, d / 2 + clearance);
-  const maxZ = Math.max(minZ, booth.depth - d / 2 - clearance);
+  const margin = PLAN_MARGIN_M;
+  const minX = Math.min(booth.width / 2, w / 2 + clearance - margin);
+  const maxX = Math.max(minX, booth.width - w / 2 - clearance + margin);
+  const minZ = Math.min(booth.depth / 2, d / 2 + clearance - margin);
+  const maxZ = Math.max(minZ, booth.depth - d / 2 - clearance + margin);
   return { minX, maxX, minZ, maxZ };
 }
 
@@ -165,7 +169,7 @@ export function placementIssuesFor(items: WorkspacePlacedItem[], rooms: Workspac
     }
     const bounds = itemPositionBounds(rotatedItemFootprint(a).width, rotatedItemFootprint(a).depth, booth);
     if (a.x < bounds.minX || a.x > bounds.maxX || a.z < bounds.minZ || a.z > bounds.maxZ) {
-      addIssue(a.id, 'Outside the usable booth floor');
+      addIssue(a.id, 'Outside the usable plan area');
     }
     for (const supportX of frontSupports) {
       const supportLane: Rect2D = {

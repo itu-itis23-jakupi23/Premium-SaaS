@@ -21,6 +21,8 @@ import { test, expect } from "@playwright/test";
 
 const BOOTH_W = 6;
 const BOOTH_D = 3;
+/** Placeable plan around the stand - mirrors PLAN_MARGIN_M. */
+const PLAN_MARGIN = 3;
 const RENDERER = `/booth-render.html?w=${BOOTH_W}&d=${BOOTH_D}&h=2.2&name=TEST`;
 
 /** Panel centres along the back and front walls, in booth coordinates. */
@@ -69,6 +71,22 @@ async function dropAt(page: import("@playwright/test").Page, item: DragItem, xPc
       }),
     { item, xPct, yPct },
   ) as Promise<DropResult | null>;
+}
+
+/** Sends one item to the renderer and reads back where it actually ended up. */
+async function placeAndRead(
+  page: import("@playwright/test").Page,
+  item: Record<string, unknown>,
+): Promise<{ x: number; z: number } | null> {
+  return page.evaluate(async (placed) => {
+    window.postMessage({ type: "boothUpdate", placedItems: [placed] }, "*");
+    await new Promise((done) => setTimeout(done, 700));
+    const state = (window as typeof window & {
+      __pendingGlbState?: { placedItems?: Array<{ id?: string; x?: number; z?: number }> };
+    }).__pendingGlbState;
+    const found = state?.placedItems?.find((entry) => entry.id === placed.id);
+    return found ? { x: Number(found.x), z: Number(found.z) } : null;
+  }, item);
 }
 
 /** Screen points spread across the visible floor. */
@@ -190,38 +208,43 @@ test.describe("Booth mounting rules", () => {
     expect(best!.z, "distance from the back wall").toBeCloseTo(targetZ, 2);
   });
 
-  test("a rotated item still reaches the edge of the carpet", async ({ page }) => {
-    // The render clamp bounds an item against its footprint, and a turned item
-    // has a different one. Using the unrotated width held a 1.0 x 0.55 counter
-    // 0.225 m off the wall whenever it was rotated 90 degrees - and the SVG
-    // path writes that correction back, so it could never be pushed to the
-    // edge no matter how many times you dragged it.
-    const reported = await page.evaluate(
-      () =>
-        new Promise<number | null>((resolve) => {
-          const item = {
-            id: "edge-probe", catalogId: "ens-208", name: "BANKO - COUNTER",
-            kind: "furniture", shape: "counter",
-            w: 1.0, d: 0.55, h: 1.0, x: 5.9, z: 1.5, y: 0, rotationY: 90,
-          };
-          const onMessage = (event: MessageEvent) => {
-            const data = event.data as Record<string, unknown> | null;
-            if (!data || data.type !== "workspaceItemMoved" || data.id !== "edge-probe") return;
-            window.removeEventListener("message", onMessage);
-            resolve(Number(data.x));
-          };
-          window.addEventListener("message", onMessage);
-          window.postMessage({ type: "boothUpdate", placedItems: [item] }, "*");
-          setTimeout(() => {
-            window.removeEventListener("message", onMessage);
-            resolve(null);
-          }, 3000);
-        }),
-    );
+  test("a rotated item is bounded by its rotated footprint", async ({ page }) => {
+    // The bound clamps against the item's footprint, and a turned item has a
+    // different one. Using the unrotated width held a 1.0 x 0.55 counter 0.225 m
+    // short of where it belonged - and the SVG path writes that correction back,
+    // so the margin was re-applied every frame and the item could never be
+    // pushed out to the limit however many times it was dragged.
+    //
+    // The limit is the edge of the placeable plan now rather than the booth
+    // wall, since the plan around the stand is placeable too - but it is the
+    // same clamp, and the same 0.225 m is at stake.
+    const landed = await placeAndRead(page, {
+      id: "edge-probe", catalogId: "ens-208", name: "BANKO - COUNTER",
+      kind: "furniture", shape: "counter",
+      w: 1.0, d: 0.55, h: 1.0, x: 20, z: 1.5, y: 0, rotationY: 90,
+    });
 
-    expect(reported, "the renderer did not report a corrected position").not.toBeNull();
-    // Flush against the right wall is half the *rotated* extent from it.
-    expect(reported!).toBeCloseTo(BOOTH_W - 0.55 / 2, 2);
+    expect(landed, "the renderer did not report a position").not.toBeNull();
+    // Rotated 90 degrees the counter is 0.55 across x, so half of that from the
+    // plan edge. Judged on the raw width it would stop 0.225 m earlier.
+    expect(landed!.x).toBeCloseTo(BOOTH_W + PLAN_MARGIN - 0.55 / 2, 2);
+  });
+
+  test("an item can stand on the plan outside the booth", async ({ page }) => {
+    // Not everything an exhibitor brings stands inside the walls: a screen on a
+    // bracket, a totem, a counter serving the aisle. Placement used to stop dead
+    // at the footprint, so any of those was dragged back through the wall and
+    // could not be drawn at all.
+    const landed = await placeAndRead(page, {
+      id: "aisle-screen", catalogId: "ens-208", name: "SCREEN",
+      kind: "furniture", shape: "counter",
+      w: 1.0, d: 0.55, h: 1.6, x: -2, z: 1.5, y: 0, rotationY: 0,
+    });
+
+    expect(landed, "the renderer did not report a position").not.toBeNull();
+    // Two metres clear of the left edge, and it stays there. The old bounds
+    // pulled it to half its own width *inside* the wall, at x = 0.5.
+    expect(landed!.x, "the item was dragged back inside the booth").toBeLessThan(-1.5);
   });
 
   test("a room wall is drawn in front of what stands behind it", async ({ page }) => {

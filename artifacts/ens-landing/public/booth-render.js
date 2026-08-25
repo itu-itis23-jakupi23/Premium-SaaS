@@ -1559,10 +1559,12 @@ function clampPlacedItemToBooth(x, z, w, d) {
   const wallClearance = 0;
   const halfW = Math.max(0.06, Number(w) || 0.3) / 2;
   const halfD = Math.max(0.06, Number(d) || 0.3) / 2;
-  const minX = Math.min(0, -BW / 2 + halfW + wallClearance);
-  const maxX = Math.max(minX, BW / 2 - halfW - wallClearance);
-  const minZ = Math.min(BD / 2, halfD + wallClearance);
-  const maxZ = Math.max(minZ, BD - halfD - wallClearance);
+  // The plan around the stand is placeable too - see PLAN_MARGIN_M. The bounds
+  // still exist so nothing can be dragged off the edge of the drawing.
+  const minX = Math.min(0, -BW / 2 + halfW + wallClearance - PLAN_MARGIN_M);
+  const maxX = Math.max(minX, BW / 2 - halfW - wallClearance + PLAN_MARGIN_M);
+  const minZ = Math.min(BD / 2, halfD + wallClearance - PLAN_MARGIN_M);
+  const maxZ = Math.max(minZ, BD - halfD - wallClearance + PLAN_MARGIN_M);
   return {
     x: Math.max(minX, Math.min(maxX, Number(x) || 0)),
     z: Math.max(minZ, Math.min(maxZ, Number(z) || 0)),
@@ -1663,6 +1665,8 @@ function hasStructuralCollision(x, z, w, d) {
  */
 const WALL_MOUNT_GRAB_M = 0.6;   // how near a wall a mounted item must be dropped
 const WALL_FLUSH_RANGE_M = 0.35; // how near a wall ordinary furniture snaps flush
+// Placeable plan around the stand. Mirrors PLAN_MARGIN_M in workspace-transform.ts.
+const PLAN_MARGIN_M = 3;
 
 function boothWallRuns() {
   // All four sides, always. An open side still has its uprights and its top
@@ -1759,7 +1763,8 @@ function applyWallMountConstraint(item, x, z) {
   let snappedX = x;
   let snappedZ = z;
   let snapped = false;
-  for (const run of boothWallRuns()) {
+  const insideBooth = Math.abs(x) <= BW / 2 && z >= 0 && z <= BD;
+  for (const run of insideBooth ? boothWallRuns() : []) {
     if (run.axis === 'x') {
       const target = run.fixed + run.inZ * (footprint.d / 2);
       if (Math.abs(z - target) <= WALL_FLUSH_RANGE_M) { snappedZ = target; snapped = true; }
@@ -2087,7 +2092,8 @@ function evaluateCatalogPlacement(data) {
   const rawX = Number(hit[0]) || 0;
   const rawZ = Number(hit[2]) || 0;
   const floorTolerance = 0.08;
-  const overFloor = rawX >= -BW / 2 - floorTolerance && rawX <= BW / 2 + floorTolerance && rawZ >= -floorTolerance && rawZ <= BD + floorTolerance;
+  const reach = PLAN_MARGIN_M + floorTolerance;
+  const overFloor = rawX >= -BW / 2 - reach && rawX <= BW / 2 + reach && rawZ >= -reach && rawZ <= BD + reach;
   const footprint = rotatedFootprint(w, d, rotationY);
 
   // A shelf or a light dropped from the catalogue mounts straight away, so the

@@ -59,6 +59,20 @@ export const ROOM_CORNER_SNAP_M = 0.32;
  */
 export const ITEM_WALL_CLEARANCE_M = 0;
 
+/**
+ * Usable plan around the stand, in metres.
+ *
+ * Not everything an exhibitor brings stands inside the walls: a screen on a
+ * bracket, a totem, a counter serving the aisle. Placement used to stop dead at
+ * the footprint, so those could not be drawn at all. The plan around the stand
+ * is placeable too, out to this margin - far enough to lay out an aisle-facing
+ * frontage, near enough that nothing can be lost off the edge of the drawing.
+ *
+ * The renderer holds the same number; `scripts/check-transform-constants.mjs`
+ * keeps the two honest.
+ */
+export const PLAN_MARGIN_M = 3;
+
 /** Offset applied to a duplicated item so it does not sit exactly on its source. */
 export const DUPLICATE_OFFSET_M = 0.35;
 
