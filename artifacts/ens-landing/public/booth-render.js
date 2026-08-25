@@ -44,9 +44,9 @@ let PANELS_SIDE = Math.max(1, Math.round(BD));
  * the levels can be compared side by side: soft | normal | strong.
  */
 const LEGIBILITY_LEVELS = {
-  soft:   { seam: 'rgba(96,102,110,0.20)', seamW: 0.34, ground: 0.30 },
-  normal: { seam: 'rgba(88,95,104,0.32)',  seamW: 0.46, ground: 0.42 },
-  strong: { seam: 'rgba(72,79,88,0.46)',   seamW: 0.62, ground: 0.55 },
+  soft:   { seam: 'rgba(96,102,110,0.20)', seamW: 0.34, ground: 0.38 },
+  normal: { seam: 'rgba(88,95,104,0.32)',  seamW: 0.46, ground: 0.54 },
+  strong: { seam: 'rgba(72,79,88,0.46)',   seamW: 0.62, ground: 0.68 },
 };
 const LEGIBILITY = LEGIBILITY_LEVELS[_P.get('legibility')] || LEGIBILITY_LEVELS.normal;
 
@@ -2509,9 +2509,33 @@ function buildFloor() {
     const fp = document.createElementNS(SVG_NS, 'polygon');
     fp.setAttribute('points', path); fp.setAttribute('fill', 'url(#floor)');
     g.appendChild(fp);
-    const tilePoly = document.createElementNS(SVG_NS, 'polygon');
-    tilePoly.setAttribute('points', path); tilePoly.setAttribute('fill', 'url(#tile)');
-    tilePoly.setAttribute('opacity', '0.5'); g.appendChild(tilePoly);
+    // Metre lines on the ground, in world space so they converge with the
+    // floor. The old #tile pattern was drawn in screen space: it stayed a flat
+    // rectangular mesh no matter where the camera was, which read as wallpaper
+    // behind the stand rather than as a plan underneath it. They fade with
+    // distance so the plot around the stand is the part that reads.
+    const planReach = 6;
+    const x0 = -BW / 2 - planReach, x1 = BW / 2 + planReach;
+    const z0 = -planReach, z1 = BD + planReach;
+    const planLine = (a, b, distance) => {
+      const pa = project(a), pb = project(b);
+      if (!pa || !pb) return;
+      const fade = Math.max(0, 1 - distance / planReach);
+      const ln = document.createElementNS(SVG_NS, 'line');
+      ln.setAttribute('x1', pa.x.toFixed(2)); ln.setAttribute('y1', pa.y.toFixed(2));
+      ln.setAttribute('x2', pb.x.toFixed(2)); ln.setAttribute('y2', pb.y.toFixed(2));
+      ln.setAttribute('stroke', 'rgba(34,40,50,' + (0.08 + 0.22 * fade).toFixed(3) + ')');
+      ln.setAttribute('stroke-width', (0.8 + 0.5 * fade).toFixed(2));
+      g.appendChild(ln);
+    };
+    for (let x = Math.ceil(x0); x <= x1; x += 1) {
+      planLine([x, 0, z0], [x, 0, z1], Math.max(0, Math.abs(x) - BW / 2));
+    }
+    for (let z = Math.ceil(z0); z <= z1; z += 1) {
+      const outside = z < 0 ? -z : Math.max(0, z - BD);
+      planLine([x0, 0, z], [x1, 0, z], outside);
+    }
+
   }
   // Contact shadow under the stand footprint. Without it a near-white stand on
   // a near-white floor has no visual anchor and reads as floating.
@@ -2530,6 +2554,27 @@ function buildFloor() {
     sp.setAttribute('opacity', String(LEGIBILITY.ground));
     sp.setAttribute('pointer-events', 'none');
     g.appendChild(sp);
+  }
+
+  // The plot the stand occupies. This is the line that separates "the plan"
+  // from "the booth" - set out from the stand rather than under it, both
+  // because the walls stand on the footprint and would cover it, and because
+  // an exhibitor's plot really is the ground allotted around the structure.
+  // Drawn after the shadow: the shadow's blur is wide enough to erase it.
+  const plotPad = 0.34;
+  const plotVerts = [
+    [-BW / 2 - plotPad, 0.002, -plotPad], [BW / 2 + plotPad, 0.002, -plotPad],
+    [BW / 2 + plotPad, 0.002, BD + plotPad], [-BW / 2 - plotPad, 0.002, BD + plotPad],
+  ].map(project);
+  if (plotVerts.every(Boolean)) {
+    const plot = document.createElementNS(SVG_NS, 'polygon');
+    plot.setAttribute('points', plotVerts.map(pt => pt.x.toFixed(2) + ',' + pt.y.toFixed(2)).join(' '));
+    plot.setAttribute('fill', 'none');
+    plot.setAttribute('stroke', 'rgba(28,34,44,0.55)');
+    plot.setAttribute('stroke-width', '1.8');
+    plot.setAttribute('stroke-dasharray', '11 8');
+    plot.setAttribute('pointer-events', 'none');
+    g.appendChild(plot);
   }
 
   const carpetVerts = [

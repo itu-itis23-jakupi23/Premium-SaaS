@@ -286,6 +286,36 @@ test.describe("Booth mounting rules", () => {
     ).toBeGreaterThan(order!.item);
   });
 
+  test("the plot boundary survives the contact shadow", async ({ page }) => {
+    // The stand is near-white on a near-white ground, so what separates "the
+    // plan" from "the booth" is the dashed plot line set out around it. It is
+    // drawn into the same group as the contact shadow, whose Gaussian blur is
+    // wide enough to erase a hairline completely - which it did, silently,
+    // until the line was moved after it. Order is the whole fix, so order is
+    // what this checks.
+    const layout = await page.evaluate(() => {
+      const floor = document.getElementById("floorGroup");
+      if (!floor) return null;
+      const children = [...floor.children];
+      return {
+        shadow: children.findIndex((el) => (el.getAttribute("filter") || "").includes("ground-shadow")),
+        plot: children.findIndex((el) => el.hasAttribute("stroke-dasharray")),
+        gridLines: children.filter((el) => el.tagName.toLowerCase() === "line").length,
+      };
+    });
+
+    expect(layout, "the floor group was never built").not.toBeNull();
+    expect(layout!.shadow, "no contact shadow under the stand").toBeGreaterThan(-1);
+    expect(layout!.plot, "no plot boundary drawn around the stand").toBeGreaterThan(-1);
+    expect(
+      layout!.plot,
+      "the plot boundary is drawn before the shadow, which blurs it away",
+    ).toBeGreaterThan(layout!.shadow);
+    // Metre lines on the ground, in world space. A screen-space pattern would
+    // not need any.
+    expect(layout!.gridLines, "no metre grid on the ground plan").toBeGreaterThan(8);
+  });
+
   test("an overlap warns but does not refuse the placement", async ({ page }) => {
     // Uprights stand at every panel joint. Refusing a drop that clips one is
     // what made corners unreachable; a designer putting a counter tight against
