@@ -576,8 +576,8 @@ function buildRooms() {
     const skipFront = z1 >= BD - shellTol;
     const label = room.name || 'Room';
     const meta = `${w.toFixed(1)} x ${d.toFixed(1)} x ${h.toFixed(1)} m`;
-    const roomCommon = { roomId: room.id, softEdge: true, renderOrder: 0.24005 };
-    const wallBoxCommon = { roomId: room.id, renderOrder: 0.24005 };
+    const roomCommon = { roomId: room.id, softEdge: true, renderOrder: 0.00005 };
+    const wallBoxCommon = { roomId: room.id, renderOrder: 0.00005 };
     const wallFinish = ['frosted', 'glass', 'dark'].includes(room.wallFinish) ? room.wallFinish : 'white';
     const wallFill = wallFinish === 'glass'
       ? 'rgba(210,232,245,0.42)'
@@ -801,7 +801,7 @@ function buildRooms() {
           // Above the wall slab it sits on. Within the tie window this is
           // settled by depth and insertion order rather than by the layer
           // itself, since the upright stands proud of the wall on both faces.
-          renderOrder: 0.24008,
+          renderOrder: 0.00008,
         };
         // Stand the upright proud of the wall on both faces. Drawn flush it was
         // coplanar with the slab, and the painter's algorithm put the wall in
@@ -881,7 +881,7 @@ function buildRooms() {
         partLabel: label + ' wall image',
         partMeta: `Uploaded room wall graphic · ${roomDesignWall} wall · ${roomDesignFit}`,
         roomId: room.id,
-        renderOrder: 0.24006,
+        renderOrder: 0.00006,
       });
     }
     addRoomProfilesAndDoor(room, { x0, x1, z0, z1, h, doorSide, doorCenterX, doorCenterZ, doorW, doorH, label, meta, roomCommon, wallInsetFill, skipLeft, skipRight, skipBack, skipFront });
@@ -899,7 +899,7 @@ function addRoomProfilesAndDoor(room, geom) {
     ...roomCommon,
     isAlu: true,
     softEdge: true,
-    renderOrder: 0.24007,
+    renderOrder: 0.00007,
   };
   const doorOpen = room.doorOpen === true;
   const doorSwing = ['right-in', 'left-out', 'right-out'].includes(room.doorSwing) ? room.doorSwing : 'left-in';
@@ -951,7 +951,7 @@ function addRoomProfilesAndDoor(room, geom) {
       partMeta: 'Room wall infill panel with reveal',
       roomId: room.id,
       softEdge: true,
-      renderOrder: 0.24006,
+      renderOrder: 0.00006,
     });
   }
 
@@ -970,7 +970,7 @@ function addRoomProfilesAndDoor(room, geom) {
       partMeta: 'Room wall infill panel with reveal',
       roomId: room.id,
       softEdge: true,
-      renderOrder: 0.24006,
+      renderOrder: 0.00006,
     });
   }
 
@@ -1174,7 +1174,7 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
   const rotation = ((Number(item.rotationY ?? item.rotation) || 0) % 360) * Math.PI / 180;
   const isCeilingFixture = shape === 'light' || shape === 'rail_light';
   if (!isCeilingFixture) y = Math.max(y, 0.035);
-  const common = { partLabel, partMeta, isFurniture: true, itemId: item.id, rotRad: rotation, originX: x, originZ: z, renderOrder: 0.24 };
+  const common = { partLabel, partMeta, isFurniture: true, itemId: item.id, rotRad: rotation, originX: x, originZ: z, renderOrder: 0.00003 };
   const topColor = color || '#e8e2d8';
   const legColor = '#50555f';
   if (!isCeilingFixture) pushFurnitureShadow(x, z, w, d, common);
@@ -2538,8 +2538,8 @@ function buildFloor() {
       const ln = document.createElementNS(SVG_NS, 'line');
       ln.setAttribute('x1', pa.x.toFixed(2)); ln.setAttribute('y1', pa.y.toFixed(2));
       ln.setAttribute('x2', pb.x.toFixed(2)); ln.setAttribute('y2', pb.y.toFixed(2));
-      ln.setAttribute('stroke', 'rgba(34,40,50,' + (0.08 + 0.22 * fade).toFixed(3) + ')');
-      ln.setAttribute('stroke-width', (0.8 + 0.5 * fade).toFixed(2));
+      ln.setAttribute('stroke', 'rgba(38,45,56,' + (0.045 + 0.105 * fade).toFixed(3) + ')');
+      ln.setAttribute('stroke-width', (0.7 + 0.25 * fade).toFixed(2));
       g.appendChild(ln);
     };
     for (let x = Math.ceil(x0); x <= x1; x += 1) {
