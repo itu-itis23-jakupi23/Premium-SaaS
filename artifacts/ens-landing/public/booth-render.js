@@ -1179,6 +1179,27 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
   const rotation = ((Number(item.rotationY ?? item.rotation) || 0) % 360) * Math.PI / 180;
   const isCeilingFixture = shape === 'light' || shape === 'rail_light';
   if (!isCeilingFixture) y = Math.max(y, 0.035);
+  /**
+   * Every part of an item shares one layer, and what decides the order *within*
+   * an item is the sequence these are pushed in - nothing else.
+   *
+   * That is worth stating because the code used to claim otherwise. Twenty-one
+   * call sites below carried explicit renderOrder values - a table top at 1, its
+   * post at 2, its base at 3 - and every one of them was dead: `...common` is
+   * spread last in those literals, so this renderOrder overwrote them all. The
+   * declarations had never once taken effect, and the furniture looked right
+   * only because the push order happens to agree with the intent.
+   *
+   * Making them live is not the fix. The booth shell carries no renderOrder at
+   * all, so it sits at 0, and the fascia occupies 0.42-0.96. Switching the
+   * spread order was tried: the table top jumped to 1 and drew straight through
+   * the fascia beam, and a showcase drew over the wall behind it. Those values
+   * were written against a layer scheme that does not exist.
+   *
+   * So: one layer for the whole item, insertion order within it. To put a part
+   * in front of another part, push it later - and if the two are coplanar, that
+   * is the only thing that will decide it.
+   */
   const common = { partLabel, partMeta, isFurniture: true, itemId: item.id, rotRad: rotation, originX: x, originZ: z, renderOrder: 0.00003 };
   const topColor = color || '#e8e2d8';
   if (!isCeilingFixture) pushFurnitureShadow(x, z, w, d, common);
@@ -1193,7 +1214,6 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
       partLabel,
       partMeta: item.modelUrl || partMeta,
       softEdge: true,
-      renderOrder: 0.9,
       skipSelectionHighlight: true,
       ...common,
     });
@@ -1207,7 +1227,7 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
       fill: topColor, partId: id + '-asset-proxy', partLabel: partLabel + ' · GLB proxy', partMeta: (item.modelUrl || partMeta), softEdge: true, ...common,
     });
     pushBox([x - w*0.18, y + h, z - d*0.18], [x + w*0.18, y + h + Math.min(0.08, h * 0.12), z + d*0.18], {
-      fill: '#ffffff', partId: id + '-asset-highlight', softEdge: true, renderOrder: 0.5, ...common,
+      fill: '#ffffff', partId: id + '-asset-highlight', softEdge: true, ...common,
     });
     return;
   }
@@ -1232,13 +1252,13 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
     const topThickness = 0.035;
     const postHalf = 0.022;
     pushPrism(x, z, y + h - topThickness, y + h, radius, 56, {
-      fill: topColor, partId: id + '-table-top', softEdge: true, noFacetShade: true, noSides: true, renderOrder: 1, ...common,
+      fill: topColor, partId: id + '-table-top', softEdge: true, noFacetShade: true, noSides: true, ...common,
     });
     pushBox([x - postHalf, y + 0.03, z - postHalf], [x + postHalf, y + h - topThickness, z + postHalf], {
-      fill: '#464b54', partId: id + '-table-post', softEdge: true, renderOrder: 2, ...common,
+      fill: '#464b54', partId: id + '-table-post', softEdge: true, ...common,
     });
     pushPrism(x, z, y, y + 0.018, Math.min(radius * 0.34, 0.14), 40, {
-      fill: '#444952', partId: id + '-table-base', softEdge: true, noFacetShade: true, noSides: true, renderOrder: 3, ...common,
+      fill: '#444952', partId: id + '-table-base', softEdge: true, noFacetShade: true, noSides: true, ...common,
     });
     return;
   }
@@ -1291,7 +1311,7 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
         fill: cushion, partId: id + '-back-panel', softEdge: true, ...common,
       });
       pushBox([x - w*0.34, y + seatH + 0.14, z + d*0.285], [x + w*0.34, y + h - 0.05, z + d*0.30], {
-        fill: '#ffffff', partId: id + '-back-highlight', softEdge: true, renderOrder: 0.5, ...common,
+        fill: '#ffffff', partId: id + '-back-highlight', softEdge: true, ...common,
       });
       [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz],i)=>{
         const lx = x + sx*(w*0.34);
@@ -1314,23 +1334,23 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
       fill: bodyColor, partId: id + '-counter-body', softEdge: true, ...common,
     });
     pushBox([x - w/2 + 0.075, y + 0.16, z - d/2 - 0.014], [x + w/2 - 0.075, y + h - topH - 0.07, z - d/2 + 0.018], {
-      fill: insetColor, partId: id + '-counter-front-inset', softEdge: true, renderOrder: 0.5, ...common,
+      fill: insetColor, partId: id + '-counter-front-inset', softEdge: true, ...common,
     });
     pushBox([x - w/2 + 0.11, y + 0.2, z - d/2 - 0.021], [x + w/2 - 0.11, y + 0.225, z - d/2 + 0.004], {
-      fill: shadowColor, partId: id + '-counter-inset-shadow-top', softEdge: true, renderOrder: 0.58, ...common,
+      fill: shadowColor, partId: id + '-counter-inset-shadow-top', softEdge: true, ...common,
     });
     pushBox([x - w/2 - 0.015, y + h - topH, z - d/2 - 0.04], [x + w/2 + 0.015, y + h + 0.025, z + d/2 + 0.035], {
-      fill: '#ffffff', partId: id + '-counter-top-slab', softEdge: true, renderOrder: 0.62, ...common,
+      fill: '#ffffff', partId: id + '-counter-top-slab', softEdge: true, ...common,
     });
     pushBox([x - w/2 + 0.02, y + h - topH - 0.025, z - d/2 - 0.018], [x + w/2 - 0.02, y + h - topH, z + d/2 + 0.012], {
-      fill: '#d7cab8', partId: id + '-counter-top-underlip', softEdge: true, renderOrder: 0.55, ...common,
+      fill: '#d7cab8', partId: id + '-counter-top-underlip', softEdge: true, ...common,
     });
     pushBox([x - w/2 + 0.07, y, z - d/2 + 0.04], [x + w/2 - 0.07, y + plinthH, z + d/2 - 0.04], {
       fill: '#4b5058', partId: id + '-counter-plinth', softEdge: true, ...common,
     });
     [-1, 1].forEach((sx, i) => {
       pushBox([x + sx * (w/2 - 0.035) - 0.006, y + 0.11, z - d/2 - 0.016], [x + sx * (w/2 - 0.035) + 0.006, y + h - topH - 0.08, z - d/2 + 0.01], {
-        fill: 'rgba(130,122,112,0.26)', partId: id + '-counter-front-seam-' + i, softEdge: true, renderOrder: 0.57, ...common,
+        fill: 'rgba(130,122,112,0.26)', partId: id + '-counter-front-seam-' + i, softEdge: true, ...common,
       });
     });
     return;
@@ -1376,30 +1396,30 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
       });
     }
     pushBox([x - w/2 + 0.018, y + 0.055, z - d/2 - 0.012], [x + w/2 - 0.018, y + 0.085, z - d/2 + 0.015], {
-      fill: '#bfc8d1', partId: id + '-case-front-bottom-rail', softEdge: true, renderOrder: 0.52, ...common,
+      fill: '#bfc8d1', partId: id + '-case-front-bottom-rail', softEdge: true, ...common,
     });
     pushBox([x - w/2 + 0.018, y + h - 0.085, z - d/2 - 0.012], [x + w/2 - 0.018, y + h - 0.055, z - d/2 + 0.015], {
-      fill: '#eef2f5', partId: id + '-case-front-top-rail', softEdge: true, renderOrder: 0.52, ...common,
+      fill: '#eef2f5', partId: id + '-case-front-top-rail', softEdge: true, ...common,
     });
     if (shape === 'cabinet') {
       pushBox([x - w/2 + 0.04, y + 0.08, z - d/2 - 0.012], [x, y + h - 0.08, z - d/2 + 0.018], {
-        fill: 'rgba(255,255,255,0.58)', partId: id + '-cabinet-left-door', softEdge: true, renderOrder: 0.5, ...common,
+        fill: 'rgba(255,255,255,0.58)', partId: id + '-cabinet-left-door', softEdge: true, ...common,
       });
       pushBox([x, y + 0.08, z - d/2 - 0.012], [x + w/2 - 0.04, y + h - 0.08, z - d/2 + 0.018], {
-        fill: 'rgba(255,255,255,0.52)', partId: id + '-cabinet-right-door', softEdge: true, renderOrder: 0.5, ...common,
+        fill: 'rgba(255,255,255,0.52)', partId: id + '-cabinet-right-door', softEdge: true, ...common,
       });
       pushBox([x - 0.035, y + h*0.48, z - d/2 - 0.025], [x + 0.035, y + h*0.56, z - d/2 + 0.005], {
-        fill: '#b9c1cb', partId: id + '-cabinet-handle', softEdge: true, renderOrder: 0.65, ...common,
+        fill: '#b9c1cb', partId: id + '-cabinet-handle', softEdge: true, ...common,
       });
       pushBox([x - 0.006, y + 0.11, z - d/2 - 0.026], [x + 0.006, y + h - 0.11, z - d/2 + 0.006], {
-        fill: 'rgba(125,132,142,0.26)', partId: id + '-cabinet-door-gap', softEdge: true, renderOrder: 0.66, ...common,
+        fill: 'rgba(125,132,142,0.26)', partId: id + '-cabinet-door-gap', softEdge: true, ...common,
       });
     } else {
       pushBox([x - w/2 + 0.035, y + 0.08, z - d/2 - 0.012], [x + w/2 - 0.035, y + h - 0.08, z - d/2 + 0.018], {
-        fill: glass, partId: id + '-shelf-glass-front', softEdge: true, renderOrder: 0.55, ...common,
+        fill: glass, partId: id + '-shelf-glass-front', softEdge: true, ...common,
       });
       pushBox([x - w/2 + 0.055, y + 0.13, z - d/2 - 0.02], [x + w/2 - 0.055, y + h - 0.13, z - d/2 - 0.006], {
-        fill: 'rgba(255,255,255,0.28)', partId: id + '-shelf-glass-reflection', softEdge: true, renderOrder: 0.66, ...common,
+        fill: 'rgba(255,255,255,0.28)', partId: id + '-shelf-glass-reflection', softEdge: true, ...common,
       });
     }
     return;
@@ -1423,7 +1443,7 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
       });
     });
     pushBox([x - w/2 + 0.03, y + 0.07, z - d/2 - 0.008], [x + w/2 - 0.03, y + h - 0.07, z - d/2 + 0.016], {
-      fill: glassFill, partId: id + '-display-glass-front', softEdge: true, renderOrder: 0.55, ...common,
+      fill: glassFill, partId: id + '-display-glass-front', softEdge: true, ...common,
     });
     if (isShowcase) {
       const shelfCount = h > 1.2 ? 3 : 2;
@@ -1435,7 +1455,7 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
       }
       if (code === '205' || code === '206' || String(item.name || '').toLowerCase().includes('lighted')) {
         pushBox([x - w/2 + 0.08, y + h - 0.11, z - d/2 + 0.02], [x + w/2 - 0.08, y + h - 0.08, z + d/2 - 0.02], {
-          fill: '#fff3b0', partId: id + '-display-light-strip', softEdge: true, renderOrder: 0.7, ...common,
+          fill: '#fff3b0', partId: id + '-display-light-strip', softEdge: true, ...common,
         });
       }
     }
