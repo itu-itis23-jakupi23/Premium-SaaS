@@ -2503,12 +2503,31 @@ buildBoothGeometry();
 // ── Floor ────────────────────────────────────────────────────────────────────
 function buildFloor() {
   const g = document.getElementById('floorGroup');
-  const floorVerts = [[-22,0,-10],[22,0,-10],[22,0,22],[-22,0,22]].map(project);
-  if (floorVerts.every(Boolean)) {
+  // The ground quad has to fall inside the projection to be drawn at all, and
+  // it was fixed at 44 x 32 m. Its far corners sit outside the frustum in the
+  // default three-quarter view, so `every(Boolean)` was false and the whole
+  // block was skipped - the floor was never drawn there at all, and what reads
+  // as ground is the background gradient showing through. The largest extent
+  // that actually projects is used instead: measured at 8 m in three-quarter,
+  // 12 m from the front and side, more from overhead.
+  let floorVerts = null;
+  for (const reach of [20, 16, 12, 10, 8, 6]) {
+    const verts = [
+      [-reach, 0, -reach], [reach, 0, -reach],
+      [reach, 0, BD + reach], [-reach, 0, BD + reach],
+    ].map(project);
+    if (verts.every(Boolean)) { floorVerts = verts; break; }
+  }
+  if (floorVerts) {
     const path = floorVerts.map(p=>`${p.x},${p.y}`).join(' ');
     const fp = document.createElementNS(SVG_NS, 'polygon');
     fp.setAttribute('points', path); fp.setAttribute('fill', 'url(#floor)');
     g.appendChild(fp);
+  }
+
+  // Drawn outside that block on purpose: each line clips itself, so the plan
+  // survives even when the ground quad cannot be drawn.
+  {
     // Metre lines on the ground, in world space so they converge with the
     // floor. The old #tile pattern was drawn in screen space: it stayed a flat
     // rectangular mesh no matter where the camera was, which read as wallpaper
@@ -2596,20 +2615,6 @@ function buildFloor() {
     carpet.setAttribute('data-meta', `${BW.toFixed(1)} × ${BD.toFixed(1)} m`);
     g.appendChild(carpet);
   }
-  for (let i = -20; i <= 22; i += 2) {
-    const a=project([i,0,-10]), b=project([i,0,22]);
-    if (a&&b) { const ln=document.createElementNS(SVG_NS,'line');
-      ln.setAttribute('x1',a.x); ln.setAttribute('y1',a.y);
-      ln.setAttribute('x2',b.x); ln.setAttribute('y2',b.y);
-      ln.setAttribute('stroke','rgba(20,22,26,0.06)'); ln.setAttribute('stroke-width','0.7');
-      g.appendChild(ln); }
-    const c=project([-22,0,i]), d=project([22,0,i]);
-    if (c&&d) { const ln=document.createElementNS(SVG_NS,'line');
-      ln.setAttribute('x1',c.x); ln.setAttribute('y1',c.y);
-      ln.setAttribute('x2',d.x); ln.setAttribute('y2',d.y);
-      ln.setAttribute('stroke','rgba(20,22,26,0.06)'); ln.setAttribute('stroke-width','0.7');
-      g.appendChild(ln); }
-  }
   const shCenter = project([0, 0, BD * 0.35]);
   if (shCenter) {
     const sh = document.createElementNS(SVG_NS, 'ellipse');
@@ -2618,7 +2623,79 @@ function buildFloor() {
     sh.setAttribute('fill', 'url(#shadow)'); sh.setAttribute('opacity', '0.7');
     g.appendChild(sh);
   }
+
+  buildPlanDimensions(g, plotPad);
 }
+
+/**
+ * Drafting dimensions on the ground, faded in as the camera comes overhead.
+ *
+ * The top view was only a camera angle: same lighting, same shading, same
+ * everything, just seen from above - so switching to it barely registered as a
+ * change of mode. Dimensions are what makes a plan a plan, and bringing them in
+ * on the way up means the switch reads as entering a drawing rather than as
+ * orbiting the camera. They fade out again on the way back to a 3D view, where
+ * they would only be clutter across the stand.
+ */
+function buildPlanDimensions(g, plotPad) {
+  const planMix = Math.max(0, Math.min(1, (camState.elevation - Math.PI * 0.30) / (Math.PI * 0.15)));
+  if (planMix < 0.02) return;
+
+  const off = plotPad + 0.62;
+  const tick = 0.20;
+  const stroke = 'rgba(26,32,42,' + (0.66 * planMix).toFixed(3) + ')';
+  const ink = 'rgba(22,28,38,' + (0.9 * planMix).toFixed(3) + ')';
+
+  const line = (a, b, width) => {
+    const pa = project(a), pb = project(b);
+    if (!pa || !pb) return;
+    const el = document.createElementNS(SVG_NS, 'line');
+    el.setAttribute('x1', pa.x.toFixed(2)); el.setAttribute('y1', pa.y.toFixed(2));
+    el.setAttribute('x2', pb.x.toFixed(2)); el.setAttribute('y2', pb.y.toFixed(2));
+    el.setAttribute('stroke', stroke);
+    el.setAttribute('stroke-width', String(width));
+    el.setAttribute('pointer-events', 'none');
+    g.appendChild(el);
+  };
+
+  const label = (at, text) => {
+    const pt = project(at);
+    if (!pt) return;
+    const el = document.createElementNS(SVG_NS, 'text');
+    el.setAttribute('x', pt.x.toFixed(2));
+    el.setAttribute('y', pt.y.toFixed(2));
+    el.setAttribute('fill', ink);
+    el.setAttribute('font-family', 'ui-monospace, SFMono-Regular, Menlo, monospace');
+    el.setAttribute('font-size', '19');
+    el.setAttribute('font-weight', '600');
+    el.setAttribute('letter-spacing', '0.6');
+    el.setAttribute('text-anchor', 'middle');
+    el.setAttribute('dominant-baseline', 'middle');
+    el.setAttribute('paint-order', 'stroke');
+    el.setAttribute('stroke', 'rgba(236,238,241,' + (0.85 * planMix).toFixed(3) + ')');
+    el.setAttribute('stroke-width', '4');
+    el.setAttribute('pointer-events', 'none');
+    el.textContent = text;
+    g.appendChild(el);
+  };
+
+  // Width, run along the back edge. The camera looks at BD * 0.35, so a
+  // dimension set out past the front edge falls off the bottom of the frame at
+  // the very moment the plan view is meant to show it.
+  const wz = -off;
+  line([-BW / 2, 0.003, wz], [BW / 2, 0.003, wz], 1.5);
+  line([-BW / 2, 0.003, wz - tick], [-BW / 2, 0.003, wz + tick], 1.5);
+  line([BW / 2, 0.003, wz - tick], [BW / 2, 0.003, wz + tick], 1.5);
+  label([0, 0.003, wz - 0.44], BW.toFixed(1) + ' m');
+
+  // Depth, run down the left edge.
+  const dx = -BW / 2 - off;
+  line([dx, 0.003, 0], [dx, 0.003, BD], 1.5);
+  line([dx - tick, 0.003, 0], [dx + tick, 0.003, 0], 1.5);
+  line([dx - tick, 0.003, BD], [dx + tick, 0.003, BD], 1.5);
+  label([dx - 0.52, 0.003, BD / 2], BD.toFixed(1) + ' m');
+}
+
 
 // ── Booth grid ────────────────────────────────────────────────────────────────
 function buildGrid() {

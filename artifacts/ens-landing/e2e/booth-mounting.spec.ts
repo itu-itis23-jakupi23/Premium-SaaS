@@ -301,6 +301,7 @@ test.describe("Booth mounting rules", () => {
         shadow: children.findIndex((el) => (el.getAttribute("filter") || "").includes("ground-shadow")),
         plot: children.findIndex((el) => el.hasAttribute("stroke-dasharray")),
         gridLines: children.filter((el) => el.tagName.toLowerCase() === "line").length,
+        floor: children.filter((el) => (el.getAttribute("fill") || "").includes("#floor")).length,
       };
     });
 
@@ -314,6 +315,11 @@ test.describe("Booth mounting rules", () => {
     // Metre lines on the ground, in world space. A screen-space pattern would
     // not need any.
     expect(layout!.gridLines, "no metre grid on the ground plan").toBeGreaterThan(8);
+    // The ground quad was sized 44 x 32 m and drawn only when all four corners
+    // projected. They do not in the default three-quarter view, so the floor
+    // was skipped entirely and the backdrop gradient stood in for it - for as
+    // long as that view has existed, with nothing to say so.
+    expect(layout!.floor, "the ground plane was not drawn").toBe(1);
   });
 
   test("an overlap warns but does not refuse the placement", async ({ page }) => {
