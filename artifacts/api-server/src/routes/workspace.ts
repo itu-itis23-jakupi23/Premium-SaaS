@@ -18,6 +18,62 @@ async function queryRows<T>(statement: SQL) {
   return (result as unknown as { rows: T[] }).rows;
 }
 
+/** Revision rounds included with every project, before anything is bought. */
+const BASE_REVISION_ROUNDS = 2;
+
+/**
+ * Wire value for "no practical limit". The client renders this number, so it
+ * stays a plain integer - JSON turns Infinity into null, which the client would
+ * then read as "missing" and fall back to the base allowance.
+ */
+const UNLIMITED_REVISION_ROUNDS = 9999;
+
+interface RevisionPolicy {
+  /** Change requests already spent on this project. */
+  used: number;
+  /** Rounds the client is entitled to, including any purchased. */
+  limit: number;
+  unlimited: boolean;
+  /** Rounds left, or null when unlimited - the shape the client payload uses. */
+  remaining: number | null;
+  /** Whether another change request may be submitted right now. */
+  canRequest: boolean;
+}
+
+/**
+ * The single source of truth for how many change requests a project may make.
+ *
+ * This used to be worked out twice, independently. The endpoint that *enforced*
+ * the limit hardcoded 2; the endpoint that *reported* it to the client added
+ * purchased rounds and honoured an unlimited subscription. So a client who
+ * bought extra rounds was shown the higher figure, allowed to act on it by a UI
+ * reading that same figure, and then refused by the server at 2. The money was
+ * taken and the capability was not delivered.
+ *
+ * Both sites call this now, so the advertised limit and the enforced limit
+ * cannot drift apart again.
+ */
+async function revisionPolicy(access: ProjectAccess): Promise<RevisionPolicy> {
+  const countResult = await queryRows<{ count: number }>(sql`
+    select count(*)::int as count
+    from approvals
+    where project_id = ${access.projectId}::uuid
+      and status::text = 'revision_requested'
+  `);
+  const used = countResult[0]?.count ?? 0;
+  const unlimited = !!access.workspaceEditorSubscriptionActive;
+  const limit = unlimited
+    ? UNLIMITED_REVISION_ROUNDS
+    : BASE_REVISION_ROUNDS + (access.workspaceEditorExtraRevisionRounds ?? 0);
+  return {
+    used,
+    limit,
+    unlimited,
+    remaining: unlimited ? null : Math.max(0, limit - used),
+    canRequest: used < limit,
+  };
+}
+
 router.get("/platform/workspace/current", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const auth = req.auth!;
 
@@ -354,20 +410,13 @@ router.post("/platform/projects/:projectId/change-requests", requireRoles(["clie
     return;
   }
 
-  const countResult = await queryRows<{ count: number }>(sql`
-    select count(*)::int as count
-    from approvals
-    where project_id = ${projectId}::uuid
-      and status::text = 'revision_requested'
-  `);
-  const revisionCount = countResult[0]?.count ?? 0;
-  const revisionLimit = 2;
+  const policy = await revisionPolicy(access);
 
-  if (revisionCount >= revisionLimit) {
+  if (!policy.canRequest) {
     res.status(400).json({
       error: {
         code: "revision_limit_reached",
-        message: `Revision limit reached (${revisionLimit}/${revisionLimit}). No further change requests are allowed.`
+        message: `Revision limit reached (${policy.used}/${policy.limit}). No further change requests are allowed.`
       }
     });
     return;
@@ -675,20 +724,12 @@ async function loadWorkspace(auth: AuthContext, projectId: string | undefined) {
   const currentVersion = versions[0] ?? null;
   const workspace = normalizeWorkspace(currentVersion?.layoutJson, access);
 
-  const countResult = await queryRows<{ count: number }>(sql`
-    select count(*)::int as count
-    from approvals
-    where project_id = ${access.projectId}::uuid
-      and status::text = 'revision_requested'
-  `);
-  const revisionCount = countResult[0]?.count ?? 0;
+  const policy = await revisionPolicy(access);
+  const revisionCount = policy.used;
 
-  const unlimitedAccess = !!access.workspaceEditorSubscriptionActive;
+  const unlimitedAccess = policy.unlimited;
   const extraRounds = access.workspaceEditorExtraRevisionRounds ?? 0;
-  const roundsLimit = 2;
-  const totalRoundLimit = unlimitedAccess ? null : (roundsLimit + extraRounds);
-  const roundsRemaining = unlimitedAccess ? null : Math.max(0, (totalRoundLimit ?? 0) - revisionCount);
-  const subscriptionRequired = !unlimitedAccess && (roundsRemaining !== null && roundsRemaining <= 0);
+  const subscriptionRequired = !policy.unlimited && !policy.canRequest;
   const subscriptionStatus = access.workspaceEditorSubscriptionStatus || "inactive";
   const subscriptionPending = subscriptionStatus === "pending";
   const subscriptionPlan = access.workspaceEditorSubscriptionPlan;
@@ -696,8 +737,8 @@ async function loadWorkspace(auth: AuthContext, projectId: string | undefined) {
   const planLabel = subscriptionPlan === "starter" ? "Starter" : subscriptionPlan === "pro" ? "Pro" : subscriptionPlan === "unlimited" ? "Unlimited" : null;
   const planPrice = subscriptionPlan === "starter" ? 2.99 : subscriptionPlan === "pro" ? 9.99 : subscriptionPlan === "unlimited" ? 11.99 : 0.00;
 
-  const canRequestChanges = !subscriptionRequired && access.projectStatus !== "approved";
-  const revisionLimit = unlimitedAccess ? 9999 : (2 + extraRounds);
+  const canRequestChanges = policy.canRequest && access.projectStatus !== "approved";
+  const revisionLimit = policy.limit;
 
   const projRows = await queryRows<{ metadata: Record<string, unknown> }>(sql`
     select metadata
@@ -755,10 +796,14 @@ async function loadWorkspace(auth: AuthContext, projectId: string | undefined) {
       can_edit: auth.user.role !== "client" || canRequestChanges,
       can_save: auth.user.role !== "client" || canRequestChanges,
       can_send_arrangement: auth.user.role !== "client" || canRequestChanges,
-      arrangement_round_limit: roundsLimit,
-      arrangement_rounds_used: revisionCount,
-      arrangement_rounds_remaining: roundsRemaining,
-      total_round_limit: totalRoundLimit,
+      // These two describe one policy and now carry one number. Until this
+      // commit arrangement_round_limit reported the base allowance regardless
+      // of what the client had bought - the same mismatch, in the same payload,
+      // waiting for the next consumer to read the wrong field.
+      arrangement_round_limit: policy.limit,
+      arrangement_rounds_used: policy.used,
+      arrangement_rounds_remaining: policy.remaining,
+      total_round_limit: policy.unlimited ? null : policy.limit,
       subscription_active: unlimitedAccess || (subscriptionPlan !== null && extraRounds > 0),
       subscription_unlimited: unlimitedAccess,
       subscription_status: subscriptionStatus,
@@ -771,7 +816,7 @@ async function loadWorkspace(auth: AuthContext, projectId: string | undefined) {
       edit_disabled_reason: subscriptionRequired
         ? (subscriptionPending
             ? "Payment verification is still pending. Revision access will activate after server-side confirmation."
-            : "You have used the 2 included arrangement rounds. Choose a plan to continue.")
+            : `You have used all ${policy.limit} arrangement rounds. Choose a plan to continue.`)
         : null
     }
   };
