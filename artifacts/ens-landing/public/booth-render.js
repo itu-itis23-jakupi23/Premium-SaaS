@@ -50,6 +50,60 @@ const LEGIBILITY_LEVELS = {
 };
 const LEGIBILITY = LEGIBILITY_LEVELS[_P.get('legibility')] || LEGIBILITY_LEVELS.normal;
 
+/**
+ * Near-plane losses, made audible.
+ *
+ * There is no clipping step in this renderer. `project()` returns null for a
+ * vertex behind the near plane, and the draw loop drops the *whole* polygon
+ * rather than trimming it, so a face that straddles the plane does not degrade -
+ * it disappears, completely and without a word. That is how a 44 x 32 m ground
+ * quad went unnoticed as never drawn at all in the view the workspace opens on:
+ * the absence read as a background gradient, and nothing anywhere disagreed.
+ *
+ * This does not clip anything. It gives the absence a name. Run the renderer
+ * with ?debug=clipping and every face lost this way is reported once per pass,
+ * grouped by part, with how many of its vertices fell behind the plane.
+ *
+ * Off unless asked for: a dropped face is normal and frequent for geometry
+ * genuinely behind the camera, so this is a diagnostic, not a warning anyone
+ * should meet by accident.
+ */
+const DEBUG_CLIPPING = _P.get('debug') === 'clipping';
+/** @type {Map<string, {type: string, faces: number, verts: number, lost: number}> | null} */
+let clippedThisPass = null;
+
+function recordClippedFace(face, projected, sourceLabel) {
+  if (!clippedThisPass) clippedThisPass = new Map();
+  const partId = String(face.partId || '(unnamed)');
+  const key = sourceLabel ? sourceLabel + ' · ' + partId : partId;
+  const entry = clippedThisPass.get(key) || {
+    type: sourceLabel || partTypeFor(partId) || 'unknown',
+    faces: 0,
+    verts: projected.length,
+    lost: 0,
+  };
+  entry.faces += 1;
+  entry.lost += projected.filter((point) => !point).length;
+  clippedThisPass.set(key, entry);
+}
+
+function reportClippedFaces() {
+  if (!clippedThisPass || clippedThisPass.size === 0) return;
+  const rows = [...clippedThisPass.entries()];
+  const total = rows.reduce((sum, [, entry]) => sum + entry.faces, 0);
+  console.warn(
+    `[booth-render] ${total} face(s) dropped by near-plane clipping and not drawn ` +
+    `(${rows.length} distinct part(s)):`
+  );
+  for (const [key, entry] of rows) {
+    console.warn(
+      `  ${key}  type=${entry.type}  ${entry.faces} face(s)  ` +
+      `${entry.verts} vertices, ${entry.lost} behind the near plane`
+    );
+  }
+  clippedThisPass = null;
+}
+
 let CARPET_COLOR = _P.get('carpet') || '#3b3e44';
 let WALL_COLOR = _P.get('wall') || '#f8fafc';
 let FRAME_COLOR = _P.get('frame') || '#b8bdc3';
@@ -2504,6 +2558,12 @@ function buildFloor() {
       [reach, 0, BD + reach], [-reach, 0, BD + reach],
     ].map(project);
     if (verts.every(Boolean)) { floorVerts = verts; break; }
+    if (DEBUG_CLIPPING) {
+      // Same failure as the draw loop, reached by another route: the ground is
+      // chosen by trying extents until one projects, and every rejected extent
+      // is a quad that would have vanished silently.
+      recordClippedFace({ partId: `ground-plane@${reach}m` }, verts, 'floor');
+    }
   }
   if (floorVerts) {
     const path = floorVerts.map(p=>`${p.x},${p.y}`).join(' ');
@@ -2883,7 +2943,10 @@ function renderBooth() {
   for (const face of sorted) {
     if (face.isCarpet) continue;
     const proj = face.pts.map(project);
-    if (proj.some(p => !p)) continue;
+    if (proj.some(p => !p)) {
+      if (DEBUG_CLIPPING) recordClippedFace(face, proj);
+      continue;
+    }
 
     if (face.normal) {
       const camDir = norm(sub(face.pts[0], cam));
@@ -3194,6 +3257,9 @@ function renderAll() {
   placeAnnotations();
   updateHud();
   drawCatalogDropPreview();
+  // One report per pass, after both the ground and the draw loop have had their
+  // chance to lose something.
+  if (DEBUG_CLIPPING) reportClippedFaces();
   window.__pendingGlbState = {
       width: BW,
       depth: BD,
