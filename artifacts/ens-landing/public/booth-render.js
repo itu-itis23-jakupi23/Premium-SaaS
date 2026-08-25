@@ -2912,10 +2912,28 @@ function renderBooth() {
     const intensity = faceIntensity(face);
     const points = proj.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
 
+    // The seam used to be a whole extra polygon laid over the face: 804 of the
+    // 2,157 nodes in a measured stand, each carrying its own copy of the same
+    // points to stroke an outline the face already had. It now rides on
+    // whichever polygon is drawn *last* for this face - the shade when there is
+    // one, the fill otherwise - so the picture is unchanged and the node is not
+    // created at all.
+    const wantsSeam = !face.signOnly && !(face.softEdge && face.hasFacetEdge);
+    const seamStroke = face.softEdge
+      ? LEGIBILITY.seam
+      : (face.isAlu ? 'rgba(80,85,92,0.55)' : 'rgba(170,175,182,0.42)');
+    const seamWidth = face.softEdge ? String(LEGIBILITY.seamW) : (face.isAlu ? '0.5' : '0.4');
+    const wantsShade = !face.signOnly && intensity < 0.98 && !face.noFacetShade;
+
     if (!face.signOnly) {
       const poly = document.createElementNS(SVG_NS, 'polygon');
       poly.setAttribute('points', points);
       poly.setAttribute('fill', face.fill);
+      if (wantsSeam && !wantsShade) {
+        poly.setAttribute('stroke', seamStroke);
+        poly.setAttribute('stroke-width', seamWidth);
+        poly.setAttribute('stroke-linejoin', 'round');
+      }
       if (face.partId) {
         poly.setAttribute('data-pid', face.partId);
         poly.setAttribute('data-type', partTypeFor(face.partId));
@@ -3009,24 +3027,21 @@ function renderBooth() {
       }
     }
 
-    if (!face.signOnly && intensity < 0.98 && !face.noFacetShade) {
+    if (wantsShade) {
       const sh = document.createElementNS(SVG_NS, 'polygon');
       sh.setAttribute('points', points);
       const alpha = Math.max(0, (1 - intensity)) * (face.isFurniture ? LIGHTING.itemShade : LIGHTING.faceShade);
-      sh.setAttribute('fill', '#000'); sh.setAttribute('opacity', alpha.toFixed(3));
+      sh.setAttribute('fill', '#000');
+      // fill-opacity rather than opacity, so the seam below can carry its own
+      // alpha instead of being faded along with the shading.
+      sh.setAttribute('fill-opacity', alpha.toFixed(3));
+      if (wantsSeam) {
+        sh.setAttribute('stroke', seamStroke);
+        sh.setAttribute('stroke-width', seamWidth);
+        sh.setAttribute('stroke-linejoin', 'round');
+      }
       sh.setAttribute('pointer-events', 'none');
       container.appendChild(sh);
-    }
-
-    if (!face.signOnly && !(face.softEdge && face.hasFacetEdge)) {
-      const edge = document.createElementNS(SVG_NS, 'polygon');
-      edge.setAttribute('points', points);
-      edge.setAttribute('fill', 'none');
-      edge.setAttribute('stroke', face.softEdge ? LEGIBILITY.seam : (face.isAlu ? 'rgba(80,85,92,0.55)' : 'rgba(170,175,182,0.42)'));
-      edge.setAttribute('stroke-width', face.softEdge ? String(LEGIBILITY.seamW) : (face.isAlu ? '0.5' : '0.4'));
-      edge.setAttribute('stroke-linejoin', 'round');
-      edge.setAttribute('pointer-events', 'none');
-      container.appendChild(edge);
     }
 
     if (face.signText) {
