@@ -19,6 +19,18 @@ import { test, expect } from "@playwright/test";
  * side carries three - panel centres land on the half metre.
  */
 
+/**
+ * The renderer's own top-level bindings, as seen from inside page.evaluate.
+ *
+ * These are script-scoped `const`/`function` declarations in a classic script.
+ * A top-level `const` is a lexical binding: later scripts in the same realm see
+ * it by name, but it never becomes a property of globalThis - so reaching for
+ * `globalThis.camState` finds undefined, while a bare `camState` resolves.
+ */
+declare const camState: { azimuth: number };
+declare function updateCamera(): void;
+declare function renderAll(): void;
+
 const BOOTH_W = 6;
 const BOOTH_D = 3;
 /** Placeable plan around the stand - mirrors PLAN_MARGIN_M. */
@@ -343,6 +355,79 @@ test.describe("Booth mounting rules", () => {
     // was skipped entirely and the backdrop gradient stood in for it - for as
     // long as that view has existed, with nothing to say so.
     expect(layout!.floor, "the ground plane was not drawn").toBe(1);
+  });
+
+  test("a room and the stand swap draw order as the camera moves round", async ({ page }) => {
+    // renderOrder defaults to zero, so the booth shell sits at 0. Lifting rooms
+    // to the furniture band did not put them beside furniture in the sort - it
+    // put them in front of the whole stand, and a room at the back painted
+    // straight over the wall it stands against.
+    //
+    // Layer cannot express this, because the answer changes with the camera:
+    // from the front the room is nearer than the back wall, from behind the
+    // wall is nearer than the room. Only a depth comparison gets both, so this
+    // asks for both. Anything that forces one above the other fails one half.
+    const order = await page.evaluate(
+      () =>
+        new Promise<{ front: { room: number; wall: number }; behind: { room: number; wall: number } } | null>((resolve) => {
+          const read = () => {
+            const nodes = [...document.querySelectorAll("#boothGroup *")];
+            let room = -1;
+            let wall = -1;
+            nodes.forEach((el, index) => {
+              // Room *walls*. The door leaf and its handle sit on their own
+              // layer above the tie window and are deliberately excluded: the
+              // handle has to beat the leaf and the leaf has to beat the wall,
+              // and inside the window depth decides that the wrong way round -
+              // it put the handle behind its own door. They keep the layer, and
+              // the cost is a door that can show through the stand from behind.
+              const pid = el.getAttribute("data-pid") || "";
+              if (el.hasAttribute("data-room-id") && !pid.includes("-door-")) {
+                room = Math.max(room, index);
+              }
+              if ((el.getAttribute("data-pid") || "").startsWith("panel-back-")) wall = Math.max(wall, index);
+            });
+            return { room, wall };
+          };
+          window.postMessage({
+            type: "boothUpdate",
+            rooms: [{
+              id: "swap-room", name: "Swap room",
+              width: 1.6, depth: 1, height: 2.4,
+              // Stood clear of the back wall on purpose: flush against it the two
+              // are coplanar, depth ties, and insertion order decides - which tests
+              // nothing. A metre of clear air makes the answer unambiguous.
+              x: 3, z: 1.5, hasDoor: true, doorSide: "front",
+              doorWidth: 0.9, doorPosition: "center", doorSwing: "left-in",
+              doorOpen: false, hasCeiling: false,
+              wallFinish: "white", floorColor: "#dddddd", locked: false,
+            }],
+            placedItems: [],
+          }, "*");
+          setTimeout(() => {
+            const front = read();
+            // Swing the camera to the far side and redraw.
+            camState.azimuth += Math.PI;
+            updateCamera();
+            renderAll();
+            resolve({ front, behind: read() });
+          }, 900);
+        }),
+    );
+
+    expect(order, "the renderer never drew the room").not.toBeNull();
+    for (const [where, side] of Object.entries(order!)) {
+      expect(side.room, `no room faces drawn from ${where}`).toBeGreaterThan(-1);
+      expect(side.wall, `no back wall drawn from ${where}`).toBeGreaterThan(-1);
+    }
+    expect(
+      order!.front.room,
+      "from the front the room stands in front of the back wall",
+    ).toBeGreaterThan(order!.front.wall);
+    expect(
+      order!.behind.wall,
+      "from behind, the back wall is the nearer of the two and must cover the room",
+    ).toBeGreaterThan(order!.behind.room);
   });
 
   test("an overlap warns but does not refuse the placement", async ({ page }) => {

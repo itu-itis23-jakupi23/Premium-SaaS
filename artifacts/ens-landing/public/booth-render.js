@@ -1095,6 +1095,11 @@ function addRoomProfilesAndDoor(room, geom) {
     ...roomCommon,
     ...doorTransform,
     fill: 'rgba(247,249,252,0.94)',
+    // Kept clear of the tie window on purpose. The door leaf has to beat the
+    // wall it sits in, and its handle has to beat the leaf - inside the window
+    // that is decided by depth, and the handle's centroid sits *behind* the
+    // leaf, so it disappeared. The cost is that a door can show through the
+    // stand when viewed from behind; a hidden handle on every room was worse.
     partId: `${room.id}-door-panel`,
     partLabel: `${label} door panel`,
     partMeta: `${meta} - hinged room door`,
