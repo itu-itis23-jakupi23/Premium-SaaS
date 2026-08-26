@@ -1263,13 +1263,18 @@ function pushFurnitureItem(item, x, y, z, w, d, h, color, partLabel, partMeta, q
   // two lights, one of them a yellow cube.
   if (item.modelUrl) {
     pushBox([x - w/2, y, z - d/2], [x + w/2, y + Math.max(0.18, h), z + d/2], {
+      // `common` goes first so the keys below win. Spread last - as it was -
+      // its partMeta replaced the one on the next-but-one line, and the model
+      // path this pick-box exists to carry never reached the inspector. That
+      // is the one thing worth knowing when a model fails to load: which file
+      // did not arrive.
+      ...common,
       fill: 'rgba(37,99,235,0.001)',
       partId: id + '-glb-hitbox',
       partLabel,
       partMeta: item.modelUrl || partMeta,
       softEdge: true,
       skipSelectionHighlight: true,
-      ...common,
     });
     return;
   }
