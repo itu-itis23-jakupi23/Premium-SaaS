@@ -222,7 +222,7 @@ export default function ClientWorkspace() {
   const approvalStageLabel = workspaceApprovalStageLabel(approvalStage);
   const approvalStageColor = approvalStage === "approved" || approvalStage === "locked"
     ? C.green
-    : approvalStage === "revision_requested"
+    : approvalStage === "revision_requested" || approvalStage === "rejected"
       ? C.orange
       : approvalStage === "sent" || approvalStage === "viewed"
         ? C.blue

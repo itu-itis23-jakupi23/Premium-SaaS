@@ -452,7 +452,7 @@ export interface ProjectWorkspace {
   permissions?: ClientArrangementPermissions;
 }
 
-export type WorkspaceApprovalStage = "draft" | "sent" | "viewed" | "approved" | "revision_requested" | "locked";
+export type WorkspaceApprovalStage = "draft" | "sent" | "viewed" | "approved" | "rejected" | "revision_requested" | "locked";
 
 export function workspaceApprovalStage(record: ProjectWorkspace | null | undefined): WorkspaceApprovalStage {
   const projectStatus = record?.project.status?.toLowerCase() ?? "";
@@ -460,6 +460,13 @@ export function workspaceApprovalStage(record: ProjectWorkspace | null | undefin
 
   if (record?.currentVersion?.lockedAt) return "locked";
   if (record?.approved || projectStatus.includes("approved") || versionStatus.includes("approved")) return "approved";
+  // `rejected` is a real booth_version_status - routes/platform.ts writes it
+  // when an approval is declined - and there was no stage for it. A declined
+  // design fell through every branch below and came out as "sent", so the
+  // client was told their design was awaiting review when it had been turned
+  // down. Checked against the version only: project_status has no such value,
+  // and a condition that can never fire is worse than no condition.
+  if (versionStatus.includes("rejected")) return "rejected";
   if (projectStatus.includes("revision") || versionStatus.includes("revision")) return "revision_requested";
   if (versionStatus.includes("viewed") || versionStatus.includes("under_review")) return "viewed";
   if (record?.currentVersion?.submittedAt || versionStatus.includes("submitted")) return "sent";
@@ -472,6 +479,8 @@ export function workspaceApprovalStageLabel(stage: WorkspaceApprovalStage) {
     sent: "Sent",
     viewed: "Viewed",
     approved: "Approved",
+    // "Declined" is the word the API already uses for this state.
+    rejected: "Declined",
     revision_requested: "Revision Requested",
     locked: "Locked",
   };
