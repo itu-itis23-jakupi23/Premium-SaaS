@@ -107,16 +107,47 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
   ],
 };
 
+/**
+ * Width at or below which the sidebar is always the icon rail.
+ *
+ * 1023 rather than 767: at 768 the full sidebar took 260px of a portrait
+ * tablet, and the content column had 508px left to hold a header that will not
+ * shrink below 686.
+ */
+const SIDEBAR_RAIL_QUERY = "(max-width: 1023px)";
+
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const { t, i18n } = useTranslation();
   const isRtl = i18n.language === "ar";
   const prefersReducedMotion = useReducedMotion();
   const [location, navigate] = useLocation();
   const routeKey = location.split("?")[0];
-  // Phones start with the icon rail; desktop starts expanded.
-  const [isCollapsed, setIsCollapsed] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches,
+  /**
+   * The rail is forced below SIDEBAR_RAIL_QUERY and chosen by the user
+   * above it.
+   *
+   * Two things were wrong before. The threshold was 767px, so a portrait tablet
+   * at exactly 768 kept the full 260px sidebar - 34% of the screen given to
+   * navigation. And the value was read once, at mount, so narrowing an open
+   * window never collapsed anything: the layout only responded if you reloaded
+   * at the new size.
+   */
+  const [isNarrow, setIsNarrow] = useState(
+    () => typeof window !== "undefined" && window.matchMedia(SIDEBAR_RAIL_QUERY).matches,
   );
+  const [userCollapsed, setUserCollapsed] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const query = window.matchMedia(SIDEBAR_RAIL_QUERY);
+    const onChange = (event: MediaQueryListEvent) => setIsNarrow(event.matches);
+    query.addEventListener("change", onChange);
+    setIsNarrow(query.matches);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
+  // Below the threshold the rail is the only workable option, so the user's
+  // preference applies above it and is remembered for when they return there.
+  const isCollapsed = isNarrow || userCollapsed;
+  const setIsCollapsed = setUserCollapsed;
   const { logout, user } = useAuth();
   const cacheKey = user?.id || user?.email || "anonymous";
   const [profile, setProfile] = useState<CachedProfile | null>(() => cachedProfiles[cacheKey] ?? null);
@@ -437,7 +468,14 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
 
       <div
         className={cn(
-          "flex flex-1 flex-col transition-all duration-300",
+          // min-w-0 is what lets this shrink to the viewport. A flex child
+          // defaults to min-width:auto, so without it the column's floor is its
+          // own content: 260px of padding for the sidebar plus a 686px header
+          // that does not shrink, which pinned it at 946px inside a 768px
+          // screen. The overflow was invisible because the page root clips
+          // rather than scrolls, so the surplus was not scrolled off - it was
+          // simply unreachable, buttons included.
+          "flex min-w-0 flex-1 flex-col transition-all duration-300",
           isCollapsed
             ? (isRtl ? "pr-[70px]" : "pl-[70px]")
             : (isRtl ? "pr-[260px]" : "pl-[260px]"),
@@ -448,17 +486,20 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           <button
             type="button"
             onClick={() => setCmdPaletteOpen(true)}
-            className="flex items-center gap-2.5 rounded-lg border border-border bg-card/60 px-3 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/40 hover:bg-muted/60 hover:text-foreground"
+            aria-label="Quick search and actions"
+            className="flex shrink-0 items-center gap-2.5 rounded-lg border border-border bg-card/60 px-2 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/40 hover:bg-muted/60 hover:text-foreground sm:px-3"
           >
             <Search className="h-3.5 w-3.5 text-primary" />
             <span className="hidden sm:inline font-medium">Quick Search &amp; Actions...</span>
-            <span className="sm:hidden font-medium">Search...</span>
-            <kbd className="ml-2 inline-flex items-center gap-0.5 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground shadow-xs">
+            {/* A keyboard shortcut badge is 31px of nothing on a phone. */}
+            <kbd className="ml-2 hidden sm:inline-flex items-center gap-0.5 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground shadow-xs">
               <span className="text-[9px]">⌘</span>K
             </kbd>
           </button>
 
-          <div className="flex items-center gap-3">
+          {/* gap-2 on a phone: at 390 the header wanted 330px in 320, and the
+              gaps between these five controls were most of the difference. */}
+          <div className="flex items-center gap-2 sm:gap-3">
             {user && (
               <Link href={accountHref}>
                 <div className="flex cursor-pointer items-center gap-2 rounded-full border bg-card/60 py-1 pl-1 pr-3 transition-colors hover:bg-muted">
@@ -468,7 +509,10 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                       {initials(profile?.name ?? user.name)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="hidden min-w-0 text-left sm:block">
+                  {/* Name and address are the widest thing in the header and
+                      the least needed on a small screen - the avatar already
+                      says who is signed in. Shown from lg, not sm. */}
+                  <div className="hidden min-w-0 text-left lg:block">
                     <p className="max-w-[160px] truncate text-xs font-medium">{profile?.name ?? user.name}</p>
                     <p className="max-w-[160px] truncate text-[11px] text-muted-foreground">{profile?.email ?? user.email}</p>
                   </div>
@@ -481,8 +525,18 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
               onOpen={openNotification}
               onMarkAllRead={markAllRead}
             />
-            <CurrencySwitcher />
-            <LanguageSwitcher />
+            {/* Both switchers stay on every screen - they live nowhere else in
+                the product, so hiding them on a phone would mean a phone user
+                simply cannot change currency. They shrink instead: the compact
+                variant below sm, the full one above. */}
+            <div className="hidden items-center gap-3 sm:flex">
+              <CurrencySwitcher />
+              <LanguageSwitcher />
+            </div>
+            <div className="flex items-center gap-1.5 sm:hidden">
+              <CurrencySwitcher variant="toolbar" />
+              <LanguageSwitcher />
+            </div>
             <ThemeToggle />
           </div>
         </header>

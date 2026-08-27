@@ -149,7 +149,7 @@ export function StaffGateway({ children }: { children: ReactNode }) {
     <div className="relative flex min-h-screen items-center justify-center p-4 overflow-hidden bg-background">
       {/* Ambient glow layers — matching hero aesthetic */}
       <div className="absolute inset-0 grid-pattern opacity-[0.06] dark:opacity-[0.12] pointer-events-none" />
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-primary/15 blur-[130px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] max-w-[100vw] h-[500px] bg-primary/15 blur-[130px] rounded-full pointer-events-none" />
       <div className="absolute top-1/4 right-0 w-[400px] h-[400px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-cyan-500/8 blur-[90px] rounded-full pointer-events-none" />
 
