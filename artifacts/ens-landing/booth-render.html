@@ -285,6 +285,12 @@
 
 <script src="/booth-render.js"></script>
 <script type="module">
+// @ts-check
+// The GLB half of the renderer. Its side of the bridge - the window.__* globals
+// and the message payloads - is described in public/booth-render.js. Note that
+// no tooling reads this block today: tsconfig covers src/** and nothing
+// extracts script blocks from HTML, so this marks intent and helps an editor,
+// and is not yet enforced anywhere.
 import * as THREE from '/src/workspace/three-proxy.ts';
 import { GLTFLoader } from '/src/workspace/gltf-loader-proxy.ts';
 import { MeshoptDecoder } from '/src/workspace/meshopt-decoder-proxy.ts';
@@ -641,7 +647,15 @@ window.__updateGlbLayer = async function updateGlbLayer(state) {
       const x = -Number(state.width || 0) / 2 + (Number(item.x) || 0);
       const z = Number(item.z) || 0;
       // Drawing must not move what it draws - see placedItemRenderXZ.
-      const clamped = placedItemRenderXZ(item, x, z);
+      //
+      // Guarded like its two neighbours. This was the one bare cross-file call
+      // without a guard: booth-render.js is a separate classic script, reached
+      // here by name alone, so a rename there threw at runtime inside an iframe
+      // with no compiler having objected. Falling back to the unclamped point
+      // keeps the model where the caller asked rather than at the origin.
+      const clamped = typeof placedItemRenderXZ === 'function'
+        ? placedItemRenderXZ(item, x, z)
+        : { x, z };
       if (typeof syncCorrectedItemPosition === 'function') {
         syncCorrectedItemPosition(item, clamped.x, clamped.z);
       }

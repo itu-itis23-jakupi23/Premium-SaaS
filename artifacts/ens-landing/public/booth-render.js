@@ -1,3 +1,156 @@
+// @ts-check
+/**
+ * ─── The bridge contract ──────────────────────────────────────────────────
+ *
+ * This file draws the booth as SVG. A separate module script inside
+ * booth-render.html draws the GLB furniture with three.js over the top. They
+ * share one realm and talk three ways, and until now none of the three was
+ * described anywhere:
+ *
+ *   1. `window.__*` globals - state and callbacks handed across (below).
+ *   2. postMessage, in both directions, with the parent workspace.
+ *   3. Bare cross-file calls: the module reaches into this file by name.
+ *
+ * What made that costly is not the absence of types on its own - it is that
+ * every value crossing is coerced with `Number(x) || 0` and every cross-file
+ * call is guarded with a fallback of `0`. A renamed field does not throw; the
+ * model quietly renders at the origin, or on the floor. That is how rail
+ * lights came to sit on the carpet with nothing raised on either side.
+ *
+ * These typedefs do not remove the coercions. They write down what is supposed
+ * to cross, so the next rename is a type error rather than a silent zero.
+ */
+
+/**
+ * One placed item, as far as the bridge is concerned. The renderer reads more
+ * than this; these are the fields the GLB layer depends on.
+ * @typedef {object} GlbPlacedItem
+ * @property {string|number} [id]
+ * @property {string} [sku]
+ * @property {string} [catalogId]
+ * @property {string} [name]
+ * @property {string} [kind]
+ * @property {string} [shape]
+ * @property {string} [modelUrl]
+ * @property {number} [x] Booth-space X, 0..width.
+ * @property {number} [z] Booth-space Z, 0..depth.
+ * @property {number} [y] Mount height. Absent means "derive it".
+ * @property {number} [w]
+ * @property {number} [d]
+ * @property {number} [h]
+ * @property {number} [rotationX]
+ * @property {number} [rotationY]
+ * @property {number} [rotationZ]
+ * @property {number} [rotation] Legacy alias for rotationY.
+ */
+
+/**
+ * The scene snapshot handed to the GLB layer on every render pass.
+ * @typedef {object} GlbState
+ * @property {number} width
+ * @property {number} depth
+ * @property {number} height
+ * @property {number} fasciaHeight
+ * @property {{back: boolean, left: boolean, right: boolean, front: boolean}} wallsVisible
+ * @property {number[]} cam
+ * @property {number[]} target
+ * @property {number} fov
+ * @property {GlbPlacedItem[]} placedItems
+ * @property {string|null} selectedItemId
+ */
+
+/**
+ * Measured size of a loaded model against the size the catalogue claims, which
+ * is how the GLB layer decides its scale.
+ * @typedef {object} GlbPhysicalBounds
+ * @property {number} width
+ * @property {number} depth
+ * @property {number} height
+ * @property {number} targetWidth
+ * @property {number} targetDepth
+ * @property {number} targetHeight
+ */
+
+/**
+ * @typedef {object} GlbPixelCoverage
+ * @property {number} width
+ * @property {number} height
+ * @property {number} visiblePixels
+ */
+
+/**
+ * Lighting handed to the three.js rig. Colours are hex integers, not strings -
+ * they go straight into Color.setHex.
+ * @typedef {object} LightingRig
+ * @property {number} hemi
+ * @property {number} key
+ * @property {number} fill
+ * @property {number} keyColor
+ * @property {number} fillColor
+ */
+
+/**
+ * The globals the two halves share. Nine of them, none previously declared.
+ * @typedef {Window & typeof globalThis & {
+ *   __pendingGlbState?: GlbState,
+ *   __lastGlbState?: GlbState,
+ *   __updateGlbLayer?: (state: GlbState) => void | Promise<void>,
+ *   __glbVisibleItems?: Set<string>,
+ *   __glbPhysicalBounds?: Map<string, GlbPhysicalBounds>,
+ *   __applyGlbLighting?: (rig: LightingRig) => void,
+ *   __lightingRig?: LightingRig,
+ *   __shellOccluderCount?: number,
+ *   __readGlbPixelCoverage?: () => GlbPixelCoverage,
+ * }} RendererWindow
+ */
+
+/**
+ * Messages this renderer posts to the parent workspace.
+ *
+ * Sixteen types across seventeen call sites - `workspaceItemSelected` and
+ * `workspaceItemRotated` are each posted from two places, and the catalogue
+ * drop site chooses between two types on one line. Two of these are posted
+ * from booth-render.html rather than here.
+ *
+ * @typedef {{type: 'boothRendererReady'}} MsgRendererReady
+ * @typedef {{type: 'boothRendererError', message: string}} MsgRendererError
+ * @typedef {{type: 'boothUpdateAck', width: number, depth: number, height: number, selectedPartId: string|null}} MsgUpdateAck
+ * @typedef {{type: 'workspaceItemMoved', id: string, x: number, z: number, w?: number, y?: number, rotationY?: number}} MsgItemMoved
+ * @typedef {{type: 'workspaceItemRemoved', id: string}} MsgItemRemoved
+ * @typedef {{type: 'workspaceItemRotated', id: string, rotationY: number}} MsgItemRotated
+ * @typedef {{type: 'workspaceItemSelected', id: string|null, partId?: string, roomId?: string, partType?: string, label?: string, meta?: string, xPct?: number, yPct?: number}} MsgItemSelected
+ * @typedef {{type: 'workspaceItemDeleteRequested', id: string}} MsgItemDeleteRequested
+ * @typedef {{type: 'workspaceRoomMoved', id: string, x: number, z: number}} MsgRoomMoved
+ * @typedef {{type: 'workspaceRoomPatched', id: string, doorOpen?: boolean, doorSwing?: string}} MsgRoomPatched
+ * @typedef {{type: 'workspaceFrontSupportsMoved', positions: number[], suppressedDefaultPositions: number[]}} MsgFrontSupportsMoved
+ * @typedef {{type: 'workspaceGestureEnd', kind: string}} MsgGestureEnd
+ * @typedef {{type: 'workspaceShortcut', action: string}} MsgShortcut
+ * @typedef {{type: 'pinRequested', x: number, y: number, partId: string}} MsgPinRequested
+ * @typedef {{type: 'catalogDropPreview'|'catalogDropCommitted', catalogId: string, valid: boolean, reason: string|null, x: number, z: number, w?: number, y?: number, rotationY?: number, mounted?: boolean}} MsgCatalogDrop
+ *
+ * @typedef {MsgRendererReady|MsgRendererError|MsgUpdateAck|MsgItemMoved|MsgItemRemoved
+ *   |MsgItemRotated|MsgItemSelected|MsgItemDeleteRequested|MsgRoomMoved|MsgRoomPatched
+ *   |MsgFrontSupportsMoved|MsgGestureEnd|MsgShortcut|MsgPinRequested|MsgCatalogDrop
+ * } OutboundMessage
+ */
+
+/**
+ * Messages the parent workspace posts in. Five types.
+ *
+ * @typedef {{type: 'boothUpdate'} & Record<string, unknown>} MsgBoothUpdate
+ * @typedef {{type: 'catalogDragPreview', xPct: number, yPct: number, item: GlbPlacedItem}} MsgCatalogDragPreview
+ * @typedef {{type: 'catalogDragCommit', xPct: number, yPct: number, item: GlbPlacedItem}} MsgCatalogDragCommit
+ * @typedef {{type: 'catalogDragCancel'}} MsgCatalogDragCancel
+ * @typedef {{type: 'workspaceItemRemove', id: string}} MsgItemRemove
+ *
+ * @typedef {MsgBoothUpdate|MsgCatalogDragPreview|MsgCatalogDragCommit
+ *   |MsgCatalogDragCancel|MsgItemRemove
+ * } InboundMessage
+ */
+
+/** The shared globals, reached through one declared alias rather than nine undeclared ones. */
+const rendererWindow = /** @type {RendererWindow} */ (window);
+
 /*
  * Booth renderer - the perspective-projected SVG engine.
  *
@@ -191,8 +344,8 @@ function applyLightingPreset() {
   root.style.setProperty('--bg-bot', LIGHTING.bg[1]);
   // The GLB layer owns its own lights. Publish the rig either way: the module
   // may not have finished loading yet, and it reads this on startup.
-  window.__lightingRig = LIGHTING;
-  if (typeof window.__applyGlbLighting === 'function') window.__applyGlbLighting(LIGHTING);
+  rendererWindow.__lightingRig = LIGHTING;
+  if (typeof rendererWindow.__applyGlbLighting === 'function') rendererWindow.__applyGlbLighting(LIGHTING);
 }
 
 function normalizeHex(value, fallback) {
@@ -3265,7 +3418,7 @@ function renderAll() {
   // One report per pass, after both the ground and the draw loop have had their
   // chance to lose something.
   if (DEBUG_CLIPPING) reportClippedFaces();
-  window.__pendingGlbState = {
+  rendererWindow.__pendingGlbState = {
       width: BW,
       depth: BD,
       height: BH,
@@ -3277,8 +3430,8 @@ function renderAll() {
       placedItems,
       selectedItemId,
     };
-  if (window.__updateGlbLayer) {
-    window.__updateGlbLayer(window.__pendingGlbState);
+  if (rendererWindow.__updateGlbLayer) {
+    rendererWindow.__updateGlbLayer(rendererWindow.__pendingGlbState);
   }
 }
 window.renderAll = renderAll;
@@ -3399,7 +3552,7 @@ function notifyRoomPatched(room, patch) {
 // Show a small "⟳ 3D" badge over any furniture item whose GLB model is still
 // fetching. Disappears automatically once __glbVisibleItems contains the item.
 function drawGlbLoadingIndicators(container) {
-  const glbVisible = window.__glbVisibleItems || new Set();
+  const glbVisible = rendererWindow.__glbVisibleItems || new Set();
   for (const item of placedItems) {
     if (!item.modelUrl) continue;
     const keyId = String(item.id || item.sku || item.modelUrl);
