@@ -104,6 +104,7 @@ import {
   type SavedManagerView, type Manager, type ManagedClient, type ManagedProject,
   type AuditEntry, type ManagerSummary, type RebalancePreview,
 } from "./managers-model";
+import { daysUntil, planRebalance } from "./rebalance";
 
 
 export default function ChiefManagers() {
@@ -670,52 +671,32 @@ export default function ChiefManagers() {
     }
   }
 
-  // Computes rebalance plan and shows a confirmation preview instead of executing immediately
+  // Decides nothing itself: `planRebalance` works out who receives what, and
+  // this turns that decision into a toast or a confirmation dialog. Splitting
+  // them is what made the decision testable - see rebalance.test.ts.
   function requestRebalance(id: string) {
-    const source = summaries.find((m) => m.id === id);
-    const active = summaries.filter((m) => m.id !== id && m.status === "Active");
-
-    if (!source || !active.length) {
-      showToast(t("chief.managers.toast.rebalanceNoTarget"));
-      return;
+    const plan = planRebalance(id, summaries);
+    switch (plan.outcome) {
+      case "no-target":
+        showToast(t("chief.managers.toast.rebalanceNoTarget"));
+        return;
+      case "not-overloaded":
+        showToast(
+          t("chief.managers.toast.rebalanceNormal", {
+            name: plan.source.name,
+            pct: plan.source.workload,
+          }),
+        );
+        return;
+      case "all-loaded":
+        showToast(t("chief.managers.toast.rebalanceAllLoaded"));
+        return;
+      case "no-project":
+        showToast(t("chief.managers.toast.rebalanceNoProject"));
+        return;
+      case "move":
+        setRebalancePreview({ project: plan.project, source: plan.source, target: plan.target });
     }
-
-    if (source.workload < 70) {
-      showToast(t("chief.managers.toast.rebalanceNormal", { name: source.name, pct: source.workload }));
-      return;
-    }
-
-    // Score candidates: 60% available capacity + 25% rating quality + 15% fewer current projects
-    const maxProjects = Math.max(...active.map((m) => m.activeProjects.length), 1);
-    const scored = active
-      .filter((m) => m.workload < 85) // never overload a target
-      .map((m) => ({
-        manager: m,
-        score:
-          (100 - m.workload) * 0.6 +
-          (m.rating / 5) * 100 * 0.25 +
-          ((maxProjects - m.activeProjects.length) / maxProjects) * 100 * 0.15,
-      }))
-      .sort((a, b) => b.score - a.score);
-
-    if (!scored.length) {
-      showToast(t("chief.managers.toast.rebalanceAllLoaded"));
-      return;
-    }
-
-    const target = scored[0].manager;
-
-    // Move LEAST critical project first so the overloaded PM keeps their urgent work
-    const projectToMove = [...source.activeProjects]
-      .sort((a, b) => compareProjectRisk(a, b))
-      .reverse()[0]; // reverse → ascending risk, pick lowest
-
-    if (!projectToMove) {
-      showToast(t("chief.managers.toast.rebalanceNoProject"));
-      return;
-    }
-
-    setRebalancePreview({ project: projectToMove, source, target });
   }
 
   async function confirmRebalance() {
@@ -2545,7 +2526,10 @@ function summarizeManager(manager: Manager, clients: ManagedClient[], projects: 
   const managerClients = clients.filter((client) => client.managerId === manager.id);
   const workload = computeWorkload(manager.status, activeProjects, managerClients.length);
   const delayedCount = activeProjects.filter((project) => project.status === "Delayed").length;
-  const urgentCount = activeProjects.filter((project) => daysUntil(project.deadline) <= 14).length;
+  const urgentCount = activeProjects.filter((project) => {
+    const days = daysUntil(project.deadline);
+    return days !== null && days <= 14;
+  }).length;
   const nextDeadline = activeProjects.map((project) => project.deadline).sort()[0] ?? null;
 
   return {
@@ -2567,9 +2551,12 @@ function computeWorkload(status: ManagerStatus, projects: ManagedProject[], clie
   const delayedFraction = projects.filter(p => p.status === "Delayed").length / total;
   const urgentFraction = projects.filter(p => {
     const d = daysUntil(p.deadline);
-    return d >= 0 && d <= 14;
+    return d !== null && d >= 0 && d <= 14;
   }).length / total;
-  const overdueBonus = projects.filter(p => daysUntil(p.deadline) < 0).length / total;
+  const overdueBonus = projects.filter(p => {
+    const d = daysUntil(p.deadline);
+    return d !== null && d < 0;
+  }).length / total;
 
   // Base load: how full is this PM relative to capacity?
   const projectLoad = Math.min(1, projects.length / PM_ACTIVE_PROJECT_CAPACITY);
@@ -2584,17 +2571,7 @@ function computeWorkload(status: ManagerStatus, projects: ManagedProject[], clie
   return Math.max(0, Math.min(100, Math.round(adjusted)));
 }
 
-function compareProjectRisk(a: ManagedProject, b: ManagedProject) {
-  const aRisk = (a.status === "Delayed" ? 100 : 0) - daysUntil(a.deadline);
-  const bRisk = (b.status === "Delayed" ? 100 : 0) - daysUntil(b.deadline);
-  return bRisk - aRisk;
-}
 
-function daysUntil(date: string) {
-  const now = new Date();
-  const target = new Date(`${date}T12:00:00`);
-  return Math.ceil((target.getTime() - now.getTime()) / 86400000);
-}
 
 function formatDate(date: string, locale = "en-US") {
   const parsed = new Date(`${date}T12:00:00`);
