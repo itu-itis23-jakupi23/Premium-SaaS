@@ -37,6 +37,7 @@ import {
   Users,
   UserPlus,
 } from "lucide-react";
+import { isDelayedDashboardProject } from "./dashboard-risk";
 
 const EMPTY_OVERVIEW: PlatformOverview = {
   organization: null,
@@ -693,10 +694,4 @@ function dashboardDaysUntil(date: string | null | undefined) {
   const target = new Date(`${date}T12:00:00`);
   if (Number.isNaN(target.getTime())) return null;
   return Math.ceil((target.getTime() - Date.now()) / 86400000);
-}
-
-function isDelayedDashboardProject(status: string, health: string) {
-  const statusValue = status.toLowerCase();
-  const healthValue = health.toLowerCase();
-  return statusValue.includes("delay") || statusValue.includes("blocked") || healthValue.includes("risk");
 }
