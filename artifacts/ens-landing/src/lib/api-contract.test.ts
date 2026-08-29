@@ -111,6 +111,10 @@ describe("task requests match the schema the API parses", () => {
   const projectId = "3f2504e0-4f89-11d3-9a0c-0305e82c3301";
 
   it.each([
+    // Urgent is the tier the API used to report as "High". Because the edit
+    // dialog resends whatever it was shown, that round trip demoted an urgent
+    // task to high on any save - so the mapping is asserted in both directions.
+    ["Urgent", "urgent"],
     ["High", "high"],
     ["Medium", "normal"],
     ["Low", "low"],

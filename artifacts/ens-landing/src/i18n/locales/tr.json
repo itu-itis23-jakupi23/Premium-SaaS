@@ -1649,7 +1649,8 @@
       "priority": {
         "high": "Yüksek",
         "medium": "Orta",
-        "low": "Düşük"
+        "low": "Düşük",
+        "urgent": "Acil"
       },
       "status": {
         "active": "Aktif",

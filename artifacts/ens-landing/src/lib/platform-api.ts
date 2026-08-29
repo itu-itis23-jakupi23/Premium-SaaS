@@ -174,7 +174,7 @@ export interface PlatformClientSummary {
 }
 
 export type PmTaskColumn = "todo" | "in_progress" | "blocked" | "done";
-export type PmTaskPriority = "High" | "Medium" | "Low";
+export type PmTaskPriority = "Urgent" | "High" | "Medium" | "Low";
 
 /**
  * The UI speaks the display vocabulary ("High" / "Medium" / "Low"), which is
@@ -183,7 +183,8 @@ export type PmTaskPriority = "High" | "Medium" | "Low";
  * pmTaskSchema, so the send direction has to be mapped - posting "Medium"
  * failed with an enum error and there is no "medium" on the API side at all.
  */
-const TASK_PRIORITY_TO_API: Record<PmTaskPriority, "low" | "normal" | "high"> = {
+const TASK_PRIORITY_TO_API: Record<PmTaskPriority, "low" | "normal" | "high" | "urgent"> = {
+  Urgent: "urgent",
   High: "high",
   Medium: "normal",
   Low: "low",

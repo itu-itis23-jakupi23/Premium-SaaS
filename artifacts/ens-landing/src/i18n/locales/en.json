@@ -1887,7 +1887,8 @@
       "priority": {
         "high": "High",
         "medium": "Medium",
-        "low": "Low"
+        "low": "Low",
+        "urgent": "Urgent"
       },
       "status": {
         "active": "Active",

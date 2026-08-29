@@ -5717,7 +5717,13 @@ function taskStatusLabel(status: string): PmTaskStatus {
 }
 
 function taskPriorityLabel(priority: string) {
-  if (priority === "urgent" || priority === "high") return "High";
+  // `urgent` used to be reported as "High", which lost the tier on the way
+  // out and then destroyed it on the way back: the task edit dialog resends
+  // whatever it was shown, and "High" maps to `high`, so editing a deadline
+  // silently demoted an urgent task. The sort at the top of this file already
+  // ranked urgent above high, so it dropped down the board as well.
+  if (priority === "urgent") return "Urgent";
+  if (priority === "high") return "High";
   if (priority === "low") return "Low";
   return "Medium";
 }

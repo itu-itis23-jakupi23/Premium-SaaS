@@ -1649,7 +1649,8 @@
       "priority": {
         "high": "Élevé",
         "medium": "Moyen",
-        "low": "Faible"
+        "low": "Faible",
+        "urgent": "Urgent"
       },
       "status": {
         "active": "Actif",

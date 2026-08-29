@@ -1649,7 +1649,8 @@
       "priority": {
         "high": "Hoog",
         "medium": "Middel",
-        "low": "Laag"
+        "low": "Laag",
+        "urgent": "Urgent"
       },
       "status": {
         "active": "Actief",

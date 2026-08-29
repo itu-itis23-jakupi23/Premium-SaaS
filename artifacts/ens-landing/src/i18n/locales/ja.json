@@ -1649,7 +1649,8 @@
       "priority": {
         "high": "高",
         "medium": "中",
-        "low": "低"
+        "low": "低",
+        "urgent": "緊急"
       },
       "status": {
         "active": "アクティブ",

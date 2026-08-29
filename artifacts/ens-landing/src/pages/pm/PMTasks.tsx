@@ -39,9 +39,11 @@ type TaskDraft = {
 };
 
 const COL_IDS: Col[] = ["todo", "in_progress", "blocked", "done"];
-const PRIORITY_FILTER_OPTIONS = ["All", "High", "Medium", "Low"] as const;
+const PRIORITY_FILTER_OPTIONS = ["All", "Urgent", "High", "Medium", "Low"] as const;
 
 const PRIORITY_CFG: Record<Priority, { color: string; bg: string }> = {
+  // Urgent sits above High and has to look like it does.
+  Urgent: { color: "#b91c1c", bg: "rgba(185,28,28,0.14)" },
   High: { color: "#dc2626", bg: "rgba(220,38,38,0.08)" },
   Medium: { color: "#d97706", bg: "rgba(217,119,6,0.08)" },
   Low: { color: "#6b7280", bg: "rgba(107,114,128,0.08)" },
@@ -105,9 +107,10 @@ function compareTasks(a: PmTask, b: PmTask) {
 }
 
 function priorityRank(priority: Priority) {
-  if (priority === "High") return 0;
-  if (priority === "Medium") return 1;
-  return 2;
+  if (priority === "Urgent") return 0;
+  if (priority === "High") return 1;
+  if (priority === "Medium") return 2;
+  return 3;
 }
 
 function dateRank(value: string) {
@@ -702,6 +705,7 @@ export default function PMTasks() {
                     aria-label={t("pm.tasks.modal.priority")}
                     className="w-full h-9 border rounded-md px-3 text-sm bg-muted/30 outline-none focus:border-primary"
                   >
+                    <option value="Urgent">{t("pm.common.priority.urgent")}</option>
                     <option value="High">{t("pm.common.priority.high")}</option>
                     <option value="Medium">{t("pm.common.priority.medium")}</option>
                     <option value="Low">{t("pm.common.priority.low")}</option>
@@ -808,6 +812,7 @@ export default function PMTasks() {
                     aria-label={t("pm.tasks.modal.priority")}
                     className="w-full h-9 border rounded-md px-3 text-sm bg-muted/30 outline-none focus:border-primary"
                   >
+                    <option value="Urgent">{t("pm.common.priority.urgent")}</option>
                     <option value="High">{t("pm.common.priority.high")}</option>
                     <option value="Medium">{t("pm.common.priority.medium")}</option>
                     <option value="Low">{t("pm.common.priority.low")}</option>
