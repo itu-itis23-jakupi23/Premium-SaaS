@@ -412,8 +412,9 @@ router.post("/platform/quotes/:quoteId/respond", async (req, res) => {
 
   const clientId = await callerClientId(auth);
   const quoteId = req.params.quoteId;
-  const rows = await queryRows<{ status: string; clientId: string | null; projectId: string | null; quoteNumber: string; createdBy: string | null }>(sql`
-    select q.status, q.client_id::text as "clientId", q.project_id::text as "projectId", q.quote_number as "quoteNumber", q.created_by_user_id::text as "createdBy"
+  const rows = await queryRows<{ status: string; clientId: string | null; projectId: string | null; quoteNumber: string; createdBy: string | null; hasExpired: boolean }>(sql`
+    select q.status, q.client_id::text as "clientId", q.project_id::text as "projectId", q.quote_number as "quoteNumber", q.created_by_user_id::text as "createdBy",
+      coalesce(q.valid_until < now(), false) as "hasExpired"
     from quotes q
     where q.id = ${quoteId}::uuid and q.organization_id = ${auth.organization.id}::uuid and q.deleted_at is null
     limit 1
@@ -425,6 +426,35 @@ router.post("/platform/quotes/:quoteId/respond", async (req, res) => {
   }
   if (!["sent", "viewed"].includes(quote.status)) {
     res.status(409).json({ error: { code: "not_respondable", message: "This quote can no longer be responded to." } });
+    return;
+  }
+
+  // `valid_until` was stored, shown to the client as the date the quote is good
+  // until, and then never enforced, so a client could accept six-month-old
+  // pricing and the business was bound by it. Expiry is only checked on accept:
+  // declining a stale quote is harmless and should not be met with an error.
+  //
+  // The quote is moved to `expired` rather than left sitting in `sent`, which
+  // both tells staff why the client could not accept and puts it in the one
+  // state /send will re-issue from. That transition was designed for - `expired`
+  // is in the send-allowed list - and simply never wired up.
+  if (decision === "accept" && quote.hasExpired) {
+    await db.execute(sql`
+      update quotes set status = 'expired'::quote_status, updated_at = now() where id = ${quoteId}::uuid
+    `);
+    await logEvent(
+      auth.organization.id,
+      auth.user.id,
+      quote.projectId,
+      "quote_expired",
+      `could not accept quote ${quote.quoteNumber}: past its valid-until date`,
+    );
+    res.status(409).json({
+      error: {
+        code: "quote_expired",
+        message: "This quote has passed its valid-until date. Ask your project manager to re-issue it.",
+      },
+    });
     return;
   }
 

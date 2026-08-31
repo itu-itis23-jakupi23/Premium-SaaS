@@ -139,4 +139,100 @@ describe("quotes workflow", () => {
     const delDraft = await request(app).delete(`/api/platform/quotes/${draftId}`).set("Cookie", chiefCookies);
     expect(delDraft.status).toBe(204);
   });
+
+  /** A quote sitting with the client whose valid-until date has already gone. */
+  async function staleQuote() {
+    const created = await request(app)
+      .post("/api/platform/quotes")
+      .set("Cookie", chiefCookies)
+      .send({
+        clientId,
+        title: "Last season's pricing",
+        lineItems,
+        validUntil: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+    expect(created.status).toBe(201);
+    const id = created.body.quote.id as string;
+    const sent = await request(app).post(`/api/platform/quotes/${id}/send`).set("Cookie", chiefCookies).send({});
+    expect(sent.status).toBe(200);
+    return id;
+  }
+
+  it("will not let a client accept a quote past its valid-until date", async () => {
+    const id = await staleQuote();
+    const res = await request(app)
+      .post(`/api/platform/quotes/${id}/respond`)
+      .set("Cookie", clientCookies)
+      .send({ decision: "accept" });
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe("quote_expired");
+  });
+
+  it("marks the stale quote expired so staff can see why and re-issue it", async () => {
+    const id = await staleQuote();
+    await request(app)
+      .post(`/api/platform/quotes/${id}/respond`)
+      .set("Cookie", clientCookies)
+      .send({ decision: "accept" });
+
+    const after = await request(app).get(`/api/platform/quotes/${id}`).set("Cookie", chiefCookies);
+    expect(after.body.quote.status).toBe("expired");
+
+    // `expired` is one of the states /send re-issues from, which is the whole
+    // point of moving it there rather than leaving it stuck in `sent`.
+    const reissued = await request(app).post(`/api/platform/quotes/${id}/send`).set("Cookie", chiefCookies).send({});
+    expect(reissued.status).toBe(200);
+    expect(reissued.body.quote.status).toBe("sent");
+  });
+
+  it("still lets a client decline a stale quote without an error", async () => {
+    // Saying no to old pricing is harmless, and refusing the decline would
+    // leave the quote sitting open forever.
+    const id = await staleQuote();
+    const res = await request(app)
+      .post(`/api/platform/quotes/${id}/respond`)
+      .set("Cookie", clientCookies)
+      .send({ decision: "reject" });
+    expect(res.status).toBe(200);
+    expect(res.body.quote.status).toBe("rejected");
+  });
+
+  it("accepts a quote that is still inside its valid-until date", async () => {
+    const created = await request(app)
+      .post("/api/platform/quotes")
+      .set("Cookie", chiefCookies)
+      .send({
+        clientId,
+        title: "Current pricing",
+        lineItems,
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+    const id = created.body.quote.id as string;
+    await request(app).post(`/api/platform/quotes/${id}/send`).set("Cookie", chiefCookies).send({});
+
+    const res = await request(app)
+      .post(`/api/platform/quotes/${id}/respond`)
+      .set("Cookie", clientCookies)
+      .send({ decision: "accept" });
+    expect(res.status).toBe(200);
+    expect(res.body.quote.status).toBe("accepted");
+  });
+
+  it("accepts a quote with no valid-until date at all", async () => {
+    // Most quotes carry no expiry. They must stay acceptable indefinitely
+    // rather than being caught by a null comparison.
+    const created = await request(app)
+      .post("/api/platform/quotes")
+      .set("Cookie", chiefCookies)
+      .send({ clientId, title: "Open-ended", lineItems });
+    const id = created.body.quote.id as string;
+    await request(app).post(`/api/platform/quotes/${id}/send`).set("Cookie", chiefCookies).send({});
+
+    const res = await request(app)
+      .post(`/api/platform/quotes/${id}/respond`)
+      .set("Cookie", clientCookies)
+      .send({ decision: "accept" });
+    expect(res.status).toBe(200);
+    expect(res.body.quote.status).toBe("accepted");
+  });
 });
