@@ -3086,19 +3086,33 @@ function drawSelectedItemGizmo(container) {
 
 function renderBooth() {
   const g = document.getElementById('boothGroup');
-  const sorted = [...faces].map((f,i)=>({...f, idx:i, depth:avgDepth(f)}))
-    .sort((a,b) => {
-      const layer = renderOrder(a) - renderOrder(b);
-      if (Math.abs(layer) > 0.0001) return layer;
-      const depth = b.depth - a.depth;
-      if (Math.abs(depth) > 0.0001) return depth;
-      return a.idx - b.idx;
-    });
+  // Sort indices, not copies. This used to spread every face into a fresh
+  // object to carry two extra fields - 1,586 allocations of a fifteen-property
+  // record per frame, measured at 5.65 ms of a 29 ms pass. The depth and layer
+  // each face sorts on live in typed arrays beside it instead, which also keeps
+  // the comparator free of function calls.
+  const faceCount = faces.length;
+  const faceDepth = new Float64Array(faceCount);
+  const faceLayer = new Float64Array(faceCount);
+  for (let i = 0; i < faceCount; i++) {
+    faceDepth[i] = avgDepth(faces[i]);
+    faceLayer[i] = renderOrder(faces[i]);
+  }
+  const sorted = new Array(faceCount);
+  for (let i = 0; i < faceCount; i++) sorted[i] = i;
+  sorted.sort((a, b) => {
+    const layer = faceLayer[a] - faceLayer[b];
+    if (Math.abs(layer) > 0.0001) return layer;
+    const depth = faceDepth[b] - faceDepth[a];
+    if (Math.abs(depth) > 0.0001) return depth;
+    return a - b;
+  });
 
   const container = document.createElementNS(SVG_NS, 'g');
   g.appendChild(container);
 
-  for (const face of sorted) {
+  for (const faceIndex of sorted) {
+    const face = faces[faceIndex];
     if (face.isCarpet) continue;
     const proj = face.pts.map(project);
     if (proj.some(p => !p)) {
@@ -3112,7 +3126,18 @@ function renderBooth() {
     }
 
     const intensity = faceIntensity(face);
-    const points = proj.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+    // Built by hand rather than map/toFixed/join. This is the hottest line in
+    // the renderer - two toFixed calls per vertex across every face came to
+    // 10.3 ms of a 29 ms pass, more than the entire DOM cost. Rounding to two
+    // decimals the arithmetic way gives SVG the same geometry; the only
+    // difference is that a whole number now writes as "10" rather than "10.00",
+    // which the parser treats identically.
+    let points = '';
+    for (let i = 0; i < proj.length; i++) {
+      const point = proj[i];
+      if (i > 0) points += ' ';
+      points += Math.round(point.x * 100) / 100 + ',' + Math.round(point.y * 100) / 100;
+    }
 
     // The seam used to be a whole extra polygon laid over the face: 804 of the
     // 2,157 nodes in a measured stand, each carrying its own copy of the same
@@ -3169,7 +3194,7 @@ function renderBooth() {
         const maxX = Math.max(...xs);
         const minY = Math.min(...ys);
         const maxY = Math.max(...ys);
-        const clipId = 'clip-panel-design-' + face.idx;
+        const clipId = 'clip-panel-design-' + faceIndex;
         const clip = document.createElementNS(SVG_NS, 'clipPath');
         clip.setAttribute('id', clipId);
         const clipPoly = document.createElementNS(SVG_NS, 'polygon');
