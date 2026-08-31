@@ -249,6 +249,10 @@ jobs:
         working-directory: lib/api-zod
         run: pnpm run test
 
+      - name: Test scripts (operational script logic)
+        working-directory: scripts
+        run: pnpm run test
+
       - name: Build api-server
         working-directory: artifacts/api-server
         run: pnpm run build
