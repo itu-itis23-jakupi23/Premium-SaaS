@@ -117,19 +117,116 @@ describe("invoices workflow", () => {
     expect(delDraft.status).toBe(204);
   });
 
-  it("creates an invoice from an existing quote, copying its line items and totals", async () => {
+  /** A quote the client has actually agreed to: draft -> sent -> accepted. */
+  async function acceptedQuote() {
     const quote = await request(app)
       .post("/api/platform/quotes")
       .set("Cookie", chiefCookies)
       .send({ clientId, title: "Full booth", currency: "USD", discountCents: 10_000, taxCents: 20_000, lineItems });
     expect(quote.status).toBe(201);
+    const quoteId = quote.body.quote.id as string;
+
+    const sent = await request(app)
+      .post(`/api/platform/quotes/${quoteId}/send`)
+      .set("Cookie", chiefCookies)
+      .send({});
+    expect(sent.status).toBe(200);
+
+    const accepted = await request(app)
+      .post(`/api/platform/quotes/${quoteId}/respond`)
+      .set("Cookie", clientCookies)
+      .send({ decision: "accept" });
+    expect(accepted.status).toBe(200);
+
+    return quote.body.quote as { id: string; totalCents: number };
+  }
+
+  it("creates an invoice from an accepted quote, copying its line items and totals", async () => {
+    const quote = await acceptedQuote();
+    const res = await request(app)
+      .post("/api/platform/invoices")
+      .set("Cookie", chiefCookies)
+      .send({ quoteId: quote.id });
+    expect(res.status).toBe(201);
+    expect(res.body.invoice.quoteId).toBe(quote.id);
+    expect(res.body.invoice.subtotalCents).toBe(2_090_000);
+    expect(res.body.invoice.totalCents).toBe(quote.totalCents);
+  });
+
+  it("will not invoice a draft quote the client has never seen", async () => {
+    const quote = await request(app)
+      .post("/api/platform/quotes")
+      .set("Cookie", chiefCookies)
+      .send({ clientId, title: "Not sent yet", currency: "USD", lineItems });
+    expect(quote.status).toBe(201);
+
     const res = await request(app)
       .post("/api/platform/invoices")
       .set("Cookie", chiefCookies)
       .send({ quoteId: quote.body.quote.id });
-    expect(res.status).toBe(201);
-    expect(res.body.invoice.quoteId).toBe(quote.body.quote.id);
-    expect(res.body.invoice.subtotalCents).toBe(2_090_000);
-    expect(res.body.invoice.totalCents).toBe(quote.body.quote.totalCents);
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe("quote_not_accepted");
+  });
+
+  it("will not invoice a quote the client rejected", async () => {
+    const quote = await request(app)
+      .post("/api/platform/quotes")
+      .set("Cookie", chiefCookies)
+      .send({ clientId, title: "Declined work", currency: "USD", lineItems });
+    const quoteId = quote.body.quote.id as string;
+    await request(app).post(`/api/platform/quotes/${quoteId}/send`).set("Cookie", chiefCookies).send({});
+    const rejected = await request(app)
+      .post(`/api/platform/quotes/${quoteId}/respond`)
+      .set("Cookie", clientCookies)
+      .send({ decision: "reject" });
+    expect(rejected.status).toBe(200);
+
+    const res = await request(app)
+      .post("/api/platform/invoices")
+      .set("Cookie", chiefCookies)
+      .send({ quoteId });
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe("quote_not_accepted");
+  });
+
+  it("bills an accepted quote once, naming the invoice that already exists", async () => {
+    const quote = await acceptedQuote();
+    const first = await request(app)
+      .post("/api/platform/invoices")
+      .set("Cookie", chiefCookies)
+      .send({ quoteId: quote.id });
+    expect(first.status).toBe(201);
+
+    const second = await request(app)
+      .post("/api/platform/invoices")
+      .set("Cookie", chiefCookies)
+      .send({ quoteId: quote.id });
+    expect(second.status).toBe(409);
+    expect(second.body.error.code).toBe("quote_already_invoiced");
+    expect(second.body.error.message).toContain(first.body.invoice.invoiceNumber);
+  });
+
+  it("lets a voided invoice be re-issued from the same quote", async () => {
+    // Voiding is how a mistaken invoice is withdrawn, so it has to leave the
+    // quote billable again - otherwise a typo strands the money permanently.
+    const quote = await acceptedQuote();
+    const first = await request(app)
+      .post("/api/platform/invoices")
+      .set("Cookie", chiefCookies)
+      .send({ quoteId: quote.id });
+    expect(first.status).toBe(201);
+
+    const voided = await request(app)
+      .post(`/api/platform/invoices/${first.body.invoice.id}/void`)
+      .set("Cookie", chiefCookies)
+      .send({});
+    expect(voided.status).toBe(200);
+
+    const reissued = await request(app)
+      .post("/api/platform/invoices")
+      .set("Cookie", chiefCookies)
+      .send({ quoteId: quote.id });
+    expect(reissued.status).toBe(201);
+    expect(reissued.body.invoice.totalCents).toBe(quote.totalCents);
   });
 });

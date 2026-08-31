@@ -189,6 +189,45 @@ router.post("/platform/invoices", async (req, res) => {
         from quotes where id = ${fromQuoteId}::uuid and organization_id = ${auth.organization.id}::uuid and deleted_at is null limit 1
       `);
       if (!q[0]) { res.status(404).json({ error: { code: "quote_not_found", message: "Quote not found." } }); return; }
+
+      // Only a quote the client actually agreed to may be billed. The status
+      // was already being selected here and then dropped on the floor, so a
+      // draft the client had never seen - or one they had explicitly rejected -
+      // could be turned into an invoice and sent for payment.
+      if (q[0].status !== "accepted") {
+        res.status(409).json({
+          error: {
+            code: "quote_not_accepted",
+            message: "Only an accepted quote can be invoiced.",
+          },
+        });
+        return;
+      }
+
+      // One invoice per quote. Nothing here bills a part of a quote - the lines
+      // and totals are copied wholesale - so a second invoice from the same
+      // quote is the same money charged twice. Voided invoices are ignored on
+      // purpose: voiding is how a mistaken invoice is withdrawn, and it has to
+      // leave the quote billable again.
+      const alreadyBilled = await queryRows<{ invoiceNumber: string }>(sql`
+        select invoice_number as "invoiceNumber"
+        from invoices
+        where quote_id = ${fromQuoteId}::uuid
+          and organization_id = ${auth.organization.id}::uuid
+          and deleted_at is null
+          and status::text <> 'void'
+        limit 1
+      `);
+      if (alreadyBilled[0]) {
+        res.status(409).json({
+          error: {
+            code: "quote_already_invoiced",
+            message: `This quote was already invoiced as ${alreadyBilled[0].invoiceNumber}.`,
+          },
+        });
+        return;
+      }
+
       const id = await insertInvoice(auth, {
         clientId: q[0].clientId, projectId: q[0].projectId, quoteId: fromQuoteId,
         title: q[0].title ?? "Invoice", currency: q[0].currency,
