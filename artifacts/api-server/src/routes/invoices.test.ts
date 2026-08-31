@@ -6,6 +6,7 @@ import {
   cleanupTestOrg,
   createTestUser,
   createTestClient,
+  createTestProject,
   loginAs,
   type TestOrg,
   type TestUser,
@@ -115,6 +116,33 @@ describe("invoices workflow", () => {
     const draft = await request(app).post("/api/platform/invoices").set("Cookie", chiefCookies).send({ clientId, lineItems });
     const delDraft = await request(app).delete(`/api/platform/invoices/${draft.body.invoice.id}`).set("Cookie", chiefCookies);
     expect(delDraft.status).toBe(204);
+  });
+
+  it("bills a project in the money that project is budgeted in", async () => {
+    const project = await createTestProject(org.id, clientId);
+    const res = await request(app)
+      .post("/api/platform/invoices")
+      .set("Cookie", chiefCookies)
+      .send({ projectId: project.id, lineItems });
+    expect(res.status).toBe(201);
+    expect(res.body.invoice.currency).toBe("EUR");
+  });
+
+  it("will not attach an invoice to another organisation's project", async () => {
+    const otherOrg = await createTestOrg();
+    try {
+      const otherClient = await createTestClient(otherOrg.id, { status: "active" });
+      const otherProject = await createTestProject(otherOrg.id, otherClient.id);
+
+      const res = await request(app)
+        .post("/api/platform/invoices")
+        .set("Cookie", chiefCookies)
+        .send({ clientId, projectId: otherProject.id, lineItems });
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("invalid_project");
+    } finally {
+      await cleanupTestOrg(otherOrg.id);
+    }
   });
 
   /** A quote the client has actually agreed to: draft -> sent -> accepted. */

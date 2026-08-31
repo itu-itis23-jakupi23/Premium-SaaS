@@ -6,6 +6,7 @@ import {
   cleanupTestOrg,
   createTestUser,
   createTestClient,
+  createTestProject,
   loginAs,
   type TestOrg,
   type TestUser,
@@ -138,6 +139,49 @@ describe("quotes workflow", () => {
     expect(editDraft.body.quote.title).toBe("Revised");
     const delDraft = await request(app).delete(`/api/platform/quotes/${draftId}`).set("Cookie", chiefCookies);
     expect(delDraft.status).toBe(204);
+  });
+
+  it("bills a project in the money that project is budgeted in", async () => {
+    // Quotes defaulted to USD while projects default to EUR, so a quote raised
+    // against a euro project came out in dollars from the defaults alone - and
+    // the chief's revenue report adds those totals straight together.
+    const project = await createTestProject(org.id, clientId);
+    const res = await request(app)
+      .post("/api/platform/quotes")
+      .set("Cookie", chiefCookies)
+      .send({ projectId: project.id, lineItems });
+    expect(res.status).toBe(201);
+    expect(res.body.quote.currency).toBe("EUR");
+  });
+
+  it("still honours a currency the caller asks for", async () => {
+    const project = await createTestProject(org.id, clientId);
+    const res = await request(app)
+      .post("/api/platform/quotes")
+      .set("Cookie", chiefCookies)
+      .send({ projectId: project.id, currency: "gbp", lineItems });
+    expect(res.status).toBe(201);
+    expect(res.body.quote.currency).toBe("GBP");
+  });
+
+  it("will not attach a quote to another organisation's project", async () => {
+    // The project lookup used to be skipped whenever a clientId was supplied
+    // too, so the id went into the row unchecked and the quote was pinned to a
+    // project in a different tenant.
+    const otherOrg = await createTestOrg();
+    try {
+      const otherClient = await createTestClient(otherOrg.id, { status: "active" });
+      const otherProject = await createTestProject(otherOrg.id, otherClient.id);
+
+      const res = await request(app)
+        .post("/api/platform/quotes")
+        .set("Cookie", chiefCookies)
+        .send({ clientId, projectId: otherProject.id, lineItems });
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("invalid_project");
+    } finally {
+      await cleanupTestOrg(otherOrg.id);
+    }
   });
 
   /** A quote sitting with the client whose valid-until date has already gone. */

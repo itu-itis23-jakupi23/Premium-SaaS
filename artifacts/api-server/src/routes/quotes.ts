@@ -228,17 +228,26 @@ router.post("/platform/quotes", async (req, res) => {
   const projectId = typeof body.projectId === "string" && body.projectId ? body.projectId : null;
   let clientId = typeof body.clientId === "string" && body.clientId ? body.clientId : null;
 
-  // If a project is given, inherit its client.
-  if (projectId && !clientId) {
-    const p = await queryRows<{ clientId: string | null }>(sql`
-      select client_id::text as "clientId" from projects
+  // If a project is given, inherit its client and the money it is budgeted in.
+  //
+  // The lookup used to be skipped whenever a clientId was also supplied, which
+  // meant the project id went into the row unchecked - so a quote could be
+  // pinned to another organization's project. Nothing renders that project's
+  // name, so nothing leaked, but it wrote a cross-tenant reference and put the
+  // quote outside its own org's project reporting. It is validated whenever it
+  // is present now.
+  let projectCurrency: string | null = null;
+  if (projectId) {
+    const p = await queryRows<{ clientId: string | null; currency: string }>(sql`
+      select client_id::text as "clientId", currency from projects
       where id = ${projectId}::uuid and organization_id = ${auth.organization.id}::uuid and deleted_at is null limit 1
     `);
     if (!p[0]) {
       res.status(400).json({ error: { code: "invalid_project", message: "Project not found." } });
       return;
     }
-    clientId = p[0].clientId;
+    projectCurrency = p[0].currency;
+    if (!clientId) clientId = p[0].clientId;
   }
 
   const items = normalizeLineItems(body.lineItems);
@@ -249,7 +258,13 @@ router.post("/platform/quotes", async (req, res) => {
   const discountCents = Math.max(0, toInt(body.discountCents));
   const taxCents = Math.max(0, toInt(body.taxCents));
   const { subtotalCents, totalCents } = computeTotals(items, discountCents, taxCents);
-  const currency = typeof body.currency === "string" ? body.currency.slice(0, 3).toUpperCase() : "USD";
+  // Quotes defaulted to USD while projects and invoices default to EUR, so a
+  // quote raised against a euro project came out in dollars from the defaults
+  // alone - and the chief's revenue report adds those totals straight together.
+  // An explicit currency still wins; the project's is only the fallback.
+  const currency = typeof body.currency === "string"
+    ? body.currency.slice(0, 3).toUpperCase()
+    : (projectCurrency ?? "USD");
   const title = typeof body.title === "string" ? body.title.slice(0, 200) : null;
   const notes = typeof body.notes === "string" ? body.notes.slice(0, 8000) : null;
   const terms = typeof body.terms === "string" ? body.terms.slice(0, 8000) : null;

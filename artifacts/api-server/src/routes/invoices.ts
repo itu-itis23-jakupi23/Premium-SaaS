@@ -242,16 +242,25 @@ router.post("/platform/invoices", async (req, res) => {
     // Manual invoice.
     let clientId = typeof body.clientId === "string" && body.clientId ? body.clientId : null;
     const projectId = typeof body.projectId === "string" && body.projectId ? body.projectId : null;
-    if (projectId && !clientId) {
-      const p = await queryRows<{ clientId: string | null }>(sql`select client_id::text as "clientId" from projects where id = ${projectId}::uuid and organization_id = ${auth.organization.id}::uuid limit 1`);
-      clientId = p[0]?.clientId ?? null;
+
+    // Same as quotes: validate the project whenever one is named, not only when
+    // the client has to be inferred from it, and bill in the money the project
+    // is budgeted in. Skipping the lookup let an invoice be pinned to another
+    // organization's project, and an unknown project id was swallowed instead
+    // of reported.
+    let projectCurrency: string | null = null;
+    if (projectId) {
+      const p = await queryRows<{ clientId: string | null; currency: string }>(sql`select client_id::text as "clientId", currency from projects where id = ${projectId}::uuid and organization_id = ${auth.organization.id}::uuid and deleted_at is null limit 1`);
+      if (!p[0]) { res.status(400).json({ error: { code: "invalid_project", message: "Project not found." } }); return; }
+      projectCurrency = p[0].currency;
+      if (!clientId) clientId = p[0].clientId;
     }
     const items = normalizeLineItems(body.lineItems);
     if (items.length === 0) { res.status(400).json({ error: { code: "no_line_items", message: "An invoice needs at least one line item." } }); return; }
     const id = await insertInvoice(auth, {
       clientId, projectId, quoteId: null,
       title: typeof body.title === "string" ? body.title.slice(0, 200) : null,
-      currency: typeof body.currency === "string" ? body.currency.slice(0, 3).toUpperCase() : "USD",
+      currency: typeof body.currency === "string" ? body.currency.slice(0, 3).toUpperCase() : (projectCurrency ?? "USD"),
       items, discountCents: Math.max(0, toInt(body.discountCents)), taxCents: Math.max(0, toInt(body.taxCents)),
       notes: typeof body.notes === "string" ? body.notes.slice(0, 8000) : null,
       dueAt: typeof body.dueAt === "string" && body.dueAt ? body.dueAt : null,
