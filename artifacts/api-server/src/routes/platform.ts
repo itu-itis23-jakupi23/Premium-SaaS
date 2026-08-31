@@ -19,6 +19,11 @@ import {
 } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
 import { hashPassword, verifyPassword } from "../lib/password";
+import {
+  normalizePipelineStage,
+  pipelineStageFromProjectStatus,
+  type PipelineStage,
+} from "../lib/pipeline-stage";
 import { createRefreshToken, hashToken } from "../lib/tokens";
 import {
   sendClientApprovedEmail,
@@ -7002,27 +7007,6 @@ function pipelineStageToProject(stage: PipelineStage) {
   return { status: "planning", health: "on_track" };
 }
 
-function pipelineStageFromProjectStatus(status: string): PipelineStage {
-  if (status === "completed" || status === "approved") return "closed";
-  if (status === "in_production") return "production";
-  if (status === "client_review" || status === "revision") return "review";
-  if (status === "in_design") return "design";
-  return "intake";
-}
-
-function normalizePipelineStage(stage: string | null): PipelineStage | null {
-  if (
-    stage === "intake" ||
-    stage === "design" ||
-    stage === "review" ||
-    stage === "production" ||
-    stage === "closed"
-  ) {
-    return stage;
-  }
-  return null;
-}
-
 function parseProjectListQuery(
   query: Record<string, unknown>,
 ): ProjectListQuery {
@@ -7425,7 +7409,6 @@ function parseUpdateProjectInput(body: unknown) {
   return zParse(updateProjectSchema, body);
 }
 
-type PipelineStage = "intake" | "design" | "review" | "production" | "closed";
 
 function parsePipelineStageInput(body: unknown) {
   return zParse(pipelineStageSchema, body);
