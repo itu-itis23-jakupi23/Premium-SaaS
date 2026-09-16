@@ -88,6 +88,9 @@ import {
   positionBoundsForItem,
   roomPlacementIssue,
   findAvailableRoomPlacement,
+  alignedPositions,
+  distributedPositions,
+  type AlignEdge,
   placementIssuesFor,
   availableRoomWallSides,
   type PlacementIssue,
@@ -1024,50 +1027,32 @@ export default function PMWorkspace() {
    * right edge - not to the booth, because a designer lining furniture up is
    * lining it up with itself.
    */
-  const alignItems = (ids:string[], edge:'left'|'right'|'centre-x'|'front'|'back'|'centre-z') => {
+  /*
+   * Where things should go is geometry and lives in workspace-geometry.ts;
+   * whether the result may be kept is applyItemPositions' business. These two
+   * only join them up, filter out what is locked, and say why nothing happened.
+   *
+   * The locked filter is here rather than in the geometry because a locked item
+   * must not move *and* must not drag the group's extent around - so it simply
+   * is not among the items handed over.
+   */
+  const alignItems = (ids:string[], edge:AlignEdge) => {
     const chosen = ws.placedItems.filter(item => ids.includes(item.id) && !item.locked);
     if(chosen.length < 2) {
       setToast('Select two or more items to align');
       return;
     }
-    const spanOf = (item:WorkspacePlacedItem) => rotatedItemFootprint(item);
-    const alongX = edge === 'left' || edge === 'right' || edge === 'centre-x';
-    const lows = chosen.map(item => (alongX ? item.x - spanOf(item).width/2 : item.z - spanOf(item).depth/2));
-    const highs = chosen.map(item => (alongX ? item.x + spanOf(item).width/2 : item.z + spanOf(item).depth/2));
-    const low = Math.min(...lows);
-    const high = Math.max(...highs);
-    const mid = (low + high) / 2;
-    const target = (item:WorkspacePlacedItem) => {
-      const half = (alongX ? spanOf(item).width : spanOf(item).depth) / 2;
-      if(edge === 'left' || edge === 'back') return low + half;
-      if(edge === 'right' || edge === 'front') return high - half;
-      return mid;
-    };
-    applyItemPositions(chosen.map(item => ({
-      id: item.id,
-      x: alongX ? target(item) : item.x,
-      z: alongX ? item.z : target(item),
-    })), 'Align blocked');
+    applyItemPositions(alignedPositions(chosen, edge), 'Align blocked');
   };
 
   /** Even gaps between the outermost two, along whichever axis is asked for. */
   const distributeItems = (ids:string[], axis:'x'|'z') => {
-    const chosen = ws.placedItems
-      .filter(item => ids.includes(item.id) && !item.locked)
-      .sort((a, b) => (axis === 'x' ? a.x - b.x : a.z - b.z));
+    const chosen = ws.placedItems.filter(item => ids.includes(item.id) && !item.locked);
     if(chosen.length < 3) {
       setToast('Select three or more items to distribute');
       return;
     }
-    const centre = (item:WorkspacePlacedItem) => (axis === 'x' ? item.x : item.z);
-    const first = centre(chosen[0]);
-    const last = centre(chosen[chosen.length - 1]);
-    const step = (last - first) / (chosen.length - 1);
-    applyItemPositions(chosen.map((item, index) => ({
-      id: item.id,
-      x: axis === 'x' ? first + step * index : item.x,
-      z: axis === 'x' ? item.z : first + step * index,
-    })), 'Distribute blocked');
+    applyItemPositions(distributedPositions(chosen, axis), 'Distribute blocked');
   };
 
   /**

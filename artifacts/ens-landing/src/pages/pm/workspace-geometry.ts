@@ -390,3 +390,92 @@ export function roomPlacementReason(candidate: WorkspaceRoom, rooms: WorkspaceRo
   }
   return "";
 }
+
+/* ── Arranging a selection ─────────────────────────────────────────────────
+ *
+ * The six alignments and the two distributions, as data in and data out. They
+ * lived inline in PMWorkspace.tsx, closing over `ws` and `commit`, which put
+ * them out of reach of the test suite - the only thing that had ever exercised
+ * them was a browser.
+ *
+ * These decide *where things should go*, and nothing else. Whether the result
+ * is allowed is a separate question, answered by placementIssuesFor() on the
+ * whole arrangement, and whether it is kept is the caller's: the workspace
+ * applies all of the returned positions or none of them, because half an
+ * alignment is worse than none when the designer cannot see what was skipped.
+ *
+ * Locked items are the caller's business too. It passes in the items that are
+ * allowed to move, and a locked one is simply not among them - so it does not
+ * shift, and it does not drag the group's extent around either.
+ */
+
+/** Which edge of the selection's own extent to line up on. */
+export type AlignEdge = 'left' | 'right' | 'centre-x' | 'front' | 'back' | 'centre-z';
+
+/** The least an arrangement needs to know about an item. */
+export type ArrangeItem = Pick<WorkspacePlacedItem, 'id' | 'x' | 'z' | 'w' | 'd'>
+  & Partial<Pick<WorkspacePlacedItem, 'rotationY' | 'rotation'>>;
+
+/** Where one item should end up. */
+export interface ArrangedPosition {
+  id: string;
+  x: number;
+  z: number;
+}
+
+function footprintOf(item: ArrangeItem) {
+  return rotatedItemFootprint(item as WorkspacePlacedItem);
+}
+
+/**
+ * Line a selection up on one edge of its own extent.
+ *
+ * To its own extent, not to the booth: someone lining furniture up is lining it
+ * up with itself. Fewer than two items has no extent to speak of and returns
+ * nothing to do.
+ */
+export function alignedPositions(items: ArrangeItem[], edge: AlignEdge): ArrangedPosition[] {
+  if (items.length < 2) return [];
+  const alongX = edge === 'left' || edge === 'right' || edge === 'centre-x';
+  const halfOf = (item: ArrangeItem) => (alongX ? footprintOf(item).width : footprintOf(item).depth) / 2;
+  const centreOf = (item: ArrangeItem) => (alongX ? item.x : item.z);
+  const low = Math.min(...items.map(item => centreOf(item) - halfOf(item)));
+  const high = Math.max(...items.map(item => centreOf(item) + halfOf(item)));
+  const mid = (low + high) / 2;
+  const target = (item: ArrangeItem) => {
+    const half = halfOf(item);
+    if (edge === 'left' || edge === 'back') return low + half;
+    if (edge === 'right' || edge === 'front') return high - half;
+    return mid;
+  };
+  return items.map(item => ({
+    id: item.id,
+    x: alongX ? target(item) : item.x,
+    z: alongX ? item.z : target(item),
+  }));
+}
+
+/**
+ * Even gaps between the outermost two, along one axis.
+ *
+ * The ends stay where they are and everything between them is respaced, which
+ * is what "space these evenly" means to someone who has already placed the two
+ * that matter. Fewer than three items has nothing between the ends.
+ *
+ * The gaps come out even in metres; the workspace snaps each result to the
+ * furniture grid afterwards, so the applied gaps can differ by up to one grid
+ * step.
+ */
+export function distributedPositions(items: ArrangeItem[], axis: 'x' | 'z'): ArrangedPosition[] {
+  if (items.length < 3) return [];
+  const centreOf = (item: ArrangeItem) => (axis === 'x' ? item.x : item.z);
+  const ordered = [...items].sort((a, b) => centreOf(a) - centreOf(b));
+  const first = centreOf(ordered[0]);
+  const last = centreOf(ordered[ordered.length - 1]);
+  const step = (last - first) / (ordered.length - 1);
+  return ordered.map((item, index) => ({
+    id: item.id,
+    x: axis === 'x' ? first + step * index : item.x,
+    z: axis === 'x' ? item.z : first + step * index,
+  }));
+}

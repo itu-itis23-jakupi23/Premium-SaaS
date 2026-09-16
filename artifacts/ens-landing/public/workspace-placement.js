@@ -25,10 +25,12 @@ var ENSPlacement = (() => {
   // artifacts/ens-landing/src/pages/pm/workspace-geometry.ts
   var workspace_geometry_exports = {};
   __export(workspace_geometry_exports, {
+    alignedPositions: () => alignedPositions,
     applyRoomLimits: () => applyRoomLimits,
     availableRoomWallSides: () => availableRoomWallSides,
     clampInsideRoom: () => clampInsideRoom,
     clampItemToBooth: () => clampItemToBooth,
+    distributedPositions: () => distributedPositions,
     findAvailableRoomPlacement: () => findAvailableRoomPlacement,
     itemPositionBounds: () => itemPositionBounds,
     placementIssuesFor: () => placementIssuesFor,
@@ -326,6 +328,42 @@ var ENSPlacement = (() => {
       if (conflict === "door") return `Blocks ${String(candidate.name || "room")} door clearance`;
     }
     return "";
+  }
+  function footprintOf(item) {
+    return rotatedItemFootprint(item);
+  }
+  function alignedPositions(items, edge) {
+    if (items.length < 2) return [];
+    const alongX = edge === "left" || edge === "right" || edge === "centre-x";
+    const halfOf = (item) => (alongX ? footprintOf(item).width : footprintOf(item).depth) / 2;
+    const centreOf = (item) => alongX ? item.x : item.z;
+    const low = Math.min(...items.map((item) => centreOf(item) - halfOf(item)));
+    const high = Math.max(...items.map((item) => centreOf(item) + halfOf(item)));
+    const mid = (low + high) / 2;
+    const target = (item) => {
+      const half = halfOf(item);
+      if (edge === "left" || edge === "back") return low + half;
+      if (edge === "right" || edge === "front") return high - half;
+      return mid;
+    };
+    return items.map((item) => ({
+      id: item.id,
+      x: alongX ? target(item) : item.x,
+      z: alongX ? item.z : target(item)
+    }));
+  }
+  function distributedPositions(items, axis) {
+    if (items.length < 3) return [];
+    const centreOf = (item) => axis === "x" ? item.x : item.z;
+    const ordered = [...items].sort((a, b) => centreOf(a) - centreOf(b));
+    const first = centreOf(ordered[0]);
+    const last = centreOf(ordered[ordered.length - 1]);
+    const step = (last - first) / (ordered.length - 1);
+    return ordered.map((item, index) => ({
+      id: item.id,
+      x: axis === "x" ? first + step * index : item.x,
+      z: axis === "x" ? item.z : first + step * index
+    }));
   }
   return __toCommonJS(workspace_geometry_exports);
 })();

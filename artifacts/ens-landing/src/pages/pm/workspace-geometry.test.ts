@@ -6,6 +6,8 @@ import {
   positionBoundsForItem,
   roomPlacementIssue,
   placementIssuesFor,
+  alignedPositions,
+  distributedPositions,
 } from "./workspace-geometry";
 import type { BoothState, WorkspacePlacedItem, WorkspaceRoom } from "./workspace-model";
 
@@ -136,5 +138,159 @@ describe("roomPlacementIssue", () => {
     const a = room({ id: "a", name: "A", x: 1, z: 1 });
     const b = room({ id: "b", name: "B", x: 5, z: 2 });
     expect(roomPlacementIssue(a, [a, b], [])).toBe("");
+  });
+});
+
+describe("alignedPositions", () => {
+  // Three items of different sizes, spread on both axes, so every alignment has
+  // something to do and the size of each item matters to where it lands.
+  const spread = () => [
+    item({ id: "a", x: 1.0, z: 1.0, w: 0.4, d: 0.4 }),
+    item({ id: "b", x: 2.0, z: 2.0, w: 1.0, d: 0.6 }),
+    item({ id: "c", x: 3.0, z: 3.0, w: 0.6, d: 1.0 }),
+  ];
+  const edgesOf = (moved: { id: string; x: number; z: number }[], axis: "x" | "z") =>
+    moved.map((position) => {
+      const source = spread().find((entry) => entry.id === position.id)!;
+      const half = (axis === "x" ? source.w : source.d) / 2;
+      const centre = axis === "x" ? position.x : position.z;
+      return { low: +(centre - half).toFixed(6), high: +(centre + half).toFixed(6) };
+    });
+
+  it("lines every left edge up on the leftmost one", () => {
+    const edges = edgesOf(alignedPositions(spread(), "left"), "x");
+    // 1.0 - 0.4/2 is the leftmost edge in the group.
+    expect(edges.every((edge) => edge.low === 0.8)).toBe(true);
+  });
+
+  it("lines every right edge up on the rightmost one", () => {
+    const edges = edgesOf(alignedPositions(spread(), "right"), "x");
+    // 3.0 + 0.6/2 is the rightmost edge in the group.
+    expect(edges.every((edge) => edge.high === 3.3)).toBe(true);
+  });
+
+  it("centres everything across the group's own extent", () => {
+    const moved = alignedPositions(spread(), "centre-x");
+    // Extent 0.8 to 3.3, so the centre line is 2.05 regardless of item size.
+    expect(moved.every((position) => position.x === 2.05)).toBe(true);
+  });
+
+  it("lines every back edge up on the backmost one", () => {
+    const edges = edgesOf(alignedPositions(spread(), "back"), "z");
+    expect(edges.every((edge) => edge.low === 0.8)).toBe(true);
+  });
+
+  it("lines every front edge up on the frontmost one", () => {
+    const edges = edgesOf(alignedPositions(spread(), "front"), "z");
+    expect(edges.every((edge) => edge.high === 3.5)).toBe(true);
+  });
+
+  it("centres everything front-to-back", () => {
+    const moved = alignedPositions(spread(), "centre-z");
+    expect(moved.every((position) => position.z === 2.15)).toBe(true);
+  });
+
+  it("leaves the other axis exactly where it was", () => {
+    const source = spread();
+    for (const position of alignedPositions(source, "left")) {
+      expect(position.z).toBe(source.find((entry) => entry.id === position.id)!.z);
+    }
+    for (const position of alignedPositions(source, "back")) {
+      expect(position.x).toBe(source.find((entry) => entry.id === position.id)!.x);
+    }
+  });
+
+  it("measures a turned item by the room it actually takes up", () => {
+    // A 2.0 x 0.4 item turned 90 degrees is 0.4 across, so its left edge sits
+    // 0.2 from its centre, not 1.0.
+    const turned = [
+      item({ id: "flat", x: 1.0, z: 1.0, w: 0.4, d: 0.4 }),
+      item({ id: "turned", x: 2.0, z: 2.0, w: 2.0, d: 0.4, rotationY: 90 }),
+    ];
+    const moved = alignedPositions(turned, "left");
+    const turnedAt = moved.find((position) => position.id === "turned")!;
+    expect(turnedAt.x).toBeCloseTo(0.8 + 0.2, 6);
+  });
+
+  it("has nothing to do with fewer than two items", () => {
+    expect(alignedPositions([], "left")).toEqual([]);
+    expect(alignedPositions([item({ id: "only" })], "left")).toEqual([]);
+  });
+});
+
+describe("distributedPositions", () => {
+  it("leaves the ends alone and evens the gaps between them", () => {
+    const uneven = [
+      item({ id: "a", x: 1.0, z: 1.0 }),
+      item({ id: "b", x: 1.4, z: 1.0 }),
+      item({ id: "c", x: 4.0, z: 1.0 }),
+    ];
+    const moved = distributedPositions(uneven, "x");
+    const xs = moved.map((position) => position.x).sort((a, b) => a - b);
+    expect(xs[0]).toBeCloseTo(1.0, 6);
+    expect(xs[2]).toBeCloseTo(4.0, 6);
+    expect(xs[1] - xs[0]).toBeCloseTo(xs[2] - xs[1], 6);
+  });
+
+  it("works the same front-to-back, and leaves x alone", () => {
+    const uneven = [
+      item({ id: "a", x: 2.0, z: 0.5 }),
+      item({ id: "b", x: 2.0, z: 0.7 }),
+      item({ id: "c", x: 2.0, z: 2.9 }),
+      item({ id: "d", x: 2.0, z: 3.0 }),
+    ];
+    const moved = distributedPositions(uneven, "z");
+    const zs = moved.map((position) => position.z).sort((a, b) => a - b);
+    const gaps = zs.slice(1).map((value, index) => +(value - zs[index]).toFixed(6));
+    expect(new Set(gaps).size).toBe(1);
+    expect(moved.every((position) => position.x === 2.0)).toBe(true);
+  });
+
+  it("orders by position, not by the order they were selected in", () => {
+    const shuffled = [
+      item({ id: "right", x: 4.0, z: 1.0 }),
+      item({ id: "left", x: 1.0, z: 1.0 }),
+      item({ id: "middle", x: 1.2, z: 1.0 }),
+    ];
+    const moved = distributedPositions(shuffled, "x");
+    // The ends must not move however they arrived.
+    expect(moved.find((position) => position.id === "left")!.x).toBeCloseTo(1.0, 6);
+    expect(moved.find((position) => position.id === "right")!.x).toBeCloseTo(4.0, 6);
+    expect(moved.find((position) => position.id === "middle")!.x).toBeCloseTo(2.5, 6);
+  });
+
+  it("has nothing between the ends with fewer than three items", () => {
+    expect(distributedPositions([item({ id: "a" }), item({ id: "b" })], "x")).toEqual([]);
+  });
+});
+
+describe("an arrangement that is not allowed", () => {
+  // The refusal that was only ever seen in a browser: centring two items across
+  // their own extent lands both on a front support column, and the workspace
+  // applies all of an arrangement or none of it.
+  const straddlers = [
+    item({ id: "a", x: 2.6, z: 1.0, w: 0.5, d: 0.5 }),
+    item({ id: "b", x: 3.4, z: 2.2, w: 0.5, d: 0.5 }),
+  ];
+
+  it("is legal where it starts", () => {
+    expect(placementIssuesFor(straddlers, [], booth, [3])).toHaveLength(0);
+  });
+
+  it("is reported once the alignment would put it on a support column", () => {
+    const moved = alignedPositions(straddlers, "centre-x");
+    // Extent 2.35 to 3.65, so both centre on 3.0 - the column.
+    expect(moved.every((position) => position.x === 3.0)).toBe(true);
+
+    const arranged = straddlers.map((source) => {
+      const position = moved.find((entry) => entry.id === source.id)!;
+      return { ...source, x: position.x, z: position.z };
+    });
+    const issues = placementIssuesFor(arranged, [], booth, [3]);
+    expect(issues.length).toBeGreaterThan(0);
+    expect(issues.every((issue) => issue.message.includes("support rail"))).toBe(true);
+    // Both of them, so the workspace refuses the whole arrangement rather than
+    // moving one and leaving the other.
+    expect(new Set(issues.map((issue) => issue.itemId))).toEqual(new Set(["a", "b"]));
   });
 });
