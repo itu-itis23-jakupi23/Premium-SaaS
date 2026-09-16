@@ -60,6 +60,30 @@ export const ROOM_CORNER_SNAP_M = 0.32;
 export const ITEM_WALL_CLEARANCE_M = 0;
 
 /**
+ * Daylight kept between a room wall and anything standing against it.
+ *
+ * A room is not a booth: its walls carry a frame on both faces and a door that
+ * has to clear what is beside it, so furniture sits a hand's width off them
+ * rather than flush. Together with ROOM_ITEM_PAD_M this is what makes a room
+ * interior a size rather than a suggestion.
+ *
+ * The renderer encodes both; `scripts/check-transform-constants.mjs` fails if
+ * they drift. They did drift once - the renderer inset by the clearance and
+ * forgot the pad, so a drag would let go of a cabinet 3 cm inside a spot the
+ * workspace then refused with "crosses a room wall", and the item sprang back
+ * with nothing to show why.
+ */
+export const ROOM_WALL_CLEARANCE_M = 0.12;
+
+/**
+ * Slack added around an item's footprint when testing it against a room.
+ *
+ * Measuring a footprint at exactly its catalogue size makes every judgement a
+ * knife edge; this keeps "just fits" from depending on floating-point luck.
+ */
+export const ROOM_ITEM_PAD_M = 0.03;
+
+/**
  * Usable plan around the stand, in metres.
  *
  * Not everything an exhibitor brings stands inside the walls: a screen on a

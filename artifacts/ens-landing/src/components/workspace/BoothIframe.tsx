@@ -38,6 +38,16 @@ interface IframeBoothConfig {
   openBack?: boolean;
   placedItems?: any[];
   rooms?: any[];
+  /** Items the workspace has selected; dragging any of them moves all of them. */
+  selectedItemIds?: string[];
+  /**
+   * The room selected in the workspace panel.
+   *
+   * The renderer keeps its own selection for clicks inside the iframe, but a
+   * room picked from the list outside it is invisible in there - and a selected
+   * room is what opens its walls up so the designer can see what is inside.
+   */
+  activeRoomId?: string;
   panelOverrides?: Record<string, any>;
   frontSupportPositions?: number[];
   suppressedDefaultPositions?: number[];
@@ -84,7 +94,7 @@ interface IframeBoothConfig {
 }
 
 type OptionalIframeConfigKey =
-  | 'placedItems' | 'rooms' | 'panelOverrides' | 'frontSupportPositions' | 'suppressedDefaultPositions'
+  | 'placedItems' | 'rooms' | 'selectedItemIds' | 'activeRoomId' | 'panelOverrides' | 'frontSupportPositions' | 'suppressedDefaultPositions'
   | 'fasciaOption' | 'lightingPreset' | 'pins' | 'pinMode' | 'invalidItemIds'
   | 'catalogDragItem'
   | 'onItemMove' | 'onGestureEnd' | 'onShortcut' | 'onItemSelect' | 'onItemDelete' | 'onItemRotate' | 'onRoomMove'
@@ -191,6 +201,8 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
       carpet: cfg.carpetColor ?? '#3b3e44',
       placedItems: cfg.placedItems ?? [],
       rooms: cfg.rooms ?? [],
+      selectedItemIds: cfg.selectedItemIds ?? [],
+      activeRoomId: cfg.activeRoomId ?? '',
       panelOverrides: cfg.panelOverrides ?? {},
       frontSupportPositions: cfg.frontSupportPositions ?? [],
       suppressedDefaultPositions: cfg.suppressedDefaultPositions ?? [],
@@ -205,7 +217,7 @@ export function BoothIframe({ config }: { config?: IframeBoothConfig }) {
     cfg.width, cfg.depth, cfg.height,
     cfg.system, cfg.companyName, cfg.wallColor, cfg.frameColor, cfg.fasciaColor, cfg.carpetColor,
     openSides,
-    cfg.placedItems, cfg.rooms, cfg.panelOverrides, cfg.frontSupportPositions, cfg.suppressedDefaultPositions, cfg.fasciaEnabled, cfg.fasciaOption, cfg.lightingPreset, cfg.pins, cfg.pinMode, cfg.invalidItemIds,
+    cfg.placedItems, cfg.rooms, cfg.selectedItemIds, cfg.activeRoomId, cfg.panelOverrides, cfg.frontSupportPositions, cfg.suppressedDefaultPositions, cfg.fasciaEnabled, cfg.fasciaOption, cfg.lightingPreset, cfg.pins, cfg.pinMode, cfg.invalidItemIds,
   ]);
 
   const sendUpdate = useCallback(() => {

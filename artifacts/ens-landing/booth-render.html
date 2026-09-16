@@ -210,8 +210,13 @@
 
     <rect x="0" y="0" width="1600" height="1000" fill="url(#sky)"/>
     <g id="floorGroup"></g>
-    <g id="boothGroup"></g>
+    <!-- The grid is paint on the carpet, so it is laid down before the stand is
+         built on top of it. It used to come after boothGroup, which meant every
+         metre line was drawn over the booth: walls, room partitions and
+         furniture all had the floor grid showing through them, and a solid
+         panel read as glass. -->
     <g id="gridGroup" clip-path="url(#carpet-clip)"></g>
+    <g id="boothGroup"></g>
     <rect x="0" y="0" width="1600" height="1000" fill="url(#vignette)" pointer-events="none"/>
   </svg>
   <canvas id="glbCanvas"></canvas>
@@ -259,7 +264,7 @@
         <span class="sep">·</span>
         <span id="hud-height">2.50 m total</span>
         <span class="sep">·</span>
-        <span>40 mm profile</span>
+        <span id="hud-profile">Ø 45 mm profile</span>
       </div>
     </div>
   </div>
@@ -283,6 +288,11 @@
   <div class="ann" id="dim-h"><div class="lbl">2.5 m</div></div>
 </div>
 
+<!-- The placement rules, compiled from workspace-geometry.ts. Must load before
+     the renderer: booth-render.js builds its geometry during its own top-level
+     execution, and a classic script cannot import. See
+     scripts/build-placement-bundle.mjs. -->
+<script src="/workspace-placement.js"></script>
 <script src="/booth-render.js"></script>
 <script type="module">
 // @ts-check
@@ -506,7 +516,15 @@ function updateShellOccluders(state) {
   const height = Math.max(0.8, Number(state.height) || 0.8);
   const fasciaHeight = Math.max(0.1, Number(state.fasciaHeight) || 0.3);
   const visible = state.wallsVisible || {};
-  const nextKey = [width, depth, height, fasciaHeight, visible.front, visible.back, visible.left, visible.right].join('|');
+  // Rooms occlude too - see the note by the room boxes below.
+  const rooms = Array.isArray(state.rooms) ? state.rooms : [];
+  const openRoomWalls = new Set(Array.isArray(state.openRoomWalls) ? state.openRoomWalls : []);
+  const roomKey = rooms
+    .map(room => [room.id, room.x0, room.x1, room.z0, room.z1, room.h,
+      room.built?.back, room.built?.front, room.built?.left, room.built?.right].join(','))
+    .join(';');
+  const nextKey = [width, depth, height, fasciaHeight, visible.front, visible.back, visible.left, visible.right,
+    roomKey, [...openRoomWalls].sort().join(';')].join('|');
   if (nextKey === shellOccluderKey) return;
   shellOccluderKey = nextKey;
 
@@ -535,6 +553,28 @@ function updateShellOccluders(state) {
   if (visible.front) addBox(width, height, 0.035, 0, height / 2, depth);
   if (visible.left) addBox(0.035, height, depth, -width / 2, height / 2, depth / 2);
   if (visible.right) addBox(0.035, height, depth, width / 2, height / 2, depth / 2);
+
+  // Room walls, on the same terms as the shell's. A GLB model is drawn by this
+  // layer on top of the SVG booth, so without a depth writer standing where the
+  // room wall is, a cabinet inside a storeroom drew straight over the wall in
+  // front of it and the room read as a flat sticker behind the furniture.
+  //
+  // A wall the SVG has cut away is skipped: the designer is looking through it
+  // on purpose, and an invisible occluder there would hide exactly the
+  // furniture the cutaway was opened to show.
+  for (const room of rooms) {
+    const w = Math.max(0.05, Number(room.x1) - Number(room.x0));
+    const d = Math.max(0.05, Number(room.z1) - Number(room.z0));
+    const h = Math.max(0.2, Number(room.h) || height);
+    const cx = (Number(room.x0) + Number(room.x1)) / 2;
+    const cz = (Number(room.z0) + Number(room.z1)) / 2;
+    const built = room.built || {};
+    const open = side => openRoomWalls.has(room.id + '|' + side);
+    if (built.back && !open('back')) addBox(w, h, 0.035, cx, h / 2, Number(room.z0));
+    if (built.front && !open('front')) addBox(w, h, 0.035, cx, h / 2, Number(room.z1));
+    if (built.left && !open('left')) addBox(0.035, h, d, Number(room.x0), h / 2, cz);
+    if (built.right && !open('right')) addBox(0.035, h, d, Number(room.x1), h / 2, cz);
+  }
   window.__shellOccluderCount = shellOccluders.children.length;
 }
 

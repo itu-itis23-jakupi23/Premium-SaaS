@@ -1,5 +1,11 @@
 import { ROOM_SIDE_OPTIONS, type BoothState, type DoorSide, type WorkspacePlacedItem, type WorkspaceRoom } from "./workspace-model";
-import { ITEM_WALL_CLEARANCE_M, PLAN_MARGIN_M, snapNumber } from "@/lib/workspace-transform";
+import {
+  ITEM_WALL_CLEARANCE_M,
+  PLAN_MARGIN_M,
+  ROOM_ITEM_PAD_M,
+  ROOM_WALL_CLEARANCE_M,
+  snapNumber,
+} from "@/lib/workspace-transform";
 
 // Pure 2D placement/collision geometry for the booth workspace, split out of
 // PMWorkspace.tsx. No React, no component state — just math on booth/item/room
@@ -36,7 +42,7 @@ export function positionBoundsForItem(item: WorkspacePlacedItem, booth: BoothSta
   return itemPositionBounds(footprint.width, footprint.depth, booth);
 }
 
-function itemRect(item: WorkspacePlacedItem, pad = 0.03): Rect2D {
+function itemRect(item: WorkspacePlacedItem, pad = ROOM_ITEM_PAD_M): Rect2D {
   const footprint = rotatedItemFootprint(item);
   return {
     x0: item.x - footprint.width / 2 - pad,
@@ -67,7 +73,7 @@ function rectInside(inner: Rect2D, outer: Rect2D, tolerance = 0.001) {
 }
 
 function roomInteriorRect(room: WorkspaceRoom): Rect2D {
-  const clearance = 0.12;
+  const clearance = ROOM_WALL_CLEARANCE_M;
   const outer = roomRect(room, 0);
   return {
     x0: Math.min(room.x, outer.x0 + clearance),
@@ -187,12 +193,200 @@ export function placementIssuesFor(items: WorkspacePlacedItem[], rooms: Workspac
 // Which sides of a room actually get a built wall: a room edge flush with the
 // booth shell borrows that shell wall instead of getting its own. Drives both
 // the door-side options and the room material take-off.
+//
+// A side can only be borrowed if the shell has a wall on it. An open side is a
+// frame with no panel in it, so a room pushed against one builds its own wall
+// there like anywhere else - and gets charged for it. Reading the flush test
+// alone left a storeroom standing open to the aisle, with nothing on the
+// take-off for the wall that was missing.
 export function availableRoomWallSides(width: number, depth: number, x: number, z: number, booth: BoothState): DoorSide[] {
   const tolerance = 0.02;
   return ROOM_SIDE_OPTIONS.map(option => option.value).filter(side => {
-    if (side === 'back') return z - depth / 2 > tolerance;
-    if (side === 'front') return z + depth / 2 < booth.depth - tolerance;
-    if (side === 'left') return x - width / 2 > tolerance;
-    return x + width / 2 < booth.width - tolerance;
+    if (side === 'back') return booth.openBack || z - depth / 2 > tolerance;
+    if (side === 'front') return booth.openFront || z + depth / 2 < booth.depth - tolerance;
+    if (side === 'left') return booth.openLeft || x - width / 2 > tolerance;
+    return booth.openRight || x + width / 2 < booth.width - tolerance;
   });
+}
+
+/* ── The renderer's half, now living here too ──────────────────────────────
+ *
+ * Everything below was implemented a second time in booth-render.js, in booth-
+ * centred coordinates, untyped, with twenty-five call sites. The two copies
+ * drifted: they measured room interiors differently until recently, and they
+ * still disagreed on how much daylight two items need between them - the
+ * renderer let go at 2 cm and this module refused under 6 cm, so a drag could
+ * put something down that the workspace then rejected with no explanation.
+ *
+ * One implementation now. The renderer loads a compiled copy of this file and
+ * calls these; it keeps only the coordinate shift (it draws the booth centred
+ * on the origin, this module measures from the front-left corner) and the
+ * things that are genuinely about drawing - wall mounting, drag state, rails.
+ *
+ * Everything here is pure and takes the world it needs as an argument, because
+ * the renderer's world lives in globals that this module must never see.
+ */
+
+/** The world a placement is judged against. */
+export interface PlacementWorld {
+  items: WorkspacePlacedItem[];
+  rooms: WorkspaceRoom[];
+  booth: BoothState;
+  frontSupports: number[];
+}
+
+/** A footprint standing at a point, in workspace coordinates. */
+export interface Footprint {
+  x: number;
+  z: number;
+  w: number;
+  d: number;
+  rotationY?: number;
+}
+
+function footprintRect(shape: Footprint, pad = ROOM_ITEM_PAD_M): Rect2D {
+  const size = rotatedItemFootprint({ w: shape.w, d: shape.d, rotationY: shape.rotationY ?? 0 } as WorkspacePlacedItem);
+  return {
+    x0: shape.x - size.width / 2 - pad,
+    x1: shape.x + size.width / 2 + pad,
+    z0: shape.z - size.depth / 2 - pad,
+    z1: shape.z + size.depth / 2 + pad,
+  };
+}
+
+/** The box an item has to sit inside to count as being in this room. */
+export function roomInteriorBounds(room: WorkspaceRoom): Rect2D {
+  return roomInteriorRect(room);
+}
+
+/** The room whose footprint contains (x, z), or null out on the stand floor. */
+export function roomContainingPoint(rooms: WorkspaceRoom[], x: number, z: number): WorkspaceRoom | null {
+  for (const room of rooms) {
+    const outer = roomRect(room, 0);
+    if (x >= outer.x0 && x <= outer.x1 && z >= outer.z0 && z <= outer.z1) return room;
+  }
+  return null;
+}
+
+/**
+ * Holds a footprint inside a room's walls.
+ *
+ * What makes a room's walls a limit rather than a warning: an item dragged
+ * inside one slides along the wall it is pushed against instead of crossing it.
+ * A footprint too big for the room is centred rather than clamped to nothing,
+ * so it lands somewhere sensible and the collision check can still report it.
+ */
+export function clampInsideRoom(room: WorkspaceRoom, x: number, z: number, w: number, d: number) {
+  const interior = roomInteriorRect(room);
+  // The pad, as well as the interior. roomItemConflict() tests a *padded*
+  // footprint against this same rect, so clamping to the bare interior lands an
+  // item one pad-width short of legal - it stops against the wall and is still
+  // reported as crossing it. Clamp and check have to inset by the same amount.
+  const spareX = (interior.x1 - interior.x0 - Math.max(0.06, w) - ROOM_ITEM_PAD_M * 2) / 2;
+  const spareZ = (interior.z1 - interior.z0 - Math.max(0.06, d) - ROOM_ITEM_PAD_M * 2) / 2;
+  const cx = (interior.x0 + interior.x1) / 2;
+  const cz = (interior.z0 + interior.z1) / 2;
+  return {
+    x: spareX <= 0 ? cx : Math.max(cx - spareX, Math.min(cx + spareX, x)),
+    z: spareZ <= 0 ? cz : Math.max(cz - spareZ, Math.min(cz + spareZ, z)),
+  };
+}
+
+/**
+ * Makes every room's walls solid in both directions: something inside slides
+ * along the inside of the wall it is pushed against, something outside slides
+ * along the outside.
+ *
+ * Drag and drop only. Drawing must never call this - a renderer that relocates
+ * what it draws is how furniture used to slide out of corners.
+ */
+export function applyRoomLimits(rooms: WorkspaceRoom[], x: number, z: number, w: number, d: number) {
+  if (!rooms.length) return { x, z };
+  const inside = roomContainingPoint(rooms, x, z);
+  if (inside) return clampInsideRoom(inside, x, z, w, d);
+  let outX = x;
+  let outZ = z;
+  for (const room of rooms) {
+    const outer = roomRect(room, 0);
+    const cx = (outer.x0 + outer.x1) / 2;
+    const cz = (outer.z0 + outer.z1) / 2;
+    const reachX = (outer.x1 - outer.x0) / 2 + Math.max(0.06, w) / 2 + ROOM_ITEM_PAD_M;
+    const reachZ = (outer.z1 - outer.z0) / 2 + Math.max(0.06, d) / 2 + ROOM_ITEM_PAD_M;
+    const dx = outX - cx;
+    const dz = outZ - cz;
+    const overlapX = reachX - Math.abs(dx);
+    const overlapZ = reachZ - Math.abs(dz);
+    if (overlapX <= 0 || overlapZ <= 0) continue;
+    // Out along whichever axis is the shorter way out, so the item slides
+    // around the room rather than jumping to the far side of it.
+    if (overlapX <= overlapZ) outX = cx + (dx < 0 ? -reachX : reachX);
+    else outZ = cz + (dz < 0 ? -reachZ : reachZ);
+  }
+  return { x: outX, z: outZ };
+}
+
+/** Holds a footprint inside the drawable plan around the stand. */
+export function clampItemToBooth(booth: BoothState, x: number, z: number, w: number, d: number) {
+  const bounds = itemPositionBounds(w, d, booth);
+  return {
+    x: Math.max(bounds.minX, Math.min(bounds.maxX, Number(x) || 0)),
+    z: Math.max(bounds.minZ, Math.min(bounds.maxZ, Number(z) || 0)),
+  };
+}
+
+/**
+ * Things furniture cannot be built through.
+ *
+ * Exactly one: the front support column, which stands in the open span with
+ * nothing behind it to push against. The frame is not on this list - a corner
+ * unit is a real product and a corner is where it goes.
+ */
+export function structuralObstacles(booth: BoothState, frontSupports: number[]): Rect2D[] {
+  return frontSupports.map(supportX => ({
+    x0: supportX - 0.12,
+    x1: supportX + 0.12,
+    z0: 0,
+    z1: booth.depth,
+  }));
+}
+
+/**
+ * Why a footprint cannot stand at this spot, or '' when it can.
+ *
+ * The single source for both halves. The renderer shows the sentence on the
+ * drag gizmo; the workspace turns it into a placement issue.
+ */
+export function placementReason(world: PlacementWorld, excludeId: string | null, shape: Footprint): string {
+  const rect = footprintRect(shape);
+  for (const zone of structuralObstacles(world.booth, world.frontSupports)) {
+    if (rectsOverlap(rect, zone)) return "Blocked by a booth support";
+  }
+  for (const other of world.items) {
+    if (excludeId != null && String(other.id) === String(excludeId)) continue;
+    if (!isFloorPlacedItem(other)) continue;
+    if (rectsOverlap(rect, itemRect(other))) return `Overlaps ${String(other.name || "another item")}`;
+  }
+  for (const room of world.rooms) {
+    const conflict = roomItemConflict(rect, room);
+    if (conflict === "wall") return `Crosses ${String(room.name || "room")} wall`;
+    if (conflict === "door") return `Blocks ${String(room.name || "room")} door clearance`;
+  }
+  return "";
+}
+
+/** Why a room cannot stand where it is being put, or '' when it can. */
+export function roomPlacementReason(candidate: WorkspaceRoom, rooms: WorkspaceRoom[], items: WorkspacePlacedItem[]): string {
+  for (const other of rooms) {
+    if (String(other.id) === String(candidate.id)) continue;
+    if (rectsOverlap(roomRect(candidate, 0.04), roomRect(other, 0.04))) {
+      return `Overlaps ${String(other.name || "another room")}`;
+    }
+  }
+  for (const item of items) {
+    if (!isFloorPlacedItem(item)) continue;
+    const conflict = roomItemConflict(itemRect(item), candidate);
+    if (conflict === "wall") return `Crosses ${String(candidate.name || "room")} wall`;
+    if (conflict === "door") return `Blocks ${String(candidate.name || "room")} door clearance`;
+  }
+  return "";
 }

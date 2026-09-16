@@ -22,6 +22,10 @@ export interface BoothConfig3D {
   openBack?: boolean;
   placedItems?: any[];
   rooms?: any[];
+  /** Items selected in the workspace; dragging any of them moves all of them. */
+  selectedItemIds?: string[];
+  /** Room selected in the workspace panel; opens that room up in the renderer. */
+  activeRoomId?: string;
   panelOverrides?: Record<string, any>;
   frontSupportPositions?: number[];
   suppressedDefaultPositions?: number[];
@@ -89,6 +93,8 @@ export function Booth3D({ config }: { config?: Partial<BoothConfig3D> }) {
       openBack:    cfg.openBack,
       placedItems: cfg.placedItems,
       rooms:       cfg.rooms,
+      selectedItemIds: cfg.selectedItemIds,
+      activeRoomId: cfg.activeRoomId,
       panelOverrides: cfg.panelOverrides,
       frontSupportPositions: cfg.frontSupportPositions,
       suppressedDefaultPositions: cfg.suppressedDefaultPositions,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PLAN_MARGIN_M } from "@/lib/workspace-transform";
+import { PLAN_MARGIN_M, ROOM_ITEM_PAD_M, ROOM_WALL_CLEARANCE_M } from "@/lib/workspace-transform";
 import {
   itemPositionBounds,
   rotatedItemFootprint,
@@ -84,6 +84,45 @@ describe("placementIssuesFor", () => {
   it("flags an item blocking a structural support rail", () => {
     const issues = placementIssuesFor([item({ id: "a", x: 3, z: 1.5 })], [], booth, [3]);
     expect(issues.some((i) => i.message.includes("support rail"))).toBe(true);
+  });
+});
+
+describe("furniture inside a room", () => {
+  // The renderer clamps a dragged item to the room interior and this module
+  // decides whether the result may be kept. They measure the same interior:
+  // ROOM_WALL_CLEARANCE_M off the wall plus ROOM_ITEM_PAD_M around the item.
+  // When they did not, a drag let go of a cabinet 3 cm inside the wall, this
+  // half answered "crosses a room wall", and it sprang back for no visible
+  // reason. These cases pin the boundary from both sides.
+  const store = room({ id: "r", name: "Store", x: 1.5, z: 1.5, width: 3, depth: 2 });
+  const inset = ROOM_WALL_CLEARANCE_M + ROOM_ITEM_PAD_M;
+
+  it("accepts an item standing at the interior limit", () => {
+    // Right edge of a 1 m wide item exactly `inset` off the inside of the wall.
+    const x = store.x + store.width / 2 - inset - 0.5;
+    const issues = placementIssuesFor([item({ id: "a", x, z: store.z })], [store], booth, []);
+    expect(issues).toHaveLength(0);
+  });
+
+  it("rejects the same item a centimetre further into the wall", () => {
+    const x = store.x + store.width / 2 - inset - 0.5 + 0.01;
+    const issues = placementIssuesFor([item({ id: "a", x, z: store.z })], [store], booth, []);
+    expect(issues.some((i) => i.message.includes("wall"))).toBe(true);
+  });
+
+  it("leaves an item clear of the room outside alone", () => {
+    const x = store.x + store.width / 2 + 0.5 + ROOM_ITEM_PAD_M + 0.01;
+    const issues = placementIssuesFor([item({ id: "a", x, z: store.z })], [store], booth, []);
+    expect(issues).toHaveLength(0);
+  });
+
+  it("keeps the door clearance free", () => {
+    const withDoor = room({ ...store, hasDoor: true, doorSide: "front", doorWidth: 0.9 });
+    const issues = placementIssuesFor(
+      [item({ id: "a", x: withDoor.x, z: withDoor.z + withDoor.depth / 2 - 0.4, w: 0.5, d: 0.5 })],
+      [withDoor], booth, [],
+    );
+    expect(issues.some((i) => i.message.includes("door clearance"))).toBe(true);
   });
 });
 

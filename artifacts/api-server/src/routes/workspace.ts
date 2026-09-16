@@ -1115,6 +1115,11 @@ function normalizeWorkspace(value: unknown, access: ProjectAccess | null): Works
       if (cents === null || !Number.isFinite(cents)) return undefined;
       return Math.min(500_000_000, Math.max(0, Math.round(cents)));
     })(),
+    unpricedItemCount: (() => {
+      const count = numberValue(data.unpricedItemCount);
+      if (count === null || !Number.isFinite(count)) return undefined;
+      return Math.min(10_000, Math.max(0, Math.round(count)));
+    })(),
   };
 }
 
@@ -1548,6 +1553,7 @@ interface WorkspaceState {
   rooms: WorkspaceRoom[];
   notes: WorkspaceNote[];
   quoteTotalCents?: number;
+  unpricedItemCount?: number;
 }
 
 interface WorkspacePlacedItem {

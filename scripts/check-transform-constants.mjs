@@ -61,79 +61,17 @@ if (failures.length === 0) {
   const furnitureSnap = constant("FURNITURE_SNAP_M");
   const roomSnap = constant("ROOM_SNAP_M");
   const cornerSnap = constant("ROOM_CORNER_SNAP_M");
-  const wallClearance = constant("ITEM_WALL_CLEARANCE_M");
-
-  /**
-   * A grid of `step` is written in the renderer as `Math.round(v * R) / R`
-   * where R = 1 / step. Assert that reciprocal appears at least `count` times,
-   * since each axis is snapped separately.
-   */
-  function expectGridFactor(label, step, count) {
-    if (step === null) return;
-    const reciprocal = 1 / step;
-    if (!Number.isInteger(reciprocal)) {
-      fail(`${label}: ${step} has no integer reciprocal; renderer cannot encode it this way`);
-      return;
-    }
-    const pattern = new RegExp(
-      `Math\\.round\\([^)]*\\*\\s*${reciprocal}\\s*\\)\\s*/\\s*${reciprocal}`,
-      "g",
-    );
-    const found = (renderer.match(pattern) ?? []).length;
-    if (found < count) {
-      fail(
-        `${label}: expected at least ${count} occurrence(s) of a ${step} m grid in booth-render.html ` +
-          `(written as \`Math.round(v * ${reciprocal}) / ${reciprocal}\`) but found ${found}. ` +
-          "The renderer and workspace-transform.ts have diverged.",
-      );
-    }
-  }
-
-  // Furniture drag snaps X and Z separately.
-  expectGridFactor("FURNITURE_SNAP_M", furnitureSnap, 2);
-  // Room drag snaps X and Z separately.
-  expectGridFactor("ROOM_SNAP_M", roomSnap, 2);
-
-  /**
-   * Assert a value appears in the specific renderer expression that uses it.
+  /*
+   * The clearance constants used to be checked here too, because the renderer
+   * carried its own copy of them. It no longer does: item/room/booth collision
+   * lives once in workspace-geometry.ts and the renderer loads it compiled, so
+   * those numbers reach it by import rather than by being written out twice.
+   * What guards them now is scripts/build-placement-bundle.mjs --check, which
+   * fails when the compiled copy has drifted from the source.
    *
-   * Searching for a bare number is useless here: booth-render.html is ~175 KB
-   * of geometry maths, so almost any small decimal occurs somewhere by
-   * coincidence and the check passes no matter what the module says. Anchoring
-   * to the assignment makes the match mean something.
+   * The snapping rules above are still genuinely duplicated - they are inline
+   * arithmetic in the drag handlers, which is what this gate exists for.
    */
-  function expectExpression(label, value, buildPattern, expression) {
-    if (value === null) return;
-    const escaped = String(value).replace(".", "\\.");
-    if (!buildPattern(escaped).test(renderer)) {
-      fail(
-        `${label}: the booth renderer does not contain \`${expression(value)}\`. ` +
-          "The renderer and workspace-transform.ts have diverged.",
-      );
-    }
-  }
-
-  expectExpression(
-    "ROOM_CORNER_SNAP_M",
-    cornerSnap,
-    (v) => new RegExp(`cornerSnap\\s*=\\s*${v}(?![0-9])`),
-    (v) => `const cornerSnap = ${v}`,
-  );
-
-  // A non-zero clearance is written as a floor under the extrusion size, so
-  // the gap is never thinner than the frame itself. Zero cannot be written
-  // that way - Math.max(EX * 6, 0) is EX * 6, not 0 - so it has to be a plain
-  // assignment. The gate checks whichever form the value calls for.
-  expectExpression(
-    "ITEM_WALL_CLEARANCE_M",
-    wallClearance,
-    (v) => (Number(v) === 0
-      ? new RegExp(`wallClearance\\s*=\\s*0(?![0-9.])`)
-      : new RegExp(`wallClearance\\s*=\\s*Math\\.max\\([^,]*,\\s*${v}(?![0-9])`)),
-    (v) => (Number(v) === 0
-      ? "const wallClearance = 0"
-      : `const wallClearance = Math.max(..., ${v})`),
-  );
 }
 
 if (failures.length > 0) {

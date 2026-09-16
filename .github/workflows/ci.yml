@@ -62,6 +62,12 @@ jobs:
       - name: Check workspace transform constants
         run: pnpm run workspace:transform
 
+      # The renderer cannot import TypeScript, so the placement rules reach it as
+      # a compiled classic script committed under public/. This fails when that
+      # copy has drifted from workspace-geometry.ts.
+      - name: Check the renderer's placement bundle is current
+        run: pnpm run workspace:placement:check
+
       - name: Check booth renderer parses
         run: pnpm run booth:render
 
@@ -160,6 +166,33 @@ jobs:
       - name: Install Playwright browsers
         working-directory: artifacts/ens-landing
         run: pnpm exec playwright install --with-deps chromium
+
+      # The booth renderer is the most visible surface in the product, and it is
+      # the one nothing else checks: every step in the verify job reads source,
+      # and none of them looks at what is drawn. verify:renderer does - it
+      # drives the real renderer in a browser and measures the geometry that
+      # reaches the DOM. It existed but was never wired in, so it rotted: two of
+      # its assertions had been failing against deliberate behaviour changes,
+      # and four room-rendering bugs shipped underneath it.
+      - name: Verify booth renderer geometry
+        working-directory: artifacts/ens-landing
+        run: |
+          pnpm run dev:staff > renderer-ci.out.log 2> renderer-ci.err.log &
+          for i in {1..40}; do
+            if curl -fsS http://localhost:5174/booth-render.html > /dev/null; then
+              break
+            fi
+            if [ "$i" = "40" ]; then
+              echo "staff dev server never came up"
+              cat renderer-ci.err.log renderer-ci.out.log
+              exit 1
+            fi
+            sleep 1
+          done
+          if ! pnpm run verify:renderer; then
+            cat renderer-ci.err.log
+            exit 1
+          fi
 
       - name: Run isolated production Playwright release suite
         run: pnpm run e2e:release

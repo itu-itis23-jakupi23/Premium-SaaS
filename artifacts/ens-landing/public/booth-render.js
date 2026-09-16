@@ -292,6 +292,16 @@ let invalidItemIds = new Set();
 let frontSupportPositions = [];
 let suppressedDefaultPositions = [];
 let catalogDropPreview = null;
+/**
+ * The drag in progress - an item, a room or a support - or null.
+ *
+ * Declared up here with the rest of the renderer's state rather than beside the
+ * pointer handlers that own it. The draw loop asks whether anything is being
+ * dragged, to decide whether to open the rooms up, and the handlers are set up
+ * after the first render: left where it was, a `let` in its temporal dead zone
+ * threw on the opening frame of any stand that already had a room in it.
+ */
+let objectDrag = null;
 
 function notifyRendererError(error) {
   const message = error && error.message ? String(error.message) : String(error || 'Renderer failed');
@@ -500,10 +510,25 @@ function pushBox(min, max, props) {
   const [x0,y0,z0] = min, [x1,y1,z1] = max;
   const xfPts = (pts) => pts.map(p => rotateFurniturePoint(p, props));
   const xfNormal = (normal) => rotateFurnitureNormal(normal, props);
+  // Everything the caller asked for first, everything this box knows about
+  // itself after. The order is the whole point and it must stay this way round.
+  //
+  // This literal used to set its per-face fields and *then* spread props over
+  // them, so any caller that happened to pass a field of the same name silently
+  // won. Three have been lost to it: `renderOrder` (twenty-one furniture call
+  // sites whose layer values never once ran), `normal` (every wall of every
+  // room shared one direction, so two of the four were culled from every view
+  // and the frame stood there with no panel in it), and `partId` (all six faces
+  // of a box answered to one id, so nothing could address a single face).
+  //
+  // A box has six faces, pointing six ways, each its own part of the drawing.
+  // Nothing outside may say otherwise, and now nothing can.
   const f = (pts, normal, suffix) => faces.push({
-    pts: xfPts(pts), normal: xfNormal(normal), gid,
-    partId: (props.partId || 'part') + '-' + gid + suffix,
     ...props,
+    pts: xfPts(pts),
+    gid,
+    partId: (props.partId || 'part') + '-' + gid + suffix,
+    normal: xfNormal(normal),
   });
   f([[x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]], [1,0,0], ':+x');
   f([[x0,y0,z1],[x0,y0,z0],[x0,y1,z0],[x0,y1,z1]], [-1,0,0], ':-x');
@@ -529,20 +554,74 @@ function pushPrism(cx, cz, y0, y1, radius, segments, props) {
       const zi = verts[i][1], zj = verts[j][1];
       const xi = verts[i][0], xj = verts[j][0];
       const ma = ((i + 0.5) / segments) * Math.PI * 2 + offset;
+      // Props first, per-face data after - see the note in pushBox().
       faces.push({
+        ...props,
         pts: [[xi, y0, zi], [xj, y0, zj], [xj, y1, zj], [xi, y1, zi]],
         normal: rotateFurnitureNormal([Math.cos(ma), 0, Math.sin(ma)], props),
         gid,
         partId: (props.partId || 'part') + '-' + gid + ':side' + i,
         hasFacetEdge: true,
-        ...props,
       });
     }
   }
-  faces.push({ pts: verts.map(([x, z]) => [x, y1, z]), normal: [0,1,0], gid,
-    partId: (props.partId||'part')+'-'+gid+':+y', ...props });
-  faces.push({ pts: verts.slice().reverse().map(([x, z]) => [x, y0, z]), normal: [0,-1,0], gid,
-    partId: (props.partId||'part')+'-'+gid+':-y', ...props });
+  faces.push({ ...props, pts: verts.map(([x, z]) => [x, y1, z]), normal: [0,1,0], gid,
+    partId: (props.partId||'part')+'-'+gid+':+y' });
+  faces.push({ ...props, pts: verts.slice().reverse().map(([x, z]) => [x, y0, z]), normal: [0,-1,0], gid,
+    partId: (props.partId||'part')+'-'+gid+':-y' });
+  return gid;
+}
+
+/**
+ * A real oval plate: an ellipse extruded to a thickness, not an ellipse painted
+ * on something rectangular.
+ *
+ * The "custom" fascia option used to draw its oval as a flat polygon laid over
+ * the rectangular name plate. Two things came of that. The oval read as an
+ * outline rather than as an object - no thickness, no shading, no edge - and
+ * the rectangular plate was still there underneath it, so the sign overlapped
+ * the board it was supposed to be. This builds the plate as the oval, so there
+ * is one object and it is the shape it claims to be.
+ *
+ * `axis` is the direction the plate is extruded along: 'z' for the front and
+ * back fascia, 'x' for the sides. The ellipse is drawn in the other two.
+ */
+function pushOvalPlate(centre, halfW, halfH, near, far, axis, segments, props) {
+  const gid = ++_gid;
+  const [cu, cy] = centre;
+  const lo = Math.min(near, far);
+  const hi = Math.max(near, far);
+  const rim = [];
+  for (let i = 0; i < segments; i++) {
+    const a = (i / segments) * Math.PI * 2;
+    rim.push([cu + Math.cos(a) * halfW, cy + Math.sin(a) * halfH]);
+  }
+  const at = (u, y, depth) => (axis === 'x' ? [depth, y, u] : [u, y, depth]);
+  const push = (pts, normal, suffix) => faces.push({
+    ...props,
+    pts,
+    gid,
+    partId: (props.partId || 'oval') + '-' + gid + suffix,
+    normal,
+    hasFacetEdge: true,
+  });
+  // The rim, one quad per segment, each facing outward from the centre.
+  for (let i = 0; i < segments; i++) {
+    const j = (i + 1) % segments;
+    const [u0, y0] = rim[i];
+    const [u1, y1] = rim[j];
+    const mid = ((i + 0.5) / segments) * Math.PI * 2;
+    const nu = Math.cos(mid);
+    const ny = Math.sin(mid);
+    push(
+      [at(u0, y0, lo), at(u1, y1, lo), at(u1, y1, hi), at(u0, y0, hi)],
+      axis === 'x' ? [0, ny, nu] : [nu, ny, 0],
+      ':rim' + i,
+    );
+  }
+  // Both faces of the plate, so it reads from in front and from behind.
+  push(rim.map(([u, y]) => at(u, y, hi)), axis === 'x' ? [1, 0, 0] : [0, 0, 1], ':+face');
+  push(rim.slice().reverse().map(([u, y]) => at(u, y, lo)), axis === 'x' ? [-1, 0, 0] : [0, 0, -1], ':-face');
   return gid;
 }
 
@@ -566,8 +645,36 @@ function pushFurnitureShadow(cx, cz, w, d, props) {
   });
 }
 
+/**
+ * The two systems, at the sizes ENS actually builds them.
+ *
+ * Ported from getSystemProfile() in the reference engine
+ * (references/ens-workspace/engine/booth_render_core.js), the same source the
+ * fascia stack above came from. Only the fascia half had been ported: the
+ * structure was drawn at EX for both systems, so the *only* thing that changed
+ * between Octanorm and Maxima was an octagon becoming a square at the same 40
+ * mm across - a few pixels at any usable zoom. Switching system produced a
+ * booth that looked identical, while the take-off, the weights and the price
+ * all moved.
+ *
+ * Maxima's upright is 80 mm against Octanorm's 45 - nearly double - and its
+ * rails are almost three times as deep. That is what the difference is supposed
+ * to look like.
+ */
+const ENS_SYSTEM = {
+  octanorm: { uprightWidth: 0.045, uprightSegments: 8, railHeight: 0.07,  railDepth: 0.02,  wallThickness: 0.05,
+              label: 'Ø 45 mm', meta: 'Ø 45 mm Octanorm upright · 8 grooves · anodized' },
+  maxima:   { uprightWidth: 0.08,  uprightSegments: 4, railHeight: 0.094, railDepth: 0.055, wallThickness: 0.08,
+              label: '80 mm', meta: '80 × 80 mm Maxima upright · anodized' },
+};
+
+function ensSystemProfile() {
+  return ENS_SYSTEM[columnStyle === 'maxima' ? 'maxima' : 'octanorm'];
+}
+
 function pushPost(cx, cz, y0, y1, props) {
-  const T = EX;
+  const profile = ensSystemProfile();
+  const T = profile.uprightWidth;
   pushBox(
     [cx - T*0.55, y0 - 0.005, cz - T*0.55],
     [cx + T*0.55, y0 + 0.018, cz + T*0.55],
@@ -580,8 +687,11 @@ function pushPost(cx, cz, y0, y1, props) {
     { fill: 'url(#alu-cap)', isAlu: true, partId: (props.partId||'post')+'-cube',
       partLabel: 'Connector cube', partMeta: 'K-block joint · die-cast aluminum' }
   );
-  if (columnStyle === 'octa') {
-    return pushPrism(cx, cz, y0 + 0.018, y1 - T*0.55, T * 0.5, 8,
+  // Octanorm's extrusion is round with eight grooves; Maxima's is a square box.
+  // Both are drawn as prisms so the only thing that varies is the segment count
+  // and the size - four segments on a square is the square.
+  if (profile.uprightSegments >= 8) {
+    return pushPrism(cx, cz, y0 + 0.018, y1 - T*0.55, T * 0.5, profile.uprightSegments,
       { fill: 'url(#alu)', isAlu: true, isOctaPost: true, ...props });
   }
   return pushBox(
@@ -700,36 +810,43 @@ function buildWall(name, p1, p2, numPanels, normal, options = {}) {
     pushPost(cx, cz, 0, BH + FH, {
       partId: post.id,
       partLabel: post.label,
-      partMeta: columnStyle === 'octa'
-        ? 'Ø 40 mm Octanorm profile · 8 grooves · anodized'
-        : '40 × 40 mm Maxima profile · anodized',
+      partMeta: ensSystemProfile().meta,
     });
   }
 
+  // Rail section by system, from the same reference profile as the upright.
+  // Both rails were EX-square whichever system was chosen, which is the other
+  // half of why the two looked alike: Maxima rails are nearly three times as
+  // deep as Octanorm's.
+  const railProfile = ensSystemProfile();
+  const railH = railProfile.railHeight;
+  const railD = railProfile.railDepth;
+  const railMeta = `${Math.round(railH * 1000)} x ${Math.round(railD * 1000)} mm ${columnStyle === 'maxima' ? 'Maxima' : 'Octanorm'} rail`;
   const isAlongX = Math.abs(dir[0]) > Math.abs(dir[2]);
   if (isAlongX) {
     const xMin = Math.min(p1[0], p2[0]) - T/2;
     const xMax = Math.max(p1[0], p2[0]) + T/2;
-    pushBox([xMin, BH - T*0.4, cz_clamp(p1[2], -T/2)],
-            [xMax, BH + T*0.4, cz_clamp(p1[2], +T/2)],
+    pushBox([xMin, BH - railH/2, cz_clamp(p1[2], -railD/2)],
+            [xMax, BH + railH/2, cz_clamp(p1[2], +railD/2)],
             { fill: 'url(#alu-h)', isAlu: true, partId: 'rail-top-' + name,
-              partLabel: 'Top rail · ' + name, partMeta: 'Header beam · brushed aluminum' });
-    pushBox([xMin, 0, cz_clamp(p1[2], -T/2)],
-            [xMax, T*0.5, cz_clamp(p1[2], +T/2)],
+              partLabel: 'Top rail · ' + name, partMeta: railMeta });
+    pushBox([xMin, 0, cz_clamp(p1[2], -railD/2)],
+            [xMax, railH*0.7, cz_clamp(p1[2], +railD/2)],
             { fill: 'url(#alu-h)', isAlu: true, partId: 'rail-bot-' + name,
-              partLabel: 'Bottom rail · ' + name, partMeta: 'Floor profile · brushed aluminum' });
+              partLabel: 'Bottom rail · ' + name, partMeta: railMeta });
   } else {
     const zMin = Math.min(p1[2], p2[2]) - T/2;
     const zMax = Math.max(p1[2], p2[2]) + T/2;
-    pushBox([cz_clamp(p1[0], -T/2), BH - T*0.4, zMin],
-            [cz_clamp(p1[0], +T/2), BH + T*0.4, zMax],
+    pushBox([cz_clamp(p1[0], -railD/2), BH - railH/2, zMin],
+            [cz_clamp(p1[0], +railD/2), BH + railH/2, zMax],
             { fill: 'url(#alu-h)', isAlu: true, partId: 'rail-top-' + name,
-              partLabel: 'Top rail · ' + name, partMeta: 'Header beam · brushed aluminum' });
-    pushBox([cz_clamp(p1[0], -T/2), 0, zMin],
-            [cz_clamp(p1[0], +T/2), T*0.5, zMax],
+              partLabel: 'Top rail · ' + name, partMeta: railMeta });
+    pushBox([cz_clamp(p1[0], -railD/2), 0, zMin],
+            [cz_clamp(p1[0], +railD/2), railH*0.7, zMax],
             { fill: 'url(#alu-h)', isAlu: true, partId: 'rail-bot-' + name,
-              partLabel: 'Bottom rail · ' + name, partMeta: 'Floor profile · brushed aluminum' });
+              partLabel: 'Bottom rail · ' + name, partMeta: railMeta });
   }
+
   return { dir, perp, wallLen, numPanels, bayLen };
 }
 
@@ -768,7 +885,21 @@ function buildCeilingSupportRail() {
   });
 }
 
+/**
+ * Where each room was actually built, in booth coordinates.
+ *
+ * buildRooms() clamps a room into the stand before drawing it, and skips any
+ * wall the room borrows from the shell, so neither the extents nor the list of
+ * walls can be read off the record. The cutaway and the mounting runs have to
+ * agree with the picture rather than with the record, so they read this instead
+ * of re-deriving the clamp and drifting from it.
+ *
+ * Keys are room ids; values carry the built extents and which walls exist.
+ */
+const roomGeometry = new Map();
+
 function buildRooms() {
+  roomGeometry.clear();
   for (const room of rooms) {
     const w = Math.max(0.5, Number(room.width) || 2);
     const d = Math.max(0.5, Number(room.depth) || 2);
@@ -776,13 +907,22 @@ function buildRooms() {
     const cx = -BW / 2 + Math.max(w / 2, Math.min(BW - w / 2, (room.x != null && room.x !== '') ? Number(room.x) : w / 2));
     const cz = Math.max(d / 2, Math.min(BD - d / 2, (room.z != null && room.z !== '') ? Number(room.z) : d / 2));
     const x0 = cx - w / 2, x1 = cx + w / 2, z0 = cz - d / 2, z1 = cz + d / 2;
+    // A room edge flush with the stand borrows that shell wall instead of
+    // building its own - but only if the shell actually has a wall there. An
+    // open side has no panel, so a room pushed against one was skipping a wall
+    // that nothing else was building: the storeroom stood open to the aisle,
+    // with a gap exactly where its wall should have been.
     const shellTol = 0.012;
-    const skipLeft = x0 <= -BW / 2 + shellTol;
-    const skipRight = x1 >= BW / 2 - shellTol;
-    const skipBack = z0 <= shellTol;
-    const skipFront = z1 >= BD - shellTol;
+    const skipLeft = wallsVisible.left && x0 <= -BW / 2 + shellTol;
+    const skipRight = wallsVisible.right && x1 >= BW / 2 - shellTol;
+    const skipBack = wallsVisible.back && z0 <= shellTol;
+    const skipFront = wallsVisible.front && z1 >= BD - shellTol;
     const label = room.name || 'Room';
     const meta = `${w.toFixed(1)} x ${d.toFixed(1)} x ${h.toFixed(1)} m`;
+    roomGeometry.set(String(room.id), {
+      id: String(room.id), name: label, cx, cz, x0, x1, z0, z1, h,
+      built: { back: !skipBack, front: !skipFront, left: !skipLeft, right: !skipRight },
+    });
     const roomCommon = { roomId: room.id, softEdge: true, renderOrder: 0.00005 };
     const wallBoxCommon = { roomId: room.id, renderOrder: 0.00005 };
     const wallFinish = ['frosted', 'glass', 'dark'].includes(room.wallFinish) ? room.wallFinish : 'white';
@@ -841,7 +981,6 @@ function buildRooms() {
       partId: room.id + '-floor',
       partLabel: label + ' floor',
       partMeta: meta,
-      normal: [0, 1, 0],
       ...roomCommon
     });
     if (!skipBack && room.hasDoor && doorSide === 'back') {
@@ -850,7 +989,7 @@ function buildRooms() {
         partId: room.id + '-back-left',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
-        normal: [0, 0, 1],
+        roomWall: 'back',
         ...wallBoxCommon
       });
       pushBox([doorCenterX + doorW/2, 0, z0], [x1, h, z0 + EX], {
@@ -858,7 +997,7 @@ function buildRooms() {
         partId: room.id + '-back-right',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
-        normal: [0, 0, 1],
+        roomWall: 'back',
         ...wallBoxCommon
       });
       pushBox([doorCenterX - doorW/2, doorH, z0], [doorCenterX + doorW/2, h, z0 + EX], {
@@ -866,7 +1005,7 @@ function buildRooms() {
         partId: room.id + '-back-header',
         partLabel: label + ' door header',
         partMeta: meta,
-        normal: [0, 0, 1],
+        roomWall: 'back',
         ...wallBoxCommon
       });
     } else if (!skipBack) {
@@ -875,7 +1014,7 @@ function buildRooms() {
       partId: room.id + '-back',
       partLabel: label + ' wall',
       partMeta: meta,
-      normal: [0, 0, 1],
+      roomWall: 'back',
       ...wallBoxCommon
     });
     }
@@ -885,7 +1024,7 @@ function buildRooms() {
         partId: room.id + '-front-left',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
-        normal: [0, 0, -1],
+        roomWall: 'front',
         ...wallBoxCommon
       });
       pushBox([doorCenterX + doorW/2, 0, z1 - EX], [x1, h, z1], {
@@ -893,7 +1032,7 @@ function buildRooms() {
         partId: room.id + '-front-right',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
-        normal: [0, 0, -1],
+        roomWall: 'front',
         ...wallBoxCommon
       });
       pushBox([doorCenterX - doorW/2, doorH, z1 - EX], [doorCenterX + doorW/2, h, z1], {
@@ -901,7 +1040,7 @@ function buildRooms() {
         partId: room.id + '-front-header',
         partLabel: label + ' door header',
         partMeta: meta,
-        normal: [0, 0, -1],
+        roomWall: 'front',
         ...wallBoxCommon
       });
     } else if (!skipFront) {
@@ -910,7 +1049,7 @@ function buildRooms() {
       partId: room.id + '-front',
       partLabel: label + ' wall',
       partMeta: room.hasDoor ? meta + ' · door' : meta,
-      normal: [0, 0, -1],
+      roomWall: 'front',
       ...wallBoxCommon
     });
     }
@@ -920,7 +1059,7 @@ function buildRooms() {
         partId: room.id + '-left-back',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
-        normal: [1, 0, 0],
+        roomWall: 'left',
         ...wallBoxCommon
       });
       pushBox([x0, 0, doorCenterZ + doorW/2], [x0 + EX, h, z1], {
@@ -928,7 +1067,7 @@ function buildRooms() {
         partId: room.id + '-left-front',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
-        normal: [1, 0, 0],
+        roomWall: 'left',
         ...wallBoxCommon
       });
       pushBox([x0, doorH, doorCenterZ - doorW/2], [x0 + EX, h, doorCenterZ + doorW/2], {
@@ -936,7 +1075,7 @@ function buildRooms() {
         partId: room.id + '-left-header',
         partLabel: label + ' door header',
         partMeta: meta,
-        normal: [1, 0, 0],
+        roomWall: 'left',
         ...wallBoxCommon
       });
     } else if (!skipLeft) {
@@ -945,7 +1084,7 @@ function buildRooms() {
       partId: room.id + '-left',
       partLabel: label + ' wall',
       partMeta: meta,
-      normal: [1, 0, 0],
+      roomWall: 'left',
       ...wallBoxCommon
     });
     }
@@ -955,7 +1094,7 @@ function buildRooms() {
         partId: room.id + '-right-back',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
-        normal: [-1, 0, 0],
+        roomWall: 'right',
         ...wallBoxCommon
       });
       pushBox([x1 - EX, 0, doorCenterZ + doorW/2], [x1, h, z1], {
@@ -963,7 +1102,7 @@ function buildRooms() {
         partId: room.id + '-right-front',
         partLabel: label + ' wall',
         partMeta: meta + ' · door',
-        normal: [-1, 0, 0],
+        roomWall: 'right',
         ...wallBoxCommon
       });
       pushBox([x1 - EX, doorH, doorCenterZ - doorW/2], [x1, h, doorCenterZ + doorW/2], {
@@ -971,7 +1110,7 @@ function buildRooms() {
         partId: room.id + '-right-header',
         partLabel: label + ' door header',
         partMeta: meta,
-        normal: [-1, 0, 0],
+        roomWall: 'right',
         ...wallBoxCommon
       });
     } else if (!skipRight) {
@@ -980,7 +1119,7 @@ function buildRooms() {
       partId: room.id + '-right',
       partLabel: label + ' wall',
       partMeta: meta,
-      normal: [-1, 0, 0],
+      roomWall: 'right',
       ...wallBoxCommon
     });
     }
@@ -1029,7 +1168,6 @@ function buildRooms() {
         partId: room.id + '-ceiling',
         partLabel: label + ' ceiling',
         partMeta: meta,
-        normal: [0, 1, 0],
         ...roomCommon
       });
     }
@@ -1084,6 +1222,9 @@ function buildRooms() {
         designOpacity: roomDesignOpacity,
         graphicFit: roomDesignFit,
         designWall: roomDesignWall,
+        // Hides with the wall it is printed on, so a cut-away wall does not
+        // leave its graphic floating in the opening.
+        roomWall: roomDesignWall,
         partId: room.id + '-wall-image',
         partLabel: label + ' wall image',
         partMeta: `Uploaded room wall graphic · ${roomDesignWall} wall · ${roomDesignFit}`,
@@ -1143,7 +1284,7 @@ function addRoomProfilesAndDoor(room, geom) {
     });
   }
 
-  function addInsetX(fromX, toX, z, normal, id, skip = false) {
+  function addInsetX(fromX, toX, z, normal, id, side, skip = false) {
     if (skip || toX - fromX <= rail * 2.8) return;
     const margin = Math.min(0.09, (toX - fromX) * 0.14);
     const y0 = rail * 1.45;
@@ -1157,12 +1298,13 @@ function addRoomProfilesAndDoor(room, geom) {
       partLabel: `${label} framed infill panel`,
       partMeta: 'Room wall infill panel with reveal',
       roomId: room.id,
+      roomWall: side,
       softEdge: true,
       renderOrder: 0.00006,
     });
   }
 
-  function addInsetZ(fromZ, toZ, x, normal, id, skip = false) {
+  function addInsetZ(fromZ, toZ, x, normal, id, side, skip = false) {
     if (skip || toZ - fromZ <= rail * 2.8) return;
     const margin = Math.min(0.09, (toZ - fromZ) * 0.14);
     const y0 = rail * 1.45;
@@ -1176,6 +1318,7 @@ function addRoomProfilesAndDoor(room, geom) {
       partLabel: `${label} framed infill panel`,
       partMeta: 'Room wall infill panel with reveal',
       roomId: room.id,
+      roomWall: side,
       softEdge: true,
       renderOrder: 0.00006,
     });
@@ -1228,12 +1371,12 @@ function addRoomProfilesAndDoor(room, geom) {
   const sortedX = [...xStops].sort((a, b) => a - b);
   const sortedZ = [...zStops].sort((a, b) => a - b);
   for (let i = 0; i < sortedX.length - 1; i++) {
-    if (!skipBack) addInsetX(sortedX[i], sortedX[i + 1], z0 + EX + 0.006, [0, 0, 1], `back-${i}`, isDoorBay('back', sortedX[i], sortedX[i + 1]));
-    if (!skipFront) addInsetX(sortedX[i], sortedX[i + 1], z1 - EX - 0.006, [0, 0, -1], `front-${i}`, isDoorBay('front', sortedX[i], sortedX[i + 1]));
+    if (!skipBack) addInsetX(sortedX[i], sortedX[i + 1], z0 + EX + 0.006, [0, 0, 1], `back-${i}`, 'back', isDoorBay('back', sortedX[i], sortedX[i + 1]));
+    if (!skipFront) addInsetX(sortedX[i], sortedX[i + 1], z1 - EX - 0.006, [0, 0, -1], `front-${i}`, 'front', isDoorBay('front', sortedX[i], sortedX[i + 1]));
   }
   for (let i = 0; i < sortedZ.length - 1; i++) {
-    if (!skipLeft) addInsetZ(sortedZ[i], sortedZ[i + 1], x0 + EX + 0.006, [1, 0, 0], `left-${i}`, isDoorBay('left', sortedZ[i], sortedZ[i + 1]));
-    if (!skipRight) addInsetZ(sortedZ[i], sortedZ[i + 1], x1 - EX - 0.006, [-1, 0, 0], `right-${i}`, isDoorBay('right', sortedZ[i], sortedZ[i + 1]));
+    if (!skipLeft) addInsetZ(sortedZ[i], sortedZ[i + 1], x0 + EX + 0.006, [1, 0, 0], `left-${i}`, 'left', isDoorBay('left', sortedZ[i], sortedZ[i + 1]));
+    if (!skipRight) addInsetZ(sortedZ[i], sortedZ[i + 1], x1 - EX - 0.006, [-1, 0, 0], `right-${i}`, 'right', isDoorBay('right', sortedZ[i], sortedZ[i + 1]));
   }
 
   if (!skipBack) {
@@ -1302,17 +1445,25 @@ function addRoomProfilesAndDoor(room, geom) {
     ...roomCommon,
     ...doorTransform,
     fill: 'rgba(247,249,252,0.94)',
-    // Kept clear of the tie window on purpose. The door leaf has to beat the
-    // wall it sits in, and its handle has to beat the leaf - inside the window
-    // that is decided by depth, and the handle's centroid sits *behind* the
-    // leaf, so it disappeared. The cost is that a door can show through the
-    // stand when viewed from behind; a hidden handle on every room was worse.
+    // Inside the room's own layer band, so depth decides where the leaf sits
+    // rather than a layer number. It used to be lifted clear of the band to
+    // guarantee it beat the wall it hangs in - which also lifted it above every
+    // *other* wall, so a door on the far side of a room was drawn on top of the
+    // near wall and appeared to float in the middle of a solid panel. That was
+    // invisible while two of the four walls were not being drawn at all; with
+    // the walls fixed it is the first thing you see.
+    //
+    // Depth is now enough. The leaf stands proud of the wall plane on both
+    // faces, so it wins against the wall it belongs to; the handle stands proud
+    // of the leaf on the inward face, so it wins from inside the room and is
+    // correctly hidden by the leaf from outside - which is where an inward
+    // handle actually is.
     partId: `${room.id}-door-panel`,
     partLabel: `${label} door panel`,
     partMeta: `${meta} - hinged room door`,
     softEdge: true,
     roomDoorToggle: true,
-    renderOrder: 0.06,
+    renderOrder: 0.00009,
   });
   const panelWidth = Math.max(0.4, closedMax - closedMin);
   const handleAxis = isRightHinge ? closedMin + Math.min(0.16, panelWidth * 0.2) : closedMax - Math.min(0.16, panelWidth * 0.2);
@@ -1337,7 +1488,7 @@ function addRoomProfilesAndDoor(room, geom) {
     partMeta: 'Metal handle plate',
     softEdge: true,
     roomDoorToggle: true,
-    renderOrder: 0.08,
+    renderOrder: 0.00009,
   });
   const handleGripMin = doorUsesX
     ? [handleAxis - 0.09, handleY - 0.015, Math.min(handleGripA, handleGripB)]
@@ -1354,7 +1505,7 @@ function addRoomProfilesAndDoor(room, geom) {
     partMeta: 'Metal pull handle',
     softEdge: true,
     roomDoorToggle: true,
-    renderOrder: 0.10,
+    renderOrder: 0.00009,
   });
 }
 
@@ -1786,100 +1937,6 @@ function buildPlacedItems() {
   }
 }
 
-function clampPlacedItemToBooth(x, z, w, d) {
-  // No wall clearance. This used to hold every item 25 cm off every wall,
-  // which put a visible gap behind anything pushed back and made corners
-  // unreachable - a counter could not be built into the corner it is designed
-  // to sit in. Items are still kept inside the booth footprint; where they go
-  // inside it is the designer's call.
-  const wallClearance = 0;
-  const halfW = Math.max(0.06, Number(w) || 0.3) / 2;
-  const halfD = Math.max(0.06, Number(d) || 0.3) / 2;
-  // The plan around the stand is placeable too - see PLAN_MARGIN_M. The bounds
-  // still exist so nothing can be dragged off the edge of the drawing.
-  const minX = Math.min(0, -BW / 2 + halfW + wallClearance - PLAN_MARGIN_M);
-  const maxX = Math.max(minX, BW / 2 - halfW - wallClearance + PLAN_MARGIN_M);
-  const minZ = Math.min(BD / 2, halfD + wallClearance - PLAN_MARGIN_M);
-  const maxZ = Math.max(minZ, BD - halfD - wallClearance + PLAN_MARGIN_M);
-  return {
-    x: Math.max(minX, Math.min(maxX, Number(x) || 0)),
-    z: Math.max(minZ, Math.min(maxZ, Number(z) || 0)),
-  };
-}
-
-function boxOverlap(a, b, margin = 0) {
-  return (
-    Math.abs(a.x - b.x) < (a.w / 2) + (b.w / 2) + margin &&
-    Math.abs(a.z - b.z) < (a.d / 2) + (b.d / 2) + margin
-  );
-}
-
-function rotatedFootprint(w, d, rotationY = 0) {
-  const width = Math.max(0.06, Number(w) || 0.3);
-  const depth = Math.max(0.06, Number(d) || 0.3);
-  const radians = ((Number(rotationY) || 0) * Math.PI) / 180;
-  const cos = Math.abs(Math.cos(radians));
-  const sin = Math.abs(Math.sin(radians));
-  return {
-    w: width * cos + depth * sin,
-    d: width * sin + depth * cos,
-  };
-}
-
-function structuralObstacleZones() {
-  const zones = [];
-  const postLaneW = Math.max(0.24, EX * 7);
-  const postPocket = Math.max(0.32, EX * 9);
-  const wallPocketD = Math.max(0.24, EX * 7);
-
-  // Front support posts carry the fascia and ceiling cross rail. Protect the
-  // whole rail lane so large furniture cannot visually swallow the support.
-  activeFrontSupportPositions().forEach((value) => {
-    zones.push({
-      kind: 'front-support-lane',
-      x: -BW / 2 + value,
-      z: BD / 2,
-      w: postLaneW,
-      d: Math.max(BD + 0.1, postPocket),
-    });
-  });
-
-  // Corner posts are already close to wall clearance, but large items can still
-  // clip them when rotated or scaled. Reserve a small physical pocket.
-  [
-    [-BW / 2, 0],
-    [ BW / 2, 0],
-    [-BW / 2, BD],
-    [ BW / 2, BD],
-  ].forEach(([x, z]) => {
-    zones.push({ kind: 'corner-post', x, z, w: postPocket, d: postPocket });
-  });
-
-  // Back and side wall post pockets prevent tall cabinets from sitting exactly
-  // on panel mullions while still allowing normal placement near walls.
-  if (wallsVisible.back) {
-    for (let i = 1; i < PANELS_BACK; i++) {
-      zones.push({ kind: 'back-post', x: -BW / 2 + i * (BW / PANELS_BACK), z: 0, w: postPocket, d: wallPocketD });
-    }
-  }
-  if (wallsVisible.left) {
-    for (let i = 1; i < PANELS_SIDE; i++) {
-      zones.push({ kind: 'left-post', x: -BW / 2, z: i * (BD / PANELS_SIDE), w: wallPocketD, d: postPocket });
-    }
-  }
-  if (wallsVisible.right) {
-    for (let i = 1; i < PANELS_SIDE; i++) {
-      zones.push({ kind: 'right-post', x: BW / 2, z: i * (BD / PANELS_SIDE), w: wallPocketD, d: postPocket });
-    }
-  }
-  return zones;
-}
-
-function hasStructuralCollision(x, z, w, d) {
-  const footprint = { x, z, w: Math.max(0.06, Number(w) || 0.3), d: Math.max(0.06, Number(d) || 0.3) };
-  return structuralObstacleZones().some(zone => boxOverlap(footprint, zone, 0.035));
-}
-
 
 /* ── Wall mounting constraints ─────────────────────────────────────────────
  *
@@ -1913,7 +1970,113 @@ function boothWallRuns() {
     { name:'front', axis:'x', from:-BW/2, to:BW/2, fixed:BD,    panels:PANELS_BACK, inX:0,  inZ:-1 },
     { name:'left',  axis:'z', from:0,     to:BD,   fixed:-BW/2, panels:PANELS_SIDE, inX:1,  inZ:0  },
     { name:'right', axis:'z', from:0,     to:BD,   fixed:BW/2,  panels:PANELS_SIDE, inX:-1, inZ:0  },
+    ...roomWallRuns(),
   ];
+}
+
+/**
+ * The same runs, for the walls of every room in the stand.
+ *
+ * A room is built out of the identical 1 m modules as the shell, with the same
+ * uprights and the same top rail, so everything the booth walls support a room
+ * wall supports too: a shelf takes the width of the panel it lands on, a light
+ * rides the top rail, and a counter pushed against it sits flush. None of that
+ * worked inside a room before - boothWallRuns() listed the four shell walls and
+ * nothing else, so a storeroom was a place furniture could stand in and not a
+ * place anything could be fixed to.
+ *
+ * Two runs per wall, one for each face: a shelf hangs inside a room or outside
+ * it, and which one you get is decided by where the item is, not by a rule.
+ * Walls that a room borrows from the shell are skipped - those are already in
+ * the list above, and a doubled run is a slot furniture fights over.
+ */
+function roomWallRuns() {
+  const runs = [];
+  for (const geom of roomGeometry.values()) {
+    // roomGeometry records what was last *built*, and a room can be removed
+    // without a rebuild having happened yet. Mounting to the walls of a room
+    // that is no longer in the stand is worse than mounting to nothing.
+    if (!rooms.some(room => String(room.id) === geom.id)) continue;
+    const modulesX = Math.max(1, Math.round(geom.x1 - geom.x0));
+    const modulesZ = Math.max(1, Math.round(geom.z1 - geom.z0));
+    const add = (side, axis, from, to, outerFixed, innerFixed, inX, inZ, panels) => {
+      if (!geom.built[side]) return;
+      const shared = { axis, from, to, panels, railY: geom.h, wallHeight: geom.h, roomId: geom.id };
+      runs.push({ ...shared, name: `room:${geom.id}:${side}:in`,  face: 'in',  fixed: innerFixed, inX,  inZ  });
+      runs.push({ ...shared, name: `room:${geom.id}:${side}:out`, face: 'out', fixed: outerFixed, inX: -inX, inZ: -inZ });
+    };
+    add('back',  'x', geom.x0, geom.x1, geom.z0,      geom.z0 + EX, 0,  1,  modulesX);
+    add('front', 'x', geom.x0, geom.x1, geom.z1,      geom.z1 - EX, 0, -1,  modulesX);
+    add('left',  'z', geom.z0, geom.z1, geom.x0,      geom.x0 + EX, 1,  0,  modulesZ);
+    add('right', 'z', geom.z0, geom.z1, geom.x1,      geom.x1 - EX, -1, 0,  modulesZ);
+  }
+  return runs;
+}
+
+/**
+ * The height the top profile of a run sits at.
+ *
+ * A room's rail is at the room's own height, which is at most the booth's and
+ * usually lower. Without this a light mounted on a room wall was pinned to the
+ * booth's ceiling rail and hung above the room it was supposed to be lighting.
+ */
+function runRailY(run) {
+  const roomRail = run && Number(run.railY);
+  if (!Number.isFinite(roomRail) || roomRail <= 0) return railLightY();
+  // Mirrors railLightY() against the room's own top rail: addRailZ/addRailX
+  // centre that profile on the room height, so its underside is half a profile
+  // below, and the fixture hangs from it by its bracket.
+  const rail = Math.max(EX * 1.25, 0.055);
+  return Math.max(0, roomRail - rail / 2 - RAIL_LIGHT_BRACKET_RISE);
+}
+
+/** The height a shelf defaults to on a given run. */
+function runShelfY(run) {
+  const height = run && Number(run.wallHeight) > 0 ? Number(run.wallHeight) : BH;
+  return Math.min(Math.max(0.9, height * 0.55), Math.max(0, height - 0.25));
+}
+
+/**
+ * The wall faces something standing at (x, z) can actually be fixed to.
+ *
+ * Both faces of a room wall are in the list, and only one of them is reachable
+ * from any given spot: standing in a storeroom you can hang a shelf on the
+ * inside of its walls and on nothing else, and standing outside it you can
+ * reach the outside of those same walls but not through them. Without this a
+ * shelf dropped in a room mounted on whichever face happened to be a centimetre
+ * nearer, and ended up hanging on the wrong side of the wall.
+ *
+ * The shell's own runs stay reachable from both: a room flush against the stand
+ * borrows that shell wall instead of building its own, so the shell run is the
+ * only thing there is to mount to.
+ */
+function runsReachableFrom(runs, x, z) {
+  const room = roomContainingPoint(x, z);
+  if (!room) {
+    // Out on the stand floor: the shell, and the outside of every room.
+    return runs.filter(run => !run.roomId || run.face === 'out');
+  }
+  const insideId = String(room.id);
+  const geom = roomGeometry.get(insideId);
+  // A room flush with the stand borrows that shell wall rather than building
+  // its own, so the shell run is the only thing on that side to fix to. Every
+  // other shell run - including the ceiling cross rails that pass over an
+  // open-topped room - is on the far side of a wall from in here.
+  const borrowed = new Set(geom
+    ? ['back', 'front', 'left', 'right'].filter(side => !geom.built[side])
+    : []);
+  return runs.filter(run => {
+    if (!run.roomId) return borrowed.has(run.name);
+    return String(run.roomId) === insideId && run.face === 'in';
+  });
+}
+
+/** Whether (x, z) lies within the stretch of wall a run covers, plus a margin. */
+function withinRunExtent(run, x, z, margin = 0) {
+  const along = run.axis === 'x' ? x : z;
+  const lo = Math.min(run.from, run.to) - margin;
+  const hi = Math.max(run.from, run.to) + margin;
+  return along >= lo && along <= hi;
 }
 
 /** Distance from (x,z) to a wall run, and how far along the run that lands. */
@@ -1951,7 +2114,7 @@ function slotMountPoint(slot, depth) {
 
 function nearestPanelSlot(x, z) {
   let best = null;
-  for (const run of boothWallRuns()) {
+  for (const run of runsReachableFrom(boothWallRuns(), x, z)) {
     const projection = wallRunProjection(run, x, z);
     for (const slot of panelSlotsForRun(run)) {
       const gap = projection.distance + Math.abs(slot.along - projection.along) * 0.35;
@@ -1976,7 +2139,11 @@ function applyWallMountConstraint(item, x, z) {
     // clear the uprights.
     item.w = Math.max(0.2, hit.slot.bay - 0.06);
     item.rotationY = hit.slot.run.axis === 'x' ? 0 : 90;
-    if (!(Number(item.y) > 0)) item.y = Math.min(Math.max(0.9, BH * 0.55), BH - 0.25);
+    // Never above the wall it is now on. A shelf carried from the booth shell
+    // onto a lower room wall kept its old height and hung over the top of it.
+    const wallHeight = Number(hit.slot.run.wallHeight) > 0 ? Number(hit.slot.run.wallHeight) : BH;
+    const wanted = Number(item.y) > 0 ? Number(item.y) : runShelfY(hit.slot.run);
+    item.y = Math.min(wanted, Math.max(0, wallHeight - 0.25));
     return slotMountPoint(hit.slot, item.d);
   }
 
@@ -1984,9 +2151,10 @@ function applyWallMountConstraint(item, x, z) {
     const hit = nearestRailRun(x, z);
     if (!hit) return null;
     // Lights ride the overhead profile: free to slide along it, pinned to its
-    // height and never anywhere else.
+    // height and never anywhere else. Which profile that is now includes the
+    // top rail of every room wall, so a storeroom can be lit from its own frame.
     item.rotationY = hit.run.axis === 'x' ? 0 : 90;
-    item.y = railLightY();
+    item.y = runRailY(hit.run);
     return railMountPoint(hit, item.d);
   }
 
@@ -1999,14 +2167,34 @@ function applyWallMountConstraint(item, x, z) {
   let snappedZ = z;
   let snapped = false;
   const insideBooth = Math.abs(x) <= BW / 2 && z >= 0 && z <= BD;
-  for (const run of insideBooth ? boothWallRuns() : []) {
-    if (run.axis === 'x') {
-      const target = run.fixed + run.inZ * (footprint.d / 2);
-      if (Math.abs(z - target) <= WALL_FLUSH_RANGE_M) { snappedZ = target; snapped = true; }
-    } else {
-      const target = run.fixed + run.inX * (footprint.w / 2);
-      if (Math.abs(x - target) <= WALL_FLUSH_RANGE_M) { snappedX = target; snapped = true; }
-    }
+  for (const run of insideBooth ? runsReachableFrom(boothWallRuns(), x, z) : []) {
+    // Only where the wall actually runs. The shell's walls span the whole
+    // stand, so this never mattered until room walls joined the list - and a
+    // room wall three metres away has no business pulling a counter onto its
+    // line. The half-footprint margin lets an item still tuck into the corner
+    // at either end of the run.
+    const reach = run.axis === 'x' ? footprint.w / 2 : footprint.d / 2;
+    if (!withinRunExtent(run, x, z, reach)) continue;
+    // Measured from the item's near EDGE to the wall, not from its centre to
+    // where its centre would end up. Those are the same distance only for an
+    // item of no size: a 1.02 m counter seats with its centre 0.51 m off the
+    // wall, so aiming the pointer at the wall itself put the centre 0.51 m
+    // past the target - beyond the 0.35 m range - and the snap never fired.
+    // Pushing furniture straight at a wall was the one gesture that could not
+    // seat it against one, and a corner needs it to fire on both axes at once.
+    const half = run.axis === 'x' ? footprint.d / 2 : footprint.w / 2;
+    const depthIn = run.axis === 'x' ? (z - run.fixed) * run.inZ : (x - run.fixed) * run.inX;
+    if (depthIn - half > WALL_FLUSH_RANGE_M) continue;
+    // ...but only from the face's own side. depthIn goes negative once the
+    // pointer is past the wall plane, which is not "pressed hard against it" -
+    // it is standing on the other side of it, where the opposite face's run
+    // belongs. Without this a counter dropped inside a room was grabbed by the
+    // *outside* of that room's far wall and thrown a metre across the stand.
+    // The tolerance is what lets a corner work at all: aiming straight at the
+    // wall line puts depthIn at exactly zero.
+    if (depthIn < -0.02) continue;
+    if (run.axis === 'x') { snappedZ = run.fixed + run.inZ * half; snapped = true; }
+    else { snappedX = run.fixed + run.inX * half; snapped = true; }
   }
   // Rest on whatever is underneath, so a laptop dropped on a desk stays on it.
   item.y = supportSurfaceHeight(snapped ? snappedX : x, snapped ? snappedZ : z, item.id);
@@ -2063,6 +2251,44 @@ function supportSurfaceHeight(x, z, excludeId) {
  * placedItemRenderXZ(); neither relocates anything.
  */
 
+/**
+ * The nearest spot to (x, z) where this item can actually be put down, or null
+ * if there is none within reach.
+ *
+ * Read the note above before calling this. What was deleted was not the idea of
+ * searching - it was searching from the *draw* path, which moved furniture on
+ * every frame and wrote the result back. This has exactly one caller, the
+ * pointer-release handler, and it runs once per gesture. Nothing that draws may
+ * call it, and neither may anything that runs per frame.
+ *
+ * Rings outward on the same 5 cm grid the drag snaps to, nearest offset first,
+ * and each candidate goes through resolveDropPosition() so a rescued item obeys
+ * the same wall, room and mounting rules as a dragged one. The probe is a copy
+ * because that function mutates what it resolves.
+ */
+function nearestValidPlacement(item, x, z, maxRadius = 0.8) {
+  const step = 0.05;
+  const rings = Math.max(1, Math.round(maxRadius / step));
+  const rotation = item.rotationY ?? item.rotation;
+  for (let ring = 1; ring <= rings; ring += 1) {
+    const offsets = [];
+    for (let dx = -ring; dx <= ring; dx += 1) {
+      for (let dz = -ring; dz <= ring; dz += 1) {
+        // The ring itself, not the filled square - the inside was searched on
+        // the previous pass.
+        if (Math.max(Math.abs(dx), Math.abs(dz)) === ring) offsets.push([dx, dz]);
+      }
+    }
+    // A square ring is not a circle, so order what is on it by true distance.
+    offsets.sort((a, b) => (a[0] * a[0] + a[1] * a[1]) - (b[0] * b[0] + b[1] * b[1]));
+    for (const [dx, dz] of offsets) {
+      const at = resolveDropPosition({ ...item }, x + dx * step, z + dz * step);
+      if (!itemCollisionReason(item.id, at.x, at.z, item.w, item.d, rotation)) return at;
+    }
+  }
+  return null;
+}
+
 /* ── Where a placed item goes ───────────────────────────────────────────────
  *
  * Two operations, and only two. They were previously written out at four call
@@ -2084,9 +2310,13 @@ function supportSurfaceHeight(x, z, excludeId) {
 function resolveDropPosition(item, x, z) {
   const footprint = rotatedFootprint(item.w, item.d, item.rotationY ?? item.rotation);
   const mounted = applyWallMountConstraint(item, x, z);
-  return mounted
+  // A shelf or a light is already fixed to a profile and owns no floor, so the
+  // room walls are not a limit on it - it is mounted *to* one.
+  if (mounted && isWallMountedItem(item)) return clampMountedPoint(mounted);
+  const inBooth = mounted
     ? clampMountedPoint(mounted)
     : clampPlacedItemToBooth(x, z, footprint.w, footprint.d);
+  return applyRoomLimits(inBooth.x, inBooth.z, footprint.w, footprint.d);
 }
 
 /**
@@ -2163,7 +2393,7 @@ function boothRailRuns() {
 /** The overhead profile nearest (x, z), and how far along it that lands. */
 function nearestRailRun(x, z) {
   let best = null;
-  for (const run of boothRailRuns()) {
+  for (const run of runsReachableFrom(boothRailRuns(), x, z)) {
     const projection = wallRunProjection(run, x, z);
     if (!best || projection.distance < best.distance) {
       best = { run, along: projection.along, distance: projection.distance };
@@ -2197,11 +2427,19 @@ function mountedBaseY(item) {
   // already-saved booth kept the mid-wall height it was given back when lights
   // had no rail to hang from, so the mount code computed the right answer and
   // the draw code threw it away on the very next frame.
-  if (shape === 'light' || shape === 'rail_light') return railLightY();
+  const itemX = (Number(item && item.x) || 0) - BW / 2;
+  const itemZ = Number(item && item.z) || 0;
+  if (shape === 'light' || shape === 'rail_light') {
+    // Whichever profile it is nearest, not always the booth's ceiling rail -
+    // a light clamped to a room's top rail belongs at that room's height.
+    const hit = nearestRailRun(itemX, itemZ);
+    return runRailY(hit && hit.run);
+  }
   const stored = Number(item && item.y);
   if (Number.isFinite(stored) && stored > 0) return stored;
   if (shape === 'wall_shelf' || shape === 'shelf') {
-    return Math.min(Math.max(0.9, BH * 0.55), Math.max(0, BH - 0.25));
+    const hit = nearestPanelSlot(itemX, itemZ);
+    return runShelfY(hit && hit.slot.run);
   }
   return 0;
 }
@@ -2213,103 +2451,86 @@ function isWallMountedItem(item) {
 }
 
 
-function isFloorCollisionItem(item) {
-  const kind = String(item && item.kind || 'furniture');
-  const shape = String(item && item.shape || '');
-  return (kind === 'furniture' || kind === 'asset') && shape !== 'wall_shelf' && shape !== 'light' && shape !== 'rail_light';
-}
+/* ── Placement rules ───────────────────────────────────────────────────────
+ *
+ * These used to be implemented here, a second time, in booth-centred
+ * coordinates and untyped. The two copies drifted: they measured room interiors
+ * differently until recently, and they still disagreed on how much daylight two
+ * items need - this half let go at 2 cm and the workspace refused under 6 cm, so
+ * a drag could put something down that the workspace then rejected with nothing
+ * to explain why.
+ *
+ * The rules now live once, in workspace-geometry.ts, compiled to
+ * /workspace-placement.js and loaded immediately before this file. What is left
+ * here is the coordinate shift and nothing else: this file draws the booth
+ * centred on the origin, and the rules measure from its front-left corner.
+ */
+const PLACEMENT = (typeof ENSPlacement !== 'undefined') ? ENSPlacement : null;
 
-function boxInsideBox(inner, outer, tolerance = 0.001) {
-  return Math.abs(inner.x - outer.x) + inner.w / 2 <= outer.w / 2 + tolerance
-    && Math.abs(inner.z - outer.z) + inner.d / 2 <= outer.d / 2 + tolerance;
-}
-
-function roomCollisionBox(room, inset = 0) {
-  const width = Math.max(0.1, Number(room.width) || 1);
-  const depth = Math.max(0.1, Number(room.depth) || 1);
+/** The stand as the rules expect to receive it. */
+function placementWorld() {
   return {
-    x: Number(room.x) - BW / 2,
-    z: Number(room.z) || 0,
-    w: Math.max(0.05, width - inset * 2),
-    d: Math.max(0.05, depth - inset * 2),
+    items: placedItems,
+    rooms,
+    booth: { width: BW, depth: BD, height: BH, system: columnStyle === 'maxima' ? 'maxima' : 'octanorm' },
+    frontSupports: activeFrontSupportPositions(),
   };
 }
 
-function roomDoorCollisionBox(room) {
-  if (!room.hasDoor) return null;
-  const side = ['back', 'left', 'right'].includes(room.doorSide) ? room.doorSide : 'front';
-  const roomBox = roomCollisionBox(room);
-  const usesDepth = side === 'left' || side === 'right';
-  const span = usesDepth ? roomBox.d : roomBox.w;
-  const axisStart = usesDepth ? roomBox.z - roomBox.d / 2 : roomBox.x - roomBox.w / 2;
-  const sections = Math.max(1, Math.floor(span));
-  const sectionWidth = span / sections;
-  const position = room.doorPosition === 'left' || room.doorPosition === 'right' ? room.doorPosition : 'center';
-  const index = position === 'left' ? 0 : position === 'right' ? sections - 1 : Math.round((sections - 1) / 2);
-  const center = axisStart + sectionWidth * (index + 0.5);
-  const opening = Math.max(0.55, Math.min(Number(room.doorWidth) || 0.85, span - 0.16));
-  const swingDepth = Math.max(0.75, opening + 0.12);
-  if (side === 'back') return { x: center, z: roomBox.z - roomBox.d / 2 + swingDepth / 2 - 0.03, w: opening + 0.16, d: swingDepth + 0.06 };
-  if (side === 'left') return { x: roomBox.x - roomBox.w / 2 + swingDepth / 2 - 0.03, z: center, w: swingDepth + 0.06, d: opening + 0.16 };
-  if (side === 'right') return { x: roomBox.x + roomBox.w / 2 - swingDepth / 2 + 0.03, z: center, w: swingDepth + 0.06, d: opening + 0.16 };
-  return { x: center, z: roomBox.z + roomBox.d / 2 - swingDepth / 2 + 0.03, w: opening + 0.16, d: swingDepth + 0.06 };
+/** Booth-centred x to workspace x, and back. */
+function toWorldX(centredX) { return (Number(centredX) || 0) + BW / 2; }
+function toCentredX(worldX) { return (Number(worldX) || 0) - BW / 2; }
+
+function rotatedFootprint(w, d, rotationY = 0) {
+  const size = PLACEMENT.rotatedItemFootprint({
+    w: Math.max(0.06, Number(w) || 0.3),
+    d: Math.max(0.06, Number(d) || 0.3),
+    rotationY: Number(rotationY) || 0,
+  });
+  return { w: size.width, d: size.depth };
 }
 
-function roomItemCollisionReason(candidate, room) {
-  const outer = roomCollisionBox(room);
-  if (!boxOverlap(candidate, outer)) return '';
-  if (!boxInsideBox(candidate, roomCollisionBox(room, 0.12))) return `Crosses ${String(room.name || 'room')} wall`;
-  const doorClearance = roomDoorCollisionBox(room);
-  if (doorClearance && boxOverlap(candidate, doorClearance)) return `Blocks ${String(room.name || 'room')} door clearance`;
-  return '';
-}
-
-function roomPlacementCollisionReason(excludeId, candidateRoom) {
-  const candidateBox = roomCollisionBox(candidateRoom);
-  for (const other of rooms) {
-    if (String(other.id) === String(excludeId)) continue;
-    if (boxOverlap(candidateBox, roomCollisionBox(other), 0.08)) return `Overlaps ${String(other.name || 'another room')}`;
-  }
-  for (const item of placedItems) {
-    if (!isFloorCollisionItem(item)) continue;
-    const footprint = rotatedFootprint(item.w, item.d, item.rotationY ?? item.rotation);
-    const itemBox = { x: Number(item.x) - BW / 2, z: Number(item.z) || 0, ...footprint };
-    const reason = roomItemCollisionReason(itemBox, candidateRoom);
-    if (reason) return reason;
-  }
-  return '';
-}
-
-// Returns the reason a proposed floor footprint is invalid. Rotated models use
-// their world-space AABB, matching the React workspace validation.
+/** Why a footprint cannot stand at this booth-centred spot, or '' when it can. */
 function itemCollisionReason(excludeId, cx, cz, w, d, rotationY = 0) {
-  const MARGIN = 0.02;
-  const boothX = Number(cx) || 0;
-  const footprint = rotatedFootprint(w, d, rotationY);
-  const candidate = { x: boothX, z: Number(cz) || 0, ...footprint };
-  if (hasStructuralCollision(candidate.x, candidate.z, candidate.w, candidate.d)) return 'Blocked by a booth support';
-
-  for (const other of placedItems) {
-    if (String(other.id) === String(excludeId)) continue;
-    if (!isFloorCollisionItem(other)) continue;
-    const otherFootprint = rotatedFootprint(other.w, other.d, other.rotationY ?? other.rotation);
-    const otherBox = {
-      x: Number(other.x) - BW / 2,
-      z: Number(other.z) || 0,
-      ...otherFootprint,
-    };
-    if (boxOverlap(candidate, otherBox, MARGIN)) return `Overlaps ${String(other.name || 'another item')}`;
-  }
-
-  for (const room of rooms) {
-    const reason = roomItemCollisionReason(candidate, room);
-    if (reason) return reason;
-  }
-  return '';
+  return PLACEMENT.placementReason(placementWorld(), excludeId == null ? null : String(excludeId), {
+    x: toWorldX(cx), z: Number(cz) || 0,
+    w: Math.max(0.06, Number(w) || 0.3), d: Math.max(0.06, Number(d) || 0.3),
+    rotationY: Number(rotationY) || 0,
+  });
 }
 
 function checkItemCollision(excludeId, cx, cz, w, d, rotationY = 0) {
   return Boolean(itemCollisionReason(excludeId, cx, cz, w, d, rotationY));
+}
+
+/** Why a room cannot stand where it is being dragged, or '' when it can. */
+function roomPlacementCollisionReason(excludeId, candidateRoom) {
+  return PLACEMENT.roomPlacementReason(
+    { ...candidateRoom, id: candidateRoom.id ?? excludeId },
+    rooms.filter(room => String(room.id) !== String(excludeId)),
+    placedItems,
+  );
+}
+
+/** The room whose footprint contains a booth-centred point, or null. */
+function roomContainingPoint(cx, cz) {
+  return PLACEMENT.roomContainingPoint(rooms, toWorldX(cx), Number(cz) || 0);
+}
+
+/**
+ * Makes a room's walls a limit rather than a warning, in booth-centred space.
+ * Drag and drop only - drawing must never relocate what it draws.
+ */
+function applyRoomLimits(cx, cz, w, d) {
+  const at = PLACEMENT.applyRoomLimits(rooms, toWorldX(cx), Number(cz) || 0,
+    Math.max(0.06, Number(w) || 0.3), Math.max(0.06, Number(d) || 0.3));
+  return { x: toCentredX(at.x), z: at.z };
+}
+
+function clampPlacedItemToBooth(x, z, w, d) {
+  const at = PLACEMENT.clampItemToBooth(placementWorld().booth, toWorldX(x), Number(z) || 0,
+    Math.max(0.06, Number(w) || 0.3), Math.max(0.06, Number(d) || 0.3));
+  return { x: toCentredX(at.x), z: at.z };
 }
 
 function evaluateCatalogPlacement(data) {
@@ -2345,12 +2566,22 @@ function evaluateCatalogPlacement(data) {
   const advisory = mounted
     ? null
     : itemCollisionReason(null, clamped.x, clamped.z, w, d, rotationY);
-  const reason = !overFloor ? 'Move onto the booth floor' : advisory;
+  // A room conflict is the one overlap that is not advisory: the workspace
+  // refuses the placement outright, so a preview that reads "release to place"
+  // and is then rejected with a toast is just a lie. Wall crossings cannot
+  // happen any more - resolveDropPosition clamps into the room - so in practice
+  // this is the door clearance.
+  const roomBlock = mounted
+    ? ''
+    : rooms.reduce((found, room) => found || roomItemCollisionReason(
+        { x: clamped.x, z: clamped.z, ...rotatedFootprint(w, d, rotationY) }, room), '');
+  const placeable = overFloor && !roomBlock;
+  const reason = !overFloor ? 'Move onto the booth floor' : (roomBlock || advisory);
   return {
     catalogId,
     name: String(item.name || 'Furniture'),
-    valid: overFloor,
-    reason: overFloor ? (reason || 'Release to place') : reason,
+    valid: placeable,
+    reason: placeable ? (reason || 'Release to place') : reason,
     x: clamped.x + BW / 2,
     z: clamped.z,
     boothX: clamped.x,
@@ -2418,6 +2649,8 @@ function drawCatalogDropPreview() {
 
 // Global flag set during drag so the SVG renderer can highlight collisions.
 let dragHasCollision = false;
+/** Why the item under the pointer cannot be put down here, or '' when it can. */
+let dragCollisionReason = '';
 
 /**
  * Fascia assembly, ported from the ENS reference renderer
@@ -2555,6 +2788,22 @@ function buildFascia() {
    *
    * `span` is the length of the rail this board is mounted on.
    */
+  /**
+   * The oval sign's real size, in metres.
+   *
+   * Width is capped against its own height so the plate stays a recognisable
+   * oval rather than a sliver: a full-width ellipse on a 0.30 m band is nearly
+   * nine times as wide as it is tall, which reads as a lens. Five to one is
+   * about what these signs actually are. The height is the band's, so the oval
+   * sits inside the fascia and overlaps nothing.
+   */
+  const OVAL_MAX_ASPECT = 5;
+  function ovalSignSize(span, boardH) {
+    const height = boardH;
+    const width = Math.max(0.5, Math.min(span, height * OVAL_MAX_ASPECT));
+    return { width, height };
+  }
+
   function signBoardGeometry(span) {
     const full = FASCIA_OPTION === 'full';
     const width = full
@@ -2587,6 +2836,24 @@ function buildFascia() {
     const y1 = y0 + signH;
     const z0 = exteriorZ + outward * geo.near;
     const z1 = exteriorZ + outward * geo.far;
+    // The custom option's plate IS the oval, inscribed in the same band the
+    // rectangular plate occupies - so it is proportioned to the fascia and
+    // overlaps nothing, where the painted-on oval overlapped the plate beneath
+    // it and stood taller than the board.
+    const plateProps = {
+      fill: '#fbfcfd',
+      isFascia: side,
+      partId: `fascia-${side}-name-plate`,
+      partLabel: `${side} fascia company name plate`,
+      partMeta: 'Thin banner-style company name fascia plate',
+      softEdge: true,
+      renderOrder: 0.64,
+    };
+    if (FASCIA_OPTION === 'custom') {
+      const oval = ovalSignSize(signW, signH);
+      pushOvalPlate([(x0 + x1) / 2, (y0 + y1) / 2], oval.width / 2, oval.height / 2,
+        Math.min(z0, z1), Math.max(z0, z1), 'z', 48, plateProps);
+    } else {
     pushBox([x0, y0, Math.min(z0, z1)], [x1, y1, Math.max(z0, z1)], {
       fill: '#fbfcfd',
       isFascia: side,
@@ -2596,6 +2863,7 @@ function buildFascia() {
       softEdge: true,
       renderOrder: 0.64
     });
+    }
     const faceZ = exteriorZ + outward * geo.textGap;
     addSignFace([[x0,y0,faceZ],[x1,y0,faceZ],[x1,y1,faceZ],[x0,y1,faceZ]], [0,0,outward], side);
   }
@@ -2612,6 +2880,20 @@ function buildFascia() {
     const y1 = y0 + signH;
     const x0 = exteriorX + outward * geo.near;
     const x1 = exteriorX + outward * geo.far;
+    const plateProps = {
+      fill: '#fbfcfd',
+      isFascia: side,
+      partId: `fascia-${side}-name-plate`,
+      partLabel: `${side} fascia company name plate`,
+      partMeta: 'Thin banner-style company name fascia plate',
+      softEdge: true,
+      renderOrder: 0.64,
+    };
+    if (FASCIA_OPTION === 'custom') {
+      const oval = ovalSignSize(signW, signH);
+      pushOvalPlate([(z0 + z1) / 2, (y0 + y1) / 2], oval.width / 2, oval.height / 2,
+        Math.min(x0, x1), Math.max(x0, x1), 'x', 48, plateProps);
+    } else {
     pushBox([Math.min(x0, x1), y0, z0], [Math.max(x0, x1), y1, z1], {
       fill: '#fbfcfd',
       isFascia: side,
@@ -2621,6 +2903,7 @@ function buildFascia() {
       softEdge: true,
       renderOrder: 0.64
     });
+    }
     const faceX = exteriorX + outward * geo.textGap;
     addSignFace([[faceX,y0,z0],[faceX,y0,z1],[faceX,y1,z1],[faceX,y1,z0]], [outward,0,0], side);
   }
@@ -2975,13 +3258,170 @@ function renderOrder(face) {
   return Number(face.renderOrder || 0);
 }
 
+/**
+ * Units the surface coordinate system counts in, per metre of real panel.
+ *
+ * The graphics on a panel are placed in the panel's own coordinates rather than
+ * on the screen, so their sizes are real lengths - a brand set at 0.2 of panel
+ * height is 0.2 x 2.4 = 0.48 m of lettering. Written straight into SVG that is
+ * `font-size="0.48"`, small enough that some rasterisers lose the hinting, so
+ * the surface counts centimetres and the matrix scales them back down.
+ */
+const SURFACE_UNITS_PER_M = 100;
+
+/**
+ * The transform that puts a graphic *on* a panel instead of in front of it.
+ *
+ * Artwork and brand text used to be laid out in screen space: the image went
+ * into the bounding box of the projected panel and was clipped to it, and the
+ * text was drawn horizontally at the panel's centre. Neither was attached to
+ * the wall in any way - orbit the stand and the logo stayed upright and square
+ * while the panel it was supposedly printed on turned away, so a graphic
+ * changed shape every time the booth moved.
+ *
+ * This returns the panel's own surface as a coordinate system: origin at its
+ * top-left corner, +x across the panel, +y down it, both in centimetres of real
+ * panel. Anything drawn in those coordinates is painted on the wall and follows
+ * it, because the matrix is rebuilt from the projected corners on every frame.
+ *
+ * Every face that carries a graphic is built with pts[0..1] along its bottom
+ * edge and pts[2..3] along its top, so the corners can be read directly.
+ *
+ * The mapping is affine, which is exact for the rotation, scale and shear of a
+ * panel and approximates only its perspective taper - measured at 2-5% of panel
+ * width across the stand's own views. A projective map cannot be expressed as
+ * an SVG transform at all; the alternative is slicing every graphic into a mesh
+ * of separately transformed tiles, which is a great deal of machinery for a few
+ * pixels at one corner.
+ */
+function faceSurface(face, proj) {
+  if (!face.pts || face.pts.length < 4 || proj.length < 4) return null;
+  // Which way round the panel was wound is not consistent, and it cannot be:
+  // buildWall() runs the side walls back-to-front and the back wall
+  // left-to-right, and each bay is pushed twice with its reverse face in the
+  // opposite order. Read literally, half the panels in a stand printed their
+  // artwork mirrored - a brand on the left-hand wall came out back to front.
+  //
+  // The test is handedness. Take the across and down vectors along the surface;
+  // their cross product points out of the face when the pair reads left-to-right
+  // to somebody standing in front of it. When it points the same way as the
+  // face's own normal instead, this corner is the far end of the panel, and the
+  // opposite corner is the one to start from.
+  const u = sub(face.pts[2], face.pts[3]);
+  const v = sub(face.pts[0], face.pts[3]);
+  const outward = face.normal || norm(cross(u, v));
+  const mirrored = dot(cross(u, v), outward) > 0;
+  const originIndex = mirrored ? 2 : 3;
+  const acrossIndex = mirrored ? 3 : 2;
+  const downIndex = mirrored ? 1 : 0;
+  const origin = proj[originIndex];
+  const across = proj[acrossIndex];
+  const down = proj[downIndex];
+  const wM = len(sub(face.pts[acrossIndex], face.pts[originIndex]));
+  const hM = len(sub(face.pts[downIndex], face.pts[originIndex]));
+  if (!(wM > 1e-4) || !(hM > 1e-4)) return null;
+  const w = wM * SURFACE_UNITS_PER_M;
+  const h = hM * SURFACE_UNITS_PER_M;
+  const round = value => Math.round(value * 100000) / 100000;
+  return {
+    w,
+    h,
+    transform: 'matrix('
+      + round((across.x - origin.x) / w) + ',' + round((across.y - origin.y) / w) + ','
+      + round((down.x - origin.x) / h) + ',' + round((down.y - origin.y) / h) + ','
+      + round(origin.x) + ',' + round(origin.y) + ')',
+  };
+}
+
 // ── Render ────────────────────────────────────────────────────────────────────
 let selectedKey = null;
 let selectedItemId = null;
+let selectedRoomId = null;
+/**
+ * The workspace's selection, mirrored here so a drag can carry all of it.
+ *
+ * The renderer does not own selection - clicks are reported upward and the
+ * workspace decides - so this arrives on boothUpdate. Dragging any member moves
+ * every member by the same offset; dragging anything else moves only itself.
+ */
+let selectedItemIds = [];
+
+/* ── Room cutaway ──────────────────────────────────────────────────────────
+ *
+ * A room is a closed box, so from outside it you see four walls and nothing
+ * else - which is right for a client view and useless for arranging what goes
+ * inside one. The walls nearest the camera are therefore ghosted back while a
+ * room is being worked on, the way a plan drawing cuts through them: the
+ * aluminium frame stays solid so the room still reads as built, and only the
+ * infill goes translucent.
+ *
+ * Nothing is persisted. A room is opened up while it is selected, while an item
+ * inside it is selected, while anything is being dragged, and while an item is
+ * being dragged in from the catalogue - in other words exactly while someone is
+ * working in it - and is solid again the moment they stop.
+ */
+const ROOM_CUTAWAY_OPACITY = 0.14;
+
+/** Rooms that should open up for the work in progress. */
+function roomsUnderEdit() {
+  const ids = new Set();
+  if (!roomGeometry.size) return ids;
+  // Any drag at all, and any catalogue drop in flight, opens every room: the
+  // designer cannot aim at an interior they cannot see.
+  if (objectDrag || catalogDropPreview) {
+    for (const id of roomGeometry.keys()) ids.add(id);
+    return ids;
+  }
+  if (selectedRoomId && roomGeometry.has(String(selectedRoomId))) ids.add(String(selectedRoomId));
+  if (selectedItemId) {
+    const item = placedItems.find(entry => String(entry.id) === String(selectedItemId));
+    const room = item ? roomContainingPoint((Number(item.x) || 0) - BW / 2, Number(item.z) || 0) : null;
+    if (room) ids.add(String(room.id));
+  }
+  return ids;
+}
+
+/**
+ * Which room walls stand between the camera and the room they enclose.
+ * Returns a set of "roomId|side" keys; the draw loop ghosts those faces.
+ */
+function cutawayRoomWalls() {
+  const open = new Set();
+  const editing = roomsUnderEdit();
+  if (!editing.size) return open;
+  for (const id of editing) {
+    const geom = roomGeometry.get(id);
+    if (!geom) continue;
+    const toCamX = cam[0] - geom.cx;
+    const toCamZ = cam[2] - geom.cz;
+    const length = Math.hypot(toCamX, toCamZ) || 1;
+    const dirX = toCamX / length;
+    const dirZ = toCamZ / length;
+    // Outward normal of each wall, in the plan. A wall is in the way when its
+    // outward face is turned towards the camera; the threshold keeps a wall
+    // seen almost edge-on solid, so a straight-on view opens one wall and a
+    // three-quarter view opens two.
+    const sides = [
+      ['back', 0, -1], ['front', 0, 1], ['left', -1, 0], ['right', 1, 0],
+    ];
+    for (const [side, nx, nz] of sides) {
+      if (!geom.built[side]) continue;
+      if (nx * dirX + nz * dirZ > 0.2) open.add(id + '|' + side);
+    }
+  }
+  return open;
+}
 
 function drawSelectedItemGizmo(container) {
-  if (!selectedItemId) return;
-  const item = placedItems.find(entry => String(entry.id) === String(selectedItemId));
+  // Whatever is under the pointer, as well as whatever is selected. Selection
+  // only happens on a click that did not turn into a drag, so an item picked up
+  // and moved without being clicked first had no gizmo - and the gizmo card is
+  // where the "cannot go here, because..." warning lives. The feedback existed
+  // and was shown to nobody unless they had selected the item beforehand.
+  const gizmoItemId = selectedItemId
+    || (objectDrag && objectDrag.type === 'item' ? objectDrag.itemId : null);
+  if (!gizmoItemId) return;
+  const item = placedItems.find(entry => String(entry.id) === String(gizmoItemId));
   if (!item) return;
   const x = Number.isFinite(Number(item.x)) ? -BW / 2 + Number(item.x) : 0;
   const z = Number.isFinite(Number(item.z)) ? Number(item.z) : BD / 2;
@@ -3023,11 +3463,15 @@ function drawSelectedItemGizmo(container) {
   const lockLabel = item.locked ? '  LOCKED' : '';
   const labelText = `${item.name || 'Item'}  ${item.sku || item.catalogId || ''}`.trim();
   const metaText = `${Number(item.w || 0).toFixed(2)} × ${Number(item.d || 0).toFixed(2)} × ${Number(item.h || 0).toFixed(2)} m${rotLabel}${lockLabel}`;
-  const collisionText = dragHasCollision && objectDrag?.type === 'item' ? '⚠ Overlap' : null;
+  const collisionText = dragHasCollision && objectDrag?.type === 'item' ? '⚠ ' + (dragCollisionReason || 'Overlap') : null;
   const labelX = p0.x + 12;
   const labelY = p0.y - (collisionText ? 60 : 44);
   const cardHeight = collisionText ? 54 : 38;
-  const width = Math.max(130, Math.min(280, Math.max(labelText.length, metaText.length) * 6.2 + 34));
+  // The warning is a sentence now, not the word "Overlap", so it has to be
+  // measured like the other two or it runs out of the card.
+  const width = Math.max(130, Math.min(320, Math.max(
+    labelText.length, metaText.length, (collisionText || '').length * 0.86,
+  ) * 6.2 + 34));
   const borderColor = collisionText ? 'rgba(230,60,32,0.6)' : 'rgba(37,99,235,0.45)';
   const rect = document.createElementNS(SVG_NS, 'rect');
   rect.setAttribute('x', labelX.toFixed(2)); rect.setAttribute('y', labelY.toFixed(2));
@@ -3070,7 +3514,7 @@ function drawSelectedItemGizmo(container) {
       if (item.locked) return;
       const currentY = Number.isFinite(Number(item.rotationY)) ? Number(item.rotationY) : 0;
       const newY = ((currentY + Number(delta)) % 360 + 360) % 360;
-      window.parent.postMessage({ type: 'workspaceItemRotated', id: selectedItemId, rotationY: newY }, '*');
+      window.parent.postMessage({ type: 'workspaceItemRotated', id: gizmoItemId, rotationY: newY }, '*');
     });
     g.appendChild(btn);
     const lbl = document.createElementNS(SVG_NS, 'text');
@@ -3111,9 +3555,17 @@ function renderBooth() {
   const container = document.createElementNS(SVG_NS, 'g');
   g.appendChild(container);
 
+  // One decision per pass, not per face: which room walls the camera is
+  // currently looking through. See cutawayRoomWalls().
+  const openRoomWalls = cutawayRoomWalls();
+
   for (const faceIndex of sorted) {
     const face = faces[faceIndex];
     if (face.isCarpet) continue;
+    const ghosted = face.roomWall && openRoomWalls.has(face.roomId + '|' + face.roomWall);
+    // A ghosted wall's graphic is dropped rather than faded - a printed panel
+    // read through its own wall is noise, not information.
+    if (ghosted && face.designImageUrl) continue;
     const proj = face.pts.map(project);
     if (proj.some(p => !p)) {
       if (DEBUG_CLIPPING) recordClippedFace(face, proj);
@@ -3156,6 +3608,15 @@ function renderBooth() {
       const poly = document.createElementNS(SVG_NS, 'polygon');
       poly.setAttribute('points', points);
       poly.setAttribute('fill', face.fill);
+      if (ghosted) {
+        // fill-opacity, not opacity, so the seam still draws the panel's outline
+        // at full strength - a cut-away wall reads as a wall you are looking
+        // through rather than as a wall that is not there.
+        poly.setAttribute('fill-opacity', String(ROOM_CUTAWAY_OPACITY));
+        // The near wall is drawn last, so left clickable it would swallow every
+        // click meant for what is inside the room.
+        poly.setAttribute('pointer-events', 'none');
+      }
       if (wantsSeam && !wantsShade) {
         poly.setAttribute('stroke', seamStroke);
         poly.setAttribute('stroke-width', seamWidth);
@@ -3175,6 +3636,13 @@ function renderBooth() {
         poly.setAttribute('data-room-id', face.roomId);
         poly.style.cursor = 'move';
       }
+      // Which wall of the room this belongs to, and whether it is currently cut
+      // away. Read by the renderer verification, and the only handle anything
+      // outside has on a wall that is built but not drawn.
+      if (face.roomWall) {
+        poly.setAttribute('data-room-wall', face.roomWall);
+        if (ghosted) poly.setAttribute('data-room-cutaway', '1');
+      }
       if (face.roomDoorToggle) {
         poly.setAttribute('data-door-toggle', '1');
         poly.style.cursor = 'pointer';
@@ -3182,82 +3650,77 @@ function renderBooth() {
       container.appendChild(poly);
     }
 
-    if (face.designImageUrl) {
+    // Artwork and brand text are printed on the panel, in the panel's own
+    // surface coordinates - see faceSurface(). Both used to be composed in
+    // screen space, which is why a logo stayed square and upright while the
+    // wall carrying it turned away.
+    if (face.designImageUrl || face.brandText) {
       const screenW = Math.hypot(proj[1].x - proj[0].x, proj[1].y - proj[0].y);
       const screenH = Math.hypot(proj[3].x - proj[0].x, proj[3].y - proj[0].y);
       const camDir = norm(sub(face.pts[0], cam));
       const facing = face.normal ? Math.abs(dot(face.normal, camDir)) : 1;
-      if (screenW > 28 && screenH > 18 && facing > 0.1) {
-        const xs = proj.map(p => p.x);
-        const ys = proj.map(p => p.y);
-        const minX = Math.min(...xs);
-        const maxX = Math.max(...xs);
-        const minY = Math.min(...ys);
-        const maxY = Math.max(...ys);
-        const clipId = 'clip-panel-design-' + faceIndex;
-        const clip = document.createElementNS(SVG_NS, 'clipPath');
-        clip.setAttribute('id', clipId);
-        const clipPoly = document.createElementNS(SVG_NS, 'polygon');
-        clipPoly.setAttribute('points', points);
-        clip.appendChild(clipPoly);
-        container.appendChild(clip);
+      const surface = screenW > 28 && screenH > 15 && facing > 0.1 ? faceSurface(face, proj) : null;
+      if (surface) {
+        const printed = document.createElementNS(SVG_NS, 'g');
+        printed.setAttribute('transform', surface.transform);
+        printed.setAttribute('pointer-events', 'none');
 
-        if (face.signOnly || face.graphicFit === 'contain') {
-          const backing = document.createElementNS(SVG_NS, 'polygon');
-          backing.setAttribute('points', points);
+        if (face.designImageUrl && (face.signOnly || face.graphicFit === 'contain')) {
+          const backing = document.createElementNS(SVG_NS, 'rect');
+          backing.setAttribute('x', '0');
+          backing.setAttribute('y', '0');
+          backing.setAttribute('width', surface.w.toFixed(2));
+          backing.setAttribute('height', surface.h.toFixed(2));
           backing.setAttribute('fill', face.signOnly ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.12)');
-          backing.setAttribute('clip-path', `url(#${clipId})`);
-          backing.setAttribute('pointer-events', 'none');
-          container.appendChild(backing);
+          printed.appendChild(backing);
         }
 
-        const img = document.createElementNS(SVG_NS, 'image');
-        img.setAttribute('href', face.designImageUrl);
-        img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', face.designImageUrl);
-        img.setAttribute('x', minX.toFixed(2));
-        img.setAttribute('y', minY.toFixed(2));
-        img.setAttribute('width', Math.max(1, maxX - minX).toFixed(2));
-        img.setAttribute('height', Math.max(1, maxY - minY).toFixed(2));
-        img.setAttribute('preserveAspectRatio', face.graphicFit === 'stretch' ? 'none' : face.graphicFit === 'contain' ? 'xMidYMid meet' : 'xMidYMid slice');
-        img.setAttribute('clip-path', `url(#${clipId})`);
-        img.setAttribute('opacity', String(face.designOpacity ?? 1));
-        img.setAttribute('pointer-events', 'none');
-        container.appendChild(img);
-      }
-    }
+        if (face.designImageUrl) {
+          const img = document.createElementNS(SVG_NS, 'image');
+          img.setAttribute('href', face.designImageUrl);
+          img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', face.designImageUrl);
+          img.setAttribute('x', '0');
+          img.setAttribute('y', '0');
+          img.setAttribute('width', surface.w.toFixed(2));
+          img.setAttribute('height', surface.h.toFixed(2));
+          // An <image> establishes its own viewport and `slice` is clipped to
+          // it, so filling the panel needs no clip path. The screen-space
+          // version built a clipPath and a polygon for every graphic on every
+          // frame purely to cut the image back to the panel it sat on.
+          img.setAttribute('preserveAspectRatio', face.graphicFit === 'stretch' ? 'none' : face.graphicFit === 'contain' ? 'xMidYMid meet' : 'xMidYMid slice');
+          img.setAttribute('opacity', String(face.designOpacity ?? 1));
+          printed.appendChild(img);
+        }
 
-    if (face.brandText) {
-      const mid = [
-        (face.pts[0][0] + face.pts[1][0] + face.pts[2][0] + face.pts[3][0]) / 4,
-        (face.pts[0][1] + face.pts[1][1] + face.pts[2][1] + face.pts[3][1]) / 4,
-        (face.pts[0][2] + face.pts[1][2] + face.pts[2][2] + face.pts[3][2]) / 4
-      ];
-      const pM = project(mid);
-      if (pM) {
-        const screenW = Math.hypot(proj[1].x - proj[0].x, proj[1].y - proj[0].y);
-        const screenH = Math.hypot(proj[3].x - proj[0].x, proj[3].y - proj[0].y);
-        const camDir = norm(sub(face.pts[0], cam));
-        const facing = face.normal ? Math.abs(dot(face.normal, camDir)) : 1;
-        if (screenW > 30 && screenH > 15 && facing > 0.1) {
-          const fontSize = Math.max(6, Math.min(24, screenH * (face.brandScale || 0.15), screenW / Math.max(4, face.brandText.length) * 1.2));
+        if (face.brandText) {
+          // Lettering measured against the panel rather than against the
+          // screen: a brand set at 0.2 is a fifth of the panel's height and
+          // stays that fraction of it from every distance and angle.
+          const fit = Math.min(
+            surface.h * (face.brandScale || 0.15),
+            surface.w / Math.max(4, face.brandText.length) * 1.2,
+          );
           const t = document.createElementNS(SVG_NS, 'text');
-          t.setAttribute('x', pM.x); t.setAttribute('y', pM.y + fontSize * 0.34);
+          t.setAttribute('x', (surface.w / 2).toFixed(2));
+          t.setAttribute('y', (surface.h / 2 + fit * 0.34).toFixed(2));
           t.setAttribute('text-anchor', 'middle');
           t.setAttribute('fill', face.brandColor || '#ffffff');
           t.setAttribute('font-family', 'SamsungOne, Samsung One, SamsungOne UI, Samsung Sharp Sans, -apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif');
-          t.setAttribute('font-size', fontSize.toFixed(1));
+          t.setAttribute('font-size', fit.toFixed(2));
           t.setAttribute('font-weight', '700');
           t.textContent = face.brandText;
-          t.setAttribute('pointer-events', 'none');
-          container.appendChild(t);
+          printed.appendChild(t);
         }
+
+        container.appendChild(printed);
       }
     }
 
     if (wantsShade) {
       const sh = document.createElementNS(SVG_NS, 'polygon');
       sh.setAttribute('points', points);
-      const alpha = Math.max(0, (1 - intensity)) * (face.isFurniture ? LIGHTING.itemShade : LIGHTING.faceShade);
+      const shadeScale = ghosted ? ROOM_CUTAWAY_OPACITY : 1;
+      const alpha = Math.max(0, (1 - intensity)) * (face.isFurniture ? LIGHTING.itemShade : LIGHTING.faceShade) * shadeScale;
       sh.setAttribute('fill', '#000');
       // fill-opacity rather than opacity, so the seam below can carry its own
       // alpha instead of being faded along with the shading.
@@ -3364,35 +3827,19 @@ function renderBooth() {
           addCenteredNamePlate(fasciaSignWidthM(BW), '#fbfcfd', '#c7ccd4', '#4b5563');
 
         } else if (FASCIA_OPTION === 'custom') {
-          // Custom: oval / stadium-shaped sign plate (Movetech-style)
-          const bH = face.pts[3][1] - face.pts[0][1];   // board height in metres
-          const ovW = Math.min(2.65, BW - 0.4);
-          const r_m = bH * 0.54;                          // radius ~slightly taller than half-board
-          const sx_m = Math.max(0, ovW - r_m * 2) / 2;
-          // Stadium outline: right arc (bot→top) + left arc (top→bot), straight parts implicit
-          const SEG = 18;
-          const ovalPts = [];
-          for (let i = 0; i <= SEG; i++) {
-            const a = -Math.PI/2 + (i/SEG)*Math.PI;
-            ovalPts.push(uvP(0.5+(sx_m+r_m*Math.cos(a))/BW, 0.5+r_m*Math.sin(a)/bH));
-          }
-          for (let i = 0; i <= SEG; i++) {
-            const a = Math.PI/2 + (i/SEG)*Math.PI;
-            ovalPts.push(uvP(0.5+(-sx_m+r_m*Math.cos(a))/BW, 0.5+r_m*Math.sin(a)/bH));
-          }
-          const validOval = ovalPts.filter(p=>p);
-          if (validOval.length > 6) {
-            const el = document.createElementNS(SVG_NS, 'polygon');
-            el.setAttribute('points', validOval.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' '));
-            el.setAttribute('fill', '#f6f7fb');
-            el.setAttribute('stroke', '#b0b6be');
-            el.setAttribute('stroke-width', '2');
-            el.setAttribute('pointer-events', 'none');
-            container.appendChild(el);
-          }
+          // The oval is real geometry now - an ellipse extruded to a plate, built
+          // in buildFascia() - so all that belongs here is the lettering on it.
+          // This used to paint an oval polygon over the rectangular plate, which
+          // is why it read as an outline and why it overlapped the board.
           const label = String(face.signLabel || COMPANY_NAME || 'Company Name').slice(0, 40);
-          const fs = Math.max(8, Math.min(18, screenH*0.38, (screenW*ovW/BW)/Math.max(6,label.length)*0.95));
-          addText(pM.x, pM.y + fs*0.36, label, fs.toFixed(1), face.signColor || '#14213d');
+          // Against the oval's real width - it is capped by aspect, so the old
+          // full-board figure would have set type too large to fit on it.
+          const boardWm = Math.hypot(face.pts[1][0] - face.pts[0][0], face.pts[1][2] - face.pts[0][2]);
+          const boardHm = Math.max(0.01, face.pts[3][1] - face.pts[0][1]);
+          const ovW = Math.max(0.5, Math.min(boardWm, boardHm * 5));
+          const fs = Math.max(8, Math.min(20, screenH * 0.42,
+            (screenW * (ovW / Math.max(0.001, boardWm))) / Math.max(5, label.length) * 1.5));
+          addText(pM.x, pM.y + fs * 0.36, label, fs.toFixed(1), face.signColor || '#14213d');
 
         } else {
           // 'full' — edge-to-edge band, no inset plate, large centred type.
@@ -3454,6 +3901,12 @@ function renderAll() {
       fov,
       placedItems,
       selectedItemId,
+      // The GLB layer draws on top of the SVG and knows nothing about rooms, so
+      // furniture inside one used to float in front of the walls that enclose
+      // it. These are what the depth-only occluders are built from - and the
+      // cut-away walls are listed so a ghosted wall stops occluding too.
+      rooms: [...roomGeometry.values()],
+      openRoomWalls: [...cutawayRoomWalls()],
     };
   if (rendererWindow.__updateGlbLayer) {
     rendererWindow.__updateGlbLayer(rendererWindow.__pendingGlbState);
@@ -3468,7 +3921,6 @@ let dragging = false, lastX = 0, lastY = 0, didDrag = false;
 svgEl.style.cursor = 'grab';
 const pointers = new Map();
 let pinchPrev = 0;
-let objectDrag = null;
 let pendingClickPart = null;
 
 function partTypeFor(partId) {
@@ -3482,9 +3934,23 @@ function partTypeFor(partId) {
   return 'shell';
 }
 
+/**
+ * A face's id with the face marker removed - the part it belongs to.
+ *
+ * pushBox(), pushPrism() and pushOvalPlate() give every face its own id
+ * ("r1-back-482:+x", "fascia-front-name-plate-91:rim7") so a single face can be
+ * addressed. Anything asking about the *part* wants this. Every suffix those
+ * three append has to be listed below, or the part it belongs to goes unnamed.
+ * It is not the same question as canonicalPartId(), which additionally folds a
+ * whole family down to one selection key ("fascia-front-body" -> "fascia-front").
+ */
+function basePartId(partId) {
+  return String(partId || '').replace(/-\d+:(?:[-+][xyz]|side\d+|rim\d+|[-+]face)$/, '');
+}
+
 function canonicalPartId(partId) {
   if (!partId) return '';
-  const text = String(partId);
+  const text = basePartId(partId);
   const panel = text.match(/panel-(front|back|left|right)-\d+/);
   if (panel) return panel[0];
   const support = text.match(/post-front-support-\d+/);
@@ -3496,6 +3962,8 @@ function canonicalPartId(partId) {
   const rail = text.match(/rail-(front|back|left|right|front-ceiling|back-ceiling|left-ceiling|right-ceiling|ceiling-cross-left-right)/);
   if (rail) return rail[0];
   if (text.includes('carpet')) return 'carpet';
+  // Rooms, furniture and room doors have no family to fold into; the face
+  // marker is already off, courtesy of basePartId above.
   return text;
 }
 
@@ -3695,14 +4163,25 @@ svgEl.addEventListener('pointerdown', (e) => {
     }
     const hit = item ? screenToFloorPoint(e) : null;
     if (item && hit) {
+      // Snapshot where every selected item started, so the group can be moved
+      // by an offset rather than each item chasing the pointer.
+      const groupIds = selectedItemIds.includes(String(itemId)) ? selectedItemIds : [String(itemId)];
+      const group = groupIds
+        .map(id => placedItems.find(entry => String(entry.id) === String(id)))
+        .filter(entry => entry && !entry.locked && String(entry.id) !== String(itemId))
+        .map(entry => ({ id: String(entry.id), startX: Number(entry.x || 0), startZ: Number(entry.z || 0),
+                         lastValidX: Number(entry.x || 0), lastValidZ: Number(entry.z || 0) }));
       objectDrag = {
         type: 'item',
         pointerId: e.pointerId,
         itemId,
         offsetX: (-BW / 2 + Number(item.x || 0)) - hit[0],
         offsetZ: Number(item.z || 0) - hit[2],
+        startX: Number(item.x || 0),
+        startZ: Number(item.z || 0),
         lastValidX: Number(item.x || 0),
         lastValidZ: Number(item.z || 0),
+        group,
       };
       dragging = false;
       svgEl.style.cursor = 'move';
@@ -3764,12 +4243,43 @@ svgEl.addEventListener('pointermove', (e) => {
       item.z = clamped.z;
       // A mounted item shares no floor space with anything, so floor collision
       // does not apply to it.
-      dragHasCollision = isWallMountedItem(item)
-        ? false
-        : checkItemCollision(item.id, clamped.x, clamped.z, item.w, item.d, item.rotationY ?? item.rotation);
+      // The reason, not just the fact. itemCollisionReason() has always
+      // returned a sentence a designer can act on - "Crosses Storage wall",
+      // "Blocked by a booth support" - and the drag threw it away for a
+      // boolean, so the gizmo could only ever say "Overlap" no matter what was
+      // actually wrong.
+      dragCollisionReason = isWallMountedItem(item)
+        ? ''
+        : itemCollisionReason(item.id, clamped.x, clamped.z, item.w, item.d, item.rotationY ?? item.rotation);
+      dragHasCollision = Boolean(dragCollisionReason);
       if (!dragHasCollision) {
         objectDrag.lastValidX = item.x;
         objectDrag.lastValidZ = item.z;
+      }
+
+      // Everything else in the selection follows by the same offset. Each one
+      // is still resolved on its own - a shelf in the group keeps following its
+      // panel, a counter still seats flush - so the group moves together
+      // without any member landing somewhere it could not be dragged to.
+      const groupDX = item.x - objectDrag.startX;
+      const groupDZ = item.z - objectDrag.startZ;
+      for (const member of objectDrag.group || []) {
+        const other = placedItems.find(entry => String(entry.id) === String(member.id));
+        if (!other) continue;
+        const at = resolveDropPosition(other, member.startX + groupDX - BW / 2, member.startZ + groupDZ);
+        other.x = at.x + BW / 2;
+        other.z = at.z;
+        const memberBlocked = isWallMountedItem(other)
+          ? ''
+          : itemCollisionReason(other.id, at.x, at.z, other.w, other.d, other.rotationY ?? other.rotation);
+        if (memberBlocked) {
+          if (!dragCollisionReason) dragCollisionReason = memberBlocked;
+          dragHasCollision = true;
+        } else {
+          member.lastValidX = other.x;
+          member.lastValidZ = other.z;
+        }
+        notifyItemMoved(other);
       }
       didDrag = true;
       notifyItemMoved(item);
@@ -3857,8 +4367,32 @@ function endPointer(e) {
       const item = placedItems.find(entry => String(entry.id) === String(objectDrag.itemId));
       if (item) {
         if (dragHasCollision) {
-          item.x = objectDrag.lastValidX;
-          item.z = objectDrag.lastValidZ;
+          // Put it down beside where it was aimed rather than back where it
+          // came from. The spring-back was the whole of the old feedback: an
+          // item dragged across the stand onto something would vanish from
+          // under the pointer and reappear at its start, which reads as the
+          // drag having failed rather than as the spot being taken.
+          const rescue = nearestValidPlacement(item, Number(item.x) - BW / 2, Number(item.z));
+          if (rescue) {
+            const settled = resolveDropPosition(item, rescue.x, rescue.z);
+            item.x = settled.x + BW / 2;
+            item.z = settled.z;
+          } else {
+            // Nowhere within reach. Falling back to the last good spot is the
+            // behaviour this replaced, so a crowded stand is never worse off.
+            item.x = objectDrag.lastValidX;
+            item.z = objectDrag.lastValidZ;
+          }
+          // The rest of the group goes back to its own last good spot. Rescuing
+          // each member separately would pull the selection apart, which is the
+          // one thing a group move must not do.
+          for (const member of objectDrag.group || []) {
+            const other = placedItems.find(entry => String(entry.id) === String(member.id));
+            if (!other) continue;
+            other.x = member.lastValidX;
+            other.z = member.lastValidZ;
+            notifyItemMoved(other);
+          }
           buildBoothGeometry();
           renderAll();
         }
@@ -3885,6 +4419,7 @@ function endPointer(e) {
     }
     objectDrag = null;
     dragHasCollision = false;
+    dragCollisionReason = '';
   }
   pointers.delete(e.pointerId);
   if (pointers.size < 2) pinchPrev = 0;
@@ -3936,10 +4471,14 @@ svgEl.addEventListener('pointerup', (e) => {
 
     selectedKey = pid;
     selectedItemId = pendingClickPart.itemId;
+    selectedRoomId = pendingClickPart.roomId || null;
     const selectedPoint = eventToSvgPoint(e);
     window.parent.postMessage({
       type: 'workspaceItemSelected',
       id: selectedItemId,
+      // Shift or the platform modifier means "add to what is already picked".
+      // The workspace owns the selection; this only reports the intent.
+      additive: Boolean(e.shiftKey || e.metaKey || e.ctrlKey),
       roomId: pendingClickPart.roomId,
       partId: selectedKey,
       partType: pendingClickPart.roomId ? 'room' : (pendingClickPart.partType || partTypeFor(selectedKey)),
@@ -3955,6 +4494,7 @@ svgEl.addEventListener('pointerup', (e) => {
   } else if (!didDrag && e.target.tagName === 'svg' && selectedKey) {
     selectedKey = null;
     selectedItemId = null;
+    selectedRoomId = null;
     document.getElementById('sel-card').style.display = 'none';
     window.parent.postMessage({ type: 'workspaceItemSelected', id: null, partId: null }, '*');
     renderAll();
@@ -3976,10 +4516,22 @@ window.addEventListener('keydown', (e) => {
   const mod = e.ctrlKey || e.metaKey;
   const key = String(e.key || '').toLowerCase();
   let action = '';
+  // This list has to match the workspace's own keydown handler. Clicking the
+  // booth moves focus into this iframe and the parent stops seeing key events,
+  // so anything the workspace binds and this does not forward simply stops
+  // working the moment the designer touches the stand - which is exactly when
+  // they want it.
   if (mod && key === 'z') action = e.shiftKey ? 'redo' : 'undo';
   else if (mod && key === 'y') action = 'redo';
+  else if (mod && key === 'd') action = 'duplicate';
   else if (key === 'delete' || key === 'backspace') action = 'delete';
   else if (key === 'escape') action = 'deselect';
+  else if (key === '[') action = 'rotate-ccw';
+  else if (key === ']') action = 'rotate-cw';
+  else if (key === 'arrowleft') action = 'nudge-left';
+  else if (key === 'arrowright') action = 'nudge-right';
+  else if (key === 'arrowup') action = 'nudge-up';
+  else if (key === 'arrowdown') action = 'nudge-down';
   if (!action) return;
   e.preventDefault();
   window.parent.postMessage({ type: 'workspaceShortcut', action }, '*');
@@ -4046,6 +4598,10 @@ function updateHud() {
   document.getElementById('hud-dims').textContent = BW.toFixed(1) + ' × ' + BD.toFixed(1) + ' m';
   document.getElementById('hud-height').textContent = (BH + FH).toFixed(2) + ' m total';
   document.getElementById('hud-system').textContent = columnStyle === 'maxima' ? 'Maxima' : 'Octanorm';
+  // Was a hardcoded "40 mm profile" in the page, which was wrong for both
+  // systems and identical for each.
+  const profileEl = document.getElementById('hud-profile');
+  if (profileEl) profileEl.textContent = ensSystemProfile().label + ' profile';
   // Determine booth type from open sides
   const openCount = [!wallsVisible.back,!wallsVisible.left,!wallsVisible.right,!wallsVisible.front].filter(Boolean).length;
   document.getElementById('hud-type').textContent = openCount >= 3 ? 'Island' : openCount === 2 ? 'Corner' : openCount === 1 ? 'Open Side' : 'Enclosed';
@@ -4185,6 +4741,7 @@ window.addEventListener('message', (e) => {
     if (String(selectedItemId || '') === id) {
       selectedItemId = null;
       selectedKey = null;
+      selectedRoomId = null;
       const card = document.getElementById('sel-card');
       if (card) card.style.display = 'none';
     }
@@ -4217,6 +4774,13 @@ window.addEventListener('message', (e) => {
     }
   }
   if (d.rooms != null) rooms = Array.isArray(d.rooms) ? d.rooms : [];
+  if (d.selectedItemIds != null) {
+    selectedItemIds = Array.isArray(d.selectedItemIds) ? d.selectedItemIds.map(String) : [];
+  }
+  // Selecting a room in the workspace panel has to open it up here as well -
+  // otherwise a room picked from the list stays a closed box and there is no
+  // way to see what is being changed inside it.
+  if (d.activeRoomId !== undefined) selectedRoomId = d.activeRoomId ? String(d.activeRoomId) : null;
   if (d.fasciaEnabled != null) FASCIA_ENABLED = d.fasciaEnabled !== false;
   if (d.fasciaOption != null) FASCIA_OPTION = String(d.fasciaOption || 'classic');
   if (d.fasciaSignWidthM != null) FASCIA_SIGN_WIDTH_M = Math.max(0, parseFloat(d.fasciaSignWidthM) || 0);

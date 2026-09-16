@@ -14,6 +14,27 @@ import type { PlacementIssue } from "./workspace-geometry";
 
 const PLACED_LIST_KEY = 'ens-workspace-placed-open';
 
+/**
+ * The half of a catalogue name a designer reads.
+ *
+ * ENS names every item in both languages - "AHSAP YUVARLAK MASA - WOODEN ROUND
+ * TABLE" - which is right for the take-off and far too long for a 240px panel:
+ * at forty characters it wrapped to three lines in the name column and pushed
+ * the row past 150px, so barely one item was on screen at a time. The English
+ * half alone is eighteen characters and fits on one line.
+ *
+ * Split on " - " only. A bare hyphen is part of a code ("312-S", "100 W
+ * 3-COLORED LAMP") and splitting on it would cut a name in the middle of a
+ * word. Anything without the separator is already one language and is left
+ * alone. The full original is kept on the row's tooltip, because the Turkish
+ * half is what appears on a picking list.
+ */
+export function catalogDisplayName(name: string) {
+  const halves = String(name || '').split(' - ');
+  const english = halves.length > 1 ? halves[halves.length - 1].trim() : '';
+  return english || String(name || '').trim();
+}
+
 export function WorkspaceCatalogPanel({
   visibleCatalog, filteredCatalog, search, onSearch, openCats, onToggleCat,
   activeFurnitureCategory, onFurnitureCategory, furnitureCategoryCounts,
@@ -85,7 +106,7 @@ export function WorkspaceCatalogPanel({
               </button>
 
               {isOpen&&(
-                <div style={{padding:'8px 10px 10px',display:'flex',flexDirection:'column',gap:7}}>
+                <div style={{padding:'6px 8px 8px',display:'flex',flexDirection:'column',gap:3}}>
                   {cat === 'Furniture'&&(
                     <div style={{display:'flex',gap:5,overflowX:'auto',paddingBottom:2,marginBottom:1}}>
                       {FURNITURE_CATEGORY_ORDER.filter(category => (furnitureCategoryCounts.get(category) || 0) > 0).map(category=>{
@@ -123,34 +144,43 @@ export function WorkspaceCatalogPanel({
                           if(isOut||catalogDragWasActiveRef.current) return;
                           onAddItem(item);
                         }}
-                        title={canDragToFloor&&!isOut?'Drag onto the booth floor or click to add':undefined}
-                        style={{position:'relative',opacity:isOut?0.58:1,background:isDragging?`${C.green}12`:isActive?'#f0ecff':placed?`${C.blue}08`:C.bg,border:`1px ${isActive||isDragging?'solid':hasCount?'solid':'dashed'} ${isDragging?C.green:isActive?C.ink:placed?C.blue:C.hair}`,borderRadius:5,padding:7,cursor:isOut?'not-allowed':canDragToFloor?'grab':'pointer',display:'grid',gridTemplateColumns:'72px 1fr',gap:8,textAlign:'left',transition:'background-color 90ms ease-out, border-color 90ms ease-out',alignItems:'center'}}>
-                        {placed&&(
-                          <div style={{position:'absolute',top:3,right:3,background:C.blue,borderRadius:2,padding:'1px 4px'}}>
-                            <span style={{fontFamily:MONO,fontSize:8,color:'#fff',fontWeight:700}}>x{placedCount}</span>
-                          </div>
-                        )}
-                        {!placed&&hasCount&&(
-                          <span style={{position:'absolute',top:3,right:3,fontFamily:MONO,fontSize:8,color:C.blue,fontWeight:700}}>×{item.inStand}</span>
-                        )}
-                        <CatalogPreview item={item} active={isActive}/>
-                        <span style={{minWidth:0,display:'flex',flexDirection:'column',gap:3}}>
-                          <span style={{fontSize:11.5,fontWeight:700,color:C.ink,lineHeight:1.15,wordBreak:'break-word'}}>{item.name}</span>
-                          <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted,display:'flex',gap:5,flexWrap:'wrap'}}>
-                            <span>{item.sku}</span>
-                            {item.family&&<span>/ {item.family}</span>}
+                        title={`${item.name}${item.family?` · ${item.family}`:''}${canDragToFloor&&!isOut?'\nDrag onto the booth floor or click to add':''}`}
+                        style={{position:'relative',opacity:isOut?0.58:1,background:isDragging?`${C.green}12`:isActive?'#f0ecff':placed?`${C.blue}08`:C.bg,border:`1px ${isActive||isDragging?'solid':hasCount?'solid':'dashed'} ${isDragging?C.green:isActive?C.ink:placed?C.blue:C.hair}`,borderRadius:5,padding:'5px 6px',cursor:isOut?'not-allowed':canDragToFloor?'grab':'pointer',display:'grid',gridTemplateColumns:'30px 1fr',gap:7,textAlign:'left',transition:'background-color 90ms ease-out, border-color 90ms ease-out',alignItems:'center'}}>
+                        <CatalogPreview item={item} active={isActive} height={18}/>
+                        <span style={{minWidth:0,display:'flex',flexDirection:'column',gap:1}}>
+                          {/* Name and count on one line. The count used to be a
+                              badge pinned to the card's top-right corner, where
+                              it sat on top of the name it was counting. */}
+                          <span style={{display:'flex',alignItems:'baseline',gap:5,minWidth:0}}>
+                            <span style={{flex:1,minWidth:0,fontSize:11,fontWeight:700,color:C.ink,lineHeight:1.2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                              {catalogDisplayName(item.name)}
+                            </span>
+                            {placed&&(
+                              <span style={{flexShrink:0,background:C.blue,borderRadius:2,padding:'0 3px',fontFamily:MONO,fontSize:8,color:'#fff',fontWeight:700,lineHeight:'13px'}}>×{placedCount}</span>
+                            )}
+                            {!placed&&hasCount&&(
+                              <span style={{flexShrink:0,fontFamily:MONO,fontSize:8,color:C.blue,fontWeight:700}}>×{item.inStand}</span>
+                            )}
                           </span>
-                          <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted}}>{item.dim} m</span>
-                          {item.price!=null&&<span style={{fontFamily:MONO,fontSize:8.5,color:C.green,fontWeight:700}}>USD {item.price.toLocaleString()}</span>}
-                          <span style={{fontFamily:MONO,fontSize:8.5,color:isOut?C.orange:isLow?'#8a6b20':C.muted,fontWeight:isOut||isLow?700:500}}>
-                            {availability}
-                          </span>
-                          <span style={{display:'flex',alignItems:'center',gap:5,marginTop:2}}>
-                            <button type="button" disabled={!placed} onClick={(event)=>{event.stopPropagation();onRemoveCatalogItem(item.id);}}
-                              style={{width:24,height:22,border:`1px solid ${C.hair}`,borderRadius:4,background:placed?C.panel:C.bg,color:placed?C.ink:C.muted,cursor:placed?'pointer':'not-allowed',fontFamily:MONO,fontSize:13,lineHeight:1,opacity:placed?1:0.45}}>−</button>
-                            <span style={{minWidth:24,textAlign:'center',fontFamily:MONO,fontSize:9.5,fontWeight:700,color:C.ink}}>{placedCount}</span>
-                            <button type="button" disabled={isOut} onClick={(event)=>{event.stopPropagation();onAddItem(item);}}
-                              style={{width:24,height:22,border:`1px solid ${isOut?C.hair:C.blue}`,borderRadius:4,background:isOut?C.bg:`${C.blue}12`,color:isOut?C.muted:C.blue,cursor:isOut?'not-allowed':'pointer',fontFamily:MONO,fontSize:13,lineHeight:1,opacity:isOut?0.5:1}}>+</button>
+                          <span style={{display:'flex',alignItems:'center',gap:4,minWidth:0}}>
+                            <span style={{flex:1,minWidth:0,fontFamily:MONO,fontSize:8.5,color:C.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                              {item.sku} · {item.dim}
+                              {item.price!=null&&<span style={{color:C.green,fontWeight:700}}> · USD {item.price.toLocaleString()}</span>}
+                            </span>
+                            {/* Only when it is news. "98 available" on all
+                                fifty-two rows told a designer nothing. */}
+                            {(isOut||isLow)&&(
+                              <span style={{flexShrink:0,fontFamily:MONO,fontSize:8,color:isOut?C.orange:'#8a6b20',fontWeight:700}}>{availability}</span>
+                            )}
+                            {/* Minus only where it can do something. It was
+                                rendered disabled on every row that had nothing
+                                placed, which is most of them. */}
+                            {placed&&(
+                              <button type="button" aria-label={`Remove one ${catalogDisplayName(item.name)}`} onClick={(event)=>{event.stopPropagation();onRemoveCatalogItem(item.id);}}
+                                style={{flexShrink:0,width:18,height:18,border:`1px solid ${C.hair}`,borderRadius:3,background:C.panel,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:11,lineHeight:1,padding:0}}>−</button>
+                            )}
+                            <button type="button" disabled={isOut} aria-label={`Add ${catalogDisplayName(item.name)}`} onClick={(event)=>{event.stopPropagation();onAddItem(item);}}
+                              style={{flexShrink:0,width:18,height:18,border:`1px solid ${isOut?C.hair:C.blue}`,borderRadius:3,background:isOut?C.bg:`${C.blue}12`,color:isOut?C.muted:C.blue,cursor:isOut?'not-allowed':'pointer',fontFamily:MONO,fontSize:11,lineHeight:1,padding:0,opacity:isOut?0.5:1}}>+</button>
                           </span>
                         </span>
                       </div>
@@ -186,7 +216,7 @@ export function WorkspaceCatalogPanel({
             return (
             <div key={p.id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
               <div style={{width:8,height:8,borderRadius:2,background:issues.length?C.orange:p.color,flexShrink:0}} title={issues.map(issue=>issue.message).join(', ')}/>
-              <span style={{fontFamily:MONO,fontSize:9,flex:1,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
+              <span title={p.name} style={{fontFamily:MONO,fontSize:9,flex:1,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{catalogDisplayName(p.name)}</span>
               {issues.length>0&&<span title={issues.map(issue=>issue.message).join(', ')} style={{fontFamily:MONO,fontSize:8,color:C.orange,border:`1px solid ${C.orange}40`,borderRadius:3,padding:'1px 4px',background:`${C.orange}10`}}>CHECK</span>}
               <span style={{fontFamily:MONO,fontSize:9,color:C.muted}}>×{p.qty}</span>
               <button

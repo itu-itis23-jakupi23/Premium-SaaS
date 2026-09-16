@@ -4,6 +4,7 @@ import { CurrencySwitcher, useCurrency } from "@/lib/currency";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { Booth3D } from "@/components/workspace/Booth3D";
+import { quotePresentation } from "@/lib/workspace-quote";
 import {
   getCurrentWorkspace,
   submitClientChangeRequest,
@@ -179,6 +180,7 @@ export default function ClientWorkspace() {
     (workspaceRecord?.currentVersion as any);
   const selectedWorkspace = selectedVersionRecord?.workspace ?? workspaceRecord?.workspace;
   const costEstimateCents = selectedVersionRecord?.costEstimateCents ?? 0;
+  const unpricedItemCount = (selectedWorkspace as { unpricedItemCount?: number } | undefined)?.unpricedItemCount ?? 0;
   const comparedWorkspace =
     workspaceRecord?.versions.find(
       (v) => String(v.versionNumber) === compareVersion,
@@ -1041,14 +1043,33 @@ export default function ClientWorkspace() {
               background: "rgba(47, 125, 58, 0.05)",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: "uppercase", fontFamily: MONO }}>
-                Est. Cost
-              </span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.green, fontFamily: MONO }}>
-                {costEstimateCents ? formatMoneyCents(costEstimateCents) : "Quote pending"}
-              </span>
-            </div>
+            {(() => {
+              // Never print a partial total as though it were the price - see
+              // quotePresentation(). The estimate covers only priced items, and
+              // the furniture catalogue is priced at zero today.
+              const quote = quotePresentation({
+                costEstimateCents,
+                unpricedItemCount,
+                formatMoney: formatMoneyCents,
+              });
+              return (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: "uppercase", fontFamily: MONO }}>
+                      Est. Cost
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: quote.partial ? C.ink : C.green, fontFamily: MONO }}>
+                      {quote.value}
+                    </span>
+                  </div>
+                  {quote.note && (
+                    <div style={{ marginTop: 3, fontSize: 9.5, color: C.muted, fontFamily: MONO, textAlign: "right" }}>
+                      {quote.note}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
           <div style={{ flex: 1, overflowY: "auto" }}>
             {clientCatalog.length === 0 && (

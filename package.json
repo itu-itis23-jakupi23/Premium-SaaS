@@ -27,6 +27,8 @@
     "public:metadata": "node scripts/check-public-metadata.mjs",
     "public:routes": "node scripts/check-public-routes.mjs",
     "workspace:transform": "node scripts/check-transform-constants.mjs",
+    "workspace:placement": "node scripts/build-placement-bundle.mjs",
+    "workspace:placement:check": "node scripts/build-placement-bundle.mjs --check",
     "booth:render": "node scripts/check-booth-render.mjs",
     "ui:unfinished": "node scripts/check-unfinished-controls.mjs",
     "performance:budgets": "node scripts/check-frontend-budgets.mjs",

@@ -23,6 +23,7 @@ import {
   Maximize2, Plus, Trash2,
   Square, Layers, Map, X,
   CheckCircle2, Package, StickyNote, Settings2, Copy, MessageSquare, ImagePlus, Lock, Unlock,
+  AlertTriangle,
 } from "lucide-react";
 import {
   clampNumber,
@@ -31,6 +32,7 @@ import {
   ROOM_SNAP_M,
   ROOM_DIMENSION_SNAP_M,
   DUPLICATE_OFFSET_M,
+  FURNITURE_SNAP_M,
 } from "@/lib/workspace-transform";
 // Data model (types + static Sedef furniture catalog) lives in a dedicated
 // module so this file carries workspace behaviour, not static data.
@@ -425,6 +427,9 @@ export default function PMWorkspace() {
   // Mirrors the render-scope BOM quote so persistWorkspace (defined earlier
   // in the component) can attach it to every save payload.
   const quoteTotalCentsRef = useRef(0);
+  // Saved beside the total, not instead of it. The total is real as far as it
+  // goes; this says how far that is.
+  const unpricedItemCountRef = useRef(0);
   const activeProjectIdRef = useRef<string | null>(null);
   const [histIdx, setHistIdx] = useState(0);
   const [histLen, setHistLen] = useState(1);
@@ -436,7 +441,28 @@ export default function PMWorkspace() {
   const [activeShellPartId,setActiveShellPartId] = useState('');
   const [selectionAnchor,setSelectionAnchor] = useState<{x:number;y:number;label:string;partType:string}|null>(null);
   const [activeId,   setActiveId]   = useState('');
-  const [activePlacedId,setActivePlacedId] = useState('');
+  /*
+   * The selection is a set, and a single selected item is the set of size one.
+   *
+   * There is no separate single-item path: activePlacedId below is derived from
+   * the set, so the inspector, the popover and every group operation read the
+   * same state. A parallel "one item" branch is what drifts.
+   *
+   * activePlacedId is the *anchor* - the item whose properties the inspector
+   * shows - and it is the last one added, which is the one the designer just
+   * clicked.
+   */
+  const [selectedPlacedIds,setSelectedPlacedIds] = useState<string[]>([]);
+  const activePlacedId = selectedPlacedIds.length ? selectedPlacedIds[selectedPlacedIds.length - 1] : '';
+  /** Replace the selection. Passing '' clears it. */
+  const setActivePlacedId = useCallback((id:string) => {
+    setSelectedPlacedIds(id ? [id] : []);
+  },[]);
+  /** Add or remove one item, for shift-click. */
+  const togglePlacedSelection = useCallback((id:string) => {
+    if(!id) return;
+    setSelectedPlacedIds(prev => prev.includes(id) ? prev.filter(entry => entry !== id) : [...prev, id]);
+  },[]);
   const [activeRoomId,setActiveRoomId] = useState('');
   const [roomTemplate,setRoomTemplate] = useState<RoomTemplateKey>('storage');
   const [draggedCatalogItem, setDraggedCatalogItem] = useState<CatItem | null>(null);
@@ -561,7 +587,7 @@ export default function PMWorkspace() {
     setLastSaved('Saving...');
     setSaveStatus('saving');
     try {
-      const payload = { ...workspace, quoteTotalCents: quoteTotalCentsRef.current || undefined };
+      const payload = { ...workspace, quoteTotalCents: quoteTotalCentsRef.current || undefined, unpricedItemCount: unpricedItemCountRef.current || undefined };
       const saved = await saveProjectWorkspace(projectId, payload, title);
       if(activeProjectIdRef.current !== projectId) return false;
       setWorkspaceRecord(saved);
@@ -909,13 +935,202 @@ export default function PMWorkspace() {
   redoRef.current = redo;
   const activePlacedIdRef = useRef(activePlacedId);
   activePlacedIdRef.current = activePlacedId;
+  const selectedPlacedIdsRef = useRef(selectedPlacedIds);
+  selectedPlacedIdsRef.current = selectedPlacedIds;
 
-  const removeItem = (id:string) => {
-    if(activePlacedId===id) {
-      setActivePlacedId('');
-      setSelectionAnchor(null);
+  /* ── Group operations ──────────────────────────────────────────────────
+   *
+   * Every one of these takes a list, and the single-item entry points below
+   * hand it a list of one. That is the whole of the "single select is the
+   * size-1 case" rule: there is no second implementation to drift.
+   *
+   * Locked items are skipped rather than refused, so one locked piece inside a
+   * selection does not block the other seven.
+   */
+  const removeItems = (ids:string[]) => {
+    const doomed = new Set(ids);
+    if(!doomed.size) return;
+    setSelectedPlacedIds(prev => prev.filter(id => !doomed.has(id)));
+    if(ids.includes(activePlacedId)) setSelectionAnchor(null);
+    commit(prev=>({...prev,placedItems:prev.placedItems.filter(p=>!doomed.has(p.id))}));
+  };
+  const removeItem = (id:string) => removeItems([id]);
+
+  /** Rotate every unlocked item in the list about its own centre. */
+  const rotateItems = (ids:string[], delta:number) => {
+    const turning = new Set(ids);
+    if(!turning.size) return;
+    const candidate = normalizeWorkspaceData({
+      ...ws,
+      placedItems: ws.placedItems.map(item => {
+        if(!turning.has(item.id) || item.locked) return item;
+        const next = ((Number(item.rotationY ?? item.rotation) + delta) % 360 + 360) % 360;
+        return {...item, rotation: next, rotationY: next};
+      }),
+    });
+    const supports = activeFrontSupportPositionsFor(
+      candidate.booth.width, candidate.frontSupportPositions, candidate.suppressedDefaultPositions,
+    );
+    const issue = placementIssuesFor(candidate.placedItems, candidate.rooms, candidate.booth, supports)
+      .find(entry => turning.has(entry.itemId));
+    if(issue) {
+      setToast(`Rotation blocked: ${issue.message}`);
+      return;
     }
-    commit(prev=>({...prev,placedItems:prev.placedItems.filter(p=>p.id!==id)}));
+    commit(()=>candidate);
+  };
+
+  /** Move every unlocked item in the list by the same offset. */
+  const moveItems = (ids:string[], dx:number, dz:number) => {
+    const moving = new Set(ids);
+    if(!moving.size || (!dx && !dz)) return;
+    const candidate = normalizeWorkspaceData({
+      ...ws,
+      placedItems: ws.placedItems.map(item => {
+        if(!moving.has(item.id) || item.locked) return item;
+        const bounds = positionBoundsForItem(item, ws.booth);
+        return {
+          ...item,
+          x: snapItemCoordinate(item.x + dx, bounds.minX, bounds.maxX),
+          z: snapItemCoordinate(item.z + dz, bounds.minZ, bounds.maxZ),
+        };
+      }),
+    });
+    const supports = activeFrontSupportPositionsFor(
+      candidate.booth.width, candidate.frontSupportPositions, candidate.suppressedDefaultPositions,
+    );
+    const issue = placementIssuesFor(candidate.placedItems, candidate.rooms, candidate.booth, supports)
+      .find(entry => moving.has(entry.itemId));
+    if(issue) {
+      setToast(`Move blocked: ${issue.message}`);
+      return;
+    }
+    commit(()=>candidate);
+  };
+
+  /**
+   * Line a selection up, or space it evenly.
+   *
+   * The reason multi-select was worth building: "six chairs evenly along this
+   * table" was eight drags and a good eye. Both operations move items only
+   * along one axis and go through the same validation every other move does, so
+   * an alignment that would put something through a wall is refused with the
+   * reason rather than silently half-applied.
+   *
+   * Alignment is to the selection's own extent - its left edge, its centre, its
+   * right edge - not to the booth, because a designer lining furniture up is
+   * lining it up with itself.
+   */
+  const alignItems = (ids:string[], edge:'left'|'right'|'centre-x'|'front'|'back'|'centre-z') => {
+    const chosen = ws.placedItems.filter(item => ids.includes(item.id) && !item.locked);
+    if(chosen.length < 2) {
+      setToast('Select two or more items to align');
+      return;
+    }
+    const spanOf = (item:WorkspacePlacedItem) => rotatedItemFootprint(item);
+    const alongX = edge === 'left' || edge === 'right' || edge === 'centre-x';
+    const lows = chosen.map(item => (alongX ? item.x - spanOf(item).width/2 : item.z - spanOf(item).depth/2));
+    const highs = chosen.map(item => (alongX ? item.x + spanOf(item).width/2 : item.z + spanOf(item).depth/2));
+    const low = Math.min(...lows);
+    const high = Math.max(...highs);
+    const mid = (low + high) / 2;
+    const target = (item:WorkspacePlacedItem) => {
+      const half = (alongX ? spanOf(item).width : spanOf(item).depth) / 2;
+      if(edge === 'left' || edge === 'back') return low + half;
+      if(edge === 'right' || edge === 'front') return high - half;
+      return mid;
+    };
+    applyItemPositions(chosen.map(item => ({
+      id: item.id,
+      x: alongX ? target(item) : item.x,
+      z: alongX ? item.z : target(item),
+    })), 'Align blocked');
+  };
+
+  /** Even gaps between the outermost two, along whichever axis is asked for. */
+  const distributeItems = (ids:string[], axis:'x'|'z') => {
+    const chosen = ws.placedItems
+      .filter(item => ids.includes(item.id) && !item.locked)
+      .sort((a, b) => (axis === 'x' ? a.x - b.x : a.z - b.z));
+    if(chosen.length < 3) {
+      setToast('Select three or more items to distribute');
+      return;
+    }
+    const centre = (item:WorkspacePlacedItem) => (axis === 'x' ? item.x : item.z);
+    const first = centre(chosen[0]);
+    const last = centre(chosen[chosen.length - 1]);
+    const step = (last - first) / (chosen.length - 1);
+    applyItemPositions(chosen.map((item, index) => ({
+      id: item.id,
+      x: axis === 'x' ? first + step * index : item.x,
+      z: axis === 'x' ? item.z : first + step * index,
+    })), 'Distribute blocked');
+  };
+
+  /**
+   * Apply a set of absolute positions in one commit, or none of them.
+   *
+   * Half an alignment is worse than none - the designer cannot see what was
+   * skipped - so this validates the whole arrangement and refuses as a unit.
+   */
+  const applyItemPositions = (moves:{id:string;x:number;z:number}[], refusal:string) => {
+    // A plain record, not a Map: this file imports lucide-react's Map icon, so
+    // the identifier is already taken.
+    const byId:Record<string,{id:string;x:number;z:number}> = {};
+    for(const move of moves) byId[move.id] = move;
+    const candidate = normalizeWorkspaceData({
+      ...ws,
+      placedItems: ws.placedItems.map(item => {
+        const move = byId[item.id];
+        if(!move || item.locked) return item;
+        const bounds = positionBoundsForItem(item, ws.booth);
+        return {
+          ...item,
+          x: snapItemCoordinate(move.x, bounds.minX, bounds.maxX),
+          z: snapItemCoordinate(move.z, bounds.minZ, bounds.maxZ),
+        };
+      }),
+    });
+    const supports = activeFrontSupportPositionsFor(
+      candidate.booth.width, candidate.frontSupportPositions, candidate.suppressedDefaultPositions,
+    );
+    const issue = placementIssuesFor(candidate.placedItems, candidate.rooms, candidate.booth, supports)
+      .find(entry => Boolean(byId[entry.itemId]));
+    if(issue) {
+      setToast(`${refusal}: ${issue.message}`);
+      return;
+    }
+    commit(()=>candidate);
+  };
+
+  /** Copy every item in the list, offset as a group, and select the copies. */
+  const duplicateItems = (ids:string[]) => {
+    const sources = new Set(ids);
+    if(!sources.size) return;
+    const madeIds:string[] = [];
+    commit(prev=>{
+      const made:WorkspacePlacedItem[] = [];
+      for(const source of prev.placedItems) {
+        if(!sources.has(source.id)) continue;
+        const bounds = positionBoundsForItem(source, prev.booth);
+        const copy:WorkspacePlacedItem = {
+          ...source,
+          id:`${source.catalogId}-${Date.now()}-${Math.random().toString(16).slice(2,6)}-${made.length}`,
+          locked:false,
+          x:snapItemCoordinate(source.x + DUPLICATE_OFFSET_M, bounds.minX, bounds.maxX),
+          z:snapItemCoordinate(source.z + DUPLICATE_OFFSET_M, bounds.minZ, bounds.maxZ),
+        };
+        made.push(copy);
+        madeIds.push(copy.id);
+      }
+      if(!made.length) return prev;
+      return {...prev,placedItems:[...prev.placedItems,...made]};
+    });
+    if(madeIds.length) {
+      setSelectedPlacedIds(madeIds);
+      setActiveRoomId('');
+      setToast(madeIds.length === 1 ? 'Furniture duplicated' : `${madeIds.length} items duplicated`);
+    }
   };
   // ── Keyboard shortcuts ────────────────────────────────────────
   // The undo button has advertised "Ctrl+Z" since it was written and nothing
@@ -928,14 +1143,39 @@ export default function PMWorkspace() {
     if(action === 'undo') { undoRef.current(); return; }
     if(action === 'redo') { redoRef.current(); return; }
     if(action === 'delete') {
-      const selected = activePlacedIdRef.current;
-      if(selected) removeItemRef.current(selected);
+      const selected = selectedPlacedIdsRef.current;
+      if(selected.length) removeItemsRef.current(selected);
       return;
     }
     if(action === 'deselect') {
-      setActivePlacedId('');
+      setSelectedPlacedIds([]);
       setActiveRoomId('');
       setSelectionAnchor(null);
+      return;
+    }
+    if(action === 'duplicate') {
+      const selected = selectedPlacedIdsRef.current;
+      if(selected.length) duplicateItemsRef.current(selected);
+      return;
+    }
+    // The gizmo has advertised [ and ] for rotation since it was written and
+    // nothing ever listened - the comment beside its rotate buttons named them
+    // as the keyboard equivalent. They turn the whole selection, 15 degrees a
+    // press, the same step the buttons use.
+    if(action === 'rotate-ccw' || action === 'rotate-cw') {
+      const selected = selectedPlacedIdsRef.current;
+      if(selected.length) rotateItemsRef.current(selected, action === 'rotate-cw' ? 15 : -15);
+      return;
+    }
+    // Arrow keys nudge the whole selection one grid step, the same code path a
+    // group drag uses. Holding shift takes a metre instead.
+    const nudge = {
+      'nudge-left': [-1, 0], 'nudge-right': [1, 0],
+      'nudge-up': [0, -1], 'nudge-down': [0, 1],
+    }[action];
+    if(nudge) {
+      const selected = selectedPlacedIdsRef.current;
+      if(selected.length) moveItemsRef.current(selected, nudge[0] * FURNITURE_SNAP_M, nudge[1] * FURNITURE_SNAP_M);
     }
   },[previewMode]);
 
@@ -949,8 +1189,15 @@ export default function PMWorkspace() {
       let action = '';
       if(mod && key === 'z') action = event.shiftKey ? 'redo' : 'undo';
       else if(mod && key === 'y') action = 'redo';
+      else if(mod && key === 'd') action = 'duplicate';
+      else if(key === '[') action = 'rotate-ccw';
+      else if(key === ']') action = 'rotate-cw';
       else if(key === 'delete' || key === 'backspace') action = 'delete';
       else if(key === 'escape') action = 'deselect';
+      else if(key === 'arrowleft') action = 'nudge-left';
+      else if(key === 'arrowright') action = 'nudge-right';
+      else if(key === 'arrowup') action = 'nudge-up';
+      else if(key === 'arrowdown') action = 'nudge-down';
       if(!action) return;
       event.preventDefault();
       runShortcut(action);
@@ -961,6 +1208,14 @@ export default function PMWorkspace() {
 
   const removeItemRef = useRef(removeItem);
   removeItemRef.current = removeItem;
+  const removeItemsRef = useRef(removeItems);
+  removeItemsRef.current = removeItems;
+  const moveItemsRef = useRef(moveItems);
+  moveItemsRef.current = moveItems;
+  const duplicateItemsRef = useRef(duplicateItems);
+  duplicateItemsRef.current = duplicateItems;
+  const rotateItemsRef = useRef(rotateItems);
+  rotateItemsRef.current = rotateItems;
 
   const updateItem = (id:string, patch:Partial<WorkspacePlacedItem>) => commit(prev=>normalizeWorkspaceData({
     ...prev,
@@ -1044,32 +1299,13 @@ export default function PMWorkspace() {
     return {...prev, panelOverrides};
   });
   const rotateItem = (id:string, delta:number) => {
-    const item = placedItems.find(entry => entry.id === id);
-    if(!item) return;
-    const next = ((Number(item.rotationY ?? item.rotation) + delta) % 360 + 360) % 360;
-    updateItemTransform(id,{rotation:next, rotationY:next});
+    // A rotation asked for on one item still goes through the group path when
+    // that item is part of a multi-selection - turning one chair of eight and
+    // leaving the rest is never what was meant.
+    rotateItems(selectedPlacedIds.includes(id) ? selectedPlacedIds : [id], delta);
   };
   const duplicateItem = (id:string) => {
-    let nextId = '';
-    commit(prev=>{
-      const source = prev.placedItems.find(item => item.id === id);
-      if(!source) return prev;
-      const bounds = positionBoundsForItem(source, prev.booth);
-      const next:WorkspacePlacedItem = {
-        ...source,
-        id:`${source.catalogId}-${Date.now()}-${Math.random().toString(16).slice(2,6)}`,
-        locked:false,
-        x:snapItemCoordinate(source.x + DUPLICATE_OFFSET_M, bounds.minX, bounds.maxX),
-        z:snapItemCoordinate(source.z + DUPLICATE_OFFSET_M, bounds.minZ, bounds.maxZ),
-      };
-      nextId = next.id;
-      return {...prev,placedItems:[...prev.placedItems,next]};
-    });
-    if(nextId) {
-      setActivePlacedId(nextId);
-      setActiveRoomId('');
-      setToast('Furniture duplicated');
-    }
+    duplicateItems(selectedPlacedIds.includes(id) ? selectedPlacedIds : [id]);
   };
   const moveItemLive = useCallback((id:string, patch:{
     x:number; z:number; w?:number; y?:number; rotationY?:number;
@@ -1333,6 +1569,7 @@ export default function PMWorkspace() {
   // Only the values the shell itself still needs — the BOM panel reads `totals`.
   const { structWeight, roomWeight, fasciaSubtotal, quoteAllowance, quoteTotal } = totals;
   quoteTotalCentsRef.current = totals.quoteTotalCents;
+  unpricedItemCountRef.current = totals.unpricedItems;
   const csvCell = (value:string|number) => `"${String(value).replace(/"/g,'""')}"`;
   const exportBomCsv = () => {
     const rows = [
@@ -1609,6 +1846,8 @@ export default function PMWorkspace() {
               openLeft:booth.openLeft, openRight:booth.openRight,
               placedItems: placedItems,
               rooms,
+              selectedItemIds: selectedPlacedIds,
+              activeRoomId,
               panelOverrides,
               frontSupportPositions,
               suppressedDefaultPositions: suppressedDefaultPositions ?? [],
@@ -1626,7 +1865,7 @@ export default function PMWorkspace() {
               onItemMove: moveItemLive,
               onGestureEnd: commitLiveTransform,
               onShortcut: runShortcut,
-              onItemSelect: (id:string|null, partId?:string|null, detail?:{xPct?:number|null;yPct?:number|null;label?:string|null;partType?:string|null;roomId?:string|null})=>{
+              onItemSelect: (id:string|null, partId?:string|null, detail?:{xPct?:number|null;yPct?:number|null;label?:string|null;partType?:string|null;roomId?:string|null;additive?:boolean})=>{
                 const roomId = detail?.roomId ? String(detail.roomId) : '';
                 if (roomId && rooms.some(room => room.id === roomId)) {
                   setActiveRoomId(roomId);
@@ -1658,7 +1897,11 @@ export default function PMWorkspace() {
                 setActiveRoomId('');
                 setSelectionAnchor(null);
                 if (id) {
-                  setActivePlacedId(id);
+                  // Shift-click adds to the selection; a plain click replaces
+                  // it. Both go through the same set - selecting one item is
+                  // the set of size one.
+                  if (detail?.additive) togglePlacedSelection(id);
+                  else setActivePlacedId(id);
                   setActiveRoomId('');
                   setSelectionAnchor(anchorFromSelection(detail, 'Furniture', 'furniture'));
                   setActiveTab('bom');
@@ -1666,8 +1909,16 @@ export default function PMWorkspace() {
               },
               onRoomMove: moveRoomLive,
               onFrontSupportMove: moveFrontSupportsLive,
-              onItemDelete: (id: string) => removeItem(id),
-              onItemRotate: (id: string, patch: { rotationY: number }) => updateItemTransform(id, { rotation: patch.rotationY, rotationY: patch.rotationY }),
+              onItemDelete: (id: string) => removeItems(selectedPlacedIds.includes(id) ? selectedPlacedIds : [id]),
+              onItemRotate: (id: string, patch: { rotationY: number }) => {
+                // The renderer reports an absolute angle for the item under the
+                // gizmo. Turned into a delta so the rest of the selection turns
+                // with it by the same amount, about each item's own centre.
+                const current = placedItems.find(item => item.id === id);
+                const delta = ((patch.rotationY - Number(current?.rotationY ?? current?.rotation ?? 0)) % 360 + 360) % 360;
+                if (!delta) return;
+                rotateItems(selectedPlacedIds.includes(id) ? selectedPlacedIds : [id], delta);
+              },
               onCatalogItemDrop: placeCatalogItemAt,
               onCatalogItemDropRejected: (_catalogId: string, reason: string) => {
                 setDraggedCatalogItem(null);
@@ -1686,6 +1937,63 @@ export default function PMWorkspace() {
               <span key={b.text} style={{fontFamily:MONO,fontSize:9.5,display:'flex',alignItems:'center',gap:5,background:C.panel,border:`1px solid ${C.hair}`,borderRadius:4,padding:'4px 9px',color:b.color,letterSpacing:'0.04em'}}>{b.text}</span>
             ))}
           </div>
+
+          {/* Alignment bar. Appears only with more than one item picked, because
+              aligning one thing to itself is a no-op and the bar would just be
+              clutter the rest of the time. */}
+          {selectedPlacedIds.length > 1 && (
+            <div style={{
+              position:'absolute', bottom:14, left:'50%', transform:'translateX(-50%)',
+              zIndex:23, display:'flex', alignItems:'center', gap:6,
+              background:C.panel, border:`1px solid ${C.hair}`, borderRadius:8,
+              padding:'7px 10px', boxShadow:'0 6px 22px rgba(20,22,26,0.14)',
+            }}>
+              <span style={{fontFamily:MONO,fontSize:9,color:C.muted,letterSpacing:'0.06em',marginRight:2}}>
+                {selectedPlacedIds.length} SELECTED
+              </span>
+              {([
+                ['left','Align left edges','⇤'],
+                ['centre-x','Centre across','↔'],
+                ['right','Align right edges','⇥'],
+                ['back','Align to back','⇧'],
+                ['centre-z','Centre front-to-back','↕'],
+                ['front','Align to front','⇩'],
+              ] as const).map(([edge,title,glyph])=>(
+                <button key={edge} type="button" title={title} aria-label={title}
+                  onClick={()=>alignItems(selectedPlacedIds, edge)}
+                  style={{width:26,height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,
+                          color:C.ink,cursor:'pointer',fontSize:13,lineHeight:1,padding:0}}>{glyph}</button>
+              ))}
+              <span style={{width:1,height:18,background:C.hair,margin:'0 3px'}}/>
+              {([
+                ['x','Space evenly across','⋯'],
+                ['z','Space evenly front-to-back','⋮'],
+              ] as const).map(([axis,title,glyph])=>(
+                <button key={axis} type="button" title={title} aria-label={title}
+                  disabled={selectedPlacedIds.length < 3}
+                  onClick={()=>distributeItems(selectedPlacedIds, axis)}
+                  style={{width:26,height:26,border:`1px solid ${C.hair}`,borderRadius:4,
+                          background:selectedPlacedIds.length < 3 ? C.bg : C.bg,
+                          color:selectedPlacedIds.length < 3 ? C.muted : C.ink,
+                          cursor:selectedPlacedIds.length < 3 ? 'not-allowed' : 'pointer',
+                          opacity:selectedPlacedIds.length < 3 ? 0.45 : 1,
+                          fontSize:13,lineHeight:1,padding:0}}>{glyph}</button>
+              ))}
+              <span style={{width:1,height:18,background:C.hair,margin:'0 3px'}}/>
+              <button type="button" title="Duplicate selection" aria-label="Duplicate selection"
+                onClick={()=>duplicateItems(selectedPlacedIds)}
+                style={{width:26,height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,
+                        color:C.ink,cursor:'pointer',padding:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <Copy size={12}/>
+              </button>
+              <button type="button" title="Delete selection" aria-label="Delete selection"
+                onClick={()=>removeItems(selectedPlacedIds)}
+                style={{width:26,height:26,border:`1px solid ${C.orange}55`,borderRadius:4,background:`${C.orange}10`,
+                        color:C.orange,cursor:'pointer',padding:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <Trash2 size={12}/>
+              </button>
+            </div>
+          )}
 
           {selectionAnchor&&activePlacedItem&&(
             <div style={{
@@ -2597,7 +2905,7 @@ export default function PMWorkspace() {
                     {label:'Fascia',value:booth.fasciaEnabled?fasciaMeta.label:'Disabled'},
                     {label:'BOM Items', value:`${structItems.reduce((a,s)=>a+s.qty,0) + totalParts} parts`},
                     {label:'Est. Weight',value:`${(structWeight+totalWeight).toFixed(0)} kg`},
-                    {label:'Est. Quote',value:formatUsd(quoteTotal)},
+                    {label:'Est. Quote',value:totals.unpricedItems?`${formatUsd(quoteTotal)} · ${totals.unpricedItems} unpriced`:formatUsd(quoteTotal)},
                   ].map(row=>(
                     <div key={row.label} style={{display:'flex',justifyContent:'space-between',padding:'3px 0'}}>
                       <span style={{fontFamily:MONO,fontSize:9.5,color:C.muted}}>{row.label}</span>
@@ -2605,6 +2913,20 @@ export default function PMWorkspace() {
                     </div>
                   ))}
                 </div>
+                {/* Sending an unpriced design is a legitimate thing to do - the
+                    client portal has a "Quote pending" state for exactly that -
+                    but it should be a decision, not a surprise. The whole ENS
+                    furniture catalogue is priced at zero today, so this fires on
+                    any stand with furniture in it. */}
+                {totals.unpricedItems>0&&(
+                  <div style={{display:'flex',gap:8,alignItems:'flex-start',background:`${C.orange}0e`,border:`1px solid ${C.orange}40`,borderRadius:6,padding:'9px 11px',marginBottom:14}}>
+                    <AlertTriangle size={13} style={{color:C.orange,flexShrink:0,marginTop:1}}/>
+                    <span style={{fontFamily:UI,fontSize:11.5,color:C.ink,lineHeight:1.35}}>
+                      <strong>{totals.unpricedItems} placed {totals.unpricedItems===1?'item has':'items have'} no price.</strong>{' '}
+                      The quote covers the structure and rooms only, and the client will see it marked as excluding {totals.unpricedItems===1?'it':'them'}.
+                    </span>
+                  </div>
+                )}
                 <div style={{display:'flex',gap:8}}>
                   <button onClick={()=>{setShowSendDlg(false);setSendConfirmed(false);}} style={{flex:1,height:38,background:'none',border:`1px solid ${C.hair}`,borderRadius:5,cursor:'pointer',fontFamily:UI,fontSize:13,color:C.ink}}>Cancel</button>
                   <button onClick={sendToClient} disabled={isSending || !workspaceRecord || !canSendToClient} title={sendDisabledReason || 'Send for approval'} style={{flex:2,height:38,background:canSendToClient?C.blue:`${C.muted}30`,border:'none',color:'#fff',borderRadius:5,cursor:isSending || !workspaceRecord || !canSendToClient?'not-allowed':'pointer',fontFamily:UI,fontSize:13,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:6,opacity:isSending || !workspaceRecord || !canSendToClient?0.65:1}}>

@@ -85,6 +85,13 @@ export const workspaceStateSchema = z.object({
   // Canonical quote (USD cents) computed by the PM workspace BOM model; the
   // server stores this on each version so every portal shows the same number.
   quoteTotalCents: z.number().int().min(0).max(500_000_000).optional(),
+  // How many placed items carry no price, and are therefore missing from the
+  // total above. It travels with the number it qualifies on purpose: the whole
+  // ENS furniture catalogue is currently priced at zero, so a stand full of
+  // furniture produces a quote total covering only its structure and rooms.
+  // The PM workspace has always shown that as "+ N TBD"; the client portal was
+  // shown the bare figure and presented it as the price.
+  unpricedItemCount: z.number().int().min(0).max(10_000).optional(),
 });
 
 export const workspaceInputSchema = z.object({

@@ -49,26 +49,32 @@ function catalogPreviewUrl(item: CatItem) {
   const filename = decodeURIComponent(item.modelUrl.split('/').pop() || '').replace(/\.glb$/i, ' - preview.png');
   return `/ens-workspace-assets/sedef_remaining_furniture_refined_v2/previews-clean/${encodeURIComponent(filename)}`;
 }
-function CatalogImagePreview({item,active}:{item:CatItem;active:boolean}) {
+function CatalogImagePreview({item,active,height}:{item:CatItem;active:boolean;height:number}) {
   const previewUrl = catalogPreviewUrl(item);
   return (
-    <div style={{width:'100%',height:62,border:`1px solid ${active?C.ink:'rgba(156,163,175,0.32)'}`,borderRadius:4,background:active?'#f8fafc':'#ffffff',overflow:'hidden',display:'grid',placeItems:'center'}}>
+    <div style={{width:'100%',height,border:`1px solid ${active?C.ink:'rgba(156,163,175,0.32)'}`,borderRadius:4,background:active?'#f8fafc':'#ffffff',overflow:'hidden',display:'grid',placeItems:'center'}}>
       {previewUrl ? (
         <img src={previewUrl} alt={`${item.name} preview`} loading="lazy" style={{width:'100%',height:'100%',objectFit:'contain',objectPosition:'center',display:'block',padding:2}}/>
       ) : (
-        <Box size={18} color={C.muted}/>
+        <Box size={Math.max(12, Math.round(height * 0.3))} color={C.muted}/>
       )}
     </div>
   );
 }
-export function CatalogPreview({item,active}:{item:CatItem;active:boolean}) {
+/**
+ * `height` is the drawing's height in pixels; the width comes from the column
+ * it sits in. The catalogue lists items as one dense row each, which needs a
+ * thumbnail about half the height the browsing card used, so this is a
+ * parameter rather than the two constants it used to be.
+ */
+export function CatalogPreview({item,active,height=46}:{item:CatItem;active:boolean;height?:number}) {
   const props = catalogItemProps(item);
   const color = props.color;
   const stroke = active ? C.ink : '#9ca3af';
   const shape = item.shape ?? 'box';
-  if (item.modelUrl) return <CatalogImagePreview item={item} active={active}/>;
+  if (item.modelUrl) return <CatalogImagePreview item={item} active={active} height={height + 16}/>;
   return (
-    <svg viewBox="0 0 72 46" width="100%" height="46" aria-hidden="true" style={{display:'block'}}>
+    <svg viewBox="0 0 72 46" width="100%" height={height} preserveAspectRatio="xMidYMid meet" aria-hidden="true" style={{display:'block'}}>
       <rect x="1" y="1" width="70" height="44" rx="4" fill={active?'rgba(24,22,19,0.05)':'rgba(255,255,255,0.48)'} stroke="rgba(156,163,175,0.32)"/>
       {shape==='round_table'&&<>
         <ellipse cx="36" cy="19" rx="18" ry="10" fill={color} stroke={stroke} strokeWidth="1"/>
