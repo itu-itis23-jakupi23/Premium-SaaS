@@ -123,6 +123,12 @@ jobs:
       - name: Check no unfinished controls shipped
         run: pnpm run ui:unfinished
 
+      # lucide-react exports icons named after JS globals (Map, Image, File).
+      # Importing one bare shadows the global for the whole module and fails
+      # silently - `new Map()` returns a React component instead of throwing.
+      - name: Check no icon import shadows a global its file uses
+        run: pnpm run ui:icon-shadowing
+
   playwright:
     name: Playwright browser tests (production backend)
     runs-on: ubuntu-latest

@@ -31,6 +31,7 @@
     "workspace:placement:check": "node scripts/build-placement-bundle.mjs --check",
     "booth:render": "node scripts/check-booth-render.mjs",
     "ui:unfinished": "node scripts/check-unfinished-controls.mjs",
+    "ui:icon-shadowing": "node scripts/check-icon-shadowing.mjs",
     "performance:budgets": "node scripts/check-frontend-budgets.mjs",
     "deployment:preflight": "node scripts/validate-deployment.mjs && pnpm --filter @workspace/api-server run preflight:env",
     "release:check": "node scripts/release-check.mjs",

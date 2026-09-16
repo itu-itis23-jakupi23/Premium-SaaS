@@ -21,7 +21,10 @@ import {
 import {
   ChevronLeft, ChevronRight, Undo2, Redo2, Save, Camera, History, Send,
   Maximize2, Plus, Trash2,
-  Square, Layers, Map, X,
+  // Aliased: lucide-react exports an icon called Map, and importing it bare
+  // shadows the Map constructor for this whole file - `new Map()` silently
+  // resolves to a React component instead of throwing.
+  Square, Layers, Map as MapIcon, X,
   CheckCircle2, Package, StickyNote, Settings2, Copy, MessageSquare, ImagePlus, Lock, Unlock,
   AlertTriangle,
 } from "lucide-react";
@@ -1074,14 +1077,11 @@ export default function PMWorkspace() {
    * skipped - so this validates the whole arrangement and refuses as a unit.
    */
   const applyItemPositions = (moves:{id:string;x:number;z:number}[], refusal:string) => {
-    // A plain record, not a Map: this file imports lucide-react's Map icon, so
-    // the identifier is already taken.
-    const byId:Record<string,{id:string;x:number;z:number}> = {};
-    for(const move of moves) byId[move.id] = move;
+    const byId = new Map(moves.map(move => [move.id, move]));
     const candidate = normalizeWorkspaceData({
       ...ws,
       placedItems: ws.placedItems.map(item => {
-        const move = byId[item.id];
+        const move = byId.get(item.id);
         if(!move || item.locked) return item;
         const bounds = positionBoundsForItem(item, ws.booth);
         return {
@@ -1095,7 +1095,7 @@ export default function PMWorkspace() {
       candidate.booth.width, candidate.frontSupportPositions, candidate.suppressedDefaultPositions,
     );
     const issue = placementIssuesFor(candidate.placedItems, candidate.rooms, candidate.booth, supports)
-      .find(entry => Boolean(byId[entry.itemId]));
+      .find(entry => byId.has(entry.itemId));
     if(issue) {
       setToast(`${refusal}: ${issue.message}`);
       return;
@@ -1784,7 +1784,7 @@ export default function PMWorkspace() {
             <span style={{fontFamily:MONO,fontSize:9,background:`${C.blue}15`,color:C.blue,borderRadius:3,padding:'1px 5px'}}>{snapshots.length}</span>
           </button>
           <button onClick={()=>setShowGrid(value=>!value)} title="Toggle grid" style={{background:showGrid?`${C.blue}10`:'none',border:`1px solid ${showGrid?C.blue:C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:showGrid?C.blue:C.ink}}>
-            <Map size={12}/> Grid
+            <MapIcon size={12}/> Grid
           </button>
           <CurrencySwitcher variant="toolbar" />
           <button onClick={()=>setPreviewMode(value=>!value)} title="Preview workspace" style={{background:previewMode?`${C.orange}12`:'none',border:`1px solid ${previewMode?C.orange:C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:previewMode?C.orange:C.ink}}>

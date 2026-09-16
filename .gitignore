@@ -64,3 +64,6 @@ Thumbs.db
 .release-evidence/
 artifacts/ens-landing/.dev-data-backup-*/
 backups/pg-*.sql
+
+# Throwaway verification probes and captured baselines.
+.scratch/
