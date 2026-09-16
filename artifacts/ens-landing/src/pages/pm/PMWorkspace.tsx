@@ -1052,6 +1052,17 @@ export default function PMWorkspace() {
       setToast('Select three or more items to distribute');
       return;
     }
+    // Said plainly, because the result rarely looks exactly even and the reason
+    // is not visible: the spacing is computed evenly in metres and then each
+    // item is snapped to the furniture grid, so applied gaps can differ by a
+    // grid step. That is the grid doing its job - see distributedPositions().
+    //
+    // Set before applying rather than after. applyItemPositions() refuses an
+    // arrangement by calling setToast() with its own reason, and it runs later
+    // in this same handler, so a refusal replaces this note instead of the two
+    // fighting - and the note needs no way to ask whether the apply succeeded,
+    // which would mean changing applyItemPositions.
+    setToast(`Spaced evenly · snapped to nearest ${Math.round(FURNITURE_SNAP_M * 100)} cm`);
     applyItemPositions(distributedPositions(chosen, axis), 'Distribute blocked');
   };
 
@@ -1928,7 +1939,12 @@ export default function PMWorkspace() {
               clutter the rest of the time. */}
           {selectedPlacedIds.length > 1 && (
             <div style={{
-              position:'absolute', bottom:14, left:'50%', transform:'translateX(-50%)',
+              // Above the toast band. Toast is fixed at bottom 48 and about 38
+              // tall, and the bar used to sit at 14 - so every toast covered
+              // most of it. That was survivable while toasts were refusals;
+              // distribute now reports on success too, which would have hidden
+              // the buttons for three seconds after every use.
+              position:'absolute', bottom:72, left:'50%', transform:'translateX(-50%)',
               zIndex:23, display:'flex', alignItems:'center', gap:6,
               background:C.panel, border:`1px solid ${C.hair}`, borderRadius:8,
               padding:'7px 10px', boxShadow:'0 6px 22px rgba(20,22,26,0.14)',

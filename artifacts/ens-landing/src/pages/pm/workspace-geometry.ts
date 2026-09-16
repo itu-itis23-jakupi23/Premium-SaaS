@@ -433,6 +433,12 @@ function footprintOf(item: ArrangeItem) {
  * To its own extent, not to the booth: someone lining furniture up is lining it
  * up with itself. Fewer than two items has no extent to speak of and returns
  * nothing to do.
+ *
+ * Edges land on the grid, not on the arithmetic. Centring puts every item on
+ * one coordinate, so they all snap together and stay flush; aligning left or
+ * right gives each item its own target (the extent, plus its own half-width),
+ * so two items of different sizes can finish up to a grid step apart. Same
+ * reason as distributedPositions() below - the grid wins, deliberately.
  */
 export function alignedPositions(items: ArrangeItem[], edge: AlignEdge): ArrangedPosition[] {
   if (items.length < 2) return [];
@@ -462,9 +468,23 @@ export function alignedPositions(items: ArrangeItem[], edge: AlignEdge): Arrange
  * is what "space these evenly" means to someone who has already placed the two
  * that matter. Fewer than three items has nothing between the ends.
  *
- * The gaps come out even in metres; the workspace snaps each result to the
- * furniture grid afterwards, so the applied gaps can differ by up to one grid
- * step.
+ * The gaps returned here are exactly even, in metres. The applied gaps usually
+ * are not, and that is on purpose.
+ *
+ * The workspace snaps every position to the furniture grid on the way in, so
+ * four items spread over 1.95 m come out as 0.65 / 0.60 / 0.65 rather than
+ * three gaps of 0.65 - each item lands on the nearest 5 cm, and the remainder
+ * has to go somewhere. This was measured during the align/distribute extraction
+ * and kept: an item off the grid cannot be reached again by dragging, by the
+ * arrow keys, or by anything else in the workspace, so exact spacing would buy
+ * a tidier number at the cost of furniture that no longer lines up with
+ * everything around it.
+ *
+ * Do not "fix" this by rounding the step, by snapping the span first, or by
+ * exempting distribute from the grid. If the variance ever needs to be smaller,
+ * the grid is the thing to change - FURNITURE_SNAP_M in workspace-transform.ts,
+ * which check-transform-constants keeps in step with the renderer. The workspace
+ * tells the designer what happened when it distributes; see distributeItems().
  */
 export function distributedPositions(items: ArrangeItem[], axis: 'x' | 'z'): ArrangedPosition[] {
   if (items.length < 3) return [];
