@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useId, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
@@ -1047,6 +1047,9 @@ function EditProjectModal({
   t: TFn;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  // Every field here already had a visible label and none was associated with
+  // its control, so a screen reader announced an unnamed edit box.
+  const uid = useId();
   useFocusTrap(dialogRef, true, () => !isSaving && onCancel());
   return (
     <>
@@ -1082,8 +1085,9 @@ function EditProjectModal({
             [t("pm.projects.modal.client"), "client"],
           ] as const).map(([label, key]) => (
             <div key={key}>
-              <label className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{label}</label>
+              <label htmlFor={`${uid}-${key}`} className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{label}</label>
               <input
+                  id={`${uid}-${key}`}
                 value={value[key]}
                 onChange={(e) => onChange({ ...value, [key]: e.target.value })}
                 className="h-9 w-full rounded-md border bg-muted/30 px-3 text-sm outline-none focus:border-primary"
@@ -1092,8 +1096,9 @@ function EditProjectModal({
           ))}
 
           <div>
-            <label className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{t("pm.projects.modal.deadline")}</label>
+            <label htmlFor={`${uid}-deadline`} className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{t("pm.projects.modal.deadline")}</label>
             <input
+              id={`${uid}-deadline`}
               type="date"
               value={value.deadline}
               onChange={(e) => onChange({ ...value, deadline: e.target.value })}
@@ -1102,8 +1107,9 @@ function EditProjectModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{t("pm.projects.modal.system")}</label>
+            <label htmlFor={`${uid}-system`} className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{t("pm.projects.modal.system")}</label>
             <select
+              id={`${uid}-system`}
               value={value.system}
               onChange={(e) => onChange({ ...value, system: e.target.value })}
               className="h-9 w-full rounded-md border bg-muted/30 px-3 text-sm outline-none focus:border-primary"
@@ -1120,8 +1126,9 @@ function EditProjectModal({
               [t("pm.projects.modal.depth"), "depth"],
             ] as const).map(([label, key]) => (
               <div key={key}>
-                <label className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{label}</label>
+                <label htmlFor={`${uid}-${key}`} className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{label}</label>
                 <input
+                  id={`${uid}-${key}`}
                   type="number" min="1" max="100" step="0.5"
                   value={value[key]}
                   onChange={(e) => onChange({ ...value, [key]: e.target.value })}
@@ -1132,10 +1139,11 @@ function EditProjectModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+            <label htmlFor={`${uid}-description`} className="mb-1 block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
               {t("pm.projects.detail.description")}
             </label>
             <textarea
+              id={`${uid}-description`}
               value={value.description}
               onChange={(e) => onChange({ ...value, description: e.target.value })}
               rows={3}

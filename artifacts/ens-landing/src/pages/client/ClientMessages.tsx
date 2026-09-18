@@ -353,6 +353,7 @@ export default function ClientMessages() {
             )}
             <div className="flex items-center gap-3 bg-muted/50 rounded-xl p-2 border border-transparent focus-within:border-primary/30 transition-colors">
               <input
+                aria-label={t("client.messages.actions.attach")}
                 ref={fileInputRef}
                 type="file"
                 className="hidden"

@@ -755,6 +755,7 @@ function MessageDrawer({
                           )}
                           <div className="flex items-center gap-2 rounded-xl border bg-background/70 p-2">
                             <input
+                              aria-label={t("chief.messages.actions.attach")}
                               ref={fileInput}
                               type="file"
                               className="hidden"

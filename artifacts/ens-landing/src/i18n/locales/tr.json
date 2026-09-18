@@ -1918,7 +1918,8 @@
       },
       "paging": {
         "showing": "{{total}} müşteriden {{start}}-{{end}} arası gösteriliyor"
-      }
+      },
+      "openClient": "{{name}} müşterisini aç"
     },
     "tasks": {
       "title": "Görev Panosu",

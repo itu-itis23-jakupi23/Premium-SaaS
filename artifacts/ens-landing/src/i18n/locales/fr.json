@@ -1918,7 +1918,8 @@
       },
       "paging": {
         "showing": "Affichage de {{start}}-{{end}} sur {{total}} clients"
-      }
+      },
+      "openClient": "Ouvrir le client {{name}}"
     },
     "tasks": {
       "title": "Kanban des tâches",

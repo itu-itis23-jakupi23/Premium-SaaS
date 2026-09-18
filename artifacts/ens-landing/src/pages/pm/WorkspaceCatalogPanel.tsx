@@ -144,6 +144,19 @@ export function WorkspaceCatalogPanel({
                           if(isOut||catalogDragWasActiveRef.current) return;
                           onAddItem(item);
                         }}
+                        // Adding furniture is the workspace's primary action and
+                        // this card was the only way to do it: a div with a click
+                        // handler, no tab stop and nothing focusable inside, so a
+                        // keyboard could not put anything on a stand at all.
+                        role="button"
+                        tabIndex={isOut?-1:0}
+                        aria-disabled={isOut||undefined}
+                        onKeyDown={(event)=>{
+                          if(event.key!=='Enter'&&event.key!==' ') return;
+                          if(isOut||catalogDragWasActiveRef.current) return;
+                          event.preventDefault();
+                          onAddItem(item);
+                        }}
                         title={`${item.name}${item.family?` · ${item.family}`:''}${canDragToFloor&&!isOut?'\nDrag onto the booth floor or click to add':''}`}
                         style={{position:'relative',opacity:isOut?0.58:1,background:isDragging?`${C.green}12`:isActive?'#f0ecff':placed?`${C.blue}08`:C.bg,border:`1px ${isActive||isDragging?'solid':hasCount?'solid':'dashed'} ${isDragging?C.green:isActive?C.ink:placed?C.blue:C.hair}`,borderRadius:5,padding:'5px 6px',cursor:isOut?'not-allowed':canDragToFloor?'grab':'pointer',display:'grid',gridTemplateColumns:'30px 1fr',gap:7,textAlign:'left',transition:'background-color 90ms ease-out, border-color 90ms ease-out',alignItems:'center'}}>
                         <CatalogPreview item={item} active={isActive} height={18}/>

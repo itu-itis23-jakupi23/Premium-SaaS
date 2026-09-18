@@ -1918,7 +1918,8 @@
       },
       "paging": {
         "showing": "Zeige {{start}}-{{end}} von {{total}} Kunden"
-      }
+      },
+      "openClient": "Kunde {{name}} öffnen"
     },
     "tasks": {
       "title": "Aufgaben-Kanban",

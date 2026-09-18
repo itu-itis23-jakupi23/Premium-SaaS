@@ -1918,7 +1918,8 @@
       },
       "paging": {
         "showing": "{{total}}件中 {{start}}-{{end}}件を表示"
-      }
+      },
+      "openClient": "クライアント {{name}} を開く"
     },
     "tasks": {
       "title": "タスクかんばん",

@@ -640,6 +640,7 @@ export default function PMMessages() {
                   )}
                   <div className="flex items-center gap-2 bg-background/60 rounded-xl px-3 py-2 border border-border">
                     <input
+                      aria-label={t("pm.messages.actions.attach")}
                       ref={fileInput}
                       type="file"
                       className="hidden"
@@ -649,6 +650,7 @@ export default function PMMessages() {
                       <Paperclip aria-hidden="true" className="h-4 w-4" />
                     </button>
                     <input
+                      aria-label={t("pm.messages.inputPlaceholder")}
                       value={inputText}
                       onChange={(event) => setInputText(event.target.value)}
                       onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void sendMessage(); } }}

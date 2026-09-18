@@ -1918,7 +1918,8 @@
       },
       "paging": {
         "showing": "عرض {{start}}-{{end}} من {{total}} عميلًا"
-      }
+      },
+      "openClient": "فتح العميل {{name}}"
     },
     "tasks": {
       "title": "كانبان المهام",

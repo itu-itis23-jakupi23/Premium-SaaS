@@ -200,6 +200,18 @@ export default function PMClients() {
                       key={client.id}
                       className="group cursor-pointer hover:bg-muted/20 transition-colors"
                       onClick={() => setSelectedClient(client)}
+                      // Opening a client was mouse-only. The row keeps its row
+                      // semantics rather than taking role="button" - a button
+                      // inside a table tells a screen reader the wrong thing
+                      // about the grid - and becomes a tab stop that answers
+                      // Enter and Space, with a name saying what it opens.
+                      tabIndex={0}
+                      aria-label={t("pm.clients.openClient", { name: client.name })}
+                      onKeyDown={(event) => {
+                        if (event.key !== "Enter" && event.key !== " ") return;
+                        event.preventDefault();
+                        setSelectedClient(client);
+                      }}
                     >
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-3">

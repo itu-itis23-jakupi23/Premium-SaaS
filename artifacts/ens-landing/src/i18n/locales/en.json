@@ -2153,7 +2153,8 @@
           "linkSendSuccess": "Workspace link successfully sent to client!",
           "detailSource": "Project finance module & contracts"
         }
-      }
+      },
+      "openClient": "Open client {{name}}"
     },
     "tasks": {
       "title": "Tasks Kanban",

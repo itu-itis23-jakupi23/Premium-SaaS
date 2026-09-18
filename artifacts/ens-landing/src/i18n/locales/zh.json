@@ -1918,7 +1918,8 @@
       },
       "paging": {
         "showing": "显示第 {{start}}-{{end}} 项，共 {{total}} 位客户"
-      }
+      },
+      "openClient": "打开客户 {{name}}"
     },
     "tasks": {
       "title": "任务看板",
