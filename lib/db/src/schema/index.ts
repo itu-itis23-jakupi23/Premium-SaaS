@@ -821,6 +821,13 @@ export const quotes = pgTable(
       .references(() => organizations.id, { onDelete: "cascade" }),
     clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
     projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+    // The booth version this quote was priced from, when it was raised from a
+    // take-off rather than typed by hand. Provenance only - the line items and
+    // totals are the quote's own, so deleting the version leaves the quote
+    // intact and merely unlinked.
+    boothVersionId: uuid("booth_version_id").references(() => boothVersions.id, {
+      onDelete: "set null",
+    }),
     quoteNumber: varchar("quote_number", { length: 80 }).notNull(),
     title: varchar("title", { length: 200 }),
     status: quoteStatusEnum("status").notNull().default("draft"),

@@ -134,6 +134,13 @@
       "when": 1784080000000,
       "tag": "0018_exhibitions",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1784090000000,
+      "tag": "0019_quote_booth_version",
+      "breakpoints": true
     }
   ]
 }

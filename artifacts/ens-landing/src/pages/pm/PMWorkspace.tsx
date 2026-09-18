@@ -5,6 +5,7 @@ import { Booth3D } from "@/components/workspace/Booth3D";
 import type { BoothSystem } from "@/components/workspace/BoothCanvas";
 import {
   createProjectWorkspaceVersion,
+  createQuote,
   getCurrentWorkspace,
   getProjectWorkspace,
   getWorkspaceComments,
@@ -116,7 +117,7 @@ import {
   availableRoomWallSides,
   type PlacementIssue,
 } from "./workspace-geometry";
-import { structuralBom, roomBom, catalogItemFor, quoteTotals } from "./workspace-bom";
+import { structuralBom, roomBom, catalogItemFor, quoteTotals, quoteLinesFromTakeOff } from "./workspace-bom";
 import { WorkspaceBomPanel } from "./WorkspaceBomPanel";
 import { useWorkspaceAnimation, type OverrideMap } from "./useWorkspaceAnimation";
 
@@ -1780,6 +1781,55 @@ export default function PMWorkspace() {
   const { structWeight, roomWeight, fasciaSubtotal, quoteAllowance, quoteTotal } = totals;
   quoteTotalCentsRef.current = totals.quoteTotalCents;
   unpricedItemCountRef.current = totals.unpricedItems;
+  /**
+   * Raise a draft quote from the take-off on screen.
+   *
+   * The BOM has always held the priced stand and there was no way to carry it
+   * into a quote, so the numbers were read off this panel and typed into the
+   * quote builder - which is where transcription errors get into priced work.
+   *
+   * The lines are built from the same take-off the panel renders, and the
+   * server recomputes the totals from those lines, so what the PM approved on
+   * screen is what the quote says. The quote is created as a draft: nothing is
+   * sent to a client by pressing this.
+   */
+  const [creatingQuote, setCreatingQuote] = useState(false);
+  const boothVersionId = workspaceRecord?.currentVersion?.id ?? null;
+  const createQuoteFromBom = async () => {
+    if (!boothVersionId || creatingQuote) return;
+    setCreatingQuote(true);
+    try {
+      const draft = quoteLinesFromTakeOff({
+        structItems, roomItems, placedItems,
+        fasciaSubtotal: booth.fasciaEnabled ? fasciaMeta.price : 0,
+        fasciaLabel: fasciaMeta.label,
+      });
+      if (!draft.lines.length) {
+        setToast('Nothing to quote yet — the take-off is empty');
+        return;
+      }
+      const quote = await createQuote({
+        boothVersionId,
+        title: `${booth.companyName || 'Stand'} — ${booth.width} x ${booth.depth} m`,
+        lineItems: draft.lines,
+        notes: totals.unpricedItems > 0
+          ? `${totals.unpricedItems} item(s) on this stand have no catalogue price and are quoted at zero.`
+          : undefined,
+      });
+      // The panel's total and the server's have to agree; if they ever do not,
+      // say so rather than letting the PM send a number they never saw.
+      if (quote.totalCents !== draft.totalCents) {
+        setToast(`Quote ${quote.quoteNumber} created, but its total differs from the take-off — check it`);
+      } else {
+        setToast(`Quote ${quote.quoteNumber} created as a draft`);
+      }
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : 'Could not create the quote');
+    } finally {
+      setCreatingQuote(false);
+    }
+  };
+
   const csvCell = (value:string|number) => `"${String(value).replace(/"/g,'""')}"`;
   const exportBomCsv = () => {
     const rows = [
@@ -2959,6 +3009,8 @@ export default function PMWorkspace() {
               totalParts={totalParts} totalWeight={totalWeight} floorArea={floorArea}
               placementIssueByItem={placementIssueByItem} activePlacedId={activePlacedId}
               onExportCsv={exportBomCsv} onExportChecklist={exportProductionChecklist}
+              onCreateQuote={createQuoteFromBom} creatingQuote={creatingQuote}
+              canCreateQuote={Boolean(boothVersionId)}
               onSelectRoom={roomId=>{setActiveRoomId(roomId);setActivePlacedId('');setActiveTab('props');}}
               onSelectPlaced={id=>{setActivePlacedId(id);setActiveRoomId('');}}
               onToggleLock={(id,locked)=>updateItem(id,{locked})}

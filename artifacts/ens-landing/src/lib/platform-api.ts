@@ -1751,6 +1751,8 @@ export interface Quote {
 export interface CreateQuoteInput {
   clientId?: string;
   projectId?: string;
+  /** The booth version this quote was priced from, when raised from a take-off. */
+  boothVersionId?: string;
   title?: string;
   currency?: string;
   discountCents?: number;

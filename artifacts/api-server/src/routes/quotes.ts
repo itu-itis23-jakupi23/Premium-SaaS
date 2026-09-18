@@ -122,6 +122,7 @@ const QUOTE_COLUMNS = sql`
   q.valid_until as "validUntil",
   q.client_id::text as "clientId",
   q.project_id::text as "projectId",
+  q.booth_version_id::text as "boothVersionId",
   q.sent_at as "sentAt",
   q.viewed_at as "viewedAt",
   q.responded_at as "respondedAt",
@@ -225,8 +226,52 @@ router.post("/platform/quotes", async (req, res) => {
     return;
   }
   const body = (req.body ?? {}) as Record<string, unknown>;
-  const projectId = typeof body.projectId === "string" && body.projectId ? body.projectId : null;
+  let projectId = typeof body.projectId === "string" && body.projectId ? body.projectId : null;
   let clientId = typeof body.clientId === "string" && body.clientId ? body.clientId : null;
+  const boothVersionId =
+    typeof body.boothVersionId === "string" && body.boothVersionId ? body.boothVersionId : null;
+
+  /**
+   * Raised from a booth take-off.
+   *
+   * The workspace computes the whole bill of materials - structure, rooms,
+   * placed furniture, fascia, contingency - and a PM used to read those numbers
+   * off the panel and type them in again. `boothVersionId` records which
+   * version the money came from.
+   *
+   * It is provenance, not a source of money: the line items still arrive in the
+   * body and the totals are still recomputed below, exactly as for a quote
+   * typed by hand. What the version does supply is the project and client, so a
+   * quote raised from a stand cannot be filed against the wrong one.
+   */
+  let boothVersionLabel: string | null = null;
+  if (boothVersionId) {
+    const version = await queryRows<{ projectId: string; versionNumber: number; title: string | null }>(sql`
+      select project_id::text as "projectId", version_number as "versionNumber", title
+      from booth_versions
+      where id = ${boothVersionId}::uuid and organization_id = ${auth.organization.id}::uuid
+      limit 1
+    `);
+    if (!version[0]) {
+      res.status(400).json({
+        error: { code: "invalid_booth_version", message: "Booth version not found." },
+      });
+      return;
+    }
+    if (projectId && projectId !== version[0].projectId) {
+      res.status(400).json({
+        error: {
+          code: "booth_version_project_mismatch",
+          message: "That booth version belongs to a different project.",
+        },
+      });
+      return;
+    }
+    projectId = version[0].projectId;
+    boothVersionLabel = version[0].title
+      ? `${version[0].title} (v${version[0].versionNumber})`
+      : `v${version[0].versionNumber}`;
+  }
 
   // If a project is given, inherit its client and the money it is budgeted in.
   //
@@ -280,12 +325,13 @@ router.post("/platform/quotes", async (req, res) => {
     try {
       const inserted = await queryRows<{ id: string }>(sql`
         insert into quotes (
-          organization_id, client_id, project_id, quote_number, title, status, currency,
+          organization_id, client_id, project_id, booth_version_id, quote_number, title, status, currency,
           line_items, subtotal_cents, discount_cents, tax_cents, total_cents, notes, terms,
           valid_until, created_by_user_id
         )
         values (
           ${auth.organization.id}::uuid, ${clientId ? sql`${clientId}::uuid` : sql`null`}, ${projectId ? sql`${projectId}::uuid` : sql`null`},
+          ${boothVersionId ? sql`${boothVersionId}::uuid` : sql`null`},
           ${quoteNumber}, ${title}, 'draft', ${currency}, ${JSON.stringify(items)}::jsonb,
           ${subtotalCents}, ${discountCents}, ${taxCents}, ${totalCents}, ${notes}, ${terms},
           ${validUntil ? sql`${validUntil}::timestamptz` : sql`null`}, ${auth.user.id}::uuid
@@ -304,7 +350,15 @@ router.post("/platform/quotes", async (req, res) => {
     res.status(500).json({ error: { code: "quote_create_failed", message: "Could not create the quote. Please try again." } });
     return;
   }
-  await logEvent(auth.organization.id, auth.user.id, projectId, "quote_created", `created quote ${quoteNumber}`);
+  await logEvent(
+    auth.organization.id,
+    auth.user.id,
+    projectId,
+    "quote_created",
+    boothVersionLabel
+      ? `created quote ${quoteNumber} from booth ${boothVersionLabel}`
+      : `created quote ${quoteNumber}`,
+  );
   const full = await queryRows(sql`select ${QUOTE_COLUMNS} from quotes q where q.id = ${id}::uuid`);
   res.status(201).json({ quote: full[0] });
 });

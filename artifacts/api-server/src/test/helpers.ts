@@ -103,6 +103,37 @@ export async function createTestProject(orgId: string, clientId: string, opts: {
   return { id: projectId };
 }
 
+/**
+ * A saved booth version for a project, which is what a quote raised from a
+ * take-off cites. Reuses the design createTestProject already inserted.
+ */
+export async function createTestBoothVersion(
+  orgId: string,
+  projectId: string,
+  opts: { versionNumber?: number; title?: string; costEstimateCents?: number } = {},
+): Promise<{ id: string }> {
+  const design = await queryRows<{ id: string }>(sql`
+    select id::text from booth_designs
+    where organization_id = ${orgId}::uuid and project_id = ${projectId}::uuid
+    limit 1
+  `);
+  if (!design[0]) throw new Error("createTestBoothVersion: the project has no booth_design");
+
+  const rows = await queryRows<{ id: string }>(sql`
+    insert into booth_versions (
+      organization_id, design_id, project_id, version_number, status, title,
+      layout_json, cost_estimate_cents
+    )
+    values (
+      ${orgId}::uuid, ${design[0].id}::uuid, ${projectId}::uuid,
+      ${opts.versionNumber ?? 1}, 'draft'::booth_version_status,
+      ${opts.title ?? "Take-off"}, '{}'::jsonb, ${opts.costEstimateCents ?? 0}
+    )
+    returning id::text
+  `);
+  return { id: rows[0].id };
+}
+
 export async function addProjectMember(projectId: string, userId: string, role: "chief" | "pm" | "client") {
   await db.execute(sql`
     insert into project_members (project_id, user_id, role)

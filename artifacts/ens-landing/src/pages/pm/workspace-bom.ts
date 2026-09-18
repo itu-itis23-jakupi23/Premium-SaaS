@@ -171,3 +171,117 @@ export function quoteTotals(input: {
     quoteTotalCents: Math.round(quoteTotal * 100),
   };
 }
+
+/** One line as the quote builder expects it. Money is in cents, always. */
+export interface QuoteLineDraft {
+  description: string;
+  sku?: string;
+  quantity: number;
+  unitPriceCents: number;
+  kind: 'structure' | 'room' | 'furniture' | 'fascia' | 'allowance';
+}
+
+export interface QuoteDraft {
+  lines: QuoteLineDraft[];
+  subtotalCents: number;
+  allowanceCents: number;
+  totalCents: number;
+}
+
+/**
+ * Turn the take-off into quote lines.
+ *
+ * The workspace has always computed the whole bill of materials and shown a
+ * quote total beside it, and there was no way to carry that into a quote - a PM
+ * read the numbers off the panel and typed them into the quote builder again,
+ * which is where transcription errors get into priced work.
+ *
+ * Everything is summed in cents rather than in dollars-then-rounded, so the
+ * total here is the total the server recomputes from these same lines. Unit
+ * prices in this product are whole units, so the two agree exactly;
+ * workspace-bom.test.ts holds them to it.
+ *
+ * Items whose catalogue entry carries no price are kept at zero rather than
+ * dropped. The panel counts them as "unpriced" and a quote that silently
+ * omitted them would understate the stand.
+ */
+export function quoteLinesFromTakeOff(input: {
+  structItems: StructBomLine[];
+  roomItems: RoomBomLine[];
+  placedItems: WorkspacePlacedItem[];
+  fasciaSubtotal: number;
+  fasciaLabel?: string;
+  priceFor?: (catalogId: string) => number | undefined;
+  nameFor?: (catalogId: string) => string | undefined;
+}): QuoteDraft {
+  const priceFor = input.priceFor ?? ((catalogId: string) => catalogItemFor(catalogId)?.price);
+  const nameFor = input.nameFor ?? ((catalogId: string) => catalogItemFor(catalogId)?.name);
+  const cents = (value: number) => Math.round(value * 100);
+
+  const lines: QuoteLineDraft[] = [];
+
+  for (const line of input.structItems) {
+    if (line.qty <= 0) continue;
+    lines.push({
+      description: line.name,
+      sku: line.sku,
+      quantity: line.qty,
+      unitPriceCents: cents(line.unitPrice),
+      kind: 'structure',
+    });
+  }
+
+  for (const line of input.roomItems) {
+    if (line.qty <= 0) continue;
+    lines.push({
+      // The room name matters on a quote: three rooms of profile otherwise
+      // read as one line repeated.
+      description: `${line.roomName} — ${line.name}`,
+      sku: line.sku,
+      quantity: line.qty,
+      unitPriceCents: cents(line.unitPrice),
+      kind: 'room',
+    });
+  }
+
+  // Placed furniture is quoted per catalogue entry, not per instance: eight of
+  // the same chair is one line of eight.
+  const byCatalog = new Map<string, number>();
+  for (const item of input.placedItems) {
+    byCatalog.set(item.catalogId, (byCatalog.get(item.catalogId) ?? 0) + item.qty);
+  }
+  for (const [catalogId, quantity] of byCatalog) {
+    if (quantity <= 0) continue;
+    const unitPrice = priceFor(catalogId) ?? 0;
+    const name = nameFor(catalogId) ?? catalogId;
+    lines.push({
+      description: unitPrice > 0 ? name : `${name} (price to be confirmed)`,
+      sku: catalogId,
+      quantity,
+      unitPriceCents: cents(unitPrice),
+      kind: 'furniture',
+    });
+  }
+
+  if (input.fasciaSubtotal > 0) {
+    lines.push({
+      description: input.fasciaLabel ? `Fascia — ${input.fasciaLabel}` : 'Fascia',
+      quantity: 1,
+      unitPriceCents: cents(input.fasciaSubtotal),
+      kind: 'fascia',
+    });
+  }
+
+  const subtotalCents = lines.reduce((total, line) => total + line.quantity * line.unitPriceCents, 0);
+  const allowanceCents = Math.round(subtotalCents * QUOTE_ALLOWANCE_RATE);
+  if (allowanceCents > 0) {
+    lines.push({
+      description: `Contingency allowance (${Math.round(QUOTE_ALLOWANCE_RATE * 100)}%)`,
+      quantity: 1,
+      unitPriceCents: allowanceCents,
+      kind: 'allowance',
+    });
+  }
+
+  return { lines, subtotalCents, allowanceCents, totalCents: subtotalCents + allowanceCents };
+}

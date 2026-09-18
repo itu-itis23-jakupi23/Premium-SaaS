@@ -1,4 +1,4 @@
-import { Download, Lock, Unlock, Copy, Trash2 } from "lucide-react";
+import { Download, FileText, Lock, Unlock, Copy, Trash2 } from "lucide-react";
 import { C, MONO } from "./workspace-constants";
 import { MonoLabel, DimInput, formatUsd } from "./workspace-ui";
 import { catalogItemFor, type QuoteTotals, type RoomBomLine, type StructBomLine } from "./workspace-bom";
@@ -13,7 +13,8 @@ import type { BoothState, WorkspacePlacedItem, WorkspaceRoom } from "./workspace
 export function WorkspaceBomPanel({
   booth, rooms, placedItems, structItems, roomItems, totals,
   totalParts, totalWeight, floorArea, placementIssueByItem, activePlacedId,
-  onExportCsv, onExportChecklist, onSelectRoom, onSelectPlaced,
+  onExportCsv, onExportChecklist, onCreateQuote, creatingQuote, canCreateQuote,
+  onSelectRoom, onSelectPlaced,
   onToggleLock, onDuplicate, onRemove, onTransform, onRotate,
 }: {
   booth: BoothState;
@@ -29,6 +30,11 @@ export function WorkspaceBomPanel({
   activePlacedId: string;
   onExportCsv: () => void;
   onExportChecklist: () => void;
+  /** Raise a draft quote from this take-off. */
+  onCreateQuote: () => void;
+  creatingQuote: boolean;
+  /** False until the stand has been saved: a quote needs a version to cite. */
+  canCreateQuote: boolean;
   /** Room BOM line click: focus that room in the Properties tab. */
   onSelectRoom: (roomId: string) => void;
   onSelectPlaced: (id: string) => void;
@@ -74,6 +80,19 @@ export function WorkspaceBomPanel({
           <button onClick={onExportChecklist}
             style={{height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.panel,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',gap:6,fontFamily:MONO,fontSize:9,fontWeight:700,padding:'0 9px',whiteSpace:'nowrap'}}>
             <Download size={11}/> TXT
+          </button>
+          {/* The take-off already is the quote; this stops it being retyped.
+              Disabled until the stand has been saved, because a quote cites the
+              booth version it was priced from. */}
+          <button onClick={onCreateQuote} disabled={!canCreateQuote || creatingQuote}
+            title={canCreateQuote ? 'Create a draft quote from this take-off' : 'Save the stand first — a quote cites the version it was priced from'}
+            aria-label="Create a draft quote from this bill of materials"
+            style={{height:30,border:`1px solid ${canCreateQuote && !creatingQuote ? C.green : C.hair}`,borderRadius:4,
+              background:canCreateQuote && !creatingQuote ? `${C.green}12` : C.panel,
+              color:canCreateQuote && !creatingQuote ? C.green : C.muted,
+              cursor:canCreateQuote && !creatingQuote ? 'pointer' : 'not-allowed',
+              display:'flex',alignItems:'center',gap:6,fontFamily:MONO,fontSize:9,fontWeight:700,padding:'0 9px',whiteSpace:'nowrap'}}>
+            <FileText size={11}/> {creatingQuote ? 'QUOTING…' : 'QUOTE'}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import {
   QUOTE_ALLOWANCE_RATE,
   fasciaBoardQty,
   moduleSize,
+  quoteLinesFromTakeOff,
   quoteTotals,
   roomBomFor,
   structuralBom,
@@ -213,5 +214,81 @@ describe('quote totals', () => {
     expect(t.quoteTotal).toBe(0);
     expect(t.quoteTotalCents).toBe(0);
     expect(t.unpricedItems).toBe(0);
+  });
+});
+
+describe('take-off to quote lines', () => {
+  const priceFor = (id: string) => (id === 'priced' ? 100 : undefined);
+  const nameFor = (id: string) => (id === 'priced' ? 'Priced Chair' : 'Mystery Item');
+
+  const sample = {
+    structItems: [{ name: 'Upright', sku: 'UP-1', qty: 4, unit: 'ea', weight: 2, unitPrice: 95 }],
+    roomItems: [{
+      roomId: 'r1', roomName: 'Storage', notes: '', name: 'Wall panel',
+      sku: 'RP-1', qty: 3, unit: 'm2', weight: 4, unitPrice: 85,
+    }],
+    placedItems: [
+      placed({ id: 'a', catalogId: 'priced', qty: 2 }),
+      placed({ id: 'b', catalogId: 'priced', qty: 1 }),
+      placed({ id: 'c', catalogId: 'unknown', qty: 1 }),
+    ],
+    fasciaSubtotal: 1200,
+    fasciaLabel: 'Classic',
+    priceFor,
+    nameFor,
+  };
+
+  /**
+   * The point of the whole feature: the quote must be the number the panel
+   * showed. The server recomputes totals from the lines it is sent, so if these
+   * two ever disagree the PM is quoting a different figure from the one they
+   * approved on screen.
+   */
+  it('produces a total identical to the panel quote total', () => {
+    const draft = quoteLinesFromTakeOff(sample);
+    const totals = quoteTotals(sample);
+    expect(draft.totalCents).toBe(totals.quoteTotalCents);
+  });
+
+  it('sums the lines to the same total the server will recompute', () => {
+    const draft = quoteLinesFromTakeOff(sample);
+    const recomputed = draft.lines.reduce((sum, line) => sum + line.quantity * line.unitPriceCents, 0);
+    expect(recomputed).toBe(draft.totalCents);
+  });
+
+  it('groups placed items per catalogue entry rather than per instance', () => {
+    const draft = quoteLinesFromTakeOff(sample);
+    const furniture = draft.lines.filter(line => line.kind === 'furniture');
+    expect(furniture).toHaveLength(2);
+    const pricedLine = furniture.find(line => line.sku === 'priced');
+    expect(pricedLine?.quantity).toBe(3);
+    expect(pricedLine?.unitPriceCents).toBe(10_000);
+  });
+
+  it('keeps unpriced items on the quote at zero instead of dropping them', () => {
+    const draft = quoteLinesFromTakeOff(sample);
+    const unpriced = draft.lines.find(line => line.sku === 'unknown');
+    expect(unpriced).toBeTruthy();
+    expect(unpriced?.unitPriceCents).toBe(0);
+    expect(unpriced?.description).toMatch(/to be confirmed/i);
+  });
+
+  it('names the room on every room line', () => {
+    const draft = quoteLinesFromTakeOff(sample);
+    const roomLine = draft.lines.find(line => line.kind === 'room');
+    expect(roomLine?.description).toContain('Storage');
+  });
+
+  it('carries the contingency as its own line, not folded into the others', () => {
+    const draft = quoteLinesFromTakeOff(sample);
+    const allowance = draft.lines.filter(line => line.kind === 'allowance');
+    expect(allowance).toHaveLength(1);
+    expect(allowance[0].unitPriceCents).toBe(draft.allowanceCents);
+    expect(draft.allowanceCents).toBe(Math.round(draft.subtotalCents * QUOTE_ALLOWANCE_RATE));
+  });
+
+  it('omits the fascia line when no fascia is priced', () => {
+    const draft = quoteLinesFromTakeOff({ ...sample, fasciaSubtotal: 0 });
+    expect(draft.lines.some(line => line.kind === 'fascia')).toBe(false);
   });
 });

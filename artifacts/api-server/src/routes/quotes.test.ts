@@ -7,6 +7,7 @@ import {
   createTestUser,
   createTestClient,
   createTestProject,
+  createTestBoothVersion,
   loginAs,
   type TestOrg,
   type TestUser,
@@ -278,5 +279,108 @@ describe("quotes workflow", () => {
       .send({ decision: "accept" });
     expect(res.status).toBe(200);
     expect(res.body.quote.status).toBe("accepted");
+  });
+});
+
+/**
+ * Raising a quote from a booth take-off.
+ *
+ * The workspace computed a full bill of materials and a quote total, and there
+ * was no column joining that to a quote - so the numbers were retyped. These
+ * cover the link itself: that it is recorded, that the project comes from the
+ * version rather than from whatever the caller claimed, and that a version from
+ * another organization cannot be cited.
+ */
+describe("quotes raised from a booth version", () => {
+  let org: TestOrg;
+  let other: TestOrg;
+  let chief: TestUser;
+  let cookies: string[];
+  let projectId: string;
+  let versionId: string;
+  let foreignVersionId: string;
+
+  const lines = [
+    { description: "Upright", sku: "UP-1", quantity: 4, unitPriceCents: 9_500, kind: "structure" },
+    { description: "Storage — Wall panel", sku: "RP-1", quantity: 3, unitPriceCents: 8_500, kind: "room" },
+    { description: "Contingency allowance (10%)", quantity: 1, unitPriceCents: 6_350, kind: "allowance" },
+  ];
+  // 38_000 + 25_500 + 6_350 = 69_850
+
+  beforeAll(async () => {
+    org = await createTestOrg();
+    other = await createTestOrg();
+    chief = await createTestUser(org.id, "chief");
+    const client = await createTestClient(org.id, { status: "active" });
+    const project = await createTestProject(org.id, client.id);
+    projectId = project.id;
+    cookies = await loginAs(app, org.slug, chief);
+
+    versionId = (await createTestBoothVersion(org.id, projectId)).id;
+    const otherClient = await createTestClient(other.id, { status: "active" });
+    const otherProject = await createTestProject(other.id, otherClient.id);
+    foreignVersionId = (await createTestBoothVersion(other.id, otherProject.id)).id;
+  });
+
+  afterAll(async () => {
+    await cleanupTestOrg(org.id);
+    await cleanupTestOrg(other.id);
+  });
+
+  it("records which booth version the quote was priced from", async () => {
+    const res = await request(app)
+      .post("/api/platform/quotes")
+      .set("Cookie", cookies)
+      .send({ boothVersionId: versionId, title: "From take-off", lineItems: lines });
+
+    expect(res.status).toBe(201);
+    expect(res.body.quote.boothVersionId).toBe(versionId);
+    // The project comes from the version, not from the caller.
+    expect(res.body.quote.projectId).toBe(projectId);
+    // And the money is the server's arithmetic over the lines it was sent.
+    expect(res.body.quote.totalCents).toBe(69_850);
+    expect(res.body.quote.status).toBe("draft");
+  });
+
+  it("rejects a booth version that does not exist", async () => {
+    const res = await request(app)
+      .post("/api/platform/quotes")
+      .set("Cookie", cookies)
+      .send({ boothVersionId: "00000000-0000-4000-8000-000000000001", lineItems: lines });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("invalid_booth_version");
+  });
+
+  it("refuses a booth version belonging to another organization", async () => {
+    const res = await request(app)
+      .post("/api/platform/quotes")
+      .set("Cookie", cookies)
+      .send({ boothVersionId: foreignVersionId, lineItems: lines });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("invalid_booth_version");
+  });
+
+  it("refuses a project that is not the version's project", async () => {
+    const otherClient = await createTestClient(org.id, { status: "active" });
+    const otherProject = await createTestProject(org.id, otherClient.id);
+    const res = await request(app)
+      .post("/api/platform/quotes")
+      .set("Cookie", cookies)
+      .send({ boothVersionId: versionId, projectId: otherProject.id, lineItems: lines });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("booth_version_project_mismatch");
+  });
+
+  it("still creates an ordinary quote with no booth version", async () => {
+    const res = await request(app)
+      .post("/api/platform/quotes")
+      .set("Cookie", cookies)
+      .send({ projectId, lineItems: lines });
+
+    expect(res.status).toBe(201);
+    expect(res.body.quote.boothVersionId).toBeNull();
   });
 });
