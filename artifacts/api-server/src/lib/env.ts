@@ -39,6 +39,11 @@ export function validateRuntimeEnvironment(
   requireConfigured(env, "STAFF_SIGNUP_KEY", report);
   requireConfigured(env, "APP_URL", report);
   requireConfigured(env, "CORS_ORIGIN", report);
+  // Public lead intake files every website enquiry against this organization.
+  // Unset means "Request a quote" answers 503 and the lead is lost; whether the
+  // slug actually resolves is checked against the database at startup, which is
+  // the half this synchronous, env-only pass cannot see.
+  requireConfigured(env, "DEFAULT_ORGANIZATION_SLUG", report);
 
   if (strict) {
     requireConfigured(env, "RESEND_API_KEY", report);
@@ -79,7 +84,7 @@ export function assertRuntimeEnvironment(env: NodeJS.ProcessEnv = process.env) {
   return result;
 }
 
-function deploymentProfile(env: NodeJS.ProcessEnv): DeploymentProfile {
+export function deploymentProfile(env: NodeJS.ProcessEnv = process.env): DeploymentProfile {
   const requested = env.DEPLOYMENT_ENV?.trim().toLowerCase();
   if (
     requested === "development" ||

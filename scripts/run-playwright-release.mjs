@@ -154,6 +154,11 @@ const serviceEnv = {
   CORS_ORIGIN: `${staffOrigin},${clientOrigin}`,
   VITE_API_BASE_URL: `${apiOrigin}/api`,
   VITE_ORGANIZATION_SLUG: `ens-e2e-${testRunId}`,
+  // Public lead intake has to file website enquiries against the organization
+  // this run creates, or the quote-form test submits into a slug that does not
+  // exist here and is answered 503. The API tolerates the organization not
+  // existing yet at boot - it is created by the suite's own seeding step.
+  DEFAULT_ORGANIZATION_SLUG: `ens-e2e-${testRunId}`,
   VITE_USE_MOCK_API: "false",
   VITE_USE_REAL_CORE: "true",
   VITE_USE_REAL_MESSAGES: "true",

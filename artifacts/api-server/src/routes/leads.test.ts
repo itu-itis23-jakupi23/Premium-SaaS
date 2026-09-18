@@ -4,6 +4,11 @@ import { sql } from "drizzle-orm";
 import { db } from "@workspace/db";
 import app from "../app";
 import { createTestOrg, cleanupTestOrg, type TestOrg } from "../test/helpers";
+import {
+  describeLeadIntakeFailure,
+  isFatalLeadIntakeFailure,
+  resolveLeadIntakeOrganization,
+} from "../lib/lead-intake";
 
 async function queryRows<T>(statement: ReturnType<typeof sql>): Promise<T[]> {
   const result = await db.execute(statement);
@@ -61,6 +66,78 @@ describe("POST /api/leads (public lead intake)", () => {
       where organization_id = ${org.id}::uuid and lower(contact_email) = ${email}
     `);
     expect(rows[0].count).toBe("1");
+  });
+
+  /**
+   * The blind spot this suite used to have.
+   *
+   * `beforeAll` points DEFAULT_ORGANIZATION_SLUG at an organization it has just
+   * created, so every test above passes *because the suite supplies the thing a
+   * real deployment was missing*. Production had the variable set to a slug no
+   * organization owned, and this file stayed green while every website lead was
+   * answered 503 and thrown away.
+   *
+   * These two restore the real failure mode and assert it is loud: the startup
+   * assertion rejects, so a misconfigured deployment cannot begin serving.
+   */
+  describe("when the configured organization does not exist", () => {
+    const bogus = "no-such-organization-slug";
+    let restore: string | undefined;
+
+    beforeAll(() => {
+      restore = process.env.DEFAULT_ORGANIZATION_SLUG;
+      process.env.DEFAULT_ORGANIZATION_SLUG = bogus;
+    });
+    afterAll(() => {
+      process.env.DEFAULT_ORGANIZATION_SLUG = restore;
+    });
+
+    it("refuses to start rather than accepting leads it cannot file", async () => {
+      const result = await resolveLeadIntakeOrganization();
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.reason).toBe("unknown-organization");
+      // Fatal in every profile: the database has organizations, none is this one.
+      expect(isFatalLeadIntakeFailure(result.reason, "production")).toBe(true);
+      expect(isFatalLeadIntakeFailure(result.reason, "development")).toBe(true);
+      expect(describeLeadIntakeFailure(result)).toMatch(/no organization has that slug/i);
+    });
+
+    it("drops nothing quietly: a submission is refused and no client row appears", async () => {
+      const before = await queryRows<{ n: string }>(
+        sql`select count(*)::text as n from clients where contact_email = ${"stranded-lead@example.test"}`,
+      );
+      const res = await request(app).post("/api/leads").send({ ...validLead, contactEmail: "stranded-lead@example.test" });
+      expect(res.status).toBe(503);
+      const after = await queryRows<{ n: string }>(
+        sql`select count(*)::text as n from clients where contact_email = ${"stranded-lead@example.test"}`,
+      );
+      expect(after[0].n).toBe(before[0].n);
+    });
+  });
+
+  describe("when the slug is not configured at all", () => {
+    let restore: string | undefined;
+
+    beforeAll(() => {
+      restore = process.env.DEFAULT_ORGANIZATION_SLUG;
+      delete process.env.DEFAULT_ORGANIZATION_SLUG;
+    });
+    afterAll(() => {
+      process.env.DEFAULT_ORGANIZATION_SLUG = restore;
+    });
+
+    it("refuses to start in a real deployment and says which variable is missing", async () => {
+      const result = await resolveLeadIntakeOrganization();
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.reason).toBe("unset");
+      expect(isFatalLeadIntakeFailure(result.reason, "production")).toBe(true);
+      expect(isFatalLeadIntakeFailure(result.reason, "staging")).toBe(true);
+      // Tolerated where the variable is routinely absent.
+      expect(isFatalLeadIntakeFailure(result.reason, "test")).toBe(false);
+      expect(describeLeadIntakeFailure(result)).toMatch(/is not set/i);
+    });
   });
 
   it("rejects a submission missing required fields", async () => {

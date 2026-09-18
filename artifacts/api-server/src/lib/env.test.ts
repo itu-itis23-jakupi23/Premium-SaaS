@@ -22,9 +22,20 @@ const productionEnv = {
   STORAGE_PROVIDER: "s3",
   STORAGE_BUCKET: "ens-production-assets",
   SEED_DEMO_DATA: "false",
+  DEFAULT_ORGANIZATION_SLUG: "example-agency",
 } satisfies NodeJS.ProcessEnv;
 
 describe("runtime environment validation", () => {
+  it("rejects a production profile with no lead-intake organization", () => {
+    // Public "Request a quote" has to file enquiries somewhere. Unset means
+    // every website lead is answered 503 and lost, which is how it shipped.
+    const { DEFAULT_ORGANIZATION_SLUG: _omitted, ...withoutSlug } = productionEnv;
+    const result = validateRuntimeEnvironment(withoutSlug);
+    expect(result.errors).toContain(
+      "DEFAULT_ORGANIZATION_SLUG is required and cannot be a placeholder.",
+    );
+  });
+
   it("accepts a complete production profile", () => {
     expect(validateRuntimeEnvironment(productionEnv)).toEqual({
       profile: "production",

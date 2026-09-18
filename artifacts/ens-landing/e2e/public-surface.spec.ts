@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { clientUrl, monitorPageFailures } from "./helpers";
+import { apiLogin, clientUrl, monitorPageFailures } from "./helpers";
+import { API_URL } from "../playwright.config";
 
 /**
  * Public marketing surface coverage (CS-17).
@@ -201,5 +202,51 @@ test.describe("Marketing calls to action", () => {
     await page.getByTestId("btn-hero-quote").click();
 
     await expect(page).toHaveURL(/\/get-quote$/);
+  });
+
+  /**
+   * Submitting the form, not just reaching it.
+   *
+   * The test above stopped at the navigation, and that was the whole gap: the
+   * lead endpoint answered 503 for every real submission - the configured
+   * organization slug matched no organization - and this suite stayed green
+   * because nothing ever pressed the button. Reaching a form proves routing.
+   * Only a submission that turns into a row proves lead intake.
+   */
+  test("submitting the quote form creates a lead the agency can see", async ({ page, request }) => {
+    const stamp = Date.now();
+    const company = `E2E Quote Co ${stamp}`;
+    const email = `e2e-lead-${stamp}@example.test`;
+
+    await page.goto(clientUrl("/get-quote"));
+    await page.getByTestId("input-company").fill(company);
+    await page.getByTestId("input-name").fill("E2E Prospect");
+    await page.getByTestId("input-email").fill(email);
+
+    const submission = page.waitForResponse(
+      (res) => res.url().includes("/leads") && res.request().method() === "POST",
+    );
+    await page.getByTestId("button-submit-quote").click();
+    const response = await submission;
+
+    // A 503 here is the original defect: the form works, the lead is gone.
+    expect(
+      response.status(),
+      "lead intake rejected the submission - check DEFAULT_ORGANIZATION_SLUG names a real organization",
+    ).toBe(201);
+
+    // And the visitor is told it worked.
+    await expect(page.getByTestId("input-company")).toBeHidden();
+
+    // The row has to exist on the agency side, not just in the response.
+    // apiLogin stores the session cookie on this request context.
+    expect(await apiLogin(request, "chief")).toBe(true);
+    const clients = await request.get(`${API_URL}/api/platform/clients?status=lead`);
+    expect(clients.ok()).toBe(true);
+    const body = await clients.json();
+    const landed = (body.clients ?? []).find(
+      (c: { contactEmail?: string }) => c.contactEmail === email,
+    );
+    expect(landed, `no lead row for ${email} - the submission was accepted but not filed`).toBeTruthy();
   });
 });

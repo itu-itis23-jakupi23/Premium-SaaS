@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { logger } from "../lib/logger";
+import { describeLeadIntakeFailure, resolveLeadIntakeOrganization } from "../lib/lead-intake";
 
 /**
  * Public lead intake ("Request a quote" on the marketing site).
@@ -84,15 +85,21 @@ router.post("/leads", async (req, res) => {
   };
 
   try {
-    const slug = process.env.DEFAULT_ORGANIZATION_SLUG?.trim();
-    const orgRows = await queryRows<{ id: string }>(
-      sql`select id::text from organizations where slug = ${slug} and deleted_at is null limit 1`,
-    );
-    const organizationId = orgRows[0]?.id;
-    if (!organizationId) {
+    // Resolved through the shared helper that startup also asserts against, so
+    // there is one definition of "where do leads go". Reaching the failure
+    // branch here means the configuration changed under a running server -
+    // startup would have refused to boot otherwise - so it is logged at error
+    // level rather than passed over as a transient blip.
+    const intake = await resolveLeadIntakeOrganization();
+    if (!intake.ok) {
+      logger.error(
+        { slug: intake.slug, reason: intake.reason },
+        `Lead intake is misconfigured and this submission was dropped. ${describeLeadIntakeFailure(intake)}`,
+      );
       res.status(503).json({ error: { code: "unavailable", message: "Lead intake is temporarily unavailable." } });
       return;
     }
+    const organizationId = intake.organizationId;
 
     // De-dupe by email within the org: append to the existing record's history
     // rather than create a duplicate lead.

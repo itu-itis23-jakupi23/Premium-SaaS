@@ -41,6 +41,10 @@ services:
       AUTH_SECRET: "${AUTH_SECRET:?AUTH_SECRET must be set - generate with openssl rand -base64 64}"
       MESSAGE_ENCRYPTION_KEY: "${MESSAGE_ENCRYPTION_KEY:?MESSAGE_ENCRYPTION_KEY must be set and kept stable}"
       STAFF_SIGNUP_KEY: "${STAFF_SIGNUP_KEY:?STAFF_SIGNUP_KEY must be set to gate staff/chief signup}"
+      # Public "Request a quote" submissions are filed against this organization.
+      # Unset or pointing at a slug no organization has means every website lead is
+      # answered 503 and lost, so the API refuses to start rather than leak them.
+      DEFAULT_ORGANIZATION_SLUG: "${DEFAULT_ORGANIZATION_SLUG:?DEFAULT_ORGANIZATION_SLUG must name the organization that receives website leads}"
       RESEND_API_KEY: "${RESEND_API_KEY:-}"
       RESEND_FROM: "${RESEND_FROM:-ENS Agency <noreply@ens.example.com>}"
       SEED_DEMO_DATA: "${SEED_DEMO_DATA:-false}"

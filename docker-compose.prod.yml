@@ -10,6 +10,9 @@ services:
       RESEND_API_KEY: "${RESEND_API_KEY:?RESEND_API_KEY must be set}"
       RESEND_FROM: "${RESEND_FROM:?RESEND_FROM must be set}"
       STORAGE_PROVIDER: "${STORAGE_PROVIDER:?STORAGE_PROVIDER must be local or s3}"
+      # Named here as well as in the base file so a production deploy cannot
+      # inherit a stale value: an unresolvable slug drops every website lead.
+      DEFAULT_ORGANIZATION_SLUG: "${DEFAULT_ORGANIZATION_SLUG:?DEFAULT_ORGANIZATION_SLUG must name the organization that receives website leads}"
       STORAGE_BUCKET: "${STORAGE_BUCKET:-}"
       STORAGE_REGION: "${STORAGE_REGION:-us-east-1}"
       STORAGE_ENDPOINT: "${STORAGE_ENDPOINT:-}"
