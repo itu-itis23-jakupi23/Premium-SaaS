@@ -1817,7 +1817,8 @@
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "フェーズの変更履歴はまだありません。"
+        "noHistory": "フェーズの変更履歴はまだありません。",
+        "historyMove": "{{from}} から {{to}} に移動しました"
       },
       "paging": {
         "showing": "{{total}}件中 {{start}}-{{end}}件を表示"
@@ -2043,7 +2044,17 @@
       "newChatNoMatch": "検索条件に一致する連絡先はありません。",
       "newChatAllAdded": "すべての連絡先がすでにスレッドにあります。",
       "uploadingAttachment": "Uploading attachment...",
-      "undecryptable": "メッセージを表示できません"
+      "undecryptable": "メッセージを表示できません",
+      "back": "戻る",
+      "chooser": {
+        "prompt": "誰にメッセージを送りますか？",
+        "noChief": "チーフが未割り当てです",
+        "noClient": "クライアント担当者がいません",
+        "noChiefDetail": "この展示会にチーフマネージャーが割り当てられていません。",
+        "noClientDetail": "この展示会のクライアント担当者が見つかりません。"
+      },
+      "selectExhibitionHint": "展示会を選択",
+      "selectExhibitionSub": "左から展示会を選んで、チーフまたはクライアントにメッセージを送信します。"
     },
     "requests": {
       "title": "修正依頼",
@@ -2210,7 +2221,9 @@
         "appliances": "Appliances",
         "lighting": "Lights",
         "decor": "Decor",
-        "parts": "Parts"
+        "parts": "Parts",
+        "counters": "カウンター",
+        "displays": "ディスプレイ"
       }
     },
     "calendar": {
@@ -2484,7 +2497,17 @@
         "Active": "進行中",
         "Pending": "保留中",
         "Delayed": "遅延",
-        "Completed": "完了"
+        "Completed": "完了",
+        "Draft": "下書き",
+        "Planning": "計画中",
+        "In Design": "デザイン中",
+        "Client Review": "クライアント確認",
+        "Revision": "修正中",
+        "Approved": "承認済み",
+        "In Production": "製作中",
+        "Production": "製作",
+        "Cancelled": "キャンセル済み",
+        "Archived": "アーカイブ済み"
       },
       "meta": {
         "system": "システム",
@@ -2873,7 +2896,8 @@
       "backToLogin": "ログインに戻る",
       "validation": {
         "email": "有効なメールアドレスを入力してください"
-      }
+      },
+      "errorGeneric": "リセットリンクを送信できませんでした。もう一度お試しください。"
     },
     "resetPassword": {
       "pageTitle": "新しいパスワードを設定 | ENS",
@@ -2910,7 +2934,11 @@
         "passwordNumber": "数字を1文字以上含める必要があります",
         "confirmRequired": "パスワードを確認してください",
         "passwordsMismatch": "パスワードが一致しません"
-      }
+      },
+      "errorGeneric": "パスワードをリセットできませんでした。もう一度お試しください。",
+      "invalidLinkTitle": "無効なリンク",
+      "invalidLinkMessage": "このパスワードリセットリンクは無効か有効期限切れです。新しいリンクをリクエストしてください。",
+      "requestNewLink": "新しいリセットリンクをリクエスト"
     }
   },
   "settings": {

@@ -337,7 +337,7 @@ export default function PMMessages() {
           <div className="w-72 border-r border-border flex flex-col bg-card/50 flex-shrink-0">
             <div className="px-4 py-3 border-b border-border">
               <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">Exhibitions</p>
-              <p className="text-xs text-muted-foreground">{t("pm.messages.selectExhibitionHint", { defaultValue: "Select an exhibition to message" })}</p>
+              <p className="text-xs text-muted-foreground">{t("pm.messages.selectExhibitionHint")}</p>
             </div>
             <ScrollArea className="flex-1">
               {isLoading && !visibleScopes.length
@@ -412,8 +412,8 @@ export default function PMMessages() {
                 <div className="w-12 h-12 rounded-full bg-muted/40 flex items-center justify-center">
                   <Search aria-hidden="true" className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <p className="text-sm font-semibold text-muted-foreground">{t("pm.messages.selectExhibitionHint", { defaultValue: "Select an exhibition" })}</p>
-                <p className="text-xs text-muted-foreground">{t("pm.messages.selectExhibitionSub", { defaultValue: "Choose an exhibition from the left to message your chief or client." })}</p>
+                <p className="text-sm font-semibold text-muted-foreground">{t("pm.messages.selectExhibitionHint")}</p>
+                <p className="text-xs text-muted-foreground">{t("pm.messages.selectExhibitionSub")}</p>
               </div>
 
             ) : !contactType ? (
@@ -429,7 +429,7 @@ export default function PMMessages() {
                   </button>
                   <div>
                     <h4 className="text-sm font-bold leading-tight">{activeExhibitionName}</h4>
-                    <p className="text-[10px] font-mono text-muted-foreground">{t("pm.messages.chooser.prompt", { defaultValue: "Who do you want to message?" })}</p>
+                    <p className="text-[10px] font-mono text-muted-foreground">{t("pm.messages.chooser.prompt")}</p>
                   </div>
                 </div>
                 <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
@@ -450,7 +450,7 @@ export default function PMMessages() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold">Chief Manager</p>
                         <p className="text-[10px] font-mono text-muted-foreground truncate">
-                          {activeScope?.chiefContact?.name ?? t("pm.messages.chooser.noChief", { defaultValue: "No chief assigned" })}
+                          {activeScope?.chiefContact?.name ?? t("pm.messages.chooser.noChief")}
                         </p>
                       </div>
                     </div>
@@ -472,7 +472,7 @@ export default function PMMessages() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold">Client</p>
                         <p className="text-[10px] font-mono text-muted-foreground truncate">
-                          {activeScope?.clientContact?.name ?? t("pm.messages.chooser.noClient", { defaultValue: "No client contact" })}
+                          {activeScope?.clientContact?.name ?? t("pm.messages.chooser.noClient")}
                         </p>
                       </div>
                     </div>
@@ -488,12 +488,12 @@ export default function PMMessages() {
                   className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-4"
                 >
                   <ChevronLeft aria-hidden="true" className="h-3.5 w-3.5" />
-                  {t("pm.messages.back", { defaultValue: "Back" })}
+                  {t("pm.messages.back")}
                 </button>
                 <p className="text-sm text-muted-foreground">
                   {contactType === "chief"
-                    ? t("pm.messages.chooser.noChief", { defaultValue: "No chief manager assigned to this exhibition." })
-                    : t("pm.messages.chooser.noClient", { defaultValue: "No client contact found for this exhibition." })}
+                    ? t("pm.messages.chooser.noChiefDetail")
+                    : t("pm.messages.chooser.noClientDetail")}
                 </p>
               </div>
 

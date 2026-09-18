@@ -1817,7 +1817,8 @@
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "لم تُسجّل أي تغييرات في المراحل بعد."
+        "noHistory": "لم تُسجّل أي تغييرات في المراحل بعد.",
+        "historyMove": "تم النقل من {{from}} إلى {{to}}"
       },
       "paging": {
         "showing": "عرض {{start}}-{{end}} من {{total}} مشروعًا"
@@ -2043,7 +2044,17 @@
       "newChatNoMatch": "لا توجد جهات اتصال تطابق بحثك.",
       "newChatAllAdded": "جميع جهات الاتصال موجودة بالفعل في محادثاتك.",
       "uploadingAttachment": "Uploading attachment...",
-      "undecryptable": "تعذّر قراءة الرسالة"
+      "undecryptable": "تعذّر قراءة الرسالة",
+      "back": "رجوع",
+      "chooser": {
+        "prompt": "من تريد مراسلته؟",
+        "noChief": "لم يتم تعيين مسؤول",
+        "noClient": "لا يوجد جهة اتصال للعميل",
+        "noChiefDetail": "لم يتم تعيين مسؤول لهذا المعرض.",
+        "noClientDetail": "لم يتم العثور على جهة اتصال للعميل لهذا المعرض."
+      },
+      "selectExhibitionHint": "اختر معرضًا",
+      "selectExhibitionSub": "اختر معرضًا من اليسار لمراسلة مسؤولك أو عميلك."
     },
     "requests": {
       "title": "طلبات المراجعة",
@@ -2210,7 +2221,9 @@
         "appliances": "Appliances",
         "lighting": "Lights",
         "decor": "Decor",
-        "parts": "Parts"
+        "parts": "Parts",
+        "counters": "كاونترات",
+        "displays": "وحدات عرض"
       }
     },
     "calendar": {
@@ -2484,7 +2497,17 @@
         "Active": "نشط",
         "Pending": "قيد الانتظار",
         "Delayed": "متأخر",
-        "Completed": "مكتمل"
+        "Completed": "مكتمل",
+        "Draft": "مسودة",
+        "Planning": "التخطيط",
+        "In Design": "قيد التصميم",
+        "Client Review": "مراجعة العميل",
+        "Revision": "مراجعة",
+        "Approved": "تمت الموافقة",
+        "In Production": "قيد الإنتاج",
+        "Production": "الإنتاج",
+        "Cancelled": "ملغى",
+        "Archived": "مؤرشف"
       },
       "meta": {
         "system": "النظام",
@@ -2873,7 +2896,8 @@
       "backToLogin": "العودة إلى تسجيل الدخول",
       "validation": {
         "email": "يرجى إدخال عنوان بريد إلكتروني صالح"
-      }
+      },
+      "errorGeneric": "تعذّر إرسال رابط إعادة التعيين. يرجى المحاولة مرة أخرى."
     },
     "resetPassword": {
       "pageTitle": "تعيين كلمة مرور جديدة | ENS",
@@ -2910,7 +2934,11 @@
         "passwordNumber": "يجب أن تحتوي على رقم واحد على الأقل",
         "confirmRequired": "يرجى تأكيد كلمة المرور",
         "passwordsMismatch": "كلمتا المرور غير متطابقتين"
-      }
+      },
+      "errorGeneric": "تعذّر إعادة تعيين كلمة المرور. يرجى المحاولة مرة أخرى.",
+      "invalidLinkTitle": "رابط غير صالح",
+      "invalidLinkMessage": "رابط إعادة تعيين كلمة المرور هذا غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.",
+      "requestNewLink": "طلب رابط إعادة تعيين جديد"
     }
   },
   "settings": {

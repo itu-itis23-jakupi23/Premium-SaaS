@@ -116,19 +116,19 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <AuthLayout title={t('auth.resetPassword.invalidLinkTitle', { defaultValue: 'Invalid link' })}>
+      <AuthLayout title={t('auth.resetPassword.invalidLinkTitle')}>
         <div className="flex flex-col items-center text-center space-y-4 py-4">
           <div className="h-14 w-14 rounded-full bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-2">
             <AlertCircle className="h-7 w-7 text-destructive" aria-hidden="true" />
           </div>
           <p className="text-muted-foreground leading-relaxed">
-            {t('auth.resetPassword.invalidLinkMessage', { defaultValue: 'This password reset link is invalid or has expired. Please request a new one.' })}
+            {t('auth.resetPassword.invalidLinkMessage')}
           </p>
           <Link
             href="/forgot-password"
             className="text-sm font-medium text-primary hover:underline"
           >
-            {t('auth.resetPassword.requestNewLink', { defaultValue: 'Request new reset link' })}
+            {t('auth.resetPassword.requestNewLink')}
           </Link>
         </div>
       </AuthLayout>

@@ -1817,7 +1817,8 @@
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "Henüz bir aşama değişikliği kaydedilmedi."
+        "noHistory": "Henüz bir aşama değişikliği kaydedilmedi.",
+        "historyMove": "{{from}} aşamasından {{to}} aşamasına taşındı"
       },
       "paging": {
         "showing": "{{total}} projeden {{start}}-{{end}} arası gösteriliyor"
@@ -2043,7 +2044,17 @@
       "newChatNoMatch": "Aramanızla eşleşen kişi yok.",
       "newChatAllAdded": "Tüm kişiler zaten konuşmalarınızda.",
       "uploadingAttachment": "Uploading attachment...",
-      "undecryptable": "Mesaj okunamıyor"
+      "undecryptable": "Mesaj okunamıyor",
+      "back": "Geri",
+      "chooser": {
+        "prompt": "Kime mesaj göndermek istiyorsunuz?",
+        "noChief": "Atanmış yönetici yok",
+        "noClient": "Müşteri kişisi yok",
+        "noChiefDetail": "Bu fuara atanmış bir yönetici yok.",
+        "noClientDetail": "Bu fuar için müşteri kişisi bulunamadı."
+      },
+      "selectExhibitionHint": "Bir fuar seçin",
+      "selectExhibitionSub": "Yöneticinize veya müşterinize mesaj göndermek için soldan bir fuar seçin."
     },
     "requests": {
       "title": "Revizyon Talepleri",
@@ -2210,7 +2221,9 @@
         "appliances": "Appliances",
         "lighting": "Lights",
         "decor": "Decor",
-        "parts": "Parts"
+        "parts": "Parts",
+        "counters": "Tezgâhlar",
+        "displays": "Teşhir üniteleri"
       }
     },
     "calendar": {
@@ -2484,7 +2497,17 @@
         "Active": "Aktif",
         "Pending": "Bekliyor",
         "Delayed": "Gecikmiş",
-        "Completed": "Tamamlandı"
+        "Completed": "Tamamlandı",
+        "Draft": "Taslak",
+        "Planning": "Planlama",
+        "In Design": "Tasarımda",
+        "Client Review": "Müşteri incelemesi",
+        "Revision": "Revizyon",
+        "Approved": "Onaylandı",
+        "In Production": "Üretimde",
+        "Production": "Üretim",
+        "Cancelled": "İptal edildi",
+        "Archived": "Arşivlendi"
       },
       "meta": {
         "system": "Sistem",
@@ -2873,7 +2896,8 @@
       "backToLogin": "Girişe geri dön",
       "validation": {
         "email": "Lütfen geçerli bir e-posta adresi girin"
-      }
+      },
+      "errorGeneric": "Sıfırlama bağlantısı gönderilemedi. Lütfen tekrar deneyin."
     },
     "resetPassword": {
       "pageTitle": "Yeni Şifre Belirle | ENS",
@@ -2910,7 +2934,11 @@
         "passwordNumber": "En az bir rakam içermelidir",
         "confirmRequired": "Lütfen şifrenizi onaylayın",
         "passwordsMismatch": "Şifreler eşleşmiyor"
-      }
+      },
+      "errorGeneric": "Şifreniz sıfırlanamadı. Lütfen tekrar deneyin.",
+      "invalidLinkTitle": "Geçersiz bağlantı",
+      "invalidLinkMessage": "Bu şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş. Lütfen yeni bir tane isteyin.",
+      "requestNewLink": "Yeni bağlantı iste"
     }
   },
   "settings": {

@@ -1817,7 +1817,8 @@
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "尚未记录任何阶段变更。"
+        "noHistory": "尚未记录任何阶段变更。",
+        "historyMove": "从 {{from}} 移至 {{to}}"
       },
       "paging": {
         "showing": "显示第 {{start}}-{{end}} 项，共 {{total}} 个项目"
@@ -2043,7 +2044,17 @@
       "newChatNoMatch": "没有联系人符合您的搜索。",
       "newChatAllAdded": "所有联系人都已在您的会话中。",
       "uploadingAttachment": "Uploading attachment...",
-      "undecryptable": "无法读取此消息"
+      "undecryptable": "无法读取此消息",
+      "back": "返回",
+      "chooser": {
+        "prompt": "您想联系谁？",
+        "noChief": "未分配主管",
+        "noClient": "无客户联系人",
+        "noChiefDetail": "此展会未分配主管。",
+        "noClientDetail": "未找到此展会的客户联系人。"
+      },
+      "selectExhibitionHint": "选择展会",
+      "selectExhibitionSub": "从左侧选择一个展会，向您的主管或客户发送消息。"
     },
     "requests": {
       "title": "修改申请",
@@ -2210,7 +2221,9 @@
         "appliances": "Appliances",
         "lighting": "Lights",
         "decor": "Decor",
-        "parts": "Parts"
+        "parts": "Parts",
+        "counters": "柜台",
+        "displays": "展示架"
       }
     },
     "calendar": {
@@ -2484,7 +2497,17 @@
         "Active": "进行中",
         "Pending": "待处理",
         "Delayed": "已延迟",
-        "Completed": "已完成"
+        "Completed": "已完成",
+        "Draft": "草稿",
+        "Planning": "规划中",
+        "In Design": "设计中",
+        "Client Review": "客户审核",
+        "Revision": "修订中",
+        "Approved": "已批准",
+        "In Production": "生产中",
+        "Production": "生产",
+        "Cancelled": "已取消",
+        "Archived": "已归档"
       },
       "meta": {
         "system": "系统",
@@ -2873,7 +2896,8 @@
       "backToLogin": "返回登录",
       "validation": {
         "email": "请输入有效的电子邮件地址"
-      }
+      },
+      "errorGeneric": "无法发送重置链接，请重试。"
     },
     "resetPassword": {
       "pageTitle": "设置新密码 | ENS",
@@ -2910,7 +2934,11 @@
         "passwordNumber": "必须包含至少一个数字",
         "confirmRequired": "请确认您的密码",
         "passwordsMismatch": "密码不匹配"
-      }
+      },
+      "errorGeneric": "无法重置您的密码，请重试。",
+      "invalidLinkTitle": "链接无效",
+      "invalidLinkMessage": "此密码重置链接无效或已过期，请重新申请。",
+      "requestNewLink": "申请新的重置链接"
     }
   },
   "settings": {

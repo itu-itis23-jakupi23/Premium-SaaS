@@ -271,8 +271,12 @@ export default function ClientProjects() {
                             border: `1px solid ${sc.border}`,
                           }}
                         >
-                          {t(`client.projects.status.${project.status}`) ||
-                            project.status}
+                          {/* No `|| project.status` fallback: i18next returns the
+                              key itself on a miss, which is truthy, so it could
+                              never run. Every status the API can produce is a
+                              real key - locale-coverage.test.ts proves it from
+                              the project_status enum. */}
+                          {t(`client.projects.status.${project.status}`)}
                         </span>
                         {hasAction && (
                           <span className="flex items-center gap-1 text-[10px] font-mono font-bold text-orange-600 bg-orange-50 border border-orange-200 rounded px-1.5 py-0.5 animate-pulse">

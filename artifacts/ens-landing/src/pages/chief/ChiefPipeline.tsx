@@ -180,7 +180,7 @@ export default function ChiefPipeline() {
           </div>
           <div className="mt-2 flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setEditing(null)}>{t("common.cancel")}</Button>
-            <Button onClick={saveEdit} disabled={saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{t("common.save")}</Button>
+            <Button onClick={saveEdit} disabled={saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{t("chief.common.save")}</Button>
           </div>
         </DialogContent>
       </Dialog>

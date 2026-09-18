@@ -1817,7 +1817,8 @@
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "Er zijn nog geen fasewijzigingen vastgelegd."
+        "noHistory": "Er zijn nog geen fasewijzigingen vastgelegd.",
+        "historyMove": "Verplaatst van {{from}} naar {{to}}"
       },
       "paging": {
         "showing": "{{start}}-{{end}} van {{total}} projecten weergegeven"
@@ -2043,7 +2044,17 @@
       "newChatNoMatch": "Geen contacten komen overeen met je zoekopdracht.",
       "newChatAllAdded": "Alle contacten staan al in je gesprekken.",
       "uploadingAttachment": "Uploading attachment...",
-      "undecryptable": "Bericht niet leesbaar"
+      "undecryptable": "Bericht niet leesbaar",
+      "back": "Terug",
+      "chooser": {
+        "prompt": "Wie wil je een bericht sturen?",
+        "noChief": "Geen chief toegewezen",
+        "noClient": "Geen klantcontact",
+        "noChiefDetail": "Geen chief manager toegewezen aan deze beurs.",
+        "noClientDetail": "Geen klantcontact gevonden voor deze beurs."
+      },
+      "selectExhibitionHint": "Selecteer een beurs",
+      "selectExhibitionSub": "Kies links een beurs om je chief of klant te berichten."
     },
     "requests": {
       "title": "Revisieaanvragen",
@@ -2210,7 +2221,9 @@
         "appliances": "Appliances",
         "lighting": "Lights",
         "decor": "Decor",
-        "parts": "Parts"
+        "parts": "Parts",
+        "counters": "Balies",
+        "displays": "Displays"
       }
     },
     "calendar": {
@@ -2484,7 +2497,17 @@
         "Active": "Actief",
         "Pending": "In behandeling",
         "Delayed": "Vertraagd",
-        "Completed": "Voltooid"
+        "Completed": "Voltooid",
+        "Draft": "Concept",
+        "Planning": "Planning",
+        "In Design": "In ontwerp",
+        "Client Review": "Klantbeoordeling",
+        "Revision": "Herziening",
+        "Approved": "Goedgekeurd",
+        "In Production": "In productie",
+        "Production": "Productie",
+        "Cancelled": "Geannuleerd",
+        "Archived": "Gearchiveerd"
       },
       "meta": {
         "system": "Systeem",
@@ -2873,7 +2896,8 @@
       "backToLogin": "Terug naar inloggen",
       "validation": {
         "email": "Voer een geldig e-mailadres in"
-      }
+      },
+      "errorGeneric": "De resetlink kon niet worden verzonden. Probeer het opnieuw."
     },
     "resetPassword": {
       "pageTitle": "Nieuw wachtwoord | ENS",
@@ -2910,7 +2934,11 @@
         "passwordNumber": "Moet minimaal één cijfer bevatten",
         "confirmRequired": "Bevestig uw wachtwoord",
         "passwordsMismatch": "Wachtwoorden komen niet overeen"
-      }
+      },
+      "errorGeneric": "Je wachtwoord kon niet worden gereset. Probeer het opnieuw.",
+      "invalidLinkTitle": "Ongeldige link",
+      "invalidLinkMessage": "Deze resetlink is ongeldig of verlopen. Vraag een nieuwe aan.",
+      "requestNewLink": "Nieuwe resetlink aanvragen"
     }
   },
   "settings": {

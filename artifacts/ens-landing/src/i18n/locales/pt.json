@@ -1817,7 +1817,8 @@
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "Ainda não foi registada nenhuma mudança de fase."
+        "noHistory": "Ainda não foi registada nenhuma mudança de fase.",
+        "historyMove": "Movido de {{from}} para {{to}}"
       },
       "paging": {
         "showing": "A mostrar {{start}}-{{end}} de {{total}} projetos"
@@ -2043,7 +2044,17 @@
       "newChatNoMatch": "Nenhum contacto corresponde à sua pesquisa.",
       "newChatAllAdded": "Todos os contactos já estão nas suas conversas.",
       "uploadingAttachment": "Uploading attachment...",
-      "undecryptable": "Não é possível ler a mensagem"
+      "undecryptable": "Não é possível ler a mensagem",
+      "back": "Voltar",
+      "chooser": {
+        "prompt": "A quem quer enviar mensagem?",
+        "noChief": "Nenhum chefe atribuído",
+        "noClient": "Sem contacto do cliente",
+        "noChiefDetail": "Nenhum chefe atribuído a esta exposição.",
+        "noClientDetail": "Nenhum contacto de cliente encontrado para esta exposição."
+      },
+      "selectExhibitionHint": "Selecione uma exposição",
+      "selectExhibitionSub": "Escolha uma exposição à esquerda para enviar mensagem ao seu chefe ou cliente."
     },
     "requests": {
       "title": "Solicitações de revisão",
@@ -2210,7 +2221,9 @@
         "appliances": "Appliances",
         "lighting": "Lights",
         "decor": "Decor",
-        "parts": "Parts"
+        "parts": "Parts",
+        "counters": "Balcões",
+        "displays": "Expositores"
       }
     },
     "calendar": {
@@ -2484,7 +2497,17 @@
         "Active": "Ativo",
         "Pending": "Pendente",
         "Delayed": "Atrasado",
-        "Completed": "Concluído"
+        "Completed": "Concluído",
+        "Draft": "Rascunho",
+        "Planning": "Planeamento",
+        "In Design": "Em design",
+        "Client Review": "Revisão do cliente",
+        "Revision": "Revisão",
+        "Approved": "Aprovado",
+        "In Production": "Em produção",
+        "Production": "Produção",
+        "Cancelled": "Cancelado",
+        "Archived": "Arquivado"
       },
       "meta": {
         "system": "Sistema",
@@ -2873,7 +2896,8 @@
       "backToLogin": "Voltar ao login",
       "validation": {
         "email": "Por favor insira um endereço de e-mail válido"
-      }
+      },
+      "errorGeneric": "Não foi possível enviar o link de redefinição. Tente novamente."
     },
     "resetPassword": {
       "pageTitle": "Nova senha | ENS",
@@ -2910,7 +2934,11 @@
         "passwordNumber": "Deve conter pelo menos um número",
         "confirmRequired": "Por favor confirme sua senha",
         "passwordsMismatch": "As senhas não coincidem"
-      }
+      },
+      "errorGeneric": "Não foi possível redefinir a sua palavra-passe. Tente novamente.",
+      "invalidLinkTitle": "Ligação inválida",
+      "invalidLinkMessage": "Esta ligação de redefinição é inválida ou expirou. Solicite uma nova.",
+      "requestNewLink": "Solicitar nova ligação"
     }
   },
   "settings": {

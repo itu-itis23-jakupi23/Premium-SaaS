@@ -1817,7 +1817,8 @@
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "Aucun changement d'étape n'a encore été enregistré."
+        "noHistory": "Aucun changement d'étape n'a encore été enregistré.",
+        "historyMove": "Déplacé de {{from}} vers {{to}}"
       },
       "paging": {
         "showing": "Affichage de {{start}}-{{end}} sur {{total}} projets"
@@ -2043,7 +2044,17 @@
       "newChatNoMatch": "Aucun contact ne correspond à votre recherche.",
       "newChatAllAdded": "Tous les contacts figurent déjà dans vos conversations.",
       "uploadingAttachment": "Uploading attachment...",
-      "undecryptable": "Message illisible"
+      "undecryptable": "Message illisible",
+      "back": "Retour",
+      "chooser": {
+        "prompt": "À qui voulez-vous écrire ?",
+        "noChief": "Aucun chef assigné",
+        "noClient": "Aucun contact client",
+        "noChiefDetail": "Aucun chef de projet n'est affecté à ce salon.",
+        "noClientDetail": "Aucun contact client trouvé pour ce salon."
+      },
+      "selectExhibitionHint": "Sélectionnez un salon",
+      "selectExhibitionSub": "Choisissez un salon à gauche pour écrire à votre chef ou à votre client."
     },
     "requests": {
       "title": "Demandes de révision",
@@ -2210,7 +2221,9 @@
         "appliances": "Appliances",
         "lighting": "Lights",
         "decor": "Decor",
-        "parts": "Parts"
+        "parts": "Parts",
+        "counters": "Comptoirs",
+        "displays": "Présentoirs"
       }
     },
     "calendar": {
@@ -2484,7 +2497,17 @@
         "Active": "Actif",
         "Pending": "En attente",
         "Delayed": "Retardé",
-        "Completed": "Terminé"
+        "Completed": "Terminé",
+        "Draft": "Brouillon",
+        "Planning": "Planification",
+        "In Design": "En conception",
+        "Client Review": "Revue client",
+        "Revision": "Révision",
+        "Approved": "Approuvé",
+        "In Production": "En production",
+        "Production": "Production",
+        "Cancelled": "Annulé",
+        "Archived": "Archivé"
       },
       "meta": {
         "system": "Système",
@@ -2873,7 +2896,8 @@
       "backToLogin": "Retour à la connexion",
       "validation": {
         "email": "Veuillez saisir une adresse e-mail valide"
-      }
+      },
+      "errorGeneric": "Impossible d'envoyer le lien de réinitialisation. Veuillez réessayer."
     },
     "resetPassword": {
       "pageTitle": "Nouveau mot de passe | ENS",
@@ -2910,7 +2934,11 @@
         "passwordNumber": "Doit contenir au moins un chiffre",
         "confirmRequired": "Veuillez confirmer votre mot de passe",
         "passwordsMismatch": "Les mots de passe ne correspondent pas"
-      }
+      },
+      "errorGeneric": "Impossible de réinitialiser votre mot de passe. Veuillez réessayer.",
+      "invalidLinkTitle": "Lien invalide",
+      "invalidLinkMessage": "Ce lien de réinitialisation est invalide ou a expiré. Veuillez en demander un nouveau.",
+      "requestNewLink": "Demander un nouveau lien"
     }
   },
   "settings": {

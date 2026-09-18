@@ -2027,7 +2027,8 @@
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "No stage changes have been recorded yet."
+        "noHistory": "No stage changes have been recorded yet.",
+        "historyMove": "Moved from {{from}} to {{to}}"
       },
       "modal": {
         "title": "Create New Project",
@@ -2278,7 +2279,17 @@
       "newChatNoMatch": "No contacts match your search.",
       "newChatAllAdded": "All contacts are already in your conversations.",
       "uploadingAttachment": "Uploading attachment...",
-      "undecryptable": "Message can't be read"
+      "undecryptable": "Message can't be read",
+      "back": "Back",
+      "chooser": {
+        "prompt": "Who do you want to message?",
+        "noChief": "No chief assigned",
+        "noClient": "No client contact",
+        "noChiefDetail": "No chief manager assigned to this exhibition.",
+        "noClientDetail": "No client contact found for this exhibition."
+      },
+      "selectExhibitionHint": "Select an exhibition",
+      "selectExhibitionSub": "Choose an exhibition from the left to message your chief or client."
     },
     "requests": {
       "title": "Revision Requests",
@@ -2445,7 +2456,9 @@
         "appliances": "Appliances",
         "lighting": "Lights",
         "decor": "Decor",
-        "parts": "Parts"
+        "parts": "Parts",
+        "counters": "Counters",
+        "displays": "Displays"
       }
     },
     "calendar": {
@@ -2717,7 +2730,17 @@
         "Active": "Active",
         "Pending": "Pending",
         "Delayed": "Delayed",
-        "Completed": "Completed"
+        "Completed": "Completed",
+        "Draft": "Draft",
+        "Planning": "Planning",
+        "In Design": "In Design",
+        "Client Review": "Client Review",
+        "Revision": "Revision",
+        "Approved": "Approved",
+        "In Production": "In Production",
+        "Production": "Production",
+        "Cancelled": "Cancelled",
+        "Archived": "Archived"
       },
       "meta": {
         "system": "System",
@@ -3106,7 +3129,8 @@
       "backToLogin": "Back to login",
       "validation": {
         "email": "Please enter a valid email address"
-      }
+      },
+      "errorGeneric": "Could not send the reset link. Please try again."
     },
     "resetPassword": {
       "pageTitle": "Set New Password | ENS",
@@ -3143,7 +3167,11 @@
         "passwordNumber": "Must contain at least one number",
         "confirmRequired": "Please confirm your password",
         "passwordsMismatch": "Passwords don't match"
-      }
+      },
+      "errorGeneric": "Could not reset your password. Please try again.",
+      "invalidLinkTitle": "Invalid link",
+      "invalidLinkMessage": "This password reset link is invalid or has expired. Please request a new one.",
+      "requestNewLink": "Request new reset link"
     }
   },
   "workspace": {

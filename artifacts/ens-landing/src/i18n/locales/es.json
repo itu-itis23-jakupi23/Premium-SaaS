@@ -1817,7 +1817,8 @@
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "Todavía no se ha registrado ningún cambio de etapa."
+        "noHistory": "Todavía no se ha registrado ningún cambio de etapa.",
+        "historyMove": "Movido de {{from}} a {{to}}"
       },
       "paging": {
         "showing": "Mostrando {{start}}-{{end}} de {{total}} proyectos"
@@ -2043,7 +2044,17 @@
       "newChatNoMatch": "Ningún contacto coincide con tu búsqueda.",
       "newChatAllAdded": "Todos los contactos ya están en tus conversaciones.",
       "uploadingAttachment": "Uploading attachment...",
-      "undecryptable": "No se puede leer el mensaje"
+      "undecryptable": "No se puede leer el mensaje",
+      "back": "Atrás",
+      "chooser": {
+        "prompt": "¿A quién quiere escribir?",
+        "noChief": "Ningún jefe asignado",
+        "noClient": "Sin contacto de cliente",
+        "noChiefDetail": "No hay ningún jefe asignado a esta feria.",
+        "noClientDetail": "No se encontró ningún contacto de cliente para esta feria."
+      },
+      "selectExhibitionHint": "Seleccione una feria",
+      "selectExhibitionSub": "Elija una feria a la izquierda para escribir a su jefe o cliente."
     },
     "requests": {
       "title": "Solicitudes de revisión",
@@ -2210,7 +2221,9 @@
         "appliances": "Appliances",
         "lighting": "Lights",
         "decor": "Decor",
-        "parts": "Parts"
+        "parts": "Parts",
+        "counters": "Mostradores",
+        "displays": "Expositores"
       }
     },
     "calendar": {
@@ -2484,7 +2497,17 @@
         "Active": "Activo",
         "Pending": "Pendiente",
         "Delayed": "Retrasado",
-        "Completed": "Completado"
+        "Completed": "Completado",
+        "Draft": "Borrador",
+        "Planning": "Planificación",
+        "In Design": "En diseño",
+        "Client Review": "Revisión del cliente",
+        "Revision": "Revisión",
+        "Approved": "Aprobado",
+        "In Production": "En producción",
+        "Production": "Producción",
+        "Cancelled": "Cancelado",
+        "Archived": "Archivado"
       },
       "meta": {
         "system": "Sistema",
@@ -2873,7 +2896,8 @@
       "backToLogin": "Volver a inicio de sesión",
       "validation": {
         "email": "Por favor introduce una dirección de correo válida"
-      }
+      },
+      "errorGeneric": "No se pudo enviar el enlace de restablecimiento. Inténtelo de nuevo."
     },
     "resetPassword": {
       "pageTitle": "Nueva contraseña | ENS",
@@ -2910,7 +2934,11 @@
         "passwordNumber": "Debe contener al menos un número",
         "confirmRequired": "Por favor confirma tu contraseña",
         "passwordsMismatch": "Las contraseñas no coinciden"
-      }
+      },
+      "errorGeneric": "No se pudo restablecer su contraseña. Inténtelo de nuevo.",
+      "invalidLinkTitle": "Enlace no válido",
+      "invalidLinkMessage": "Este enlace de restablecimiento no es válido o ha caducado. Solicite uno nuevo.",
+      "requestNewLink": "Solicitar un enlace nuevo"
     }
   },
   "settings": {

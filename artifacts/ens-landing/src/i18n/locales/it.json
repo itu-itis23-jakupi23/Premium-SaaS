@@ -1817,7 +1817,8 @@
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "Non è ancora stato registrato alcun cambio di fase."
+        "noHistory": "Non è ancora stato registrato alcun cambio di fase.",
+        "historyMove": "Spostato da {{from}} a {{to}}"
       },
       "paging": {
         "showing": "Visualizzati {{start}}-{{end}} di {{total}} progetti"
@@ -2043,7 +2044,17 @@
       "newChatNoMatch": "Nessun contatto corrisponde alla ricerca.",
       "newChatAllAdded": "Tutti i contatti sono già nelle tue conversazioni.",
       "uploadingAttachment": "Uploading attachment...",
-      "undecryptable": "Messaggio non leggibile"
+      "undecryptable": "Messaggio non leggibile",
+      "back": "Indietro",
+      "chooser": {
+        "prompt": "A chi vuoi scrivere?",
+        "noChief": "Nessun responsabile assegnato",
+        "noClient": "Nessun contatto cliente",
+        "noChiefDetail": "Nessun responsabile assegnato a questa fiera.",
+        "noClientDetail": "Nessun contatto cliente trovato per questa fiera."
+      },
+      "selectExhibitionHint": "Seleziona una fiera",
+      "selectExhibitionSub": "Scegli una fiera a sinistra per scrivere al tuo responsabile o cliente."
     },
     "requests": {
       "title": "Richieste di revisione",
@@ -2210,7 +2221,9 @@
         "appliances": "Appliances",
         "lighting": "Lights",
         "decor": "Decor",
-        "parts": "Parts"
+        "parts": "Parts",
+        "counters": "Banconi",
+        "displays": "Espositori"
       }
     },
     "calendar": {
@@ -2484,7 +2497,17 @@
         "Active": "Attivo",
         "Pending": "In attesa",
         "Delayed": "In ritardo",
-        "Completed": "Completato"
+        "Completed": "Completato",
+        "Draft": "Bozza",
+        "Planning": "Pianificazione",
+        "In Design": "In progettazione",
+        "Client Review": "Revisione cliente",
+        "Revision": "Revisione",
+        "Approved": "Approvato",
+        "In Production": "In produzione",
+        "Production": "Produzione",
+        "Cancelled": "Annullato",
+        "Archived": "Archiviato"
       },
       "meta": {
         "system": "Sistema",
@@ -2873,7 +2896,8 @@
       "backToLogin": "Torna al login",
       "validation": {
         "email": "Inserisci un indirizzo e-mail valido"
-      }
+      },
+      "errorGeneric": "Impossibile inviare il link di reimpostazione. Riprova."
     },
     "resetPassword": {
       "pageTitle": "Nuova password | ENS",
@@ -2910,7 +2934,11 @@
         "passwordNumber": "Deve contenere almeno un numero",
         "confirmRequired": "Conferma la tua password",
         "passwordsMismatch": "Le password non corrispondono"
-      }
+      },
+      "errorGeneric": "Impossibile reimpostare la password. Riprova.",
+      "invalidLinkTitle": "Link non valido",
+      "invalidLinkMessage": "Questo link di reimpostazione non è valido o è scaduto. Richiedine uno nuovo.",
+      "requestNewLink": "Richiedi un nuovo link"
     }
   },
   "settings": {

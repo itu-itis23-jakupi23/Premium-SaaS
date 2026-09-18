@@ -1817,7 +1817,8 @@
         "history": "Stage history",
         "historyMeta": "{{from}} → {{to}}",
         "historyActor": "{{actor}} / {{time}}",
-        "noHistory": "Es wurden noch keine Phasenwechsel erfasst."
+        "noHistory": "Es wurden noch keine Phasenwechsel erfasst.",
+        "historyMove": "Von {{from}} nach {{to}} verschoben"
       },
       "paging": {
         "showing": "Zeige {{start}}-{{end}} von {{total}} Projekten"
@@ -2043,7 +2044,17 @@
       "newChatNoMatch": "Keine Kontakte entsprechen Ihrer Suche.",
       "newChatAllAdded": "Alle Kontakte sind bereits in Ihren Gesprächen.",
       "uploadingAttachment": "Uploading attachment...",
-      "undecryptable": "Nachricht nicht lesbar"
+      "undecryptable": "Nachricht nicht lesbar",
+      "back": "Zurück",
+      "chooser": {
+        "prompt": "Wen möchten Sie anschreiben?",
+        "noChief": "Kein Chief zugewiesen",
+        "noClient": "Kein Kundenkontakt",
+        "noChiefDetail": "Dieser Messe ist kein Chief Manager zugewiesen.",
+        "noClientDetail": "Für diese Messe wurde kein Kundenkontakt gefunden."
+      },
+      "selectExhibitionHint": "Messe auswählen",
+      "selectExhibitionSub": "Wählen Sie links eine Messe, um Ihrem Chief oder Kunden zu schreiben."
     },
     "requests": {
       "title": "Änderungsanfragen",
@@ -2210,7 +2221,9 @@
         "appliances": "Appliances",
         "lighting": "Lights",
         "decor": "Decor",
-        "parts": "Parts"
+        "parts": "Parts",
+        "counters": "Theken",
+        "displays": "Displays"
       }
     },
     "calendar": {
@@ -2484,7 +2497,17 @@
         "Active": "Aktiv",
         "Pending": "Ausstehend",
         "Delayed": "Verzögert",
-        "Completed": "Abgeschlossen"
+        "Completed": "Abgeschlossen",
+        "Draft": "Entwurf",
+        "Planning": "Planung",
+        "In Design": "In Gestaltung",
+        "Client Review": "Kundenprüfung",
+        "Revision": "Überarbeitung",
+        "Approved": "Genehmigt",
+        "In Production": "In Produktion",
+        "Production": "Produktion",
+        "Cancelled": "Storniert",
+        "Archived": "Archiviert"
       },
       "meta": {
         "system": "System",
@@ -2873,7 +2896,8 @@
       "backToLogin": "Zurück zur Anmeldung",
       "validation": {
         "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein"
-      }
+      },
+      "errorGeneric": "Der Zurücksetzungslink konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
     },
     "resetPassword": {
       "pageTitle": "Neues Passwort setzen | ENS",
@@ -2910,7 +2934,11 @@
         "passwordNumber": "Muss mindestens eine Zahl enthalten",
         "confirmRequired": "Bitte Passwort bestätigen",
         "passwordsMismatch": "Passwörter stimmen nicht überein"
-      }
+      },
+      "errorGeneric": "Ihr Passwort konnte nicht zurückgesetzt werden. Bitte versuchen Sie es erneut.",
+      "invalidLinkTitle": "Ungültiger Link",
+      "invalidLinkMessage": "Dieser Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen an.",
+      "requestNewLink": "Neuen Link anfordern"
     }
   },
   "settings": {
