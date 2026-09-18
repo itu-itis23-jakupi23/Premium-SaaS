@@ -12,7 +12,7 @@
  * and nothing caught it until the renderer failed at runtime, inside an iframe,
  * with a blank booth.
  *
- * Two checks, both cheap:
+ * Three checks, all cheap:
  *
  *   1. Every <script> block parses. Classic blocks are checked as scripts and
  *      `type="module"` blocks as modules, since the two have different rules
@@ -24,6 +24,9 @@
  *      the codebase imports those shims, so a rename or a tidy-up that looks
  *      safe - the files read as orphaned by any normal usage search - would
  *      leave the booth importing a path that no longer exists.
+ *
+ *   3. Every shortcut action the renderer forwards is handled by the workspace,
+ *      so a key cannot be swallowed by preventDefault() and then do nothing.
  */
 
 import { execFileSync } from "node:child_process";
@@ -145,6 +148,64 @@ try {
   rmSync(scratch, { recursive: true, force: true });
 }
 
+/**
+ * 3. Every shortcut the renderer forwards is handled by the workspace.
+ *
+ * Clicking the booth moves focus into the iframe, so the renderer forwards key
+ * presses to the parent as `{type:'workspaceShortcut', action}`. An action it
+ * sends that the workspace does not handle is a key that silently does
+ * nothing - and the renderer calls preventDefault() first, so it also swallows
+ * whatever the browser would otherwise have done. `[` and `]` sat in exactly
+ * that state for a full development cycle: forwarded, advertised beside the
+ * rotate buttons, handled nowhere.
+ *
+ * The workspace dispatches some actions by equality and others through a
+ * lookup table, so both forms are collected.
+ *
+ * Scope, so nobody over-trusts this: it catches an action handled *nowhere*,
+ * which is the failure that actually shipped. It cannot tell whether a handler
+ * is correct - an action still named anywhere in the file counts as handled.
+ */
+if (existsSync(enginePath)) {
+  const workspacePath = resolve(landingRoot, "src", "pages", "pm", "PMWorkspace.tsx");
+  if (!existsSync(workspacePath)) {
+    failures.push("src/pages/pm/PMWorkspace.tsx is missing");
+  } else {
+    const engineSource = readFileSync(enginePath, "utf8");
+    const workspace = readFileSync(workspacePath, "utf8");
+
+    if (!/postMessage\(\s*\{\s*type:\s*['"]workspaceShortcut['"]/.test(engineSource)) {
+      failures.push(
+        "booth-render.js no longer posts workspaceShortcut - this check needs updating",
+      );
+    }
+
+    const forwarded = new Set(
+      [...engineSource.matchAll(/action\s*=\s*[^;\n]*?['"]([a-z][a-z-]{2,})['"]/g)].map(
+        (match) => match[1],
+      ),
+    );
+    const handled = new Set([
+      ...[...workspace.matchAll(/action\s*===\s*['"]([a-z][a-z-]{2,})['"]/g)].map((m) => m[1]),
+      ...[...workspace.matchAll(/['"]([a-z][a-z-]{2,})['"]\s*:\s*\[/g)].map((m) => m[1]),
+    ]);
+
+    if (forwarded.size === 0) {
+      failures.push(
+        "no forwarded shortcut actions found in booth-render.js - this check needs updating",
+      );
+    }
+
+    const unhandled = [...forwarded].filter((action) => !handled.has(action)).sort();
+    if (unhandled.length > 0) {
+      failures.push(
+        `the renderer forwards shortcut action(s) the workspace never handles: ${unhandled.join(", ")}. ` +
+          "preventDefault() swallows the key and then nothing happens.",
+      );
+    }
+  }
+}
+
 if (failures.length > 0) {
   console.error("Booth renderer check failed:");
   for (const failure of failures) console.error(`  - ${failure}`);
@@ -153,6 +214,6 @@ if (failures.length > 0) {
   const modules = blocks.filter((b) => b.isModule).length;
   console.log(
     `Booth renderer check passed: ${blocks.length} inline script block(s) parse ` +
-      `(${modules} module), and every absolute import resolves.`,
+      `(${modules} module), every absolute import resolves, and every forwarded shortcut is handled.`,
   );
 }

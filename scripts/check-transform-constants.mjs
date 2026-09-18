@@ -108,6 +108,23 @@ if (failures.length === 0) {
     );
   }
 
+  // The placeable plan around the stand. Both files carried a comment saying
+  // this gate kept them honest, and it did not read this constant at all -
+  // which is how a number stops being checked by hand without anyone noticing.
+  // The renderer uses it as `PLAN_MARGIN_M + floorTolerance` to decide how far
+  // outside the booth something may be dropped, so a drift here means the
+  // renderer and the workspace disagree about what is placeable.
+  const planMargin = constant("PLAN_MARGIN_M");
+  const rendererPlanMargin = renderer.match(/const\s+PLAN_MARGIN_M\s*=\s*([0-9.]+)\s*;/);
+  if (!rendererPlanMargin) {
+    fail("could not find the renderer's `const PLAN_MARGIN_M = <number>;` placeable-plan margin");
+  } else if (planMargin !== null && Math.abs(Number(rendererPlanMargin[1]) - planMargin) > 1e-9) {
+    fail(
+      `renderer's placeable plan margin is ${rendererPlanMargin[1]} m but ` +
+      `PLAN_MARGIN_M is ${planMargin}`,
+    );
+  }
+
   const cornerMatch = renderer.match(/const\s+cornerSnap\s*=\s*([0-9.]+)\s*;/);
   if (!cornerMatch) {
     fail("could not find the renderer's `const cornerSnap = <number>;` corner-snap radius");

@@ -91,6 +91,9 @@ type ArrangeOutcome =
   | {applied:false; blocked:string[]};
 
 /** How long each confirmation runs. Short enough to read, short enough to work through. */
+/** Shift+Arrow distance. A metre is a bay, which is how stands are laid out. */
+const NUDGE_FAR_M = 1;
+
 const MOVE_MS = 170;
 const ROTATE_MS = 130;
 const REMOVE_MS = 120;
@@ -1367,14 +1370,22 @@ export default function PMWorkspace() {
       return;
     }
     // Arrow keys nudge the whole selection one grid step, the same code path a
-    // group drag uses. Holding shift takes a metre instead.
+    // group drag uses. Holding shift takes a metre instead - the distance is
+    // carried in the table rather than recomputed, so the two stay in step.
     const nudge = {
-      'nudge-left': [-1, 0], 'nudge-right': [1, 0],
-      'nudge-up': [0, -1], 'nudge-down': [0, 1],
+      'nudge-left':      [-1,  0, FURNITURE_SNAP_M],
+      'nudge-right':     [ 1,  0, FURNITURE_SNAP_M],
+      'nudge-up':        [ 0, -1, FURNITURE_SNAP_M],
+      'nudge-down':      [ 0,  1, FURNITURE_SNAP_M],
+      'nudge-left-far':  [-1,  0, NUDGE_FAR_M],
+      'nudge-right-far': [ 1,  0, NUDGE_FAR_M],
+      'nudge-up-far':    [ 0, -1, NUDGE_FAR_M],
+      'nudge-down-far':  [ 0,  1, NUDGE_FAR_M],
     }[action];
     if(nudge) {
+      const [dx, dz, step] = nudge;
       const selected = selectedPlacedIdsRef.current;
-      if(selected.length) moveItemsRef.current(selected, nudge[0] * FURNITURE_SNAP_M, nudge[1] * FURNITURE_SNAP_M);
+      if(selected.length) moveItemsRef.current(selected, dx * step, dz * step);
     }
   },[previewMode]);
 
@@ -1393,10 +1404,10 @@ export default function PMWorkspace() {
       else if(key === ']') action = 'rotate-cw';
       else if(key === 'delete' || key === 'backspace') action = 'delete';
       else if(key === 'escape') action = 'deselect';
-      else if(key === 'arrowleft') action = 'nudge-left';
-      else if(key === 'arrowright') action = 'nudge-right';
-      else if(key === 'arrowup') action = 'nudge-up';
-      else if(key === 'arrowdown') action = 'nudge-down';
+      else if(key === 'arrowleft') action = event.shiftKey ? 'nudge-left-far' : 'nudge-left';
+      else if(key === 'arrowright') action = event.shiftKey ? 'nudge-right-far' : 'nudge-right';
+      else if(key === 'arrowup') action = event.shiftKey ? 'nudge-up-far' : 'nudge-up';
+      else if(key === 'arrowdown') action = event.shiftKey ? 'nudge-down-far' : 'nudge-down';
       if(!action) return;
       event.preventDefault();
       runShortcut(action);

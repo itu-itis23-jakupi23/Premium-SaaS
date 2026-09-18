@@ -691,13 +691,18 @@ function pushPost(cx, cz, y0, y1, props) {
   // Both are drawn as prisms so the only thing that varies is the segment count
   // and the size - four segments on a square is the square.
   if (profile.uprightSegments >= 8) {
+    // Spread first, fixed fields after. With the spread last, a caller that
+    // happened to pass `fill` or `isOctaPost` would silently overwrite what
+    // makes this a post - the same construction that cost pushBox its
+    // renderOrder, normal and partId. No caller collides today; this is so
+    // none ever can.
     return pushPrism(cx, cz, y0 + 0.018, y1 - T*0.55, T * 0.5, profile.uprightSegments,
-      { fill: 'url(#alu)', isAlu: true, isOctaPost: true, ...props });
+      { ...props, fill: 'url(#alu)', isAlu: true, isOctaPost: true });
   }
   return pushBox(
     [cx - T/2, y0 + 0.018, cz - T/2],
     [cx + T/2, y1 - T*0.55, cz + T/2],
-    { fill: 'url(#alu)', isAlu: true, isMaximaPost: true, ...props }
+    { ...props, fill: 'url(#alu)', isAlu: true, isMaximaPost: true }
   );
 }
 
@@ -4528,10 +4533,12 @@ window.addEventListener('keydown', (e) => {
   else if (key === 'escape') action = 'deselect';
   else if (key === '[') action = 'rotate-ccw';
   else if (key === ']') action = 'rotate-cw';
-  else if (key === 'arrowleft') action = 'nudge-left';
-  else if (key === 'arrowright') action = 'nudge-right';
-  else if (key === 'arrowup') action = 'nudge-up';
-  else if (key === 'arrowdown') action = 'nudge-down';
+  // Shift takes a metre instead of one grid step. The workspace comment has
+  // promised this since the nudges were written and nothing implemented it.
+  else if (key === 'arrowleft') action = e.shiftKey ? 'nudge-left-far' : 'nudge-left';
+  else if (key === 'arrowright') action = e.shiftKey ? 'nudge-right-far' : 'nudge-right';
+  else if (key === 'arrowup') action = e.shiftKey ? 'nudge-up-far' : 'nudge-up';
+  else if (key === 'arrowdown') action = e.shiftKey ? 'nudge-down-far' : 'nudge-down';
   if (!action) return;
   e.preventDefault();
   window.parent.postMessage({ type: 'workspaceShortcut', action }, '*');
