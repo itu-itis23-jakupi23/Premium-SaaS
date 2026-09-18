@@ -1,8 +1,20 @@
 # Premium SaaS Production Readiness Tracker
 
-Last updated: 2026-08-07
+Last updated: 2026-09-19
 
 Status values: `not started`, `in progress`, `blocked`, `implemented`, `verified`.
+
+> **How much of this column to trust.** An audit on 2026-09-18 spot-checked two
+> rows against the code and both were wrong, in opposite directions: AU-02 still
+> said, in bold, that CSP was report-only and had to be flipped, when it has been
+> enforced for some time with a recorded zero-violation pass; WS-08 said "not
+> started" for work that exists and is wired into the drag HUD. Both are
+> corrected below.
+>
+> **Only those two were checked.** The other 151 rows have not been re-verified
+> against the code and may be stale in either direction. A launch decision taken
+> from this column needs a pass over it first — a row claiming a blocker may
+> describe finished work, and a row claiming progress may describe none.
 
 ## Baseline
 
@@ -59,7 +71,7 @@ Status values: `not started`, `in progress`, `blocked`, `implemented`, `verified
 | WS-05 | Keyboard movement, duplication, locking, grouping, multi-select | in progress | Keyboard/accessibility tests.                             |
 | WS-06 | Floor grounding and booth bounds                                | in progress | World-space bounds assertions across edit/preview/client. |
 | WS-07 | Structural and room collision prevention                        | in progress | Columns, walls, fascia, room, furniture collision tests.  |
-| WS-08 | Invalid-placement feedback and nearest valid position           | not started | Deterministic geometry tests and UX assertion.            |
+| WS-08 | Invalid-placement feedback and nearest valid position           | implemented | `nearestValidPlacement()` (public/booth-render.js) searches outward on the snap grid for the closest legal spot, and `dragCollisionReason` is rendered in the drag HUD, so a refused drop says why. Deterministic geometry tests live in workspace-geometry.test.ts. |
 | WS-09 | Complete deletion propagation                                   | in progress | Scene, selection, BOM, history, payload, server, preview. |
 | WS-10 | Room corner snap, walls, doors, swing, ceiling, floor, graphics | in progress | Persistence and collision tests.                          |
 | WS-11 | Fascia position/orientation/logo/text/duplication               | in progress | All side configurations and save/reload.                  |
@@ -139,7 +151,7 @@ Status values: `not started`, `in progress`, `blocked`, `implemented`, `verified
 | BE-10 | Security audit logging                                          | in progress | Actor/org/action evidence tests.                                                                                                       |
 | BE-11 | Currency provider abstraction and financial snapshots           | not started | Historical invoice immutability tests.                                                                                                 |
 | AU-01 | Invitation-only production staff creation                       | in progress | Production-mode route tests.                                                                                                           |
-| AU-02 | Secure cookies/proxy/CORS/CSRF/CSP/iframe/upload headers        | in progress | **CSP is deployed REPORT-ONLY and must be flipped to enforced.** `artifacts/ens-landing/nginx.conf` sends `Content-Security-Policy-Report-Only`; rename the header to `Content-Security-Policy` (both occurrences — server level and the static-asset location) once a report pass has covered the 3D workspace and the Stripe checkout redirect. Those two flows are the risk: the booth editor needs `script-src 'wasm-unsafe-eval'` and `worker-src blob:` for the meshopt GLB decoder, and breaking them is silent. HSTS is gated on `X-Forwarded-Proto` via a `map`, so it is only sent where TLS actually terminates. Header inheritance is fixed: nginx drops parent `add_header` directives in any location that declares its own, so the static-asset block repeats the full set — keep the two lists in sync. |
+| AU-02 | Secure cookies/proxy/CORS/CSRF/CSP/iframe/upload headers        | implemented | CSP is **enforced**, not report-only: `artifacts/ens-landing/nginx.conf` sends `Content-Security-Policy` at server level and again in the static-asset location (nginx drops parent `add_header` directives in any location that declares its own, so the two lists must stay in sync), and no `Content-Security-Policy-Report-Only` header exists anywhere in the repo. The report pass this row was waiting on is recorded in the comment above the directive: every public page plus `booth-render.html` was loaded against this exact policy with zero `securitypolicyviolation` events, including the two flows that fail silently - the meshopt GLB decoder's `script-src 'wasm-unsafe-eval'` and `worker-src blob:`. HSTS is still gated on `X-Forwarded-Proto` via a `map`, so it is only sent where TLS terminates. |
 | AU-03 | Email verification and password reset delivery                  | in progress | Local mail/test-provider flow.                                                                                                         |
 | AU-04 | Complete or hide unfinished 2FA                                  | verified    | Now implemented, not hidden. TOTP enrolment, login challenge, and single-use backup codes ship end to end (`artifacts/api-server/src/lib/totp.ts`, the `/auth/2fa/*` routes, and `components/settings/TwoFactorSettings.tsx`), so `FEATURE_TWO_FACTOR` is unconditionally true and the settings badge reflects server-verified state rather than a persisted flag. |
 | AU-05 | Session management and forced logout after account/role changes | in progress | Browser coverage proves one shared refresh, valid-cookie rotation, terminal expiry redirect, and no render loop; administrator-driven account/role invalidation remains.                             |

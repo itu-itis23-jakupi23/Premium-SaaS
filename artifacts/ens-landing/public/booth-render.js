@@ -2470,7 +2470,28 @@ function isWallMountedItem(item) {
  * here is the coordinate shift and nothing else: this file draws the booth
  * centred on the origin, and the rules measure from its front-left corner.
  */
-const PLACEMENT = (typeof ENSPlacement !== 'undefined') ? ENSPlacement : null;
+/**
+ * The compiled placement rules, or nothing to draw.
+ *
+ * This used to read `: null`, which looked like a graceful fallback and was
+ * not one - every use below dereferences it unconditionally, so a missing
+ * bundle surfaced later as "Cannot read properties of null (reading
+ * 'rotatedItemFootprint')" at whichever drag happened to touch it first.
+ *
+ * Failing hard is the right behaviour: without these rules the renderer would
+ * accept placements the workspace then refuses, which is the drift this bundle
+ * exists to prevent. So it fails here instead, names its own cause, and tells
+ * the parent through the channel that already shows a renderer error, rather
+ * than pretending there is a degraded mode.
+ */
+if (typeof ENSPlacement === 'undefined') {
+  const detail =
+    '/workspace-placement.js did not load, so the booth has no placement rules. ' +
+    'It is a committed build artifact - run: node scripts/build-placement-bundle.mjs';
+  notifyRendererError(new Error(detail));
+  throw new Error(detail);
+}
+const PLACEMENT = ENSPlacement;
 
 /** The stand as the rules expect to receive it. */
 function placementWorld() {
