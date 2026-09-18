@@ -69,9 +69,53 @@ if (failures.length === 0) {
    * What guards them now is scripts/build-placement-bundle.mjs --check, which
    * fails when the compiled copy has drifted from the source.
    *
-   * The snapping rules above are still genuinely duplicated - they are inline
-   * arithmetic in the drag handlers, which is what this gate exists for.
+   * The snapping rules are still genuinely duplicated - they are inline
+   * arithmetic in the drag handlers, which is what this gate exists for, and
+   * what the rest of this block compares.
    */
+
+  // The drag handlers snap by rounding to a reciprocal grid:
+  //   Math.round(nextX * 20) / 20   ==  a 1/20 = 0.05 m grid
+  // Anchoring on nextX/nextZ keeps this away from the renderer's other
+  // Math.round sites, which round for output precision rather than snapping.
+  const gridSites = [...renderer.matchAll(
+    /Math\.round\(\s*next[XZ]\s*\*\s*([0-9.]+)\s*\)\s*\/\s*([0-9.]+)/g,
+  )];
+  if (gridSites.length < 4) {
+    fail(
+      `expected at least 4 snap-to-grid sites on nextX/nextZ in the renderer, found ${gridSites.length} ` +
+      "(if the drag handlers were renamed, update this gate rather than deleting it)",
+    );
+  }
+  for (const [text, multiplier, divisor] of gridSites) {
+    if (multiplier !== divisor) {
+      fail(`renderer snaps with mismatched grid arithmetic: ${text.trim()}`);
+      continue;
+    }
+    const step = 1 / Number(multiplier);
+    if (furnitureSnap !== null && Math.abs(step - furnitureSnap) > 1e-9) {
+      fail(
+        `renderer snaps to a ${step} m grid (${text.trim()}) but ` +
+        `FURNITURE_SNAP_M is ${furnitureSnap}`,
+      );
+    }
+  }
+  // Rooms share the furniture grid; a divergence means one of the two moved.
+  if (furnitureSnap !== null && roomSnap !== null && furnitureSnap !== roomSnap) {
+    fail(
+      `FURNITURE_SNAP_M (${furnitureSnap}) and ROOM_SNAP_M (${roomSnap}) differ, but the renderer ` +
+      "rounds furniture and rooms on the same grid - teach this gate which is which before they diverge",
+    );
+  }
+
+  const cornerMatch = renderer.match(/const\s+cornerSnap\s*=\s*([0-9.]+)\s*;/);
+  if (!cornerMatch) {
+    fail("could not find the renderer's `const cornerSnap = <number>;` corner-snap radius");
+  } else if (cornerSnap !== null && Math.abs(Number(cornerMatch[1]) - cornerSnap) > 1e-9) {
+    fail(
+      `renderer's corner snap radius is ${cornerMatch[1]} m but ROOM_CORNER_SNAP_M is ${cornerSnap}`,
+    );
+  }
 }
 
 if (failures.length > 0) {

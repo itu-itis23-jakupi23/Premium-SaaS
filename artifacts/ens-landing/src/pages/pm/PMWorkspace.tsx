@@ -79,6 +79,24 @@ import { WorkspaceCatalogPanel } from "./WorkspaceCatalogPanel";
 
 // ── Initial state ──────────────────────────────────────────────────
 const INITIAL_BOOTH: BoothState = {width:6,depth:3,height:2.5,system:'octanorm',companyName:'TECHCORP INDUSTRIES',openFront:true,openBack:false,openLeft:false,openRight:false,fasciaEnabled:true,fasciaOption:'full'};
+/**
+ * What applyItemPositions did.
+ *
+ * It still decides the whole arrangement or none of it; this only reports which
+ * happened, so the presentation layer can play the move or show the refusal on
+ * the items that caused it. No animation logic lives inside it.
+ */
+type ArrangeOutcome =
+  | {applied:true; landed:{id:string;x:number;z:number}[]}
+  | {applied:false; blocked:string[]};
+
+/** How long each confirmation runs. Short enough to read, short enough to work through. */
+const MOVE_MS = 170;
+const ROTATE_MS = 130;
+const REMOVE_MS = 120;
+const APPEAR_MS = 150;
+const REFUSE_MS = 220;
+
 const INITIAL_WS: WSData = {booth:INITIAL_BOOTH,themeIdx:0,wallFinishIdx:0,frameFinishIdx:0,fasciaFinishIdx:0,carpetIdx:0,lightingPreset:'exhibition',placedItems:[],rooms:[],notes:[],panelOverrides:{},frontSupportPositions:[],suppressedDefaultPositions:[]};
 
 // Placement/collision geometry lives in ./workspace-geometry (pure, testable).
@@ -97,6 +115,7 @@ import {
 } from "./workspace-geometry";
 import { structuralBom, roomBom, catalogItemFor, quoteTotals } from "./workspace-bom";
 import { WorkspaceBomPanel } from "./WorkspaceBomPanel";
+import { useWorkspaceAnimation, type OverrideMap } from "./useWorkspaceAnimation";
 
 function normalizeDoorPosition(value:unknown): DoorPosition {
   return value === 'left' || value === 'right' ? value : 'center';
@@ -458,7 +477,26 @@ export default function PMWorkspace() {
    * shows - and it is the last one added, which is the one the designer just
    * clicked.
    */
+  /*
+   * Confirmation animations for the discrete actions. The committed state still
+   * jumps straight to its final value; this only drives a display copy of the
+   * items for a few frames afterwards. See useWorkspaceAnimation().
+   */
+  const anim = useWorkspaceAnimation();
+
   const [selectedPlacedIds,setSelectedPlacedIds] = useState<string[]>([]);
+  /*
+   * The alignment bar's entrance and exit.
+   *
+   * `mounted` outlives `shown` by the length of the transition, so the bar can
+   * animate away instead of being unmounted on the frame the selection drops
+   * back to one - React would otherwise remove the node before the transition
+   * had a chance to run.
+   */
+  const selectionBarWanted = selectedPlacedIds.length > 1;
+  const [selectionBarMounted,setSelectionBarMounted] = useState(false);
+  const [selectionBarShown,setSelectionBarShown] = useState(false);
+  const selectionBarRef = useRef<HTMLDivElement|null>(null);
   const activePlacedId = selectedPlacedIds.length ? selectedPlacedIds[selectedPlacedIds.length - 1] : '';
   /** Replace the selection. Passing '' clears it. */
   const setActivePlacedId = useCallback((id:string) => {
@@ -939,6 +977,51 @@ export default function PMWorkspace() {
   undoRef.current = undo;
   const redoRef = useRef(redo);
   redoRef.current = redo;
+  useEffect(()=>{
+    if(selectionBarWanted) {
+      setSelectionBarMounted(true);
+      // Two frames, not one. A single rAF fires before the next paint, and in a
+      // production build React can flush the mount and the flip to "shown" into
+      // that same frame - the bar is then inserted already at its end state, the
+      // browser has no start state to interpolate from, and it snaps in. The
+      // inner rAF runs after the paint that put the bar on screen at opacity 0,
+      // which is what the transition needs. (A dev build was slow enough to fade
+      // on one rAF, which is why this looked right until it was measured built.)
+      let inner = 0;
+      const outer = requestAnimationFrame(()=>{
+        inner = requestAnimationFrame(()=>setSelectionBarShown(true));
+      });
+      return ()=>{ cancelAnimationFrame(outer); cancelAnimationFrame(inner); };
+    }
+    setSelectionBarShown(false);
+    if(anim.reducedMotion) {
+      setSelectionBarMounted(false);
+      return;
+    }
+    // Unmount when the fade has actually finished, not on a fixed timer. The
+    // same selection change makes the renderer rebuild synchronously, which
+    // blocks the main thread for ~100ms; a 140ms timer routinely pulled the bar
+    // out of the DOM before the browser had painted a single frame of the fade,
+    // so it snapped away while the entrance animated. transitionend is the real
+    // signal. The timer is only a fallback for when the transition never runs -
+    // a throttled tab, or reduced motion switched on mid-flight - and is long
+    // enough that it never beats a fade that is merely running late.
+    const node = selectionBarRef.current;
+    let timer = 0;
+    const finish = () => {
+      window.clearTimeout(timer);
+      node?.removeEventListener('transitionend', onEnd);
+      setSelectionBarMounted(false);
+    };
+    const onEnd = (event:TransitionEvent) => { if(event.propertyName === 'opacity') finish(); };
+    node?.addEventListener('transitionend', onEnd);
+    timer = window.setTimeout(finish, 600);
+    return ()=>{
+      window.clearTimeout(timer);
+      node?.removeEventListener('transitionend', onEnd);
+    };
+  },[selectionBarWanted, anim.reducedMotion]);
+
   const activePlacedIdRef = useRef(activePlacedId);
   activePlacedIdRef.current = activePlacedId;
   const selectedPlacedIdsRef = useRef(selectedPlacedIds);
@@ -956,11 +1039,80 @@ export default function PMWorkspace() {
   const removeItems = (ids:string[]) => {
     const doomed = new Set(ids);
     if(!doomed.size) return;
+    const leaving = ws.placedItems.filter(item => doomed.has(item.id));
     setSelectedPlacedIds(prev => prev.filter(id => !doomed.has(id)));
     if(ids.includes(activePlacedId)) setSelectionAnchor(null);
     commit(prev=>({...prev,placedItems:prev.placedItems.filter(p=>!doomed.has(p.id))}));
+    // Gone from the workspace on this tick; held on screen for a moment longer,
+    // lifting out of the stand. A fade would read better and is not available:
+    // the renderer has no per-item opacity, and scaling is worse than nothing
+    // because width, depth and height are the GLB cache key - varying them
+    // re-clones every model on every frame.
+    if(leaving.length) {
+      anim.play({
+        duration: REMOVE_MS,
+        ghosts: leaving,
+        frame: (eased) => {
+          const overrides:OverrideMap = {};
+          for(const item of leaving) overrides[item.id] = {y: (Number(item.y) || 0) + 0.45 * eased};
+          return overrides;
+        },
+      });
+    }
   };
   const removeItem = (id:string) => removeItems([id]);
+
+  /**
+   * Play a committed arrangement as a move rather than a cut.
+   *
+   * The items are already where they are going; this holds them at where they
+   * were and lets them travel. Anything that did not actually move is left out,
+   * so a locked item or one already in place never twitches.
+   */
+  const playArrangement = (from:{id:string;x:number;z:number}[], landed:{id:string;x:number;z:number}[]) => {
+    const startById = new Map(from.map(entry => [entry.id, entry]));
+    const travelling = landed.filter(end => {
+      const start = startById.get(end.id);
+      return start && (Math.abs(start.x - end.x) > 0.0005 || Math.abs(start.z - end.z) > 0.0005);
+    });
+    if(!travelling.length) return;
+    anim.play({
+      duration: MOVE_MS,
+      frame: (eased) => {
+        const overrides:OverrideMap = {};
+        for(const end of travelling) {
+          const start = startById.get(end.id)!;
+          overrides[end.id] = {
+            x: start.x + (end.x - start.x) * eased,
+            z: start.z + (end.z - start.z) * eased,
+          };
+        }
+        return overrides;
+      },
+    });
+  };
+
+  /**
+   * Show a refusal on the items that caused it.
+   *
+   * The toast says what is wrong; this says which. A short lateral shake,
+   * decaying, on the blocked items only - additive to the toast, never instead
+   * of it. Nothing is committed, so this moves only the display copy and the
+   * items are back where they were when it ends.
+   */
+  const playRefusal = (blocked:string[]) => {
+    const shaking = ws.placedItems.filter(item => blocked.includes(item.id));
+    if(!shaking.length) return;
+    anim.play({
+      duration: REFUSE_MS,
+      frame: (_eased, raw) => {
+        const swing = Math.sin(raw * Math.PI * 6) * 0.05 * (1 - raw);
+        const overrides:OverrideMap = {};
+        for(const item of shaking) overrides[item.id] = {x: item.x + swing};
+        return overrides;
+      },
+    });
+  };
 
   /** Rotate every unlocked item in the list about its own centre. */
   const rotateItems = (ids:string[], delta:number) => {
@@ -977,13 +1129,38 @@ export default function PMWorkspace() {
     const supports = activeFrontSupportPositionsFor(
       candidate.booth.width, candidate.frontSupportPositions, candidate.suppressedDefaultPositions,
     );
-    const issue = placementIssuesFor(candidate.placedItems, candidate.rooms, candidate.booth, supports)
-      .find(entry => turning.has(entry.itemId));
-    if(issue) {
-      setToast(`Rotation blocked: ${issue.message}`);
+    const issues = placementIssuesFor(candidate.placedItems, candidate.rooms, candidate.booth, supports)
+      .filter(entry => turning.has(entry.itemId));
+    if(issues.length) {
+      setToast(`Rotation blocked: ${issues[0].message}`);
+      playRefusal([...new Set(issues.map(entry => entry.itemId))]);
       return;
     }
+    const before = new Map(ws.placedItems
+      .filter(item => turning.has(item.id) && !item.locked)
+      .map(item => [item.id, Number(item.rotationY ?? item.rotation) || 0]));
     commit(()=>candidate);
+    // Turn through the step rather than appearing at the end of it. Holding the
+    // key chases the rotation: play() cancels whatever was mid-flight, so each
+    // press animates from where the last one committed rather than stacking.
+    const turned = candidate.placedItems.filter(item => before.has(item.id));
+    if(turned.length) {
+      anim.play({
+        duration: ROTATE_MS,
+        frame: (eased) => {
+          const overrides:OverrideMap = {};
+          for(const item of turned) {
+            const start = before.get(item.id)!;
+            const end = Number(item.rotationY ?? item.rotation) || 0;
+            // Round the short way, so 350 to 5 turns fifteen degrees forward
+            // rather than three hundred and forty-five back.
+            const delta = ((end - start) % 360 + 540) % 360 - 180;
+            overrides[item.id] = {rotationY: start + delta * eased};
+          }
+          return overrides;
+        },
+      });
+    }
   };
 
   /** Move every unlocked item in the list by the same offset. */
@@ -1042,7 +1219,10 @@ export default function PMWorkspace() {
       setToast('Select two or more items to align');
       return;
     }
-    applyItemPositions(alignedPositions(chosen, edge), 'Align blocked');
+    const before = chosen.map(item => ({id:item.id, x:item.x, z:item.z}));
+    const outcome = applyItemPositions(alignedPositions(chosen, edge), 'Align blocked');
+    if(outcome.applied) playArrangement(before, outcome.landed);
+    else playRefusal(outcome.blocked);
   };
 
   /** Even gaps between the outermost two, along whichever axis is asked for. */
@@ -1063,7 +1243,10 @@ export default function PMWorkspace() {
     // fighting - and the note needs no way to ask whether the apply succeeded,
     // which would mean changing applyItemPositions.
     setToast(`Spaced evenly · snapped to nearest ${Math.round(FURNITURE_SNAP_M * 100)} cm`);
-    applyItemPositions(distributedPositions(chosen, axis), 'Distribute blocked');
+    const before = chosen.map(item => ({id:item.id, x:item.x, z:item.z}));
+    const outcome = applyItemPositions(distributedPositions(chosen, axis), 'Distribute blocked');
+    if(outcome.applied) playArrangement(before, outcome.landed);
+    else playRefusal(outcome.blocked);
   };
 
   /**
@@ -1072,7 +1255,7 @@ export default function PMWorkspace() {
    * Half an alignment is worse than none - the designer cannot see what was
    * skipped - so this validates the whole arrangement and refuses as a unit.
    */
-  const applyItemPositions = (moves:{id:string;x:number;z:number}[], refusal:string) => {
+  const applyItemPositions = (moves:{id:string;x:number;z:number}[], refusal:string): ArrangeOutcome => {
     const byId = new Map(moves.map(move => [move.id, move]));
     const candidate = normalizeWorkspaceData({
       ...ws,
@@ -1090,43 +1273,63 @@ export default function PMWorkspace() {
     const supports = activeFrontSupportPositionsFor(
       candidate.booth.width, candidate.frontSupportPositions, candidate.suppressedDefaultPositions,
     );
-    const issue = placementIssuesFor(candidate.placedItems, candidate.rooms, candidate.booth, supports)
-      .find(entry => byId.has(entry.itemId));
-    if(issue) {
-      setToast(`${refusal}: ${issue.message}`);
-      return;
+    const issues = placementIssuesFor(candidate.placedItems, candidate.rooms, candidate.booth, supports)
+      .filter(entry => byId.has(entry.itemId));
+    if(issues.length) {
+      setToast(`${refusal}: ${issues[0].message}`);
+      // Which items caused it, so the refusal can be shown on them and not
+      // only in a toast at the bottom of the screen.
+      return {applied:false, blocked:[...new Set(issues.map(entry => entry.itemId))]};
     }
     commit(()=>candidate);
+    // The positions actually committed - snapped to the grid, so these are the
+    // values an animation has to arrive at, not the ones that were asked for.
+    return {
+      applied: true,
+      landed: candidate.placedItems
+        .filter(item => byId.has(item.id))
+        .map(item => ({id:item.id, x:item.x, z:item.z})),
+    };
   };
 
   /** Copy every item in the list, offset as a group, and select the copies. */
   const duplicateItems = (ids:string[]) => {
     const sources = new Set(ids);
     if(!sources.size) return;
-    const madeIds:string[] = [];
-    commit(prev=>{
-      const made:WorkspacePlacedItem[] = [];
-      for(const source of prev.placedItems) {
-        if(!sources.has(source.id)) continue;
-        const bounds = positionBoundsForItem(source, prev.booth);
-        const copy:WorkspacePlacedItem = {
-          ...source,
-          id:`${source.catalogId}-${Date.now()}-${Math.random().toString(16).slice(2,6)}-${made.length}`,
-          locked:false,
-          x:snapItemCoordinate(source.x + DUPLICATE_OFFSET_M, bounds.minX, bounds.maxX),
-          z:snapItemCoordinate(source.z + DUPLICATE_OFFSET_M, bounds.minZ, bounds.maxZ),
-        };
-        made.push(copy);
-        madeIds.push(copy.id);
-      }
-      if(!made.length) return prev;
-      return {...prev,placedItems:[...prev.placedItems,...made]};
-    });
-    if(madeIds.length) {
-      setSelectedPlacedIds(madeIds);
-      setActiveRoomId('');
-      setToast(madeIds.length === 1 ? 'Furniture duplicated' : `${madeIds.length} items duplicated`);
+    // Build the copies out here rather than inside the commit updater. React is
+    // free to defer an updater to the render phase, so the ids it collected into
+    // an outer array were still empty when this handler read them a line later -
+    // which silently cost the new items their selection, their toast and their
+    // settle-in. Deriving from `ws` is what every other handler here does.
+    const made:WorkspacePlacedItem[] = [];
+    for(const source of ws.placedItems) {
+      if(!sources.has(source.id)) continue;
+      const bounds = positionBoundsForItem(source, ws.booth);
+      made.push({
+        ...source,
+        id:`${source.catalogId}-${Date.now()}-${Math.random().toString(16).slice(2,6)}-${made.length}`,
+        locked:false,
+        x:snapItemCoordinate(source.x + DUPLICATE_OFFSET_M, bounds.minX, bounds.maxX),
+        z:snapItemCoordinate(source.z + DUPLICATE_OFFSET_M, bounds.minZ, bounds.maxZ),
+      });
     }
+    if(!made.length) return;
+    const madeIds = made.map(copy => copy.id);
+    commit(prev=>({...prev,placedItems:[...prev.placedItems,...made]}));
+    setSelectedPlacedIds(madeIds);
+    setActiveRoomId('');
+    setToast(madeIds.length === 1 ? 'Furniture duplicated' : `${madeIds.length} items duplicated`);
+    // The copy settles into place from just above it, so the eye reads "a new
+    // one appeared" rather than "the original slid sideways" - the two look
+    // identical the instant a duplicate lands beside its source.
+    anim.play({
+      duration: APPEAR_MS,
+      frame: (eased) => {
+        const overrides:OverrideMap = {};
+        for(const id of madeIds) overrides[id] = {y: 0.4 * (1 - eased)};
+        return overrides;
+      },
+    });
   };
   // ── Keyboard shortcuts ────────────────────────────────────────
   // The undo button has advertised "Ctrl+Z" since it was written and nothing
@@ -1840,7 +2043,11 @@ export default function PMWorkspace() {
               carpetColor,
               openFront:booth.openFront, openBack:booth.openBack,
               openLeft:booth.openLeft, openRight:booth.openRight,
-              placedItems: placedItems,
+              // The display copy: committed items with any in-flight animation
+              // merged over them. The inspector, the take-off and every
+              // validation still read `placedItems`, which never holds a
+              // position the workspace has not accepted.
+              placedItems: anim.withOverrides(placedItems),
               rooms,
               selectedItemIds: selectedPlacedIds,
               activeRoomId,
@@ -1937,14 +2144,21 @@ export default function PMWorkspace() {
           {/* Alignment bar. Appears only with more than one item picked, because
               aligning one thing to itself is a no-op and the bar would just be
               clutter the rest of the time. */}
-          {selectedPlacedIds.length > 1 && (
-            <div style={{
+          {selectionBarMounted && (
+            <div ref={selectionBarRef} style={{
               // Above the toast band. Toast is fixed at bottom 48 and about 38
               // tall, and the bar used to sit at 14 - so every toast covered
               // most of it. That was survivable while toasts were refusals;
               // distribute now reports on success too, which would have hidden
               // the buttons for three seconds after every use.
-              position:'absolute', bottom:72, left:'50%', transform:'translateX(-50%)',
+              position:'absolute', bottom:72, left:'50%',
+              // Slides up as it arrives and drops back as it goes. Held mounted
+              // for the length of the exit so it can animate out instead of
+              // being unmounted mid-fade.
+              transform:`translateX(-50%) translateY(${selectionBarShown ? 0 : 10}px)`,
+              opacity: selectionBarShown ? 1 : 0,
+              transition: anim.reducedMotion ? 'none' : 'opacity 140ms ease-out, transform 140ms ease-out',
+              pointerEvents: selectionBarShown ? 'auto' : 'none',
               zIndex:23, display:'flex', alignItems:'center', gap:6,
               background:C.panel, border:`1px solid ${C.hair}`, borderRadius:8,
               padding:'7px 10px', boxShadow:'0 6px 22px rgba(20,22,26,0.14)',
