@@ -1630,7 +1630,8 @@
       "reports": "Rapports",
       "settings": "Paramètres",
       "quotes": "Devis",
-      "invoices": "Factures"
+      "invoices": "Factures",
+      "pipeline": "Pipeline commercial"
     },
     "common": {
       "noDeadline": "Pas d'échéance",

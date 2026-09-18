@@ -1630,7 +1630,8 @@
       "reports": "Raporlar",
       "settings": "Ayarlar",
       "quotes": "Teklifler",
-      "invoices": "Faturalar"
+      "invoices": "Faturalar",
+      "pipeline": "Satış Hattı"
     },
     "common": {
       "noDeadline": "Son tarih yok",

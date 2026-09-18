@@ -1630,7 +1630,8 @@
       "reports": "Relatórios",
       "settings": "Configurações",
       "quotes": "Orçamentos",
-      "invoices": "Faturas"
+      "invoices": "Faturas",
+      "pipeline": "Funil de vendas"
     },
     "common": {
       "noDeadline": "Sem prazo",

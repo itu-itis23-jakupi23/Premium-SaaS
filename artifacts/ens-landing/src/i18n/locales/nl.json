@@ -1630,7 +1630,8 @@
       "reports": "Rapporten",
       "settings": "Instellingen",
       "quotes": "Offertes",
-      "invoices": "Facturen"
+      "invoices": "Facturen",
+      "pipeline": "Verkooppijplijn"
     },
     "common": {
       "noDeadline": "Geen deadline",

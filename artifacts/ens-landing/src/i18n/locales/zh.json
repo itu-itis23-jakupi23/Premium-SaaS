@@ -1630,7 +1630,8 @@
       "reports": "报告",
       "settings": "设置",
       "quotes": "报价单",
-      "invoices": "发票"
+      "invoices": "发票",
+      "pipeline": "销售管道"
     },
     "common": {
       "noDeadline": "无截止日期",

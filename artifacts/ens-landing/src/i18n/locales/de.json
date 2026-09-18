@@ -1630,7 +1630,8 @@
       "reports": "Berichte",
       "settings": "Einstellungen",
       "quotes": "Angebote",
-      "invoices": "Rechnungen"
+      "invoices": "Rechnungen",
+      "pipeline": "Vertriebs-Pipeline"
     },
     "common": {
       "noDeadline": "Kein Termin",

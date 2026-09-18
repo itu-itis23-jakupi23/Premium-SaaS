@@ -116,6 +116,7 @@ function createStaffRoutes() {
   const PMDashboard = lazyPage(() => import("@/pages/pm/PMDashboard"));
   const PMCalendar = lazyPage(() => import("@/pages/pm/PMCalendar"));
   const PMClients = lazyPage(() => import("@/pages/pm/PMClients"));
+  const PMPipeline = lazyPage(() => import("@/pages/pm/PMPipeline"));
   const PMProjects = lazyPage(() => import("@/pages/pm/PMProjects"));
   const PMWorkspace = lazyPage(() => import("@/pages/pm/PMWorkspace"));
   const PMRequests = lazyPage(() => import("@/pages/pm/PMRequests"));
@@ -256,6 +257,13 @@ function createStaffRoutes() {
           {(params) => (
             <ErrorBoundary label="PM Clients">
               <ProtectedRoute component={PMClients} allowedRoles={["pm"]} params={params} />
+            </ErrorBoundary>
+          )}
+        </Route>
+        <Route path="/pm/pipeline">
+          {(params) => (
+            <ErrorBoundary label="PM Pipeline">
+              <ProtectedRoute component={PMPipeline} allowedRoles={["pm"]} params={params} />
             </ErrorBoundary>
           )}
         </Route>

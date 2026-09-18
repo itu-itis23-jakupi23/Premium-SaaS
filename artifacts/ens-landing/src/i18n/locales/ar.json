@@ -1630,7 +1630,8 @@
       "reports": "التقارير",
       "settings": "الإعدادات",
       "quotes": "عروض الأسعار",
-      "invoices": "الفواتير"
+      "invoices": "الفواتير",
+      "pipeline": "مسار المبيعات"
     },
     "common": {
       "noDeadline": "لا يوجد موعد نهائي",

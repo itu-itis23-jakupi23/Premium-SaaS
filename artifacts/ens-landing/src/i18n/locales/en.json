@@ -1865,7 +1865,8 @@
       "reports": "Reports",
       "settings": "Settings",
       "quotes": "Quotes",
-      "invoices": "Invoices"
+      "invoices": "Invoices",
+      "pipeline": "Sales Pipeline"
     },
     "common": {
       "noDeadline": "No deadline",

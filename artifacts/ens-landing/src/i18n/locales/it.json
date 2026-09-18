@@ -1630,7 +1630,8 @@
       "reports": "Report",
       "settings": "Impostazioni",
       "quotes": "Preventivi",
-      "invoices": "Fatture"
+      "invoices": "Fatture",
+      "pipeline": "Pipeline commerciale"
     },
     "common": {
       "noDeadline": "Nessuna scadenza",

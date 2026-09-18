@@ -87,6 +87,7 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
   pm: [
     { icon: LayoutDashboard, labelKey: "pm.nav.dashboard",  href: "/pm" },
     { icon: Users,           labelKey: "pm.nav.myClients",  href: "/pm/clients" },
+    { icon: KanbanSquare,    labelKey: "pm.nav.pipeline",   href: "/pm/pipeline" },
     { icon: Briefcase,       labelKey: "pm.nav.projects",   href: "/pm/projects" },
     { icon: Receipt,         labelKey: "pm.nav.quotes",     href: "/pm/quotes" },
     { icon: CreditCard,      labelKey: "pm.nav.invoices",   href: "/pm/invoices" },

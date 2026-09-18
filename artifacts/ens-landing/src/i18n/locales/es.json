@@ -1630,7 +1630,8 @@
       "reports": "Informes",
       "settings": "Configuración",
       "quotes": "Presupuestos",
-      "invoices": "Facturas"
+      "invoices": "Facturas",
+      "pipeline": "Embudo de ventas"
     },
     "common": {
       "noDeadline": "Sin fecha límite",

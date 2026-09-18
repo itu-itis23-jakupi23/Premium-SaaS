@@ -1630,7 +1630,8 @@
       "reports": "レポート",
       "settings": "設定",
       "quotes": "見積書",
-      "invoices": "請求書"
+      "invoices": "請求書",
+      "pipeline": "営業パイプライン"
     },
     "common": {
       "noDeadline": "期限なし",

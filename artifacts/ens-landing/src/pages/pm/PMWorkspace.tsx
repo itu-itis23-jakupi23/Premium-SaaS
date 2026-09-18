@@ -468,6 +468,9 @@ export default function PMWorkspace() {
   const [activeFurnitureCategory, setActiveFurnitureCategory] = useState<FurnitureCategory>('all');
   const [activeTab,  setActiveTab]  = useState<'props'|'panel'|'bom'|'notes'|'feedback'>('props');
   const [activeShellPartId,setActiveShellPartId] = useState('');
+  // Panels picked with shift, the same additive gesture placed items use.
+  // activeShellPartId stays the anchor the inspector reads from.
+  const [selectedPanelIds,setSelectedPanelIds] = useState<string[]>([]);
   const [selectionAnchor,setSelectionAnchor] = useState<{x:number;y:number;label:string;partType:string}|null>(null);
   const [activeId,   setActiveId]   = useState('');
   /*
@@ -1456,19 +1459,37 @@ export default function PMWorkspace() {
     }
     updateItem(id, patch);
   };
-  const updatePanelOverride = (id:string, patch:PanelOverride) => commit(prev=>{
-    const current = prev.panelOverrides[id] || {};
-    const next: PanelOverride = {...current, ...patch};
-    Object.keys(next).forEach(key => {
-      const value = next[key as keyof PanelOverride];
-      if (value === '' || value == null) delete next[key as keyof PanelOverride];
+  /**
+   * Apply one patch to many panels in a single commit.
+   *
+   * Branding a wall meant repeating the same action per bay - an 8 m back wall
+   * is eight passes to set one colour - because the override writer only ever
+   * took a single id. It takes a list now, and one commit covers the whole
+   * selection so undo puts all of them back together rather than one at a time.
+   */
+  const updatePanelOverrides = (ids:string[], patch:PanelOverride) => {
+    if(!ids.length) return;
+    commit(prev=>{
+      const panelOverrides = {...prev.panelOverrides};
+      for(const id of ids) {
+        const next: PanelOverride = {...(prev.panelOverrides[id] || {}), ...patch};
+        Object.keys(next).forEach(key => {
+          const value = next[key as keyof PanelOverride];
+          if (value === '' || value == null) delete next[key as keyof PanelOverride];
+        });
+        if (Object.keys(next).length) panelOverrides[id] = next;
+        else delete panelOverrides[id];
+      }
+      return {...prev, panelOverrides};
     });
-    const panelOverrides = {...prev.panelOverrides};
-    if (Object.keys(next).length) panelOverrides[id] = next;
-    else delete panelOverrides[id];
-    return {...prev, panelOverrides};
-  });
-  const uploadPanelDesign = (id:string, file?:File|null) => {
+  };
+  const updatePanelOverride = (id:string, patch:PanelOverride) => updatePanelOverrides([id], patch);
+  /**
+   * `targets` is the set the finished image is written to. The upload itself
+   * happens once - the same asset url lands on every selected bay - so putting
+   * one graphic across a wall is one upload, not one per bay.
+   */
+  const uploadPanelDesign = (id:string, file?:File|null, targets?:string[]) => {
     if(!file) return;
     if(!workspaceRecord?.project.id) {
       setToast('Open a project before uploading images');
@@ -1495,8 +1516,9 @@ export default function PMWorkspace() {
           name: file.name,
           purpose: id.includes('fascia') ? 'fascia' : 'panel',
         });
-        updatePanelOverride(id,{designImageUrl:uploaded.asset.url,designImageName:file.name,designOpacity:1});
-        setToast('Panel design uploaded');
+        const applyTo = targets && targets.length ? targets : [id];
+        updatePanelOverrides(applyTo,{designImageUrl:uploaded.asset.url,designImageName:file.name,designOpacity:1});
+        setToast(applyTo.length > 1 ? `Design applied to ${applyTo.length} panels` : 'Panel design uploaded');
       } catch (error) {
         setToast(error instanceof Error ? error.message : 'Image could not be uploaded');
       }
@@ -1699,6 +1721,16 @@ export default function PMWorkspace() {
   const activePanel = activeShellPartId ? panelDetails(activeShellPartId, booth) : null;
   const activeShellPart = activeShellPartId ? shellPartDetails(activeShellPartId, booth) : null;
   const activePanelOverride = activePanel ? (panelOverrides[activePanel.id] || {}) : {};
+  /**
+   * Which bays a panel edit lands on: the whole selection when there is one,
+   * otherwise just the bay in the inspector. The inspector still *shows* the
+   * anchor panel's own values - there is no sensible single value to show for a
+   * mixed selection - but what it writes covers all of them.
+   */
+  const panelEditTargets = selectedPanelIds.length > 1
+    ? selectedPanelIds
+    : (activePanel ? [activePanel.id] : []);
+  const applyPanelPatch = (patch:PanelOverride) => updatePanelOverrides(panelEditTargets, patch);
   const activeFasciaId = activeShellPart?.type === 'fascia' ? canonicalShellPartId(activeShellPartId) : '';
   const activeFasciaOverride = activeFasciaId ? (panelOverrides[activeFasciaId] || {}) : {};
   const activeFrontSupportIndex = Number(activeShellPartId.match(/^post-front-support-(\d+)$/)?.[1] ?? -1);
@@ -2142,6 +2174,14 @@ export default function PMWorkspace() {
                 const shellId = canonicalShellPartId(partId);
                 const panelId = shellId.match(/panel-(front|back|left|right)-\d+/)?.[0];
                 if (panelId) {
+                  // Shift adds a bay to the selection, exactly as it does for a
+                  // placed item; a plain click starts a new one.
+                  setSelectedPanelIds(prev => {
+                    if (!detail?.additive) return [panelId];
+                    return prev.includes(panelId)
+                      ? prev.filter(entry => entry !== panelId)
+                      : [...prev, panelId];
+                  });
                   setActiveShellPartId(panelId);
                   setSelectionAnchor(anchorFromSelection(detail, 'Panel', 'panel'));
                   setActivePlacedId('');
@@ -2150,6 +2190,7 @@ export default function PMWorkspace() {
                   return;
                 }
                 if (shellId && shellPartDetails(shellId, booth)) {
+                  setSelectedPanelIds([]);
                   setActiveShellPartId(shellId);
                   setSelectionAnchor(anchorFromSelection(detail, 'Selection', 'shell'));
                   setActivePlacedId('');
@@ -2158,6 +2199,7 @@ export default function PMWorkspace() {
                   return;
                 }
                 setActiveShellPartId('');
+                setSelectedPanelIds([]);
                 setActiveRoomId('');
                 setSelectionAnchor(null);
                 if (id) {
@@ -2420,10 +2462,14 @@ export default function PMWorkspace() {
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
                 <div style={{width:9,height:9,borderRadius:2,background:activePanelOverride.color || wallFinish.color,flexShrink:0}}/>
                 <div style={{minWidth:0,flex:1}}>
-                  <div style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.08em'}}>Panel selection</div>
-                  <div style={{fontSize:12,fontWeight:800,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{activePanel.label}</div>
+                  <div style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.08em'}}>
+                    {panelEditTargets.length > 1 ? `Panel selection — ${panelEditTargets.length} bays` : 'Panel selection'}
+                  </div>
+                  <div style={{fontSize:12,fontWeight:800,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                    {panelEditTargets.length > 1 ? `${activePanel.label} +${panelEditTargets.length - 1} more` : activePanel.label}
+                  </div>
                 </div>
-                <button onClick={()=>{setSelectionAnchor(null);setActiveShellPartId('');}} style={{width:24,height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center'}}>
+                <button onClick={()=>{setSelectionAnchor(null);setActiveShellPartId('');setSelectedPanelIds([]);}} aria-label="Clear panel selection" style={{width:24,height:24,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',display:'grid',placeItems:'center'}}>
                   <X size={12}/>
                 </button>
               </div>
@@ -2440,9 +2486,9 @@ export default function PMWorkspace() {
                 ))}
               </div>
               <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:8}}>
-                <input type="color" value={activePanelOverride.color || wallFinish.color} onChange={e=>updatePanelOverride(activePanel.id,{color:e.target.value})}
+                <input type="color" value={activePanelOverride.color || wallFinish.color} onChange={e=>applyPanelPatch({color:e.target.value})}
                   style={{width:34,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',padding:2}}/>
-                <input value={activePanelOverride.brandText || ''} onChange={e=>updatePanelOverride(activePanel.id,{brandText:e.target.value.slice(0,40)})}
+                <input value={activePanelOverride.brandText || ''} onChange={e=>applyPanelPatch({brandText:e.target.value.slice(0,40)})}
                   placeholder="Brand / sticker text"
                   style={{flex:1,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:UI,fontSize:11.5,color:C.ink,paddingLeft:8,outline:'none'}}/>
               </div>
@@ -2450,10 +2496,10 @@ export default function PMWorkspace() {
                 <label style={{height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,fontFamily:MONO,fontSize:8.5,fontWeight:800,overflow:'hidden',padding:'0 8px'}}>
                   <ImagePlus size={11}/>
                   <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{activePanelOverride.designImageName || 'Upload image design'}</span>
-                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" onChange={e=>{uploadPanelDesign(activePanel.id,e.target.files?.[0]); e.currentTarget.value='';}} style={{display:'none'}}/>
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" onChange={e=>{uploadPanelDesign(activePanel.id,e.target.files?.[0],panelEditTargets); e.currentTarget.value='';}} style={{display:'none'}}/>
                 </label>
                 {activePanelOverride.designImageUrl&&(
-                  <button onClick={()=>updatePanelOverride(activePanel.id,{designImageUrl:'',designImageName:'',designOpacity:undefined})}
+                  <button onClick={()=>applyPanelPatch({designImageUrl:'',designImageName:'',designOpacity:undefined})}
                     style={{height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.muted,cursor:'pointer',fontFamily:MONO,fontSize:8.5,fontWeight:800,padding:'0 8px'}}>
                     Clear
                   </button>
@@ -2462,14 +2508,14 @@ export default function PMWorkspace() {
               {activePanelOverride.designImageUrl&&(
                 <div style={{display:'grid',gridTemplateColumns:'54px 1fr',gap:7,alignItems:'center',marginBottom:8}}>
                   <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted,textTransform:'uppercase'}}>Image</span>
-                  <input type="range" min={0.15} max={1} step={0.05} value={activePanelOverride.designOpacity ?? 1} onChange={e=>updatePanelOverride(activePanel.id,{designOpacity:Number(e.target.value)})}
+                  <input type="range" min={0.15} max={1} step={0.05} value={activePanelOverride.designOpacity ?? 1} onChange={e=>applyPanelPatch({designOpacity:Number(e.target.value)})}
                     style={{width:'100%',accentColor:C.blue}}/>
                 </div>
               )}
               <div style={{display:'grid',gridTemplateColumns:'34px 1fr 54px',gap:7,alignItems:'center'}}>
-                <input type="color" value={activePanelOverride.brandColor || '#111827'} onChange={e=>updatePanelOverride(activePanel.id,{brandColor:e.target.value})}
+                <input type="color" value={activePanelOverride.brandColor || '#111827'} onChange={e=>applyPanelPatch({brandColor:e.target.value})}
                   style={{width:34,height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',padding:2}}/>
-                <input type="range" min={0.08} max={0.45} step={0.01} value={activePanelOverride.brandScale ?? 0.15} onChange={e=>updatePanelOverride(activePanel.id,{brandScale:Number(e.target.value)})}
+                <input type="range" min={0.08} max={0.45} step={0.01} value={activePanelOverride.brandScale ?? 0.15} onChange={e=>applyPanelPatch({brandScale:Number(e.target.value)})}
                   style={{width:'100%',accentColor:C.blue}}/>
                 <button onClick={()=>resetPanelOverride(activePanel.id)}
                   style={{height:26,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:MONO,fontSize:8.5,fontWeight:800}}>
@@ -2858,33 +2904,38 @@ export default function PMWorkspace() {
                   <Hairline/>
                   <PropBlock label="Panel Finish" right={activePanelOverride.color ? 'Custom' : wallFinish.label}>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <input type="color" value={activePanelOverride.color || wallFinish.color} onChange={e=>updatePanelOverride(activePanel.id,{color:e.target.value})}
+                      <input type="color" value={activePanelOverride.color || wallFinish.color} onChange={e=>applyPanelPatch({color:e.target.value})}
                         style={{width:38,height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',padding:2}}/>
-                      <input value={activePanelOverride.color || wallFinish.color} onChange={e=>updatePanelOverride(activePanel.id,{color:e.target.value})}
+                      <input value={activePanelOverride.color || wallFinish.color} onChange={e=>applyPanelPatch({color:e.target.value})}
                         style={{flex:1,height:30,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:MONO,fontSize:11,color:C.ink,paddingLeft:8,outline:'none'}}/>
                     </div>
                     <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:8}}>
                       {WALL_FINISHES.map(finish=>(
-                        <Swatch key={finish.label} color={finish.color} active={(activePanelOverride.color || wallFinish.color)===finish.color} onClick={()=>updatePanelOverride(activePanel.id,{color:finish.color})} size={24} title={finish.label}/>
+                        <Swatch key={finish.label} color={finish.color} active={(activePanelOverride.color || wallFinish.color)===finish.color} onClick={()=>applyPanelPatch({color:finish.color})} size={24} title={finish.label}/>
                       ))}
                     </div>
                   </PropBlock>
                   <Hairline/>
                   <PropBlock label="Brand / Sticker" right={activePanelOverride.brandText ? 'Applied' : 'None'}>
+                    {panelEditTargets.length > 1 && (
+                      <div style={{fontFamily:MONO,fontSize:9,color:C.blue,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:6}}>
+                        Editing {panelEditTargets.length} bays
+                      </div>
+                    )}
                     <label htmlFor={`${uid}-panel-text`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Text</label>
-                    <input id={`${uid}-panel-text`} value={activePanelOverride.brandText || ''} onChange={e=>updatePanelOverride(activePanel.id,{brandText:e.target.value.slice(0,40)})}
+                    <input id={`${uid}-panel-text`} value={activePanelOverride.brandText || ''} onChange={e=>applyPanelPatch({brandText:e.target.value.slice(0,40)})}
                       placeholder="Company logo, product name, sticker"
                       style={{width:'100%',height:32,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:UI,fontSize:12,color:C.ink,paddingLeft:9,boxSizing:'border-box',outline:'none'}}/>
                     <div style={{display:'grid',gridTemplateColumns:'72px 1fr',gap:8,marginTop:9,alignItems:'center'}}>
                       <label htmlFor={`${uid}-panel-color`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Color</label>
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <input id={`${uid}-panel-color`} type="color" value={activePanelOverride.brandColor || '#111827'} onChange={e=>updatePanelOverride(activePanel.id,{brandColor:e.target.value})}
+                        <input id={`${uid}-panel-color`} type="color" value={activePanelOverride.brandColor || '#111827'} onChange={e=>applyPanelPatch({brandColor:e.target.value})}
                           style={{width:34,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,cursor:'pointer',padding:2}}/>
-                        <input value={activePanelOverride.brandColor || '#111827'} onChange={e=>updatePanelOverride(activePanel.id,{brandColor:e.target.value})}
+                        <input value={activePanelOverride.brandColor || '#111827'} onChange={e=>applyPanelPatch({brandColor:e.target.value})}
                           style={{flex:1,height:28,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,fontFamily:MONO,fontSize:10.5,color:C.ink,paddingLeft:8,outline:'none'}}/>
                       </div>
                       <label htmlFor={`${uid}-panel-scale`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Scale</label>
-                      <input id={`${uid}-panel-scale`} type="range" min={0.08} max={0.45} step={0.01} value={activePanelOverride.brandScale ?? 0.15} onChange={e=>updatePanelOverride(activePanel.id,{brandScale:Number(e.target.value)})}
+                      <input id={`${uid}-panel-scale`} type="range" min={0.08} max={0.45} step={0.01} value={activePanelOverride.brandScale ?? 0.15} onChange={e=>applyPanelPatch({brandScale:Number(e.target.value)})}
                         style={{width:'100%',accentColor:C.blue}}/>
                     </div>
                     <div style={{marginTop:8,fontFamily:MONO,fontSize:8.5,color:C.muted}}>
@@ -2896,7 +2947,7 @@ export default function PMWorkspace() {
                     <label style={{height:34,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:7,fontFamily:MONO,fontSize:9.5,fontWeight:800,padding:'0 10px',overflow:'hidden'}}>
                       <ImagePlus size={13}/>
                       <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{activePanelOverride.designImageName || 'Choose logo or wall graphic'}</span>
-                      <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" onChange={e=>{uploadPanelDesign(activePanel.id,e.target.files?.[0]); e.currentTarget.value='';}} style={{display:'none'}}/>
+                      <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" onChange={e=>{uploadPanelDesign(activePanel.id,e.target.files?.[0],panelEditTargets); e.currentTarget.value='';}} style={{display:'none'}}/>
                     </label>
                     {activePanelOverride.designImageUrl&&<>
                       <div style={{height:62,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
@@ -2904,10 +2955,10 @@ export default function PMWorkspace() {
                       </div>
                       <div style={{display:'grid',gridTemplateColumns:'72px 1fr',gap:8,alignItems:'center',marginTop:9}}>
                         <label htmlFor={`${uid}-panel-design-opacity`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
-                        <input id={`${uid}-panel-design-opacity`} type="range" min={0.15} max={1} step={0.05} value={activePanelOverride.designOpacity ?? 1} onChange={e=>updatePanelOverride(activePanel.id,{designOpacity:Number(e.target.value)})}
+                        <input id={`${uid}-panel-design-opacity`} type="range" min={0.15} max={1} step={0.05} value={activePanelOverride.designOpacity ?? 1} onChange={e=>applyPanelPatch({designOpacity:Number(e.target.value)})}
                           style={{width:'100%',accentColor:C.blue}}/>
                       </div>
-                      <button onClick={()=>updatePanelOverride(activePanel.id,{designImageUrl:'',designImageName:'',designOpacity:undefined})}
+                      <button onClick={()=>applyPanelPatch({designImageUrl:'',designImageName:'',designOpacity:undefined})}
                         style={{width:'100%',height:30,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:UI,fontSize:12,fontWeight:700}}>
                         Remove image design
                       </button>

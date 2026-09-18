@@ -24,7 +24,17 @@ const STAGE_ACCENT: Record<LeadStage, string> = {
   lost: "border-t-red-500",
 };
 
-export default function ChiefPipeline() {
+/**
+ * The sales board, for whoever is allowed to see it.
+ *
+ * The API already decides what a caller may see: GET /platform/pipeline admits
+ * staff and scopes PMs to `assigned_pm_user_id = me`, and both PATCH routes
+ * apply the same guard before they write. So the board itself needs no
+ * role-specific logic - only the shell it renders inside differs, which is what
+ * this prop is for. Re-deriving the scoping here would be a second opinion
+ * about authorization, and the two would drift.
+ */
+export default function ChiefPipeline({ role = "chief" }: { role?: "chief" | "pm" } = {}) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [board, setBoard] = useState<Pipeline | null>(null);
@@ -85,7 +95,7 @@ export default function ChiefPipeline() {
   const isOverdue = (d: string | null) => d != null && new Date(d) < new Date();
 
   return (
-    <DashboardLayout role="chief">
+    <DashboardLayout role={role}>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("pipeline.title")}</h1>
