@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@workspace/db";
+import { documentTotals, lineTotalCents, normalizeCents, normalizeQuantity } from "@workspace/api-zod";
 import { requireAuth, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
 import { deliverNotification } from "../lib/notifications";
@@ -60,14 +61,19 @@ function normalizeLineItems(raw: unknown): NormalizedLineItem[] {
     .slice(0, 200)
     .map((entry) => {
       const item = (entry ?? {}) as QuoteLineItemInput;
-      const quantity = Math.max(0, toInt(item.quantity));
-      const unitPriceCents = Math.max(0, toInt(item.unitPriceCents));
+      // Fractional quantities are kept. `toInt` rounded them to whole numbers,
+      // so 2.5 m² of carpet was stored as 3 and 0.4 as 0 - the client received
+      // a quote for more, or for nothing, than the one the PM approved. The
+      // totals come from the shared helper so the form's preview and the stored
+      // document cannot diverge again.
+      const quantity = normalizeQuantity(item.quantity);
+      const unitPriceCents = normalizeCents(item.unitPriceCents);
       return {
         description: String(item.description ?? "").slice(0, 300),
         sku: item.sku ? String(item.sku).slice(0, 80) : undefined,
         quantity,
         unitPriceCents,
-        totalCents: quantity * unitPriceCents,
+        totalCents: lineTotalCents(quantity, unitPriceCents),
         kind: item.kind ? String(item.kind).slice(0, 40) : undefined,
       };
     })
@@ -75,9 +81,10 @@ function normalizeLineItems(raw: unknown): NormalizedLineItem[] {
 }
 
 function computeTotals(items: NormalizedLineItem[], discountCents: number, taxCents: number) {
-  const subtotalCents = items.reduce((sum, item) => sum + item.totalCents, 0);
-  const totalCents = Math.max(0, subtotalCents - discountCents + taxCents);
-  return { subtotalCents, totalCents };
+  // Delegated so the document total is computed by the same code as the
+  // preview, including the int32 ceiling the columns impose.
+  const totals = documentTotals({ lineItems: items, discountCents, taxCents });
+  return { subtotalCents: totals.subtotalCents, totalCents: totals.totalCents };
 }
 
 // SQL predicate: which quotes a staff member may see (chief: all; PM: their

@@ -1,3 +1,4 @@
+import { documentTotals, normalizeQuantity, priceToCents } from "@workspace/api-zod";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Send, Trash2, Receipt, Loader2, X, CheckCircle2, Ban, Coins } from "lucide-react";
@@ -117,11 +118,31 @@ export default function Invoices({ role }: { role: "chief" | "pm" }) {
     listQuotes({ status: "accepted" }).then(setAcceptedQuotes).catch(() => setAcceptedQuotes([]));
   }, []);
 
+  /**
+   * The preview, computed by the same code the API stores with.
+   *
+   * It used to multiply in a different order - `round(qty * price * 100)`
+   * against the API's `qty * round(price * 100)` - and the API additionally
+   * rounded the quantity to a whole number. So this preview and the saved
+   * document disagreed on any fractional quantity: 0.5 at 480.00 previewed as
+   * 240.00 and was stored as 480.00. Sharing `documentTotals` is the fix;
+   * recomputing something equivalent here would just drift again.
+   */
   const totals = useMemo(() => {
-    const subtotal = lines.reduce((sum, l) => sum + Math.round((Number(l.quantity) || 0) * (Number(l.unitPrice) || 0) * 100), 0);
-    const disc = Math.round((Number(discount) || 0) * 100);
-    const taxc = Math.round((Number(tax) || 0) * 100);
-    return { subtotal, disc, taxc, total: Math.max(0, subtotal - disc + taxc) };
+    const result = documentTotals({
+      lineItems: lines.map((l) => ({
+        quantity: l.quantity,
+        unitPriceCents: priceToCents(l.unitPrice),
+      })),
+      discountCents: priceToCents(discount),
+      taxCents: priceToCents(tax),
+    });
+    return {
+      subtotal: result.subtotalCents,
+      disc: result.discountCents,
+      taxc: result.taxCents,
+      total: result.totalCents,
+    };
   }, [lines, discount, tax]);
 
   function resetForm() {
@@ -138,7 +159,7 @@ export default function Invoices({ role }: { role: "chief" | "pm" }) {
       } else {
         const items = lines
           .filter((l) => l.description.trim())
-          .map((l) => ({ description: l.description.trim(), sku: l.sku.trim() || undefined, quantity: Number(l.quantity) || 0, unitPriceCents: Math.round((Number(l.unitPrice) || 0) * 100) }));
+          .map((l) => ({ description: l.description.trim(), sku: l.sku.trim() || undefined, quantity: normalizeQuantity(l.quantity), unitPriceCents: priceToCents(l.unitPrice) }));
         if (items.length === 0) { setFormError(t("invoices.form.needLine")); setSaving(false); return; }
         await createInvoice({
           clientId: clientId || undefined, title: title.trim() || undefined, currency,
@@ -372,7 +393,7 @@ export default function Invoices({ role }: { role: "chief" | "pm" }) {
                     <div key={i} className="grid grid-cols-[1fr_70px_90px_auto] items-center gap-2">
                       <Input aria-label={t("invoices.form.description")} placeholder={t("invoices.form.description")} value={line.description}
                         onChange={(e) => setLines((ls) => ls.map((l, j) => j === i ? { ...l, description: e.target.value } : l))} />
-                      <Input aria-label={t("invoices.form.qty")} type="number" min="0" placeholder="1" value={line.quantity}
+                      <Input aria-label={t("invoices.form.qty")} type="number" min="0" step="0.001" placeholder="1" value={line.quantity}
                         onChange={(e) => setLines((ls) => ls.map((l, j) => j === i ? { ...l, quantity: e.target.value } : l))} />
                       <Input aria-label={t("invoices.form.unitPrice")} type="number" min="0" step="0.01" placeholder="0.00" value={line.unitPrice}
                         onChange={(e) => setLines((ls) => ls.map((l, j) => j === i ? { ...l, unitPrice: e.target.value } : l))} />

@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@workspace/db";
+import { documentTotals, lineTotalCents, normalizeCents, normalizeQuantity } from "@workspace/api-zod";
 import { requireAuth, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
 import { deliverNotification } from "../lib/notifications";
@@ -57,21 +58,24 @@ function normalizeLineItems(raw: unknown): NormalizedLineItem[] {
   if (!Array.isArray(raw)) return [];
   return raw.slice(0, 200).map((entry) => {
     const item = (entry ?? {}) as LineItemInput;
-    const quantity = Math.max(0, toInt(item.quantity));
-    const unitPriceCents = Math.max(0, toInt(item.unitPriceCents));
+    // See quotes.ts: fractional quantities are kept, and the line total comes
+    // from the shared helper the staff form also uses.
+    const quantity = normalizeQuantity(item.quantity);
+    const unitPriceCents = normalizeCents(item.unitPriceCents);
     return {
       description: String(item.description ?? "").slice(0, 300),
       sku: item.sku ? String(item.sku).slice(0, 80) : undefined,
-      quantity, unitPriceCents, totalCents: quantity * unitPriceCents,
+      quantity, unitPriceCents, totalCents: lineTotalCents(quantity, unitPriceCents),
       kind: item.kind ? String(item.kind).slice(0, 40) : undefined,
     };
   }).filter((item) => item.description.length > 0);
 }
 
 function computeTotals(items: NormalizedLineItem[], discountCents: number, taxCents: number) {
-  const subtotalCents = items.reduce((sum, item) => sum + item.totalCents, 0);
-  const totalCents = Math.max(0, subtotalCents - discountCents + taxCents);
-  return { subtotalCents, totalCents };
+  // Delegated so the document total is computed by the same code as the
+  // preview, including the int32 ceiling the columns impose.
+  const totals = documentTotals({ lineItems: items, discountCents, taxCents });
+  return { subtotalCents: totals.subtotalCents, totalCents: totals.totalCents };
 }
 
 function staffScope(auth: AuthContext): SQL {
