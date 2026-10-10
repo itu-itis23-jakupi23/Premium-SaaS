@@ -89,3 +89,21 @@ export function getPortalForbiddenMessage(role: UserRole) {
   }
   return 'This account is not available in this portal.';
 }
+
+/**
+ * Where an alias route should send the browser, keeping its query string.
+ *
+ * `/client/approvals` and `/chief/approvals` are aliases that redirect to the
+ * corresponding workspace page, and those pages now read `?project=` to decide
+ * which stand to open. A redirect that dropped the search turned a deep link
+ * into a link to whichever project the server called current - the bug this
+ * exists to prevent.
+ *
+ * A target that carries its own query wins: it was written deliberately, and
+ * merging two query strings would need a conflict rule nothing here wants.
+ */
+export function redirectTargetWithSearch(href: string, search: string): string {
+  if (!search || search === "?") return href;
+  if (href.includes("?")) return href;
+  return `${href}${search.startsWith("?") ? search : `?${search}`}`;
+}

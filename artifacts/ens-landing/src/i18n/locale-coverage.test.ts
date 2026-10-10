@@ -25,9 +25,39 @@ const LOCALES = ["de", "fr", "es", "it", "pt", "nl", "tr", "zh", "ja", "ar"] as 
  *  names the marketing surface explicitly, which is the highest-impact gap. */
 const PUBLIC_PREFIXES = ["home.", "common.", "nav."];
 
-function load(code: string): Record<string, unknown> {
-  const url = new URL(`./locales/${code}.json`, import.meta.url);
+function readLocale(name: string): Record<string, unknown> {
+  const url = new URL(`./locales/${name}.json`, import.meta.url);
   return JSON.parse(readFileSync(fileURLToPath(url), "utf8")) as Record<string, unknown>;
+}
+
+function deepMerge(
+  base: Record<string, unknown>,
+  extra: Record<string, unknown>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...base };
+  for (const [key, value] of Object.entries(extra)) {
+    const existing = out[key];
+    out[key] =
+      existing && typeof existing === "object" && !Array.isArray(existing) &&
+      value && typeof value === "object" && !Array.isArray(value)
+        ? deepMerge(existing as Record<string, unknown>, value as Record<string, unknown>)
+        : value;
+  }
+  return out;
+}
+
+/**
+ * English lives in three files: en.json ships with the first load, en.app.json
+ * arrives with any authenticated page and en.staff.json with the chief and PM
+ * pages (CS-14). Together they are the catalogue,
+ * so every check here reads the pair as one - splitting it for weight must not
+ * create a blind spot where a key is "missing" only because it moved.
+ */
+function load(code: string): Record<string, unknown> {
+  if (code === "en") {
+    return [readLocale("en.app"), readLocale("en.staff")].reduce(deepMerge, readLocale("en"));
+  }
+  return readLocale(code);
 }
 
 function flatten(value: unknown, prefix = ""): string[] {
@@ -53,6 +83,16 @@ function read(path: string, root: unknown): unknown {
   }, root);
 }
 
+function placeholderNames(value: unknown): string[] {
+  return typeof value === "string"
+    ? [...value.matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((match) => match[1]).sort()
+    : [];
+}
+
+// Read the English catalog once. Loading and merging its three JSON files for
+// every placeholder made this guard depend on disk speed and machine load.
+const englishPlaceholders = english.map((key) => ({ key, names: placeholderNames(read(key, en)) }));
+
 describe("locale coverage", () => {
   it.each(LOCALES)("%s translates every key in en.json", (code) => {
     // Full parity, not just the public surface. The authenticated dashboards
@@ -77,31 +117,13 @@ describe("locale coverage", () => {
 
   it.each(LOCALES)("%s keeps interpolation placeholders intact", (code) => {
     const locale = load(code);
-    const read = (path: string): unknown =>
-      path.split(".").reduce<unknown>((node, part) => {
-        if (node === null || typeof node !== "object") return undefined;
-        return (node as Record<string, unknown>)[part];
-      }, locale);
 
     // A translation that drops {{percent}} or ${{amount}} renders a broken
-    // string at runtime rather than failing loudly, so assert on it here.
-    const withPlaceholders = english.filter((key) => {
-      const value = read(key);
-      return typeof value === "string" && /\{\{\s*\w+\s*\}\}/.test(value);
-    });
-
-    for (const key of withPlaceholders) {
-      const source = String(read(key));
-      const names = [...source.matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((m) => m[1]).sort();
-      const englishSource = String(
-        key.split(".").reduce<unknown>((node, part) => {
-          if (node === null || typeof node !== "object") return undefined;
-          return (node as Record<string, unknown>)[part];
-        }, load("en")),
-      );
-      const englishNames = [...englishSource.matchAll(/\{\{\s*(\w+)\s*\}\}/g)]
-        .map((m) => m[1])
-        .sort();
+    // string at runtime rather than failing loudly. Check source placeholders
+    // even when the translation dropped all of them, and catch added ones too.
+    for (const { key, names: englishNames } of englishPlaceholders) {
+      const names = placeholderNames(read(key, locale));
+      if (names.length === 0 && englishNames.length === 0) continue;
       expect(names, `${code} ${key} placeholder mismatch`).toEqual(englishNames);
     }
   });

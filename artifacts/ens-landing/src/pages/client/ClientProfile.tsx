@@ -24,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getAccountSettings,
+  type AccountSettings,
   saveAccountAvatar,
   saveAccountSettings,
   updateAccountPassword,
@@ -45,6 +46,12 @@ export default function ClientProfile() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // The form is populated by a request, so until it lands the fields hold
+  // placeholder values rather than the account's own.
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  // True when an agency client record stands behind this account, which is what
+  // makes the company name theirs to change rather than ours.
+  const [companyManagedByAgency, setCompanyManagedByAgency] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarTone, setAvatarTone] = useState("green");
   const { toast } = useToast();
@@ -72,9 +79,8 @@ export default function ClientProfile() {
   });
 
   const companySchema = z.object({
-    companyName: z
-      .string()
-      .min(2, t("client.profile.validation.companyNameRequired")),
+    // Not validated: it is displayed from the agency's record and never sent.
+    companyName: z.string(),
     industry: z.string().optional(),
     website: z
       .string()
@@ -95,9 +101,9 @@ export default function ClientProfile() {
   const companyForm = useForm<z.infer<typeof companySchema>>({
     resolver: zodResolver(companySchema),
     defaultValues: {
-      companyName: "TechCorp Industries",
-      industry: "Technology",
-      website: "https://techcorp.com",
+      companyName: "",
+      industry: "",
+      website: "",
     },
   });
 
@@ -110,15 +116,29 @@ export default function ClientProfile() {
     getAccountSettings()
       .then((settings) => {
         if (!mounted) return;
-        profileForm.reset({
-          name: settings.profile.name || user?.name || "Client",
-          email:
-            settings.profile.email || user?.email || "",
-          phone: settings.profile.phone,
-        });
+        // Never overwrite something the user has already typed. The fields are
+        // disabled while this is in flight, but a slow response, a browser
+        // autofill or a restored form can still beat it - and a reset() landing
+        // on top of a half-typed name silently discards their work.
+        if (!profileForm.formState.isDirty) {
+          profileForm.reset({
+            name: settings.profile.name || user?.name || "Client",
+            email:
+              settings.profile.email || user?.email || "",
+            phone: settings.profile.phone,
+          });
+        }
         setAvatarUrl(settings.profile.avatarUrl);
         setAvatarTone(settings.profile.avatarTone || "green");
         setNotifications(settings.notifications);
+        if (!companyForm.formState.isDirty) {
+          companyForm.reset({
+            companyName: settings.company.name,
+            industry: settings.company.industry,
+            website: settings.company.website,
+          });
+        }
+        setCompanyManagedByAgency(settings.company.managedByAgency);
       })
       .catch((error: unknown) => {
         if (!mounted) return;
@@ -127,6 +147,9 @@ export default function ClientProfile() {
             ? error.message
             : t("client.profile.toast.profileLoadError"),
         );
+      })
+      .finally(() => {
+        if (mounted) setSettingsLoading(false);
       });
 
     return () => {
@@ -162,9 +185,30 @@ export default function ClientProfile() {
     }
   }
 
-  function saveCompany(values: z.infer<typeof companySchema>) {
-    companyForm.reset(values);
-    showToast(t("client.profile.toast.companySaved"));
+  async function saveCompany(values: z.infer<typeof companySchema>) {
+    try {
+      // Only the two fields this account owns are sent. The company name comes
+      // from the agency's client record and the server ignores it on write;
+      // sending it would imply an edit that is not going to happen.
+      const settings = await saveAccountSettings({
+        company: {
+          industry: values.industry ?? "",
+          website: values.website ?? "",
+        } as AccountSettings["company"],
+      });
+      companyForm.reset({
+        companyName: settings.company.name,
+        industry: settings.company.industry,
+        website: settings.company.website,
+      });
+      showToast(t("client.profile.toast.companySaved"));
+    } catch (error) {
+      showToast(
+        error instanceof Error
+          ? error.message
+          : t("client.profile.toast.companyError"),
+      );
+    }
   }
 
   async function setAvatarImageFromFile(file: File | null) {
@@ -411,7 +455,7 @@ export default function ClientProfile() {
                             {t("client.profile.field.name")}
                           </FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} disabled={settingsLoading} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -426,7 +470,7 @@ export default function ClientProfile() {
                             {t("client.profile.field.email")}
                           </FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} disabled={settingsLoading} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -441,14 +485,14 @@ export default function ClientProfile() {
                             {t("client.profile.field.phone")}
                           </FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} disabled={settingsLoading} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                     <div className="md:col-span-2 pt-4">
-                      <Button type="submit">
+                      <Button type="submit" disabled={settingsLoading}>
                         {t("client.profile.btn.saveChanges")}
                       </Button>
                     </div>
@@ -484,8 +528,13 @@ export default function ClientProfile() {
                             {t("client.profile.field.companyName")}
                           </FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} disabled readOnly />
                           </FormControl>
+                          {companyManagedByAgency && (
+                            <p className="text-xs text-muted-foreground">
+                              {t("client.profile.company.agencyOwned")}
+                            </p>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -500,7 +549,7 @@ export default function ClientProfile() {
                               {t("client.profile.field.industry")}
                             </FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} disabled={settingsLoading} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -515,7 +564,7 @@ export default function ClientProfile() {
                               {t("client.profile.field.website")}
                             </FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} disabled={settingsLoading} placeholder="https://" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -523,7 +572,7 @@ export default function ClientProfile() {
                       />
                     </div>
                     <div className="pt-4">
-                      <Button type="submit">
+                      <Button type="submit" disabled={settingsLoading}>
                         {t("client.profile.btn.updateCompany")}
                       </Button>
                     </div>

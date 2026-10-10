@@ -133,6 +133,16 @@ function splitVendorChunks(id: string) {
     return "vendor-react";
   }
 
+  // `vendor-radix` is in the marketing entry's initial graph, because the
+  // shell and the landing page use Radix. Anything only a lazy portal page
+  // reaches therefore has to be kept out of it, or an anonymous visitor
+  // downloads a confirmation dialog from the client portal before reading a
+  // word. Its own chunk name keeps it shareable between lazy pages while
+  // staying off the critical path.
+  if (normalizedId.includes("/@radix-ui/react-alert-dialog/")) {
+    return "vendor-radix-alert";
+  }
+
   if (normalizedId.includes("/@radix-ui/")) {
     return "vendor-radix";
   }

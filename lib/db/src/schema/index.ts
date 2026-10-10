@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -8,6 +9,7 @@ import {
   pgEnum,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -793,6 +795,30 @@ export const invoices = pgTable(
 );
 
 // ── Quotes / proposals ───────────────────────────────────────────────────────
+export const invoicePaymentRequests = pgTable(
+  "invoice_payment_requests",
+  {
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    actorUserId: uuid("actor_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    requestKey: varchar("request_key", { length: 128 }).notNull(),
+    invoiceId: uuid("invoice_id").notNull().references(() => invoices.id, { onDelete: "cascade" }),
+    operation: varchar("operation", { length: 20 }).notNull(),
+    requestHash: varchar("request_hash", { length: 64 }).notNull(),
+    responseStatus: smallint("response_status").notNull(),
+    responseBody: jsonb("response_body").$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    pk: primaryKey({ name: "invoice_payment_requests_pk", columns: [table.organizationId, table.actorUserId, table.requestKey] }),
+    invoiceIdx: index("invoice_payment_requests_invoice_idx").on(table.invoiceId),
+    actorIdx: index("invoice_payment_requests_actor_idx").on(table.actorUserId),
+    keyCheck: check("invoice_payment_requests_key_chk", sql`${table.requestKey} ~ '^[A-Za-z0-9][A-Za-z0-9_-]{7,127}$'`),
+    operationCheck: check("invoice_payment_requests_operation_chk", sql`${table.operation} in ('record-payment', 'mark-paid')`),
+    hashCheck: check("invoice_payment_requests_hash_chk", sql`${table.requestHash} ~ '^[0-9a-f]{64}$'`),
+    statusCheck: check("invoice_payment_requests_status_chk", sql`${table.responseStatus} in (200, 201)`),
+  }),
+);
+
 export const quoteStatusEnum = pgEnum("quote_status", [
   "draft",
   "sent",

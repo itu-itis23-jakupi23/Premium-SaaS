@@ -4,6 +4,8 @@ import { db } from "@workspace/db";
 import { requireAuth, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
 import { deliverNotification } from "../lib/notifications";
+import { dateLabel, moneyLabel, sendInvoiceIssuedEmail, sendPaymentReceivedEmail } from "../lib/email";
+import { lockPaymentRequest, parsePaymentRequest, replayPaymentRequest, savePaymentResult } from "../lib/invoice-payment-idempotency";
 
 /**
  * Client invoicing workflow (BIZ-02).
@@ -21,8 +23,29 @@ router.use(requireAuth, requireTenant);
 interface LineItemInput { description: string; sku?: string; quantity: number; unitPriceCents: number; kind?: string; }
 interface NormalizedLineItem { description: string; sku?: string; quantity: number; unitPriceCents: number; totalCents: number; kind?: string; }
 
-async function queryRows<T>(statement: SQL): Promise<T[]> {
-  const result = await db.execute(statement);
+type InvoiceExecutor = Pick<typeof db, "execute">;
+
+function invoiceFailure(status: number, code: string, message: string) {
+  return { status, body: { error: { code, message } } };
+}
+
+function paymentAccountChanged(auth: AuthContext, actorId: string | undefined, organizationSlug: string | undefined) {
+  return (actorId !== undefined && actorId !== auth.user.id)
+    || (organizationSlug !== undefined && organizationSlug !== auth.organization.slug);
+}
+
+// Financial changes and their audit record commit together. An audit failure
+// must roll back the ledger entry rather than report an untracked payment.
+async function recordPaymentEvent(executor: InvoiceExecutor, auth: AuthContext, projectId: string | null, type: string, message: string) {
+  await executor.execute(sql`
+    insert into activity_events (organization_id, actor_user_id, project_id, event_type, message, metadata)
+    values (${auth.organization.id}::uuid, ${auth.user.id}::uuid,
+      ${projectId ? sql`${projectId}::uuid` : sql`null`}, ${type}, ${message}, '{}'::jsonb)
+  `);
+}
+
+async function queryRows<T>(statement: SQL, executor: InvoiceExecutor = db): Promise<T[]> {
+  const result = await executor.execute(statement);
   return (result as unknown as { rows: T[] }).rows;
 }
 
@@ -160,7 +183,11 @@ router.get("/platform/invoices/:invoiceId", async (req, res) => {
   `);
   const meta = rows[0];
   if (!meta) { res.status(404).json({ error: { code: "invoice_not_found", message: "Invoice not found." } }); return; }
-  if (!isStaff(auth)) {
+  if (isStaff(auth)) {
+    if (!(await loadPayableInvoice(auth, String(req.params.invoiceId)))) {
+      res.status(404).json({ error: { code: "invoice_not_found", message: "Invoice not found." } }); return;
+    }
+  } else {
     const clientId = await callerClientId(auth);
     if (!clientId || meta.clientId !== clientId || meta.status === "draft") {
       res.status(404).json({ error: { code: "invoice_not_found", message: "Invoice not found." } }); return;
@@ -276,8 +303,9 @@ router.post("/platform/invoices", async (req, res) => {
 router.post("/platform/invoices/:invoiceId/send", async (req, res) => {
   const auth = req.auth!;
   if (!isStaff(auth)) { res.status(403).json({ error: { code: "forbidden", message: "Only staff can issue invoices." } }); return; }
-  const rows = await queryRows<{ status: string; clientId: string | null; projectId: string | null; invoiceNumber: string; dueAt: string | null }>(sql`
-    select i.status, i.client_id::text as "clientId", i.project_id::text as "projectId", i.invoice_number as "invoiceNumber", i.due_at as "dueAt"
+  const rows = await queryRows<{ status: string; clientId: string | null; projectId: string | null; invoiceNumber: string; dueAt: string | null; totalCents: number; currency: string }>(sql`
+    select i.status, i.client_id::text as "clientId", i.project_id::text as "projectId", i.invoice_number as "invoiceNumber", i.due_at as "dueAt",
+      i.total_cents as "totalCents", i.currency
     from invoices i where i.id = ${req.params.invoiceId}::uuid and i.organization_id = ${auth.organization.id}::uuid and i.deleted_at is null and ${staffScope(auth)} limit 1
   `);
   const inv = rows[0];
@@ -285,20 +313,44 @@ router.post("/platform/invoices/:invoiceId/send", async (req, res) => {
   if (!inv.clientId) { res.status(400).json({ error: { code: "no_client", message: "Attach a client before issuing." } }); return; }
   if (inv.status !== "draft") { res.status(409).json({ error: { code: "already_issued", message: "This invoice has already been issued." } }); return; }
 
-  await db.execute(sql`
+  const issued = await queryRows<{ id: string }>(sql`
     update invoices set status = 'open', issued_at = now(),
       due_at = coalesce(due_at, now() + interval '30 days'), updated_at = now()
-    where id = ${req.params.invoiceId}::uuid
+    where id = ${req.params.invoiceId}::uuid and status = 'draft' and deleted_at is null
+    returning id::text
   `);
+  if (!issued[0]) { res.status(409).json({ error: { code: "already_issued", message: "This invoice changed before it could be issued. Refresh and try again." } }); return; }
   await logEvent(auth.organization.id, auth.user.id, inv.projectId, "invoice_issued", `issued invoice ${inv.invoiceNumber}`);
 
-  const clientUser = await queryRows<{ userId: string }>(sql`
-    select u.id::text as "userId" from clients c join users u on lower(u.email) = lower(c.contact_email)
-    where c.id = ${inv.clientId}::uuid and u.deleted_at is null limit 1
+  const clientUser = await queryRows<{ userId: string; email: string; name: string }>(sql`
+    select u.id::text as "userId", u.email, u.name from clients c join users u on lower(u.email) = lower(c.contact_email)
+    where c.id = ${inv.clientId}::uuid and c.organization_id = ${auth.organization.id}::uuid
+      and c.deleted_at is null and u.deleted_at is null and u.disabled_at is null
+      and exists (select 1 from memberships m where m.user_id = u.id
+        and m.organization_id = c.organization_id and m.status = 'active') limit 1
   `);
   if (clientUser[0]) {
     await deliverNotification(auth.organization.id, clientUser[0].userId, "New invoice",
       `Invoice ${inv.invoiceNumber} is ready. View it in your portal.`, "/client/invoices", "system").catch(() => undefined);
+
+    /**
+     * Emailed as well as notified in-app. The in-app notification only reaches
+     * a client who happens to log in; an invoice they are never told about is
+     * an invoice that does not get paid. The due date is read back from the
+     * row because the update above defaults it to 30 days when it was unset.
+     */
+    const issuedDueAt = await queryRows<{ dueAt: string | null }>(sql`
+      select due_at::text as "dueAt" from invoices where id = ${req.params.invoiceId}::uuid
+    `);
+    void sendInvoiceIssuedEmail({
+      to: clientUser[0].email,
+      name: clientUser[0].name,
+      invoiceNumber: inv.invoiceNumber,
+      totalLabel: moneyLabel(inv.totalCents, inv.currency),
+      dueAt: dateLabel(issuedDueAt[0]?.dueAt ?? inv.dueAt),
+    }).catch((reason: unknown) => {
+      console.error("[invoices] invoice-issued email failed to dispatch:", reason);
+    });
   }
   const full = await queryRows(sql`select ${INVOICE_COLUMNS} from invoices i where i.id = ${req.params.invoiceId}::uuid`);
   res.json({ invoice: full[0] });
@@ -308,34 +360,262 @@ router.post("/platform/invoices/:invoiceId/send", async (req, res) => {
 router.post("/platform/invoices/:invoiceId/mark-paid", async (req, res) => {
   const auth = req.auth!;
   if (!isStaff(auth)) { res.status(403).json({ error: { code: "forbidden", message: "Only staff can record payment." } }); return; }
-  const rows = await queryRows<{ status: string; totalCents: number; projectId: string | null; invoiceNumber: string }>(sql`
-    select i.status, i.total_cents as "totalCents", i.project_id::text as "projectId", i.invoice_number as "invoiceNumber"
-    from invoices i where i.id = ${req.params.invoiceId}::uuid and i.organization_id = ${auth.organization.id}::uuid and i.deleted_at is null and ${staffScope(auth)} limit 1
+  // A stale tab can retain a pending request while another tab changes shared
+  // cookies. Assert its original account before entering the actor-key namespace.
+  if (paymentAccountChanged(auth, req.get("X-Payment-Actor-Id"), req.get("X-Payment-Organization"))) {
+    res.status(409).json({ error: { code: "payment_account_changed", message: "The signed-in account changed. Sign in to the original account to recover this payment." } }); return;
+  }
+  const invoiceId = String(req.params.invoiceId).toLowerCase();
+  const expectedAmountCents = req.body?.expectedAmountCents ?? null;
+  if (expectedAmountCents !== null && (!Number.isSafeInteger(expectedAmountCents) || expectedAmountCents < 0 || expectedAmountCents > 2_147_483_647)) {
+    res.status(400).json({ error: { code: "invalid_amount", message: "Expected balance must be an integer number of cents." } }); return;
+  }
+  const parsed = parsePaymentRequest(req.get("Idempotency-Key"), "mark-paid", { expectedAmountCents });
+  if (!parsed.valid) { res.status(400).json({ error: { code: "invalid_idempotency_key", message: "Payment request keys must contain 8 to 128 letters, numbers, underscores, or hyphens." } }); return; }
+  const result = await db.transaction(async (tx) => {
+    await lockPaymentRequest(tx, auth, parsed.request);
+    const inv = await loadPayableInvoice(auth, invoiceId, tx, true);
+    if (!inv) return invoiceFailure(404, "invoice_not_found", "Invoice not found.");
+    const replay = await replayPaymentRequest(tx, auth, invoiceId, parsed.request);
+    if (replay) return replay;
+    if (inv.status !== "open") return invoiceFailure(409, "not_payable", "Only issued (open) invoices can be marked paid.");
+    const outstanding = inv.totalCents - inv.amountPaidCents;
+    if (expectedAmountCents !== null && outstanding !== expectedAmountCents) {
+      return invoiceFailure(409, "balance_changed", "The outstanding balance changed. Refresh the invoice and review the payment again.");
+    }
+    if (outstanding > 0) {
+      await tx.execute(sql`
+        insert into invoice_payments (organization_id, invoice_id, amount_cents, method, note, recorded_by_user_id)
+        values (${auth.organization.id}::uuid, ${invoiceId}::uuid, ${outstanding}, 'manual', 'Balance settled', ${auth.user.id}::uuid)
+      `);
+    }
+    await syncInvoicePayment(invoiceId, tx);
+    await recordPaymentEvent(tx, auth, inv.projectId, "invoice_paid", `recorded payment for invoice ${inv.invoiceNumber}`);
+    const full = await queryRows(sql`select ${INVOICE_COLUMNS} from invoices i where i.id = ${invoiceId}::uuid`, tx);
+    const response = { status: 200, body: { invoice: full[0] } };
+    await savePaymentResult(tx, auth, invoiceId, parsed.request, response);
+    return response;
+  });
+  res.status(result.status).json(result.body);
+});
+
+
+/**
+ * Recompute invoices.amount_paid_cents from the invoice_payments ledger and move
+ * the invoice to `paid` once the balance is covered.
+ *
+ * Every payment path funnels through here rather than adjusting the column in
+ * place, so the cached total and the ledger cannot disagree - a partial payment
+ * followed by a mark-paid would otherwise double-count.
+ */
+async function syncInvoicePayment(invoiceId: string, executor: InvoiceExecutor) {
+  await executor.execute(sql`
+    update invoices i set
+      amount_paid_cents = coalesce(paid.total, 0),
+      status = case
+        when i.status = 'open' and coalesce(paid.total, 0) >= i.total_cents then 'open'::invoice_status
+        else i.status
+      end,
+      updated_at = now()
+    from (select coalesce(sum(amount_cents), 0)::int as total from invoice_payments where invoice_id = ${invoiceId}::uuid) paid
+    where i.id = ${invoiceId}::uuid
   `);
-  const inv = rows[0];
-  if (!inv) { res.status(404).json({ error: { code: "invoice_not_found", message: "Invoice not found." } }); return; }
-  if (inv.status !== "open") { res.status(409).json({ error: { code: "not_payable", message: "Only issued (open) invoices can be marked paid." } }); return; }
-  await db.execute(sql`
-    update invoices set status = 'paid', paid_at = now(), amount_paid_cents = total_cents, updated_at = now()
-    where id = ${req.params.invoiceId}::uuid
+  // Settle in a second statement so `paid_at` is only ever stamped on the
+  // transition, never refreshed by a later recompute.
+  await executor.execute(sql`
+    update invoices set status = 'paid', paid_at = coalesce(paid_at, now()), updated_at = now()
+    where id = ${invoiceId}::uuid and status = 'open' and amount_paid_cents >= total_cents
   `);
-  await logEvent(auth.organization.id, auth.user.id, inv.projectId, "invoice_paid", `recorded payment for invoice ${inv.invoiceNumber}`);
-  const full = await queryRows(sql`select ${INVOICE_COLUMNS} from invoices i where i.id = ${req.params.invoiceId}::uuid`);
-  res.json({ invoice: full[0] });
+}
+
+interface InvoicePaymentRow {
+  id: string;
+  amountCents: number;
+  method: string;
+  reference: string | null;
+  note: string | null;
+  recordedBy: string | null;
+  createdAt: string;
+}
+
+const PAYMENT_COLUMNS = sql`
+  p.id::text as "id", p.amount_cents as "amountCents", p.method, p.reference, p.note,
+  u.name as "recordedBy", p.created_at as "createdAt"
+`;
+
+/**
+ * The payment ledger for one invoice, scoped to the caller's organization.
+ *
+ * Both callers check visibility first; the filter is here anyway so the query
+ * cannot be made unsafe by being called from somewhere new.
+ */
+async function listInvoicePayments(auth: AuthContext, invoiceId: string, executor: InvoiceExecutor = db) {
+  return queryRows<InvoicePaymentRow>(sql`
+    select ${PAYMENT_COLUMNS} from invoice_payments p
+    left join users u on u.id = p.recorded_by_user_id
+    where p.invoice_id = ${invoiceId}::uuid
+      and p.organization_id = ${auth.organization.id}::uuid
+    order by p.created_at asc, p.id asc
+  `, executor);
+}
+
+/** Staff-visible invoice with the balance, or null. */
+async function loadPayableInvoice(auth: AuthContext, invoiceId: string, executor: InvoiceExecutor = db, lock = false) {
+  const rows = await queryRows<{ status: string; totalCents: number; amountPaidCents: number; projectId: string | null; invoiceNumber: string; currency: string }>(sql`
+    select i.status, i.total_cents as "totalCents", i.amount_paid_cents as "amountPaidCents",
+           i.project_id::text as "projectId", i.invoice_number as "invoiceNumber", i.currency
+    from invoices i
+    where i.id = ${invoiceId}::uuid and i.organization_id = ${auth.organization.id}::uuid
+      and i.deleted_at is null and ${staffScope(auth)}
+    limit 1 ${lock ? sql`for update of i` : sql``}
+  `, executor);
+  return rows[0] ?? null;
+}
+
+// ── Record a payment (staff) — supports deposits and instalments ─────────────
+router.post("/platform/invoices/:invoiceId/payments", async (req, res) => {
+  const auth = req.auth!;
+  if (!isStaff(auth)) { res.status(403).json({ error: { code: "forbidden", message: "Only staff can record payment." } }); return; }
+  if (paymentAccountChanged(auth, req.get("X-Payment-Actor-Id"), req.get("X-Payment-Organization"))) {
+    res.status(409).json({ error: { code: "payment_account_changed", message: "The signed-in account changed. Sign in to the original account to recover this payment." } }); return;
+  }
+  const invoiceId = String(req.params.invoiceId).toLowerCase();
+  const amountCents = req.body?.amountCents;
+  // Money must be an integer number of cents; rounding or coercion can record
+  // a different amount from the one the caller intended.
+  if (!Number.isSafeInteger(amountCents) || amountCents <= 0 || amountCents > 2_147_483_647) {
+    res.status(400).json({ error: { code: "invalid_amount", message: "Payment amount must be a positive integer number of cents." } });
+    return;
+  }
+  const method = String(req.body?.method ?? "manual").slice(0, 40) || "manual";
+  const reference = req.body?.reference ? String(req.body.reference).slice(0, 200) : null;
+  const note = req.body?.note ? String(req.body.note).slice(0, 1000) : null;
+  const parsed = parsePaymentRequest(req.get("Idempotency-Key"), "record-payment", { amountCents, method, reference, note });
+  if (!parsed.valid) { res.status(400).json({ error: { code: "invalid_idempotency_key", message: "Payment request keys must contain 8 to 128 letters, numbers, underscores, or hyphens." } }); return; }
+  /**
+   * What to put in a receipt, filled in only on the path that actually inserts.
+   *
+   * Read after the transaction resolves rather than inside it, for two reasons:
+   * a rollback must not send a receipt for a payment that was never recorded,
+   * and a replayed idempotent request returns the stored response without
+   * inserting anything - sending there would mail the client a fresh receipt
+   * for the same payment every time they retried.
+   */
+  let receipt: { invoiceId: string; invoiceNumber: string; amountCents: number; currency: string } | null = null;
+  const result = await db.transaction(async (tx) => {
+    await lockPaymentRequest(tx, auth, parsed.request);
+    // Lock before reading the balance. All payment and void paths use this
+    // same row lock, including requests handled by other server processes.
+    const inv = await loadPayableInvoice(auth, invoiceId, tx, true);
+    if (!inv) return invoiceFailure(404, "invoice_not_found", "Invoice not found.");
+    const replay = await replayPaymentRequest(tx, auth, invoiceId, parsed.request);
+    if (replay) return replay;
+    if (inv.status !== "open") return invoiceFailure(409, "not_payable", "Only issued (open) invoices can take a payment.");
+    const outstanding = inv.totalCents - inv.amountPaidCents;
+    if (amountCents > outstanding) return invoiceFailure(409, "amount_exceeds_balance", `Payment exceeds the outstanding balance of ${outstanding} cents.`);
+    await tx.execute(sql`
+      insert into invoice_payments (organization_id, invoice_id, amount_cents, method, reference, note, recorded_by_user_id)
+      values (${auth.organization.id}::uuid, ${invoiceId}::uuid, ${amountCents}, ${method},
+              ${reference}, ${note}, ${auth.user.id}::uuid)
+    `);
+    await syncInvoicePayment(invoiceId, tx);
+    const full = await queryRows<{ status: string }>(sql`select ${INVOICE_COLUMNS} from invoices i where i.id = ${invoiceId}::uuid`, tx);
+    await recordPaymentEvent(tx, auth, inv.projectId,
+      full[0]?.status === "paid" ? "invoice_paid" : "invoice_payment_recorded",
+      `recorded ${amountCents} cents against invoice ${inv.invoiceNumber}`);
+    const response = { status: 201, body: { invoice: full[0], payments: await listInvoicePayments(auth, invoiceId, tx) } };
+    await savePaymentResult(tx, auth, invoiceId, parsed.request, response);
+    receipt = { invoiceId, invoiceNumber: inv.invoiceNumber, amountCents, currency: inv.currency };
+    return response;
+  });
+  res.status(result.status).json(result.body);
+  if (receipt) void sendPaymentReceipt(auth, receipt);
+});
+
+/**
+ * Tell the client their payment landed.
+ *
+ * Separate from the route because it runs after the response has been sent:
+ * the payment is already committed, so a slow or failing mail provider must
+ * not affect the status the caller sees. Everything it needs is passed in,
+ * since the transaction it came from has closed.
+ */
+async function sendPaymentReceipt(
+  auth: AuthContext,
+  receipt: { invoiceId: string; invoiceNumber: string; amountCents: number; currency: string },
+) {
+  try {
+    const rows = await queryRows<{ email: string; name: string; totalCents: number; amountPaidCents: number }>(sql`
+      select u.email, u.name, i.total_cents as "totalCents", i.amount_paid_cents as "amountPaidCents"
+      from invoices i
+      join clients c on c.id = i.client_id
+      join users u on lower(u.email) = lower(c.contact_email)
+      where i.id = ${receipt.invoiceId}::uuid and i.organization_id = ${auth.organization.id}::uuid
+        and c.deleted_at is null and u.deleted_at is null and u.disabled_at is null
+        and exists (select 1 from memberships m where m.user_id = u.id
+          and m.organization_id = c.organization_id and m.status = 'active')
+      limit 1
+    `);
+    const target = rows[0];
+    if (!target) return;
+    // Taken from the synced cache rather than subtracted here, so the figure in
+    // the email is the one the ledger produced.
+    const remaining = target.totalCents - target.amountPaidCents;
+    await sendPaymentReceivedEmail({
+      to: target.email,
+      name: target.name,
+      invoiceNumber: receipt.invoiceNumber,
+      amountLabel: moneyLabel(receipt.amountCents, receipt.currency),
+      remainingLabel: remaining > 0 ? moneyLabel(remaining, receipt.currency) : null,
+    });
+  } catch (reason) {
+    console.error("[invoices] payment receipt email failed to dispatch:", reason);
+  }
+}
+
+// ── Payment history — staff, or the client the invoice is addressed to ───────
+router.get("/platform/invoices/:invoiceId/payments", async (req, res) => {
+  const auth = req.auth!;
+  const invoiceId = String(req.params.invoiceId);
+  const rows = await queryRows<{ clientId: string | null; status: string }>(sql`
+    select i.client_id::text as "clientId", i.status from invoices i
+    where i.id = ${invoiceId}::uuid and i.organization_id = ${auth.organization.id}::uuid and i.deleted_at is null limit 1
+  `);
+  const meta = rows[0];
+  if (!meta) { res.status(404).json({ error: { code: "invoice_not_found", message: "Invoice not found." } }); return; }
+
+  if (isStaff(auth)) {
+    // A PM only sees invoices inside their own scope, same as the detail route.
+    if (!(await loadPayableInvoice(auth, invoiceId))) {
+      res.status(404).json({ error: { code: "invoice_not_found", message: "Invoice not found." } });
+      return;
+    }
+  } else {
+    const clientId = await callerClientId(auth);
+    if (!clientId || meta.clientId !== clientId || meta.status === "draft") {
+      res.status(404).json({ error: { code: "invoice_not_found", message: "Invoice not found." } });
+      return;
+    }
+  }
+
+  res.json({ payments: await listInvoicePayments(auth, invoiceId) });
 });
 
 // ── Void (staff) ─────────────────────────────────────────────────────────────
 router.post("/platform/invoices/:invoiceId/void", async (req, res) => {
   const auth = req.auth!;
   if (!isStaff(auth)) { res.status(403).json({ error: { code: "forbidden", message: "Only staff can void invoices." } }); return; }
-  const rows = await queryRows<{ status: string }>(sql`
-    select status from invoices i where i.id = ${req.params.invoiceId}::uuid and i.organization_id = ${auth.organization.id}::uuid and i.deleted_at is null and ${staffScope(auth)} limit 1
-  `);
-  if (!rows[0]) { res.status(404).json({ error: { code: "invoice_not_found", message: "Invoice not found." } }); return; }
-  if (rows[0].status === "paid") { res.status(409).json({ error: { code: "already_paid", message: "A paid invoice cannot be voided." } }); return; }
-  await db.execute(sql`update invoices set status = 'void', updated_at = now() where id = ${req.params.invoiceId}::uuid`);
-  const full = await queryRows(sql`select ${INVOICE_COLUMNS} from invoices i where i.id = ${req.params.invoiceId}::uuid`);
-  res.json({ invoice: full[0] });
+  const invoiceId = String(req.params.invoiceId);
+  const result = await db.transaction(async (tx) => {
+    const inv = await loadPayableInvoice(auth, invoiceId, tx, true);
+    if (!inv) return invoiceFailure(404, "invoice_not_found", "Invoice not found.");
+    if (inv.status === "paid") return invoiceFailure(409, "already_paid", "A paid invoice cannot be voided.");
+    if (inv.amountPaidCents > 0) return invoiceFailure(409, "payments_recorded", "An invoice with recorded payments cannot be voided.");
+    await tx.execute(sql`update invoices set status = 'void', updated_at = now() where id = ${invoiceId}::uuid`);
+    const full = await queryRows(sql`select ${INVOICE_COLUMNS} from invoices i where i.id = ${invoiceId}::uuid`, tx);
+    return { status: 200, body: { invoice: full[0] } };
+  });
+  res.status(result.status).json(result.body);
 });
 
 // ── Delete a draft (staff) ───────────────────────────────────────────────────
@@ -347,7 +627,12 @@ router.delete("/platform/invoices/:invoiceId", async (req, res) => {
   `);
   if (!rows[0]) { res.status(404).json({ error: { code: "invoice_not_found", message: "Invoice not found." } }); return; }
   if (rows[0].status !== "draft") { res.status(409).json({ error: { code: "not_deletable", message: "Only draft invoices can be deleted." } }); return; }
-  await db.execute(sql`update invoices set deleted_at = now(), updated_at = now() where id = ${req.params.invoiceId}::uuid`);
+  const deleted = await queryRows<{ id: string }>(sql`
+    update invoices set deleted_at = now(), updated_at = now()
+    where id = ${req.params.invoiceId}::uuid and status = 'draft' and deleted_at is null
+    returning id::text
+  `);
+  if (!deleted[0]) { res.status(409).json({ error: { code: "not_deletable", message: "This invoice changed before it could be deleted. Refresh and try again." } }); return; }
   res.status(204).end();
 });
 

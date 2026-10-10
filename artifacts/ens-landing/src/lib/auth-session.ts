@@ -101,8 +101,13 @@ function refreshSession(apiBaseUrl: string, portal: RequestPortal) {
         "x-ens-portal": portal,
       },
     })
-      .then((response) => response.ok)
-      .catch(() => false)
+      .then((response) => {
+        if (response.ok) return true;
+        if (response.status === 401 || response.status === 403) return false;
+        // A temporary service failure is not proof that the session expired.
+        // Keep the user and their drafts in place so they can retry later.
+        throw new Error(`Session renewal temporarily unavailable (${response.status}). Please try again.`);
+      })
       .finally(() => {
         refreshPromises[portal] = null;
       });

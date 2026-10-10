@@ -141,6 +141,27 @@
       "when": 1784090000000,
       "tag": "0019_quote_booth_version",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1784100000000,
+      "tag": "0020_invoice_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1784110000000,
+      "tag": "0021_workspace_proposals",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1784120000000,
+      "tag": "0022_invoice_payment_requests",
+      "breakpoints": true
     }
   ]
 }

@@ -38,6 +38,60 @@ function localDocumentPath(organizationId: string, documentId: string, ext: stri
   return path.join(documentRootDirectory(), organizationId, `${documentId}${ext}`);
 }
 
+/**
+ * The bucket this deployment is allowed to read from.
+ *
+ * `documents.storage_bucket` is passed to the provider on download, so without
+ * this a row naming another bucket would send the API off to fetch it with
+ * whatever credentials it holds.
+ */
+export function expectedStorageBucket(): string {
+  const provider = process.env.STORAGE_PROVIDER ?? "local";
+  if (provider === "local") return "local";
+  return process.env.STORAGE_BUCKET ?? "";
+}
+
+/**
+ * Whether a stored key is one this organization is allowed to read.
+ *
+ * `store()` always produces `<organizationId>/<documentId><ext>`, so a key that
+ * does not start with the caller's own organization id was not produced for
+ * them. Checked on the way in rather than on the way out, because an existing
+ * row predating this check must still be readable.
+ *
+ * Separators are normalised because `store()` builds the key with `path.join`,
+ * which emits a backslash on Windows and a forward slash elsewhere - the same
+ * key is spelled differently depending on where it was written.
+ */
+export function isStorageKeyOwnedBy(key: string, organizationId: string): boolean {
+  const normalized = key.split("\\").join("/");
+  if (normalized.includes("..") || normalized.startsWith("/") || /^[A-Za-z]:/.test(normalized)) return false;
+  const [prefix, ...rest] = normalized.split("/");
+  if (rest.length !== 1 || !rest[0]) return false;
+  return prefix.toLowerCase() === organizationId.toLowerCase();
+}
+
+/**
+ * Reject a path that escapes the document root.
+ *
+ * Defence in depth behind the key validation on the write side: this is the
+ * last thing standing between a malformed `storage_key` and `readFile` of an
+ * arbitrary file, and it holds whatever wrote that column. A traversal key
+ * reached this point through the document-registration route, which accepted
+ * `storageKey` straight from the request body, so any staff user could read
+ * the API's own .env - database password, auth secret and provider keys - by
+ * registering a document at "../../../.env" and downloading it.
+ */
+function resolveInsideRoot(root: string, key: string): string {
+  const resolvedRoot = path.resolve(root);
+  const target = path.resolve(resolvedRoot, key);
+  const withSeparator = resolvedRoot.endsWith(path.sep) ? resolvedRoot : resolvedRoot + path.sep;
+  if (target !== resolvedRoot && !target.startsWith(withSeparator)) {
+    throw new Error("Refusing to read outside the document storage directory");
+  }
+  return target;
+}
+
 const localDiskProvider: StorageProvider = {
   async store({ bytes, organizationId, documentId, fileName, mimeType }) {
     const ext = extname(fileName) || ".bin";
@@ -60,8 +114,7 @@ const localDiskProvider: StorageProvider = {
 
   async retrieve(bucket, key) {
     if (bucket !== "local") throw new Error(`Cannot retrieve from bucket "${bucket}" with local provider`);
-    const filePath = path.join(documentRootDirectory(), key);
-    return readFile(filePath);
+    return readFile(resolveInsideRoot(documentRootDirectory(), key));
   },
 };
 
@@ -109,6 +162,12 @@ function buildS3Provider(): StorageProvider {
     },
 
     async retrieve(storedBucket, key) {
+      // The bucket comes from the document row, not from configuration, so a
+      // crafted row would otherwise point the API at any bucket these
+      // credentials can reach.
+      if (storedBucket !== bucket) {
+        throw new Error(`Refusing to read from bucket "${storedBucket}"; this deployment serves "${bucket}"`);
+      }
       const resp = await client.send(new GetObjectCommand({ Bucket: storedBucket, Key: key }));
       if (!resp.Body) throw new Error(`S3 returned empty body for key "${key}"`);
       const chunks: Buffer[] = [];

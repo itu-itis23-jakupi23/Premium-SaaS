@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const envPath = resolve(root, ".env");
@@ -94,7 +95,7 @@ async function waitForReadiness(child) {
         `Production API exited before readiness with code ${child.exitCode}.`,
       );
     try {
-      const response = await fetch(`${origin}/api/healthz/ready`);
+      const response = await fetch(`${origin}/api/healthz/ready`, { signal: AbortSignal.timeout(2_000) });
       if (response.ok) return;
     } catch {
       // The service is still binding.
@@ -146,6 +147,9 @@ const serviceEnv = {
   ...process.env,
   DATABASE_URL: databaseUrl.toString(),
   NODE_ENV: "test",
+  // This disposable database and local storage belong to the test, even when
+  // the parent shell is configured for a local/staging/production deployment.
+  DEPLOYMENT_ENV: "test",
   PORT: port,
   AUTH_SECRET: authSecret,
   MESSAGE_ENCRYPTION_KEY: encryptionKey,
@@ -156,6 +160,21 @@ const serviceEnv = {
   DOCUMENT_STORAGE_DIR: join(storageRoot, "documents"),
   MESSAGE_ATTACHMENT_DIR: join(storageRoot, "message-attachments"),
 };
+
+// This run owns a throwaway database, so the developer's own lead-intake
+// organization cannot exist in it. Inheriting DEFAULT_ORGANIZATION_SLUG from
+// .env makes the restart below fail: the first boot is fine (an empty database
+// is a bootstrap state), but signing up a staff user creates an organization,
+// and the restarted server then sees a populated database whose organizations
+// do not include the configured slug - which is a misconfiguration it refuses
+// to start on, and rightly so. Unset, it is only a warning under NODE_ENV=test.
+// See artifacts/api-server/src/lib/lead-intake.ts.
+//
+// Empty rather than deleted: the API server loads .env itself and fills in any
+// key that is `undefined` (lib/load-env.ts), so deleting it here just hands the
+// child the value from disk. An empty string is already defined, so it survives,
+// and leadIntakeSlug() reads a blank slug as unset.
+serviceEnv.DEFAULT_ORGANIZATION_SLUG = "";
 
 try {
   await administrationPool.query(
@@ -192,8 +211,8 @@ try {
     "Chief signup",
   );
   let cookie = cookiesFrom(signup);
+  const signupBody = await signup.json();
   if (!cookie) {
-    const signupBody = await signup.json();
     const login = await expectResponse(
       await fetch(`${origin}/api/auth/login`, {
         method: "POST",
@@ -201,7 +220,7 @@ try {
         body: JSON.stringify({
           email,
           password,
-          organizationSlug: signupBody.user?.organizationSlug ?? null,
+          organizationSlug: signupBody.organization?.slug ?? null,
         }),
       }),
       "Chief login",
@@ -210,6 +229,39 @@ try {
   }
   if (!cookie)
     throw new Error("Authentication did not return a session cookie.");
+
+  async function postJson(path, body, headers = {}) {
+    return expectResponse(await fetch(`${origin}/api${path}`, {
+      method: "POST",
+      headers: { cookie, "content-type": "application/json", ...headers },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15_000),
+    }), path);
+  }
+  const clientEmail = `payment-persistence-${suffix}@example.test`;
+  const clientsResponse = await postJson("/platform/clients", {
+    companyName: "Payment persistence client", contactName: "Persistence Contact", contactEmail: clientEmail,
+  });
+  const client = (await clientsResponse.json()).clients.find((candidate) => candidate.contactEmail === clientEmail);
+  if (!client) throw new Error("Payment persistence client was not created.");
+  const createdInvoice = await postJson("/platform/invoices", {
+    clientId: client.id, currency: "USD",
+    lineItems: [{ description: "Restart verification", quantity: 1, unitPriceCents: 10_000 }],
+  });
+  const invoice = (await createdInvoice.json()).invoice;
+  await postJson(`/platform/invoices/${invoice.id}/send`, {});
+  const identityHeaders = {
+    "X-Payment-Actor-Id": signupBody.user.id,
+    "X-Payment-Organization": signupBody.organization.slug,
+  };
+  const depositHeaders = { ...identityHeaders, "Idempotency-Key": `restart-deposit-${suffix}` };
+  const settlementHeaders = { ...identityHeaders, "Idempotency-Key": `restart-settle-${suffix}` };
+  const depositPayload = { amountCents: 2500, method: "bank_transfer", reference: `RESTART-${suffix}` };
+  const settlementPayload = { expectedAmountCents: 7500 };
+  const originalDeposit = await postJson(`/platform/invoices/${invoice.id}/payments`, depositPayload, depositHeaders);
+  const depositBody = await originalDeposit.json();
+  const originalSettlement = await postJson(`/platform/invoices/${invoice.id}/mark-paid`, settlementPayload, settlementHeaders);
+  const settlementBody = await originalSettlement.json();
 
   const documentBytes = Buffer.from(`durable-document-${suffix}`);
   const documentUpload = await expectResponse(
@@ -247,6 +299,22 @@ try {
   await stopApi();
   apiProcess = startApi(serviceEnv);
   await waitForReadiness(apiProcess);
+
+  const replayedDeposit = await postJson(`/platform/invoices/${invoice.id}/payments`, depositPayload, depositHeaders);
+  const replayedSettlement = await postJson(`/platform/invoices/${invoice.id}/mark-paid`, settlementPayload, settlementHeaders);
+  if (replayedDeposit.status !== originalDeposit.status || !isDeepStrictEqual(await replayedDeposit.json(), depositBody)
+    || replayedSettlement.status !== originalSettlement.status || !isDeepStrictEqual(await replayedSettlement.json(), settlementBody)) {
+    throw new Error("Payment response changed across API restart.");
+  }
+  const paymentHistory = await expectResponse(await fetch(`${origin}/api/platform/invoices/${invoice.id}/payments`, {
+    headers: { cookie }, signal: AbortSignal.timeout(15_000),
+  }), "Payment history after restart");
+  const paymentAmounts = (await paymentHistory.json()).payments.map((payment) => payment.amountCents);
+  if (!isDeepStrictEqual(paymentAmounts, [2500, 7500])) throw new Error("Retry after API restart created a duplicate payment.");
+  if (settlementBody.invoice.status !== "paid" || settlementBody.invoice.amountPaidCents !== 10_000) {
+    throw new Error("Restart verification invoice was not settled correctly.");
+  }
+  console.log("Deposit and settlement responses replayed across a production API restart without duplicate ledger entries.");
 
   const documentDownload = await expectResponse(
     await fetch(`${origin}${document.downloadUrl}`, { headers: { cookie } }),

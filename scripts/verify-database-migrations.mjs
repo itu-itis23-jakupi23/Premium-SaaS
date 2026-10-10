@@ -79,6 +79,12 @@ async function verifyFinalSchema(url) {
         (select count(*)::int from drizzle.__drizzle_migrations) as migration_count,
         to_regclass('public.clients_org_email_unique') is not null as client_email_unique,
         to_regclass('public.stripe_webhook_events') is not null as stripe_events,
+        to_regclass('public.invoice_payment_requests') is not null as invoice_payment_requests,
+        exists (
+          select 1 from pg_constraint
+          where conname = 'invoice_payment_requests_pk' and contype = 'p'
+            and conrelid = 'public.invoice_payment_requests'::regclass
+        ) as invoice_payment_request_key,
         exists (
           select 1 from pg_constraint
           where conname = 'stripe_webhook_events_status_chk'
@@ -102,6 +108,8 @@ async function verifyFinalSchema(url) {
     for (const field of [
       "client_email_unique",
       "stripe_events",
+      "invoice_payment_requests",
+      "invoice_payment_request_key",
       "stripe_status_constraint",
       "invitation_status_constraint",
       "documents_legacy_name_removed",

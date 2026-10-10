@@ -1,3 +1,4 @@
+import { trackEvent } from "@/lib/analytics";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -166,6 +167,8 @@ export default function Signup() {
     setError('');
 
     try {
+      // Counted after the account exists, not on submit: a failed signup is
+      // not a conversion.
       const createdUser = await auth.signup({
         name: values.name,
         company: values.company,
@@ -182,6 +185,7 @@ export default function Signup() {
         password: values.password,
         role: selectedRole,
       });
+      trackEvent("signup_completed");
       navigate(getRoleDashboard(createdUser.role));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('auth.signup.createError'));
@@ -202,39 +206,64 @@ export default function Signup() {
     navigate(`/pm/join?token=${encodeURIComponent(token)}`);
   }
 
+  /**
+   * The account-path switch shown above the invitation form.
+   *
+   * The button for the path you were already on had no handler, so pressing it
+   * did nothing - and nothing said it was the current choice either. Both are
+   * now live, and `aria-pressed` carries the selection, which is what a screen
+   * reader needs to describe the pair as a choice rather than two buttons.
+   *
+   * The main signup form has its own role selector ("Staff Account Role"); this
+   * one exists because that form is not rendered on the invitation path.
+   */
+  function AccountPathSwitch() {
+    const paths = [
+      { role: 'pm' as const, title: 'Project Manager', hint: 'Join an existing company', testId: 'button-role-pm' },
+      { role: 'chief' as const, title: 'Chief Manager', hint: 'Create a new company', testId: 'button-role-chief' },
+    ];
+
+    return (
+      <div className="mb-5">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          Account path
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {paths.map((path) => {
+            const current = selectedRole === path.role;
+            return (
+              <button
+                key={path.role}
+                type="button"
+                aria-pressed={current}
+                onClick={() => {
+                  setSelectedRole(path.role);
+                  setInviteInputError('');
+                }}
+                className={
+                  current
+                    ? 'rounded-lg border border-primary bg-primary/10 p-3 text-left text-foreground'
+                    : 'rounded-lg border border-border bg-background/40 p-3 text-left text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground'
+                }
+                data-testid={path.testId}
+              >
+                <span className="block text-sm font-semibold">{path.title}</span>
+                <span className="mt-1 block text-[11px] text-muted-foreground">{path.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   if (isStaffPortal && selectedRole === 'pm') {
     return (
       <AuthLayout
         title="Join as a Project Manager"
         description="Use the invitation from your Chief Manager. Your company and access are assigned automatically."
       >
-        <div className="mb-5">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Account path
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              className="rounded-lg border border-primary bg-primary/10 p-3 text-left text-foreground"
-              data-testid="button-role-pm"
-            >
-              <span className="block text-sm font-semibold">Project Manager</span>
-              <span className="mt-1 block text-[11px] text-muted-foreground">Join an existing company</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedRole('chief');
-                setInviteInputError('');
-              }}
-              className="rounded-lg border border-border bg-background/40 p-3 text-left text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
-              data-testid="button-role-chief"
-            >
-              <span className="block text-sm font-semibold">Chief Manager</span>
-              <span className="mt-1 block text-[11px]">Create a new company</span>
-            </button>
-          </div>
-        </div>
+        <AccountPathSwitch />
 
         <div className="mb-5 flex items-start gap-3 border-l-2 border-primary bg-primary/5 px-4 py-3">
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
@@ -337,6 +366,7 @@ export default function Signup() {
                   <button
                     key={role}
                     type="button"
+                    aria-pressed={selectedRole === role}
                     onClick={() => setSelectedRole(role as UserRole)}
                     className={`rounded-lg border p-2.5 text-left transition-colors ${
                       selectedRole === role

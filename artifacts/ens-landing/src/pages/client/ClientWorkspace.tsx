@@ -1,12 +1,27 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useSearchParams } from "wouter";
+import { useUnsavedWarning } from "@/hooks/useUnsavedWarning";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { CurrencySwitcher, useCurrency } from "@/lib/currency";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { Booth3D } from "@/components/workspace/Booth3D";
+import { HelpHint } from "@/components/HelpHint";
 import { quotePresentation } from "@/lib/workspace-quote";
+import { useFurnitureProposal } from "./useFurnitureProposal";
+import {
+  ClientFurniturePanel,
+  ClientProposeSubmitDialog,
+  ClientProposalDecision,
+} from "./ClientFurniturePanel";
+import {
+  ENS_FURNITURE_ITEMS,
+  catalogFurnitureProps,
+  type FurnitureCatalogItem,
+} from "@/lib/furniture-catalog";
 import {
   getCurrentWorkspace,
+  getProjectWorkspace,
   submitClientChangeRequest,
   getWorkspaceComments,
   createWorkspaceComment,
@@ -22,6 +37,8 @@ import {
 } from "@/lib/platform-api";
 import {
   Lock,
+  Move,
+  Check,
   Send,
   CheckCircle2,
   AlertCircle,
@@ -99,6 +116,15 @@ function workspaceToBoothConfig(workspace?: WorkspaceState | null) {
 export default function ClientWorkspace() {
   const { t } = useTranslation();
   const { formatMoneyCents } = useCurrency();
+  const [searchParams] = useSearchParams();
+  const requestedProjectId = searchParams.get("project");
+  // One loader for every place that refetches the record, so a page opened on
+  // a specific project does not silently snap back to the default one after a
+  // proposal or an approval.
+  const loadWorkspaceRecord = useCallback(
+    () => (requestedProjectId ? getProjectWorkspace(requestedProjectId) : getCurrentWorkspace()),
+    [requestedProjectId],
+  );
   const [workspaceRecord, setWorkspaceRecord] =
     useState<ProjectWorkspace | null>(null);
   const [workspaceError, setWorkspaceError] = useState("");
@@ -116,6 +142,8 @@ export default function ClientWorkspace() {
   useFocusTrap(changeDlgRef, showChangeDlg, () => setShowChangeDlg(false));
   useFocusTrap(subscriptionDlgRef, showSubscriptionDlg, () => setShowSubscriptionDlg(false));
   const [changeText, setChangeText] = useState("");
+  const [isSubmittingChange, setIsSubmittingChange] = useState(false);
+  useUnsavedWarning(Boolean(changeText.trim()));
   const [approved, setApproved] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [pinMode, setPinMode] = useState(false);
@@ -153,9 +181,11 @@ export default function ClientWorkspace() {
     document.title = t("client.workspace.pageTitle");
   }, [t]);
 
-  const showToast = (msg: string) => {
+  // Stable, because the booth config memo depends on it: a fresh function each
+  // render would rebuild that config every time and re-mount the renderer.
+  const showToast = useCallback((msg: string) => {
     toast({ title: msg });
-  };
+  }, [toast]);
 
   const elements = useMemo(
     () => [
@@ -185,13 +215,97 @@ export default function ClientWorkspace() {
     workspaceRecord?.versions.find(
       (v) => String(v.versionNumber) === compareVersion,
     )?.workspace ?? selectedWorkspace;
+  // ── Furniture proposals ──────────────────────────────────────────────────
+  // The client cannot edit the design; they arrange furniture in a sandbox and
+  // send it to the PM. See useFurnitureProposal for why the whole layout is
+  // held here but only the furniture in it is ever theirs.
+  const proposalProjectId = workspaceRecord?.project.id ?? null;
+  const proposal = useFurnitureProposal(proposalProjectId, selectedWorkspace);
+  const [draggedCatalogItem, setDraggedCatalogItem] = useState<FurnitureCatalogItem | null>(null);
+  const [submitOpen, setSubmitOpen] = useState(false);
+  const [submitNote, setSubmitNote] = useState("");
+  // Dismissal is remembered per proposal, so a decision the client has already
+  // read does not greet them again on every visit. Per browser is the right
+  // scope: it is an acknowledgement, not a state the design depends on.
+  const DECISION_SEEN_KEY = "ens-proposal-decision-seen";
+  const [dismissedDecisionId, setDismissedDecisionId] = useState<string | null>(() => {
+    try { return window.localStorage.getItem(DECISION_SEEN_KEY); } catch { return null; }
+  });
+
+  const dismissDecision = (id: string) => {
+    setDismissedDecisionId(id);
+    try { window.localStorage.setItem(DECISION_SEEN_KEY, id); } catch { /* private mode */ }
+  };
+
+  // The most recent decided proposal, so a decline reason reaches the client.
+  const lastDecision = proposal.history[0] ?? null;
+  const showDecision =
+    lastDecision && lastDecision.id !== dismissedDecisionId ? lastDecision : null;
+
+  /**
+   * Place a piece without dragging it.
+   *
+   * Drag is a mouse-only affordance, so the catalogue needs a click path too.
+   * Centre of the stand, nudged along by what is already there so successive
+   * additions do not stack on one spot; the server clamps whatever it gets.
+   */
+  const addFurnitureAtDefault = (item: FurnitureCatalogItem) => {
+    const booth = selectedWorkspace?.booth;
+    const placedCount = proposal.items.filter((entry) => entry.kind === "furniture").length;
+    const step = 0.35;
+    proposal.addItem(item, {
+      x: (booth?.width ?? 6) / 2 + ((placedCount % 4) - 1.5) * step,
+      z: (booth?.depth ?? 3) / 2 + (Math.floor(placedCount / 4) % 3) * step,
+    });
+  };
+
+  const beginCatalogDrag = (event: React.DragEvent<HTMLElement>, item: FurnitureCatalogItem) => {
+    setDraggedCatalogItem(item);
+    event.dataTransfer.effectAllowed = "copy";
+    event.dataTransfer.setData("application/x-ens-catalog-item", item.id);
+    event.dataTransfer.setData("text/plain", item.name);
+  };
+
   const selectedBoothConfig = useMemo(() => ({
     ...workspaceToBoothConfig(selectedWorkspace),
-    placedItems: selectedWorkspace?.placedItems ?? [],
+    // While proposing, the canvas shows the sandbox rather than the design, and
+    // takes drops and drags. Outside of it the config carries no callbacks at
+    // all, which is what keeps the review view read-only.
+    placedItems: proposal.editing ? proposal.items : (selectedWorkspace?.placedItems ?? []),
     rooms: selectedWorkspace?.rooms ?? [],
     pins,
     pinMode,
-  }), [selectedWorkspace, pins, pinMode]);
+    ...(proposal.editing
+      ? {
+          catalogDragItem: draggedCatalogItem
+            ? {
+                catalogId: draggedCatalogItem.id,
+                name: draggedCatalogItem.name,
+                ...catalogFurnitureProps(draggedCatalogItem),
+                shape: draggedCatalogItem.shape,
+                rotationY: 0,
+              }
+            : null,
+          onCatalogItemDrop: (catalogId: string, position: { x: number; z: number; rotationY?: number }) => {
+            const item = ENS_FURNITURE_ITEMS.find((entry) => entry.id === catalogId);
+            setDraggedCatalogItem(null);
+            if (!item) {
+              showToast(t("client.workspace.propose.itemUnavailable"));
+              return;
+            }
+            proposal.addItem(item, position);
+          },
+          onCatalogItemDropRejected: (_catalogId: string, reason: string) => {
+            setDraggedCatalogItem(null);
+            showToast(t("client.workspace.propose.blocked", { reason }));
+          },
+          onItemMove: (id: string, patch: { x?: number; z?: number; rotationY?: number }) =>
+            proposal.moveItem(id, patch),
+          onGestureEnd: () => proposal.commitMove(),
+          onItemDelete: (id: string) => proposal.removeItem(id),
+        }
+      : {}),
+  }), [selectedWorkspace, pins, pinMode, proposal, draggedCatalogItem, showToast, t]);
   const comparedBoothConfig = useMemo(() => ({
     ...workspaceToBoothConfig(comparedWorkspace),
     placedItems: comparedWorkspace?.placedItems ?? [],
@@ -240,7 +354,11 @@ export default function ClientWorkspace() {
 
   useEffect(() => {
     let isMounted = true;
-    getCurrentWorkspace()
+    // `?project=` lets the Projects page link straight at one stand. Without
+    // it every "View design" button on that page landed on whichever project
+    // the server happened to call current, so a client with three stands could
+    // only ever open one of them. No param keeps the old behaviour.
+    loadWorkspaceRecord()
       .then((record) => {
         if (!isMounted) return;
         setWorkspaceRecord(record);
@@ -277,7 +395,7 @@ export default function ClientWorkspace() {
       isMounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [requestedProjectId]);
 
   useEffect(() => {
     if (!workspaceRecord?.project.id) return;
@@ -359,7 +477,8 @@ export default function ClientWorkspace() {
       });
   };
   const submitChange = () => {
-    if (!changeText.trim() || !workspaceRecord?.project.id) return;
+    if (!changeText.trim() || !workspaceRecord?.project.id || isSubmittingChange) return;
+    setIsSubmittingChange(true);
     const projectId = workspaceRecord.project.id;
     submitClientChangeRequest(projectId, changeText.trim())
       .then((updated) => {
@@ -380,13 +499,14 @@ export default function ClientWorkspace() {
             status: c.status ?? "open",
           }));
           setComments(formatted);
-        });
+        }).catch(() => { /* The request succeeded; a thread refresh can be retried separately. */ });
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : "Failed to submit change request.";
         showToast(msg);
-        setShowChangeDlg(false);
-      });
+        // Keep both the dialog and its draft available for a retry.
+      })
+      .finally(() => setIsSubmittingChange(false));
   };
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!pinMode) return;
@@ -853,6 +973,91 @@ export default function ClientWorkspace() {
             <Download size={12} aria-hidden /> {t("client.workspace.downloadBtn")}
           </button>
           <CurrencySwitcher variant="toolbar" />
+          {/* Arrange furniture — the drawn form of a change request */}
+          {proposal.editing ? (
+            <>
+              <span
+                style={{
+                  fontFamily: MONO, fontSize: 9.5, display: "flex", alignItems: "center", gap: 5,
+                  background: `${C.blue}12`, color: C.blue, border: `1px solid ${C.blue}30`,
+                  borderRadius: 4, padding: "3px 9px", flexShrink: 0,
+                }}
+              >
+                {proposal.saving
+                  ? t("client.workspace.propose.saving")
+                  : proposal.dirty
+                    ? t("client.workspace.propose.unsaved")
+                    : t("client.workspace.propose.saved")}
+              </span>
+              <button
+                onClick={() => setSubmitOpen(true)}
+                disabled={proposal.furnitureCount === 0}
+                style={{
+                  background: C.blue, border: `1px solid ${C.blue}`, borderRadius: 4, padding: "5px 10px",
+                  cursor: proposal.furnitureCount === 0 ? "not-allowed" : "pointer", display: "flex",
+                  alignItems: "center", gap: 5, fontSize: 11.5, fontFamily: UI, color: "#fff",
+                  opacity: proposal.furnitureCount === 0 ? 0.55 : 1,
+                }}
+              >
+                <Check size={12} aria-hidden /> {t("client.workspace.propose.sendToPm")}
+              </button>
+              <button
+                onClick={() => { proposal.stop(); setDraggedCatalogItem(null); }}
+                style={{
+                  background: "none", border: `1px solid ${C.hair}`, borderRadius: 4, padding: "5px 10px",
+                  cursor: "pointer", fontSize: 11.5, fontFamily: UI, color: C.muted,
+                }}
+              >
+                {t("client.workspace.propose.exit")}
+              </button>
+              <button
+                onClick={() => {
+                  void proposal.discard().then(() => {
+                    setDraggedCatalogItem(null);
+                    showToast(t("client.workspace.propose.discarded"));
+                  });
+                }}
+                disabled={proposal.saving}
+                title={t("client.workspace.propose.discardHint")}
+                style={{
+                  background: "none", border: `1px solid ${C.hair}`, borderRadius: 4, padding: "5px 10px",
+                  cursor: proposal.saving ? "wait" : "pointer", fontSize: 11.5, fontFamily: UI, color: C.orange,
+                }}
+              >
+                {t("client.workspace.propose.discard")}
+              </button>
+            </>
+          ) : proposal.submitted ? (
+            <span
+              style={{
+                fontFamily: MONO, fontSize: 9.5, display: "flex", alignItems: "center", gap: 5,
+                background: `${C.blue}12`, color: C.blue, border: `1px solid ${C.blue}30`,
+                borderRadius: 4, padding: "3px 9px", flexShrink: 0,
+              }}
+            >
+              {t("client.workspace.propose.withPm")}
+            </span>
+          ) : (
+            <button
+              onClick={() => {
+                if (revisionsExhausted) { setShowSubscriptionDlg(true); return; }
+                if (!proposal.canPropose) {
+                  showToast(t("client.workspace.propose.notAvailable"));
+                  return;
+                }
+                proposal.start();
+              }}
+              aria-label={t("client.workspace.propose.start")}
+              style={{
+                background: "none", border: `1px solid ${C.blue}40`, borderRadius: 4, padding: "5px 10px",
+                cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+                fontSize: 11.5, fontFamily: UI, color: C.blue,
+              }}
+            >
+              <Move size={12} aria-hidden /> {t("client.workspace.propose.start")}
+            </button>
+          )}
+
           {/* Revision counter badge */}
           <span
             style={{
@@ -872,6 +1077,12 @@ export default function ClientWorkspace() {
           >
             {t("client.workspace.revisions.counter", { count: revisionCount, limit: revisionLimit })}
           </span>
+          <HelpHint
+            title="help.workspace.revisions.title"
+            body="help.workspace.revisions.body"
+            note="help.workspace.revisions.note"
+            align="end"
+          />
           {/* Request Changes */}
           <button
             onClick={() => {
@@ -1212,6 +1423,7 @@ export default function ClientWorkspace() {
                 }}
               >
                 <Booth3D config={selectedBoothConfig} />
+
                 <div
                   style={{
                     position: "absolute",
@@ -1259,6 +1471,32 @@ export default function ClientWorkspace() {
               onClick={handleCanvasClick}
             >
               <Booth3D config={selectedBoothConfig} />
+
+              <ClientProposalDecision
+                proposal={showDecision}
+                onDismiss={() => showDecision && dismissDecision(showDecision.id)}
+                colors={C}
+              />
+
+              {proposal.editing && (
+                <div
+                  style={{
+                    position: "absolute", top: 0, right: 0, bottom: 0, width: 260, zIndex: 20,
+                    borderLeft: `1px solid ${C.hair}`, boxShadow: "-8px 0 24px rgba(0,0,0,0.10)",
+                  }}
+                >
+                  <ClientFurniturePanel
+                    placed={proposal.items as { id: string; catalogId: string; name: string; kind: string }[]}
+                    draggingId={draggedCatalogItem?.id ?? null}
+                    onBeginDrag={beginCatalogDrag}
+                    onEndDrag={() => setDraggedCatalogItem(null)}
+                    onAdd={addFurnitureAtDefault}
+                    onRemove={proposal.removeItem}
+                    onReset={proposal.reset}
+                    colors={C}
+                  />
+                </div>
+              )}
 
               {pins.map((pin) => (
                 <div
@@ -2397,6 +2635,7 @@ export default function ClientWorkspace() {
             </label>
             <textarea
               id="change-textarea"
+              disabled={isSubmittingChange}
               value={changeText}
               onChange={(e) => setChangeText(e.target.value)}
               placeholder={t("client.workspace.dialog.placeholder")}
@@ -2441,6 +2680,7 @@ export default function ClientWorkspace() {
               </button>
               <button
                 onClick={submitChange}
+                disabled={isSubmittingChange || !changeText.trim()}
                 style={{
                   background: C.blue,
                   border: "none",
@@ -2643,6 +2883,31 @@ export default function ClientWorkspace() {
           </div>
         </>
       )}
+    <ClientProposeSubmitDialog
+      open={submitOpen}
+      note={submitNote}
+      saving={proposal.saving}
+      onNote={setSubmitNote}
+      onCancel={() => setSubmitOpen(false)}
+      onSubmit={() => {
+        void proposal.submit(submitNote).then(async (ok) => {
+          if (!ok) return;
+          setSubmitOpen(false);
+          setSubmitNote("");
+          setDraggedCatalogItem(null);
+          // Submitting spends a revision round, so the counter in the toolbar is
+          // now out of date. Left stale it tells the client they have more
+          // rounds left than they do.
+          try {
+            const record = await loadWorkspaceRecord();
+            setWorkspaceRecord(record);
+            setRevisionCount(record.revisionCount ?? 0);
+          } catch { /* the proposal still went through; the count refreshes on reload */ }
+          showToast(t("client.workspace.propose.sent"));
+        });
+      }}
+      colors={C}
+    />
     </div>
   );
 }

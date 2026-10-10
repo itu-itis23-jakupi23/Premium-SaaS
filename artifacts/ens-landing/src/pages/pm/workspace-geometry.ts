@@ -254,6 +254,27 @@ function footprintRect(shape: Footprint, pad = ROOM_ITEM_PAD_M): Rect2D {
   };
 }
 
+/**
+ * Why an item standing on this footprint conflicts with `room`, or '' when it
+ * does not.
+ *
+ * The item-shaped view of roomPlacementReason(): that one asks whether a room
+ * may move onto the items already placed, this one whether an item may move
+ * into a room already drawn. Both answer from roomItemConflict(), so a drop
+ * preview and the workspace that accepts the drop cannot disagree about what
+ * is allowed - which is the whole reason this lives here and not in a renderer.
+ *
+ * Pass a footprint that has already been rotated only if you leave rotationY
+ * off; footprintRect() rotates what it is given, so supplying both turns the
+ * box twice.
+ */
+export function roomItemPlacementReason(shape: Footprint, room: WorkspaceRoom): string {
+  const conflict = roomItemConflict(footprintRect(shape), room);
+  if (conflict === 'wall') return `Crosses ${String(room.name || 'room')} wall`;
+  if (conflict === 'door') return `Blocks ${String(room.name || 'room')} door clearance`;
+  return '';
+}
+
 /** The box an item has to sit inside to count as being in this room. */
 export function roomInteriorBounds(room: WorkspaceRoom): Rect2D {
   return roomInteriorRect(room);

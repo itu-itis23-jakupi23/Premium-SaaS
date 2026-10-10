@@ -1,7 +1,6 @@
 {
   "common": {
     "startDesigning": "Jetzt gestalten",
-    "watchDemo": "Demo ansehen",
     "getAccess": "Jetzt Zugang erhalten",
     "contactSales": "Vertrieb kontaktieren",
     "signIn": "Anmelden",
@@ -45,7 +44,7 @@
       "subheading": "Skalieren Sie Ihr Messegeschäft mit dem richtigen Plan.",
       "perMonth": "/Monat",
       "recommended": "Empfohlen",
-      "custom": "Individuell"
+      "onboardingNote": "Agenturkonten richten wir gemeinsam mit Ihnen ein, damit der Tarif zu Ihrer Arbeitsweise passt. Self-Service-Checkout folgt in Kürze."
     },
     "cta": {
       "heading": "Beginnen Sie noch heute mit dem Standbau",
@@ -271,8 +270,6 @@
       "annual": "Jährlich",
       "saveBadge": "20 % sparen",
       "perMonthAnnual": "/Monat · jährliche Abrechnung",
-      "savePerYear": "${{amount}} pro Jahr sparen",
-      "getStarted": "Loslegen",
       "contactSales": "Vertrieb kontaktieren"
     },
     "pricingTiers": [
@@ -2345,7 +2342,9 @@
       "openWorkspaceBtn": "Open Workspace",
       "reviewApprovalBtn": "Review Approval",
       "workspaceLocked": "Workspace bis zur Zuweisung gesperrt",
-      "workspaceLockedDesc": "Sie werden benachrichtigt, sobald Ihr Projektleiter zugewiesen ist."
+      "workspaceLockedDesc": "Sie werden benachrichtigt, sobald Ihr Projektleiter zugewiesen ist.",
+      "projectSwitcher": "Wählen Sie, welches Projekt dieses Dashboard zeigt",
+      "showingProject": "Angezeigt"
     },
     "approvals": {
       "pageTitle": "Genehmigungen | ENS",
@@ -2442,14 +2441,22 @@
       },
       "preview": {
         "close": "Vorschau schließen",
-        "imageUnavailable": "Bildvorschau im Demo nicht verfügbar",
         "typeUnavailable": "Vorschau für {{type}}-Dateien nicht verfügbar",
         "category": "Kategorie",
         "status": "Status",
         "uploadedBy": "Hochgeladen von",
         "tags": "Tags",
         "downloadBtn": "Datei herunterladen",
-        "mimeType": "Type"
+        "mimeType": "Type",
+        "imageAlt": "Vorschau von {{name}}",
+        "frameTitle": "Vorschau {{name}}",
+        "downloadInstead": "Laden Sie es herunter, um es in der passenden Anwendung zu öffnen.",
+        "failed": "Diese Datei konnte nicht angezeigt werden. Das Herunterladen funktioniert weiterhin."
+      },
+      "loadError": "Ihre Dokumente konnten nicht geladen werden.",
+      "fallback": {
+        "uploadedBy": "Agentur",
+        "category": "Allgemein"
       }
     },
     "messages": {
@@ -2475,10 +2482,21 @@
       "error": {
         "contacts": "Nachrichtenkontakte konnten nicht geladen werden.",
         "messages": "Nachrichten konnten nicht geladen werden.",
-        "attachmentTooLarge": "Der Anhang ist zu groß. Die maximale Dateigröße beträgt 25 MB."
+        "attachmentTooLarge": "Der Anhang ist zu groß. Die maximale Dateigröße beträgt 25 MB.",
+        "escalateFailed": "Eskalation fehlgeschlagen. Bitte erneut versuchen."
       },
       "noMessages": "Noch keine Nachrichten.",
-      "uploading": "Uploading attachment..."
+      "uploading": "Uploading attachment...",
+      "escalate": {
+        "open": "An Leitung eskalieren",
+        "hint": "Ihr Projektmanager ist Ihr erster Ansprechpartner. Eskalieren Sie nur, wenn Sie eine übergeordnete Leitung benötigen.",
+        "targetLabel": "Leitung auswählen",
+        "messageLabel": "Ihre Nachricht",
+        "placeholder": "Wobei brauchen Sie Hilfe?",
+        "send": "Senden",
+        "sending": "Wird gesendet…",
+        "cancel": "Abbrechen"
+      }
     },
     "projects": {
       "pageTitle": "Meine Projekte | ENS",
@@ -2534,7 +2552,14 @@
       },
       "loadError": "Ihre zugewiesenen Projekte konnten nicht geladen werden.",
       "emptyTitle": "Noch keine zugewiesenen Projekte",
-      "emptyDesc": "Ihre Messeanmeldung ist erfasst. Die Leitung oder ein Projektleiter muss noch ein Projekt zuweisen, bevor es hier erscheint."
+      "emptyDesc": "Ihre Messeanmeldung ist erfasst. Die Leitung oder ein Projektleiter muss noch ein Projekt zuweisen, bevor es hier erscheint.",
+      "stage": {
+        "intake": "Aufnahme",
+        "design": "Entwurf",
+        "review": "Prüfung",
+        "production": "Produktion",
+        "closed": "Abgeschlossen"
+      }
     },
     "profile": {
       "pageTitle": "Profileinstellungen | ENS",
@@ -2553,7 +2578,8 @@
       },
       "company": {
         "heading": "Unternehmensinformationen",
-        "description": "Verwalten Sie Ihre Unternehmensdaten und Ihr Messeprofil."
+        "description": "Verwalten Sie Ihre Unternehmensdaten und Ihr Messeprofil.",
+        "agencyOwned": "Dieser Name wird von Ihrem Veranstalter gepflegt. Wenden Sie sich zur Änderung an Ihren Projektmanager."
       },
       "avatar": {
         "heading": "Profilbild",
@@ -2633,7 +2659,8 @@
         "passwordFillAll": "Füllen Sie alle Passwortfelder aus",
         "passwordMismatch": "Neue Passwörter stimmen nicht überein",
         "passwordTooShort": "Passwort muss mindestens 8 Zeichen lang sein",
-        "deleteQueued": "Kontolöschungsanfrage gestellt"
+        "deleteQueued": "Kontolöschungsanfrage gestellt",
+        "companyError": "Unternehmensdaten konnten nicht gespeichert werden"
       }
     },
     "workspace": {
@@ -2775,7 +2802,46 @@
         "reopen": "Reopen",
         "resolve": "Resolve"
       },
-      "backToDashboard": "Zurück zur Übersicht"
+      "backToDashboard": "Zurück zur Übersicht",
+      "propose": {
+        "start": "Möbel anordnen",
+        "exit": "Fertig",
+        "sendToPm": "An PM senden",
+        "saving": "Wird gespeichert…",
+        "saved": "Gespeichert",
+        "unsaved": "Nicht gespeicherte Änderungen",
+        "withPm": "Layout beim PM",
+        "notAvailable": "Sie können ein Layout vorschlagen, solange der Entwurf in Prüfung ist.",
+        "itemUnavailable": "Dieser Artikel ist nicht mehr verfügbar.",
+        "blocked": "Platzierung blockiert: {{reason}}",
+        "sent": "Layout an Ihren Projektmanager gesendet.",
+        "searchLabel": "Möbel suchen",
+        "searchPlaceholder": "Möbel, SKU suchen…",
+        "noResults": "Keine Möbel passen zur Suche.",
+        "yourFurniture": "Ihre Möbel ({{count}})",
+        "reset": "Zurücksetzen",
+        "removeItem": "{{name}} entfernen",
+        "nothingPlaced": "Noch nichts platziert.",
+        "submitTitle": "Layout an Ihren Projektmanager senden",
+        "submitBody": "Ihr Projektmanager prüft dies und übernimmt es oder erklärt, warum nicht. Das verbraucht eine Revisionsrunde.",
+        "noteLabel": "Notiz für Ihren Projektmanager",
+        "notePlaceholder": "Etwas, das er wissen sollte?",
+        "cancel": "Abbrechen",
+        "send": "Layout senden",
+        "sending": "Wird gesendet…",
+        "addHint": "Ziehen Sie ein Möbelstück auf den Stand oder wählen Sie es aus, um es mittig zu platzieren. Struktur und Beleuchtung bleiben wie geplant.",
+        "addItem": "{{name}} hinzufügen",
+        "discard": "Verwerfen",
+        "discardHint": "Dieses Layout verwerfen, ohne es zu senden. Kostet nichts.",
+        "discarded": "Layout verworfen.",
+        "decision": {
+          "accepted": "Ihr Layout wurde übernommen",
+          "declined": "Ihr Layout wurde nicht übernommen",
+          "acceptedBody": "Ihr Projektmanager hat es in den Entwurf übernommen.",
+          "declinedBody": "Ihr Projektmanager hat den aktuellen Entwurf beibehalten.",
+          "dismiss": "Schließen"
+        }
+      }
     },
     "pendingApproval": {
       "title": "Pending Approval",
@@ -2817,7 +2883,6 @@
       "attemptsRemaining_other": "Noch {{count}} Anmeldeversuche vor temporärer Sperrung",
       "noAccount": "Noch kein Konto?",
       "signUpFree": "Kostenlos registrieren",
-      "devSection": "Lokale Testkonten",
       "showPassword": "Passwort anzeigen",
       "hidePassword": "Passwort ausblenden",
       "validation": {
@@ -3080,6 +3145,43 @@
     "toast": {
       "accepted": "Angebot angenommen. Ihre Agentur wurde benachrichtigt.",
       "rejected": "Angebot abgelehnt."
+    },
+    "filter": {
+      "label": "Angebote nach Status filtern",
+      "all": "Alle",
+      "awaiting": "Warten auf Ihre Entscheidung",
+      "decided": "Entschieden"
+    },
+    "summary": {
+      "awaiting": "Wartet auf Sie",
+      "value": "Offener Wert",
+      "deadline": "Nächste Frist",
+      "noDeadline": "Keine"
+    },
+    "emptyFilter": "Keine Angebote entsprechen diesem Filter.",
+    "expiresIn_one": "noch {{count}} Tag",
+    "expiresIn_other": "noch {{count}} Tage",
+    "sent": "Gesendet",
+    "validUntil": "Gültig bis",
+    "responded": "Ihre Antwort",
+    "print": "Drucken",
+    "terms": "Bedingungen",
+    "yourNote": "Ihre Notiz",
+    "expiredNote": "Dieses Angebot ist nicht mehr gültig. Bitten Sie Ihren Projektmanager um ein neues.",
+    "revisedNote": "Von diesem Angebot wurde eine überarbeitete Fassung erstellt.",
+    "notRespondableNote": "Dieses Angebot steht nicht zur Entscheidung.",
+    "confirm": {
+      "title": "Dieses Angebot annehmen?",
+      "body": "Sie nehmen Angebot {{number}} über {{amount}} an. Ihre Agentur wird benachrichtigt und beginnt auf dieser Grundlage.",
+      "cancel": "Abbrechen",
+      "confirm": "Angebot annehmen"
+    },
+    "declineDialog": {
+      "title": "Dieses Angebot ablehnen?",
+      "body": "Sagen Sie Ihrem Projektmanager, was nicht passt, damit er eine überarbeitete Fassung schicken kann.",
+      "label": "Warum Sie dieses Angebot ablehnen",
+      "placeholder": "Zu teuer, falsche Standgröße, Termine geändert…",
+      "confirm": "Ablehnung senden"
     }
   },
   "pipeline": {
@@ -3129,14 +3231,17 @@
       "issue": "Ausstellen",
       "markPaid": "Als bezahlt markieren",
       "void": "Stornieren",
-      "delete": "Löschen"
+      "delete": "Löschen",
+      "recordPayment": "Zahlung erfassen"
     },
     "toast": {
       "created": "Rechnung als Entwurf gespeichert.",
       "sent": "Rechnung an den Kunden ausgestellt.",
       "paid": "Zahlung erfasst.",
       "voided": "Rechnung storniert.",
-      "deleted": "Rechnungsentwurf gelöscht."
+      "deleted": "Rechnungsentwurf gelöscht.",
+      "paymentRecorded": "Zahlung erfasst",
+      "invalidAmount": "Gültigen Betrag eingeben."
     },
     "form": {
       "title": "Neue Rechnung",
@@ -3162,6 +3267,36 @@
       "saveDraft": "Entwurf speichern",
       "needLine": "Fügen Sie mindestens eine Position mit Beschreibung hinzu.",
       "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    },
+    "balanceDue": "{{amount}} offen",
+    "prompt": {
+      "recordPayment": "Zahlung erfassen. Offen: {{amount}}"
+    },
+    "payment": {
+      "title": "Zahlung erfassen",
+      "fullTitle": "Vollständige Zahlung bestätigen",
+      "description": "Prüfen Sie die Zahlung für Rechnung {{number}}, bevor Sie sie erfassen.",
+      "outstanding": "Offener Betrag: {{amount}}",
+      "amount": "Zahlungsbetrag ({{currency}})",
+      "method": "Zahlungsmethode",
+      "reference": "Referenz (optional)",
+      "note": "Notiz (optional)",
+      "review": "Zu erfassender Betrag: {{amount}}",
+      "fullReview": "Den gesamten offenen Betrag von {{amount}} als bezahlt erfassen?",
+      "manualNotice": "Dies erfasst bereits erhaltenes Geld. Der Kunde wird nicht belastet.",
+      "confirm": "Zahlung bestätigen",
+      "retry": "Zahlung erneut versuchen",
+      "saving": "Zahlung wird erfasst…",
+      "close": "Vorerst schließen",
+      "uncertain": "Die Bestätigung steht aus. Ihre übermittelten Angaben sind gespeichert. Wiederholen Sie diese Zahlung, um das Ergebnis zu bestätigen, bevor Sie eine weitere Zahlung erfassen.",
+      "pending": "Zahlungsbestätigung für {{number}} steht aus.",
+      "resume": "Zahlung fortsetzen",
+      "invalidAmount": "Geben Sie einen positiven Betrag mit höchstens zwei Nachkommastellen ein.",
+      "exceedsBalance": "Die Zahlung übersteigt den offenen Betrag.",
+      "storageUnavailable": "Die Zahlungswiederherstellung konnte in diesem Browser nicht gespeichert oder gelesen werden. Prüfen Sie die Speichereinstellungen und versuchen Sie es erneut, bevor Sie eine weitere Zahlung erfassen.",
+      "listError": "Die Rechnungsliste konnte nicht aktualisiert werden. Eine bestätigte Zahlung bleibt erfasst.",
+      "refresh": "Erneut versuchen",
+      "methods": { "manual": "Manuell", "bank_transfer": "Banküberweisung", "cash": "Bargeld", "card": "Karte", "other": "Andere" }
     }
   },
   "clientInvoices": {
@@ -3177,7 +3312,24 @@
     "issued": "Ausgestellt",
     "due": "Fällig",
     "paidOn": "Bezahlt",
-    "payNote": "Für die Zahlungsabwicklung wenden Sie sich bitte an Ihren Projektleiter."
+    "payNote": "Für die Zahlungsabwicklung wenden Sie sich bitte an Ihren Projektleiter.",
+    "print": "Drucken / PDF speichern",
+    "amountPaid": "Bezahlt",
+    "amountDue": "Offener Betrag",
+    "partlyPaid": "Teilweise bezahlt",
+    "paymentHistory": "Zahlungsverlauf",
+    "noneMatchFilter": "Keine Rechnungen entsprechen diesem Filter.",
+    "filter": {
+      "label": "Rechnungen nach Status filtern",
+      "all": "Alle",
+      "open": "Offen",
+      "paid": "Bezahlt"
+    },
+    "summary": {
+      "outstanding": "Offener Saldo",
+      "openCount": "Offene Rechnungen",
+      "overdue": "Überfällig"
+    }
   },
   "workspace": {
     "desktopOnly": {
@@ -3186,5 +3338,138 @@
       "requirement": "Erfordert einen Viewport von mindestens {{width}} px Breite. Laptop oder Desktop funktionieren; ein Tablet im Querformat auch.",
       "back": "Zurück zum Dashboard"
     }
+  },
+  "consent": {
+    "title": "Cookies",
+    "body": "Wir verwenden notwendige Cookies, damit Sie angemeldet bleiben und Ihre Sprache erhalten bleibt. Optionale Analyse-Cookies würden wir gerne nutzen, um die Nutzung der Website zu verstehen — nur mit Ihrer Zustimmung.",
+    "policyLink": "Cookie-Richtlinie lesen",
+    "accept": "Analyse zulassen",
+    "decline": "Nur notwendige",
+    "change": "Cookie-Auswahl ändern",
+    "changed": "Ihre Cookie-Auswahl wurde zurückgesetzt."
+  },
+  "help": {
+    "openLabel": "Hilfe: {{subject}}",
+    "invoices": {
+      "outstanding": {
+        "title": "Offener Saldo",
+        "body": "Alles, was auf Ihren ausgestellten Rechnungen noch offen ist. Bezahlte, stornierte und Entwurfsrechnungen zählen nicht.",
+        "note": "Eine teilweise bezahlte Rechnung zählt nur mit dem Restbetrag."
+      },
+      "overdue": {
+        "title": "Überfällig",
+        "body": "Ausgestellte Rechnungen, deren Fälligkeit verstrichen ist und die noch nicht vollständig beglichen sind."
+      },
+      "history": {
+        "title": "Zahlungsverlauf",
+        "body": "Jede für diese Rechnung erfasste Zahlung, älteste zuerst. Anzahlung und Restbetrag erscheinen getrennt."
+      }
+    },
+    "messages": {
+      "escalate": {
+        "title": "An die Leitung eskalieren",
+        "body": "Ihr Projektmanager ist Ihr erster Ansprechpartner und kennt Ihren Stand im Detail. Eskalieren Sie, wenn eine Entscheidung darüber hinausgeht oder Sie keine Antwort erhalten.",
+        "note": "Nach der Eskalation bleibt diese Person in Ihrer Kontaktliste."
+      }
+    },
+    "workspace": {
+      "revisions": {
+        "title": "Revisionsrunden",
+        "body": "Jede Änderungsrunde verbraucht eine. Eine schriftliche Bitte und ein gesendetes Möbellayout zählen gleichermaßen.",
+        "note": "Den Entwurf freigeben oder in Nachrichten fragen kostet nichts."
+      },
+      "propose": {
+        "title": "Ein Layout vorschlagen",
+        "body": "Ordnen Sie die Möbel nach Ihren Wünschen und senden Sie das an Ihren Projektmanager. Er übernimmt es oder erklärt, warum nicht.",
+        "note": "Nur Möbel gehören Ihnen. Wände, Blende und Beleuchtung bleiben wie geplant."
+      }
+    },
+    "staffInvoices": {
+      "flow": {
+        "title": "Der Weg einer Rechnung",
+        "body": "Entwurf beim Bearbeiten, ausgestellt nach dem Senden, bezahlt bei Saldo null. Storno nimmt eine ausgestellte Rechnung heraus.",
+        "note": "Zahlung erfassen bucht Anzahlung oder Rate; Als bezahlt markieren begleicht den Rest in einem Eintrag."
+      }
+    },
+    "proposal": {
+      "review": {
+        "title": "Ein Kundenlayout prüfen",
+        "body": "Vorschau zeigt die Version des Kunden. Übernehmen führt seine Möbel als neuen Entwurf in den aktuellen Entwurf ein.",
+        "note": "Nur Möbel werden übernommen; Ihre Strukturänderungen bleiben erhalten."
+      }
+    },
+    "quotes": {
+      "awaiting": {
+        "title": "Warten auf Ihre Entscheidung",
+        "body": "Angebote Ihrer Agentur, die Sie noch nicht angenommen oder abgelehnt haben.",
+        "note": "Ein Angebot nach Ablauf der Gültigkeit zählt hier nicht mehr."
+      },
+      "validity": {
+        "title": "Gültigkeit des Angebots",
+        "body": "Das Datum, bis zu dem der angebotene Preis gilt. Material- und Standkosten verändern sich, daher kann ein Angebot nicht unbegrenzt offen bleiben."
+      },
+      "deciding": {
+        "title": "Annehmen oder ablehnen",
+        "body": "Annehmen bestätigt den Preis und gibt Ihrer Agentur den Start frei. Ablehnen bittet um eine Überarbeitung: schreiben Sie, was sich ändern muss, und Sie erhalten ein neues Angebot.",
+        "note": "Keines von beiden verbraucht eine Revisionsrunde am Entwurf."
+      }
+    },
+    "projects": {
+      "progress": {
+        "title": "Produktionsfortschritt",
+        "body": "Wie weit Ihr Stand die Phasen der Agentur durchlaufen hat, vom ersten Briefing bis zur Übergabe vor Ort.",
+        "note": "Gemessen wird der Bau, nicht Ihre Freigaben. Eine Freigabe allein bewegt den Balken nicht."
+      },
+      "actionRequired": {
+        "title": "Handlung erforderlich",
+        "body": "Ihre Agentur wartet hier auf Sie. Öffnen Sie den Entwurf oder die Freigabeliste, um zu sehen, was offen ist."
+      },
+      "timeline": {
+        "title": "Letzte Aktivität",
+        "body": "Die letzten fünf Phasenwechsel Ihres Projekts, neueste zuerst."
+      },
+      "actions": {
+        "title": "Was diese öffnen",
+        "body": "Jede öffnet die Seite genau zu diesem Projekt, nicht den Standardstand des Portals.",
+        "note": "Dokumente gelten für Ihr gesamtes Konto, dieser Punkt ist daher nicht projektbezogen."
+      }
+    },
+    "documents": {
+      "status": {
+        "title": "Final und in Prüfung",
+        "body": "Final heißt, Ihre Agentur hat die Datei freigegeben. In Prüfung heißt, sie wird intern noch geprüft und kann sich ändern.",
+        "note": "Hier wartet nichts auf Sie. Ihre eigenen Freigaben finden Sie auf der Entwurfsseite."
+      },
+      "categories": {
+        "title": "Kategorien",
+        "body": "Die Ablage Ihrer Agentur, daher erscheinen hier nur die Kategorien, die sie tatsächlich verwendet hat."
+      }
+    },
+    "dashboard": {
+      "milestones": {
+        "title": "Meilensteine",
+        "body": "Dieselben Phasen wie der Balken oben, aus demselben Fortschrittswert gelesen, damit beide immer übereinstimmen.",
+        "note": "Ein Haken bedeutet, dass der Bau diesen Punkt passiert hat, nicht dass Sie freigegeben haben."
+      },
+      "activity": {
+        "title": "Letzte Aktivität",
+        "body": "Die letzten Schritte Ihrer Agentur an Ihrem Konto, neueste zuerst. Aktualisiert sich selbst, solange diese Seite offen ist."
+      }
+    }
+  },
+  "experience": {
+    "guide": "Ihre nächsten Schritte",
+    "clientGuide": "Prüfen Sie die Projektdaten und den fertigen Entwurf. Senden Sie Fragen an Ihre Projektleitung.",
+    "pmGuide": "Prüfen Sie zugewiesene Kunden, erstellen Sie Entwürfe und aktualisieren Sie Aufgaben und Termine.",
+    "chiefGuide": "Prüfen Sie neue Kunden, weisen Sie Projektleitungen zu und prüfen Sie Projekte, die auf eine Entscheidung warten.",
+    "offline": "Sie sind offline. Verbinden Sie sich vor dem Speichern oder Senden erneut.",
+    "mobileReview": "Entwurf prüfen",
+    "previewHelp": "Prüfen Sie gespeicherte Vorschauen. Nutzen Sie einen Computer für den interaktiven 3D-Arbeitsbereich. Die Freigabe gilt für den aktuellen Entwurf.",
+    "noPreview": "Keine Vorschau verfügbar. Bitten Sie Ihre Projektleitung um eine Vorschau, bevor Sie freigeben.",
+    "historical": "Dies ist eine ältere Version. Wechseln Sie zur aktuellen Version, um sie freizugeben.",
+    "updated": "Der Entwurf wurde geändert. Prüfen Sie die aktuelle Vorschau, bevor Sie fortfahren.",
+    "failed": "Die Daten konnten nicht geladen werden. Versuchen Sie es erneut.",
+    "retry": "Erneut versuchen",
+    "detailUnavailable": "Einige Rechnungsdetails oder Zahlungen konnten nicht geladen werden. Öffnen Sie die Rechnung erneut."
   }
 }

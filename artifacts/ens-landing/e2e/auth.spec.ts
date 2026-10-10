@@ -138,7 +138,8 @@ test.describe("Authentication", () => {
     });
 
     await context.clearCookies();
-    await page.locator('a[href="/chief/clients"]').click();
+    await page.getByRole("navigation", { name: "Main navigation" })
+      .getByRole("link", { name: "Clients", exact: true }).click();
 
     await page.waitForURL(/\/login\?returnTo=%2Fchief%2Fclients$/);
     await page.waitForTimeout(250);
@@ -181,7 +182,8 @@ test.describe("Authentication", () => {
     // pass against the production preview build the release runner uses.
     // Navigating in-app issues a data request carrying only the refresh
     // cookie, which is exactly the 401-then-refresh path under test.
-    await page.locator('a[href="/chief/clients"]').click();
+    await page.getByRole("navigation", { name: "Main navigation" })
+      .getByRole("link", { name: "Clients", exact: true }).click();
     const refreshResponse = await refreshResponsePromise;
 
     expect(refreshResponse.status()).toBe(200);

@@ -1,3 +1,4 @@
+import { catalogFurnitureProps } from "@/lib/furniture-catalog";
 import { Square, LayoutTemplate, Box, Lightbulb } from "lucide-react";
 import {
   SEDEF_FURNITURE_ITEMS,
@@ -47,10 +48,9 @@ export function furnitureCategoryFor(item: Pick<CatItem,'name'|'sku'|'shape'>): 
   return 'parts';
 }
 export const SEDEF_ITEM_PROPS: Record<string,{w:number;d:number;h:number;color:string;weight:number}> = Object.fromEntries(
-  SEDEF_FURNITURE_ITEMS.map(item => {
-    const [w,d,h] = item.dim.split(' x ').map(Number);
-    return [item.id, {w:w || 0.8, d:d || 0.8, h:h || 0.8, color:'#d9d2c5', weight:12}];
-  })
+  // catalogFurnitureProps is shared with the client portal so a proposed chair
+  // and a PM-placed chair are the same box.
+  SEDEF_FURNITURE_ITEMS.map(item => [item.id, catalogFurnitureProps(item)]),
 ) as Record<string,{w:number;d:number;h:number;color:string;weight:number}>;
 export const CATALOG: Record<string,CatItem[]> = {
   Structure: [

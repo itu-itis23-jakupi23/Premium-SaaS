@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { clearConsent, consentIsRequired } from "@/lib/consent";
 import { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { ENSLogo } from '@/components/ENSLogo';
@@ -8,6 +11,8 @@ import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { COUNSEL_REVIEWED, LEGAL_DOCUMENTS, getLegalDocument } from './content';
 
 export default function LegalPage({ slug }: { slug: string }) {
+  const { t } = useTranslation();
+  const [consentCleared, setConsentCleared] = useState(false);
   const [, navigate] = useLocation();
   const doc = getLegalDocument(slug);
 
@@ -93,6 +98,28 @@ export default function LegalPage({ slug }: { slug: string }) {
             </section>
           ))}
         </div>
+
+        {/*
+          Withdrawing consent has to be as easy as giving it, so the control
+          lives on the cookie policy itself rather than only in the notice the
+          visitor already dismissed. Shown only where there is a decision to
+          revisit - see lib/consent.ts.
+        */}
+        {doc.slug === "cookies" && consentIsRequired() && (
+          <div className="mt-12 rounded-xl border border-border/60 bg-card/60 p-5">
+            <p className="text-sm text-muted-foreground">
+              {consentCleared ? t("consent.changed") : t("consent.body")}
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              data-testid="consent-reset"
+              onClick={() => { clearConsent(); setConsentCleared(true); }}
+            >
+              {t("consent.change")}
+            </Button>
+          </div>
+        )}
 
         <nav className="mt-16 pt-8 border-t border-border/50">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">

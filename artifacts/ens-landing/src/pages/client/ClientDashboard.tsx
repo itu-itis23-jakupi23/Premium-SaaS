@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLiveRefresh } from "@/hooks/useLiveRefresh";
+import { HelpHint } from "@/components/HelpHint";
+import { milestoneReached, projectMilestones } from "@/lib/project-milestones";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -34,46 +37,55 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function ClientDashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [overview, setOverview] = useState<PlatformOverview | null>(null);
+  const [reload, setReload] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = t("client.dashboard.pageTitle");
   }, [t]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    getPlatformOverview()
-      .then((data) => {
-        if (!isMounted) return;
-        setOverview(data);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (!isMounted) return;
-        setError(
-          err instanceof Error ? err.message : t("client.dashboard.errorLoad"),
-        );
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
+  const load = useCallback(async (withSpinner = true) => {
+    if (withSpinner) setIsLoading(true);
+    try {
+      setOverview(await getPlatformOverview());
+      setError(null);
+    } catch {
+      // Not `err.message`. Raw API text on the first screen a client sees is
+      // alarming and unactionable; the retry button is the useful part.
+      setError(t("client.dashboard.errorLoad"));
+    } finally {
+      if (withSpinner) setIsLoading(false);
+    }
   }, [t]);
 
-  const activeProject = overview?.projects[0] ?? null;
+  useEffect(() => { void load(); }, [load, reload]);
+
+  // The dashboard is the page a client leaves open. Everything on it - pending
+  // approvals, progress, activity - is written by someone else.
+  useLiveRefresh(() => load(false), { intervalMs: 60_000 });
+
+  // The whole page - progress, milestones, PM, workspace link - is about one
+  // project. It was hardwired to projects[0], so a client with more than one
+  // stand saw whichever the API sorted first and had no way to reach the
+  // others from here.
+  const projects = overview?.projects ?? [];
+  const activeProject =
+    projects.find((project) => project.id === selectedProjectId) ?? projects[0] ?? null;
   const projectStatus = activeProject?.status.toLowerCase() ?? "";
+  // "client review" is a subset of "review", so testing both was redundant.
   const hasReviewReady =
-    projectStatus.includes("client review") ||
-    projectStatus.includes("revision") ||
-    projectStatus.includes("review");
+    projectStatus.includes("review") || projectStatus.includes("revision");
+  // Deep-linked, so the dashboard's buttons open the project the switcher is
+  // pointing at rather than the portal's default one.
+  const workspaceHref = activeProject
+    ? `/client/workspace?project=${encodeURIComponent(activeProject.id)}`
+    : "/client/workspace";
+
   const clientName =
     user?.name ??
     overview?.clients[0]?.contactName ??
@@ -87,45 +99,37 @@ export default function ClientDashboard() {
         label: t("client.dashboard.stat.progress"),
         value: `${activeProject?.progress ?? 0}%`,
         icon: TrendingUp,
+        href: "/client/projects",
       },
       {
         label: t("client.dashboard.stat.pendingApprovals"),
         value: String(overview?.metrics.pendingApprovals ?? 0),
         icon: CheckCircle2,
+        href: workspaceHref,
       },
       {
         label: t("client.dashboard.stat.workspaceVersions"),
         value: String(overview?.metrics.activeWorkspaces ?? 0),
         icon: Layout,
+        href: workspaceHref,
       },
       {
         label: t("client.dashboard.stat.documents"),
         value: String(overview?.metrics.documents ?? 0),
         icon: FileText,
+        href: "/client/documents",
       },
     ],
-    [t, activeProject, overview],
+    [t, activeProject, overview, workspaceHref],
   );
 
-  const steps = useMemo(() => {
-    const progress = activeProject?.progress ?? 0;
-    const stepDefs = [
-      { key: "created", threshold: 1 },
-      { key: "designing", threshold: 35 },
-      { key: "review", threshold: 65 },
-      { key: "approved", threshold: 85 },
-      { key: "production", threshold: 95 },
-    ] as const;
-    return stepDefs.map((step) => ({
-      label: t(`client.dashboard.step.${step.key}`),
-      status:
-        progress >= step.threshold
-          ? "completed"
-          : progress >= step.threshold - 20
-            ? "active"
-            : "pending",
-    }));
-  }, [activeProject, t]);
+  const steps = useMemo(
+    () => projectMilestones(activeProject?.progress ?? 0).map((milestone) => ({
+      label: t(`client.dashboard.step.${milestone.key}`),
+      status: milestone.state,
+    })),
+    [activeProject, t],
+  );
 
   if (isLoading) {
     return (
@@ -150,6 +154,32 @@ export default function ClientDashboard() {
           className="mt-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600"
         >
           {error}
+          <Button variant="outline" className="ms-2 min-h-11" onClick={() => setReload((value) => value + 1)}>{t("experience.retry")}</Button>
+        </div>
+      )}
+
+      {projects.length > 1 && (
+        <div
+          className="mt-6 flex flex-wrap items-center gap-2"
+          role="group"
+          aria-label={t("client.dashboard.projectSwitcher")}
+        >
+          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            {t("client.dashboard.showingProject")}
+          </span>
+          {projects.map((project) => (
+            <Button
+              key={project.id}
+              type="button"
+              size="sm"
+              variant={project.id === activeProject?.id ? "default" : "outline"}
+              aria-pressed={project.id === activeProject?.id}
+              onClick={() => setSelectedProjectId(project.id)}
+              data-testid={`button-dashboard-project-${project.id}`}
+            >
+              {project.name}
+            </Button>
+          ))}
         </div>
       )}
 
@@ -195,10 +225,10 @@ export default function ClientDashboard() {
             </div>
             <div className="flex flex-col gap-2 sm:flex-row md:flex-col lg:flex-row">
               <Button asChild>
-                <Link href="/client/workspace">{t("client.dashboard.openWorkspaceBtn")}</Link>
+                <Link href={workspaceHref}>{t("client.dashboard.openWorkspaceBtn")}</Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/client/approvals">{t("client.dashboard.reviewApprovalBtn")}</Link>
+                <Link href={activeProject ? `/client/approvals?project=${encodeURIComponent(activeProject.id)}` : "/client/approvals"}>{t("client.dashboard.reviewApprovalBtn")}</Link>
               </Button>
             </div>
           </CardContent>
@@ -259,8 +289,13 @@ export default function ClientDashboard() {
 
                   <div className="space-y-4">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
                         {t("client.dashboard.overallProgress")}
+                        <HelpHint
+                          title="help.projects.progress.title"
+                          body="help.projects.progress.body"
+                          note="help.projects.progress.note"
+                        />
                       </span>
                       <span className="font-medium">
                         {activeProject.progress}%
@@ -310,7 +345,7 @@ export default function ClientDashboard() {
                 </div>
 
                 <div className="w-full md:w-48">
-                  <Link href="/client/workspace">
+                  <Link href={workspaceHref}>
                     <div
                       className="group relative aspect-square rounded-lg border-2 border-dashed border-primary/30 bg-background/50 flex flex-col items-center justify-center p-4 cursor-pointer hover:border-primary/60 transition-colors"
                       aria-label={t("client.dashboard.viewWorkspace")}
@@ -373,6 +408,10 @@ export default function ClientDashboard() {
                   aria-hidden="true"
                 />
                 {t("client.dashboard.recentActivity")}
+                <HelpHint
+                  title="help.dashboard.activity.title"
+                  body="help.dashboard.activity.body"
+                />
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -392,7 +431,18 @@ export default function ClientDashboard() {
                         {item.action} {item.project}
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-1">
-                        {item.time}
+                        {/* `item.time` is built by the server in English, so
+                            it stayed English in all eleven locales. The raw
+                            timestamp formats in the reader's language; the
+                            relative string is the fallback for an older API
+                            that does not send one. */}
+                        {item.createdAt
+                          ? new Date(item.createdAt).toLocaleDateString(i18n.language, {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : item.time}
                       </p>
                     </div>
                   </div>
@@ -421,28 +471,30 @@ export default function ClientDashboard() {
                   aria-hidden="true"
                 />
                 {t("client.dashboard.approvalProgress")}
+                <HelpHint
+                  title="help.dashboard.milestones.title"
+                  body="help.dashboard.milestones.body"
+                  note="help.dashboard.milestones.note"
+                />
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                {/* Same thresholds as the step timeline above, from the one
+                    definition - these rows used 20/45/65 against the
+                    timeline's 1/35/65, so the two disagreed on screen. */}
                 <ApprovalRow
-                  done={Boolean(
-                    activeProject && activeProject.progress >= 20,
-                  )}
+                  done={Boolean(activeProject && milestoneReached("created", activeProject.progress))}
                   label={t("client.dashboard.approval.created")}
                   value={activeProject?.lastUpdate ?? ""}
                 />
                 <ApprovalRow
-                  done={Boolean(
-                    activeProject && activeProject.progress >= 45,
-                  )}
+                  done={Boolean(activeProject && milestoneReached("designing", activeProject.progress))}
                   label={t("client.dashboard.approval.designing")}
                   value={activeProject?.system ?? ""}
                 />
                 <ApprovalRow
-                  done={Boolean(
-                    activeProject && activeProject.progress >= 65,
-                  )}
+                  done={Boolean(activeProject && milestoneReached("review", activeProject.progress))}
                   label={t("client.dashboard.approval.review")}
                   value={
                     overview?.metrics.pendingApprovals

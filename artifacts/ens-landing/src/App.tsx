@@ -10,9 +10,20 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CurrencyProvider } from "@/lib/currency";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { getRequestPortal, PORTAL_MODE } from "@/lib/portal";
+import { getRequestPortal, PORTAL_MODE, redirectTargetWithSearch } from "@/lib/portal";
 import { StaffGateway } from "@/components/StaffGateway";
 import { RuntimeTextTranslator } from "@/i18n/RuntimeTextTranslator";
+// Lazy, and behind consentIsRequired(): with no analytics provider configured
+// this chunk is never fetched, so the marketing entry does not pay for a notice
+// it will not show (CS-14).
+const CookieConsent = lazy(() => import("@/components/CookieConsent"));
+import { initAnalytics } from "@/lib/analytics";
+
+// Inert without VITE_ANALYTICS_PROVIDER and VITE_ANALYTICS_URL, and silent
+// until the visitor accepts. Started here so events raised before a decision
+// are held rather than lost.
+initAnalytics();
+import { ensureAppResources, ensureStaffResources } from "@/i18n";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { scheduleStaffRoutePreloads } from "@/lib/route-preload";
 import { LEGAL_SLUGS } from "@/pages/legal/slugs";
@@ -29,14 +40,48 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * Both uses are aliases for a workspace page, and both targets now read
+ * `?project=` to pick which stand to open. A redirect that dropped the query
+ * string turned a deep link into a link to the default project, so the search
+ * is carried across unless the target sets its own.
+ */
 function RedirectTo({ href }: { href: string }): ReactElement | null {
   const [, navigate] = useLocation();
-  useEffect(() => { navigate(href, { replace: true }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    navigate(redirectTargetWithSearch(href, window.location.search), { replace: true });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
 }
 
 const lazyPage = (loader: () => Promise<{ default: ComponentType<Record<string, unknown>> }>) =>
   lazy(loader) as unknown as ComponentType<Record<string, unknown>>;
+
+/**
+ * Any authenticated page, plus the shared portal copy.
+ *
+ * The catalogue arrives before the page renders, so a portal screen never
+ * paints a raw `client.invoices.title` while its copy is still in flight. The
+ * gate is on the page rather than on each component, which is what makes the
+ * dashboard chrome safe: DashboardLayout travels in the page's own chunk and
+ * cannot render before this has resolved.
+ */
+const lazyAppPage = (loader: () => Promise<{ default: ComponentType<Record<string, unknown>> }>) =>
+  lazyPage(async () => {
+    const [page] = await Promise.all([loader(), ensureAppResources()]);
+    return page;
+  });
+
+/**
+ * A chief or PM page: the shared portal copy plus the staff page copy.
+ *
+ * See ensureStaffResources() for why neither is in the first load.
+ */
+const lazyStaffPage = (loader: () => Promise<{ default: ComponentType<Record<string, unknown>> }>) =>
+  lazyPage(async () => {
+    const [page] = await Promise.all([loader(), ensureAppResources(), ensureStaffResources()]);
+    return page;
+  });
 
 const NotFound = lazyPage(() => import("@/pages/not-found"));
 const Home = lazyPage(() => import("@/pages/Home"));
@@ -97,33 +142,37 @@ function AuthModalRoute({ component: Component }: { component: React.ComponentTy
 const EmptyRoutes = () => null;
 
 function createStaffRoutes() {
-  const ChiefDashboard = lazyPage(() => import("@/pages/chief/ChiefDashboard"));
-  const ChiefClients = lazyPage(() => import("@/pages/chief/ChiefClients"));
-  const ChiefManagers = lazyPage(() => import("@/pages/chief/ChiefManagers"));
-  const ChiefProjects = lazyPage(() => import("@/pages/chief/ChiefProjects"));
-  const ChiefReports = lazyPage(() => import("@/pages/chief/ChiefReports"));
-  const ChiefMessages = lazyPage(() => import("@/pages/chief/ChiefMessages"));
-  const ChiefSettings = lazyPage(() => import("@/pages/chief/ChiefSettings"));
-  const ChiefCalendar = lazyPage(() => import("@/pages/chief/ChiefCalendar"));
-  const ChiefPipeline = lazyPage(() => import("@/pages/chief/ChiefPipeline"));
-  const StaffQuotes = lazyPage(() => import("@/pages/staff/Quotes"));
+  const ChiefDashboard = lazyStaffPage(() => import("@/pages/chief/ChiefDashboard"));
+  const ChiefClients = lazyStaffPage(() => import("@/pages/chief/ChiefClients"));
+  const ChiefManagers = lazyStaffPage(() => import("@/pages/chief/ChiefManagers"));
+  const ChiefProjects = lazyStaffPage(() => import("@/pages/chief/ChiefProjects"));
+  const ChiefReports = lazyStaffPage(() => import("@/pages/chief/ChiefReports"));
+  const ChiefMessages = lazyStaffPage(() => import("@/pages/chief/ChiefMessages"));
+  const ChiefSettings = lazyStaffPage(() => import("@/pages/chief/ChiefSettings"));
+  const ChiefCalendar = lazyStaffPage(() => import("@/pages/chief/ChiefCalendar"));
+  const ChiefPipeline = lazyStaffPage(() => import("@/pages/chief/ChiefPipeline"));
+  const StaffQuotes = lazyAppPage(() => import("@/pages/staff/Quotes"));
   const ChiefQuotes = () => <StaffQuotes role="chief" />;
   const PMQuotes = () => <StaffQuotes role="pm" />;
-  const StaffInvoices = lazyPage(() => import("@/pages/staff/Invoices"));
+  const StaffInvoices = lazyAppPage(() => import("@/pages/staff/Invoices"));
   const ChiefInvoices = () => <StaffInvoices role="chief" />;
   const PMInvoices = () => <StaffInvoices role="pm" />;
 
-  const PMDashboard = lazyPage(() => import("@/pages/pm/PMDashboard"));
-  const PMCalendar = lazyPage(() => import("@/pages/pm/PMCalendar"));
-  const PMClients = lazyPage(() => import("@/pages/pm/PMClients"));
-  const PMPipeline = lazyPage(() => import("@/pages/pm/PMPipeline"));
-  const PMProjects = lazyPage(() => import("@/pages/pm/PMProjects"));
-  const PMWorkspace = lazyPage(() => import("@/pages/pm/PMWorkspace"));
-  const PMRequests = lazyPage(() => import("@/pages/pm/PMRequests"));
-  const PMMessages = lazyPage(() => import("@/pages/pm/PMMessages"));
-  const PMTasks = lazyPage(() => import("@/pages/pm/PMTasks"));
-  const PMReports = lazyPage(() => import("@/pages/pm/PMReports"));
-  const PMSettings = lazyPage(() => import("@/pages/pm/PMSettings"));
+  const PMDashboard = lazyStaffPage(() => import("@/pages/pm/PMDashboard"));
+  const PMCalendar = lazyStaffPage(() => import("@/pages/pm/PMCalendar"));
+  const PMClients = lazyStaffPage(() => import("@/pages/pm/PMClients"));
+  const PMPipeline = lazyStaffPage(() => import("@/pages/pm/PMPipeline"));
+  // Account administration. Lazily loaded, in no navigation anywhere, and the
+  // API behind it 404s unless ADMIN_SURFACE_ENABLED is set - which it is not.
+  // The page renders an "unavailable" notice in that case.
+  const AdminMembers = lazyAppPage(() => import("@/pages/admin/AdminMembers"));
+  const PMProjects = lazyStaffPage(() => import("@/pages/pm/PMProjects"));
+  const PMWorkspace = lazyStaffPage(() => import("@/pages/pm/PMWorkspace"));
+  const PMRequests = lazyStaffPage(() => import("@/pages/pm/PMRequests"));
+  const PMMessages = lazyStaffPage(() => import("@/pages/pm/PMMessages"));
+  const PMTasks = lazyStaffPage(() => import("@/pages/pm/PMTasks"));
+  const PMReports = lazyStaffPage(() => import("@/pages/pm/PMReports"));
+  const PMSettings = lazyStaffPage(() => import("@/pages/pm/PMSettings"));
   function StaffRoutePreloader() {
     const { user } = useAuth();
 
@@ -260,6 +309,13 @@ function createStaffRoutes() {
             </ErrorBoundary>
           )}
         </Route>
+        <Route path="/admin">
+          {() => (
+            <ErrorBoundary label="Admin Members">
+              <AdminMembers />
+            </ErrorBoundary>
+          )}
+        </Route>
         <Route path="/pm/pipeline">
           {(params) => (
             <ErrorBoundary label="PM Pipeline">
@@ -350,7 +406,7 @@ function createStaffRoutes() {
  * The caller registers this behind an explicit <Route path="/pm/join">.
  */
 function createStaffPublicPage() {
-  const PMJoin = lazyPage(() => import("@/pages/pm/PMJoin"));
+  const PMJoin = lazyStaffPage(() => import("@/pages/pm/PMJoin"));
 
   return function StaffPublicPage() {
     return <PMJoin />;
@@ -358,14 +414,14 @@ function createStaffPublicPage() {
 }
 
 function createClientRoutes() {
-  const ClientDashboard = lazyPage(() => import("@/pages/client/ClientDashboard"));
-  const ClientProjects = lazyPage(() => import("@/pages/client/ClientProjects"));
-  const ClientQuotes = lazyPage(() => import("@/pages/client/ClientQuotes"));
-  const ClientInvoices = lazyPage(() => import("@/pages/client/ClientInvoices"));
-  const ClientWorkspace = lazyPage(() => import("@/pages/client/ClientWorkspace"));
-  const ClientMessages = lazyPage(() => import("@/pages/client/ClientMessages"));
-  const ClientDocuments = lazyPage(() => import("@/pages/client/ClientDocuments"));
-  const ClientProfile = lazyPage(() => import("@/pages/client/ClientProfile"));
+  const ClientDashboard = lazyAppPage(() => import("@/pages/client/ClientDashboard"));
+  const ClientProjects = lazyAppPage(() => import("@/pages/client/ClientProjects"));
+  const ClientQuotes = lazyAppPage(() => import("@/pages/client/ClientQuotes"));
+  const ClientInvoices = lazyAppPage(() => import("@/pages/client/ClientInvoices"));
+  const ClientWorkspace = lazyAppPage(() => import("@/pages/client/ClientWorkspace"));
+  const ClientMessages = lazyAppPage(() => import("@/pages/client/ClientMessages"));
+  const ClientDocuments = lazyAppPage(() => import("@/pages/client/ClientDocuments"));
+  const ClientProfile = lazyAppPage(() => import("@/pages/client/ClientProfile"));
 
   // See the note in createStaffRoutes: every Switch child must carry a `path`.
   return function ClientRoutes() {
@@ -466,7 +522,11 @@ function Router() {
     );
   }
 
-  if (showStaff && !isPublicPmJoin && (pathname === "/pm" || pathname.startsWith("/pm/") || pathname === "/chief" || pathname.startsWith("/chief/"))) {
+  // "/admin" is in here so the account-administration page renders inside the
+  // staff gateway rather than falling through to the public 404. It is in no
+  // navigation, and the API behind it answers 404 unless ADMIN_SURFACE_ENABLED
+  // is set, so reaching this path without the flag shows "not enabled".
+  if (showStaff && !isPublicPmJoin && (pathname === "/pm" || pathname.startsWith("/pm/") || pathname === "/chief" || pathname.startsWith("/chief/") || pathname === "/admin")) {
     return (
       <Suspense fallback={<LoadingScreen label="Loading page" />}>
         <StaffGateway>
@@ -514,6 +574,9 @@ function App() {
     <>
       <Router />
       <RuntimeTextTranslator />
+      <Suspense fallback={null}>
+        <CookieConsent />
+      </Suspense>
       <Toaster />
     </>
   );

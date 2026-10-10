@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { INVOICE_STATUS_STYLES, QUOTE_STATUS_STYLES, money } from "./quote-format";
+import {
+  INVOICE_STATUS_STYLES,
+  QUOTE_STATUS_STYLES,
+  daysUntil,
+  isQuoteAwaitingResponse,
+  isQuoteExpired,
+  money,
+} from "./quote-format";
 
 /**
  * Money rendering and status badges for the quote and invoice surfaces.
@@ -88,5 +95,70 @@ describe("status badge coverage", () => {
     for (const key of Object.keys(INVOICE_STATUS_STYLES)) {
       expect(API_INVOICE_STATUSES, `invoice map has unknown status "${key}"`).toContain(key);
     }
+  });
+});
+
+/**
+ * Whether a quote can still be decided on, which is what puts the Accept and
+ * Decline buttons on screen in the client portal.
+ *
+ * Two rules have to agree with the server or the client gets a button that can
+ * only fail: POST /respond answers 409 `not_respondable` for any status other
+ * than sent/viewed, and 409 `quote_expired` once `valid_until` has passed —
+ * moving the quote to `expired` as it does so. The portal used to offer Accept
+ * on a long-expired quote because it only looked at the status.
+ */
+describe("isQuoteAwaitingResponse", () => {
+  it("accepts exactly the two statuses the server will respond to", () => {
+    expect(isQuoteAwaitingResponse("sent")).toBe(true);
+    expect(isQuoteAwaitingResponse("viewed")).toBe(true);
+  });
+
+  it("rejects every other status", () => {
+    for (const status of ["draft", "accepted", "rejected", "expired", "revised"]) {
+      expect(isQuoteAwaitingResponse(status), status).toBe(false);
+    }
+  });
+});
+
+describe("isQuoteExpired", () => {
+  const now = new Date("2026-06-15T12:00:00.000Z");
+
+  it("treats a past validity date as expired whatever the status says", () => {
+    // The real case: the server only writes `expired` when someone tries to
+    // respond, so a stale quote sits in `sent` indefinitely.
+    expect(isQuoteExpired({ status: "sent", validUntil: "2026-06-01T00:00:00.000Z" }, now)).toBe(true);
+    expect(isQuoteExpired({ status: "viewed", validUntil: "2026-06-14T23:59:00.000Z" }, now)).toBe(true);
+  });
+
+  it("leaves a quote inside its validity date alone", () => {
+    expect(isQuoteExpired({ status: "sent", validUntil: "2026-06-30T00:00:00.000Z" }, now)).toBe(false);
+  });
+
+  it("trusts the status when it already says expired", () => {
+    expect(isQuoteExpired({ status: "expired", validUntil: null }, now)).toBe(true);
+  });
+
+  it("treats a quote with no validity date as open", () => {
+    expect(isQuoteExpired({ status: "sent", validUntil: null }, now)).toBe(false);
+  });
+
+  it("does not call an unparseable date an expiry", () => {
+    // Guessing "expired" here would hide the Accept button on a live quote.
+    // Leaving it open lets the server decide, which is the safe direction.
+    expect(isQuoteExpired({ status: "sent", validUntil: "not a date" }, now)).toBe(false);
+  });
+});
+
+describe("daysUntil", () => {
+  const now = new Date("2026-06-15T12:00:00.000Z");
+
+  it("rounds a part day up, so the last day still reads as one", () => {
+    expect(daysUntil("2026-06-16T00:00:00.000Z", now)).toBe(1);
+    expect(daysUntil("2026-06-22T12:00:00.000Z", now)).toBe(7);
+  });
+
+  it("goes negative once the date has passed", () => {
+    expect(daysUntil("2026-06-14T12:00:00.000Z", now)).toBe(-1);
   });
 });

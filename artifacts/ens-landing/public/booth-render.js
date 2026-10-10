@@ -2538,6 +2538,21 @@ function roomPlacementCollisionReason(excludeId, candidateRoom) {
   );
 }
 
+/**
+ * Why a booth-centred footprint cannot stand in this room, or '' when it can.
+ *
+ * Booth-centred in, world out, like every other wrapper here: rooms are stored
+ * in world space, so the x has to cross over before the rule sees it. The
+ * footprint arrives already rotated, so rotationY is deliberately not passed
+ * on - footprintRect() would turn it a second time.
+ */
+function roomItemCollisionReason(shape, room) {
+  return PLACEMENT.roomItemPlacementReason(
+    { x: toWorldX(Number(shape.x) || 0), z: Number(shape.z) || 0, w: shape.w, d: shape.d },
+    room,
+  );
+}
+
 /** The room whose footprint contains a booth-centred point, or null. */
 function roomContainingPoint(cx, cz) {
   return PLACEMENT.roomContainingPoint(rooms, toWorldX(cx), Number(cz) || 0);

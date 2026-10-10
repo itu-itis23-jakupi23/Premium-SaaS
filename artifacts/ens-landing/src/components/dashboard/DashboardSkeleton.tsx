@@ -2,12 +2,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export function DashboardSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse p-6">
+    <div className="space-y-6 motion-safe:animate-pulse p-3 sm:p-6" aria-busy="true">
       {/* Header Skeleton */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <div className="h-8 w-64 rounded-md bg-muted/60" />
-          <div className="h-4 w-96 rounded-md bg-muted/40" />
+          <div className="h-4 w-96 max-w-full rounded-md bg-muted/40" />
         </div>
         <div className="h-10 w-32 rounded-md bg-muted/60" />
       </div>

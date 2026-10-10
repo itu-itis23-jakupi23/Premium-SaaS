@@ -49,6 +49,8 @@ import {
   markNotificationRead,
   type PlatformNotification,
 } from "@/lib/platform-api";
+import { RoleGuide } from "@/components/dashboard/RoleGuide";
+import { ConnectionNotice } from "@/components/dashboard/ConnectionNotice";
 import { preloadPortalRoute } from "@/lib/route-preload";
 
 interface SidebarItem {
@@ -477,6 +479,10 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           // rather than scrolls, so the surplus was not scrolled off - it was
           // simply unreachable, buttons included.
           "flex min-w-0 flex-1 flex-col transition-all duration-300",
+          // The sidebar is fixed, so this padding is what reserves its width.
+          // Hiding the sidebar for print does not reclaim it - the padding has
+          // to go too, or every printed page carries a blank left margin.
+          "print:!p-0",
           isCollapsed
             ? (isRtl ? "pr-[70px]" : "pl-[70px]")
             : (isRtl ? "pr-[260px]" : "pl-[260px]"),
@@ -555,6 +561,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             transition={{ duration: 0.17, ease: [0.22, 1, 0.36, 1] }}
             className="relative z-10 mx-auto max-w-7xl"
           >
+            <ConnectionNotice />
+            {routeKey === `/${role}` && <RoleGuide role={role} />}
             {children}
           </motion.div>
         </main>

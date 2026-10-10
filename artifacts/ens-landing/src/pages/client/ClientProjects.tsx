@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { Button } from "@/components/ui/button";
+import { HelpHint } from "@/components/HelpHint";
+import { useLiveRefresh } from "@/hooks/useLiveRefresh";
 import { getPlatformProjects, type PlatformProject } from "@/lib/platform-api";
+import { projectStatusLabel, projectStatusStyle } from "@/lib/project-status";
 import {
   Layers,
   CheckCircle2,
@@ -14,30 +18,6 @@ import {
   History,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const STATUS_CFG: Record<string, { bg: string; text: string; border: string }> =
-  {
-    Active: {
-      bg: "rgba(47,125,58,0.08)",
-      text: "#2f7d3a",
-      border: "rgba(47,125,58,0.3)",
-    },
-    Pending: {
-      bg: "rgba(194,65,12,0.08)",
-      text: "#c2410c",
-      border: "rgba(194,65,12,0.3)",
-    },
-    Delayed: {
-      bg: "rgba(220,38,38,0.08)",
-      text: "#dc2626",
-      border: "rgba(220,38,38,0.3)",
-    },
-    Completed: {
-      bg: "rgba(29,78,216,0.08)",
-      text: "#1d4ed8",
-      border: "rgba(29,78,216,0.3)",
-    },
-  };
 
 function ProgressBar({ value }: { value: number }) {
   const c =
@@ -69,6 +49,8 @@ function getTimeline(
   fallbackDate: string,
   fallbackBadge: string,
   formatMove: (fromStage: string | null | undefined, toStage: string) => string,
+  formatDate: (iso: string) => string,
+  formatBadge: (toStatus: string | null | undefined, toStage: string) => string,
 ) {
   const events: { icon: React.ElementType; color: string; label: string; date: string; badge: string }[] = [];
   if (p.lifecycleHistory?.length) {
@@ -76,8 +58,11 @@ function getTimeline(
       icon: History,
       color: "#7c3aed",
       label: formatMove(item.fromStage, item.toStage),
-      date: item.time || item.createdAt,
-      badge: item.toStatus || item.toStage,
+      // `item.time` is a relative string the *server* built in English ("2 days
+      // ago"), so it stayed English in all eleven locales. The ISO timestamp
+      // next to it formats in the reader's language instead.
+      date: formatDate(item.createdAt || item.time),
+      badge: formatBadge(item.toStatus, item.toStage),
     })));
   }
   if (events.length === 0) {
@@ -104,27 +89,36 @@ export default function ClientProjects() {
     document.title = t("client.projects.pageTitle");
   }, [t]);
 
-  useEffect(() => {
-    let mounted = true;
-    setIsLoading(true);
+  /** `withSpinner` is false for the background poll - see ClientQuotes. */
+  const load = useCallback(async (withSpinner = true) => {
+    if (withSpinner) setIsLoading(true);
     setError("");
-    getPlatformProjects({ limit: 50 })
-      .then((response) => {
-        if (!mounted) return;
-        setProjects(response.projects);
-        setExpanded((current) => current ?? response.projects[0]?.id ?? null);
-      })
-      .catch((reason: unknown) => {
-        if (!mounted) return;
+    try {
+      const response = await getPlatformProjects({ limit: 50 });
+      setProjects(response.projects);
+      setExpanded((current) => current ?? response.projects[0]?.id ?? null);
+    } catch {
+      // Only a visible load clears the list. A background poll that fails on a
+      // transient blip must not empty a page the client is reading - it shows
+      // the banner and leaves the last good data in place.
+      if (withSpinner) {
         setProjects([]);
         setExpanded(null);
-        setError(reason instanceof Error ? reason.message : t("client.projects.loadError"));
-      })
-      .finally(() => {
-        if (mounted) setIsLoading(false);
-      });
-    return () => { mounted = false; };
+      }
+      // Deliberately not `reason.message`: that puts raw API or network text
+      // in front of a client who can do nothing with it, and occasionally
+      // leaks internals. The retry button is the useful part.
+      setError(t("client.projects.loadError"));
+    } finally {
+      if (withSpinner) setIsLoading(false);
+    }
   }, [t]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  // A PM can move a project on while the client has this page open; the status
+  // badges and progress bars here are exactly what goes stale.
+  useLiveRefresh(() => load(false), { intervalMs: 60_000 });
 
   const stats = useMemo(
     () => [
@@ -183,6 +177,14 @@ export default function ClientProjects() {
           {error && (
             <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500">
               {error}
+              <Button
+                variant="outline"
+                className="ms-2 min-h-11"
+                disabled={isLoading}
+                onClick={() => void load()}
+              >
+                {t("experience.retry")}
+              </Button>
             </div>
           )}
 
@@ -209,17 +211,26 @@ export default function ClientProjects() {
           )}
 
           {projects.map((project) => {
-            const sc = STATUS_CFG[project.status] ?? STATUS_CFG.Active;
+            const sc = projectStatusStyle(project.status);
             const isExp = expanded === project.id;
             const hasAction = project.status === "Pending" || project.status === "Client Review";
+            const stageLabel = (stage: string) => t(`client.projects.stage.${stage}`, { defaultValue: stage });
             const timeline = getTimeline(
               project,
               t("client.projects.timeline.defaultLabel"),
               t("client.projects.timeline.defaultDate"),
               t("client.projects.status.Active"),
               (from, to) => from
-                ? t("client.projects.timeline.movedFromTo", { from, to })
-                : t("client.projects.timeline.movedTo", { to }),
+                ? t("client.projects.timeline.movedFromTo", { from: stageLabel(from), to: stageLabel(to) })
+                : t("client.projects.timeline.movedTo", { to: stageLabel(to) }),
+              (iso) => formatProjectDate(
+                iso ? iso.slice(0, 10) : null,
+                i18n.language,
+                t("client.projects.meta.noDate"),
+              ),
+              (toStatus, toStage) => toStatus
+                ? t(`client.projects.status.${projectStatusLabel(toStatus)}`, { defaultValue: projectStatusLabel(toStatus) })
+                : stageLabel(toStage),
             );
 
             const metaItems = [
@@ -253,8 +264,11 @@ export default function ClientProjects() {
                   aria-controls={`project-detail-${project.id}`}
                   onClick={() => setExpanded(isExp ? null : project.id)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ")
-                      setExpanded(isExp ? null : project.id);
+                    if (e.key !== "Enter" && e.key !== " ") return;
+                    // Space on a role="button" scrolls the page unless stopped,
+                    // so keyboard users jumped down the list on every toggle.
+                    e.preventDefault();
+                    setExpanded(isExp ? null : project.id);
                   }}
                 >
                   <div className="flex items-start justify-between gap-4 mb-3">
@@ -286,6 +300,12 @@ export default function ClientProjects() {
                             />
                             {t("client.projects.actionRequired")}
                           </span>
+                        )}
+                        {hasAction && (
+                          <HelpHint
+                            title="help.projects.actionRequired.title"
+                            body="help.projects.actionRequired.body"
+                          />
                         )}
                       </div>
                       <p className="text-[11px] text-muted-foreground font-mono">
@@ -319,7 +339,14 @@ export default function ClientProjects() {
                   {/* Progress */}
                   <div>
                     <div className="flex justify-between text-[10px] font-mono text-muted-foreground mb-1.5">
-                      <span>{t("client.projects.productionProgress")}</span>
+                      <span className="flex items-center gap-1.5">
+                        {t("client.projects.productionProgress")}
+                        <HelpHint
+                          title="help.projects.progress.title"
+                          body="help.projects.progress.body"
+                          note="help.projects.progress.note"
+                        />
+                      </span>
                       <span>{project.progress}%</span>
                     </div>
                     <ProgressBar value={project.progress} />
@@ -330,12 +357,16 @@ export default function ClientProjects() {
                 {isExp && (
                   <div
                     id={`project-detail-${project.id}`}
-                    className="border-t bg-muted/10 p-5 grid grid-cols-3 gap-6"
+                    className="border-t bg-muted/10 p-5 grid grid-cols-1 gap-6 md:grid-cols-3"
                   >
                     {/* Timeline */}
-                    <div className="col-span-2">
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-3">
+                    <div className="md:col-span-2">
+                      <p className="mb-3 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                         {t("client.projects.timeline.heading")}
+                        <HelpHint
+                          title="help.projects.timeline.title"
+                          body="help.projects.timeline.body"
+                        />
                       </p>
                       <div className="space-y-2.5">
                         {timeline.map((ev, i) => {
@@ -380,27 +411,27 @@ export default function ClientProjects() {
 
                     {/* Actions */}
                     <div>
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-3">
+                      <p className="mb-3 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                         {t("client.projects.quickActions")}
+                        <HelpHint
+                          title="help.projects.actions.title"
+                          body="help.projects.actions.body"
+                          note="help.projects.actions.note"
+                        />
                       </p>
                       <div className="space-y-2">
-                        <Link href="/client/workspace">
-                          <button className="w-full flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 rounded-md px-3 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white transition-colors">
+                        <Link href={`/client/workspace?project=${encodeURIComponent(project.id)}`} className="w-full flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 rounded-md px-3 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white transition-colors">
                             <Layers
                               className="h-3.5 w-3.5"
                               aria-hidden="true"
                             />
                             {t("client.projects.action.viewDesign")}
-                          </button>
-                        </Link>
-                        <Link href="/client/approvals">
-                          <button
-                            className={`w-full flex items-center gap-2 border rounded-md px-3 py-2.5 text-xs font-semibold transition-colors ${
+                          </Link>
+                        <Link href={`/client/approvals?project=${encodeURIComponent(project.id)}`} className={`w-full flex items-center gap-2 border rounded-md px-3 py-2.5 text-xs font-semibold transition-colors ${
                               hasAction
                                 ? "border-orange-200 text-orange-600 bg-orange-50 hover:bg-orange-600 hover:text-white"
                                 : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/40"
-                            }`}
-                          >
+                            }`}>
                             <CheckCircle2
                               className="h-3.5 w-3.5"
                               aria-hidden="true"
@@ -408,26 +439,21 @@ export default function ClientProjects() {
                             {hasAction
                               ? t("client.projects.action.reviewPending")
                               : t("client.projects.action.approvals")}
-                          </button>
-                        </Link>
-                        <Link href="/client/documents">
-                          <button className="w-full flex items-center gap-2 border rounded-md px-3 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors">
+                          </Link>
+                        <Link href="/client/documents" className="w-full flex items-center gap-2 border rounded-md px-3 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors">
                             <FileText
                               className="h-3.5 w-3.5"
                               aria-hidden="true"
                             />
                             {t("client.projects.action.documents")}
-                          </button>
-                        </Link>
-                        <Link href="/client/messages">
-                          <button className="w-full flex items-center gap-2 border rounded-md px-3 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors">
+                          </Link>
+                        <Link href={`/client/messages?project=${encodeURIComponent(project.id)}`} className="w-full flex items-center gap-2 border rounded-md px-3 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors">
                             <MessageSquare
                               className="h-3.5 w-3.5"
                               aria-hidden="true"
                             />
                             {t("client.projects.action.messagePm")}
-                          </button>
-                        </Link>
+                          </Link>
                       </div>
                     </div>
                   </div>

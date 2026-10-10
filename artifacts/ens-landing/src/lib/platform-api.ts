@@ -1,6 +1,7 @@
 import { chartData, mockActivity, mockClients, mockMessages, mockProjects } from "@/lib/mock-data";
 import { getRequestPortal } from "@/lib/portal";
 import { fetchWithSessionRefresh } from "@/lib/auth-session";
+import type { InvoicePaymentActor, InvoicePaymentInput } from "@/lib/invoice-payment-request";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api").replace(/\/+$/, "");
 const ORGANIZATION_SLUG = import.meta.env.VITE_ORGANIZATION_SLUG ?? "ens-demo-agency";
@@ -304,7 +305,10 @@ export interface PlatformActivity {
   user: string;
   action: string;
   project: string;
+  /** Server-built relative string, in English. Prefer `createdAt` in a portal. */
   time: string;
+  /** ISO timestamp, so a locale-aware date can be rendered client-side. */
+  createdAt?: string;
 }
 
 export interface WorkspaceBoothState {
@@ -659,6 +663,18 @@ export interface AccountSettings {
   security: {
     twoFactorEnabled: boolean;
     recoveryCodes: string[];
+  };
+  /**
+   * Split ownership. `name` and `contactEmail` are the agency's record of this
+   * client and are read-only here - the server ignores them on write. Industry
+   * and website are the client's own and do persist.
+   */
+  company: {
+    name: string;
+    contactEmail: string;
+    industry: string;
+    website: string;
+    managedByAgency: boolean;
   };
 }
 
@@ -1566,6 +1582,70 @@ export async function submitClientChangeRequest(
   return apiJson<ProjectWorkspace>(`/platform/projects/${projectId}/change-requests`, { changeText });
 }
 
+export interface EscalationTarget {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface WorkspaceProposal {
+  id: string;
+  projectId: string;
+  baseVersionId: string | null;
+  status: "draft" | "submitted" | "accepted" | "rejected" | "withdrawn";
+  note: string | null;
+  decisionNote: string | null;
+  layout: ProjectWorkspace["workspace"];
+  createdBy: string | null;
+  createdAt: string;
+  submittedAt: string | null;
+  decidedAt: string | null;
+}
+
+export interface WorkspaceProposalState {
+  proposal: WorkspaceProposal | null;
+  history: WorkspaceProposal[];
+  revisions: { used: number; limit: number; remaining: number | null; unlimited: boolean; canRequest: boolean };
+  canPropose: boolean;
+}
+
+export async function getWorkspaceProposal(projectId: string) {
+  return apiGet<WorkspaceProposalState>(`/platform/projects/${projectId}/workspace/proposal`);
+}
+
+/**
+ * Save the client's sandbox.
+ *
+ * The whole workspace goes up, but only its furniture is kept - the server
+ * rebuilds the rest from the PM's current version, so this cannot alter the
+ * design even if the payload says otherwise.
+ */
+export async function saveWorkspaceProposal(projectId: string, workspace: ProjectWorkspace["workspace"]) {
+  const body = await apiJsonWithMethod<{ proposal: WorkspaceProposal | null }>(
+    "PUT", `/platform/projects/${projectId}/workspace/proposal`, { title: "Client layout", workspace },
+  );
+  return body.proposal;
+}
+
+export async function submitWorkspaceProposal(projectId: string, note: string) {
+  return apiJson<{ proposal: WorkspaceProposal; revisions: WorkspaceProposalState["revisions"] }>(
+    `/platform/projects/${projectId}/workspace/proposal/submit`, { note },
+  );
+}
+
+export async function withdrawWorkspaceProposal(projectId: string) {
+  return apiJson<{ proposal: null }>(`/platform/projects/${projectId}/workspace/proposal/withdraw`, {});
+}
+
+export async function decideWorkspaceProposal(
+  projectId: string, proposalId: string, decision: "accept" | "reject", note = "",
+) {
+  return apiJson<{ proposal: WorkspaceProposal }>(
+    `/platform/projects/${projectId}/workspace/proposal/${proposalId}/${decision}`, { note },
+  );
+}
+
 export async function getMessageContacts() {
   if (USE_MOCK_API || !USE_REAL_MESSAGES) return { contacts: mockMessageContacts() };
   return apiGet<{ contacts: MessageContact[] }>("/platform/messages/contacts");
@@ -1582,6 +1662,7 @@ export async function sendConversationMessage(
   body: string,
   context?: MessageContext,
   attachments: DirectMessageAttachment[] = [],
+  escalate = false,
 ) {
   if (USE_MOCK_API || !USE_REAL_MESSAGES) {
     const current = mockConversationMessages(contactId, context);
@@ -1602,7 +1683,15 @@ export async function sendConversationMessage(
     };
   }
 
-  return apiJson<{ message: DirectMessage }>(`/platform/messages/${contactId}`, { body, context, attachments });
+  return apiJson<{ message: DirectMessage }>(`/platform/messages/${contactId}`, { body, context, attachments, escalate });
+}
+
+// The chiefs this client may escalate to. Empty for a client with no project,
+// and deliberately not part of getMessageContacts(): a chief is not a
+// conversation partner until the client actually writes to one.
+export async function getEscalationTargets() {
+  if (USE_MOCK_API || !USE_REAL_MESSAGES) return { targets: [] as EscalationTarget[] };
+  return apiGet<{ targets: EscalationTarget[] }>("/platform/messages/escalation-targets");
 }
 
 export async function uploadConversationAttachment(file: File) {
@@ -1859,9 +1948,78 @@ export async function sendInvoice(id: string): Promise<Invoice> {
   return body.invoice;
 }
 
-export async function markInvoicePaid(id: string): Promise<Invoice> {
-  const body = await apiJsonWithMethod<{ invoice: Invoice }>("POST", `/platform/invoices/${id}/mark-paid`, {});
+export interface InvoicePayment {
+  id: string;
+  amountCents: number;
+  method: string;
+  reference: string | null;
+  note: string | null;
+  recordedBy: string | null;
+  createdAt: string;
+}
+
+/** What is still owed on an invoice. Never negative: the API refuses over-payment. */
+export function invoiceAmountDueCents(invoice: Pick<Invoice, "totalCents" | "amountPaidCents">): number {
+  return Math.max(0, invoice.totalCents - invoice.amountPaidCents);
+}
+
+export async function listInvoicePayments(id: string): Promise<InvoicePayment[]> {
+  if (USE_MOCK_API) return [];
+  const body = await apiGet<{ payments: InvoicePayment[] }>(`/platform/invoices/${id}/payments`);
+  return body.payments;
+}
+
+export async function recordInvoicePayment(
+  id: string,
+  input: InvoicePaymentInput,
+  idempotencyKey: string,
+  actor: InvoicePaymentActor,
+): Promise<{ invoice: Invoice; payments: InvoicePayment[] }> {
+  return invoicePaymentMutation<{ invoice: Invoice; payments: InvoicePayment[] }>(
+    `/platform/invoices/${id}/payments`, input, idempotencyKey, actor,
+  );
+}
+
+export async function markInvoicePaid(id: string, idempotencyKey: string, actor: InvoicePaymentActor, expectedAmountCents?: number): Promise<Invoice> {
+  const body = await invoicePaymentMutation<{ invoice: Invoice }>(
+    `/platform/invoices/${id}/mark-paid`, expectedAmountCents === undefined ? {} : { expectedAmountCents }, idempotencyKey, actor,
+  );
   return body.invoice;
+}
+
+class InvoicePaymentApiError extends Error {
+  constructor(message: string, public readonly status: number, public readonly code?: string) {
+    super(message);
+    this.name = "InvoicePaymentApiError";
+  }
+}
+
+async function invoicePaymentMutation<T>(path: string, body: unknown, idempotencyKey: string, actor: InvoicePaymentActor): Promise<T> {
+  if (!/^[A-Za-z0-9][A-Za-z0-9_-]{7,127}$/.test(idempotencyKey)) {
+    throw new Error("A valid invoice payment request key is required");
+  }
+  if (!actor.actorUserId?.trim() || !actor.organizationSlug?.trim()) {
+    throw new Error("An invoice payment account is required");
+  }
+  const response = await apiFetch(path, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      "Idempotency-Key": idempotencyKey,
+      "X-Payment-Actor-Id": actor.actorUserId,
+      "X-Payment-Organization": actor.organizationSlug,
+      ...actorHeaders(),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const errorBody = await readApiBody<{ error?: string | { message?: string; code?: string } }>(response);
+    const code = errorBody?.error && typeof errorBody.error === "object" ? errorBody.error.code : undefined;
+    throw new InvoicePaymentApiError(apiErrorMessage(errorBody, response), response.status, code);
+  }
+  return response.json() as Promise<T>;
 }
 
 export async function voidInvoice(id: string): Promise<Invoice> {
@@ -2344,6 +2502,31 @@ export async function getClientDocuments(projectId?: string): Promise<ClientDocu
 
 export function getDocumentDownloadUrl(documentId: string): string {
   return `${API_BASE_URL}/platform/documents/${documentId}/download`;
+}
+
+/**
+ * The same file, asked for in a form the browser will display rather than save.
+ *
+ * The server honours this only for a short whitelist of types that cannot
+ * carry script (PNG, JPEG, GIF, WebP, PDF) and falls back to a download for
+ * anything else, so `canPreviewInline` decides whether to offer a viewer at
+ * all. Keeping the two lists in step is what stops the preview pane showing an
+ * empty frame for a file the server was never going to render.
+ */
+export function getDocumentPreviewUrl(documentId: string): string {
+  return `${getDocumentDownloadUrl(documentId)}?inline=1`;
+}
+
+const INLINE_VIEWABLE_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+]);
+
+export function canPreviewInline(mimeType: string): boolean {
+  return INLINE_VIEWABLE_MIME_TYPES.has(mimeType.trim().toLowerCase());
 }
 
 // ── Password reset ────────────────────────────────────────────────────────────
@@ -2891,6 +3074,13 @@ function mockAccountSettings(): AccountSettings {
       twoFactorEnabled: false,
       recoveryCodes: [],
     },
+    company: {
+      name: user?.company ?? "",
+      contactEmail: user?.email ?? "",
+      industry: "",
+      website: "",
+      managedByAgency: role === "client" && Boolean(user?.company),
+    },
   };
 }
 
@@ -2901,6 +3091,15 @@ function saveMockAccountSettings(input: Partial<AccountSettings>): AccountSettin
     notifications: { ...current.notifications, ...input.notifications },
     appearance: { ...current.appearance, ...input.appearance },
     security: { ...current.security, ...input.security },
+    // Name and contact email belong to the agency's client record, so the real
+    // server drops them on write. The mock has to drop them too, or offline
+    // mode would let a client rename their own company and the bug would only
+    // show up against the live API.
+    company: {
+      ...current.company,
+      industry: input.company?.industry ?? current.company.industry,
+      website: input.company?.website ?? current.company.website,
+    },
   };
   localStorage.setItem(mockAccountSettingsKey(), JSON.stringify(next));
   notifyAccountSettingsUpdated(next);

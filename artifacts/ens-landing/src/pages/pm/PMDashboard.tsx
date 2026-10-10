@@ -49,6 +49,7 @@ export default function PMDashboard() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const [overview, setOverview] = useState<PlatformOverview | null>(null);
+  const [reload, setReload] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -59,6 +60,7 @@ export default function PMDashboard() {
 
   useEffect(() => {
     let isMounted = true;
+    setIsLoading(true);
 
     getPlatformOverview()
       .then((data) => {
@@ -75,7 +77,7 @@ export default function PMDashboard() {
       });
 
     return () => { isMounted = false; };
-  }, [t]);
+  }, [t, reload]);
 
   function showToast(msg: string) {
     toast({ title: msg });
@@ -287,7 +289,7 @@ export default function PMDashboard() {
         {error && (
           <div role="alert" className="flex items-center justify-between gap-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600">
             <span>{error}</span>
-            <Button variant="outline" size="sm" className="shrink-0 border-red-500/40 text-red-600 hover:bg-red-500/10" onClick={() => { setError(null); setIsLoading(true); getPlatformOverview().then((d) => { setOverview(d); setError(null); }).catch((e: unknown) => setError(e instanceof Error ? e.message : t("pm.dashboard.loadError"))).finally(() => setIsLoading(false)); }}>
+            <Button variant="outline" size="sm" className="shrink-0 border-red-500/40 text-red-600 hover:bg-red-500/10" onClick={() => setReload((value) => value + 1)}>
               {t("pm.dashboard.retry")}
             </Button>
           </div>

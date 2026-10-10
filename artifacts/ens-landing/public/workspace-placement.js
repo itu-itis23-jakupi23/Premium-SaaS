@@ -38,6 +38,7 @@ var ENSPlacement = (() => {
     positionBoundsForItem: () => positionBoundsForItem,
     roomContainingPoint: () => roomContainingPoint,
     roomInteriorBounds: () => roomInteriorBounds,
+    roomItemPlacementReason: () => roomItemPlacementReason,
     roomPlacementIssue: () => roomPlacementIssue,
     roomPlacementReason: () => roomPlacementReason,
     rotatedItemFootprint: () => rotatedItemFootprint,
@@ -238,6 +239,12 @@ var ENSPlacement = (() => {
       z0: shape.z - size.depth / 2 - pad,
       z1: shape.z + size.depth / 2 + pad
     };
+  }
+  function roomItemPlacementReason(shape, room) {
+    const conflict = roomItemConflict(footprintRect(shape), room);
+    if (conflict === "wall") return `Crosses ${String(room.name || "room")} wall`;
+    if (conflict === "door") return `Blocks ${String(room.name || "room")} door clearance`;
+    return "";
   }
   function roomInteriorBounds(room) {
     return roomInteriorRect(room);

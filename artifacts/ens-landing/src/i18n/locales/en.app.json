@@ -1,0 +1,986 @@
+{
+  "client": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "projects": "Projects",
+      "workspace": "Workspace",
+      "messages": "Messages",
+      "documents": "Documents",
+      "profile": "Profile",
+      "quotes": "Quotes",
+      "invoices": "Invoices"
+    },
+    "dashboard": {
+      "pageTitle": "Dashboard | ENS",
+      "welcome": "Welcome back, {{name}}",
+      "breadcrumb": "Dashboard",
+      "errorLoad": "Could not load client dashboard data.",
+      "defaultClientName": "Client",
+      "loadingProject": "Loading project...",
+      "noActiveProject": "No active project",
+      "projectSubtitle": "Live overview of your booth project",
+      "loadingActiveProject": "Loading active project...",
+      "noProjectAssigned": "No active project has been assigned yet.",
+      "pmLabel": "Project Manager",
+      "messagesBtn": "Messages",
+      "overallProgress": "Overall Progress",
+      "viewWorkspace": "VIEW WORKSPACE",
+      "workspacePreview": "Workspace Preview",
+      "waitingTitle": "Waiting for Chief assignment",
+      "waitingDesc": "Your account is in the system. The Chief Manager needs to assign a project manager and project before your workspace unlocks.",
+      "messageTeamBtn": "Message team",
+      "reviewTitle": "Booth design ready for review",
+      "reviewDesc": "The latest design for {{name}} has been shared with you. Open the workspace to inspect it, approve it, or request changes.",
+      "openWorkspaceBtn": "Open Workspace",
+      "reviewApprovalBtn": "Review Approval",
+      "workspaceLocked": "Workspace locked until assignment",
+      "workspaceLockedDesc": "You will be notified when your project manager is assigned.",
+      "recentActivity": "Recent Activity",
+      "loadingActivity": "Loading activity...",
+      "noActivity": "No activity has been recorded yet.",
+      "viewTimeline": "View Project Timeline",
+      "approvalProgress": "Approval Progress",
+      "stat": {
+        "progress": "Project Progress",
+        "pendingApprovals": "Pending Approvals",
+        "workspaceVersions": "Workspace Versions",
+        "documents": "Documents"
+      },
+      "step": {
+        "created": "Created",
+        "designing": "Designing",
+        "review": "Review",
+        "approved": "Approved",
+        "production": "Production"
+      },
+      "approval": {
+        "created": "Project Created",
+        "designing": "Design In Progress",
+        "review": "Client Review",
+        "reviewRequired": "Review required",
+        "noReview": "No pending review"
+      },
+      "projectSwitcher": "Choose which project this dashboard shows",
+      "showingProject": "Showing"
+    },
+    "approvals": {
+      "pageTitle": "Approvals | ENS",
+      "title": "Approvals",
+      "breadcrumbDashboard": "Dashboard",
+      "awaitingReview": "{{count}} Awaiting Your Review",
+      "filterGroup": "Filter approvals",
+      "filterByStatus": "Filter by {{status}}",
+      "justNow": "Just now",
+      "emptyState": "No approvals here.",
+      "toggleDetails": "Toggle details for {{title}}",
+      "commentPlaceholder": "Leave a comment for your PM…",
+      "sendComment": "Send comment",
+      "status": {
+        "Pending": "Pending",
+        "Approved": "Approved",
+        "Rejected": "Rejected"
+      },
+      "filter": {
+        "all": "All"
+      },
+      "actions": {
+        "approve": "Approve",
+        "requestChanges": "Request Changes",
+        "viewDetails": "View Details"
+      },
+      "toast": {
+        "approved": "✓ Design approved — PM notified",
+        "rejected": "Changes requested — PM notified",
+        "commentSent": "Comment sent to PM"
+      },
+      "badge": {
+        "me": "ME",
+        "pm": "PM"
+      },
+      "comments_one": "{{count}} comment",
+      "comments_other": "{{count}} comments",
+      "confirm": {
+        "approveTitle": "Approve This Design?",
+        "rejectTitle": "Request Changes?",
+        "approveBody": "Your PM will be notified and this version will be marked as approved.",
+        "rejectBody": "Your PM will be notified and will address your feedback.",
+        "cancel": "Cancel",
+        "confirmApprove": "Yes, Approve",
+        "confirmReject": "Yes, Request Changes"
+      }
+    },
+    "documents": {
+      "pageTitle": "Documents | ENS",
+      "title": "Documents",
+      "breadcrumbDashboard": "Dashboard",
+      "uploadBtn": "Upload Files",
+      "filterGroup": "Filter by category",
+      "searchPlaceholder": "Search files, tags…",
+      "emptyState": "No documents found.",
+      "filter": {
+        "all": "All"
+      },
+      "stat": {
+        "total": "Total Files",
+        "final": "Final",
+        "inReview": "In Review",
+        "drafts": "Drafts",
+        "categories": "Categories"
+      },
+      "status": {
+        "final": "Final",
+        "draft": "Draft",
+        "review": "In Review"
+      },
+      "dropZone": {
+        "ariaLabel": "File upload drop zone",
+        "textBefore": "Drag and drop files here, or",
+        "browse": "browse",
+        "hint": "PDF, PNG, XLSX, DOC — up to 50 MB per file"
+      },
+      "table": {
+        "file": "File",
+        "category": "Category",
+        "uploadedBy": "Uploaded By",
+        "date": "Date",
+        "status": "Status"
+      },
+      "actions": {
+        "preview": "Preview {{name}}",
+        "download": "Download {{name}}",
+        "remove": "Remove {{name}}"
+      },
+      "toast": {
+        "uploaded_one": "{{count}} file uploaded",
+        "uploaded_other": "{{count}} files uploaded",
+        "fileRemoved": "File removed",
+        "downloading": "Downloading {{name}}…"
+      },
+      "preview": {
+        "close": "Close preview",
+        "typeUnavailable": "Preview not available for {{type}} files",
+        "category": "Category",
+        "status": "Status",
+        "uploadedBy": "Uploaded by",
+        "mimeType": "Type",
+        "tags": "Tags",
+        "downloadBtn": "Download File",
+        "imageAlt": "Preview of {{name}}",
+        "frameTitle": "{{name}} preview",
+        "downloadInstead": "Download it to open in the right application.",
+        "failed": "This file could not be displayed. Downloading it should still work."
+      },
+      "loadError": "Your documents could not be loaded.",
+      "fallback": {
+        "uploadedBy": "Agency",
+        "category": "General"
+      }
+    },
+    "messages": {
+      "pageTitle": "Messages | ENS",
+      "title": "Messages",
+      "breadcrumbDashboard": "Dashboard",
+      "searchPlaceholder": "Search messages...",
+      "contactListLabel": "Conversations",
+      "supportManager": "Support Manager",
+      "activeNow": "Active Now",
+      "justNow": "Just now",
+      "threadLabel": "Message thread",
+      "avatarYou": "YC",
+      "avatarPm": "PM",
+      "inputPlaceholder": "Type your message...",
+      "actions": {
+        "phone": "Start phone call",
+        "video": "Start video call",
+        "more": "More options",
+        "attach": "Attach file",
+        "send": "Send message"
+      },
+      "error": {
+        "contacts": "Could not load message contacts.",
+        "messages": "Could not load messages.",
+        "attachmentTooLarge": "Attachment is too large. Maximum file size is 25 MB.",
+        "escalateFailed": "Could not escalate. Please try again."
+      },
+      "noMessages": "No messages yet.",
+      "uploading": "Uploading attachment...",
+      "escalate": {
+        "open": "Escalate to a chief",
+        "hint": "Your project manager is your first contact. Escalate only if you need a manager above them.",
+        "targetLabel": "Choose a manager",
+        "messageLabel": "Your message",
+        "placeholder": "What do you need help with?",
+        "send": "Send",
+        "sending": "Sending…",
+        "cancel": "Cancel"
+      }
+    },
+    "projects": {
+      "pageTitle": "My Projects | ENS",
+      "title": "My Projects",
+      "breadcrumbDashboard": "Dashboard",
+      "breadcrumbProjects": "Projects",
+      "actionRequired": "Action Required",
+      "exhibitionTbd": "Exhibition TBD",
+      "productionProgress": "Production Progress",
+      "quickActions": "Quick Actions",
+      "stat": {
+        "total": "Total Projects",
+        "active": "Active",
+        "pendingReview": "Pending Review",
+        "avgProgress": "Avg. Progress"
+      },
+      "status": {
+        "Active": "Active",
+        "Pending": "Pending",
+        "Delayed": "Delayed",
+        "Completed": "Completed",
+        "Draft": "Draft",
+        "Planning": "Planning",
+        "In Design": "In Design",
+        "Client Review": "Client Review",
+        "Revision": "Revision",
+        "Approved": "Approved",
+        "In Production": "In Production",
+        "Production": "Production",
+        "Cancelled": "Cancelled",
+        "Archived": "Archived"
+      },
+      "meta": {
+        "system": "System",
+        "size": "Size",
+        "pm": "PM",
+        "deadline": "Deadline",
+        "noDate": "No date"
+      },
+      "loadError": "Could not load your assigned projects.",
+      "emptyTitle": "No assigned projects yet",
+      "emptyDesc": "Your exhibition registration is in the system. A Chief Manager or Project Manager needs to assign a project before it appears here.",
+      "timeline": {
+        "heading": "Project Timeline",
+        "defaultLabel": "Project created — design in progress",
+        "defaultDate": "Recently",
+        "movedFromTo": "Moved from {{from}} to {{to}}",
+        "movedTo": "Moved to {{to}}"
+      },
+      "action": {
+        "viewDesign": "View Design",
+        "reviewPending": "Review Pending",
+        "approvals": "Approvals",
+        "documents": "Documents",
+        "messagePm": "Message PM"
+      },
+      "stage": {
+        "intake": "Intake",
+        "design": "Design",
+        "review": "Review",
+        "production": "Production",
+        "closed": "Closed"
+      }
+    },
+    "profile": {
+      "pageTitle": "Profile Settings | ENS",
+      "title": "Profile Settings",
+      "breadcrumbDashboard": "Dashboard",
+      "breadcrumbProfile": "Profile",
+      "tab": {
+        "profile": "Personal Info",
+        "company": "Company",
+        "notifications": "Notifications",
+        "security": "Security"
+      },
+      "personalInfo": {
+        "heading": "Personal Information",
+        "description": "Update your personal details and how we can reach you."
+      },
+      "company": {
+        "heading": "Company Information",
+        "description": "Manage your company details and exhibition profile.",
+        "agencyOwned": "Your organiser keeps this name on your account. Ask your project manager to change it."
+      },
+      "avatar": {
+        "heading": "Profile Picture",
+        "hint": "JPG, GIF or PNG. Max size 1.5MB.",
+        "uploadNew": "Upload New",
+        "remove": "Remove",
+        "changeBtn": "Change profile picture"
+      },
+      "field": {
+        "name": "Full Name",
+        "email": "Email Address",
+        "phone": "Phone Number",
+        "companyName": "Company Name",
+        "industry": "Industry",
+        "website": "Website",
+        "currentPassword": "Current Password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm New Password"
+      },
+      "btn": {
+        "saveChanges": "Save Changes",
+        "updateCompany": "Update Company Info",
+        "updatePassword": "Update Password"
+      },
+      "notifications": {
+        "heading": "Notification Preferences",
+        "description": "Choose how you want to be notified about project updates.",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "milestones": {
+          "title": "Project Milestones",
+          "desc": "Get notified when a stage is completed."
+        },
+        "assignments": {
+          "title": "New Messages",
+          "desc": "Get notified when your PM sends a message."
+        },
+        "reports": {
+          "title": "Revision Requests",
+          "desc": "Get notified when a new design version is ready."
+        },
+        "system": {
+          "title": "Security Alerts",
+          "desc": "Get notified about account logins."
+        }
+      },
+      "security": {
+        "heading": "Security",
+        "description": "Manage your password and account security settings."
+      },
+      "dangerZone": {
+        "heading": "Danger Zone",
+        "description": "Once you delete your account, there is no going back. Please be certain.",
+        "deleteBtn": "Delete Account"
+      },
+      "validation": {
+        "nameMin": "Name must be at least 2 characters",
+        "emailInvalid": "Invalid email address",
+        "companyNameRequired": "Company name is required",
+        "websiteInvalid": "Invalid URL"
+      },
+      "toast": {
+        "profileSaved": "Profile changes saved",
+        "profileError": "Profile could not be saved",
+        "profileLoadError": "Profile settings could not be loaded",
+        "companySaved": "Company information saved",
+        "avatarUpdated": "Profile picture updated",
+        "avatarRemoved": "Profile picture removed",
+        "avatarError": "Profile picture could not be saved",
+        "avatarRemoveError": "Profile picture could not be removed",
+        "avatarNotImage": "Choose an image file",
+        "avatarTooLarge": "Choose an image under 1.5 MB",
+        "imageReadError": "Image could not be read",
+        "notificationError": "Notification setting could not be saved",
+        "passwordUpdated": "Password update saved",
+        "passwordError": "Password could not be updated",
+        "passwordFillAll": "Fill all password fields",
+        "passwordMismatch": "New passwords do not match",
+        "passwordTooShort": "Password must be at least 8 characters",
+        "deleteQueued": "Account deletion request queued",
+        "companyError": "Company information could not be saved"
+      }
+    },
+    "workspace": {
+      "pageTitle": "Design Workspace | ENS",
+      "viewOnly": "VIEW ONLY",
+      "loadingWorkspace": "Loading workspace…",
+      "compareBtn": "Compare",
+      "addPinBtn": "Add Pin",
+      "pinningLabel": "Pinning…",
+      "downloadBtn": "Download",
+      "requestChangesBtn": "Request Changes",
+      "approvedLabel": "Approved",
+      "approveDesignBtn": "Approve Design",
+      "assetLibraryLabel": "Asset Library",
+      "lockedLabel": "LOCKED",
+      "reviewModeNote": "Assets are locked in review mode. Contact your PM to request modifications.",
+      "canvasLabel": "3D booth preview canvas",
+      "compareCurrentLabel": "v{{v}} — Current",
+      "comparePreviousLabel": "v{{v}} — Previous",
+      "clickToPin": "Click canvas to place pin",
+      "versionSelect": "Select version",
+      "tab": {
+        "thread": "Thread",
+        "approvals": "Approvals",
+        "pins": "Pins"
+      },
+      "pendingDot": "Pending approvals",
+      "reviewThread": "Review Thread",
+      "notesCount_one": "{{count}} note",
+      "notesCount_other": "{{count}} notes",
+      "commentPlaceholder": "Add a comment…",
+      "sendComment": "Send comment",
+      "projectInfoLabel": "Project Info",
+      "info": {
+        "system": "System",
+        "floorArea": "Floor Area",
+        "dimensions": "Dimensions",
+        "approval": "Approval",
+        "awaiting": "Awaiting approval"
+      },
+      "elementApprovalHeading": "Review and approve each design element",
+      "element": {
+        "structure": "Structure",
+        "furniture": "Furniture",
+        "branding": "Branding",
+        "lighting": "Lighting"
+      },
+      "elementStatus": {
+        "approved": "Approved",
+        "pending": "Pending",
+        "rejected": "Feedback Sent"
+      },
+      "approveBtn": "Approve",
+      "requestFixBtn": "Request Fix",
+      "resetBtn": "Reset to pending",
+      "allApprovedMsg": "All elements approved",
+      "pendingApprovalMsg": "Pending approvals",
+      "approvedCount": "{{approved}} of {{total}} approved",
+      "canvasAnnotations": "Canvas Annotations",
+      "placingLabel": "Placing…",
+      "noPins": "No pins placed yet — use the Add Pin button, then click the canvas.",
+      "removePin": "Remove pin #{{num}}",
+      "statusBar": {
+        "viewOnly": "VIEW ONLY",
+        "restricted": "CLIENT REVIEW — RESTRICTED ACCESS"
+      },
+      "statusReadOnly": "READ ONLY",
+      "statusCompare": "COMPARE MODE",
+      "dialog": {
+        "title": "Request Design Changes",
+        "subtitle": "Describe what you'd like to change. Your PM will be notified.",
+        "placeholder": "Describe the changes you'd like…",
+        "cancel": "Cancel",
+        "submit": "Send Request"
+      },
+      "toast": {
+        "allApproved": "All elements approved — thank you!",
+        "changeRequestSent": "Change request sent to your PM",
+        "pinAdded": "Pin #{{num}} added",
+        "elementApproved": "{{label}} approved",
+        "feedbackSent": "Feedback sent to PM",
+        "downloadStarted": "Download started",
+        "designApproved": "Design approved — thank you!"
+      },
+      "justNow": "Just now",
+      "changeRequestPrefix": "Change Request",
+      "pinPrefix": "Pin",
+      "pinAnnotationPrompt": "Add a note for this pin",
+      "pinPlaceholder": "Describe this location…",
+      "confirmPin": "Confirm pin",
+      "cancelPin": "Cancel pin",
+      "errorLoad": "Failed to load workspace",
+      "unassigned": {
+        "title": "Workspace waiting for assignment",
+        "body": "Your account exists, but the Chief Manager has not assigned a project manager and booth project yet. You'll get access as soon as your account is set up.",
+        "backBtn": "Back to Dashboard"
+      },
+      "revisions": {
+        "counter": "Revisions: {{count}} / {{limit}}",
+        "upgradeBtn": "Upgrade Revisions",
+        "exhaustedTitle": "Revision limit reached",
+        "exhaustedBody": "You have used all included arrangement rounds. Upgrade your plan to unlock more revisions.",
+        "upgradeDialog": {
+          "title": "Upgrade Revisions Plan",
+          "subtitle": "Choose a plan to unlock more revision rounds.",
+          "starter": {
+            "name": "Starter",
+            "description": "Adds 3 extra client revision rounds",
+            "price": "$2.99"
+          },
+          "pro": {
+            "name": "Pro",
+            "description": "Adds 8 extra revision rounds",
+            "price": "$9.99"
+          },
+          "unlimited": {
+            "name": "Unlimited",
+            "description": "Unlimited revision rounds",
+            "price": "$11.99"
+          },
+          "cancelBtn": "Cancel",
+          "continueBtn": "Continue to checkout"
+        }
+      },
+      "feedbackFilter": {
+        "open": "Open",
+        "all": "All",
+        "resolved": "Resolved"
+      },
+      "pinStatus": {
+        "resolved": "Resolved",
+        "open": "Open",
+        "reopen": "Reopen",
+        "resolve": "Resolve"
+      },
+      "backToDashboard": "Back to Dashboard",
+      "ctrl": {
+        "reset": "Reset view",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "fullscreen": "Fullscreen"
+      },
+      "propose": {
+        "start": "Arrange furniture",
+        "exit": "Done",
+        "sendToPm": "Send to PM",
+        "saving": "Saving…",
+        "saved": "Saved",
+        "unsaved": "Unsaved changes",
+        "withPm": "Layout with your PM",
+        "notAvailable": "You can propose a layout while the design is in review.",
+        "itemUnavailable": "That item is no longer available.",
+        "blocked": "Placement blocked: {{reason}}",
+        "sent": "Layout sent to your project manager.",
+        "searchLabel": "Search furniture",
+        "searchPlaceholder": "Search furniture, SKU…",
+        "noResults": "No furniture matches that search.",
+        "yourFurniture": "Your furniture ({{count}})",
+        "reset": "Reset",
+        "removeItem": "Remove {{name}}",
+        "nothingPlaced": "Nothing placed yet.",
+        "submitTitle": "Send layout to your project manager",
+        "submitBody": "Your project manager reviews this and either applies it to the design or explains why not. This uses one revision round.",
+        "noteLabel": "Note for your project manager",
+        "notePlaceholder": "Anything they should know?",
+        "cancel": "Cancel",
+        "send": "Send layout",
+        "sending": "Sending…",
+        "addHint": "Drag a piece onto the stand, or select it to place it in the middle. Structure and lighting stay as your designer set them.",
+        "addItem": "Add {{name}}",
+        "discard": "Discard",
+        "discardHint": "Throw away this layout without sending it. Costs nothing.",
+        "discarded": "Layout discarded.",
+        "decision": {
+          "accepted": "Your layout was applied",
+          "declined": "Your layout was not applied",
+          "acceptedBody": "Your project manager added it to the design.",
+          "declinedBody": "Your project manager kept the current design.",
+          "dismiss": "Dismiss"
+        }
+      }
+    }
+  },
+  "clientInvoices": {
+    "title": "Invoices",
+    "subtitle": "View invoices from your agency and track what has been paid.",
+    "empty": "You have no invoices yet.",
+    "untitled": "Invoice",
+    "overdue": "Overdue",
+    "item": "Item",
+    "qty": "Qty",
+    "unit": "Unit",
+    "lineTotal": "Total",
+    "issued": "Issued",
+    "due": "Due",
+    "paidOn": "Paid",
+    "payNote": "To arrange payment, please contact your project manager.",
+    "print": "Print / Save PDF",
+    "amountPaid": "Paid",
+    "amountDue": "Amount due",
+    "partlyPaid": "Part paid",
+    "paymentHistory": "Payment history",
+    "noneMatchFilter": "No invoices match this filter.",
+    "filter": {
+      "label": "Filter invoices by status",
+      "all": "All",
+      "open": "Outstanding",
+      "paid": "Paid"
+    },
+    "summary": {
+      "outstanding": "Outstanding balance",
+      "openCount": "Open invoices",
+      "overdue": "Overdue"
+    }
+  },
+  "clientQuotes": {
+    "title": "Quotes",
+    "subtitle": "Review the quotes your agency has prepared and accept or decline them.",
+    "empty": "You have no quotes yet.",
+    "untitled": "Booth quote",
+    "item": "Item",
+    "qty": "Qty",
+    "unit": "Unit",
+    "lineTotal": "Total",
+    "accept": "Accept quote",
+    "decline": "Decline",
+    "acceptedNote": "You accepted this quote.",
+    "declinedNote": "You declined this quote.",
+    "error": "Something went wrong. Please try again.",
+    "toast": {
+      "accepted": "Quote accepted. Your agency has been notified.",
+      "rejected": "Quote declined."
+    },
+    "filter": {
+      "label": "Filter quotes by status",
+      "all": "All",
+      "awaiting": "Awaiting your decision",
+      "decided": "Decided"
+    },
+    "summary": {
+      "awaiting": "Awaiting you",
+      "value": "Value awaiting",
+      "deadline": "Next deadline",
+      "noDeadline": "None set"
+    },
+    "emptyFilter": "No quotes match this filter.",
+    "expiresIn_one": "{{count}} day left",
+    "expiresIn_other": "{{count}} days left",
+    "sent": "Sent",
+    "validUntil": "Valid until",
+    "responded": "You responded",
+    "print": "Print",
+    "terms": "Terms",
+    "yourNote": "Your note",
+    "expiredNote": "This quote has passed its validity date. Ask your project manager for a new one.",
+    "revisedNote": "A revised version of this quote has been prepared.",
+    "notRespondableNote": "This quote is not open for a decision.",
+    "confirm": {
+      "title": "Accept this quote?",
+      "body": "You are accepting quote {{number}} for {{amount}}. Your agency will be notified and will start work from it.",
+      "cancel": "Cancel",
+      "confirm": "Accept quote"
+    },
+    "declineDialog": {
+      "title": "Decline this quote?",
+      "body": "Tell your project manager what is wrong with it, so they can send a revised version.",
+      "label": "Why you are declining this quote",
+      "placeholder": "Too expensive, wrong stand size, dates changed…",
+      "confirm": "Send decline"
+    }
+  },
+  "invoices": {
+    "title": "Invoices",
+    "subtitle": "Issue invoices to clients, track payment, and turn accepted quotes into bills.",
+    "new": "New invoice",
+    "empty": "No invoices yet. Create one from scratch or from an accepted quote.",
+    "col": {
+      "number": "Number",
+      "title": "Title",
+      "total": "Total",
+      "due": "Due",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "draft": "Draft",
+      "open": "Awaiting payment",
+      "paid": "Paid",
+      "void": "Void",
+      "uncollectible": "Uncollectible"
+    },
+    "action": {
+      "issue": "Issue",
+      "markPaid": "Mark paid",
+      "void": "Void",
+      "delete": "Delete",
+      "recordPayment": "Record payment"
+    },
+    "toast": {
+      "created": "Invoice saved as draft.",
+      "sent": "Invoice issued to the client.",
+      "paid": "Payment recorded.",
+      "voided": "Invoice voided.",
+      "deleted": "Draft invoice deleted.",
+      "paymentRecorded": "Payment recorded",
+      "invalidAmount": "Enter a valid amount."
+    },
+    "form": {
+      "title": "New invoice",
+      "name": "Invoice title",
+      "client": "Client",
+      "selectClient": "Select a client",
+      "fromQuote": "Create from an accepted quote",
+      "fromQuoteNone": "— Start from scratch —",
+      "fromQuoteHint": "Line items and totals will be copied from the selected quote.",
+      "untitled": "Untitled quote",
+      "lineItems": "Line items",
+      "description": "Description",
+      "qty": "Qty",
+      "unitPrice": "Unit price",
+      "addLine": "Add line",
+      "removeLine": "Remove line",
+      "discount": "Discount",
+      "tax": "Tax",
+      "due": "Due date",
+      "notes": "Notes",
+      "subtotal": "Subtotal",
+      "total": "Total",
+      "saveDraft": "Save draft",
+      "needLine": "Add at least one line item with a description.",
+      "error": "Something went wrong. Please try again."
+    },
+    "balanceDue": "{{amount}} due",
+    "prompt": {
+      "recordPayment": "Record a payment. Outstanding: {{amount}}"
+    },
+    "payment": {
+      "title": "Record payment",
+      "fullTitle": "Confirm full payment",
+      "description": "Review the payment for invoice {{number}} before recording it.",
+      "outstanding": "Outstanding balance: {{amount}}",
+      "amount": "Payment amount ({{currency}})",
+      "method": "Payment method",
+      "reference": "Reference (optional)",
+      "note": "Note (optional)",
+      "review": "Amount to record: {{amount}}",
+      "fullReview": "Record the full outstanding balance of {{amount}} as paid?",
+      "manualNotice": "This records money already received. It does not charge the client.",
+      "confirm": "Confirm payment",
+      "retry": "Retry payment",
+      "saving": "Recording payment…",
+      "close": "Close for now",
+      "uncertain": "Confirmation is pending. Your submitted details are saved. Retry this same payment to confirm the result before recording another payment.",
+      "pending": "Payment confirmation is pending for {{number}}.",
+      "resume": "Resume payment",
+      "invalidAmount": "Enter a positive amount with up to two decimal places.",
+      "exceedsBalance": "The payment exceeds the outstanding balance.",
+      "storageUnavailable": "Payment recovery could not be saved or read in this browser. Check browser storage settings, then retry before recording another payment.",
+      "listError": "The invoice list could not be refreshed. A confirmed payment remains recorded.",
+      "refresh": "Retry",
+      "methods": {
+        "manual": "Manual",
+        "bank_transfer": "Bank transfer",
+        "cash": "Cash",
+        "card": "Card",
+        "other": "Other"
+      }
+    }
+  },
+  "quotes": {
+    "title": "Quotes",
+    "subtitle": "Build a quote from a booth design and send it to your client for approval.",
+    "new": "New quote",
+    "empty": "No quotes yet. Create your first quote to send to a client.",
+    "col": {
+      "number": "Number",
+      "title": "Title",
+      "total": "Total",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "viewed": "Viewed",
+      "accepted": "Accepted",
+      "rejected": "Declined",
+      "expired": "Expired",
+      "revised": "Revised"
+    },
+    "action": {
+      "send": "Send",
+      "delete": "Delete"
+    },
+    "toast": {
+      "created": "Quote saved as draft.",
+      "sent": "Quote sent to the client."
+    },
+    "form": {
+      "title": "New quote",
+      "name": "Quote title",
+      "client": "Client",
+      "selectClient": "Select a client",
+      "lineItems": "Line items",
+      "description": "Description",
+      "qty": "Qty",
+      "unitPrice": "Unit price",
+      "addLine": "Add line",
+      "removeLine": "Remove line",
+      "discount": "Discount",
+      "tax": "Tax",
+      "notes": "Notes",
+      "subtotal": "Subtotal",
+      "total": "Total",
+      "saveDraft": "Save draft",
+      "needLine": "Add at least one line item with a description.",
+      "error": "Something went wrong. Please try again."
+    }
+  },
+  "settings": {
+    "twoFactor": {
+      "title": "Two-factor authentication",
+      "description": "Add a second step at sign-in using an authenticator app such as Google Authenticator, 1Password, or Authy.",
+      "on": "On",
+      "off": "Off",
+      "enable": "Enable",
+      "disable": "Disable",
+      "backupRemaining": "{{count}} backup codes remaining",
+      "setupTitle": "Set up your authenticator",
+      "step1": "Open your authenticator app and add a new account.",
+      "step2": "Enter the key below (or open the link), then it will show a 6-digit code.",
+      "step3": "Type that code here to finish enabling two-factor.",
+      "manualKey": "Setup key",
+      "openInApp": "Open in authenticator app",
+      "codeLabel": "6-digit code",
+      "verifyEnable": "Verify & enable",
+      "backupTitle": "Save your backup codes",
+      "backupWarning": "Store these somewhere safe. Each code works once if you lose access to your authenticator. They won't be shown again.",
+      "copyAll": "Copy all",
+      "copied": "Copied",
+      "done": "Done",
+      "disableTitle": "Disable two-factor",
+      "disableHint": "Enter a current authenticator code or a backup code to confirm.",
+      "confirmDisable": "Disable two-factor",
+      "enabledToast": "Two-factor authentication enabled.",
+      "disabledToast": "Two-factor authentication disabled.",
+      "invalidCode": "That code is incorrect or expired.",
+      "genericError": "Something went wrong. Please try again.",
+      "qrAlt": "QR code for two-factor setup",
+      "scanHint": "Scan with your authenticator app"
+    }
+  },
+  "pipeline": {
+    "title": "Sales Pipeline",
+    "subtitle": "Track every lead from first contact to a won deal.",
+    "openValue": "Open value · {{count}} leads",
+    "emptyColumn": "No leads in this stage.",
+    "edit": "Edit lead",
+    "moveStage": "Move to stage",
+    "won": "Won",
+    "dealValue": "Deal value",
+    "followUp": "Next follow-up",
+    "error": "Something went wrong. Please try again.",
+    "toast": {
+      "won": "{{company}} moved to won and sent for client approval."
+    },
+    "stage": {
+      "new": "New",
+      "contacted": "Contacted",
+      "qualified": "Qualified",
+      "proposal": "Proposal",
+      "won": "Won",
+      "lost": "Lost"
+    }
+  },
+  "layout": {
+    "logout": "Logout",
+    "commandPalette": {
+      "title": "Quick search and actions",
+      "description": "Search pages, projects, and actions, then press Enter to navigate."
+    },
+    "notifications": "Notifications",
+    "unread": "{{count}} unread",
+    "markAllRead": "Mark all read",
+    "notificationNew": "New",
+    "noNotifications": "No notifications yet.",
+    "skipToContent": "Skip to main content",
+    "navigation": "Main navigation",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "switchToLight": "Switch to light theme",
+    "switchToDark": "Switch to dark theme",
+    "selectLanguage": "Select language"
+  },
+  "chief": {
+    "nav": {
+      "chief": "Chief",
+      "dashboard": "Dashboard",
+      "clients": "Clients",
+      "managers": "Managers",
+      "projects": "Projects",
+      "monitor": "Workspace Monitor",
+      "reports": "Reports",
+      "messages": "Messages",
+      "calendar": "Calendar",
+      "settings": "Settings",
+      "quotes": "Quotes",
+      "invoices": "Invoices",
+      "pipeline": "Sales Pipeline"
+    }
+  },
+  "pm": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "myClients": "My Clients",
+      "projects": "Projects",
+      "calendar": "Calendar",
+      "requests": "Requests",
+      "messages": "Messages",
+      "tasks": "Tasks",
+      "reports": "Reports",
+      "settings": "Settings",
+      "quotes": "Quotes",
+      "invoices": "Invoices",
+      "pipeline": "Sales Pipeline"
+    },
+    "messages": {
+      "undecryptable": "Message can't be read"
+    }
+  },
+  "experience": {
+    "guide": "Your next steps",
+    "clientGuide": "Check your project details, review the design when it is ready, and send questions to your project manager.",
+    "pmGuide": "Review assigned clients, prepare project designs, and keep tasks and deadlines current.",
+    "chiefGuide": "Review new clients, assign project managers, and check projects awaiting a decision.",
+    "offline": "You are offline. Reconnect before saving or sending.",
+    "mobileReview": "Review your design",
+    "previewHelp": "Review saved previews here. Use a desktop for the interactive 3D workspace. Approval applies to the current design.",
+    "noPreview": "No preview is available. Ask your project manager to share one before approving.",
+    "historical": "This is an earlier version. Switch to the current version to approve.",
+    "updated": "The design changed. Review the latest preview before continuing.",
+    "failed": "Could not load the data. Please try again.",
+    "retry": "Try again",
+    "detailUnavailable": "Some invoice details or payment records could not be loaded. Reopen the invoice to retry."
+  },
+  "help": {
+    "quotes": {
+      "awaiting": {
+        "title": "Awaiting your decision",
+        "body": "Quotes your agency has sent that you have not yet accepted or declined.",
+        "note": "A quote past its validity date is no longer counted here."
+      },
+      "validity": {
+        "title": "Quote validity",
+        "body": "The date the priced work is guaranteed until. Material and stand costs move, so a quote cannot be held open indefinitely."
+      },
+      "deciding": {
+        "title": "Accepting or declining",
+        "body": "Accepting confirms the price and lets your agency start. Declining asks for a revision; say what needs to change and they will send a new quote.",
+        "note": "Neither uses a design revision round."
+      }
+    },
+    "projects": {
+      "progress": {
+        "title": "Production progress",
+        "body": "How far your stand has moved through the agency's own stages, from first brief to handover on site.",
+        "note": "It tracks the build, not your approvals. Approving a design does not move it on its own."
+      },
+      "actionRequired": {
+        "title": "Action required",
+        "body": "Your agency is waiting on you for this one. Open the design or the approvals list to see what is outstanding."
+      },
+      "timeline": {
+        "title": "Recent activity",
+        "body": "The last five times your project moved between stages, newest first."
+      },
+      "actions": {
+        "title": "What these open",
+        "body": "Each one opens the page for this project in particular, not the portal's default stand.",
+        "note": "Documents are shared across your whole account, so that one is not project-specific."
+      }
+    },
+    "documents": {
+      "status": {
+        "title": "Final and in review",
+        "body": "Final means your agency has signed the file off. In review means it is still being checked internally and may change.",
+        "note": "Nothing here is waiting on you. Your own approvals live on the design page."
+      },
+      "categories": {
+        "title": "Categories",
+        "body": "The filing your agency uses, so only the categories they have actually used appear here."
+      }
+    },
+    "dashboard": {
+      "milestones": {
+        "title": "Milestones",
+        "body": "The same stages as the bar above, read from the one progress figure, so the two always agree.",
+        "note": "A tick means the build has passed that point, not that you approved it."
+      },
+      "activity": {
+        "title": "Recent activity",
+        "body": "The last few things your agency did on your account, newest first. It refreshes on its own while this page is open."
+      }
+    }
+  }
+}

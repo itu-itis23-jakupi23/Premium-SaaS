@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useSearchParams } from "wouter";
+import { useUnsavedWarning } from "@/hooks/useUnsavedWarning";
 import { useTranslation } from "react-i18next";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+import { HelpHint } from "@/components/HelpHint";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Paperclip, Search, X, Lock } from "lucide-react";
+import { Send, Paperclip, Search, X, Lock, ArrowUpCircle } from "lucide-react";
 import {
   getConversationMessages,
+  getEscalationTargets,
   getMessageContacts,
   getPlatformProjects,
   messageAttachmentHref,
@@ -17,6 +21,7 @@ import {
   uploadConversationAttachment,
   type DirectMessage,
   type DirectMessageAttachment,
+  type EscalationTarget,
   type MessageContact,
   type PlatformProject,
 } from "@/lib/platform-api";
@@ -27,7 +32,13 @@ export default function ClientMessages() {
   const [messages, setMessages] = useState<DirectMessage[]>([]);
   const [projects, setProjects] = useState<PlatformProject[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  // "Message PM" on a project card carries the project, so the thread opens
+  // already filed against the stand the client clicked from rather than
+  // whichever one happened to sort first.
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(
+    () => searchParams.get("project"),
+  );
   const [inputValue, setInputValue] = useState("");
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
@@ -35,8 +46,14 @@ export default function ClientMessages() {
   const [isSending, setIsSending] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [attachment, setAttachment] = useState<DirectMessageAttachment | null>(null);
+  const [escalationTargets, setEscalationTargets] = useState<EscalationTarget[]>([]);
+  const [escalateOpen, setEscalateOpen] = useState(false);
+  const [escalateTargetId, setEscalateTargetId] = useState<string>("");
+  const [escalateText, setEscalateText] = useState("");
+  const [isEscalating, setIsEscalating] = useState(false);
   const messagesEnd = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  useUnsavedWarning(Boolean(inputValue.trim() || attachment || escalateText.trim()));
 
   useEffect(() => {
     document.title = t("client.messages.pageTitle");
@@ -76,6 +93,14 @@ export default function ClientMessages() {
       .finally(() => {
         if (mounted) setIsLoading(false);
       });
+    getEscalationTargets()
+      .then((response) => {
+        if (!mounted) return;
+        setEscalationTargets(response.targets);
+        setEscalateTargetId((current) => current || response.targets[0]?.id || "");
+      })
+      .catch(() => { /* escalation is optional; the inbox still works without it */ });
+
     return () => { mounted = false; };
   }, [t]);
 
@@ -91,7 +116,16 @@ export default function ClientMessages() {
     let mounted = true;
 
     loadMessages();
-    const interval = window.setInterval(loadMessages, 5000);
+    // Skip the tick while the tab is hidden - a backgrounded inbox polling every
+    // five seconds costs the server and the battery for an answer nobody is
+    // reading - and catch up the moment it comes back, which is the case a bare
+    // interval handles worst.
+    const interval = window.setInterval(() => {
+      if (!document.hidden) loadMessages();
+    }, 5000);
+    const onFocus = () => { if (!document.hidden) loadMessages(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
 
     async function loadMessages() {
       try {
@@ -116,6 +150,8 @@ export default function ClientMessages() {
     return () => {
       mounted = false;
       window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
     };
   }, [activeContactId, messageContext, t]);
 
@@ -146,6 +182,28 @@ export default function ClientMessages() {
       setError(reason instanceof Error ? reason.message : "Could not send message.");
     } finally {
       setIsSending(false);
+    }
+  }
+
+  async function handleEscalate() {
+    const target = escalationTargets.find((entry) => entry.id === escalateTargetId) ?? escalationTargets[0];
+    const text = escalateText.trim();
+    if (!target || !text || isEscalating) return;
+    setIsEscalating(true);
+    setError("");
+    try {
+      // `escalate: true` is what opens the door. Once this first message lands
+      // the thread exists, and every later message is an ordinary one.
+      await sendConversationMessage(target.id, text, undefined, [], true);
+      const response = await getMessageContacts();
+      setContacts(response.contacts);
+      setActiveId(target.id);
+      setEscalateText("");
+      setEscalateOpen(false);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : t("client.messages.error.escalateFailed"));
+    } finally {
+      setIsEscalating(false);
     }
   }
 
@@ -185,7 +243,13 @@ export default function ClientMessages() {
         </div>
       )}
 
-      <div className="mt-6 h-[calc(100vh-220px)] flex gap-6">
+      <label className="mt-4 block text-sm md:hidden" htmlFor="mobile-conversation">{t("client.messages.contactListLabel")}
+        <select id="mobile-conversation" className="mt-1 min-h-11 w-full rounded-md border bg-background p-2" value={activeContactId ?? ""} disabled={isLoading || isSending || isUploading || Boolean(inputValue.trim() || attachment)} onChange={(event) => { setActiveId(event.target.value); setMessages([]); setError(""); }}>
+          {!contacts.length && <option value="">{t("client.messages.supportManager")}</option>}
+          {contacts.map((contact) => <option key={contact.id} value={contact.id}>{contact.name}</option>)}
+        </select>
+      </label>
+      <div className="mt-4 min-h-[420px] h-[calc(100dvh-260px)] flex gap-3 md:mt-6 md:h-[calc(100dvh-220px)] md:gap-6">
         <Card className="w-80 hidden md:flex flex-col overflow-hidden">
           <div className="p-4 border-b">
             <div className="relative">
@@ -199,6 +263,77 @@ export default function ClientMessages() {
                 className="pl-9 bg-muted/50 border-transparent"
               />
             </div>
+            {escalationTargets.length > 0 && (
+              <div className="mt-3">
+                {!escalateOpen ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start gap-2 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => setEscalateOpen(true)}
+                  >
+                    <ArrowUpCircle className="h-4 w-4" aria-hidden="true" />
+                    {t("client.messages.escalate.open")}
+                  </Button>
+                ) : (
+                  <div className="rounded-md border bg-muted/30 p-3">
+                    <p className="mb-2 flex items-start gap-1.5 text-xs text-muted-foreground">
+                      <span className="flex-1">{t("client.messages.escalate.hint")}</span>
+                      <HelpHint
+                        title="help.messages.escalate.title"
+                        body="help.messages.escalate.body"
+                        note="help.messages.escalate.note"
+                        side="left"
+                      />
+                    </p>
+                    {escalationTargets.length > 1 && (
+                      <>
+                        <label htmlFor="escalate-target" className="sr-only">{t("client.messages.escalate.targetLabel")}</label>
+                        <select
+                          id="escalate-target"
+                          value={escalateTargetId}
+                          onChange={(event) => setEscalateTargetId(event.target.value)}
+                          className="mb-2 w-full rounded-md border bg-background px-2 py-1 text-xs"
+                        >
+                          {escalationTargets.map((target) => (
+                            <option key={target.id} value={target.id}>{target.name}</option>
+                          ))}
+                        </select>
+                      </>
+                    )}
+                    <label htmlFor="escalate-text" className="sr-only">{t("client.messages.escalate.messageLabel")}</label>
+                    <Input
+                      id="escalate-text"
+                      value={escalateText}
+                      onChange={(event) => setEscalateText(event.target.value)}
+                      placeholder={t("client.messages.escalate.placeholder")}
+                      className="mb-2 text-xs"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        disabled={!escalateText.trim() || isEscalating}
+                        onClick={() => void handleEscalate()}
+                      >
+                        {isEscalating ? t("client.messages.escalate.sending") : t("client.messages.escalate.send")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs"
+                        onClick={() => { setEscalateOpen(false); setEscalateText(""); }}
+                      >
+                        {t("client.messages.escalate.cancel")}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <ScrollArea className="flex-1">
             {isLoading && <div className="p-4 text-sm text-muted-foreground">Loading...</div>}
@@ -217,7 +352,8 @@ export default function ClientMessages() {
                   <div key={contact.id} role="listitem">
                     <button
                       type="button"
-                      onClick={() => setActiveId(contact.id)}
+                      disabled={isSending || isUploading || Boolean(inputValue.trim() || attachment)}
+                      onClick={() => { setActiveId(contact.id); setMessages([]); }}
                       className={`w-full p-4 cursor-pointer transition-colors text-left ${selected ? "bg-primary/5 border-l-4 border-primary" : "hover:bg-muted/50"}`}
                     >
                       <div className="flex gap-3">
@@ -242,7 +378,7 @@ export default function ClientMessages() {
           </ScrollArea>
         </Card>
 
-        <Card className="flex-1 flex flex-col overflow-hidden border-primary/10">
+        <Card className="min-w-0 flex-1 flex flex-col overflow-hidden border-primary/10">
           <div className="p-4 border-b flex items-center justify-between bg-card/50">
             <div className="flex items-center gap-3">
               <Avatar aria-hidden="true">
@@ -276,7 +412,7 @@ export default function ClientMessages() {
             </div>
           </div>
 
-          <ScrollArea className="flex-1 p-6">
+          <ScrollArea className="min-h-0 flex-1 p-3 sm:p-6">
             <div role="log" aria-label={t("client.messages.threadLabel")} aria-live="polite" className="space-y-6">
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.isMe ? "justify-end" : "justify-start"}`}>
@@ -295,7 +431,7 @@ export default function ClientMessages() {
                             {t("pm.messages.undecryptable")}
                           </p>
                         ) : msg.text ? (
-                          <p className="whitespace-pre-wrap">{msg.text}</p>
+                          <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{msg.text}</p>
                         ) : null}
                         {Boolean(msg.attachments?.length) && (
                           <div className={msg.text ? "mt-2 space-y-1.5" : "space-y-1.5"}>

@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useLiveRefresh } from "@/hooks/useLiveRefresh";
 import { useTranslation } from "react-i18next";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { Button } from "@/components/ui/button";
+import { HelpHint } from "@/components/HelpHint";
 import {
   FileText,
   Download,
@@ -14,7 +17,13 @@ import {
   X,
   AlertCircle,
 } from "lucide-react";
-import { type ClientDocument, getClientDocuments, getDocumentDownloadUrl } from "@/lib/platform-api";
+import {
+  type ClientDocument,
+  canPreviewInline,
+  getClientDocuments,
+  getDocumentDownloadUrl,
+  getDocumentPreviewUrl,
+} from "@/lib/platform-api";
 
 type DocType = "pdf" | "image" | "spreadsheet" | "doc";
 
@@ -60,19 +69,31 @@ interface DisplayDoc {
   approved: boolean;
   category: string;
   mimeType: string;
+  /** The server will render this type in the browser; otherwise only download. */
+  previewable: boolean;
 }
 
-function toDisplayDoc(d: ClientDocument, lang: string): DisplayDoc {
+/**
+ * `fallbacks` carries the two defaults that used to be hardcoded English
+ * ("Agency", "General"), so they are no longer the one pair of strings on the
+ * page that never translated.
+ */
+function toDisplayDoc(
+  d: ClientDocument,
+  lang: string,
+  fallbacks: { uploadedBy: string; category: string },
+): DisplayDoc {
   return {
     id: d.id,
     name: d.fileName,
     type: mimeToType(d.mimeType),
     size: formatBytes(d.sizeBytes),
     uploadedAt: formatDate(d.createdAt, lang),
-    uploadedBy: d.uploadedBy ?? "Agency",
+    uploadedBy: d.uploadedBy ?? fallbacks.uploadedBy,
     approved: d.approvedAt !== null,
-    category: d.kind || "General",
+    category: d.kind || fallbacks.category,
     mimeType: d.mimeType,
+    previewable: canPreviewInline(d.mimeType),
   };
 }
 
@@ -84,6 +105,9 @@ export default function ClientDocuments() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [preview, setPreview] = useState<DisplayDoc | null>(null);
+  // Reset per document: a failure on one file must not blank the pane for the
+  // next one the client opens.
+  const [previewFailed, setPreviewFailed] = useState(false);
   // aria-modal without a focus trap hides the page from assistive tech while
   // letting keyboard focus walk straight back out into it.
   const previewRef = useRef<HTMLDivElement>(null);
@@ -93,14 +117,29 @@ export default function ClientDocuments() {
     document.title = t("client.documents.pageTitle");
   }, [t]);
 
-  useEffect(() => {
-    setLoading(true);
+  const load = useCallback(async (withSpinner = true) => {
+    if (withSpinner) setLoading(true);
     setError(null);
-    getClientDocuments()
-      .then((list) => setDocs(list.map((d) => toDisplayDoc(d, i18n.language))))
-      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load documents"))
-      .finally(() => setLoading(false));
-  }, [i18n.language]);
+    try {
+      const list = await getClientDocuments();
+      setDocs(list.map((d) => toDisplayDoc(d, i18n.language, {
+        uploadedBy: t("client.documents.fallback.uploadedBy"),
+        category: t("client.documents.fallback.category"),
+      })));
+    } catch {
+      // Not `err.message`: raw API text told the client nothing they could act
+      // on, and it replaced the whole page with no way back.
+      setError(t("client.documents.loadError"));
+    } finally {
+      if (withSpinner) setLoading(false);
+    }
+  }, [i18n.language, t]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  // The agency uploads drawings and approvals throughout a build; without this
+  // the client has to reload the page to find out anything arrived.
+  useLiveRefresh(() => load(false), { intervalMs: 90_000 });
 
   const categories = useMemo(() => Array.from(new Set(docs.map((d) => d.category))), [docs]);
 
@@ -135,20 +174,16 @@ export default function ClientDocuments() {
     [t],
   );
 
+  const previewUrl = preview ? getDocumentPreviewUrl(preview.id) : null;
+
+  const openPreview = (doc: DisplayDoc) => {
+    setPreviewFailed(false);
+    setPreview(doc);
+  };
+
   const handleDownload = (doc: DisplayDoc) => {
     window.open(getDocumentDownloadUrl(doc.id), "_blank", "noopener");
   };
-
-  if (error) {
-    return (
-      <DashboardLayout role="client">
-        <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
-          <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
-          <p className="text-sm">{error}</p>
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   return (
     <DashboardLayout role="client">
@@ -161,8 +196,21 @@ export default function ClientDocuments() {
           ]}
         />
 
+        {error && (
+          <div
+            role="alert"
+            className="flex flex-wrap items-center gap-3 rounded-lg border border-destructive px-4 py-3 text-sm"
+          >
+            <AlertCircle className="h-4 w-4 text-destructive" aria-hidden="true" />
+            {error}
+            <Button variant="outline" className="ms-auto min-h-11" disabled={loading} onClick={() => void load()}>
+              {t("experience.retry")}
+            </Button>
+          </div>
+        )}
+
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {stats.map((s) => (
             <div key={s.label} className="border rounded-lg p-3.5 bg-card">
               <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1.5">
@@ -182,6 +230,11 @@ export default function ClientDocuments() {
             role="group"
             aria-label={t("client.documents.filterGroup")}
           >
+            <HelpHint
+              title="help.documents.categories.title"
+              body="help.documents.categories.body"
+              className="me-1"
+            />
             {["All", ...categories].map((cat) => (
               <button
                 key={cat}
@@ -226,7 +279,16 @@ export default function ClientDocuments() {
                     key={i}
                     className="px-4 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-muted-foreground font-bold"
                   >
-                    {h}
+                    <span className="inline-flex items-center gap-1.5">
+                      {h}
+                      {h === t("client.documents.table.status") && (
+                        <HelpHint
+                          title="help.documents.status.title"
+                          body="help.documents.status.body"
+                          note="help.documents.status.note"
+                        />
+                      )}
+                    </span>
                   </th>
                 ))}
               </tr>
@@ -291,11 +353,16 @@ export default function ClientDocuments() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                          {/* Visible by default. These were opacity-0 until
+                              hover, so on a phone - where there is no hover -
+                              download and preview were invisible. The hover
+                              class only darkens them now. */}
+                          <div className="flex items-center gap-1.5 opacity-70 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                             <button
-                              onClick={() => setPreview(doc)}
+                              onClick={() => openPreview(doc)}
                               aria-label={t("client.documents.actions.preview", { name: doc.name })}
                               className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                              data-testid={`button-preview-${doc.id}`}
                             >
                               <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                             </button>
@@ -374,27 +441,56 @@ export default function ClientDocuments() {
               </button>
             </div>
 
-            <div className="bg-muted/30 rounded-lg h-48 flex items-center justify-center mb-4 border border-dashed">
-              {preview.type === "image" ? (
-                <div className="text-center">
-                  <Image
-                    className="h-12 w-12 mx-auto mb-2 text-muted-foreground"
-                    aria-hidden="true"
+            {/* A real preview. This pane used to be a placeholder icon over
+                "preview unavailable" for every file, because the download
+                route always sent Content-Disposition: attachment - so there
+                was nothing a browser would render. It now asks for the
+                inline form, which the server grants for the handful of types
+                that cannot carry script, and falls back to the old message
+                for anything else rather than showing an empty frame. */}
+            <div className="relative mb-4 flex h-64 items-center justify-center overflow-hidden rounded-lg border bg-muted/30">
+              {preview.previewable && previewUrl ? (
+                preview.type === "image" ? (
+                  <img
+                    src={previewUrl}
+                    alt={t("client.documents.preview.imageAlt", { name: preview.name })}
+                    className="max-h-full max-w-full object-contain"
+                    data-testid="document-preview-image"
+                    onError={() => setPreviewFailed(true)}
                   />
-                  <p className="text-xs font-mono text-muted-foreground">
-                    {t("client.documents.preview.imageUnavailable")}
-                  </p>
-                </div>
+                ) : (
+                  <iframe
+                    src={previewUrl}
+                    title={t("client.documents.preview.frameTitle", { name: preview.name })}
+                    className="h-full w-full border-0"
+                    data-testid="document-preview-frame"
+                  />
+                )
               ) : (
-                <div className="text-center">
-                  <FileText
-                    className="h-12 w-12 mx-auto mb-2 text-muted-foreground"
-                    aria-hidden="true"
-                  />
+                <div className="px-6 text-center">
+                  {preview.type === "image" ? (
+                    <Image className="mx-auto mb-2 h-12 w-12 text-muted-foreground" aria-hidden="true" />
+                  ) : (
+                    <FileText className="mx-auto mb-2 h-12 w-12 text-muted-foreground" aria-hidden="true" />
+                  )}
                   <p className="text-xs font-mono text-muted-foreground">
                     {t("client.documents.preview.typeUnavailable", {
                       type: preview.type.toUpperCase(),
                     })}
+                  </p>
+                  <p className="mt-1.5 text-[11px] text-muted-foreground">
+                    {t("client.documents.preview.downloadInstead")}
+                  </p>
+                </div>
+              )}
+              {previewFailed && (
+                <div
+                  role="alert"
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/95 px-6 text-center"
+                >
+                  <AlertCircle className="h-6 w-6 text-destructive" aria-hidden="true" />
+                  <p className="text-xs text-muted-foreground">
+                    {t("client.documents.preview.failed")}
                   </p>
                 </div>
               )}

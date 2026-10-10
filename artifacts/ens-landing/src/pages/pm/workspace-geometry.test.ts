@@ -5,6 +5,7 @@ import {
   rotatedItemFootprint,
   positionBoundsForItem,
   roomPlacementIssue,
+  roomItemPlacementReason,
   placementIssuesFor,
   alignedPositions,
   distributedPositions,
@@ -125,6 +126,61 @@ describe("furniture inside a room", () => {
       [withDoor], booth, [],
     );
     expect(issues.some((i) => i.message.includes("door clearance"))).toBe(true);
+  });
+});
+
+describe("roomItemPlacementReason", () => {
+  // The drop preview in the booth renderer asks this before it says "release to
+  // place". It used to call a function that did not exist, which threw a
+  // ReferenceError inside the iframe and took three end-to-end drag/undo
+  // journeys down with it.
+  const store = room({ id: "s", name: "Store", x: 1.5, z: 1.5, width: 2, depth: 2 });
+
+  it("allows a footprint clear of the room", () => {
+    const x = store.x + store.width / 2 + 0.5 + ROOM_ITEM_PAD_M + 0.01;
+    expect(roomItemPlacementReason({ x, z: store.z, w: 1, d: 1 }, store)).toBe("");
+  });
+
+  it("names the room whose wall the footprint crosses", () => {
+    const x = store.x + store.width / 2 - 0.5 + 0.01;
+    expect(roomItemPlacementReason({ x, z: store.z, w: 1, d: 1 }, store)).toMatch(/Crosses Store wall/);
+  });
+
+  it("reports a footprint standing in the door clearance", () => {
+    const withDoor = room({ ...store, hasDoor: true, doorSide: "front", doorWidth: 0.9 });
+    const reason = roomItemPlacementReason(
+      { x: withDoor.x, z: withDoor.z + withDoor.depth / 2 - 0.4, w: 0.5, d: 0.5 },
+      withDoor,
+    );
+    expect(reason).toMatch(/door clearance/);
+  });
+
+  it("agrees with roomPlacementIssue about the same overlap", () => {
+    // Two directions on one rule. If these ever disagree, a drop preview will
+    // promise a placement the workspace then refuses.
+    const x = store.x + store.width / 2 - 0.5 + 0.01;
+    const shape = { x, z: store.z, w: 1, d: 1 };
+    const blocked = roomItemPlacementReason(shape, store) !== "";
+    const issue = roomPlacementIssue(store, [store], [item({ id: "a", x, z: store.z })]) !== "";
+    expect(blocked).toBe(issue);
+  });
+
+  it("rotates the footprint it is given, so callers must not pre-rotate as well", () => {
+    // The contract the booth renderer depends on: 1.9 x 0.4 turned a quarter
+    // turn is the same box as 0.4 x 1.9 standing straight. The renderer has
+    // already rotated its width and depth by the time it calls here, so it
+    // leaves rotationY off - passing both would swap the axes twice and put
+    // the box back where it started.
+    const bay = room({ id: "bay", name: "Bay", x: 3, z: 1.5, width: 3, depth: 1.4 });
+    const upright = { x: bay.x, z: bay.z, w: 0.4, d: 1.9 };
+    const turned = { x: bay.x, z: bay.z, w: 1.9, d: 0.4, rotationY: 90 };
+    expect(roomItemPlacementReason(turned, bay)).toBe(roomItemPlacementReason(upright, bay));
+
+    // And the un-rotated 1.9 x 0.4 is genuinely a different box: it fits across
+    // this bay where the upright one does not, which is what makes the check
+    // above meaningful rather than two ways of saying the same thing.
+    const flat = { x: bay.x, z: bay.z, w: 1.9, d: 0.4 };
+    expect(roomItemPlacementReason(flat, bay)).not.toBe(roomItemPlacementReason(upright, bay));
   });
 });
 

@@ -47,8 +47,17 @@ function flatten(value: unknown, prefix = "", out: Set<string> = new Set()): Set
   return out;
 }
 
-const english = flatten(
-  JSON.parse(readFileSync(resolve(here, "locales", "en.json"), "utf8")),
+/**
+ * English lives in three files: en.json ships with the first load, en.app.json
+ * arrives with any authenticated page and en.staff.json with the chief and PM
+ * pages (CS-14). Together they are the catalogue,
+ * so every check here reads the pair as one - splitting it for weight must not
+ * create a blind spot where a key is "missing" only because it moved.
+ */
+const english = new Set(
+  ["en.json", "en.app.json", "en.staff.json"].flatMap((name) => [
+    ...flatten(JSON.parse(readFileSync(resolve(here, "locales", name), "utf8"))),
+  ]),
 );
 
 /**

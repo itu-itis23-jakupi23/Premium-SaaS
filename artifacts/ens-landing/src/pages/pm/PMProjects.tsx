@@ -677,15 +677,9 @@ function ProjectTable({ projects, isLoading, locale, stageBusy, onDetails, onSta
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                    <Link
-                      href={`/pm/workspace?projectId=${encodeURIComponent(project.id)}`}
-                      onPointerEnter={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }}
-                      onFocus={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }}
-                    >
-                      <button className="flex items-center gap-1 whitespace-nowrap rounded border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary hover:text-white">
+                    <Link href={`/pm/workspace?projectId=${encodeURIComponent(project.id)}`} onPointerEnter={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }} onFocus={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }} className="flex items-center gap-1 whitespace-nowrap rounded border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary hover:text-white">
                         <Layers aria-hidden="true" className="h-2.5 w-2.5" /> {t("pm.projects.actions.open")}
-                      </button>
-                    </Link>
+                      </Link>
                     <button
                       type="button"
                       onClick={() => onDetails(project)}
@@ -833,15 +827,9 @@ function ProjectGrid({ projects, isLoading, locale, stageBusy, onDetails, onStag
                   <CheckCircle2 aria-hidden="true" className="h-3 w-3" /> {t("pm.projects.actions.advance")}
                 </button>
               </div>
-              <Link
-                href={`/pm/workspace?projectId=${encodeURIComponent(project.id)}`}
-                onPointerEnter={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }}
-                onFocus={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }}
-              >
-                <button className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-primary/20 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-white">
+              <Link href={`/pm/workspace?projectId=${encodeURIComponent(project.id)}`} onPointerEnter={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }} onFocus={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-primary/20 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-white">
                   <Layers aria-hidden="true" className="h-3 w-3" /> {t("pm.projects.actions.openWorkspace")}
-                </button>
-              </Link>
+                </Link>
             </div>
           </div>
         );
@@ -1317,20 +1305,12 @@ function ProjectDetailDrawer({
             Project ownership, client assignment, and deletion are controlled by Chief Manager.
           </p>
           <div className="flex items-center gap-2">
-            <Link href={`/pm/calendar?clientName=${encodeURIComponent(project.client)}`}>
-              <button className="rounded-md border px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link href={`/pm/calendar?clientName=${encodeURIComponent(project.client)}`} className="rounded-md border px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t("pm.nav.calendar")}
-              </button>
-            </Link>
-            <Link
-              href={`/pm/workspace?projectId=${encodeURIComponent(project.id)}`}
-              onPointerEnter={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }}
-              onFocus={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }}
-            >
-              <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+              </Link>
+            <Link href={`/pm/workspace?projectId=${encodeURIComponent(project.id)}`} onPointerEnter={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }} onFocus={() => { void preloadPortalRoute("/pm/workspace")?.catch(() => undefined); }} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
                 {t("pm.projects.actions.openWorkspace")}
-              </button>
-            </Link>
+              </Link>
           </div>
         </div>
       </aside>

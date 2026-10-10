@@ -1,7 +1,6 @@
 {
   "common": {
     "startDesigning": "Começar a projetar",
-    "watchDemo": "Ver demo",
     "getAccess": "Obter acesso",
     "contactSales": "Contatar vendas",
     "signIn": "Entrar",
@@ -45,7 +44,7 @@
       "subheading": "Escale seu negócio de exposições com o plano certo.",
       "perMonth": "/mês",
       "recommended": "Recomendado",
-      "custom": "Personalizado"
+      "onboardingNote": "As contas de agência são criadas com a nossa equipa, para ajustar o plano à sua forma de trabalhar. O pagamento self-service está a caminho."
     },
     "cta": {
       "heading": "Comece a construir seu estande hoje",
@@ -271,8 +270,6 @@
       "annual": "Anual",
       "saveBadge": "Poupe 20%",
       "perMonthAnnual": "/mês · faturado anualmente",
-      "savePerYear": "Poupe ${{amount}}/ano",
-      "getStarted": "Começar",
       "contactSales": "Falar com vendas"
     },
     "pricingTiers": [
@@ -2345,7 +2342,9 @@
       "openWorkspaceBtn": "Open Workspace",
       "reviewApprovalBtn": "Review Approval",
       "workspaceLocked": "Espaço de trabalho bloqueado até à atribuição",
-      "workspaceLockedDesc": "Será notificado assim que o seu gestor de projeto for atribuído."
+      "workspaceLockedDesc": "Será notificado assim que o seu gestor de projeto for atribuído.",
+      "projectSwitcher": "Escolha qual projeto este painel mostra",
+      "showingProject": "Exibindo"
     },
     "approvals": {
       "pageTitle": "Aprovações | ENS",
@@ -2442,14 +2441,22 @@
       },
       "preview": {
         "close": "Fechar visualização",
-        "imageUnavailable": "Visualização de imagem não disponível na demo",
         "typeUnavailable": "Visualização não disponível para arquivos {{type}}",
         "category": "Categoria",
         "status": "Status",
         "uploadedBy": "Enviado por",
         "tags": "Tags",
         "downloadBtn": "Baixar arquivo",
-        "mimeType": "Type"
+        "mimeType": "Type",
+        "imageAlt": "Pré-visualização de {{name}}",
+        "frameTitle": "Pré-visualização de {{name}}",
+        "downloadInstead": "Baixe-o para abrir no aplicativo adequado.",
+        "failed": "Não foi possível exibir este arquivo. O download deve continuar funcionando."
+      },
+      "loadError": "Não foi possível carregar seus documentos.",
+      "fallback": {
+        "uploadedBy": "Agência",
+        "category": "Geral"
       }
     },
     "messages": {
@@ -2475,10 +2482,21 @@
       "error": {
         "contacts": "Não foi possível carregar os contactos de mensagens.",
         "messages": "Não foi possível carregar as mensagens.",
-        "attachmentTooLarge": "O anexo é demasiado grande. O tamanho máximo é de 25 MB."
+        "attachmentTooLarge": "O anexo é demasiado grande. O tamanho máximo é de 25 MB.",
+        "escalateFailed": "Não foi possível encaminhar. Tente novamente."
       },
       "noMessages": "Ainda não há mensagens.",
-      "uploading": "Uploading attachment..."
+      "uploading": "Uploading attachment...",
+      "escalate": {
+        "open": "Encaminhar a um responsável",
+        "hint": "O seu gestor de projeto é o primeiro contacto. Encaminhe apenas se precisar de um responsável superior.",
+        "targetLabel": "Escolher responsável",
+        "messageLabel": "A sua mensagem",
+        "placeholder": "Em que podemos ajudar?",
+        "send": "Enviar",
+        "sending": "A enviar…",
+        "cancel": "Cancelar"
+      }
     },
     "projects": {
       "pageTitle": "Meus projetos | ENS",
@@ -2534,7 +2552,14 @@
       },
       "loadError": "Não foi possível carregar os seus projetos atribuídos.",
       "emptyTitle": "Ainda não há projetos atribuídos",
-      "emptyDesc": "A sua inscrição na feira está registada. A direção ou um gestor de projeto tem de atribuir um projeto antes de este aparecer aqui."
+      "emptyDesc": "A sua inscrição na feira está registada. A direção ou um gestor de projeto tem de atribuir um projeto antes de este aparecer aqui.",
+      "stage": {
+        "intake": "Recepção",
+        "design": "Design",
+        "review": "Revisão",
+        "production": "Produção",
+        "closed": "Encerrado"
+      }
     },
     "profile": {
       "pageTitle": "Configurações de perfil | ENS",
@@ -2553,7 +2578,8 @@
       },
       "company": {
         "heading": "Informações da empresa",
-        "description": "Gerencie os dados da sua empresa e perfil de exposição."
+        "description": "Gerencie os dados da sua empresa e perfil de exposição.",
+        "agencyOwned": "Este nome é mantido pelo seu organizador. Peça ao seu gestor de projeto para alterá-lo."
       },
       "avatar": {
         "heading": "Foto de perfil",
@@ -2633,7 +2659,8 @@
         "passwordFillAll": "Preencha todos os campos de senha",
         "passwordMismatch": "As novas senhas não coincidem",
         "passwordTooShort": "A senha deve ter pelo menos 8 caracteres",
-        "deleteQueued": "Solicitação de exclusão de conta registrada"
+        "deleteQueued": "Solicitação de exclusão de conta registrada",
+        "companyError": "Não foi possível salvar as informações da empresa"
       }
     },
     "workspace": {
@@ -2775,7 +2802,46 @@
         "reopen": "Reopen",
         "resolve": "Resolve"
       },
-      "backToDashboard": "Voltar ao painel"
+      "backToDashboard": "Voltar ao painel",
+      "propose": {
+        "start": "Organizar mobiliário",
+        "exit": "Concluído",
+        "sendToPm": "Enviar ao gestor",
+        "saving": "A guardar…",
+        "saved": "Guardado",
+        "unsaved": "Alterações por guardar",
+        "withPm": "Layout com o seu gestor",
+        "notAvailable": "Pode propor um layout enquanto o design está em revisão.",
+        "itemUnavailable": "Esse artigo já não está disponível.",
+        "blocked": "Colocação bloqueada: {{reason}}",
+        "sent": "Layout enviado ao seu gestor de projeto.",
+        "searchLabel": "Procurar mobiliário",
+        "searchPlaceholder": "Mobiliário, SKU…",
+        "noResults": "Nenhum mobiliário corresponde.",
+        "yourFurniture": "O seu mobiliário ({{count}})",
+        "reset": "Repor",
+        "removeItem": "Remover {{name}}",
+        "nothingPlaced": "Ainda não colocou nada.",
+        "submitTitle": "Enviar o layout ao seu gestor de projeto",
+        "submitBody": "O seu gestor analisa e aplica-o ou explica porque não. Isto usa uma ronda de revisão.",
+        "noteLabel": "Nota para o seu gestor",
+        "notePlaceholder": "Algo que deva saber?",
+        "cancel": "Cancelar",
+        "send": "Enviar layout",
+        "sending": "A enviar…",
+        "addHint": "Arraste uma peça para o stand ou selecione-a para a colocar ao centro. Estrutura e iluminação ficam como o designer as deixou.",
+        "addItem": "Adicionar {{name}}",
+        "discard": "Descartar",
+        "discardHint": "Elimine este layout sem o enviar. Não custa nada.",
+        "discarded": "Layout descartado.",
+        "decision": {
+          "accepted": "O seu layout foi aplicado",
+          "declined": "O seu layout não foi aplicado",
+          "acceptedBody": "O seu gestor de projeto adicionou-o ao design.",
+          "declinedBody": "O seu gestor de projeto manteve o design atual.",
+          "dismiss": "Fechar"
+        }
+      }
     },
     "pendingApproval": {
       "title": "Pending Approval",
@@ -2817,7 +2883,6 @@
       "attemptsRemaining_other": "{{count}} tentativas de login restantes antes do bloqueio temporário",
       "noAccount": "Não tem uma conta?",
       "signUpFree": "Cadastre-se grátis",
-      "devSection": "Contas de teste locais",
       "showPassword": "Mostrar senha",
       "hidePassword": "Ocultar senha",
       "validation": {
@@ -3080,6 +3145,43 @@
     "toast": {
       "accepted": "Orçamento aceite. A sua agência foi notificada.",
       "rejected": "Orçamento recusado."
+    },
+    "filter": {
+      "label": "Filtrar orçamentos por status",
+      "all": "Todos",
+      "awaiting": "Aguardando sua decisão",
+      "decided": "Resolvidos"
+    },
+    "summary": {
+      "awaiting": "Aguardando você",
+      "value": "Valor pendente",
+      "deadline": "Próximo prazo",
+      "noDeadline": "Sem prazo"
+    },
+    "emptyFilter": "Nenhum orçamento corresponde a este filtro.",
+    "expiresIn_one": "resta {{count}} dia",
+    "expiresIn_other": "restam {{count}} dias",
+    "sent": "Enviado",
+    "validUntil": "Válido até",
+    "responded": "Sua resposta",
+    "print": "Imprimir",
+    "terms": "Condições",
+    "yourNote": "Sua observação",
+    "expiredNote": "Este orçamento passou da data de validade. Peça um novo ao seu gestor de projeto.",
+    "revisedNote": "Foi preparada uma versão revisada deste orçamento.",
+    "notRespondableNote": "Este orçamento não está aberto a uma decisão.",
+    "confirm": {
+      "title": "Aceitar este orçamento?",
+      "body": "Você está aceitando o orçamento {{number}} por {{amount}}. Sua agência será avisada e começará a partir dele.",
+      "cancel": "Cancelar",
+      "confirm": "Aceitar orçamento"
+    },
+    "declineDialog": {
+      "title": "Recusar este orçamento?",
+      "body": "Diga ao seu gestor de projeto o que não está certo, para que ele envie uma versão revisada.",
+      "label": "Por que você está recusando este orçamento",
+      "placeholder": "Muito caro, tamanho de stand errado, datas alteradas…",
+      "confirm": "Enviar recusa"
     }
   },
   "pipeline": {
@@ -3129,14 +3231,17 @@
       "issue": "Emitir",
       "markPaid": "Marcar como paga",
       "void": "Anular",
-      "delete": "Eliminar"
+      "delete": "Eliminar",
+      "recordPayment": "Registar pagamento"
     },
     "toast": {
       "created": "Fatura guardada como rascunho.",
       "sent": "Fatura emitida ao cliente.",
       "paid": "Pagamento registado.",
       "voided": "Fatura anulada.",
-      "deleted": "Rascunho de fatura eliminado."
+      "deleted": "Rascunho de fatura eliminado.",
+      "paymentRecorded": "Pagamento registado",
+      "invalidAmount": "Introduza um valor válido."
     },
     "form": {
       "title": "Nova fatura",
@@ -3162,6 +3267,36 @@
       "saveDraft": "Guardar rascunho",
       "needLine": "Adicione pelo menos uma linha com descrição.",
       "error": "Algo correu mal. Tente novamente."
+    },
+    "balanceDue": "{{amount}} em dívida",
+    "prompt": {
+      "recordPayment": "Registar um pagamento. Em dívida: {{amount}}"
+    },
+    "payment": {
+      "title": "Registar pagamento",
+      "fullTitle": "Confirmar pagamento integral",
+      "description": "Reveja o pagamento da fatura {{number}} antes de o registar.",
+      "outstanding": "Saldo em dívida: {{amount}}",
+      "amount": "Montante do pagamento ({{currency}})",
+      "method": "Método de pagamento",
+      "reference": "Referência (opcional)",
+      "note": "Nota (opcional)",
+      "review": "Montante a registar: {{amount}}",
+      "fullReview": "Registar o saldo total em dívida de {{amount}} como pago?",
+      "manualNotice": "Esta ação regista dinheiro já recebido. Não cobra ao cliente.",
+      "confirm": "Confirmar pagamento",
+      "retry": "Tentar o pagamento novamente",
+      "saving": "A registar pagamento…",
+      "close": "Fechar por agora",
+      "uncertain": "A confirmação está pendente. Os dados enviados estão guardados. Tente este mesmo pagamento novamente para confirmar o resultado antes de registar outro pagamento.",
+      "pending": "A confirmação do pagamento de {{number}} está pendente.",
+      "resume": "Retomar pagamento",
+      "invalidAmount": "Introduza um montante positivo com até duas casas decimais.",
+      "exceedsBalance": "O pagamento excede o saldo em dívida.",
+      "storageUnavailable": "Não foi possível guardar ou ler os dados de recuperação do pagamento neste navegador. Verifique as definições de armazenamento e tente novamente antes de registar outro pagamento.",
+      "listError": "Não foi possível atualizar a lista de faturas. Um pagamento confirmado continua registado.",
+      "refresh": "Tentar novamente",
+      "methods": { "manual": "Manual", "bank_transfer": "Transferência bancária", "cash": "Numerário", "card": "Cartão", "other": "Outro" }
     }
   },
   "clientInvoices": {
@@ -3177,7 +3312,24 @@
     "issued": "Emitida",
     "due": "Vencimento",
     "paidOn": "Paga",
-    "payNote": "Para tratar do pagamento, contacte o seu gestor de projeto."
+    "payNote": "Para tratar do pagamento, contacte o seu gestor de projeto.",
+    "print": "Imprimir / Guardar PDF",
+    "amountPaid": "Pago",
+    "amountDue": "Valor em dívida",
+    "partlyPaid": "Parcialmente pago",
+    "paymentHistory": "Histórico de pagamentos",
+    "noneMatchFilter": "Nenhuma fatura corresponde a este filtro.",
+    "filter": {
+      "label": "Filtrar faturas por estado",
+      "all": "Todas",
+      "open": "Em aberto",
+      "paid": "Pagas"
+    },
+    "summary": {
+      "outstanding": "Saldo em dívida",
+      "openCount": "Faturas em aberto",
+      "overdue": "Vencidas"
+    }
   },
   "workspace": {
     "desktopOnly": {
@@ -3186,5 +3338,138 @@
       "requirement": "Requer uma janela com pelo menos {{width}} px de largura. Um portátil ou computador servem; um tablet na horizontal também.",
       "back": "Voltar ao painel"
     }
+  },
+  "consent": {
+    "title": "Cookies",
+    "body": "Usamos cookies essenciais para o manter com sessão iniciada e recordar o seu idioma. Gostaríamos também de cookies de análise opcionais para perceber como o site é usado — apenas com o seu consentimento.",
+    "policyLink": "Ler a nossa política de cookies",
+    "accept": "Aceitar análise",
+    "decline": "Apenas essenciais",
+    "change": "Alterar escolha de cookies",
+    "changed": "A sua escolha de cookies foi reposta."
+  },
+  "help": {
+    "openLabel": "Ajuda: {{subject}}",
+    "invoices": {
+      "outstanding": {
+        "title": "Saldo em dívida",
+        "body": "Tudo o que falta pagar nas suas faturas emitidas, somado. Pagas, anuladas e rascunhos não contam.",
+        "note": "Uma fatura parcialmente paga conta apenas pelo que falta."
+      },
+      "overdue": {
+        "title": "Vencidas",
+        "body": "Faturas emitidas cujo prazo passou e que ainda não estão liquidadas."
+      },
+      "history": {
+        "title": "Histórico de pagamentos",
+        "body": "Cada pagamento registado nesta fatura, do mais antigo. Um adiantamento e o restante aparecem em separado."
+      }
+    },
+    "messages": {
+      "escalate": {
+        "title": "Encaminhar a um responsável",
+        "body": "O seu gestor de projeto é o primeiro contacto e conhece o seu stand ao pormenor. Encaminhe quando a decisão o ultrapassa, ou se não obtiver resposta.",
+        "note": "Depois de encaminhar, esse responsável fica nos seus contactos e pode escrever-lhe normalmente."
+      }
+    },
+    "workspace": {
+      "revisions": {
+        "title": "Rondas de revisão",
+        "body": "Cada ronda de alterações que pede gasta uma. Pedir por escrito e enviar um layout de mobiliário contam igual.",
+        "note": "Aprovar o design ou perguntar nas Mensagens não custa nada."
+      },
+      "propose": {
+        "title": "Propor um layout",
+        "body": "Disponha o mobiliário como gostaria e envie ao seu gestor de projeto. Ele aplica-o ao design ou explica porque não.",
+        "note": "Só o mobiliário é seu. Paredes, frontal e iluminação ficam como o designer as deixou."
+      }
+    },
+    "staffInvoices": {
+      "flow": {
+        "title": "O percurso de uma fatura",
+        "body": "Rascunho enquanto a edita, emitida assim que segue para o cliente, paga quando o saldo chega a zero. Anular retira uma fatura emitida.",
+        "note": "Registar pagamento lança um adiantamento ou prestação; Marcar como paga liquida o resto numa entrada."
+      }
+    },
+    "proposal": {
+      "review": {
+        "title": "Rever um layout do cliente",
+        "body": "Pré-visualizar muda a tela para a versão dele. Aplicar junta o mobiliário dele ao design atual como novo rascunho.",
+        "note": "Só o mobiliário transita. A estrutura que alterou entretanto mantém-se."
+      }
+    },
+    "quotes": {
+      "awaiting": {
+        "title": "Aguardando sua decisão",
+        "body": "Orçamentos que sua agência enviou e que você ainda não aceitou nem recusou.",
+        "note": "Um orçamento fora da validade já não é contado aqui."
+      },
+      "validity": {
+        "title": "Validade do orçamento",
+        "body": "A data até a qual o preço é garantido. Os custos de material e de stand mudam, por isso um orçamento não pode ficar aberto indefinidamente."
+      },
+      "deciding": {
+        "title": "Aceitar ou recusar",
+        "body": "Aceitar confirma o preço e permite que sua agência comece. Recusar pede uma revisão: diga o que precisa mudar e enviarão um novo orçamento.",
+        "note": "Nenhuma das duas consome uma rodada de revisão do design."
+      }
+    },
+    "projects": {
+      "progress": {
+        "title": "Progresso da produção",
+        "body": "O quanto seu stand avançou pelas etapas da agência, do primeiro briefing à entrega no local.",
+        "note": "Acompanha a execução, não suas aprovações. Aprovar um design por si só não faz avançar."
+      },
+      "actionRequired": {
+        "title": "Ação necessária",
+        "body": "Sua agência está esperando por você neste projeto. Abra o design ou a lista de aprovações para ver o que falta."
+      },
+      "timeline": {
+        "title": "Atividade recente",
+        "body": "As últimas cinco mudanças de etapa do seu projeto, da mais recente para a mais antiga."
+      },
+      "actions": {
+        "title": "O que estes abrem",
+        "body": "Cada um abre a página deste projeto específico, não o stand padrão do portal.",
+        "note": "Os documentos são compartilhados em toda a sua conta, por isso esse não é específico do projeto."
+      }
+    },
+    "documents": {
+      "status": {
+        "title": "Final e em revisão",
+        "body": "Final significa que sua agência aprovou o arquivo. Em revisão significa que ainda está sendo verificado internamente e pode mudar.",
+        "note": "Nada aqui depende de você. Suas aprovações ficam na página do design."
+      },
+      "categories": {
+        "title": "Categorias",
+        "body": "A organização que sua agência usa, por isso aqui aparecem apenas as categorias realmente utilizadas."
+      }
+    },
+    "dashboard": {
+      "milestones": {
+        "title": "Marcos",
+        "body": "As mesmas etapas da barra acima, lidas do mesmo percentual, por isso as duas sempre concordam.",
+        "note": "Uma marca indica que a execução passou desse ponto, não que você aprovou."
+      },
+      "activity": {
+        "title": "Atividade recente",
+        "body": "As últimas ações da sua agência na sua conta, as mais recentes primeiro. Atualiza-se sozinho enquanto esta página estiver aberta."
+      }
+    }
+  },
+  "experience": {
+    "guide": "Seus próximos passos",
+    "clientGuide": "Confira o projeto e revise o design quando estiver pronto. Envie dúvidas ao responsável.",
+    "pmGuide": "Confira os clientes atribuídos, prepare os designs e atualize tarefas e prazos.",
+    "chiefGuide": "Revise novos clientes, atribua responsáveis e confira projetos aguardando decisão.",
+    "offline": "Você está offline. Reconecte-se antes de salvar ou enviar.",
+    "mobileReview": "Revise seu design",
+    "previewHelp": "Veja as prévias salvas. Use um computador para o espaço 3D interativo. A aprovação corresponde ao design atual.",
+    "noPreview": "Nenhuma prévia disponível. Peça uma ao responsável antes de aprovar.",
+    "historical": "Esta é uma versão anterior. Selecione a atual para aprovar.",
+    "updated": "O design mudou. Revise a prévia mais recente antes de continuar.",
+    "failed": "Não foi possível carregar os dados. Tente novamente.",
+    "retry": "Tentar novamente",
+    "detailUnavailable": "Alguns detalhes ou pagamentos da fatura não foram carregados. Abra a fatura novamente."
   }
 }

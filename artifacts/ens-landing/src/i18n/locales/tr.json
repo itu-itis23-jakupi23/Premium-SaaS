@@ -1,7 +1,6 @@
 {
   "common": {
     "startDesigning": "Tasarlamaya Başla",
-    "watchDemo": "Demo İzle",
     "getAccess": "Hemen Erişim Al",
     "contactSales": "Satış ile İletişim",
     "signIn": "Giriş Yap",
@@ -45,7 +44,7 @@
       "subheading": "Doğru planla fuar işinizi büyütün.",
       "perMonth": "/ay",
       "recommended": "Önerilen",
-      "custom": "Özel"
+      "onboardingNote": "Ajans hesapları ekibimizle birlikte kurulur; böylece planı çalışma şeklinize göre belirleriz. Self servis ödeme yakında."
     },
     "cta": {
       "heading": "Bugün standınızı oluşturmaya başlayın",
@@ -266,8 +265,6 @@
       "annual": "Yıllık",
       "saveBadge": "%20 tasarruf",
       "perMonthAnnual": "/ay · yıllık faturalandırılır",
-      "savePerYear": "Yılda ${{amount}} tasarruf",
-      "getStarted": "Başlayın",
       "contactSales": "Satışla İletişime Geçin"
     },
     "pricingTiers": [
@@ -2345,7 +2342,9 @@
       "openWorkspaceBtn": "Open Workspace",
       "reviewApprovalBtn": "Review Approval",
       "workspaceLocked": "Atama yapılana kadar çalışma alanı kilitli",
-      "workspaceLockedDesc": "Proje yöneticiniz atandığında size bildirilecek."
+      "workspaceLockedDesc": "Proje yöneticiniz atandığında size bildirilecek.",
+      "projectSwitcher": "Bu panonun hangi projeyi göstereceğini seçin",
+      "showingProject": "Gösterilen"
     },
     "approvals": {
       "pageTitle": "Onaylar | ENS",
@@ -2442,14 +2441,22 @@
       },
       "preview": {
         "close": "Önizlemeyi kapat",
-        "imageUnavailable": "Görüntü önizlemesi demoda mevcut değil",
         "typeUnavailable": "{{type}} dosyaları için önizleme mevcut değil",
         "category": "Kategori",
         "status": "Durum",
         "uploadedBy": "Yükleyen",
         "tags": "Etiketler",
         "downloadBtn": "Dosyayı İndir",
-        "mimeType": "Type"
+        "mimeType": "Type",
+        "imageAlt": "{{name}} önizlemesi",
+        "frameTitle": "{{name}} önizleme",
+        "downloadInstead": "Uygun uygulamada açmak için indirin.",
+        "failed": "Bu dosya görüntülenemedi. İndirmek yine de çalışacaktır."
+      },
+      "loadError": "Belgeleriniz yüklenemedi.",
+      "fallback": {
+        "uploadedBy": "Ajans",
+        "category": "Genel"
       }
     },
     "messages": {
@@ -2475,10 +2482,21 @@
       "error": {
         "contacts": "Mesaj kişileri yüklenemedi.",
         "messages": "Mesajlar yüklenemedi.",
-        "attachmentTooLarge": "Ek çok büyük. En fazla dosya boyutu 25 MB'tır."
+        "attachmentTooLarge": "Ek çok büyük. En fazla dosya boyutu 25 MB'tır.",
+        "escalateFailed": "İletilemedi. Lütfen tekrar deneyin."
       },
       "noMessages": "Henüz mesaj yok.",
-      "uploading": "Uploading attachment..."
+      "uploading": "Uploading attachment...",
+      "escalate": {
+        "open": "Yöneticiye ilet",
+        "hint": "İlk iletişim noktanız proje yöneticinizdir. Yalnızca üst bir yönetici gerekiyorsa iletin.",
+        "targetLabel": "Yönetici seçin",
+        "messageLabel": "Mesajınız",
+        "placeholder": "Ne konuda yardıma ihtiyacınız var?",
+        "send": "Gönder",
+        "sending": "Gönderiliyor…",
+        "cancel": "İptal"
+      }
     },
     "projects": {
       "pageTitle": "Projelerim | ENS",
@@ -2534,7 +2552,14 @@
       },
       "loadError": "Size atanan projeler yüklenemedi.",
       "emptyTitle": "Henüz atanmış proje yok",
-      "emptyDesc": "Fuar kaydınız sistemde. Burada görünmesi için yöneticinin veya bir proje yöneticisinin proje ataması gerekiyor."
+      "emptyDesc": "Fuar kaydınız sistemde. Burada görünmesi için yöneticinin veya bir proje yöneticisinin proje ataması gerekiyor.",
+      "stage": {
+        "intake": "Kabul",
+        "design": "Tasarım",
+        "review": "İnceleme",
+        "production": "Üretim",
+        "closed": "Kapandı"
+      }
     },
     "profile": {
       "pageTitle": "Profil Ayarları | ENS",
@@ -2553,7 +2578,8 @@
       },
       "company": {
         "heading": "Şirket Bilgileri",
-        "description": "Şirket bilgilerinizi ve fuar profilinizi yönetin."
+        "description": "Şirket bilgilerinizi ve fuar profilinizi yönetin.",
+        "agencyOwned": "Bu ad organizatörünüz tarafından tutulur. Değiştirmek için proje yöneticinize başvurun."
       },
       "avatar": {
         "heading": "Profil Fotoğrafı",
@@ -2633,7 +2659,8 @@
         "passwordFillAll": "Tüm şifre alanlarını doldurun",
         "passwordMismatch": "Yeni şifreler eşleşmiyor",
         "passwordTooShort": "Şifre en az 8 karakter olmalıdır",
-        "deleteQueued": "Hesap silme isteği alındı"
+        "deleteQueued": "Hesap silme isteği alındı",
+        "companyError": "Şirket bilgileri kaydedilemedi"
       }
     },
     "workspace": {
@@ -2775,7 +2802,46 @@
         "reopen": "Reopen",
         "resolve": "Resolve"
       },
-      "backToDashboard": "Panele dön"
+      "backToDashboard": "Panele dön",
+      "propose": {
+        "start": "Mobilyaları düzenle",
+        "exit": "Bitti",
+        "sendToPm": "Yöneticiye gönder",
+        "saving": "Kaydediliyor…",
+        "saved": "Kaydedildi",
+        "unsaved": "Kaydedilmemiş değişiklik",
+        "withPm": "Düzen yöneticinizde",
+        "notAvailable": "Tasarım incelemedeyken düzen önerebilirsiniz.",
+        "itemUnavailable": "Bu ürün artık mevcut değil.",
+        "blocked": "Yerleştirme engellendi: {{reason}}",
+        "sent": "Düzen proje yöneticinize gönderildi.",
+        "searchLabel": "Mobilya ara",
+        "searchPlaceholder": "Mobilya, SKU ara…",
+        "noResults": "Bu aramayla eşleşen mobilya yok.",
+        "yourFurniture": "Mobilyalarınız ({{count}})",
+        "reset": "Sıfırla",
+        "removeItem": "{{name}} kaldır",
+        "nothingPlaced": "Henüz bir şey yerleştirilmedi.",
+        "submitTitle": "Düzeni proje yöneticinize gönderin",
+        "submitBody": "Proje yöneticiniz bunu inceler ve tasarıma uygular ya da nedenini açıklar. Bu bir revizyon hakkı kullanır.",
+        "noteLabel": "Proje yöneticiniz için not",
+        "notePlaceholder": "Bilmesi gereken bir şey var mı?",
+        "cancel": "İptal",
+        "send": "Düzeni gönder",
+        "sending": "Gönderiliyor…",
+        "addHint": "Bir parçayı standa sürükleyin veya ortaya yerleştirmek için seçin. Yapı ve aydınlatma tasarımcınızın bıraktığı gibi kalır.",
+        "addItem": "{{name}} ekle",
+        "discard": "Vazgeç",
+        "discardHint": "Bu düzeni göndermeden silin. Hakkınız eksilmez.",
+        "discarded": "Düzen silindi.",
+        "decision": {
+          "accepted": "Düzeniniz uygulandı",
+          "declined": "Düzeniniz uygulanmadı",
+          "acceptedBody": "Proje yöneticiniz bunu tasarıma ekledi.",
+          "declinedBody": "Proje yöneticiniz mevcut tasarımı korudu.",
+          "dismiss": "Kapat"
+        }
+      }
     },
     "pendingApproval": {
       "title": "Pending Approval",
@@ -2817,7 +2883,6 @@
       "attemptsRemaining_other": "Geçici kilit öncesi {{count}} giriş denemesi kaldı",
       "noAccount": "Hesabınız yok mu?",
       "signUpFree": "Ücretsiz kayıt ol",
-      "devSection": "Yerel Test Hesapları",
       "showPassword": "Şifreyi göster",
       "hidePassword": "Şifreyi gizle",
       "validation": {
@@ -3080,6 +3145,43 @@
     "toast": {
       "accepted": "Teklif kabul edildi. Ajansınız bilgilendirildi.",
       "rejected": "Teklif reddedildi."
+    },
+    "filter": {
+      "label": "Teklifleri duruma göre filtrele",
+      "all": "Tümü",
+      "awaiting": "Kararınızı bekleyen",
+      "decided": "Karara bağlanan"
+    },
+    "summary": {
+      "awaiting": "Sizi bekleyen",
+      "value": "Bekleyen tutar",
+      "deadline": "En yakın tarih",
+      "noDeadline": "Belirlenmedi"
+    },
+    "emptyFilter": "Bu filtreye uyan teklif yok.",
+    "expiresIn_one": "{{count}} gün kaldı",
+    "expiresIn_other": "{{count}} gün kaldı",
+    "sent": "Gönderildi",
+    "validUntil": "Geçerlilik tarihi",
+    "responded": "Yanıtladınız",
+    "print": "Yazdır",
+    "terms": "Koşullar",
+    "yourNote": "Notunuz",
+    "expiredNote": "Bu teklifin geçerlilik süresi doldu. Proje yöneticinizden yenisini isteyin.",
+    "revisedNote": "Bu teklifin revize edilmiş bir sürümü hazırlandı.",
+    "notRespondableNote": "Bu teklif karara açık değil.",
+    "confirm": {
+      "title": "Bu teklifi kabul edilsin mi?",
+      "body": "{{number}} numaralı teklifi {{amount}} tutarıyla kabul ediyorsunuz. Ajansınız bilgilendirilecek ve çalışmaya bu teklifle başlayacak.",
+      "cancel": "Vazgeç",
+      "confirm": "Teklifi kabul et"
+    },
+    "declineDialog": {
+      "title": "Bu teklif reddedilsin mi?",
+      "body": "Nesinin uygun olmadığını proje yöneticinize yazın; revize bir sürüm gönderebilsin.",
+      "label": "Bu teklifi reddetme nedeniniz",
+      "placeholder": "Çok pahalı, stand ölçüsü yanlış, tarihler değişti…",
+      "confirm": "Reddi gönder"
     }
   },
   "pipeline": {
@@ -3129,14 +3231,17 @@
       "issue": "Kes",
       "markPaid": "Ödendi işaretle",
       "void": "İptal et",
-      "delete": "Sil"
+      "delete": "Sil",
+      "recordPayment": "Ödeme kaydet"
     },
     "toast": {
       "created": "Fatura taslak olarak kaydedildi.",
       "sent": "Fatura müşteriye kesildi.",
       "paid": "Ödeme kaydedildi.",
       "voided": "Fatura iptal edildi.",
-      "deleted": "Taslak fatura silindi."
+      "deleted": "Taslak fatura silindi.",
+      "paymentRecorded": "Ödeme kaydedildi",
+      "invalidAmount": "Geçerli bir tutar girin."
     },
     "form": {
       "title": "Yeni fatura",
@@ -3162,6 +3267,36 @@
       "saveDraft": "Taslağı kaydet",
       "needLine": "Açıklaması olan en az bir kalem ekleyin.",
       "error": "Bir sorun oluştu. Lütfen tekrar deneyin."
+    },
+    "balanceDue": "{{amount}} kaldı",
+    "prompt": {
+      "recordPayment": "Ödeme kaydedin. Kalan: {{amount}}"
+    },
+    "payment": {
+      "title": "Ödeme kaydet",
+      "fullTitle": "Tam ödemeyi onayla",
+      "description": "{{number}} numaralı faturanın ödemesini kaydetmeden önce kontrol edin.",
+      "outstanding": "Kalan bakiye: {{amount}}",
+      "amount": "Ödeme tutarı ({{currency}})",
+      "method": "Ödeme yöntemi",
+      "reference": "Referans (isteğe bağlı)",
+      "note": "Not (isteğe bağlı)",
+      "review": "Kaydedilecek tutar: {{amount}}",
+      "fullReview": "Kalan {{amount}} bakiyenin tamamı ödenmiş olarak kaydedilsin mi?",
+      "manualNotice": "Bu işlem alınmış parayı kaydeder. Müşteriden ödeme tahsil etmez.",
+      "confirm": "Ödemeyi onayla",
+      "retry": "Ödemeyi yeniden dene",
+      "saving": "Ödeme kaydediliyor…",
+      "close": "Şimdilik kapat",
+      "uncertain": "Onay bekleniyor. Gönderdiğiniz bilgiler kaydedildi. Başka bir ödeme kaydetmeden önce sonucu doğrulamak için aynı ödemeyi yeniden deneyin.",
+      "pending": "{{number}} için ödeme onayı bekleniyor.",
+      "resume": "Ödemeye devam et",
+      "invalidAmount": "En fazla iki ondalık basamaklı, pozitif bir tutar girin.",
+      "exceedsBalance": "Ödeme tutarı kalan bakiyeyi aşıyor.",
+      "storageUnavailable": "Ödeme kurtarma bilgileri bu tarayıcıda kaydedilemedi veya okunamadı. Tarayıcı depolama ayarlarını kontrol edip başka bir ödeme kaydetmeden önce yeniden deneyin.",
+      "listError": "Fatura listesi yenilenemedi. Onaylanmış ödeme kayıtlı kalır.",
+      "refresh": "Yeniden dene",
+      "methods": { "manual": "Manuel", "bank_transfer": "Banka havalesi", "cash": "Nakit", "card": "Kart", "other": "Diğer" }
     }
   },
   "clientInvoices": {
@@ -3177,7 +3312,24 @@
     "issued": "Kesildi",
     "due": "Vade",
     "paidOn": "Ödendi",
-    "payNote": "Ödeme için lütfen proje müdürünüzle iletişime geçin."
+    "payNote": "Ödeme için lütfen proje müdürünüzle iletişime geçin.",
+    "print": "Yazdır / PDF kaydet",
+    "amountPaid": "Ödenen",
+    "amountDue": "Kalan tutar",
+    "partlyPaid": "Kısmi ödendi",
+    "paymentHistory": "Ödeme geçmişi",
+    "noneMatchFilter": "Bu filtreye uyan fatura yok.",
+    "filter": {
+      "label": "Faturaları duruma göre filtrele",
+      "all": "Tümü",
+      "open": "Bekleyen",
+      "paid": "Ödenen"
+    },
+    "summary": {
+      "outstanding": "Kalan bakiye",
+      "openCount": "Açık faturalar",
+      "overdue": "Gecikmiş"
+    }
   },
   "workspace": {
     "desktopOnly": {
@@ -3186,5 +3338,138 @@
       "requirement": "En az {{width}} piksel genişliğinde bir görüntü alanı gerekir. Dizüstü veya masaüstü uygundur; yatay moddaki tablet de olur.",
       "back": "Panele dön"
     }
+  },
+  "consent": {
+    "title": "Çerezler",
+    "body": "Oturumunuzu açık tutmak ve dilinizi hatırlamak için zorunlu çerezler kullanıyoruz. Sitenin nasıl kullanıldığını görmek için isteğe bağlı analiz çerezlerini de yalnızca onayınızla kullanmak isteriz.",
+    "policyLink": "Çerez politikamızı okuyun",
+    "accept": "Analizi kabul et",
+    "decline": "Yalnızca zorunlu",
+    "change": "Çerez tercihini değiştir",
+    "changed": "Çerez tercihiniz sıfırlandı."
+  },
+  "help": {
+    "openLabel": "Yardım: {{subject}}",
+    "invoices": {
+      "outstanding": {
+        "title": "Kalan bakiye",
+        "body": "Düzenlenmiş faturalarınızda ödenmemiş olan toplam tutar. Ödenmiş, iptal edilmiş ve taslak faturalar sayılmaz.",
+        "note": "Kısmi ödenen bir fatura yalnızca kalan tutarıyla hesaba katılır."
+      },
+      "overdue": {
+        "title": "Gecikmiş",
+        "body": "Vadesi geçmiş ve henüz tamamı ödenmemiş faturalar."
+      },
+      "history": {
+        "title": "Ödeme geçmişi",
+        "body": "Bu faturaya işlenen tüm ödemeler, en eskisi önce. Kapora ve sonraki bakiye ayrı kayıtlar olarak görünür."
+      }
+    },
+    "messages": {
+      "escalate": {
+        "title": "Yöneticiye iletmek",
+        "body": "İlk iletişim noktanız proje yöneticinizdir ve standınızla ilgili her şeyi bilir. Onun veremeyeceği bir karar gerektiğinde ya da yanıt alamadığınızda iletin.",
+        "note": "İlettikten sonra o yönetici kişi listenizde kalır ve normal şekilde yazışabilirsiniz."
+      }
+    },
+    "workspace": {
+      "revisions": {
+        "title": "Revizyon hakları",
+        "body": "İstediğiniz her değişiklik turu bir hak kullanır. Yazılı talep de mobilya düzeni göndermek de bir tur sayılır.",
+        "note": "Tasarımı onaylamak veya Mesajlar'dan soru sormak hak kullanmaz."
+      },
+      "propose": {
+        "title": "Düzen önermek",
+        "body": "Mobilyaları istediğiniz gibi yerleştirip proje yöneticinize gönderin. Tasarıma uygular ya da nedenini açıklar.",
+        "note": "Yalnızca mobilyalar sizindir. Duvarlar, alınlık ve aydınlatma, ne sürüklerseniz sürükleyin tasarımcınızın bıraktığı gibi kalır."
+      }
+    },
+    "staffInvoices": {
+      "flow": {
+        "title": "Fatura nasıl ilerler",
+        "body": "Düzenlerken taslak, müşteriye gönderilince açık, bakiye sıfırlanınca ödenmiş olur. İptal, açık bir faturayı devre dışı bırakır.",
+        "note": "Ödeme kaydet bir kapora veya taksit işler; Ödendi işaretle kalan tutarı tek kayıtta kapatır. İkisi de müşterinin ödeme geçmişinde görünür."
+      }
+    },
+    "proposal": {
+      "review": {
+        "title": "Müşteri düzenini incelemek",
+        "body": "Önizleme tuvali müşterinin sürümüne çevirir. Uygula, mobilyalarını mevcut tasarıma yeni bir taslak olarak katar.",
+        "note": "Yalnızca mobilyalar aktarılır. O başladıktan sonra değiştirdiğiniz yapı korunur."
+      }
+    },
+    "quotes": {
+      "awaiting": {
+        "title": "Kararınızı bekleyenler",
+        "body": "Ajansınızın gönderdiği, henüz kabul etmediğiniz ya da reddetmediğiniz teklifler.",
+        "note": "Geçerlilik süresi dolan bir teklif burada sayılmaz."
+      },
+      "validity": {
+        "title": "Teklifin geçerliliği",
+        "body": "Fiyatlandırılan işin garanti edildiği son tarih. Malzeme ve stand maliyetleri değiştiği için bir teklif sınırsız süre açık tutulamaz."
+      },
+      "deciding": {
+        "title": "Kabul etmek ya da reddetmek",
+        "body": "Kabul etmek fiyatı onaylar ve ajansın başlamasını sağlar. Reddetmek revizyon ister; neyin değişmesi gerektiğini yazın, yeni bir teklif gönderirler.",
+        "note": "İkisi de tasarım revizyon hakkınızdan düşmez."
+      }
+    },
+    "projects": {
+      "progress": {
+        "title": "Üretim ilerlemesi",
+        "body": "Standınızın ajansın aşamaları boyunca ilk brifingden sahadaki teslime kadar ne kadar ilerlediği.",
+        "note": "Onaylarınızı değil yapım sürecini izler. Bir tasarımı onaylamak tek başına bunu ilerletmez."
+      },
+      "actionRequired": {
+        "title": "İşlem gerekiyor",
+        "body": "Ajansınız bu proje için sizi bekliyor. Neyin beklediğini görmek için tasarımı ya da onay listesini açın."
+      },
+      "timeline": {
+        "title": "Son hareketler",
+        "body": "Projenizin aşamalar arasında son beş hareketi, en yenisi önce."
+      },
+      "actions": {
+        "title": "Bunlar neyi açar",
+        "body": "Her biri portalın varsayılan standını değil, özellikle bu projenin sayfasını açar.",
+        "note": "Belgeler hesabınızın tamamında paylaşılır; bu nedenle o bağlantı projeye özel değildir."
+      }
+    },
+    "documents": {
+      "status": {
+        "title": "Son hâli ve incelemede",
+        "body": "Son hâli, ajansın dosyayı onayladığı anlamına gelir. İncelemede, dosyanın hâlâ içeride kontrol edildiğini ve değişebileceğini gösterir.",
+        "note": "Burada sizi bekleyen bir şey yok. Kendi onaylarınız tasarım sayfasındadır."
+      },
+      "categories": {
+        "title": "Kategoriler",
+        "body": "Ajansınızın kullandığı dosyalama düzeni; bu nedenle burada yalnızca gerçekten kullandıkları kategoriler görünür."
+      }
+    },
+    "dashboard": {
+      "milestones": {
+        "title": "Kilometre taşları",
+        "body": "Yukarıdaki çubukla aynı aşamalar; tek bir ilerleme değerinden okunur, bu yüzden ikisi her zaman uyumludur.",
+        "note": "İşaret, yapımın o noktayı geçtiğini gösterir; sizin onayladığınız anlamına gelmez."
+      },
+      "activity": {
+        "title": "Son hareketler",
+        "body": "Ajansınızın hesabınızda yaptığı son işlemler, en yenisi önce. Bu sayfa açıkken kendiliğinden yenilenir."
+      }
+    }
+  },
+  "experience": {
+    "guide": "Sonraki adımlarınız",
+    "clientGuide": "Proje bilgilerinizi kontrol edin, tasarım hazır olduğunda inceleyin ve sorularınızı proje yöneticinize gönderin.",
+    "pmGuide": "Atanan müşterileri inceleyin, proje tasarımlarını hazırlayın ve görevlerle teslim tarihlerini güncel tutun.",
+    "chiefGuide": "Yeni müşterileri inceleyin, proje yöneticilerini atayın ve karar bekleyen projeleri kontrol edin.",
+    "offline": "Çevrimdışısınız. Kaydetmeden veya göndermeden önce yeniden bağlanın.",
+    "mobileReview": "Tasarımınızı inceleyin",
+    "previewHelp": "Kaydedilen önizlemeleri burada inceleyin. Etkileşimli 3D çalışma alanı için bilgisayar kullanın. Onay, güncel tasarım için geçerlidir.",
+    "noPreview": "Önizleme bulunmuyor. Onaylamadan önce proje yöneticinizden bir önizleme isteyin.",
+    "historical": "Bu eski bir sürümdür. Onaylamak için güncel sürüme geçin.",
+    "updated": "Tasarım değişti. Devam etmeden önce en son önizlemeyi inceleyin.",
+    "failed": "Veriler yüklenemedi. Lütfen tekrar deneyin.",
+    "retry": "Tekrar dene",
+    "detailUnavailable": "Bazı fatura ayrıntıları veya ödeme kayıtları yüklenemedi. Tekrar denemek için faturayı yeniden açın."
   }
 }

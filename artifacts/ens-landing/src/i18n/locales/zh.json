@@ -1,7 +1,6 @@
 {
   "common": {
     "startDesigning": "开始设计",
-    "watchDemo": "观看演示",
     "getAccess": "立即获取访问权限",
     "contactSales": "联系销售",
     "signIn": "登录",
@@ -45,7 +44,7 @@
       "subheading": "选择合适的方案，扩展您的展览业务。",
       "perMonth": "/月",
       "recommended": "推荐",
-      "custom": "定制"
+      "onboardingNote": "代理商账户由我们的团队协助开通，以便根据您的工作方式匹配方案。自助结账即将推出。"
     },
     "cta": {
       "heading": "立即开始构建您的展位",
@@ -271,8 +270,6 @@
       "annual": "按年",
       "saveBadge": "节省 20%",
       "perMonthAnnual": "/月 · 按年结算",
-      "savePerYear": "每年节省 ${{amount}}",
-      "getStarted": "开始使用",
       "contactSales": "联系销售"
     },
     "pricingTiers": [
@@ -2345,7 +2342,9 @@
       "openWorkspaceBtn": "Open Workspace",
       "reviewApprovalBtn": "Review Approval",
       "workspaceLocked": "工作区在分配前锁定",
-      "workspaceLockedDesc": "指派项目经理后我们会通知您。"
+      "workspaceLockedDesc": "指派项目经理后我们会通知您。",
+      "projectSwitcher": "选择此仪表板显示的项目",
+      "showingProject": "当前显示"
     },
     "approvals": {
       "pageTitle": "审批 | ENS",
@@ -2442,14 +2441,22 @@
       },
       "preview": {
         "close": "关闭预览",
-        "imageUnavailable": "演示版本中无法预览图片",
         "typeUnavailable": "无法预览 {{type}} 文件",
         "category": "类别",
         "status": "状态",
         "uploadedBy": "上传者",
         "tags": "标签",
         "downloadBtn": "下载文件",
-        "mimeType": "Type"
+        "mimeType": "Type",
+        "imageAlt": "{{name}} 的预览",
+        "frameTitle": "{{name}} 预览",
+        "downloadInstead": "请下载后用相应的应用程序打开。",
+        "failed": "无法显示此文件。下载应该仍然可用。"
+      },
+      "loadError": "无法加载您的文件。",
+      "fallback": {
+        "uploadedBy": "代理商",
+        "category": "通用"
       }
     },
     "messages": {
@@ -2475,10 +2482,21 @@
       "error": {
         "contacts": "消息联系人加载失败。",
         "messages": "消息加载失败。",
-        "attachmentTooLarge": "附件过大，单个文件最大为 25 MB。"
+        "attachmentTooLarge": "附件过大，单个文件最大为 25 MB。",
+        "escalateFailed": "上报失败，请重试。"
       },
       "noMessages": "暂无消息。",
-      "uploading": "Uploading attachment..."
+      "uploading": "Uploading attachment...",
+      "escalate": {
+        "open": "上报给主管",
+        "hint": "项目经理是您的第一联系人。仅在需要更高级别主管时才上报。",
+        "targetLabel": "选择主管",
+        "messageLabel": "您的留言",
+        "placeholder": "您需要什么帮助？",
+        "send": "发送",
+        "sending": "发送中…",
+        "cancel": "取消"
+      }
     },
     "projects": {
       "pageTitle": "我的项目 | ENS",
@@ -2534,7 +2552,14 @@
       },
       "loadError": "无法加载分配给您的项目。",
       "emptyTitle": "暂无分配的项目",
-      "emptyDesc": "您的展会报名已进入系统。需由总监或项目经理指派项目后，才会显示在此处。"
+      "emptyDesc": "您的展会报名已进入系统。需由总监或项目经理指派项目后，才会显示在此处。",
+      "stage": {
+        "intake": "受理",
+        "design": "设计",
+        "review": "审核",
+        "production": "生产",
+        "closed": "已结束"
+      }
     },
     "profile": {
       "pageTitle": "个人资料设置 | ENS",
@@ -2553,7 +2578,8 @@
       },
       "company": {
         "heading": "公司信息",
-        "description": "管理您的公司详情和展览资料。"
+        "description": "管理您的公司详情和展览资料。",
+        "agencyOwned": "此名称由您的主办方维护。如需更改，请联系您的项目经理。"
       },
       "avatar": {
         "heading": "头像",
@@ -2633,7 +2659,8 @@
         "passwordFillAll": "请填写所有密码字段",
         "passwordMismatch": "新密码不匹配",
         "passwordTooShort": "密码至少需要8个字符",
-        "deleteQueued": "账户删除请求已提交"
+        "deleteQueued": "账户删除请求已提交",
+        "companyError": "无法保存公司信息"
       }
     },
     "workspace": {
@@ -2775,7 +2802,46 @@
         "reopen": "Reopen",
         "resolve": "Resolve"
       },
-      "backToDashboard": "返回仪表板"
+      "backToDashboard": "返回仪表板",
+      "propose": {
+        "start": "布置家具",
+        "exit": "完成",
+        "sendToPm": "发送给项目经理",
+        "saving": "保存中…",
+        "saved": "已保存",
+        "unsaved": "有未保存的更改",
+        "withPm": "方案已交项目经理",
+        "notAvailable": "设计处于审核阶段时可提交布置方案。",
+        "itemUnavailable": "该物品已不可用。",
+        "blocked": "无法放置：{{reason}}",
+        "sent": "布置方案已发送给项目经理。",
+        "searchLabel": "搜索家具",
+        "searchPlaceholder": "搜索家具、SKU…",
+        "noResults": "没有匹配的家具。",
+        "yourFurniture": "你的家具（{{count}}）",
+        "reset": "重置",
+        "removeItem": "移除 {{name}}",
+        "nothingPlaced": "尚未放置任何家具。",
+        "submitTitle": "将布置方案发送给项目经理",
+        "submitBody": "项目经理会审核并应用到设计，或说明原因。这将占用一次修改机会。",
+        "noteLabel": "给项目经理的备注",
+        "notePlaceholder": "有什么需要说明的吗？",
+        "cancel": "取消",
+        "send": "发送方案",
+        "sending": "发送中…",
+        "addHint": "将家具拖到展台上，或选中它以放在中间。结构和照明保持设计师的设置。",
+        "addItem": "添加 {{name}}",
+        "discard": "丢弃",
+        "discardHint": "不发送并丢弃此方案。不占用修改机会。",
+        "discarded": "方案已丢弃。",
+        "decision": {
+          "accepted": "你的方案已采用",
+          "declined": "你的方案未采用",
+          "acceptedBody": "项目经理已将其加入设计。",
+          "declinedBody": "项目经理保留了当前设计。",
+          "dismiss": "关闭"
+        }
+      }
     },
     "pendingApproval": {
       "title": "Pending Approval",
@@ -2817,7 +2883,6 @@
       "attemptsRemaining_other": "临时锁定前还剩 {{count}} 次登录尝试",
       "noAccount": "还没有账户？",
       "signUpFree": "免费注册",
-      "devSection": "本地测试账户",
       "showPassword": "显示密码",
       "hidePassword": "隐藏密码",
       "validation": {
@@ -3080,6 +3145,43 @@
     "toast": {
       "accepted": "报价已接受，已通知您的代理商。",
       "rejected": "报价已拒绝。"
+    },
+    "filter": {
+      "label": "按状态筛选报价",
+      "all": "全部",
+      "awaiting": "等待您的决定",
+      "decided": "已处理"
+    },
+    "summary": {
+      "awaiting": "待您处理",
+      "value": "待定金额",
+      "deadline": "最近截止日",
+      "noDeadline": "未设定"
+    },
+    "emptyFilter": "没有符合此筛选条件的报价。",
+    "expiresIn_one": "剩余 {{count}} 天",
+    "expiresIn_other": "剩余 {{count}} 天",
+    "sent": "发送于",
+    "validUntil": "有效期至",
+    "responded": "您的回复",
+    "print": "打印",
+    "terms": "条款",
+    "yourNote": "您的备注",
+    "expiredNote": "此报价已超过有效期。请向您的项目经理索取新报价。",
+    "revisedNote": "此报价的修订版已编制完成。",
+    "notRespondableNote": "此报价目前不接受回复。",
+    "confirm": {
+      "title": "确认接受此报价？",
+      "body": "您正在接受报价 {{number}}，金额 {{amount}}。我们将通知您的代理商，并据此开始工作。",
+      "cancel": "取消",
+      "confirm": "接受报价"
+    },
+    "declineDialog": {
+      "title": "确认拒绝此报价？",
+      "body": "请告知项目经理哪里不合适，以便发送修订版。",
+      "label": "拒绝此报价的原因",
+      "placeholder": "价格过高、展台尺寸不符、日期有变…",
+      "confirm": "发送拒绝"
     }
   },
   "pipeline": {
@@ -3129,14 +3231,17 @@
       "issue": "开具",
       "markPaid": "标记已付",
       "void": "作废",
-      "delete": "删除"
+      "delete": "删除",
+      "recordPayment": "记录付款"
     },
     "toast": {
       "created": "发票已保存为草稿。",
       "sent": "发票已开具给客户。",
       "paid": "已记录付款。",
       "voided": "发票已作废。",
-      "deleted": "草稿发票已删除。"
+      "deleted": "草稿发票已删除。",
+      "paymentRecorded": "付款已记录",
+      "invalidAmount": "请输入有效金额。"
     },
     "form": {
       "title": "新建发票",
@@ -3162,6 +3267,36 @@
       "saveDraft": "保存草稿",
       "needLine": "请至少添加一条带说明的明细。",
       "error": "出现问题，请重试。"
+    },
+    "balanceDue": "尚欠 {{amount}}",
+    "prompt": {
+      "recordPayment": "记录一笔付款。未结：{{amount}}"
+    },
+    "payment": {
+      "title": "记录付款",
+      "fullTitle": "确认全额付款",
+      "description": "记录前请核对发票 {{number}} 的付款信息。",
+      "outstanding": "未付余额：{{amount}}",
+      "amount": "付款金额（{{currency}}）",
+      "method": "付款方式",
+      "reference": "参考编号（可选）",
+      "note": "备注（可选）",
+      "review": "将记录的金额：{{amount}}",
+      "fullReview": "是否将全部未付余额 {{amount}} 记录为已支付？",
+      "manualNotice": "此操作记录已收到的款项，不会向客户扣款。",
+      "confirm": "确认付款",
+      "retry": "重试付款",
+      "saving": "正在记录付款…",
+      "close": "暂时关闭",
+      "uncertain": "付款尚待确认。已保存提交的信息。记录另一笔付款前，请重试同一笔付款以确认结果。",
+      "pending": "{{number}} 的付款尚待确认。",
+      "resume": "继续确认付款",
+      "invalidAmount": "请输入正数金额，最多保留两位小数。",
+      "exceedsBalance": "付款金额超过未付余额。",
+      "storageUnavailable": "此浏览器无法保存或读取付款恢复信息。请检查浏览器存储设置，并在记录另一笔付款前重试。",
+      "listError": "无法刷新发票列表。已确认的付款仍已记录。",
+      "refresh": "重试",
+      "methods": { "manual": "手动", "bank_transfer": "银行转账", "cash": "现金", "card": "银行卡", "other": "其他" }
     }
   },
   "clientInvoices": {
@@ -3177,7 +3312,24 @@
     "issued": "开具日期",
     "due": "到期日",
     "paidOn": "付款日期",
-    "payNote": "如需安排付款，请联系您的项目经理。"
+    "payNote": "如需安排付款，请联系您的项目经理。",
+    "print": "打印 / 保存为 PDF",
+    "amountPaid": "已付",
+    "amountDue": "应付金额",
+    "partlyPaid": "部分付款",
+    "paymentHistory": "付款记录",
+    "noneMatchFilter": "没有符合此筛选条件的发票。",
+    "filter": {
+      "label": "按状态筛选发票",
+      "all": "全部",
+      "open": "未结清",
+      "paid": "已付清"
+    },
+    "summary": {
+      "outstanding": "未结余额",
+      "openCount": "未结发票",
+      "overdue": "逾期"
+    }
   },
   "workspace": {
     "desktopOnly": {
@@ -3186,5 +3338,138 @@
       "requirement": "需要至少 {{width}} 像素宽的视口。笔记本或台式机均可；横屏平板也可以。",
       "back": "返回仪表板"
     }
+  },
+  "consent": {
+    "title": "Cookie",
+    "body": "我们使用必要 Cookie 来保持登录状态并记住您的语言。我们还希望使用可选的分析 Cookie 了解网站使用情况——仅在您同意后。",
+    "policyLink": "阅读我们的 Cookie 政策",
+    "accept": "接受分析",
+    "decline": "仅必要",
+    "change": "更改 Cookie 选择",
+    "changed": "您的 Cookie 选择已重置。"
+  },
+  "help": {
+    "openLabel": "帮助：{{subject}}",
+    "invoices": {
+      "outstanding": {
+        "title": "未结余额",
+        "body": "已开具发票中尚未支付金额的总和。已付清、已作废和草稿不计入。",
+        "note": "部分付款的发票只按剩余金额计入，而非全额。"
+      },
+      "overdue": {
+        "title": "逾期",
+        "body": "已过到期日且尚未付清的已开具发票。"
+      },
+      "history": {
+        "title": "付款记录",
+        "body": "该发票上记录的每一笔付款，按时间先后排列。订金与后续尾款会分别显示。"
+      }
+    },
+    "messages": {
+      "escalate": {
+        "title": "上报给主管",
+        "body": "项目经理是您的第一联系人，了解展台的全部细节。当决定超出其权限，或您迟迟未收到回复时再上报。",
+        "note": "上报后，该主管会留在您的联系人中，您可以照常与其沟通。"
+      }
+    },
+    "workspace": {
+      "revisions": {
+        "title": "修改轮次",
+        "body": "您每提出一轮修改就占用一次。文字提出与发送家具布置方案同样计为一次。",
+        "note": "确认设计或在消息中提问不占用次数。"
+      },
+      "propose": {
+        "title": "提交布置方案",
+        "body": "按您的想法摆放家具并发送给项目经理。他会应用到设计中，或说明不采用的原因。",
+        "note": "只有家具归您调整。无论如何拖动，墙体、楣板和照明都保持设计师的设置。"
+      }
+    },
+    "staffInvoices": {
+      "flow": {
+        "title": "发票的流转",
+        "body": "编辑时为草稿，发送给客户后为已开具，余额归零后为已付清。作废会使已开具的发票退出流程。",
+        "note": "记录付款用于登记订金或分期；标记已付清则一次性结清余额。"
+      }
+    },
+    "proposal": {
+      "review": {
+        "title": "审阅客户方案",
+        "body": "预览会把画布切换为客户的版本。应用会把客户的家具并入当前设计，生成新的草稿。",
+        "note": "只有家具会并入，您此后所做的结构改动都会保留。"
+      }
+    },
+    "quotes": {
+      "awaiting": {
+        "title": "等待您的决定",
+        "body": "代理商已发送但您尚未接受或拒绝的报价。",
+        "note": "已过有效期的报价不再计入此处。"
+      },
+      "validity": {
+        "title": "报价有效期",
+        "body": "报价价格的保证截止日期。材料与展台成本会变动，因此报价无法无限期有效。"
+      },
+      "deciding": {
+        "title": "接受或拒绝",
+        "body": "接受即确认价格，代理商可随即开工。拒绝相当于请求修订：说明需要调整之处，他们会发送新报价。",
+        "note": "两者都不会占用设计修改轮次。"
+      }
+    },
+    "projects": {
+      "progress": {
+        "title": "生产进度",
+        "body": "您的展台在代理商各阶段中的推进程度，从首次需求简报到现场交付。",
+        "note": "它跟踪的是施工进度，而非您的审批。仅批准设计并不会使其推进。"
+      },
+      "actionRequired": {
+        "title": "需要您处理",
+        "body": "代理商正在等待您对此项目的处理。打开设计或审批清单查看待办事项。"
+      },
+      "timeline": {
+        "title": "近期动态",
+        "body": "您的项目最近五次阶段变更，最新的在前。"
+      },
+      "actions": {
+        "title": "这些按钮的用途",
+        "body": "每个按钮都会打开此项目的对应页面，而不是门户的默认展台。",
+        "note": "文件在您的整个账户内共享，因此该项不针对单个项目。"
+      }
+    },
+    "documents": {
+      "status": {
+        "title": "最终版与审核中",
+        "body": "最终版表示代理商已签署确认。审核中表示仍在内部核查，内容可能变动。",
+        "note": "此处没有需要您处理的事项。您自己的审批在设计页面。"
+      },
+      "categories": {
+        "title": "分类",
+        "body": "这是代理商使用的归档方式，因此此处只显示他们实际用过的分类。"
+      }
+    },
+    "dashboard": {
+      "milestones": {
+        "title": "里程碑",
+        "body": "与上方进度条相同的阶段，取自同一进度数值，因此两者始终一致。",
+        "note": "勾选表示施工已越过该节点，并不代表您已批准。"
+      },
+      "activity": {
+        "title": "近期动态",
+        "body": "代理商在您账户上的最近若干操作，最新的在前。本页打开期间会自动刷新。"
+      }
+    }
+  },
+  "experience": {
+    "guide": "下一步",
+    "clientGuide": "查看项目详情，在设计准备好后进行审核，并向项目经理发送问题。",
+    "pmGuide": "查看分配的客户，准备项目设计，并及时更新任务和截止日期。",
+    "chiefGuide": "审核新客户，分配项目经理，并查看等待决策的项目。",
+    "offline": "您已离线。请重新连接后再保存或发送。",
+    "mobileReview": "审核您的设计",
+    "previewHelp": "在此查看保存的预览。请使用电脑打开交互式3D工作区。批准操作适用于当前设计。",
+    "noPreview": "暂无预览。批准前请让项目经理分享预览。",
+    "historical": "这是旧版本。请切换到当前版本进行批准。",
+    "updated": "设计已更改。请先查看最新预览再继续。",
+    "failed": "无法加载数据，请重试。",
+    "retry": "重试",
+    "detailUnavailable": "部分发票详情或付款记录无法加载。请重新打开发票。"
   }
 }

@@ -79,14 +79,16 @@ describe("server entrypoint refuses to start on a misconfigured slug", () => {
    */
   function boot(slug: string | null) {
     return new Promise<{ code: number | null; output: string }>((resolveBoot) => {
-      const env = { ...process.env, PORT: "0", NODE_ENV: "test" } as NodeJS.ProcessEnv;
+      // These assertions observe startup log messages, so an inherited silent
+      // logging setting must not hide the evidence they need to inspect.
+      const env = { ...process.env, PORT: "0", NODE_ENV: "test", LOG_LEVEL: "info" } as NodeJS.ProcessEnv;
       if (slug === null) delete env.DEFAULT_ORGANIZATION_SLUG;
       else env.DEFAULT_ORGANIZATION_SLUG = slug;
 
-      const child = spawn("npx", ["tsx", "src/index.ts"], {
+      const child = spawn(process.execPath, ["--import", "tsx", "src/index.ts"], {
         cwd: serverRoot,
         env,
-        shell: process.platform === "win32",
+        shell: false,
       });
 
       let output = "";
@@ -105,10 +107,17 @@ describe("server entrypoint refuses to start on a misconfigured slug", () => {
 
       // A correctly configured boot never exits on its own, so stop waiting
       // once it reports that it is listening and treat that as "started".
+      //
+      // The budget is deliberately generous. This spawns a real server that
+      // connects to PostgreSQL, and it runs alongside twenty-three other test
+      // files competing for the same database. At 25s it intermittently fired
+      // before a *failing* boot had got as far as exiting, so the suite read
+      // "never exited" as "started" and the assertion saw null instead of 1 -
+      // a flaky release gate, which costs more than the seconds it saved.
       const timer = setTimeout(() => {
         stop();
         resolveBoot({ code: null, output });
-      }, 25_000);
+      }, 45_000);
 
       const watch = setInterval(() => {
         if (/Server listening/.test(output)) {
@@ -134,7 +143,7 @@ describe("server entrypoint refuses to start on a misconfigured slug", () => {
     expect(code).toBe(1);
     expect(output).toMatch(/lead intake is misconfigured/i);
     expect(output).not.toMatch(/Server listening/);
-  }, 40_000);
+  }, 90_000);
 
   it("starts normally when the slug resolves", async () => {
     const org = await createTestOrg();
@@ -145,5 +154,5 @@ describe("server entrypoint refuses to start on a misconfigured slug", () => {
     } finally {
       await cleanupTestOrg(org.id);
     }
-  }, 40_000);
+  }, 90_000);
 });

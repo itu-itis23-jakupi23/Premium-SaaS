@@ -1,7 +1,6 @@
 {
   "common": {
     "startDesigning": "Start ontwerpen",
-    "watchDemo": "Bekijk demo",
     "getAccess": "Krijg toegang",
     "contactSales": "Neem contact op",
     "signIn": "Inloggen",
@@ -45,7 +44,7 @@
       "subheading": "Schaal uw tentoonstellingsbedrijf met het juiste plan.",
       "perMonth": "/maand",
       "recommended": "Aanbevolen",
-      "custom": "Op maat"
+      "onboardingNote": "Bureau-accounts richten we samen met je in, zodat het plan past bij hoe je werkt. Self-service afrekenen komt eraan."
     },
     "cta": {
       "heading": "Begin vandaag nog met bouwen",
@@ -271,8 +270,6 @@
       "annual": "Jaarlijks",
       "saveBadge": "Bespaar 20%",
       "perMonthAnnual": "/maand · jaarlijks gefactureerd",
-      "savePerYear": "Bespaar ${{amount}} per jaar",
-      "getStarted": "Aan de slag",
       "contactSales": "Neem contact op met sales"
     },
     "pricingTiers": [
@@ -2345,7 +2342,9 @@
       "openWorkspaceBtn": "Open Workspace",
       "reviewApprovalBtn": "Review Approval",
       "workspaceLocked": "Werkruimte vergrendeld tot toewijzing",
-      "workspaceLockedDesc": "Je krijgt bericht zodra je projectmanager is toegewezen."
+      "workspaceLockedDesc": "Je krijgt bericht zodra je projectmanager is toegewezen.",
+      "projectSwitcher": "Kies welk project dit dashboard toont",
+      "showingProject": "Weergegeven"
     },
     "approvals": {
       "pageTitle": "Goedkeuringen | ENS",
@@ -2442,14 +2441,22 @@
       },
       "preview": {
         "close": "Voorbeeld sluiten",
-        "imageUnavailable": "Afbeeldingsvoorbeeld niet beschikbaar in demo",
         "typeUnavailable": "Voorbeeld niet beschikbaar voor {{type}}-bestanden",
         "category": "Categorie",
         "status": "Status",
         "uploadedBy": "Geüpload door",
         "tags": "Tags",
         "downloadBtn": "Bestand downloaden",
-        "mimeType": "Type"
+        "mimeType": "Type",
+        "imageAlt": "Voorbeeld van {{name}}",
+        "frameTitle": "Voorbeeld {{name}}",
+        "downloadInstead": "Download het om het in de juiste toepassing te openen.",
+        "failed": "Dit bestand kon niet worden weergegeven. Downloaden werkt waarschijnlijk wel."
+      },
+      "loadError": "Uw documenten konden niet worden geladen.",
+      "fallback": {
+        "uploadedBy": "Bureau",
+        "category": "Algemeen"
       }
     },
     "messages": {
@@ -2475,10 +2482,21 @@
       "error": {
         "contacts": "Berichtcontacten konden niet worden geladen.",
         "messages": "Berichten konden niet worden geladen.",
-        "attachmentTooLarge": "De bijlage is te groot. De maximale bestandsgrootte is 25 MB."
+        "attachmentTooLarge": "De bijlage is te groot. De maximale bestandsgrootte is 25 MB.",
+        "escalateFailed": "Escaleren mislukt. Probeer het opnieuw."
       },
       "noMessages": "Nog geen berichten.",
-      "uploading": "Uploading attachment..."
+      "uploading": "Uploading attachment...",
+      "escalate": {
+        "open": "Escaleren naar een manager",
+        "hint": "Je projectmanager is je eerste aanspreekpunt. Escaleer alleen als je een hogere manager nodig hebt.",
+        "targetLabel": "Kies een manager",
+        "messageLabel": "Je bericht",
+        "placeholder": "Waarmee kunnen we je helpen?",
+        "send": "Verzenden",
+        "sending": "Verzenden…",
+        "cancel": "Annuleren"
+      }
     },
     "projects": {
       "pageTitle": "Mijn projecten | ENS",
@@ -2534,7 +2552,14 @@
       },
       "loadError": "Je toegewezen projecten konden niet worden geladen.",
       "emptyTitle": "Nog geen toegewezen projecten",
-      "emptyDesc": "Je beursinschrijving staat in het systeem. De directie of een projectmanager moet nog een project toewijzen voordat het hier verschijnt."
+      "emptyDesc": "Je beursinschrijving staat in het systeem. De directie of een projectmanager moet nog een project toewijzen voordat het hier verschijnt.",
+      "stage": {
+        "intake": "Intake",
+        "design": "Ontwerp",
+        "review": "Beoordeling",
+        "production": "Productie",
+        "closed": "Afgesloten"
+      }
     },
     "profile": {
       "pageTitle": "Profielinstellingen | ENS",
@@ -2553,7 +2578,8 @@
       },
       "company": {
         "heading": "Bedrijfsinformatie",
-        "description": "Beheer uw bedrijfsgegevens en beursprofiel."
+        "description": "Beheer uw bedrijfsgegevens en beursprofiel.",
+        "agencyOwned": "Deze naam wordt beheerd door uw organisator. Vraag uw projectmanager om deze te wijzigen."
       },
       "avatar": {
         "heading": "Profielfoto",
@@ -2633,7 +2659,8 @@
         "passwordFillAll": "Vul alle wachtwoordvelden in",
         "passwordMismatch": "Nieuwe wachtwoorden komen niet overeen",
         "passwordTooShort": "Wachtwoord moet minimaal 8 tekens bevatten",
-        "deleteQueued": "Accountverwijderingsverzoek ingediend"
+        "deleteQueued": "Accountverwijderingsverzoek ingediend",
+        "companyError": "Bedrijfsinformatie kon niet worden opgeslagen"
       }
     },
     "workspace": {
@@ -2775,7 +2802,46 @@
         "reopen": "Reopen",
         "resolve": "Resolve"
       },
-      "backToDashboard": "Terug naar dashboard"
+      "backToDashboard": "Terug naar dashboard",
+      "propose": {
+        "start": "Meubels indelen",
+        "exit": "Klaar",
+        "sendToPm": "Naar PM sturen",
+        "saving": "Opslaan…",
+        "saved": "Opgeslagen",
+        "unsaved": "Niet-opgeslagen wijzigingen",
+        "withPm": "Indeling bij je PM",
+        "notAvailable": "Je kunt een indeling voorstellen zolang het ontwerp in review is.",
+        "itemUnavailable": "Dat item is niet meer beschikbaar.",
+        "blocked": "Plaatsing geblokkeerd: {{reason}}",
+        "sent": "Indeling naar je projectmanager gestuurd.",
+        "searchLabel": "Meubels zoeken",
+        "searchPlaceholder": "Meubels, SKU…",
+        "noResults": "Geen meubels gevonden.",
+        "yourFurniture": "Jouw meubels ({{count}})",
+        "reset": "Herstellen",
+        "removeItem": "{{name}} verwijderen",
+        "nothingPlaced": "Nog niets geplaatst.",
+        "submitTitle": "Indeling naar je projectmanager sturen",
+        "submitBody": "Je projectmanager bekijkt dit en past het toe of legt uit waarom niet. Dit kost één revisieronde.",
+        "noteLabel": "Notitie voor je projectmanager",
+        "notePlaceholder": "Iets wat hij moet weten?",
+        "cancel": "Annuleren",
+        "send": "Indeling sturen",
+        "sending": "Versturen…",
+        "addHint": "Sleep een stuk op de stand, of selecteer het om het in het midden te plaatsen. Structuur en verlichting blijven zoals je ontwerper ze zette.",
+        "addItem": "{{name}} toevoegen",
+        "discard": "Weggooien",
+        "discardHint": "Gooi deze indeling weg zonder te versturen. Kost niets.",
+        "discarded": "Indeling weggegooid.",
+        "decision": {
+          "accepted": "Je indeling is toegepast",
+          "declined": "Je indeling is niet toegepast",
+          "acceptedBody": "Je projectmanager heeft het aan het ontwerp toegevoegd.",
+          "declinedBody": "Je projectmanager heeft het huidige ontwerp behouden.",
+          "dismiss": "Sluiten"
+        }
+      }
     },
     "pendingApproval": {
       "title": "Pending Approval",
@@ -2817,7 +2883,6 @@
       "attemptsRemaining_other": "{{count}} inlogpogingen over voor tijdelijke blokkade",
       "noAccount": "Nog geen account?",
       "signUpFree": "Gratis registreren",
-      "devSection": "Lokale testaccounts",
       "showPassword": "Wachtwoord tonen",
       "hidePassword": "Wachtwoord verbergen",
       "validation": {
@@ -3080,6 +3145,43 @@
     "toast": {
       "accepted": "Offerte geaccepteerd. Uw bureau is op de hoogte gebracht.",
       "rejected": "Offerte geweigerd."
+    },
+    "filter": {
+      "label": "Filter offertes op status",
+      "all": "Alle",
+      "awaiting": "Wacht op uw beslissing",
+      "decided": "Afgehandeld"
+    },
+    "summary": {
+      "awaiting": "Wacht op u",
+      "value": "Openstaand bedrag",
+      "deadline": "Eerstvolgende deadline",
+      "noDeadline": "Geen"
+    },
+    "emptyFilter": "Geen offertes passen bij dit filter.",
+    "expiresIn_one": "nog {{count}} dag",
+    "expiresIn_other": "nog {{count}} dagen",
+    "sent": "Verzonden",
+    "validUntil": "Geldig tot",
+    "responded": "Uw antwoord",
+    "print": "Afdrukken",
+    "terms": "Voorwaarden",
+    "yourNote": "Uw opmerking",
+    "expiredNote": "Deze offerte is verlopen. Vraag uw projectmanager om een nieuwe.",
+    "revisedNote": "Er is een herziene versie van deze offerte opgesteld.",
+    "notRespondableNote": "Deze offerte staat niet open voor een beslissing.",
+    "confirm": {
+      "title": "Deze offerte accepteren?",
+      "body": "U accepteert offerte {{number}} voor {{amount}}. Uw bureau wordt op de hoogte gesteld en gaat hiermee aan de slag.",
+      "cancel": "Annuleren",
+      "confirm": "Offerte accepteren"
+    },
+    "declineDialog": {
+      "title": "Deze offerte afwijzen?",
+      "body": "Laat uw projectmanager weten wat er niet klopt, zodat hij een herziene versie kan sturen.",
+      "label": "Waarom u deze offerte afwijst",
+      "placeholder": "Te duur, verkeerde standgrootte, data gewijzigd…",
+      "confirm": "Afwijzing versturen"
     }
   },
   "pipeline": {
@@ -3129,14 +3231,17 @@
       "issue": "Uitgeven",
       "markPaid": "Markeren als betaald",
       "void": "Annuleren",
-      "delete": "Verwijderen"
+      "delete": "Verwijderen",
+      "recordPayment": "Betaling vastleggen"
     },
     "toast": {
       "created": "Factuur opgeslagen als concept.",
       "sent": "Factuur aan de klant uitgegeven.",
       "paid": "Betaling vastgelegd.",
       "voided": "Factuur geannuleerd.",
-      "deleted": "Conceptfactuur verwijderd."
+      "deleted": "Conceptfactuur verwijderd.",
+      "paymentRecorded": "Betaling vastgelegd",
+      "invalidAmount": "Voer een geldig bedrag in."
     },
     "form": {
       "title": "Nieuwe factuur",
@@ -3162,6 +3267,36 @@
       "saveDraft": "Concept opslaan",
       "needLine": "Voeg minstens één regel met omschrijving toe.",
       "error": "Er is iets misgegaan. Probeer het opnieuw."
+    },
+    "balanceDue": "{{amount}} openstaand",
+    "prompt": {
+      "recordPayment": "Betaling vastleggen. Openstaand: {{amount}}"
+    },
+    "payment": {
+      "title": "Betaling vastleggen",
+      "fullTitle": "Volledige betaling bevestigen",
+      "description": "Controleer de betaling voor factuur {{number}} voordat je deze vastlegt.",
+      "outstanding": "Openstaand saldo: {{amount}}",
+      "amount": "Betalingsbedrag ({{currency}})",
+      "method": "Betaalmethode",
+      "reference": "Referentie (optioneel)",
+      "note": "Notitie (optioneel)",
+      "review": "Vast te leggen bedrag: {{amount}}",
+      "fullReview": "Het volledige openstaande saldo van {{amount}} als betaald vastleggen?",
+      "manualNotice": "Dit legt reeds ontvangen geld vast. Er wordt geen bedrag bij de klant afgeschreven.",
+      "confirm": "Betaling bevestigen",
+      "retry": "Betaling opnieuw proberen",
+      "saving": "Betaling wordt vastgelegd…",
+      "close": "Voorlopig sluiten",
+      "uncertain": "De bevestiging staat nog open. Je verzonden gegevens zijn opgeslagen. Probeer deze betaling opnieuw om het resultaat te bevestigen voordat je een andere betaling vastlegt.",
+      "pending": "Betalingsbevestiging voor {{number}} staat nog open.",
+      "resume": "Betaling hervatten",
+      "invalidAmount": "Voer een positief bedrag met maximaal twee decimalen in.",
+      "exceedsBalance": "De betaling is hoger dan het openstaande saldo.",
+      "storageUnavailable": "De herstelgegevens van de betaling konden niet worden opgeslagen of gelezen in deze browser. Controleer de opslaginstellingen en probeer opnieuw voordat je een andere betaling vastlegt.",
+      "listError": "De factuurlijst kon niet worden vernieuwd. Een bevestigde betaling blijft vastgelegd.",
+      "refresh": "Opnieuw proberen",
+      "methods": { "manual": "Handmatig", "bank_transfer": "Bankoverschrijving", "cash": "Contant", "card": "Kaart", "other": "Overig" }
     }
   },
   "clientInvoices": {
@@ -3177,7 +3312,24 @@
     "issued": "Uitgegeven",
     "due": "Vervaldatum",
     "paidOn": "Betaald",
-    "payNote": "Neem voor de betaling contact op met uw projectleider."
+    "payNote": "Neem voor de betaling contact op met uw projectleider.",
+    "print": "Afdrukken / PDF opslaan",
+    "amountPaid": "Betaald",
+    "amountDue": "Openstaand bedrag",
+    "partlyPaid": "Deels betaald",
+    "paymentHistory": "Betalingsgeschiedenis",
+    "noneMatchFilter": "Geen facturen voldoen aan dit filter.",
+    "filter": {
+      "label": "Facturen filteren op status",
+      "all": "Alle",
+      "open": "Openstaand",
+      "paid": "Betaald"
+    },
+    "summary": {
+      "outstanding": "Openstaand saldo",
+      "openCount": "Open facturen",
+      "overdue": "Achterstallig"
+    }
   },
   "workspace": {
     "desktopOnly": {
@@ -3186,5 +3338,138 @@
       "requirement": "Vereist een venster van minstens {{width}} px breed. Een laptop of desktop volstaat; een tablet in liggende stand ook.",
       "back": "Terug naar dashboard"
     }
+  },
+  "consent": {
+    "title": "Cookies",
+    "body": "We gebruiken essentiële cookies om je ingelogd te houden en je taal te onthouden. We willen ook optionele analytische cookies om te zien hoe de site wordt gebruikt — alleen met jouw toestemming.",
+    "policyLink": "Lees ons cookiebeleid",
+    "accept": "Analytics toestaan",
+    "decline": "Alleen essentieel",
+    "change": "Cookiekeuze wijzigen",
+    "changed": "Je cookiekeuze is gewist."
+  },
+  "help": {
+    "openLabel": "Help: {{subject}}",
+    "invoices": {
+      "outstanding": {
+        "title": "Openstaand saldo",
+        "body": "Alles wat nog openstaat op je verstuurde facturen, bij elkaar. Betaald, geannuleerd en concept tellen niet mee.",
+        "note": "Een deels betaalde factuur telt alleen voor het restant."
+      },
+      "overdue": {
+        "title": "Achterstallig",
+        "body": "Verstuurde facturen waarvan de vervaldatum voorbij is en die nog niet volledig voldaan zijn."
+      },
+      "history": {
+        "title": "Betalingsgeschiedenis",
+        "body": "Elke betaling die op deze factuur is vastgelegd, oudste eerst. Een aanbetaling en het restant staan apart."
+      }
+    },
+    "messages": {
+      "escalate": {
+        "title": "Escaleren naar een manager",
+        "body": "Je projectmanager is je eerste aanspreekpunt en kent je stand tot in detail. Escaleer als een beslissing daarbuiten valt, of als je niets hoort.",
+        "note": "Na escaleren blijft die manager in je contacten en kun je gewoon berichten sturen."
+      }
+    },
+    "workspace": {
+      "revisions": {
+        "title": "Revisierondes",
+        "body": "Elke ronde wijzigingen die je vraagt kost er één. In woorden vragen en een meubelindeling sturen tellen even zwaar.",
+        "note": "Het ontwerp goedkeuren of iets vragen in Berichten kost niets."
+      },
+      "propose": {
+        "title": "Een indeling voorstellen",
+        "body": "Zet de meubels zoals jij ze wilt en stuur het naar je projectmanager. Die past het toe of legt uit waarom niet.",
+        "note": "Alleen meubels zijn van jou. Wanden, fascia en verlichting blijven zoals je ontwerper ze zette."
+      }
+    },
+    "staffInvoices": {
+      "flow": {
+        "title": "Hoe een factuur loopt",
+        "body": "Concept terwijl je hem bewerkt, verstuurd zodra hij naar de klant gaat, betaald als het saldo nul is. Annuleren haalt een verstuurde factuur eruit.",
+        "note": "Betaling vastleggen boekt een aanbetaling of termijn; Markeer als betaald vereffent de rest in één regel."
+      }
+    },
+    "proposal": {
+      "review": {
+        "title": "Een klantindeling beoordelen",
+        "body": "Voorbeeld zet het canvas op hun versie. Toepassen voegt hun meubels als nieuw concept toe aan het huidige ontwerp.",
+        "note": "Alleen meubels komen over. Structuur die je sindsdien wijzigde blijft staan."
+      }
+    },
+    "quotes": {
+      "awaiting": {
+        "title": "Wacht op uw beslissing",
+        "body": "Offertes die uw bureau heeft gestuurd en die u nog niet hebt geaccepteerd of afgewezen.",
+        "note": "Een verlopen offerte telt hier niet meer mee."
+      },
+      "validity": {
+        "title": "Geldigheid van de offerte",
+        "body": "De datum tot wanneer de prijs gegarandeerd is. Materiaal- en standkosten veranderen, dus een offerte kan niet onbeperkt open blijven."
+      },
+      "deciding": {
+        "title": "Accepteren of afwijzen",
+        "body": "Accepteren bevestigt de prijs en laat uw bureau beginnen. Afwijzen vraagt om een herziening: geef aan wat er moet veranderen en u krijgt een nieuwe offerte.",
+        "note": "Geen van beide verbruikt een ontwerprevisieronde."
+      }
+    },
+    "projects": {
+      "progress": {
+        "title": "Productievoortgang",
+        "body": "Hoe ver uw stand door de fasen van het bureau is gevorderd, van eerste briefing tot oplevering op locatie.",
+        "note": "Het volgt de bouw, niet uw goedkeuringen. Een ontwerp goedkeuren verschuift het niet op zichzelf."
+      },
+      "actionRequired": {
+        "title": "Actie vereist",
+        "body": "Uw bureau wacht hierop op u. Open het ontwerp of de goedkeuringslijst om te zien wat openstaat."
+      },
+      "timeline": {
+        "title": "Recente activiteit",
+        "body": "De laatste vijf faseovergangen van uw project, de nieuwste eerst."
+      },
+      "actions": {
+        "title": "Wat deze openen",
+        "body": "Elk opent de pagina voor juist dit project, niet de standaardstand van het portaal.",
+        "note": "Documenten worden over uw hele account gedeeld, dus die is niet projectspecifiek."
+      }
+    },
+    "documents": {
+      "status": {
+        "title": "Definitief en in beoordeling",
+        "body": "Definitief betekent dat uw bureau het bestand heeft goedgekeurd. In beoordeling betekent dat het intern nog wordt gecontroleerd en kan wijzigen.",
+        "note": "Hier wacht niets op u. Uw eigen goedkeuringen staan op de ontwerppagina."
+      },
+      "categories": {
+        "title": "Categorieën",
+        "body": "De indeling die uw bureau gebruikt, dus alleen de categorieën die zij daadwerkelijk hebben gebruikt staan hier."
+      }
+    },
+    "dashboard": {
+      "milestones": {
+        "title": "Mijlpalen",
+        "body": "Dezelfde fasen als de balk hierboven, afgeleid van hetzelfde percentage, zodat beide altijd overeenkomen.",
+        "note": "Een vinkje betekent dat de bouw dat punt voorbij is, niet dat u het hebt goedgekeurd."
+      },
+      "activity": {
+        "title": "Recente activiteit",
+        "body": "De laatste acties van uw bureau op uw account, de nieuwste eerst. Het verrist zichzelf zolang deze pagina open is."
+      }
+    }
+  },
+  "experience": {
+    "guide": "Uw volgende stappen",
+    "clientGuide": "Controleer het project en bekijk het ontwerp zodra het klaar is. Stuur vragen naar uw projectmanager.",
+    "pmGuide": "Controleer toegewezen klanten, maak ontwerpen en werk taken en deadlines bij.",
+    "chiefGuide": "Beoordeel nieuwe klanten, wijs projectmanagers toe en controleer projecten die op een besluit wachten.",
+    "offline": "U bent offline. Maak opnieuw verbinding voordat u opslaat of verzendt.",
+    "mobileReview": "Uw ontwerp beoordelen",
+    "previewHelp": "Bekijk opgeslagen voorbeelden. Gebruik een computer voor de interactieve 3D-werkruimte. Goedkeuring geldt voor het huidige ontwerp.",
+    "noPreview": "Geen voorbeeld beschikbaar. Vraag uw projectmanager om een voorbeeld voordat u goedkeurt.",
+    "historical": "Dit is een eerdere versie. Kies de huidige versie om goed te keuren.",
+    "updated": "Het ontwerp is gewijzigd. Bekijk het nieuwste voorbeeld voordat u doorgaat.",
+    "failed": "De gegevens konden niet worden geladen. Probeer het opnieuw.",
+    "retry": "Opnieuw proberen",
+    "detailUnavailable": "Sommige factuurgegevens of betalingen konden niet worden geladen. Open de factuur opnieuw."
   }
 }

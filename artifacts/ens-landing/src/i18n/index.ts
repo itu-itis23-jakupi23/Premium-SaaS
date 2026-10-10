@@ -91,6 +91,54 @@ export async function setLanguagePreference(code: string) {
   return normalized;
 }
 
+/**
+ * English copy for the chief and PM portals, kept out of the first load.
+ *
+ * en.json is the only catalogue imported statically - it has to be, because the
+ * first paint is in English - so every byte of it is paid for by an anonymous
+ * visitor on the marketing page who will never see a staff screen. The chief and
+ * PM page copy is over half the file and none of it renders outside those pages,
+ * so it loads with them instead (CS-14, see scripts/check-frontend-budgets.mjs).
+ *
+ * What stays behind in en.json is what other modules render: both portal navs in
+ * DashboardLayout, the retry in ProtectedRoute, and the undecryptable-message
+ * notice in the client inbox.
+ *
+ * The other ten locales are already fully lazy, so they keep their staff copy
+ * inline and need no equivalent.
+ */
+/**
+ * English copy for the authenticated portals, kept out of the first load.
+ *
+ * Same reasoning as the staff bundle below, one level wider: the client portal,
+ * the shared dashboard chrome, invoices, quotes and settings are never rendered
+ * on the marketing page, which is what the statically imported catalogue is
+ * sized for (CS-14).
+ *
+ * What stays in en.json is what the initial bundle genuinely draws, and that is
+ * computed rather than assumed - the pending-approval screen and the retry in
+ * ProtectedRoute, and DesktopOnlyGuard, all of which wrap routes before any page
+ * chunk is fetched.
+ */
+let appResources: Promise<void> | null = null;
+
+export function ensureAppResources(): Promise<void> {
+  appResources ??= import('./locales/en.app.json').then((module) => {
+    i18n.addResourceBundle('en', 'translation', module.default, true, true);
+  });
+  return appResources;
+}
+
+let staffResources: Promise<void> | null = null;
+
+export function ensureStaffResources(): Promise<void> {
+  staffResources ??= import('./locales/en.staff.json').then((module) => {
+    // Deep merge, so the nav keys already in en.json survive.
+    i18n.addResourceBundle('en', 'translation', module.default, true, true);
+  });
+  return staffResources;
+}
+
 async function ensureLanguageResource(code: LangCode) {
   if (code === 'en' || i18n.hasResourceBundle(code, 'translation')) return;
 

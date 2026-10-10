@@ -897,3 +897,56 @@ input[type="datetime-local"] {
   opacity: 1;
   background-color: rgba(255, 255, 255, 0.1);
 }
+
+/*
+ * Print: an invoice a client can hand to their finance team.
+ *
+ * The dashboard chrome - sidebar, sticky header, action buttons - carries no
+ * meaning on paper, and the dark theme burns a page of toner, so the printed
+ * page drops to black on white. Only the collapsed-open invoice is left, since
+ * that is what the client clicked Print from.
+ */
+@media print {
+  aside,
+  header,
+  nav,
+  [data-sonner-toaster],
+  [data-radix-popper-content-wrapper] {
+    display: none !important;
+  }
+
+  main {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  html,
+  body,
+  main {
+    background: #fff !important;
+    color: #000 !important;
+    color-scheme: light;
+  }
+
+  /* Tailwind's own print:hidden still wins; this covers the themed surfaces
+     that would otherwise print as dark blocks. */
+  .bg-card,
+  .bg-background,
+  .bg-muted\/30 {
+    background: #fff !important;
+  }
+
+  .text-muted-foreground {
+    color: #444 !important;
+  }
+
+  /* Keep an invoice from being split across pages where it can be helped. */
+  .rounded-lg.border {
+    break-inside: avoid;
+    border-color: #ccc !important;
+  }
+
+  a[href]::after {
+    content: "";
+  }
+}

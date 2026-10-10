@@ -1,3 +1,4 @@
+import { trackEvent } from "@/lib/analytics";
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { SkipToContent, MAIN_CONTENT_ID } from '@/components/SkipToContent';
@@ -144,6 +145,11 @@ export default function Home() {
   const teamRoles = t('home.team.roles', { returnObjects: true }) as TeamRole[];
   const showcaseCards = t('home.showcase.cards', { returnObjects: true }) as ShowcaseCard[];
   const pricingTiers = t('home.pricingTiers', { returnObjects: true }) as PricingTier[];
+
+  // Top of the funnel, counted once per visit.
+  useEffect(() => {
+    trackEvent("landing_viewed");
+  }, []);
 
   useEffect(() => {
     document.title = t('home.pageTitle');
@@ -810,26 +816,34 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                {p.monthlyPrice === 'Custom' ? (
-                  <Button
-                    variant="outline"
-                    asChild
-                    className="mt-auto w-full rounded-xl h-12 font-bold"
+                {/*
+                  CS-11: every tier contacts sales, including the priced ones.
+                  These are agency plans, but /auth/signup creates a *client*
+                  of an existing agency and collects no plan or payment — so a
+                  "Get Started" button here handed the visitor an account that
+                  was not the one advertised. Agency onboarding is a
+                  conversation today; this says so. Restore self-serve checkout
+                  here once billing can actually take the money.
+                */}
+                <Button
+                  variant={p.recommended ? 'default' : 'outline'}
+                  asChild
+                  className={`mt-auto w-full rounded-xl h-12 font-bold ${p.recommended ? 'shadow-lg shadow-primary/20' : ''}`}
+                >
+                  <a
+                    href={`${SALES_CONTACT_HREF}%20-%20${encodeURIComponent(String(pricingTiers[i]?.tier ?? ''))}`}
+                    data-testid={p.monthlyPrice === 'Custom' ? 'btn-pricing-contact-sales' : `btn-pricing-contact-sales-${i}`}
                   >
-                    <a href={SALES_CONTACT_HREF} data-testid="btn-pricing-contact-sales">{t('home.billing.contactSales')}</a>
-                  </Button>
-                ) : (
-                  <Button
-                    variant={p.recommended ? 'default' : 'outline'}
-                    className={`mt-auto w-full rounded-xl h-12 font-bold ${p.recommended ? 'shadow-lg shadow-primary/20' : ''}`}
-                    onClick={() => navigate('/signup?returnTo=/client')}
-                  >
-                    {t('home.billing.getStarted')}
-                  </Button>
-                )}
+                    {t('home.billing.contactSales')}
+                  </a>
+                </Button>
               </motion.div>
             ))}
           </div>
+
+          <p className="mt-10 text-center text-sm text-muted-foreground">
+            {t('home.pricing.onboardingNote')}
+          </p>
         </div>
       </section>
 

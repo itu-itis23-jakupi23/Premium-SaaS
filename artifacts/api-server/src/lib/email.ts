@@ -17,6 +17,47 @@ function getResend(): Resend | null {
   return _resend;
 }
 
+/**
+ * Escape a value being dropped into email HTML.
+ *
+ * Every template interpolated names and project titles raw. Those are
+ * user-controlled: a client sets their own contact name, a PM names a project.
+ * So a project called `<a href="https://evil.example">Reset your password</a>`
+ * rendered as a working link inside a genuine mail from this platform, sent to
+ * somebody else - content spoofing and a credible phishing vector, even though
+ * mail clients strip <script>.
+ *
+ * Applied to text content. `&` goes first or it would double-escape the
+ * entities the later replacements introduce.
+ */
+export function esc(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Escape a URL for an `href`, and refuse one that is not http(s).
+ *
+ * Attribute context needs the quote escaped, which `esc` does, but a URL also
+ * needs its scheme checked: these are built from `APP_URL` and from an
+ * `inviteUrl` passed in by a caller, and a `javascript:` or `data:` value in
+ * either would be a live link in the recipient's mail client. An unusable
+ * scheme becomes "#" rather than throwing - a broken button is better than a
+ * password reset that never arrives.
+ */
+export function escUrl(value: string): string {
+  const raw = String(value ?? "").trim();
+  if (!/^https?:\/\//i.test(raw)) {
+    console.error(`[email] refusing to link a non-http(s) url: ${raw.slice(0, 80)}`);
+    return "#";
+  }
+  return esc(raw);
+}
+
 function base(body: string): string {
   return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
 <style>
@@ -74,12 +115,12 @@ export async function sendReviewReminderEmail(opts: {
     `Your booth design is waiting for review - ${opts.projectName}`,
     base(`
       <h2>Your design is ready for review</h2>
-      <p>Hi ${opts.name || "there"},</p>
-      <p>The booth design for <strong>${opts.projectName}</strong> has been waiting
-      for your review for ${opts.daysWaiting} day${opts.daysWaiting === 1 ? "" : "s"}.
+      <p>Hi ${esc(opts.name) || "there"},</p>
+      <p>The booth design for <strong>${esc(opts.projectName)}</strong> has been waiting
+      for your review for ${esc(opts.daysWaiting)} day${opts.daysWaiting === 1 ? "" : "s"}.
       Approving it (or requesting changes) keeps your production schedule on track.</p>
-      <a href="${workspaceUrl}" class="cta">Review the design</a>
-      <div class="box">${workspaceUrl}</div>
+      <a href="${escUrl(workspaceUrl)}" class="cta">Review the design</a>
+      <div class="box">${esc(workspaceUrl)}</div>
     `),
   );
 }
@@ -91,11 +132,11 @@ export async function sendClientApprovedEmail(opts: { to: string; name: string }
     "Your account has been approved - ENS Agency",
     base(`
       <h2>You're in!</h2>
-      <p>Hi ${opts.name || "there"},</p>
+      <p>Hi ${esc(opts.name) || "there"},</p>
       <p>Your account with <strong>ENS Agency</strong> has been reviewed and approved.
       You now have full access to your client portal.</p>
-      <a href="${loginUrl}" class="cta">Open your portal</a>
-      <div class="box">${loginUrl}</div>
+      <a href="${escUrl(loginUrl)}" class="cta">Open your portal</a>
+      <div class="box">${esc(loginUrl)}</div>
     `),
   );
 }
@@ -115,12 +156,12 @@ export async function sendManagerInvitationEmail(opts: {
     "You have been invited to ENS Agency Portal",
     base(`
       <h2>You've been invited</h2>
-      <p>Hi ${opts.name || "there"},</p>
+      <p>Hi ${esc(opts.name) || "there"},</p>
       <p>You have been invited to join the <strong>ENS Agency</strong> internal portal
       as a <strong>Project Manager</strong>.</p>
-      <p>Your invitation link expires on <strong>${expiry}</strong>.</p>
-      <a href="${fullUrl}" class="cta">Accept invitation</a>
-      <div class="box">${fullUrl}</div>
+      <p>Your invitation link expires on <strong>${esc(expiry)}</strong>.</p>
+      <a href="${escUrl(fullUrl)}" class="cta">Accept invitation</a>
+      <div class="box">${esc(fullUrl)}</div>
     `),
   );
 }
@@ -136,10 +177,10 @@ export async function sendRevisionRequestedEmail(opts: {
     `Revision requested on "${opts.projectName}"`,
     base(`
       <h2>Revision requested</h2>
-      <p>Hi ${opts.pmName},</p>
+      <p>Hi ${esc(opts.pmName)},</p>
       <p>Your client has requested a revision on the booth design for
-      <strong>${opts.projectName}</strong>.</p>
-      <a href="${opts.workspaceUrl}" class="cta">Open workspace</a>
+      <strong>${esc(opts.projectName)}</strong>.</p>
+      <a href="${escUrl(opts.workspaceUrl)}" class="cta">Open workspace</a>
     `),
   );
 }
@@ -155,10 +196,10 @@ export async function sendDesignApprovedEmail(opts: {
     `Design approved: "${opts.projectName}"`,
     base(`
       <h2>Design approved!</h2>
-      <p>Hi ${opts.pmName},</p>
+      <p>Hi ${esc(opts.pmName)},</p>
       <p>Great news - your client has approved the final booth design for
-      <strong>${opts.projectName}</strong>. The workspace is now locked.</p>
-      <a href="${opts.workspaceUrl}" class="cta">View workspace</a>
+      <strong>${esc(opts.projectName)}</strong>. The workspace is now locked.</p>
+      <a href="${escUrl(opts.workspaceUrl)}" class="cta">View workspace</a>
     `),
   );
 }
@@ -169,15 +210,117 @@ export async function sendPasswordResetEmail(opts: { to: string; name: string; r
     "Reset your password - ENS Agency",
     base(`
       <h2>Reset your password</h2>
-      <p>Hi ${opts.name || "there"},</p>
+      <p>Hi ${esc(opts.name) || "there"},</p>
       <p>We received a request to reset the password for your ENS Agency account.
       Click the button below to set a new password. This link expires in <strong>1 hour</strong>.</p>
-      <a href="${opts.resetUrl}" class="cta">Reset password</a>
-      <div class="box">${opts.resetUrl}</div>
+      <a href="${escUrl(opts.resetUrl)}" class="cta">Reset password</a>
+      <div class="box">${esc(opts.resetUrl)}</div>
       <p style="margin-top:16px;font-size:13px;color:#9395a8">
         If you did not request a password reset, you can safely ignore this email.
         Your password will not change.
       </p>
+    `),
+  );
+}
+
+/**
+ * Cents to a readable amount for an email body.
+ *
+ * Deliberately plain rather than Intl-locale-aware: these go to an inbox, not
+ * a rendered page, and the recipient's locale is not known here. The currency
+ * code is spelled out so "1,250.00 EUR" cannot be mistaken for dollars.
+ */
+export function moneyLabel(cents: number, currency: string): string {
+  const amount = (Number(cents) || 0) / 100;
+  const code = (currency || "USD").toUpperCase();
+  return `${amount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${code}`;
+}
+
+/** A date for an email body, or null when there is none to show. */
+export function dateLabel(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+}
+
+export async function sendQuoteReadyEmail(opts: {
+  to: string;
+  name: string;
+  quoteNumber: string;
+  projectName: string | null;
+  totalLabel: string;
+  validUntil: string | null;
+}) {
+  const quotesUrl = `${APP_URL}/client/quotes`;
+  const subjectProject = opts.projectName ? ` - ${opts.projectName}` : "";
+  return send(
+    opts.to,
+    `Your quote ${opts.quoteNumber} is ready${subjectProject}`,
+    base(`
+      <h2>Your quote is ready</h2>
+      <p>Hi ${esc(opts.name) || "there"},</p>
+      <p>Quote <strong>${esc(opts.quoteNumber)}</strong>${
+        opts.projectName ? ` for <strong>${esc(opts.projectName)}</strong>` : ""
+      } is ready for you, totalling <strong>${esc(opts.totalLabel)}</strong>.</p>
+      ${
+        opts.validUntil
+          ? `<p>It is valid until <strong>${esc(opts.validUntil)}</strong>.</p>`
+          : ""
+      }
+      <p>You can review the line items and accept or decline it in your portal.</p>
+      <a href="${escUrl(quotesUrl)}" class="cta">Review the quote</a>
+      <div class="box">${esc(quotesUrl)}</div>
+    `),
+  );
+}
+
+export async function sendInvoiceIssuedEmail(opts: {
+  to: string;
+  name: string;
+  invoiceNumber: string;
+  totalLabel: string;
+  dueAt: string | null;
+}) {
+  const invoicesUrl = `${APP_URL}/client/invoices`;
+  return send(
+    opts.to,
+    `Invoice ${opts.invoiceNumber} from ENS Agency`,
+    base(`
+      <h2>You have a new invoice</h2>
+      <p>Hi ${esc(opts.name) || "there"},</p>
+      <p>Invoice <strong>${esc(opts.invoiceNumber)}</strong> has been issued for
+      <strong>${esc(opts.totalLabel)}</strong>.</p>
+      ${opts.dueAt ? `<p>Payment is due by <strong>${esc(opts.dueAt)}</strong>.</p>` : ""}
+      <a href="${escUrl(invoicesUrl)}" class="cta">View the invoice</a>
+      <div class="box">${esc(invoicesUrl)}</div>
+    `),
+  );
+}
+
+export async function sendPaymentReceivedEmail(opts: {
+  to: string;
+  name: string;
+  invoiceNumber: string;
+  amountLabel: string;
+  remainingLabel: string | null;
+}) {
+  const invoicesUrl = `${APP_URL}/client/invoices`;
+  return send(
+    opts.to,
+    `Payment received - invoice ${opts.invoiceNumber}`,
+    base(`
+      <h2>Thank you - payment received</h2>
+      <p>Hi ${esc(opts.name) || "there"},</p>
+      <p>We have recorded a payment of <strong>${esc(opts.amountLabel)}</strong>
+      against invoice <strong>${esc(opts.invoiceNumber)}</strong>.</p>
+      ${
+        opts.remainingLabel
+          ? `<p><strong>${esc(opts.remainingLabel)}</strong> remains outstanding on this invoice.</p>`
+          : "<p>This invoice is now settled in full.</p>"
+      }
+      <a href="${escUrl(invoicesUrl)}" class="cta">See your invoices</a>
+      <div class="box">${esc(invoicesUrl)}</div>
     `),
   );
 }

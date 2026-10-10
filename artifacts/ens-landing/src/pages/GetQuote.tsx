@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { submitLead } from "@/lib/platform-api";
+import { trackEvent } from "@/lib/analytics";
 
 export default function GetQuote() {
   const { t } = useTranslation();
@@ -47,10 +48,16 @@ export default function GetQuote() {
   });
   const { register, handleSubmit, formState } = form;
 
+  useEffect(() => {
+    trackEvent("quote_form_opened");
+  }, []);
+
   async function onSubmit(values: Values) {
     setError("");
     try {
       await submitLead(values);
+      // The far end of the funnel: a real enquiry reached the CRM.
+      trackEvent("quote_submitted");
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("getQuote.error"));
@@ -81,11 +88,11 @@ export default function GetQuote() {
                 </div>
                 <h1 className="text-2xl font-bold tracking-tight">{t("getQuote.success.title")}</h1>
                 <p className="max-w-md text-sm text-muted-foreground">{t("getQuote.success.body")}</p>
-                <Link href="/" className="mt-2">
-                  <Button variant="outline" className="gap-2">
+                <Button asChild variant="outline" className="mt-2 gap-2">
+                  <Link href="/">
                     <ArrowLeft className="h-4 w-4" /> {t("getQuote.success.back")}
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ) : (

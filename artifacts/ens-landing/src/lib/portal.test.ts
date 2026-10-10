@@ -4,6 +4,7 @@ import {
   getPortalHomePath,
   getRequestPortal,
   isRoleAllowedInPortal,
+  redirectTargetWithSearch,
 } from "./portal";
 
 /**
@@ -122,5 +123,48 @@ describe("role gating", () => {
 
   it("sends the combined build home to the marketing root", () => {
     expect(getPortalHomePath()).toBe("/");
+  });
+});
+
+/**
+ * Alias routes that redirect, and the query string they must not lose.
+ *
+ * `/client/approvals` redirects to `/client/workspace`, which reads
+ * `?project=` to pick which stand to open. The redirect dropped the search, so
+ * every "Review pending" button on the Projects page - one per project card -
+ * landed on the same default project. The failure is silent: the page loads
+ * fine, just showing the wrong stand.
+ */
+describe("redirectTargetWithSearch", () => {
+  it("carries the query across to the target", () => {
+    expect(redirectTargetWithSearch("/client/workspace", "?project=abc")).toBe(
+      "/client/workspace?project=abc",
+    );
+  });
+
+  it("keeps every parameter, not just the first", () => {
+    expect(redirectTargetWithSearch("/x", "?a=1&b=2")).toBe("/x?a=1&b=2");
+  });
+
+  it("leaves the target alone when there is no query", () => {
+    expect(redirectTargetWithSearch("/client/workspace", "")).toBe("/client/workspace");
+    // A bare "?" is what some browsers leave behind; appending it would make
+    // the url uglier for no gain.
+    expect(redirectTargetWithSearch("/client/workspace", "?")).toBe("/client/workspace");
+  });
+
+  it("does not override a query the target already carries", () => {
+    // Merging two query strings needs a conflict rule; the explicit one wins.
+    expect(redirectTargetWithSearch("/x?project=kept", "?project=dropped")).toBe("/x?project=kept");
+  });
+
+  it("tolerates a search string without its leading question mark", () => {
+    expect(redirectTargetWithSearch("/x", "project=abc")).toBe("/x?project=abc");
+  });
+
+  it("preserves an encoded value verbatim", () => {
+    // Project ids are uuids today, but the caller encodes and this must not
+    // re-encode or decode on the way through.
+    expect(redirectTargetWithSearch("/x", "?q=a%20b%26c")).toBe("/x?q=a%20b%26c");
   });
 });

@@ -40,6 +40,28 @@ router.post(
   },
 );
 
+// The chiefs a client may escalate to. Deliberately separate from
+// /messages/contacts: these people are not conversation partners yet, and must
+// not appear in the ordinary contact list until the client actually writes.
+router.get("/platform/messages/escalation-targets", requireRoles(["client"]), async (req, res) => {
+  const auth = req.auth!;
+  const contactPredicate = messageContactPredicate(auth, true);
+  const rows = await queryRows<{ id: string; name: string; email: string; role: string }>(sql`
+    select u.id::text, u.name, u.email, m.role::text as role
+    from memberships m
+    join users u on u.id = m.user_id
+    where m.organization_id = ${auth.organization.id}::uuid
+      and m.status::text = 'active'
+      and u.id <> ${auth.user.id}::uuid
+      and u.deleted_at is null
+      and u.disabled_at is null
+      and m.role::text in ('chief', 'owner')
+      and (${contactPredicate})
+    order by u.name asc
+  `);
+  res.json({ targets: rows });
+});
+
 router.get("/platform/messages/attachments/:attachmentId", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   const auth = req.auth!;
   const attachmentId = paramValue(req.params.attachmentId);
@@ -119,7 +141,10 @@ router.post("/platform/messages/:contactId", requireRoles(["admin", "owner", "ch
     return;
   }
 
-  const contactRole = await contactRoleFor(auth, contactId);
+  // A client may address a chief only by escalating on purpose. Any other
+  // caller ignores the flag entirely.
+  const escalating = auth.user.role === "client" && req.body?.escalate === true;
+  const contactRole = await contactRoleFor(auth, contactId, escalating);
   if (!contactRole) {
     res.status(404).json({ error: { code: "contact_not_found", message: "Contact was not found." } });
     return;
@@ -333,8 +358,7 @@ function publicAttachment(attachment: StoredMessageAttachment): MessageAttachmen
 }
 
 async function getContacts(auth: AuthContext) {
-  const roleFilter = sql.join(messageContactRoles(auth.user.role).map((role) => sql`${role}`), sql`, `);
-  const projectAccessFilter = messageContactProjectAccessFilter(auth);
+  const contactPredicate = messageContactPredicate(auth);
   const rows = await queryRows<ContactRow>(sql`
     with contacts as (
       select u.id, u.name, u.email, m.role
@@ -345,8 +369,7 @@ async function getContacts(auth: AuthContext) {
         and u.id <> ${auth.user.id}::uuid
         and u.deleted_at is null
         and u.disabled_at is null
-        and m.role::text in (${roleFilter})
-        and (${projectAccessFilter})
+        and (${contactPredicate})
     ),
     contact_conversations as (
       select
@@ -414,13 +437,12 @@ async function getContacts(auth: AuthContext) {
   }));
 }
 
-async function canContact(auth: AuthContext, contactId: string) {
-  return !!(await contactRoleFor(auth, contactId));
+async function canContact(auth: AuthContext, contactId: string, allowEscalation = false) {
+  return !!(await contactRoleFor(auth, contactId, allowEscalation));
 }
 
-async function contactRoleFor(auth: AuthContext, contactId: string) {
-  const roleFilter = sql.join(messageContactRoles(auth.user.role).map((role) => sql`${role}`), sql`, `);
-  const projectAccessFilter = messageContactProjectAccessFilter(auth);
+async function contactRoleFor(auth: AuthContext, contactId: string, allowEscalation = false) {
+  const contactPredicate = messageContactPredicate(auth, allowEscalation);
   const rows = await queryRows<{ role: string }>(sql`
     select m.role::text as role
     from memberships m
@@ -431,8 +453,7 @@ async function contactRoleFor(auth: AuthContext, contactId: string) {
       and u.id <> ${auth.user.id}::uuid
       and u.deleted_at is null
       and u.disabled_at is null
-      and m.role::text in (${roleFilter})
-      and (${projectAccessFilter})
+      and (${contactPredicate})
     limit 1
   `);
   return rows[0]?.role ?? null;
@@ -444,73 +465,134 @@ function messageInboxForRole(role: string) {
   return "/chief/messages";
 }
 
-function messageContactRoles(role: string) {
-  if (role === "pm") return ["chief", "owner", "admin", "client"];
-  if (role === "client") return ["pm"];
-  return ["pm", "client"];
-}
+// Who a caller may exchange messages with. This is deliberately ONE predicate:
+// the contact list and the send/read permission check both read it, so the two
+// can never drift apart. They did once - a chief could post to a client who then
+// got a 404 reading the thread, so the message was accepted and never delivered.
+//
+// `allowEscalation` widens the rule for a client who is deliberately escalating
+// to a chief. It is false everywhere except that one path, which keeps chiefs out
+// of the default contact list while still letting a client reach one on purpose.
+function messageContactPredicate(auth: AuthContext, allowEscalation = false): SQL {
+  if (["chief", "owner", "admin"].includes(auth.user.role)) {
+    return sql`m.role::text in ('pm', 'client')`;
+  }
 
-function messageContactProjectAccessFilter(auth: AuthContext): SQL {
-  if (["chief", "owner", "admin"].includes(auth.user.role)) return sql`true`;
   if (auth.user.role === "pm") {
-    return sql`
+    return sql`(
       m.role::text in ('chief', 'owner', 'admin')
-      or exists (
-        select 1
-        from projects p
-        left join clients c on c.id = p.client_id
-        where p.organization_id = ${auth.organization.id}::uuid
-          and p.deleted_at is null
-          and (
-            p.assigned_pm_user_id = ${auth.user.id}::uuid
-            or exists (
-              select 1 from project_members pm_self
-              where pm_self.project_id = p.id
-                and pm_self.user_id = ${auth.user.id}::uuid
-            )
-          )
-          and (
-            p.client_id is not null
+      or (
+        m.role::text = 'client'
+        and exists (
+          select 1
+          from projects p
+          left join clients c on c.id = p.client_id
+          where p.organization_id = ${auth.organization.id}::uuid
+            and p.deleted_at is null
             and (
-              lower(c.contact_email) = lower(u.email)
+              p.assigned_pm_user_id = ${auth.user.id}::uuid
               or exists (
-                select 1 from project_members pm_client
-                where pm_client.project_id = p.id
-                  and pm_client.user_id = u.id
+                select 1 from project_members pm_self
+                where pm_self.project_id = p.id
+                  and pm_self.user_id = ${auth.user.id}::uuid
               )
             )
-          )
+            and (
+              p.client_id is not null
+              and (
+                lower(c.contact_email) = lower(u.email)
+                or exists (
+                  select 1 from project_members pm_client
+                  where pm_client.project_id = p.id
+                    and pm_client.user_id = u.id
+                )
+              )
+            )
+        )
       )
-    `;
+    )`;
   }
+
   if (auth.user.role === "client") {
-    return sql`
-      exists (
-        select 1
-        from projects p
-        left join clients c on c.id = p.client_id
-        where p.organization_id = ${auth.organization.id}::uuid
-          and p.deleted_at is null
-          and (
-            lower(c.contact_email) = lower(${auth.user.email})
-            or exists (
-              select 1 from project_members pm_client
-              where pm_client.project_id = p.id
-                and pm_client.user_id = ${auth.user.id}::uuid
-            )
-          )
-          and (
-            p.assigned_pm_user_id = u.id
-            or exists (
-              select 1 from project_members pm_contact
-              where pm_contact.project_id = p.id
-                and pm_contact.user_id = u.id
-            )
-          )
+    return sql`(
+      (
+        m.role::text = 'pm'
+        and ${clientProjectContactExists(auth)}
       )
-    `;
+      or (
+        m.role::text in ('chief', 'owner')
+        and (
+          ${clientThreadWithContactExists(auth)}
+          or ${allowEscalation ? clientHasAnyProject(auth) : sql`false`}
+        )
+      )
+    )`;
   }
+
   return sql`false`;
+}
+
+// The client's PM: assigned to, or a member of, a project this client is on.
+function clientProjectContactExists(auth: AuthContext): SQL {
+  return sql`exists (
+    select 1
+    from projects p
+    left join clients c on c.id = p.client_id
+    where p.organization_id = ${auth.organization.id}::uuid
+      and p.deleted_at is null
+      and (
+        lower(c.contact_email) = lower(${auth.user.email})
+        or exists (
+          select 1 from project_members pm_client
+          where pm_client.project_id = p.id
+            and pm_client.user_id = ${auth.user.id}::uuid
+        )
+      )
+      and (
+        p.assigned_pm_user_id = u.id
+        or exists (
+          select 1 from project_members pm_contact
+          where pm_contact.project_id = p.id
+            and pm_contact.user_id = u.id
+        )
+      )
+  )`;
+}
+
+// A thread that already carries at least one real message. Requiring a message
+// - not just a conversation row - stops a chief who merely opened the thread
+// from surfacing in the client's contact list.
+function clientThreadWithContactExists(auth: AuthContext): SQL {
+  return sql`exists (
+    select 1
+    from direct_conversations dc
+    join direct_messages dm on dm.conversation_id = dc.id
+    where dc.organization_id = ${auth.organization.id}::uuid
+      and (
+        (dc.participant_one_user_id = ${auth.user.id}::uuid and dc.participant_two_user_id = u.id)
+        or (dc.participant_two_user_id = ${auth.user.id}::uuid and dc.participant_one_user_id = u.id)
+      )
+  )`;
+}
+
+// Escalation is open to a client who actually has a project with us. No project,
+// no chief.
+function clientHasAnyProject(auth: AuthContext): SQL {
+  return sql`exists (
+    select 1
+    from projects p
+    left join clients c on c.id = p.client_id
+    where p.organization_id = ${auth.organization.id}::uuid
+      and p.deleted_at is null
+      and (
+        lower(c.contact_email) = lower(${auth.user.email})
+        or exists (
+          select 1 from project_members pm_client
+          where pm_client.project_id = p.id
+            and pm_client.user_id = ${auth.user.id}::uuid
+        )
+      )
+  )`;
 }
 
 async function resolveConversationScope(auth: AuthContext, contactId: string, input: MessageContextInput) {

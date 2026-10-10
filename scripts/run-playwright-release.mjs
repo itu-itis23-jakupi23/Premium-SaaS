@@ -146,6 +146,7 @@ const serviceEnv = {
   ...process.env,
   DATABASE_URL: databaseUrl.toString(),
   NODE_ENV: "test",
+  DEPLOYMENT_ENV: "test",
   PORT: apiPort,
   AUTH_SECRET: randomBytes(32).toString("hex"),
   MESSAGE_ENCRYPTION_KEY: randomBytes(32).toString("hex"),

@@ -168,7 +168,16 @@ export default function PMMessages() {
     if (!activeContact) return;
     let mounted = true;
     loadMessages();
-    const interval = window.setInterval(loadMessages, 5000);
+    // Skip the tick while the tab is hidden - a backgrounded inbox polling every
+    // five seconds costs the server and the battery for an answer nobody is
+    // reading - and catch up the moment it comes back, which is the case a bare
+    // interval handles worst.
+    const interval = window.setInterval(() => {
+      if (!document.hidden) loadMessages();
+    }, 5000);
+    const onFocus = () => { if (!document.hidden) loadMessages(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
 
     async function loadMessages() {
       try {
@@ -185,6 +194,8 @@ export default function PMMessages() {
           setMessages([]);
           mounted = false;
           window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
           return;
         }
         setError(message);

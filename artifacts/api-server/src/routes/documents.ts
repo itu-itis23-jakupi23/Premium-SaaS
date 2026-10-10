@@ -6,7 +6,7 @@ import { extname } from "node:path";
 import { db } from "@workspace/db";
 import { requireAuth, requireRoles, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
-import { getStorageProvider } from "../lib/storage";
+import { expectedStorageBucket, getStorageProvider, isStorageKeyOwnedBy } from "../lib/storage";
 
 const router: IRouter = Router();
 
@@ -149,10 +149,10 @@ router.post("/platform/documents", requireRoles(["admin", "owner", "chief", "pm"
 
   const projectId = stringValue(data.projectId);
   const clientId = stringValue(data.clientId);
-  const kind = stringValue(data.kind) ?? "other";
+  const kind = (stringValue(data.kind) ?? "other").slice(0, 60);
   const visibility = stringValue(data.visibility) ?? "internal";
-  const fileName = stringValue(data.fileName);
-  const mimeType = stringValue(data.mimeType) ?? "application/octet-stream";
+  const fileName = stringValue(data.fileName)?.slice(0, 255);
+  const mimeType = normalizeMimeType(stringValue(data.mimeType));
   const sizeBytes = Number(data.sizeBytes) || 0;
   const storageBucket = stringValue(data.storageBucket);
   const storageKey = stringValue(data.storageKey);
@@ -163,6 +163,25 @@ router.post("/platform/documents", requireRoles(["admin", "owner", "chief", "pm"
   }
   if (!storageBucket || !storageKey) {
     res.status(400).json({ error: "storageBucket and storageKey are required" });
+    return;
+  }
+  /**
+   * The storage location is caller-supplied here, and it is handed straight to
+   * the storage provider on download. Unchecked, that was an authenticated
+   * arbitrary file read: registering a document at
+   * `{"storageBucket":"local","storageKey":"../../../.env"}` and downloading it
+   * returned the API's own environment file - database password, auth secret,
+   * mail and payment keys - to any chief or PM. The org prefix also stops one
+   * organization registering a pointer at another's object.
+   */
+  if (storageBucket !== expectedStorageBucket()) {
+    res.status(400).json({ error: "storageBucket is not the bucket this deployment serves" });
+    return;
+  }
+  if (!isStorageKeyOwnedBy(storageKey, organization.id)) {
+    res.status(400).json({
+      error: "storageKey must be an object stored for this organization, as \"<organizationId>/<file>\"",
+    });
     return;
   }
   if (projectId && !isUuid(projectId)) {
@@ -303,11 +322,13 @@ router.post(
       return;
     }
 
-    const fileName = stringValue(req.headers["x-file-name"] as string) ?? "upload.bin";
-    const mimeType = (stringValue(req.headers["x-content-type"] as string) ?? req.headers["content-type"] ?? "application/octet-stream").split(";")[0].trim();
+    const fileName = (stringValue(req.headers["x-file-name"] as string) ?? "upload.bin").slice(0, 255);
+    const mimeType = normalizeMimeType(
+      stringValue(req.headers["x-content-type"] as string) ?? (req.headers["content-type"] as string),
+    );
     const projectId = stringValue(req.headers["x-project-id"] as string);
     const clientId = stringValue(req.headers["x-client-id"] as string);
-    const kind = stringValue(req.headers["x-document-kind"] as string) ?? "other";
+    const kind = (stringValue(req.headers["x-document-kind"] as string) ?? "other").slice(0, 60);
     const visibility: Visibility = (isValidVisibility(stringValue(req.headers["x-visibility"] as string))
       ? (req.headers["x-visibility"] as string)
       : "internal") as Visibility;
@@ -382,7 +403,45 @@ router.post(
   },
 );
 
+/**
+ * A media type safe to store and to echo back in a response header.
+ *
+ * `mime_type` arrives from the caller - a request body field on one route, the
+ * `x-content-type` header on the other - and the download route sets it as the
+ * response `Content-Type`. Node throws on a header value containing CR or LF,
+ * so an unfiltered value turned a download into a 500; anything that is not a
+ * plausible `type/subtype` is not worth storing either. Falls back rather than
+ * rejecting, because the bytes are already uploaded by this point and a
+ * generic type still downloads correctly.
+ */
+function normalizeMimeType(raw: string | null | undefined): string {
+  const candidate = String(raw ?? "").split(";")[0].trim().toLowerCase();
+  if (!/^[a-z0-9][a-z0-9!#$&^_.+-]{0,62}\/[a-z0-9][a-z0-9!#$&^_.+-]{0,62}$/.test(candidate)) {
+    return "application/octet-stream";
+  }
+  return candidate;
+}
+
 // ── Authenticated file download ──────────────────────────────────────────────
+
+/**
+ * Types that may be served for viewing in the browser rather than saved.
+ *
+ * A whitelist, not a blocklist, and deliberately short. Serving an arbitrary
+ * uploaded file inline from the API origin is a stored-XSS vector: an uploaded
+ * .html or .svg would run as a first-party script against this origin and any
+ * cookie scoped to it. These five render as pictures or in the PDF viewer and
+ * cannot carry script. SVG is excluded for exactly that reason, even though it
+ * is an image - it is a document format that can hold <script>.
+ */
+const INLINE_VIEWABLE_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+]);
+
 
 router.get("/platform/documents/:documentId/download", async (req: Request, res: Response) => {
   const organization = req.tenant!;
@@ -432,10 +491,38 @@ router.get("/platform/documents/:documentId/download", async (req: Request, res:
     const bytes = await storage.retrieve(doc.storageBucket, doc.storageKey);
     const ext = extname(doc.fileName) || "";
     const safeName = doc.fileName.replace(/[^\w.\-]/g, "_");
+    // `?inline=1` asks for a viewable response instead of a save. The client
+    // portal's document preview was a placeholder graphic reading "preview
+    // unavailable" precisely because this always sent `attachment`, which a
+    // browser cannot render in an <img> or <iframe>.
+    const wantsInline = stringValue(req.query.inline) === "1";
+    const canInline = wantsInline && INLINE_VIEWABLE_TYPES.has(doc.mimeType.toLowerCase());
     res.setHeader("Content-Type", doc.mimeType);
     res.setHeader("Content-Length", String(bytes.byteLength));
-    res.setHeader("Content-Disposition", `attachment; filename="${safeName}"`);
+    res.setHeader(
+      "Content-Disposition",
+      `${canInline ? "inline" : "attachment"}; filename="${safeName}"`,
+    );
     res.setHeader("Cache-Control", "private, max-age=3600");
+    // `nosniff` is the load-bearing header here, together with the whitelist.
+    // `mime_type` is whatever was recorded at upload, so an HTML file could be
+    // stored claiming to be a PDF; with the type pinned to application/pdf and
+    // sniffing off, the browser hands it to the PDF reader, the parse fails and
+    // nothing executes. It never becomes a document on this origin.
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    if (canInline) {
+      // Deliberately not the `sandbox` directive, and the viewer iframe
+      // deliberately carries no `sandbox` attribute either. Both put the
+      // response in a sandboxed browsing context, which stops Chrome's built-in
+      // PDF viewer rendering at all - that would restore the blank "preview
+      // unavailable" pane this change exists to remove, in exchange for
+      // defence the whitelist above already provides. Scripting is denied
+      // instead, which is the part that mattered.
+      res.setHeader(
+        "Content-Security-Policy",
+        "default-src 'none'; script-src 'none'; object-src 'none'; img-src 'self' data: blob:; style-src 'unsafe-inline'",
+      );
+    }
     res.send(bytes);
     void ext; // used above
   } catch {

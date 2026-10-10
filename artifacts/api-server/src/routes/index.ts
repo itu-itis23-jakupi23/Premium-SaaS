@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import adminRouter from "./admin";
 import authRouter from "./auth";
 import billingRouter from "./billing";
 import clientErrorsRouter from "./client-errors";
@@ -19,6 +20,13 @@ const router: IRouter = Router();
 router.use(healthRouter);
 router.use(clientErrorsRouter);
 router.use(leadsRouter);
+// Mounted ahead of the routers that apply a blanket requireAuth to everything
+// passing through them (crm, quotes, workspace): those would answer 401 for an
+// unauthenticated caller before this router's own gate could answer 404, and
+// the gate answering first is the point of it.
+//
+// Behind ADMIN_SURFACE_ENABLED, which is set nowhere.
+router.use(adminRouter);
 router.use(authRouter);
 router.use(billingRouter);
 router.use(databaseRouter);

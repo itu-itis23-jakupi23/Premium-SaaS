@@ -26,6 +26,51 @@ interface DenialCase {
 }
 
 const cases: DenialCase[] = [
+  // Client furniture proposals. The sandbox is the client's and the decision is
+  // the PM's, so each half must refuse the other - the feature tests assert the
+  // happy paths, this asserts the refusals and that none of it is reachable
+  // unauthenticated.
+  {
+    name: "save a furniture proposal",
+    method: "put",
+    path: "/api/platform/projects/00000000-0000-4000-8000-000000000001/workspace/proposal",
+    denied: ["chief", "pm"],
+    body: { title: "x", workspace: {} },
+  },
+  {
+    name: "submit a furniture proposal",
+    method: "post",
+    path: "/api/platform/projects/00000000-0000-4000-8000-000000000001/workspace/proposal/submit",
+    denied: ["chief", "pm"],
+    body: { note: "x" },
+  },
+  {
+    name: "withdraw a furniture proposal",
+    method: "post",
+    path: "/api/platform/projects/00000000-0000-4000-8000-000000000001/workspace/proposal/withdraw",
+    denied: ["chief", "pm"],
+  },
+  {
+    name: "accept a furniture proposal",
+    method: "post",
+    path: "/api/platform/projects/00000000-0000-4000-8000-000000000001/workspace/proposal/00000000-0000-4000-8000-000000000002/accept",
+    denied: ["client"],
+  },
+  {
+    name: "reject a furniture proposal",
+    method: "post",
+    path: "/api/platform/projects/00000000-0000-4000-8000-000000000001/workspace/proposal/00000000-0000-4000-8000-000000000002/reject",
+    denied: ["client"],
+    body: { note: "x" },
+  },
+  // Escalation targets name the chiefs a client may write to, so staff have no
+  // business reading the list.
+  {
+    name: "escalation targets",
+    method: "get",
+    path: "/api/platform/messages/escalation-targets",
+    denied: ["chief", "pm"],
+  },
   {
     name: "database status",
     method: "get",

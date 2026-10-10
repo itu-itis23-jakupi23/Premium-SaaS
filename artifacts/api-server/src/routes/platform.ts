@@ -18,6 +18,7 @@ import {
   type AuthContext,
 } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
+import { deliverNotification } from "../lib/notifications";
 import { hashPassword, verifyPassword } from "../lib/password";
 import {
   normalizePipelineStage,
@@ -2390,6 +2391,27 @@ router.delete(
   },
 );
 
+/**
+ * The agency's client record for whoever is signed in, or null for staff.
+ *
+ * Matched on contact email, the same rule the invoice and messaging routes use
+ * to decide which client a portal user is.
+ */
+async function callerCompanyRecord(
+  auth: AuthContext,
+): Promise<{ companyName: string; contactEmail: string } | null> {
+  if (auth.user.role !== "client") return null;
+  const rows = await queryRows<{ companyName: string; contactEmail: string }>(sql`
+    select company_name as "companyName", contact_email as "contactEmail"
+    from clients
+    where organization_id = ${auth.organization.id}::uuid
+      and lower(contact_email) = lower(${auth.user.email})
+      and deleted_at is null
+    limit 1
+  `);
+  return rows[0] ?? null;
+}
+
 async function getAccountSettings(auth: AuthContext) {
   const rows = await queryRows<{
     id: string;
@@ -2412,6 +2434,8 @@ async function getAccountSettings(auth: AuthContext) {
   const notifications = objectValue(accountSettings.notifications);
   const appearance = objectValue(accountSettings.appearance);
   const security = objectValue(accountSettings.security);
+  const company = objectValue(accountSettings.company);
+  const companyRecord = await callerCompanyRecord(auth);
 
   return {
     profile: {
@@ -2437,6 +2461,28 @@ async function getAccountSettings(auth: AuthContext) {
       twoFactorEnabled: boolValue(security.twoFactorEnabled, false),
       recoveryCodes: arrayOfStrings(security.recoveryCodes),
     },
+    /**
+     * Split ownership, because the two halves have different owners.
+     *
+     * `name` and `contactEmail` are the agency's record of this client, so they
+     * are reported here and ignored on write - a client renaming their own
+     * company in the portal would silently disagree with the CRM row every
+     * invoice and project is filed under. Corrections go through the project
+     * manager, like every other change to agency-held data.
+     *
+     * `industry` and `website` are the client's own description of their
+     * business. Nothing in the schema held them before, so the profile page
+     * showed hardcoded placeholders and a save button that persisted nothing.
+     * They live on the user, where the client can maintain them.
+     */
+    company: {
+      name: companyRecord?.companyName ?? "",
+      contactEmail: companyRecord?.contactEmail ?? "",
+      industry: stringValue(company.industry) ?? "",
+      website: stringValue(company.website) ?? "",
+      /** False for staff, who have no client record behind them. */
+      managedByAgency: companyRecord !== null,
+    },
   };
 }
 
@@ -2447,6 +2493,7 @@ async function updateAccountSettings(
     notifications?: Record<string, unknown>;
     appearance?: Record<string, unknown>;
     security?: Record<string, unknown>;
+    company?: Record<string, unknown>;
   },
 ) {
   const current = await getUserMetadata(auth.user.id);
@@ -2470,6 +2517,10 @@ async function updateAccountSettings(
     security: {
       ...objectValue(currentSettings.security),
       ...objectValue(input.security),
+    },
+    company: {
+      ...objectValue(currentSettings.company),
+      ...objectValue(input.company),
     },
   };
   const nextMetadata = {
@@ -2676,28 +2727,7 @@ async function createNotification(
   href: string | null,
   category: "assignments" | "milestones" | "reports" | "system" = "system",
 ) {
-  if (!(await shouldDeliverNotification(userId, category))) return;
-
-  await db.execute(sql`
-    insert into notifications (organization_id, user_id, title, body, href)
-    values (
-      ${organizationId}::uuid,
-      ${userId}::uuid,
-      ${title.slice(0, 160)},
-      ${body},
-      ${href}
-    )
-  `);
-}
-
-async function shouldDeliverNotification(
-  userId: string,
-  category: "assignments" | "milestones" | "reports" | "system",
-) {
-  const metadata = await getUserMetadata(userId);
-  const settings = objectValue(metadata.accountSettings);
-  const notifications = objectValue(settings.notifications);
-  return boolValue(notifications[category], true);
+  await deliverNotification(organizationId, userId, title, body, href, category);
 }
 
 async function getManagers(organizationId: string) {
@@ -7431,6 +7461,31 @@ function parseAccountSettingsInput(body: unknown) {
     profile.avatarTone = avatar.value.avatarTone;
   }
 
+  // Only the two company fields the client actually owns are read. `name` and
+  // `contactEmail` belong to the agency's client record and are reported by the
+  // GET for display; accepting them here would let a client rename the row that
+  // their invoices and projects are filed under.
+  //
+  // Built key by key rather than as a whole object, because the caller merges
+  // this over what is stored. Reading an absent key as "" would make a save of
+  // just the website erase the industry, which is the opposite of how the
+  // notification and appearance blocks behave. An explicit "" still clears.
+  const companyInput = objectValue(data.company);
+  const company: { industry?: string; website?: string } = {};
+  if ("industry" in companyInput) {
+    company.industry = (stringValue(companyInput.industry) ?? "").slice(0, 120);
+  }
+  if ("website" in companyInput) {
+    company.website = (stringValue(companyInput.website) ?? "").slice(0, 300);
+  }
+
+  if (company.website && !/^https?:\/\//i.test(company.website)) {
+    return {
+      ok: false as const,
+      error: "Company website must start with http:// or https://",
+    };
+  }
+
   return {
     ok: true as const,
     value: {
@@ -7438,6 +7493,7 @@ function parseAccountSettingsInput(body: unknown) {
       notifications: objectValue(data.notifications),
       appearance: objectValue(data.appearance),
       security: objectValue(data.security),
+      company: "company" in data ? company : undefined,
     },
   };
 }
@@ -7898,6 +7954,10 @@ async function getActivity(
     action: event.action,
     project: event.project,
     time: relativeTime(event.createdAt),
+    // `time` is relative and built here, so it is English in every locale.
+    // The raw timestamp lets a portal format it in the reader's language;
+    // `time` stays for the staff surfaces that already render it.
+    createdAt: event.createdAt,
   }));
 }
 

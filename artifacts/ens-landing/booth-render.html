@@ -301,6 +301,7 @@
 // no tooling reads this block today: tsconfig covers src/** and nothing
 // extracts script blocks from HTML, so this marks intent and helps an editor,
 // and is not yet enforced anywhere.
+import { rendererPixelRatio } from '/src/lib/renderer-performance.ts';
 import * as THREE from '/src/workspace/three-proxy.ts';
 import { GLTFLoader } from '/src/workspace/gltf-loader-proxy.ts';
 import { MeshoptDecoder } from '/src/workspace/meshopt-decoder-proxy.ts';
@@ -308,11 +309,25 @@ import { MeshoptDecoder } from '/src/workspace/meshopt-decoder-proxy.ts';
 const canvas = document.getElementById('glbCanvas');
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
 renderer.setClearColor(0x000000, 0);
+// Lighting can request a refresh during module initialization.
+let svgRefreshFrame = 0;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
+// The key light and its shadow camera are fixed in world space. Camera movement
+// reuses the same depth map; only changes to the scene or lighting redraw it.
+renderer.shadowMap.autoUpdate = false;
+renderer.shadowMap.needsUpdate = true;
+let shadowUpdates = 0;
+function invalidateShadows() {
+  renderer.shadowMap.needsUpdate = true;
+}
+canvas.addEventListener('webglcontextrestored', () => {
+  invalidateShadows();
+  scheduleSvgRefresh();
+});
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
@@ -377,9 +392,10 @@ window.__applyGlbLighting = (rig) => {
   fill.intensity = Number.isFinite(Number(rig.fill)) ? Number(rig.fill) : fill.intensity;
   if (Number.isFinite(Number(rig.keyColor))) key.color.setHex(Number(rig.keyColor));
   if (Number.isFinite(Number(rig.fillColor))) fill.color.setHex(Number(rig.fillColor));
+  invalidateShadows();
   // Repaint through the same path the rest of the app uses, so the SVG and the
   // models stay in step.
-  if (typeof window.renderAll === 'function') requestAnimationFrame(() => window.renderAll());
+  scheduleSvgRefresh();
 };
 // The preset may have been applied before this module finished loading.
 if (window.__lightingRig) window.__applyGlbLighting(window.__lightingRig);
@@ -392,6 +408,7 @@ const shadowMaterial = new THREE.MeshBasicMaterial({
   depthWrite: false,
 });
 
+let lastCanvasSizeKey = "";
 function ensureSize() {
   // Match the SVG's 1600x1000 xMidYMid slice viewport exactly. This keeps the
   // GLB layer aligned when preview mode or a browser resize changes aspect.
@@ -400,6 +417,10 @@ function ensureSize() {
   const scale = Math.max(viewportW / 1600, viewportH / 1000);
   const cssWidth = 1600 * scale;
   const cssHeight = 1000 * scale;
+  const dpr = rendererPixelRatio(cssWidth, cssHeight, window.devicePixelRatio || 1);
+  const sizeKey = `${viewportW}:${viewportH}:${dpr}`;
+  if (sizeKey === lastCanvasSizeKey) return;
+  lastCanvasSizeKey = sizeKey;
   canvas.style.left = `${(viewportW - cssWidth) / 2}px`;
   canvas.style.top = `${(viewportH - cssHeight) / 2 + 90 * scale}px`;
   canvas.style.width = `${cssWidth}px`;
@@ -407,15 +428,15 @@ function ensureSize() {
   canvas.style.right = 'auto';
   canvas.style.bottom = 'auto';
   canvas.style.transform = 'none';
-  const rect = canvas.getBoundingClientRect();
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const width = Math.max(1, Math.floor(rect.width * dpr));
-  const height = Math.max(1, Math.floor(rect.height * dpr));
+  // Avoid a synchronous layout read on every camera movement.
+  const width = Math.max(1, Math.floor(cssWidth * dpr));
+  const height = Math.max(1, Math.floor(cssHeight * dpr));
   if (canvas.width !== width || canvas.height !== height) {
     renderer.setPixelRatio(dpr);
-    renderer.setSize(rect.width, rect.height, false);
-    camera.aspect = rect.width / Math.max(1, rect.height);
+    renderer.setSize(cssWidth, cssHeight, false);
+    camera.aspect = cssWidth / Math.max(1, cssHeight);
     camera.updateProjectionMatrix();
+    invalidateShadows();
   }
 }
 
@@ -448,9 +469,9 @@ function normalizeModel(root, item) {
 
   wrapper.traverse(node => {
     if (!node.isMesh) return;
-    // Placed instances must not share disposable resources with the cached GLB.
-    // Otherwise deleting one item can make a later instance render blank.
-    if (node.geometry) node.geometry = node.geometry.clone();
+    // Geometry and textures are immutable cached resources. Share them across
+    // repeated furniture; instance disposal releases only its own materials.
+    // The cache owns the shared resources until the renderer is torn down.
     node.castShadow = true;
     node.receiveShadow = true;
     if (node.material) {
@@ -459,11 +480,6 @@ function normalizeModel(root, item) {
         : node.material.clone();
       const materials = Array.isArray(node.material) ? node.material : [node.material];
       materials.forEach(material => {
-        for (const [key, value] of Object.entries(material)) {
-          if (!value || !value.isTexture) continue;
-          material[key] = value.clone();
-          material[key].needsUpdate = true;
-        }
         material.side = THREE.DoubleSide;
         if (material.map) material.map.colorSpace = THREE.SRGBColorSpace;
         if ('roughness' in material) material.roughness = Math.min(0.88, Math.max(0.46, material.roughness ?? 0.62));
@@ -488,20 +504,20 @@ function loadModel(url) {
   return modelCache.get(url);
 }
 
-function disposeMaterial(material) {
+function disposeMaterial(material, disposeShared = false) {
   if (!material) return;
   for (const value of Object.values(material)) {
-    if (value && value.isTexture) value.dispose();
+    if (disposeShared && value && value.isTexture) value.dispose();
   }
   material.dispose?.();
 }
 
-function disposeObject3D(node) {
+function disposeObject3D(node, disposeShared = false) {
   node.traverse(child => {
     if (!child.isMesh) return;
-    child.geometry?.dispose?.();
-    if (Array.isArray(child.material)) child.material.forEach(disposeMaterial);
-    else disposeMaterial(child.material);
+    if (disposeShared) child.geometry?.dispose?.();
+    if (Array.isArray(child.material)) child.material.forEach(material => disposeMaterial(material, disposeShared));
+    else disposeMaterial(child.material, disposeShared);
   });
 }
 
@@ -527,6 +543,7 @@ function updateShellOccluders(state) {
     roomKey, [...openRoomWalls].sort().join(';')].join('|');
   if (nextKey === shellOccluderKey) return;
   shellOccluderKey = nextKey;
+  invalidateShadows();
 
   for (const child of [...shellOccluders.children]) {
     shellOccluders.remove(child);
@@ -600,6 +617,7 @@ async function ensureModel(item, state) {
   if (existing?.userData.physicalSizeKey === expectedSizeKey) return existing;
   if (existing) {
     scene.remove(existing);
+    invalidateShadows();
     disposeObject3D(existing);
     modelNodes.delete(keyId);
     window.__glbVisibleItems.delete(keyId);
@@ -619,6 +637,7 @@ async function ensureModel(item, state) {
   const root = source.clone(true);
   holder.add(normalizeModel(root, item));
   scene.add(holder);
+  invalidateShadows();
   modelNodes.set(keyId, holder);
   return holder;
 }
@@ -627,6 +646,7 @@ function removeMissingModels(activeIds) {
   for (const [id, node] of modelNodes.entries()) {
     if (activeIds.has(id)) continue;
     scene.remove(node);
+    invalidateShadows();
     disposeObject3D(node);
     modelNodes.delete(id);
     window.__glbVisibleItems.delete(id);
@@ -648,7 +668,16 @@ function removeMissingModels(activeIds) {
   }
 }
 
+function scheduleSvgRefresh() {
+  if (svgRefreshFrame) return;
+  svgRefreshFrame = requestAnimationFrame(() => {
+    svgRefreshFrame = 0;
+    if (!document.hidden && typeof window.renderAll === 'function') window.renderAll();
+  });
+}
+
 function renderScene(state) {
+  if (document.hidden) return;
   ensureSize();
 
   if (Array.isArray(state.cam)) camera.position.set(state.cam[0], state.cam[1], state.cam[2]);
@@ -656,13 +685,18 @@ function renderScene(state) {
   camera.fov = Number(state.fov) || 30;
   camera.lookAt(target[0], target[1], target[2]);
   camera.updateProjectionMatrix();
+  const shadowsWereDirty = renderer.shadowMap.needsUpdate;
   renderer.render(scene, camera);
+  if (shadowsWereDirty && !renderer.shadowMap.needsUpdate) shadowUpdates += 1;
   if (rendererDiagnosticsEnabled) captureGlbPixelCoverage();
 }
 
 window.__updateGlbLayer = async function updateGlbLayer(state) {
   const updateSeq = ++glbUpdateSeq;
   window.__lastGlbState = state;
+  if (document.hidden) return;
+  const updateStarted = performance.now();
+  let svgNeedsRefresh = false;
   const items = Array.isArray(state.placedItems) ? state.placedItems.filter(item => item && item.modelUrl) : [];
   const activeIds = new Set(items.map(item => String(item.id || item.sku || item.modelUrl)));
   removeMissingModels(activeIds);
@@ -674,6 +708,7 @@ window.__updateGlbLayer = async function updateGlbLayer(state) {
       const node = await ensureModel(item, state);
       if (updateSeq !== glbUpdateSeq || !activeIds.has(id)) {
         scene.remove(node);
+        invalidateShadows();
         disposeObject3D(node);
         // A newer async update may already own this ID. Never detach its cache
         // entry while cleaning up an older model instance.
@@ -684,64 +719,71 @@ window.__updateGlbLayer = async function updateGlbLayer(state) {
         }
         continue;
       }
-      const x = -Number(state.width || 0) / 2 + (Number(item.x) || 0);
-      const z = Number(item.z) || 0;
-      // Drawing must not move what it draws - see placedItemRenderXZ.
-      //
-      // Guarded like its two neighbours. This was the one bare cross-file call
-      // without a guard: booth-render.js is a separate classic script, reached
-      // here by name alone, so a rename there threw at runtime inside an iframe
-      // with no compiler having objected. Falling back to the unclamped point
-      // keeps the model where the caller asked rather than at the origin.
-      const clamped = typeof placedItemRenderXZ === 'function'
-        ? placedItemRenderXZ(item, x, z)
-        : { x, z };
-      if (typeof syncCorrectedItemPosition === 'function') {
-        syncCorrectedItemPosition(item, clamped.x, clamped.z);
-      }
-      // Sit the model at its own mount height, not on the floor. This was
-      // hardcoded to 0 and then grounded to 0 below, so a light pinned to the
-      // top beam and a shelf mounted at chest height both rendered on the
-      // carpet - the constraint had put them in the right place and the model
-      // layer dropped them straight back down.
-      const baseY = typeof mountedBaseY === 'function' ? mountedBaseY(item) : 0;
-      node.position.set(clamped.x, baseY, clamped.z);
-      node.rotation.order = 'XYZ';
-      node.rotation.x = rotationDeg(item.rotationX);
-      node.rotation.y = rotationDeg(item.rotationY ?? item.rotation);
-      node.rotation.z = rotationDeg(item.rotationZ);
-      node.visible = true;
-      groundModelNode(node, baseY);
+      // Camera movement does not change a model's world bounds. Reuse them
+      // until the placement or booth dimensions change.
+      const placementKey = JSON.stringify([state.width, state.depth, state.height, item]);
+      if (node.userData.placementKey !== placementKey) {
+        invalidateShadows();
+        const x = -Number(state.width || 0) / 2 + (Number(item.x) || 0);
+        const z = Number(item.z) || 0;
+        // Drawing must not move what it draws - see placedItemRenderXZ.
+        //
+        // Guarded like its two neighbours. This was the one bare cross-file call
+        // without a guard: booth-render.js is a separate classic script, reached
+        // here by name alone, so a rename there threw at runtime inside an iframe
+        // with no compiler having objected. Falling back to the unclamped point
+        // keeps the model where the caller asked rather than at the origin.
+        const clamped = typeof placedItemRenderXZ === 'function'
+          ? placedItemRenderXZ(item, x, z)
+          : { x, z };
+        if (typeof syncCorrectedItemPosition === 'function') {
+          syncCorrectedItemPosition(item, clamped.x, clamped.z);
+        }
+        // Sit the model at its own mount height, not on the floor. This was
+        // hardcoded to 0 and then grounded to 0 below, so a light pinned to the
+        // top beam and a shelf mounted at chest height both rendered on the
+        // carpet - the constraint had put them in the right place and the model
+        // layer dropped them straight back down.
+        const baseY = typeof mountedBaseY === 'function' ? mountedBaseY(item) : 0;
+        node.position.set(clamped.x, baseY, clamped.z);
+        node.rotation.order = 'XYZ';
+        node.rotation.x = rotationDeg(item.rotationX);
+        node.rotation.y = rotationDeg(item.rotationY ?? item.rotation);
+        node.rotation.z = rotationDeg(item.rotationZ);
+        node.visible = true;
+        groundModelNode(node, baseY);
 
-      let contact = contactShadows.get(id);
-      if (!contact) {
-        contact = new THREE.Mesh(new THREE.CircleGeometry(0.5, 48), shadowMaterial.clone());
-        contact.rotation.x = -Math.PI / 2;
-        contact.renderOrder = -2;
-        contactShadows.set(id, contact);
-        scene.add(contact);
-      }
-      contact.position.set(clamped.x, 0.012, clamped.z);
-      contact.scale.set(Math.max(0.34, Number(item.w) || 0.5), Math.max(0.24, Number(item.d) || 0.5), 1);
-      contact.visible = true;
+        let contact = contactShadows.get(id);
+        if (!contact) {
+          contact = new THREE.Mesh(new THREE.CircleGeometry(0.5, 48), shadowMaterial.clone());
+          contact.rotation.x = -Math.PI / 2;
+          contact.renderOrder = -2;
+          contactShadows.set(id, contact);
+          scene.add(contact);
+        }
+        contact.position.set(clamped.x, 0.012, clamped.z);
+        contact.scale.set(Math.max(0.34, Number(item.w) || 0.5), Math.max(0.24, Number(item.d) || 0.5), 1);
+        contact.visible = true;
 
-      const visibleBox = new THREE.Box3().setFromObject(node);
-      const visibleSize = visibleBox.getSize(new THREE.Vector3());
-      const hasVisibleBounds = visibleSize.x > 0.01 && visibleSize.y > 0.01 && visibleSize.z > 0.01;
-      if (hasVisibleBounds) {
-        window.__glbPhysicalBounds.set(id, {
-          width: visibleSize.x,
-          depth: visibleSize.z,
-          height: visibleSize.y,
-          targetWidth: Math.max(0.05, Number(item.w) || 0.5),
-          targetDepth: Math.max(0.05, Number(item.d) || 0.5),
-          targetHeight: Math.max(0.05, Number(item.h) || 0.5),
-          sizeKey: node.userData.physicalSizeKey,
-        });
-      }
-      if (hasVisibleBounds && !window.__glbVisibleItems.has(id)) {
-        window.__glbVisibleItems.add(id);
-        if (typeof window.renderAll === 'function') requestAnimationFrame(() => window.renderAll());
+        const visibleBox = new THREE.Box3().setFromObject(node);
+        const visibleSize = visibleBox.getSize(new THREE.Vector3());
+        const hasVisibleBounds = visibleSize.x > 0.01 && visibleSize.y > 0.01 && visibleSize.z > 0.01;
+        if (hasVisibleBounds) {
+          window.__glbPhysicalBounds.set(id, {
+            width: visibleSize.x,
+            depth: visibleSize.z,
+            height: visibleSize.y,
+            targetWidth: Math.max(0.05, Number(item.w) || 0.5),
+            targetDepth: Math.max(0.05, Number(item.d) || 0.5),
+            targetHeight: Math.max(0.05, Number(item.h) || 0.5),
+            sizeKey: node.userData.physicalSizeKey,
+          });
+        }
+        if (hasVisibleBounds && !window.__glbVisibleItems.has(id)) {
+          window.__glbVisibleItems.add(id);
+          svgNeedsRefresh = true;
+        }
+        node.userData.placementKey = placementKey;
       }
 
       let helper = helpers.get(id);
@@ -761,17 +803,38 @@ window.__updateGlbLayer = async function updateGlbLayer(state) {
       console.error('GLB load failed', item.modelUrl, error);
     }
   }
+  if (updateSeq !== glbUpdateSeq) return;
   renderScene(state);
+  // Refresh fallbacks once after loading, rather than interrupting each model
+  // load with another complete scene update.
+  if (svgNeedsRefresh) scheduleSvgRefresh();
+  if (new URLSearchParams(window.location.search).get('renderer') === 'performance-check') {
+    window.__rendererPerformance = {
+      sequence: updateSeq, durationMs: performance.now() - updateStarted,
+      objects: modelNodes.size, drawCalls: renderer.info.render.calls,
+      triangles: renderer.info.render.triangles, pixels: canvas.width * canvas.height,
+      shadowUpdates,
+    };
+  }
 };
 
 window.addEventListener('resize', () => {
-  if (window.__lastGlbState) window.__updateGlbLayer(window.__lastGlbState);
+  if (window.__lastGlbState) renderScene(window.__lastGlbState);
+});
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && window.__lastGlbState) window.__updateGlbLayer(window.__lastGlbState);
 });
 
+let rendererDisposed = false;
 function disposeRenderer() {
+  if (rendererDisposed) return;
+  rendererDisposed = true;
+  if (svgRefreshFrame) cancelAnimationFrame(svgRefreshFrame);
   removeMissingModels(new Set());
   for (const child of [...shellOccluders.children]) child.geometry?.dispose?.();
   occluderMaterial.dispose();
+  for (const source of modelCache.values()) source.then(model => disposeObject3D(model, true)).catch(() => undefined);
+  modelCache.clear();
   renderer.dispose();
 }
 window.addEventListener('beforeunload', disposeRenderer);

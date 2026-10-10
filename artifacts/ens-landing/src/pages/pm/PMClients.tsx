@@ -671,11 +671,9 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
             <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
             {t("pm.clients.actions.message")}
           </button>
-          <Link href={`/pm/projects?q=${projectSearch}`}>
-            <button className="rounded-md border px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
+          <Link href={`/pm/projects?q=${projectSearch}`} className="rounded-md border px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
               {t("pm.clients.actions.viewProject")}
-            </button>
-          </Link>
+            </Link>
           {client.projectId ? (
             <>
               {activeTab === "overview" && (
@@ -689,11 +687,9 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
                   {isSendingLink ? "Sending..." : t("pm.clients.actions.sendWorkspace")}
                 </button>
               )}
-              <Link href={`/pm/workspace?projectId=${encodeURIComponent(client.projectId)}`}>
-                <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 shadow-md">
+              <Link href={`/pm/workspace?projectId=${encodeURIComponent(client.projectId)}`} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 shadow-md">
                   {t("pm.clients.actions.openWorkspace")}
-                </button>
-              </Link>
+                </Link>
             </>
           ) : (
             <button type="button" disabled className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground opacity-40">

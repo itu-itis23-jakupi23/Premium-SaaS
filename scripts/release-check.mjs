@@ -18,13 +18,18 @@ const evidence = {
   completedAt: null,
   status: "running",
   failedStep: null,
+  worktreeDirty:
+    spawnSync("git", ["status", "--porcelain"], {
+      cwd: root,
+      encoding: "utf8",
+    }).stdout?.trim().length > 0,
   checks: [],
 };
 
 function writeEvidence(status, failedStep = null) {
   evidence.status = status;
   evidence.failedStep = failedStep;
-  evidence.completedAt = new Date().toISOString();
+  evidence.completedAt = status === "running" ? null : new Date().toISOString();
   mkdirSync(evidenceDirectory, { recursive: true });
   writeFileSync(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`, "utf8");
 }
@@ -53,7 +58,12 @@ const checks = [
   ["pnpm", ["run", "public:metadata"]],
   ["pnpm", ["run", "public:routes"]],
   ["pnpm", ["run", "workspace:transform"]],
+  ["pnpm", ["run", "workspace:placement:check"]],
+  ["pnpm", ["run", "booth:render"]],
+  ["pnpm", ["run", "ui:icon-shadowing"]],
   ["pnpm", ["run", "typecheck", "--pretty", "false"]],
+  ["pnpm", ["--filter", "@workspace/ens-landing", "run", "test"]],
+  ["pnpm", ["--filter", "@workspace/scripts", "run", "test"]],
   ["pnpm", ["run", "deployment:preflight"]],
   ["pnpm", ["run", "security:audit"]],
   ["pnpm", ["run", "security:secrets"]],
@@ -71,6 +81,7 @@ const postSmokeChecks = [
   ["pnpm", ["--filter", "@workspace/ens-landing", "run", "build:client"]],
   ["pnpm", ["run", "performance:budgets"]],
   ["pnpm", ["run", "ui:unfinished"]],
+  ["pnpm", ["run", "ui:controls"]],
 ];
 
 if (process.env.RELEASE_CHECK_SKIP_MIGRATE !== "1") {
@@ -96,13 +107,17 @@ function runCheck(command, args, env = process.env) {
     label,
     status: result.status === 0 ? "passed" : "failed",
     durationMs: Date.now() - startedAt,
+    ...(result.error ? { error: result.error.message } : {}),
   });
   if (result.status !== 0) {
     writeEvidence("failed", label);
     console.error(`\nrelease:check failed at: ${label}`);
     console.error(`Release evidence: ${evidencePath}`);
-    process.exit(result.status ?? 1);
+    throw Object.assign(new Error(`${label} failed.`), {
+      exitCode: result.status ?? 1,
+    });
   }
+  writeEvidence("running");
 }
 
 async function waitForReadiness(url, child) {
@@ -114,7 +129,7 @@ async function waitForReadiness(url, child) {
       );
     }
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: AbortSignal.timeout(2_000) });
       if (response.ok) return;
     } catch {
       // The server may still be binding or establishing its database pool.
@@ -126,50 +141,66 @@ async function waitForReadiness(url, child) {
   );
 }
 
-for (const [command, args] of checks) {
-  runCheck(command, args);
-}
-
-const apiPort = process.env.RELEASE_CHECK_API_PORT ?? "5099";
-const apiBaseUrl = `http://127.0.0.1:${apiPort}/api`;
-const apiProcess = spawn(
-  process.execPath,
-  ["--enable-source-maps", "artifacts/api-server/dist/index.mjs"],
-  {
-    cwd: root,
-    env: { ...process.env, NODE_ENV: "test", PORT: apiPort },
-    stdio: "inherit",
-  },
-);
-
+// Replace stale passing evidence before any check starts, then save progress
+// after every stage. A failed smoke startup must also produce a failed report.
+writeEvidence("running");
+let currentStage = "release checks";
 try {
-  await waitForReadiness(`${apiBaseUrl}/healthz/ready`, apiProcess);
-  runCheck(
-    "pnpm",
-    ["--filter", "@workspace/ens-landing", "run", "smoke:workflow"],
+  for (const [command, args] of checks) {
+    currentStage = [command, ...args].join(" ");
+    runCheck(command, args);
+  }
+
+  const apiPort = process.env.RELEASE_CHECK_API_PORT ?? "5099";
+  const apiBaseUrl = `http://127.0.0.1:${apiPort}/api`;
+  const apiProcess = spawn(
+    process.execPath,
+    ["--enable-source-maps", "artifacts/api-server/dist/index.mjs"],
     {
-      ...process.env,
-      API_BASE_URL: apiBaseUrl,
+      cwd: root,
+      env: { ...process.env, NODE_ENV: "test", PORT: apiPort },
+      stdio: "inherit",
     },
   );
-} finally {
-  apiProcess.kill("SIGTERM");
-  await Promise.race([
-    new Promise((resolveExit) => apiProcess.once("exit", resolveExit)),
-    new Promise((resolveWait) => setTimeout(resolveWait, 5_000)),
-  ]);
-  if (apiProcess.exitCode === null) apiProcess.kill("SIGKILL");
+
+  try {
+    currentStage = "production API readiness";
+    await waitForReadiness(`${apiBaseUrl}/healthz/ready`, apiProcess);
+    currentStage = "production workflow smoke";
+    runCheck(
+      "pnpm",
+      ["--filter", "@workspace/ens-landing", "run", "smoke:workflow"],
+      {
+        ...process.env,
+        API_BASE_URL: apiBaseUrl,
+      },
+    );
+  } finally {
+    apiProcess.kill("SIGTERM");
+    await Promise.race([
+      new Promise((resolveExit) => apiProcess.once("exit", resolveExit)),
+      new Promise((resolveWait) => setTimeout(resolveWait, 5_000)),
+    ]);
+    if (apiProcess.exitCode === null) apiProcess.kill("SIGKILL");
+  }
+
+  for (const [command, args] of postSmokeChecks) {
+    currentStage = [command, ...args].join(" ");
+    runCheck(command, args, {
+      ...process.env,
+      NODE_ENV: "production",
+    });
+  }
+
+  currentStage = "pnpm run e2e:release";
+  runCheck("pnpm", ["run", "e2e:release"]);
+
+  writeEvidence("passed");
+  console.log("\nrelease:check passed");
+  console.log(`Release evidence: ${evidencePath}`);
+} catch (error) {
+  evidence.error = error instanceof Error ? error.message : String(error);
+  writeEvidence("failed", currentStage);
+  console.error(`release:check failed at ${currentStage}: ${evidence.error}`);
+  process.exitCode = Number.isInteger(error?.exitCode) ? error.exitCode : 1;
 }
-
-for (const [command, args] of postSmokeChecks) {
-  runCheck(command, args, {
-    ...process.env,
-    NODE_ENV: "production",
-  });
-}
-
-runCheck("pnpm", ["run", "e2e:release"]);
-
-writeEvidence("passed");
-console.log("\nrelease:check passed");
-console.log(`Release evidence: ${evidencePath}`);

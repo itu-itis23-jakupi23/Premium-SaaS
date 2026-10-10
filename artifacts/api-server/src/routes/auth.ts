@@ -1471,6 +1471,31 @@ router.post("/auth/forgot-password", async (req, res) => {
   // Opportunistically purge old tokens to keep the table bounded (fire-and-forget)
   db.execute(sql`delete from password_reset_tokens where expires_at < now() - interval '7 days'`).catch(() => undefined);
 
+  /**
+   * Throttled, and throttled on the submitted address alone.
+   *
+   * This endpoint sends mail to an address the caller chooses and nothing
+   * stopped it being called in a loop, so anyone could flood a known user's
+   * inbox and burn the Resend quota at the same time. Login is already
+   * limited; this was not.
+   *
+   * Keyed on the email and not `email:ip` as login is, because what needs
+   * protecting here is the recipient's inbox, which a caller rotating IPs
+   * would otherwise walk straight past. The counter is bumped for every
+   * submitted address whether or not an account exists, so a 429 says nothing
+   * about who is registered - the same reason this route always answers 200.
+   */
+  const resetRateKey = `pwreset:${email}`;
+  const rl = await checkLoginRateLimit(resetRateKey);
+  if (rl.blocked) {
+    res.set("Retry-After", String(rl.retryAfterSeconds));
+    res.status(429).json({
+      error: { code: "too_many_requests", message: "Too many reset requests. Please try again later." },
+    });
+    return;
+  }
+  await recordFailedLogin(resetRateKey);
+
   // Find user — but always return 200 to avoid leaking which emails are registered
   const user = await findUserByEmailForReset(email);
 
@@ -1494,7 +1519,23 @@ router.post("/auth/forgot-password", async (req, res) => {
     `);
 
     const resetUrl = `${APP_URL}/reset-password?token=${token}`;
-    await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl });
+    /**
+     * Not awaited, deliberately.
+     *
+     * The send is a network call to Resend and it only happened when the
+     * account existed, so the response took hundreds of milliseconds longer
+     * for a registered address than an unregistered one. That is a timing
+     * oracle for exactly the question the 200-for-everything answer is there
+     * to hide. Handing it off keeps both branches the same shape, and means a
+     * slow mail provider no longer holds up the request either.
+     *
+     * `send` already logs its own failures; this catch is the safety net that
+     * stops a rejected promise becoming an unhandled rejection.
+     */
+    void sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl })
+      .catch((reason: unknown) => {
+        console.error("[auth] password reset email failed to dispatch:", reason);
+      });
   }
 
   res.json({ ok: true });

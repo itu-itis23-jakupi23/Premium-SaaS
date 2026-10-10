@@ -118,6 +118,7 @@ import {
   type PlacementIssue,
 } from "./workspace-geometry";
 import { structuralBom, roomBom, catalogItemFor, quoteTotals, quoteLinesFromTakeOff } from "./workspace-bom";
+import { PMProposalReview } from "./PMProposalReview";
 import { WorkspaceBomPanel } from "./WorkspaceBomPanel";
 import { useWorkspaceAnimation, type OverrideMap } from "./useWorkspaceAnimation";
 
@@ -517,6 +518,9 @@ export default function PMWorkspace() {
   const [activeRoomId,setActiveRoomId] = useState('');
   const [roomTemplate,setRoomTemplate] = useState<RoomTemplateKey>('storage');
   const [draggedCatalogItem, setDraggedCatalogItem] = useState<CatItem | null>(null);
+  // A client's proposed furniture, shown in place of the design while the PM
+  // looks it over. Preview only - nothing here is saved until they apply it.
+  const [proposalPreview, setProposalPreview] = useState<WorkspacePlacedItem[] | null>(null);
   const catalogDragWasActiveRef = useRef(false);
 
   const [showSendDlg,   setShowSendDlg]   = useState(false);
@@ -733,6 +737,28 @@ export default function PMWorkspace() {
   },[resetWorkspace, urlProjectId, showProjectPicker]);
 
   // Select a project from the picker
+  /**
+   * Pull the design back from the server.
+   *
+   * Used after applying a client's proposal, which rewrites the draft version
+   * server-side: without this the PM would still be looking at the layout as it
+   * was before their own decision took effect.
+   */
+  const reloadWorkspaceRecord = useCallback(() => {
+    const projectId = activeProjectIdRef.current;
+    if (!projectId) return;
+    getProjectWorkspace(projectId)
+      .then(record => {
+        setWorkspaceRecord(record);
+        resetWorkspace(record.workspace as WSData);
+        setSnapshots(workspaceSnapshots(record));
+        setLastSaved(record.currentVersion ? `v${record.currentVersion.versionNumber}` : 'Loaded');
+        setHasUnsavedChanges(false);
+        setSaveStatus('saved');
+      })
+      .catch(() => setToast('Could not reload the workspace'));
+  }, [resetWorkspace]);
+
   const selectProject = useCallback((project: PlatformProject) => {
     history.replaceState(null, '', `${window.location.pathname}?projectId=${encodeURIComponent(project.id)}`);
     setShowProjectPicker(false);
@@ -2031,11 +2057,9 @@ export default function PMWorkspace() {
       {/* ── Top Bar ─────────────────────────────────────────────── */}
       <header style={{height:46,borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px',background:C.panel,flexShrink:0,gap:8}}>
         <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
-          <Link href="/pm">
-            <button style={{background:'none',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:4,color:C.muted,padding:'4px 6px',borderRadius:4,flexShrink:0}}>
+          <Link href="/pm" style={{background:'none',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:4,color:C.muted,padding:'4px 6px',borderRadius:4,flexShrink:0}}>
               <ChevronLeft size={13}/><span style={{fontFamily:MONO,fontSize:10}}>Back</span>
-            </button>
-          </Link>
+            </Link>
           <div style={{width:1,height:18,background:C.hair,flexShrink:0}}/>
           <div style={{display:'flex',flexDirection:'column',lineHeight:1.2,minWidth:0}}>
             <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted,letterSpacing:'0.1em',textTransform:'uppercase'}}>Project</span>
@@ -2140,7 +2164,7 @@ export default function PMWorkspace() {
               // merged over them. The inspector, the take-off and every
               // validation still read `placedItems`, which never holds a
               // position the workspace has not accepted.
-              placedItems: anim.withOverrides(placedItems),
+              placedItems: proposalPreview ?? anim.withOverrides(placedItems),
               rooms,
               selectedItemIds: selectedPlacedIds,
               activeRoomId,
@@ -2158,8 +2182,8 @@ export default function PMWorkspace() {
                 shape: draggedCatalogItem.shape,
                 rotationY: 0,
               } : null,
-              onItemMove: moveItemLive,
-              onGestureEnd: commitLiveTransform,
+              onItemMove: proposalPreview ? undefined : moveItemLive,
+              onGestureEnd: proposalPreview ? undefined : commitLiveTransform,
               onShortcut: runShortcut,
               onItemSelect: (id:string|null, partId?:string|null, detail?:{xPct?:number|null;yPct?:number|null;label?:string|null;partType?:string|null;roomId?:string|null;additive?:boolean})=>{
                 const roomId = detail?.roomId ? String(detail.roomId) : '';
@@ -2213,10 +2237,13 @@ export default function PMWorkspace() {
                   setActiveTab('bom');
                 }
               },
-              onRoomMove: moveRoomLive,
-              onFrontSupportMove: moveFrontSupportsLive,
-              onItemDelete: (id: string) => removeItems(selectedPlacedIds.includes(id) ? selectedPlacedIds : [id]),
+              onRoomMove: proposalPreview ? undefined : moveRoomLive,
+              onFrontSupportMove: proposalPreview ? undefined : moveFrontSupportsLive,
+              onItemDelete: proposalPreview ? undefined : (id: string) => removeItems(selectedPlacedIds.includes(id) ? selectedPlacedIds : [id]),
               onItemRotate: (id: string, patch: { rotationY: number }) => {
+                // Previewing a client's layout is read-only; see the note on
+                // onItemMove above.
+                if (proposalPreview) return;
                 // The renderer reports an absolute angle for the item under the
                 // gizmo. Turned into a delta so the rest of the selection turns
                 // with it by the same amount, about each item's own centre.
@@ -2225,7 +2252,7 @@ export default function PMWorkspace() {
                 if (!delta) return;
                 rotateItems(selectedPlacedIds.includes(id) ? selectedPlacedIds : [id], delta);
               },
-              onCatalogItemDrop: placeCatalogItemAt,
+              onCatalogItemDrop: proposalPreview ? undefined : placeCatalogItemAt,
               onCatalogItemDropRejected: (_catalogId: string, reason: string) => {
                 setDraggedCatalogItem(null);
                 setToast(`Placement blocked: ${reason}`);
@@ -2233,10 +2260,23 @@ export default function PMWorkspace() {
             }}/>
           </div>
 
+          <PMProposalReview
+            projectId={workspaceRecord?.project.id ?? null}
+            currentItems={placedItems as never}
+            previewing={proposalPreview !== null}
+            onPreviewChange={(on, items) => setProposalPreview(on ? (items as never) : null)}
+            onAccepted={() => { void reloadWorkspaceRecord(); }}
+            onToast={setToast}
+            colors={C}
+            mono={MONO}
+          />
+
           {/* Top-left floating badges */}
           <div style={{position:'absolute',top:12,left:12,display:'flex',gap:6,zIndex:10,pointerEvents:'none'}}>
             {[
-              {text:'● LIVE WORKSPACE', color:C.green},
+              ...(proposalPreview
+                ? [{text:'◉ CLIENT PROPOSAL — PREVIEW', color:C.blue}]
+                : [{text:'● LIVE WORKSPACE', color:C.green}]),
               {text:`${booth.system==='maxima'?'◈ MAXIMA':'⬡ OCTANORM'} · ${booth.width}×${booth.depth}M`, color:C.muted},
               ...(placementIssues.length ? [{text:`${placementIssues.length} PLACEMENT ISSUE${placementIssues.length>1?'S':''}`, color:C.orange}] : []),
             ].map(b=>(

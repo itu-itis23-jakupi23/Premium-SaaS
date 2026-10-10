@@ -47,7 +47,13 @@ const budgets = {
  */
 const MARKETING_PORTAL = "client";
 const marketingBudget = {
-  initialJavaScriptGzipBytes: 220 * 1024,
+  // Ratcheted twice, both times by moving English copy the marketing page never
+  // renders out of the statically imported catalogue:
+  //   220 -> 210  chief and PM page copy  (en.staff.json)
+  //   210 -> 205  the rest of the portal  (en.app.json)
+  // The entry measured 220.4 KiB gzip before the first and 202.2 after the
+  // second.
+  initialJavaScriptGzipBytes: 205 * 1024,
   initialStylesheetGzipBytes: 30 * 1024,
 };
 

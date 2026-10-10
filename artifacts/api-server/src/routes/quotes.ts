@@ -4,6 +4,7 @@ import { db } from "@workspace/db";
 import { requireAuth, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
 import { deliverNotification } from "../lib/notifications";
+import { dateLabel, moneyLabel, sendQuoteReadyEmail } from "../lib/email";
 
 /**
  * Quote / proposal workflow (BIZ-01).
@@ -420,9 +421,15 @@ router.post("/platform/quotes/:quoteId/send", async (req, res) => {
     return;
   }
   const quoteId = req.params.quoteId;
-  const rows = await queryRows<{ status: string; clientId: string | null; projectId: string | null; quoteNumber: string }>(sql`
-    select q.status, q.client_id::text as "clientId", q.project_id::text as "projectId", q.quote_number as "quoteNumber"
+  const rows = await queryRows<{
+    status: string; clientId: string | null; projectId: string | null; quoteNumber: string;
+    totalCents: number; currency: string; validUntil: string | null; projectName: string | null;
+  }>(sql`
+    select q.status, q.client_id::text as "clientId", q.project_id::text as "projectId", q.quote_number as "quoteNumber",
+      q.total_cents as "totalCents", q.currency, q.valid_until::text as "validUntil",
+      p.name as "projectName"
     from quotes q
+    left join projects p on p.id = q.project_id
     where q.id = ${quoteId}::uuid and q.organization_id = ${auth.organization.id}::uuid and q.deleted_at is null and ${staffScope(auth)}
     limit 1
   `);
@@ -444,10 +451,13 @@ router.post("/platform/quotes/:quoteId/send", async (req, res) => {
   await logEvent(auth.organization.id, auth.user.id, quote.projectId, "quote_sent", `sent quote ${quote.quoteNumber} to the client`);
 
   // Notify the client's user account, if one exists.
-  const clientUser = await queryRows<{ userId: string }>(sql`
-    select u.id::text as "userId"
+  const clientUser = await queryRows<{ userId: string; email: string; name: string }>(sql`
+    select u.id::text as "userId", u.email, u.name
     from clients c join users u on lower(u.email) = lower(c.contact_email)
-    where c.id = ${quote.clientId}::uuid and u.deleted_at is null
+    where c.id = ${quote.clientId}::uuid and c.organization_id = ${auth.organization.id}::uuid
+      and c.deleted_at is null and u.deleted_at is null and u.disabled_at is null
+      and exists (select 1 from memberships m where m.user_id = u.id
+        and m.organization_id = c.organization_id and m.status = 'active')
     limit 1
   `);
   if (clientUser[0]) {
@@ -459,6 +469,25 @@ router.post("/platform/quotes/:quoteId/send", async (req, res) => {
       "/client/quotes",
       "system",
     ).catch(() => undefined);
+
+    /**
+     * Emailed as well as notified in-app, because the in-app notification only
+     * reaches a client who logs in, and nothing was telling them to. A quote
+     * nobody knows about does not get accepted.
+     *
+     * Not awaited: the response should not wait on a mail provider, and the
+     * quote is already sent either way. `send` logs its own failures.
+     */
+    void sendQuoteReadyEmail({
+      to: clientUser[0].email,
+      name: clientUser[0].name,
+      quoteNumber: quote.quoteNumber,
+      projectName: quote.projectName,
+      totalLabel: moneyLabel(quote.totalCents, quote.currency),
+      validUntil: dateLabel(quote.validUntil),
+    }).catch((reason: unknown) => {
+      console.error("[quotes] quote-ready email failed to dispatch:", reason);
+    });
   }
 
   const full = await queryRows(sql`select ${QUOTE_COLUMNS} from quotes q where q.id = ${quoteId}::uuid`);

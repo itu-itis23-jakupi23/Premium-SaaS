@@ -485,6 +485,449 @@ router.post("/platform/projects/:projectId/change-requests", requireRoles(["clie
   res.json(workspace);
 });
 
+/* ── Client furniture proposals ───────────────────────────────────────────────
+ *
+ * The client cannot write to the design - PUT /workspace excludes them, and that
+ * is deliberate: approval stages and metered revisions only hold if the PM owns
+ * the canonical layout. A proposal is the sandbox where a client draws what they
+ * want instead, and a PM accepts it into the design or turns it down.
+ *
+ * The invariant that makes this safe is in proposalLayout(): a proposal is always
+ * the base layout with only its *furniture* replaced. Booth size, structure,
+ * rooms, fascia and lighting are copied from the PM version no matter what the
+ * client sends, so there is no way to smuggle a structural change through the
+ * furniture door, and no diffing needed to prove it.
+ */
+
+/** Furniture is the client's to arrange; everything else belongs to the PM. */
+function isClientEditableItem(item: WorkspacePlacedItem): boolean {
+  return item.kind === "furniture";
+}
+
+/**
+ * The layout a proposal is allowed to be: the base, with the client's furniture.
+ *
+ * Rebuilt from the base every time rather than trusting the payload, so a client
+ * sending a different booth width, an extra room, or a structure item re-labelled
+ * as furniture changes nothing - those values are simply never read.
+ */
+function proposalLayout(
+  base: WorkspaceState,
+  proposed: WorkspaceState,
+  access: ProjectAccess,
+): WorkspaceState {
+  const merged = {
+    ...base,
+    placedItems: [
+      ...base.placedItems.filter((item) => !isClientEditableItem(item)),
+      ...proposed.placedItems.filter(isClientEditableItem),
+    ],
+  };
+  // Re-normalise against the booth this layout actually has.
+  //
+  // The incoming furniture was clamped by parseWorkspaceInput against whatever
+  // booth the payload carried, which is the client's claim and may be far larger
+  // than the real stand. Swapping the PM's booth back in without re-clamping
+  // would leave that furniture at coordinates outside it - a 6m stand holding a
+  // chair at x=35. It also re-seats furniture if the PM has shrunk the booth
+  // since the proposal was written.
+  return normalizeWorkspace(merged, access);
+}
+
+interface ProposalRow {
+  id: string;
+  projectId: string;
+  baseVersionId: string | null;
+  status: string;
+  note: string | null;
+  decisionNote: string | null;
+  layout: WorkspaceState;
+  createdBy: string | null;
+  createdAt: string;
+  submittedAt: string | null;
+  decidedAt: string | null;
+}
+
+const PROPOSAL_COLUMNS = sql`
+  p.id::text as "id", p.project_id::text as "projectId", p.base_version_id::text as "baseVersionId",
+  p.status, p.note, p.decision_note as "decisionNote", p.layout_json as "layout",
+  u.name as "createdBy", p.created_at as "createdAt",
+  p.submitted_at as "submittedAt", p.decided_at as "decidedAt"
+`;
+
+/**
+ * The open proposal on a project, scoped to the caller's organization.
+ *
+ * Every caller already resolves getProjectAccess() first, so the tenant is
+ * checked twice. That is the point: tenant isolation that depends on the order
+ * of two statements is one careless edit away from a cross-organization read,
+ * and this query is cheap enough that it need not rely on one.
+ */
+async function loadOpenProposal(auth: AuthContext, projectId: string): Promise<ProposalRow | null> {
+  const rows = await queryRows<ProposalRow>(sql`
+    select ${PROPOSAL_COLUMNS} from workspace_proposals p
+    left join users u on u.id = p.created_by_user_id
+    where p.project_id = ${projectId}::uuid
+      and p.organization_id = ${auth.organization.id}::uuid
+      and p.status in ('draft', 'submitted')
+    limit 1
+  `);
+  return rows[0] ?? null;
+}
+
+/** One proposal, scoped to the caller's organization. See loadOpenProposal. */
+async function loadProposalById(
+  auth: AuthContext,
+  projectId: string,
+  proposalId: string,
+): Promise<ProposalRow | null> {
+  if (!/^[0-9a-fA-F-]{36}$/.test(proposalId)) return null;
+  const rows = await queryRows<ProposalRow>(sql`
+    select ${PROPOSAL_COLUMNS} from workspace_proposals p
+    left join users u on u.id = p.created_by_user_id
+    where p.id = ${proposalId}::uuid
+      and p.project_id = ${projectId}::uuid
+      and p.organization_id = ${auth.organization.id}::uuid
+    limit 1
+  `);
+  return rows[0] ?? null;
+}
+
+/** The current proposal, recent decisions, and whether a new one is allowed. */
+router.get(
+  "/platform/projects/:projectId/workspace/proposal",
+  requireRoles(["admin", "owner", "chief", "pm", "client"]),
+  async (req, res) => {
+    const projectId = paramValue(req.params.projectId);
+    const access = await getProjectAccess(req.auth!, projectId);
+    if (!access) {
+      res.status(404).json({ error: { code: "project_not_found", message: "Project not found." } });
+      return;
+    }
+
+    const open = await loadOpenProposal(req.auth!, projectId);
+    const history = await queryRows<ProposalRow>(sql`
+      select ${PROPOSAL_COLUMNS} from workspace_proposals p
+      left join users u on u.id = p.created_by_user_id
+      where p.project_id = ${projectId}::uuid
+        and p.organization_id = ${req.auth!.organization.id}::uuid
+        and p.status not in ('draft', 'submitted')
+      order by p.decided_at desc nulls last limit 20
+    `);
+    const policy = await revisionPolicy(access);
+
+    res.json({
+      proposal: open,
+      history,
+      revisions: policy,
+      // Proposing is gated exactly like requesting a change in words: the design
+      // has to be in front of the client, and a round has to be left.
+      canPropose:
+        ["client_review", "in_design"].includes(access.projectStatus) && policy.canRequest,
+    });
+  },
+);
+
+/** Save the sandbox. Never touches booth_versions. */
+router.put(
+  "/platform/projects/:projectId/workspace/proposal",
+  requireRoles(["client"]),
+  async (req, res) => {
+    const projectId = paramValue(req.params.projectId);
+    const auth = req.auth!;
+    const input = parseWorkspaceInput(req.body);
+    if (!input.ok) {
+      res.status(400).json({ error: { code: "invalid_workspace", message: input.error } });
+      return;
+    }
+
+    const access = await getProjectAccess(auth, projectId);
+    if (!access) {
+      res.status(404).json({ error: { code: "project_not_found", message: "Project not found." } });
+      return;
+    }
+    // Asked before the project-status check on purpose: once a proposal is with
+    // the PM the project sits in `revision`, so the status check would fire
+    // first and answer "not reviewable" when the real reason is that this
+    // sandbox has already been sent.
+    const existing = await loadOpenProposal(auth, projectId);
+    if (existing?.status === "submitted") {
+      res.status(409).json({
+        error: {
+          code: "proposal_submitted",
+          message: "This proposal is with your project manager and can no longer be edited.",
+        },
+      });
+      return;
+    }
+
+    if (!["client_review", "in_design"].includes(access.projectStatus)) {
+      res.status(409).json({
+        error: {
+          code: "not_reviewable",
+          message: `Project must be in client review to propose changes (current: ${access.projectStatus}).`,
+        },
+      });
+      return;
+    }
+
+    const latestVersion = await getLatestVersion(access.designId);
+    if (!latestVersion) {
+      res.status(400).json({ error: { code: "no_version", message: "No design version exists to propose against." } });
+      return;
+    }
+
+    const base = normalizeWorkspace(latestVersion.layoutJson, access);
+    const layout = proposalLayout(base, input.value.workspace, access);
+
+    if (existing) {
+      await db.execute(sql`
+        update workspace_proposals
+        set layout_json = ${JSON.stringify(layout)}::jsonb,
+            base_version_id = ${latestVersion.id}::uuid,
+            updated_at = now()
+        where id = ${existing.id}::uuid
+      `);
+    } else {
+      await db.execute(sql`
+        insert into workspace_proposals
+          (organization_id, project_id, base_version_id, created_by_user_id, layout_json, status)
+        values (
+          ${auth.organization.id}::uuid, ${projectId}::uuid, ${latestVersion.id}::uuid,
+          ${auth.user.id}::uuid, ${JSON.stringify(layout)}::jsonb, 'draft'
+        )
+      `);
+    }
+
+    res.json({ proposal: await loadOpenProposal(auth, projectId) });
+  },
+);
+
+/** Hand the sandbox to the PM. Costs one revision round, like a change request. */
+router.post(
+  "/platform/projects/:projectId/workspace/proposal/submit",
+  requireRoles(["client"]),
+  async (req, res) => {
+    const projectId = paramValue(req.params.projectId);
+    const auth = req.auth!;
+    const note = typeof req.body?.note === "string" ? req.body.note.trim().slice(0, 2000) : "";
+
+    const access = await getProjectAccess(auth, projectId);
+    if (!access) {
+      res.status(404).json({ error: { code: "project_not_found", message: "Project not found." } });
+      return;
+    }
+
+    const proposal = await loadOpenProposal(auth, projectId);
+    if (!proposal || proposal.status !== "draft") {
+      res.status(404).json({ error: { code: "no_proposal", message: "There is no draft proposal to submit." } });
+      return;
+    }
+
+    const policy = await revisionPolicy(access);
+    if (!policy.canRequest) {
+      res.status(400).json({
+        error: {
+          code: "revision_limit_reached",
+          message: `Revision limit reached (${policy.used}/${policy.limit}). No further change requests are allowed.`,
+        },
+      });
+      return;
+    }
+
+    const latestVersion = await getLatestVersion(access.designId);
+    if (!latestVersion) {
+      res.status(400).json({ error: { code: "no_version", message: "No design version exists to propose against." } });
+      return;
+    }
+
+    await db.execute(sql`
+      update workspace_proposals
+      set status = 'submitted', note = ${note || null}, submitted_at = now(), updated_at = now()
+      where id = ${proposal.id}::uuid
+    `);
+
+    // The same approval row a worded change request raises, so one proposal costs
+    // one revision round and the counter the client sees stays honest.
+    const message = note
+      ? `[Layout proposal] ${note}`
+      : "[Layout proposal] Furniture layout proposed by client";
+    await db.execute(sql`
+      insert into approvals (organization_id, project_id, booth_version_id, requested_by_user_id, status, message)
+      values (
+        ${auth.organization.id}::uuid, ${projectId}::uuid, ${latestVersion.id}::uuid,
+        ${auth.user.id}::uuid, 'revision_requested'::approval_status, ${message}
+      )
+    `);
+    await db.execute(sql`
+      insert into comments (organization_id, project_id, booth_version_id, author_user_id, body)
+      values (
+        ${auth.organization.id}::uuid, ${projectId}::uuid, ${latestVersion.id}::uuid,
+        ${auth.user.id}::uuid, ${message}
+      )
+    `);
+    await db.execute(sql`
+      update projects
+      set status = 'revision'::project_status,
+          metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object('pipelineStage', 'review'),
+          updated_at = now()
+      where id = ${projectId}::uuid
+    `);
+
+    await auditWorkspaceEvent(
+      auth,
+      projectId,
+      "client_layout_proposal",
+      `Client proposed a furniture layout on v${latestVersion.versionNumber}`,
+    );
+    await recordStageEvent(auth, projectId, "review", "client_change_request").catch(() => undefined);
+
+    if (access.assignedPmUserId) {
+      await deliverNotification(
+        auth.organization.id,
+        access.assignedPmUserId,
+        "Layout proposed",
+        `Client proposed a furniture layout on "${access.projectName}"`,
+        "/pm/requests",
+        "milestones",
+      );
+    }
+    // Email as well as the in-app notification, exactly as a worded change
+    // request does. A proposal costs the client a revision round and blocks the
+    // project in `revision` until the PM decides, so it cannot wait for the PM
+    // to happen to open the app.
+    if (access.assignedPmEmail) {
+      await sendRevisionRequestedEmail({
+        to: access.assignedPmEmail,
+        pmName: access.assignedPmName ?? "Project Manager",
+        projectName: access.projectName,
+        workspaceUrl: `${process.env.APP_URL ?? "http://localhost:5173"}/pm/workspace?projectId=${projectId}`,
+      });
+    }
+
+    res.json({ proposal: await loadOpenProposal(auth, projectId), revisions: await revisionPolicy(access) });
+  },
+);
+
+/** Drop an unsent sandbox. Costs nothing - nothing was spent on it yet. */
+router.post(
+  "/platform/projects/:projectId/workspace/proposal/withdraw",
+  requireRoles(["client"]),
+  async (req, res) => {
+    const projectId = paramValue(req.params.projectId);
+    const access = await getProjectAccess(req.auth!, projectId);
+    const proposal = access ? await loadOpenProposal(req.auth!, projectId) : null;
+    if (!access || !proposal) {
+      res.status(404).json({ error: { code: "no_proposal", message: "There is no proposal to withdraw." } });
+      return;
+    }
+    if (proposal.status !== "draft") {
+      res.status(409).json({
+        error: { code: "proposal_submitted", message: "A submitted proposal is with your project manager." },
+      });
+      return;
+    }
+    await db.execute(sql`
+      update workspace_proposals set status = 'withdrawn', decided_at = now(), updated_at = now()
+      where id = ${proposal.id}::uuid
+    `);
+    res.json({ proposal: null });
+  },
+);
+
+/** Accept the client's furniture into the design as a new draft version. */
+router.post(
+  "/platform/projects/:projectId/workspace/proposal/:proposalId/accept",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const projectId = paramValue(req.params.projectId);
+    const auth = req.auth!;
+    const access = await getProjectAccess(auth, projectId);
+    if (!access) {
+      res.status(404).json({ error: { code: "project_not_found", message: "Project not found." } });
+      return;
+    }
+
+    const proposal = await loadProposalById(auth, projectId, paramValue(req.params.proposalId));
+    if (!proposal || proposal.status !== "submitted") {
+      res.status(404).json({ error: { code: "no_proposal", message: "No submitted proposal to accept." } });
+      return;
+    }
+
+    // Merge onto the design as it stands now, not as it stood when the client
+    // started: the PM may have moved structure since, and their version of that
+    // is the one that counts. Only the furniture crosses over.
+    const latestVersion = await getLatestVersion(access.designId);
+    if (!latestVersion) {
+      res.status(400).json({ error: { code: "no_version", message: "No design version to merge into." } });
+      return;
+    }
+    const current = normalizeWorkspace(latestVersion.layoutJson, access);
+    const merged = proposalLayout(current, normalizeWorkspace(proposal.layout, access), access);
+
+    await db.execute(sql`
+      update workspace_proposals
+      set status = 'accepted', decided_at = now(), updated_at = now(),
+          decided_by_user_id = ${auth.user.id}::uuid,
+          decision_note = ${typeof req.body?.note === "string" ? req.body.note.slice(0, 2000) : null}
+      where id = ${proposal.id}::uuid
+    `);
+
+    await saveDraftWorkspace(auth, access, merged, "Client layout accepted");
+    await db.execute(sql`
+      update projects
+      set status = 'client_review'::project_status, updated_at = now()
+      where id = ${projectId}::uuid
+        and organization_id = ${auth.organization.id}::uuid
+        and status::text = 'revision'
+    `);
+    await auditWorkspaceEvent(auth, projectId, "client_layout_accepted", "Accepted the client's furniture layout");
+
+    res.json({
+      workspace: await loadWorkspace(auth, projectId),
+      proposal: await loadProposalById(auth, projectId, proposal.id),
+    });
+  },
+);
+
+/** Turn the proposal down, with a reason the client can read. */
+router.post(
+  "/platform/projects/:projectId/workspace/proposal/:proposalId/reject",
+  requireRoles(["admin", "owner", "chief", "pm"]),
+  async (req, res) => {
+    const projectId = paramValue(req.params.projectId);
+    const auth = req.auth!;
+    const access = await getProjectAccess(auth, projectId);
+    if (!access) {
+      res.status(404).json({ error: { code: "project_not_found", message: "Project not found." } });
+      return;
+    }
+    const proposal = await loadProposalById(auth, projectId, paramValue(req.params.proposalId));
+    if (!proposal || proposal.status !== "submitted") {
+      res.status(404).json({ error: { code: "no_proposal", message: "No submitted proposal to reject." } });
+      return;
+    }
+    const note = typeof req.body?.note === "string" ? req.body.note.trim().slice(0, 2000) : "";
+
+    await db.execute(sql`
+      update workspace_proposals
+      set status = 'rejected', decided_at = now(), updated_at = now(),
+          decided_by_user_id = ${auth.user.id}::uuid, decision_note = ${note || null}
+      where id = ${proposal.id}::uuid
+    `);
+    await db.execute(sql`
+      update projects
+      set status = 'client_review'::project_status, updated_at = now()
+      where id = ${projectId}::uuid
+        and organization_id = ${auth.organization.id}::uuid
+        and status::text = 'revision'
+    `);
+    await auditWorkspaceEvent(auth, projectId, "client_layout_rejected", "Declined the client's furniture layout");
+
+    res.json({ proposal: await loadProposalById(auth, projectId, proposal.id) });
+  },
+);
+
 // Real checkout-session creation lives in routes/billing.ts (Stripe-backed, with
 // a simulation fallback for dev/staging). This route only serves the dev-mode
 // simulation landing page that billing.ts's fallback redirects to.

@@ -185,6 +185,33 @@ test.describe("Marketing calls to action", () => {
     await expect(pricingContact).toHaveAttribute("href", /^mailto:/);
   });
 
+  test("no pricing tier offers self-serve signup it cannot deliver (CS-11)", async ({ page }) => {
+    await page.goto(clientUrl("/"));
+
+    // The tiers describe agency plans, but /auth/signup creates a *client* of an
+    // existing agency and takes no payment. Every tier therefore contacts sales.
+    // If self-serve checkout is ever wired, this test should be the thing that
+    // makes someone come back and change it deliberately.
+    const pricing = page.locator("#pricing");
+    // The section animates in on scroll, so it holds nothing until it is in
+    // view. count() does not auto-wait the way the expect() matchers do, and
+    // counting too early reads zero links and passes the "no signup" assertion
+    // for the wrong reason.
+    await pricing.scrollIntoViewIfNeeded();
+    const ctas = pricing.getByRole("link");
+    await expect(ctas.first()).toHaveAttribute("href", /^mailto:/);
+
+    const count = await ctas.count();
+    expect(count).toBeGreaterThanOrEqual(3);
+
+    for (let i = 0; i < count; i += 1) {
+      await expect(ctas.nth(i)).toHaveAttribute("href", /^mailto:/);
+    }
+
+    // And nothing in the pricing section points at the signup form.
+    await expect(pricing.locator('a[href*="/signup"]')).toHaveCount(0);
+  });
+
   test("the showcase nav link reveals the showcase instead of navigating away", async ({ page }) => {
     await page.goto(clientUrl("/"));
 

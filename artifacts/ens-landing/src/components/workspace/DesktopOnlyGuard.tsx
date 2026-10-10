@@ -1,6 +1,7 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
+import { ensureAppResources } from '@/i18n';
 import { Button } from '@/components/ui/button';
 import { Monitor, ArrowLeft } from 'lucide-react';
 
@@ -29,6 +30,11 @@ import { Monitor, ArrowLeft } from 'lucide-react';
  * Minimum viewport width, in CSS pixels, the editor is designed for.
  * A landscape tablet (1024) passes; a portrait tablet or phone does not.
  */
+const MobileClientReview = lazy(async () => {
+  const [component] = await Promise.all([import('./MobileClientReview'), ensureAppResources()]);
+  return component;
+});
+
 export const EDITOR_MIN_WIDTH_PX = 1024;
 
 /**
@@ -63,6 +69,7 @@ export function DesktopOnlyGuard({
 
   if (isWideEnough === undefined) return null;
   if (isWideEnough) return <>{children}</>;
+  if (backTo === '/client') return <Suspense fallback={<p role="status" className="p-6">{t('client.workspace.loadingWorkspace')}</p>}><MobileClientReview /></Suspense>;
 
   return (
     <div

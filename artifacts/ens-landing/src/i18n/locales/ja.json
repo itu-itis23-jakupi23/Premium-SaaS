@@ -1,7 +1,6 @@
 {
   "common": {
     "startDesigning": "デザインを始める",
-    "watchDemo": "デモを見る",
     "getAccess": "今すぐアクセス",
     "contactSales": "営業に問い合わせ",
     "signIn": "サインイン",
@@ -45,7 +44,7 @@
       "subheading": "最適なプランで展示ビジネスを拡大しましょう。",
       "perMonth": "/月",
       "recommended": "おすすめ",
-      "custom": "カスタム"
+      "onboardingNote": "代理店アカウントは弊社チームと一緒に開設し、業務に合ったプランをご提案します。セルフ決済は近日対応予定です。"
     },
     "cta": {
       "heading": "今日からブース制作を始めましょう",
@@ -271,8 +270,6 @@
       "annual": "年額",
       "saveBadge": "20% お得",
       "perMonthAnnual": "/月・年額一括請求",
-      "savePerYear": "年間 ${{amount}} の節約",
-      "getStarted": "はじめる",
       "contactSales": "営業に問い合わせる"
     },
     "pricingTiers": [
@@ -2345,7 +2342,9 @@
       "openWorkspaceBtn": "Open Workspace",
       "reviewApprovalBtn": "Review Approval",
       "workspaceLocked": "割り当てまでワークスペースはロック中です",
-      "workspaceLockedDesc": "担当プロジェクトマネージャーが決まりましたらお知らせします。"
+      "workspaceLockedDesc": "担当プロジェクトマネージャーが決まりましたらお知らせします。",
+      "projectSwitcher": "このダッシュボードに表示する案件を選択",
+      "showingProject": "表示中"
     },
     "approvals": {
       "pageTitle": "承認 | ENS",
@@ -2442,14 +2441,22 @@
       },
       "preview": {
         "close": "プレビューを閉じる",
-        "imageUnavailable": "デモでは画像プレビューは利用できません",
         "typeUnavailable": "{{type}}ファイルのプレビューは利用できません",
         "category": "カテゴリ",
         "status": "ステータス",
         "uploadedBy": "アップロード者",
         "tags": "タグ",
         "downloadBtn": "ファイルをダウンロード",
-        "mimeType": "Type"
+        "mimeType": "Type",
+        "imageAlt": "{{name}} のプレビュー",
+        "frameTitle": "{{name}} のプレビュー",
+        "downloadInstead": "対応するアプリで開くにはダウンロードしてください。",
+        "failed": "このファイルは表示できませんでした。ダウンロードは可能です。"
+      },
+      "loadError": "資料を読み込めませんでした。",
+      "fallback": {
+        "uploadedBy": "代理店",
+        "category": "一般"
       }
     },
     "messages": {
@@ -2475,10 +2482,21 @@
       "error": {
         "contacts": "メッセージの連絡先を読み込めませんでした。",
         "messages": "メッセージを読み込めませんでした。",
-        "attachmentTooLarge": "添付ファイルが大きすぎます。上限は25 MBです。"
+        "attachmentTooLarge": "添付ファイルが大きすぎます。上限は25 MBです。",
+        "escalateFailed": "エスカレーションできませんでした。もう一度お試しください。"
       },
       "noMessages": "まだメッセージはありません。",
-      "uploading": "Uploading attachment..."
+      "uploading": "Uploading attachment...",
+      "escalate": {
+        "open": "マネージャーにエスカレーション",
+        "hint": "最初の窓口はプロジェクトマネージャーです。上位のマネージャーが必要な場合のみエスカレーションしてください。",
+        "targetLabel": "マネージャーを選択",
+        "messageLabel": "メッセージ",
+        "placeholder": "どのようなご用件でしょうか？",
+        "send": "送信",
+        "sending": "送信中…",
+        "cancel": "キャンセル"
+      }
     },
     "projects": {
       "pageTitle": "マイプロジェクト | ENS",
@@ -2534,7 +2552,14 @@
       },
       "loadError": "担当案件を読み込めませんでした。",
       "emptyTitle": "割り当てられた案件はまだありません",
-      "emptyDesc": "展示会のお申し込みは登録済みです。統括またはプロジェクトマネージャーが案件を割り当てるとここに表示されます。"
+      "emptyDesc": "展示会のお申し込みは登録済みです。統括またはプロジェクトマネージャーが案件を割り当てるとここに表示されます。",
+      "stage": {
+        "intake": "受付",
+        "design": "設計",
+        "review": "確認",
+        "production": "製作",
+        "closed": "完了"
+      }
     },
     "profile": {
       "pageTitle": "プロフィール設定 | ENS",
@@ -2553,7 +2578,8 @@
       },
       "company": {
         "heading": "会社情報",
-        "description": "会社の詳細と展示会プロフィールを管理してください。"
+        "description": "会社の詳細と展示会プロフィールを管理してください。",
+        "agencyOwned": "この名称は主催者が管理しています。変更はプロジェクトマネージャーにご依頼ください。"
       },
       "avatar": {
         "heading": "プロフィール写真",
@@ -2633,7 +2659,8 @@
         "passwordFillAll": "すべてのパスワードフィールドを入力してください",
         "passwordMismatch": "新しいパスワードが一致しません",
         "passwordTooShort": "パスワードは8文字以上である必要があります",
-        "deleteQueued": "アカウント削除リクエストを受け付けました"
+        "deleteQueued": "アカウント削除リクエストを受け付けました",
+        "companyError": "会社情報を保存できませんでした"
       }
     },
     "workspace": {
@@ -2775,7 +2802,46 @@
         "reopen": "Reopen",
         "resolve": "Resolve"
       },
-      "backToDashboard": "ダッシュボードに戻る"
+      "backToDashboard": "ダッシュボードに戻る",
+      "propose": {
+        "start": "家具を配置",
+        "exit": "完了",
+        "sendToPm": "PMに送信",
+        "saving": "保存中…",
+        "saved": "保存済み",
+        "unsaved": "未保存の変更",
+        "withPm": "レイアウトはPMが確認中",
+        "notAvailable": "デザインのレビュー中にレイアウトを提案できます。",
+        "itemUnavailable": "そのアイテムは現在利用できません。",
+        "blocked": "配置できません：{{reason}}",
+        "sent": "レイアウトをプロジェクトマネージャーに送信しました。",
+        "searchLabel": "家具を検索",
+        "searchPlaceholder": "家具、SKUを検索…",
+        "noResults": "該当する家具はありません。",
+        "yourFurniture": "あなたの家具（{{count}}）",
+        "reset": "リセット",
+        "removeItem": "{{name}} を削除",
+        "nothingPlaced": "まだ何も配置されていません。",
+        "submitTitle": "レイアウトをプロジェクトマネージャーに送る",
+        "submitBody": "プロジェクトマネージャーが確認し、デザインに反映するか理由を説明します。修正回数を1回使用します。",
+        "noteLabel": "プロジェクトマネージャーへのメモ",
+        "notePlaceholder": "伝えておくことはありますか？",
+        "cancel": "キャンセル",
+        "send": "レイアウトを送信",
+        "sending": "送信中…",
+        "addHint": "家具をブースにドラッグするか、選択すると中央に配置されます。構造と照明はデザイナーの設定のままです。",
+        "addItem": "{{name}} を追加",
+        "discard": "破棄",
+        "discardHint": "送信せずにこのレイアウトを破棄します。修正回数は減りません。",
+        "discarded": "レイアウトを破棄しました。",
+        "decision": {
+          "accepted": "レイアウトが反映されました",
+          "declined": "レイアウトは反映されませんでした",
+          "acceptedBody": "プロジェクトマネージャーがデザインに追加しました。",
+          "declinedBody": "プロジェクトマネージャーは現在のデザインを維持しました。",
+          "dismiss": "閉じる"
+        }
+      }
     },
     "pendingApproval": {
       "title": "Pending Approval",
@@ -2817,7 +2883,6 @@
       "attemptsRemaining_other": "一時的なロックまであと {{count}} 回のログイン試行が残っています",
       "noAccount": "アカウントをお持ちでない方は？",
       "signUpFree": "無料登録",
-      "devSection": "ローカルテストアカウント",
       "showPassword": "パスワードを表示",
       "hidePassword": "パスワードを非表示",
       "validation": {
@@ -3080,6 +3145,43 @@
     "toast": {
       "accepted": "見積を承認しました。代理店に通知されました。",
       "rejected": "見積を却下しました。"
+    },
+    "filter": {
+      "label": "ステータスで見積を絞り込む",
+      "all": "すべて",
+      "awaiting": "ご回答待ち",
+      "decided": "回答済み"
+    },
+    "summary": {
+      "awaiting": "ご対応待ち",
+      "value": "保留中の金額",
+      "deadline": "直近の期限",
+      "noDeadline": "設定なし"
+    },
+    "emptyFilter": "この条件に一致する見積はありません。",
+    "expiresIn_one": "残り{{count}}日",
+    "expiresIn_other": "残り{{count}}日",
+    "sent": "送付日",
+    "validUntil": "有効期限",
+    "responded": "ご回答",
+    "print": "印刷",
+    "terms": "条件",
+    "yourNote": "ご記入内容",
+    "expiredNote": "この見積は有効期限を過ぎています。プロジェクトマネージャーに新しい見積をご依頼ください。",
+    "revisedNote": "この見積の改訂版が作成されています。",
+    "notRespondableNote": "この見積は回答の対象ではありません。",
+    "confirm": {
+      "title": "この見積を承認しますか？",
+      "body": "見積 {{number}}（{{amount}}）を承認します。代理店に通知され、この内容で作業が始まります。",
+      "cancel": "キャンセル",
+      "confirm": "見積を承認"
+    },
+    "declineDialog": {
+      "title": "この見積を辞退しますか？",
+      "body": "どこが合わないかプロジェクトマネージャーにお知らせください。改訂版をお送りします。",
+      "label": "辞退の理由",
+      "placeholder": "価格が高い、ブースの寸法が違う、日程が変わった…",
+      "confirm": "辞退を送信"
     }
   },
   "pipeline": {
@@ -3129,14 +3231,17 @@
       "issue": "発行",
       "markPaid": "入金済みにする",
       "void": "無効にする",
-      "delete": "削除"
+      "delete": "削除",
+      "recordPayment": "入金を記録"
     },
     "toast": {
       "created": "請求書を下書きとして保存しました。",
       "sent": "請求書をクライアントに発行しました。",
       "paid": "入金を記録しました。",
       "voided": "請求書を無効にしました。",
-      "deleted": "下書きの請求書を削除しました。"
+      "deleted": "下書きの請求書を削除しました。",
+      "paymentRecorded": "入金を記録しました",
+      "invalidAmount": "有効な金額を入力してください。"
     },
     "form": {
       "title": "新規請求書",
@@ -3162,6 +3267,36 @@
       "saveDraft": "下書きを保存",
       "needLine": "内容を入力した明細を1件以上追加してください。",
       "error": "問題が発生しました。もう一度お試しください。"
+    },
+    "balanceDue": "残り {{amount}}",
+    "prompt": {
+      "recordPayment": "入金を記録します。未払い: {{amount}}"
+    },
+    "payment": {
+      "title": "入金を記録",
+      "fullTitle": "全額入金を確認",
+      "description": "請求書 {{number}} の入金内容を確認してから記録してください。",
+      "outstanding": "未払い残高: {{amount}}",
+      "amount": "入金額（{{currency}}）",
+      "method": "支払い方法",
+      "reference": "参照番号（任意）",
+      "note": "メモ（任意）",
+      "review": "記録する金額: {{amount}}",
+      "fullReview": "未払い残高 {{amount}} の全額を入金済みとして記録しますか？",
+      "manualNotice": "受領済みの金額を記録します。顧客への引き落としは行いません。",
+      "confirm": "入金を確認",
+      "retry": "入金を再試行",
+      "saving": "入金を記録中…",
+      "close": "いったん閉じる",
+      "uncertain": "確認待ちです。送信した内容は保存されています。別の入金を記録する前に、この同じ入金を再試行して結果を確認してください。",
+      "pending": "{{number}} の入金確認が保留中です。",
+      "resume": "入金確認を再開",
+      "invalidAmount": "小数点以下2桁以内の正の金額を入力してください。",
+      "exceedsBalance": "入金額が未払い残高を超えています。",
+      "storageUnavailable": "このブラウザでは入金の復元情報を保存または読み取りできませんでした。保存設定を確認し、別の入金を記録する前に再試行してください。",
+      "listError": "請求書一覧を更新できませんでした。確認済みの入金は記録されています。",
+      "refresh": "再試行",
+      "methods": { "manual": "手動", "bank_transfer": "銀行振込", "cash": "現金", "card": "カード", "other": "その他" }
     }
   },
   "clientInvoices": {
@@ -3177,7 +3312,24 @@
     "issued": "発行日",
     "due": "支払期日",
     "paidOn": "入金日",
-    "payNote": "お支払いの手配は担当プロジェクトマネージャーへご連絡ください。"
+    "payNote": "お支払いの手配は担当プロジェクトマネージャーへご連絡ください。",
+    "print": "印刷 / PDF保存",
+    "amountPaid": "支払済み",
+    "amountDue": "未払い額",
+    "partlyPaid": "一部支払済み",
+    "paymentHistory": "支払い履歴",
+    "noneMatchFilter": "このフィルターに一致する請求書はありません。",
+    "filter": {
+      "label": "ステータスで請求書を絞り込む",
+      "all": "すべて",
+      "open": "未払い",
+      "paid": "支払済み"
+    },
+    "summary": {
+      "outstanding": "未払い残高",
+      "openCount": "未処理の請求書",
+      "overdue": "期限超過"
+    }
   },
   "workspace": {
     "desktopOnly": {
@@ -3186,5 +3338,138 @@
       "requirement": "幅 {{width}} px 以上の画面が必要です。ノート PC やデスクトップ、横向きのタブレットで利用できます。",
       "back": "ダッシュボードに戻る"
     }
+  },
+  "consent": {
+    "title": "Cookie",
+    "body": "ログイン状態の維持と言語設定のために必須Cookieを使用します。サイトの利用状況を把握する任意の分析Cookieは、ご同意いただいた場合のみ使用します。",
+    "policyLink": "Cookieポリシーを読む",
+    "accept": "分析を許可",
+    "decline": "必須のみ",
+    "change": "Cookie設定を変更",
+    "changed": "Cookieの選択をリセットしました。"
+  },
+  "help": {
+    "openLabel": "ヘルプ: {{subject}}",
+    "invoices": {
+      "outstanding": {
+        "title": "未払い残高",
+        "body": "発行済み請求書のうち、まだ支払われていない金額の合計です。支払済み・取消済み・下書きは含みません。",
+        "note": "一部入金済みの請求書は、残額のみが加算されます。"
+      },
+      "overdue": {
+        "title": "期限超過",
+        "body": "支払期日を過ぎ、まだ全額が支払われていない発行済み請求書です。"
+      },
+      "history": {
+        "title": "支払い履歴",
+        "body": "この請求書に記録されたすべての入金を、古い順に表示します。手付金と残額は別の記録として並びます。"
+      }
+    },
+    "messages": {
+      "escalate": {
+        "title": "マネージャーへのエスカレーション",
+        "body": "プロジェクトマネージャーが最初の窓口で、ブースの詳細を把握しています。その判断を超える場合や返答がない場合にエスカレーションしてください。",
+        "note": "エスカレーション後は、その担当者が連絡先に残り、通常どおりやり取りできます。"
+      }
+    },
+    "workspace": {
+      "revisions": {
+        "title": "修正回数",
+        "body": "変更のご依頼1回につき1回分を消費します。文章での依頼も、家具レイアウトの送信も同じ1回です。",
+        "note": "デザインの承認やメッセージでの質問には回数を消費しません。"
+      },
+      "propose": {
+        "title": "レイアウトの提案",
+        "body": "家具をご希望どおりに配置してプロジェクトマネージャーに送信してください。デザインに反映するか、理由を説明します。",
+        "note": "動かせるのは家具のみです。壁・フェイシア・照明は、ドラッグしてもデザイナーの設定のまま保たれます。"
+      }
+    },
+    "staffInvoices": {
+      "flow": {
+        "title": "請求書の流れ",
+        "body": "編集中は下書き、顧客へ送信すると発行済み、残高がゼロになると支払済みです。無効化は発行済み請求書を取り下げます。",
+        "note": "入金を記録は手付金や分割を計上し、支払済みにするは残額を1件で清算します。"
+      }
+    },
+    "proposal": {
+      "review": {
+        "title": "顧客レイアウトの確認",
+        "body": "プレビューはキャンバスを顧客の版に切り替えます。適用は顧客の家具を現在のデザインに新しい下書きとして統合します。",
+        "note": "引き継がれるのは家具のみで、その後に変更した構造はそのまま残ります。"
+      }
+    },
+    "quotes": {
+      "awaiting": {
+        "title": "ご回答待ちの見積",
+        "body": "代理店から届いた見積のうち、まだ承認も辞退もされていないものです。",
+        "note": "有効期限を過ぎた見積はここには含まれません。"
+      },
+      "validity": {
+        "title": "見積の有効期限",
+        "body": "提示価格が保証される最終日です。資材やブースの原価は変動するため、見積を無期限に保つことはできません。"
+      },
+      "deciding": {
+        "title": "承認と辞退",
+        "body": "承認すると価格が確定し、代理店が着手できます。辞退は改訂の依頼です。変更が必要な点をお書きいただければ、新しい見積をお送りします。",
+        "note": "どちらもデザインの修正回数には影響しません。"
+      }
+    },
+    "projects": {
+      "progress": {
+        "title": "製作の進捗",
+        "body": "最初のブリーフから現地での引き渡しまで、代理店の工程のどこまで進んだかを示します。",
+        "note": "承認状況ではなく製作の進み具合を示します。デザインを承認しても、それだけでは進みません。"
+      },
+      "actionRequired": {
+        "title": "対応が必要",
+        "body": "この案件は代理店がご対応をお待ちしています。デザインまたは承認一覧で保留内容をご確認ください。"
+      },
+      "timeline": {
+        "title": "最近の動き",
+        "body": "案件が工程間を移動した直近5件を、新しい順に表示します。"
+      },
+      "actions": {
+        "title": "各ボタンの行き先",
+        "body": "いずれもポータルの既定のブースではなく、この案件のページを開きます。",
+        "note": "資料はアカウント全体で共有されるため、こちらは案件ごとではありません。"
+      }
+    },
+    "documents": {
+      "status": {
+        "title": "確定版と確認中",
+        "body": "確定版は代理店が承認済みであることを示します。確認中は社内で精査中で、内容が変わる可能性があります。",
+        "note": "ここにご対応が必要なものはありません。ご自身の承認はデザインのページにあります。"
+      },
+      "categories": {
+        "title": "カテゴリ",
+        "body": "代理店の整理方法に沿っており、実際に使われたカテゴリのみ表示されます。"
+      }
+    },
+    "dashboard": {
+      "milestones": {
+        "title": "マイルストーン",
+        "body": "上のバーと同じ工程で、同一の進捗率から算出しているため、両者は必ず一致します。",
+        "note": "チェックは製作がその段階を通過したことを示すもので、承認済みという意味ではありません。"
+      },
+      "activity": {
+        "title": "最近の動き",
+        "body": "代理店がアカウントに対して行った直近の操作を、新しい順に表示します。このページを開いている間は自動で更新されます。"
+      }
+    }
+  },
+  "experience": {
+    "guide": "次のステップ",
+    "clientGuide": "プロジェクト情報を確認し、デザインの準備ができたらレビューして、担当者に質問を送信してください。",
+    "pmGuide": "担当の顧客を確認し、デザインを準備して、タスクと期限を更新してください。",
+    "chiefGuide": "新規顧客を確認し、担当者を割り当て、判断待ちのプロジェクトを確認してください。",
+    "offline": "オフラインです。保存や送信の前に再接続してください。",
+    "mobileReview": "デザインをレビュー",
+    "previewHelp": "保存されたプレビューを確認できます。操作可能な3Dワークスペースはパソコンをご利用ください。承認は現在のデザインに適用されます。",
+    "noPreview": "プレビューがありません。承認前に担当者に共有を依頼してください。",
+    "historical": "これは過去のバージョンです。承認するには現在のバージョンに切り替えてください。",
+    "updated": "デザインが変更されました。最新のプレビューを確認してから続行してください。",
+    "failed": "データを読み込めませんでした。再試行してください。",
+    "retry": "再試行",
+    "detailUnavailable": "請求書の一部の詳細または支払い記録を読み込めませんでした。請求書を開き直してください。"
   }
 }

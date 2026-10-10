@@ -23,11 +23,9 @@ export function WorkspaceProjectPicker({
     <div style={{display:'flex',flexDirection:'column',height:'100vh',background:C.bg,color:C.ink,fontFamily:UI,overflow:'hidden'}}>
       {/* Header */}
       <header style={{height:46,borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',gap:10,padding:'0 16px',background:C.panel,flexShrink:0}}>
-        <Link href="/pm">
-          <button style={{background:'none',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:4,color:C.muted,padding:'4px 6px',borderRadius:4}}>
+        <Link href="/pm" style={{background:'none',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:4,color:C.muted,padding:'4px 6px',borderRadius:4}}>
             <ChevronLeft size={13}/><span style={{fontFamily:MONO,fontSize:10}}>Back</span>
-          </button>
-        </Link>
+          </Link>
         <div style={{width:1,height:18,background:C.hair}}/>
         <span style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',color:C.muted}}>Select Project Workspace</span>
       </header>
