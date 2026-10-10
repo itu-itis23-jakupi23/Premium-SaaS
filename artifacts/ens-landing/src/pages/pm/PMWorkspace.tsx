@@ -79,7 +79,11 @@ import { WorkspaceCatalogPanel } from "./WorkspaceCatalogPanel";
 
 
 // ── Initial state ──────────────────────────────────────────────────
-const INITIAL_BOOTH: BoothState = {width:6,depth:3,height:2.5,system:'octanorm',companyName:'TECHCORP INDUSTRIES',openFront:true,openBack:false,openLeft:false,openRight:false,fasciaEnabled:true,fasciaOption:'full'};
+// `companyName` is the fascia text, which is physical signage on the stand.
+// It was 'TECHCORP INDUSTRIES', a fictional company from the original
+// mockup, so every new design started with someone else's brand on it -
+// and a PM who did not notice saved it for the client to see.
+const INITIAL_BOOTH: BoothState = {width:6,depth:3,height:2.5,system:'octanorm',companyName:'COMPANY NAME',openFront:true,openBack:false,openLeft:false,openRight:false,fasciaEnabled:true,fasciaOption:'full'};
 /**
  * What applyItemPositions did.
  *

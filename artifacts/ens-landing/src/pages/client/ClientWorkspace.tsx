@@ -90,14 +90,27 @@ function MonoLabel({ children }: { children: React.ReactNode }) {
 function Hairline() {
   return <div style={{ height: 1, background: C.hair }} />;
 }
-function workspaceToBoothConfig(workspace?: WorkspaceState | null) {
+/**
+ * `fallbackCompanyName` is the project's own client, used when the design has
+ * no fascia text yet.
+ *
+ * This defaulted to "TECHCORP INDUSTRIES" - a fictional company from the
+ * original mockup - which meant a client whose stand had no company name set
+ * opened their workspace and saw someone else's brand printed on their own
+ * fascia. "COMPANY NAME" is the last resort, matching Booth3D's own neutral
+ * default, so the renderer still receives a non-empty string.
+ */
+function workspaceToBoothConfig(
+  workspace?: WorkspaceState | null,
+  fallbackCompanyName?: string | null,
+) {
   const booth = workspace?.booth;
   return {
     width: booth?.width ?? 8,
     depth: booth?.depth ?? 6,
     height: booth?.height ?? 3,
     system: booth?.system ?? "maxima",
-    companyName: booth?.companyName ?? "TECHCORP INDUSTRIES",
+    companyName: booth?.companyName || fallbackCompanyName || "COMPANY NAME",
     primaryColor: THEME_COLORS[workspace?.themeIdx ?? 0] ?? THEME_COLORS[0],
     wallColor: WALL_COLORS[workspace?.wallFinishIdx ?? 0] ?? WALL_COLORS[0],
     frameColor: FRAME_COLORS[workspace?.frameFinishIdx ?? 0] ?? FRAME_COLORS[0],
@@ -267,7 +280,7 @@ export default function ClientWorkspace() {
   };
 
   const selectedBoothConfig = useMemo(() => ({
-    ...workspaceToBoothConfig(selectedWorkspace),
+    ...workspaceToBoothConfig(selectedWorkspace, workspaceRecord?.project.client),
     // While proposing, the canvas shows the sandbox rather than the design, and
     // takes drops and drags. Outside of it the config carries no callbacks at
     // all, which is what keeps the review view read-only.
@@ -305,14 +318,14 @@ export default function ClientWorkspace() {
           onItemDelete: (id: string) => proposal.removeItem(id),
         }
       : {}),
-  }), [selectedWorkspace, pins, pinMode, proposal, draggedCatalogItem, showToast, t]);
+  }), [selectedWorkspace, workspaceRecord?.project.client, pins, pinMode, proposal, draggedCatalogItem, showToast, t]);
   const comparedBoothConfig = useMemo(() => ({
-    ...workspaceToBoothConfig(comparedWorkspace),
+    ...workspaceToBoothConfig(comparedWorkspace, workspaceRecord?.project.client),
     placedItems: comparedWorkspace?.placedItems ?? [],
     rooms: comparedWorkspace?.rooms ?? [],
     pins: [],
     pinMode: false,
-  }), [comparedWorkspace]);
+  }), [comparedWorkspace, workspaceRecord?.project.client]);
   const selectedBooth = selectedWorkspace?.booth;
 
   const clientCatalog = useMemo(() => {
