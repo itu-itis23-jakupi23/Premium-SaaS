@@ -4,14 +4,15 @@ import "./lib/load-env";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { errorReportingConfigured, installProcessErrorHandlers } from "./lib/error-reporting";
-import { startTaskReminderWorker } from "./lib/taskReminders";
-import { startAutomationSweeps } from "./lib/automationSweeps";
+import { startTaskReminderWorker, stopTaskReminderWorker } from "./lib/taskReminders";
+import { startAutomationSweeps, stopAutomationSweeps } from "./lib/automationSweeps";
 import {
   describeLeadIntakeFailure,
   isFatalLeadIntakeFailure,
   resolveLeadIntakeOrganization,
 } from "./lib/lead-intake";
 import { deploymentProfile } from "./lib/env";
+import { createShutdownHandler, resolveGraceMs } from "./lib/shutdown";
 
 const rawPort = process.env.PORT || "5000";
 const port = Number(rawPort);
@@ -59,7 +60,7 @@ async function start() {
     process.exit(1);
   }
 
-  app.listen(port, (err) => {
+  const server = app.listen(port, (err) => {
     if (err) {
       logger.error({ err }, "Error listening on port");
       process.exit(1);
@@ -69,6 +70,19 @@ async function start() {
     startTaskReminderWorker();
     startAutomationSweeps();
   });
+
+  const shutdown = createShutdownHandler({
+    server,
+    stopWorkers: () => {
+      stopTaskReminderWorker();
+      stopAutomationSweeps();
+    },
+    log: logger,
+    graceMs: resolveGraceMs(process.env.SHUTDOWN_GRACE_MS),
+  });
+  for (const signal of ["SIGTERM", "SIGINT"] as NodeJS.Signals[]) {
+    process.on(signal, () => shutdown(signal));
+  }
 }
 
 void start();

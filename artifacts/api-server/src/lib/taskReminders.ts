@@ -14,6 +14,19 @@ type ReminderRow = {
 
 let reminderTimer: NodeJS.Timeout | null = null;
 
+/**
+ * Stop the task reminder worker, so a shutdown does not cut a sweep in half.
+ *
+ * The timer is unref'd, which keeps it from holding the process open but also
+ * means Node will exit from under a sweep that is midway through writing.
+ * Clearing it on SIGTERM means no new sweep starts while the server drains.
+ */
+export function stopTaskReminderWorker() {
+  if (!reminderTimer) return;
+  clearInterval(reminderTimer);
+  reminderTimer = null;
+}
+
 export function startTaskReminderWorker() {
   if (process.env.TASK_REMINDER_WORKER === "false" || reminderTimer) return;
 

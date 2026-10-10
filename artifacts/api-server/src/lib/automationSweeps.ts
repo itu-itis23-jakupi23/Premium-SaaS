@@ -26,6 +26,19 @@ async function queryRows<T>(statement: ReturnType<typeof sql>) {
   return (result as unknown as { rows: T[] }).rows;
 }
 
+/**
+ * Stop the automation sweeps, so a shutdown does not cut a sweep in half.
+ *
+ * The timer is unref'd, which keeps it from holding the process open but also
+ * means Node will exit from under a sweep that is midway through writing.
+ * Clearing it on SIGTERM means no new sweep starts while the server drains.
+ */
+export function stopAutomationSweeps() {
+  if (!sweepTimer) return;
+  clearInterval(sweepTimer);
+  sweepTimer = null;
+}
+
 export function startAutomationSweeps() {
   if (process.env.AUTOMATION_SWEEPS === "false" || sweepTimer) return;
 
