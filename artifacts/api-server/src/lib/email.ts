@@ -79,10 +79,27 @@ function base(body: string): string {
 </body></html>`;
 }
 
+/**
+ * An address in a form safe to write to a log.
+ *
+ * Every delivery log line carried the full recipient address, which puts
+ * personal data in application logs and log aggregation - the kind of thing a
+ * data review flags, and this product ships across the EU. The domain and the
+ * first character are enough to tell "the whole run went to the wrong domain"
+ * from "one address bounced", which is what these lines are read for.
+ */
+export function redactAddress(address: string): string {
+  const at = address.lastIndexOf("@");
+  if (at <= 0) return "[redacted]";
+  const local = address.slice(0, at);
+  const domain = address.slice(at + 1);
+  return `${local[0]}***@${domain}`;
+}
+
 async function send(to: string, subject: string, html: string): Promise<EmailDeliveryResult> {
   const resend = getResend();
   if (!resend) {
-    console.info(`[email] RESEND_API_KEY not set - skipping email to ${to}: "${subject}"`);
+    console.info(`[email] RESEND_API_KEY not set - skipping email to ${redactAddress(to)}: "${subject}"`);
     return { ok: false, status: "skipped", error: "RESEND_API_KEY is not configured" };
   }
 
@@ -92,18 +109,18 @@ async function send(to: string, subject: string, html: string): Promise<EmailDel
     const result = await resend.emails.send({ from: FROM, to, subject, html });
     if (result?.error) {
       const message = safeErrorMessage(result.error.message);
-      console.error(`[email] Failed to send to ${to}:`, message);
+      console.error(`[email] Failed to send to ${redactAddress(to)}:`, message);
       return { ok: false, status: "failed", error: message };
     }
     if (typeof result?.data?.id !== "string" || !result.data.id.trim()) {
       const message = "Email provider did not confirm message acceptance";
-      console.error(`[email] Failed to send to ${to}:`, message);
+      console.error(`[email] Failed to send to ${redactAddress(to)}:`, message);
       return { ok: false, status: "failed", error: message };
     }
     return { ok: true, status: "sent" };
   } catch (err) {
     const message = safeErrorMessage(err);
-    console.error(`[email] Failed to send to ${to}:`, message);
+    console.error(`[email] Failed to send to ${redactAddress(to)}:`, message);
     return { ok: false, status: "failed", error: message };
   }
 }

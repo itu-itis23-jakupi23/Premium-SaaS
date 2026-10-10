@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { dateLabel, esc, escUrl, moneyLabel } from "./email";
+import { dateLabel, esc, escUrl, moneyLabel, redactAddress } from "./email";
 
 const emailSource = readFileSync(
   resolve(fileURLToPath(new URL(".", import.meta.url)), "email.ts"),
@@ -244,5 +244,37 @@ describe("dateLabel", () => {
 
   it("returns null for an unparseable value", () => {
     expect(dateLabel("not a date")).toBeNull();
+  });
+});
+
+/**
+ * Recipient addresses in delivery logs.
+ *
+ * Every line carried the full address, which puts personal data into
+ * application logs and whatever aggregates them. These lines are read to tell
+ * "the whole run went to the wrong domain" from "one address bounced", and the
+ * domain plus an initial answers both.
+ */
+describe("redactAddress", () => {
+  it("keeps the domain and an initial, and drops the rest", () => {
+    expect(redactAddress("jane.doe@example.com")).toBe("j***@example.com");
+    expect(redactAddress("a@b.co")).toBe("a***@b.co");
+  });
+
+  it("still distinguishes one domain from another", () => {
+    // The diagnostic value these log lines actually have.
+    expect(redactAddress("x@agency.test")).not.toBe(redactAddress("x@client.test"));
+  });
+
+  it("does not leak the local part", () => {
+    const redacted = redactAddress("confidential.person@example.com");
+    expect(redacted).not.toContain("confidential");
+    expect(redacted).not.toContain("person");
+  });
+
+  it("redacts entirely when there is no address to split", () => {
+    for (const bad of ["", "not-an-address", "@example.com"]) {
+      expect(redactAddress(bad), bad).toBe("[redacted]");
+    }
   });
 });
