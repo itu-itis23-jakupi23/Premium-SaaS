@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { chartData, mockActivity, mockClients, mockMessages, mockProjects } from "@/lib/mock-data";
 import { getRequestPortal } from "@/lib/portal";
 import { fetchWithSessionRefresh } from "@/lib/auth-session";
@@ -2634,10 +2635,39 @@ async function readApiBody<T>(response: Response) {
   }
 }
 
+/**
+ * The message a caller will show for a failed response.
+ *
+ * A server-authored message is preferred and shown as-is: it is specific and
+ * actionable ("Payment exceeds the outstanding balance of 50000 cents") in a
+ * way no generic string can be.
+ *
+ * What it replaces is the old last resort, `API request failed: 503 Service
+ * Unavailable`. That reached the screen whenever a response carried no JSON
+ * error body - a gateway timeout, a crashed process, a proxy error page - and
+ * it is both untranslated and meaningless to the person reading it. The status
+ * line is logged instead, where it is useful.
+ */
 function apiErrorMessage(body: { error?: string | { message?: string } } | null, response: Response) {
   if (typeof body?.error === "string") return body.error;
   if (body?.error && typeof body.error === "object" && body.error.message) return body.error.message;
-  return `API request failed: ${response.status} ${response.statusText}`;
+  console.error(`[api] ${response.status} ${response.statusText} from ${response.url} with no error body`);
+  return serverErrorMessage();
+}
+
+/**
+ * Translated text for a failure the server did not describe.
+ *
+ * Mirrors `connectionFailedMessage` in auth-session: i18next is a singleton so
+ * this works outside React, and it falls back to English when called before
+ * the catalogue has loaded rather than rendering a raw key.
+ */
+function serverErrorMessage(): string {
+  const key = "experience.serverError";
+  const fallback = "The server could not complete that request. Please try again.";
+  if (!i18next.isInitialized) return fallback;
+  const translated = i18next.t(key);
+  return !translated || translated === key ? fallback : translated;
 }
 
 function actorHeaders(): Record<string, string> {

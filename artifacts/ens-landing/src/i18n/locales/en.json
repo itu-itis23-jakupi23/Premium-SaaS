@@ -732,5 +732,9 @@
         "note": "Only furniture crosses over. Any structure you have changed since they started is kept."
       }
     }
+  },
+  "experience": {
+    "connectionFailed": "Could not reach the server. Check your connection and try again.",
+    "serverError": "The server could not complete that request. Please try again."
   }
 }

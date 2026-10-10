@@ -3296,7 +3296,13 @@
       "storageUnavailable": "I dati di recupero del pagamento non possono essere salvati o letti in questo browser. Controlla le impostazioni di archiviazione e riprova prima di registrare un altro pagamento.",
       "listError": "Impossibile aggiornare l’elenco delle fatture. Un pagamento confermato resta registrato.",
       "refresh": "Riprova",
-      "methods": { "manual": "Manuale", "bank_transfer": "Bonifico bancario", "cash": "Contanti", "card": "Carta", "other": "Altro" }
+      "methods": {
+        "manual": "Manuale",
+        "bank_transfer": "Bonifico bancario",
+        "cash": "Contanti",
+        "card": "Carta",
+        "other": "Altro"
+      }
     }
   },
   "clientInvoices": {
@@ -3470,6 +3476,8 @@
     "updated": "Il design è cambiato. Esamina l’ultima anteprima prima di continuare.",
     "failed": "Impossibile caricare i dati. Riprova.",
     "retry": "Riprova",
-    "detailUnavailable": "Alcuni dettagli o pagamenti della fattura non sono disponibili. Riapri la fattura."
+    "detailUnavailable": "Alcuni dettagli o pagamenti della fattura non sono disponibili. Riapri la fattura.",
+    "connectionFailed": "Non è stato possibile raggiungere il server. Controllate la connessione e riprovate.",
+    "serverError": "Il server non ha potuto completare la richiesta. Riprovate."
   }
 }

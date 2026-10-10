@@ -3296,7 +3296,13 @@
       "storageUnavailable": "Die Zahlungswiederherstellung konnte in diesem Browser nicht gespeichert oder gelesen werden. Prüfen Sie die Speichereinstellungen und versuchen Sie es erneut, bevor Sie eine weitere Zahlung erfassen.",
       "listError": "Die Rechnungsliste konnte nicht aktualisiert werden. Eine bestätigte Zahlung bleibt erfasst.",
       "refresh": "Erneut versuchen",
-      "methods": { "manual": "Manuell", "bank_transfer": "Banküberweisung", "cash": "Bargeld", "card": "Karte", "other": "Andere" }
+      "methods": {
+        "manual": "Manuell",
+        "bank_transfer": "Banküberweisung",
+        "cash": "Bargeld",
+        "card": "Karte",
+        "other": "Andere"
+      }
     }
   },
   "clientInvoices": {
@@ -3470,6 +3476,8 @@
     "updated": "Der Entwurf wurde geändert. Prüfen Sie die aktuelle Vorschau, bevor Sie fortfahren.",
     "failed": "Die Daten konnten nicht geladen werden. Versuchen Sie es erneut.",
     "retry": "Erneut versuchen",
-    "detailUnavailable": "Einige Rechnungsdetails oder Zahlungen konnten nicht geladen werden. Öffnen Sie die Rechnung erneut."
+    "detailUnavailable": "Einige Rechnungsdetails oder Zahlungen konnten nicht geladen werden. Öffnen Sie die Rechnung erneut.",
+    "connectionFailed": "Der Server war nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "serverError": "Der Server konnte diese Anfrage nicht abschließen. Bitte versuchen Sie es erneut."
   }
 }

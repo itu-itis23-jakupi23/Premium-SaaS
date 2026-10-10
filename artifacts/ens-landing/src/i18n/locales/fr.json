@@ -3296,7 +3296,13 @@
       "storageUnavailable": "Les informations de récupération du paiement n’ont pas pu être enregistrées ou lues dans ce navigateur. Vérifiez les paramètres de stockage et réessayez avant d’enregistrer un autre paiement.",
       "listError": "La liste des factures n’a pas pu être actualisée. Un paiement confirmé reste enregistré.",
       "refresh": "Réessayer",
-      "methods": { "manual": "Manuel", "bank_transfer": "Virement bancaire", "cash": "Espèces", "card": "Carte", "other": "Autre" }
+      "methods": {
+        "manual": "Manuel",
+        "bank_transfer": "Virement bancaire",
+        "cash": "Espèces",
+        "card": "Carte",
+        "other": "Autre"
+      }
     }
   },
   "clientInvoices": {
@@ -3470,6 +3476,8 @@
     "updated": "Le design a changé. Examinez le dernier aperçu avant de continuer.",
     "failed": "Impossible de charger les données. Réessayez.",
     "retry": "Réessayer",
-    "detailUnavailable": "Certains détails ou paiements de la facture n’ont pas pu être chargés. Rouvrez la facture."
+    "detailUnavailable": "Certains détails ou paiements de la facture n’ont pas pu être chargés. Rouvrez la facture.",
+    "connectionFailed": "Le serveur est injoignable. Vérifiez votre connexion et réessayez.",
+    "serverError": "Le serveur n'a pas pu traiter cette demande. Veuillez réessayer."
   }
 }

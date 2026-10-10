@@ -3296,7 +3296,13 @@
       "storageUnavailable": "Ödeme kurtarma bilgileri bu tarayıcıda kaydedilemedi veya okunamadı. Tarayıcı depolama ayarlarını kontrol edip başka bir ödeme kaydetmeden önce yeniden deneyin.",
       "listError": "Fatura listesi yenilenemedi. Onaylanmış ödeme kayıtlı kalır.",
       "refresh": "Yeniden dene",
-      "methods": { "manual": "Manuel", "bank_transfer": "Banka havalesi", "cash": "Nakit", "card": "Kart", "other": "Diğer" }
+      "methods": {
+        "manual": "Manuel",
+        "bank_transfer": "Banka havalesi",
+        "cash": "Nakit",
+        "card": "Kart",
+        "other": "Diğer"
+      }
     }
   },
   "clientInvoices": {
@@ -3470,6 +3476,8 @@
     "updated": "Tasarım değişti. Devam etmeden önce en son önizlemeyi inceleyin.",
     "failed": "Veriler yüklenemedi. Lütfen tekrar deneyin.",
     "retry": "Tekrar dene",
-    "detailUnavailable": "Bazı fatura ayrıntıları veya ödeme kayıtları yüklenemedi. Tekrar denemek için faturayı yeniden açın."
+    "detailUnavailable": "Bazı fatura ayrıntıları veya ödeme kayıtları yüklenemedi. Tekrar denemek için faturayı yeniden açın.",
+    "connectionFailed": "Sunucuya ulaşılamadı. Bağlantınızı kontrol edip yeniden deneyin.",
+    "serverError": "Sunucu bu isteği tamamlayamadı. Lütfen yeniden deneyin."
   }
 }

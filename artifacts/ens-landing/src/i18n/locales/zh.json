@@ -3296,7 +3296,13 @@
       "storageUnavailable": "此浏览器无法保存或读取付款恢复信息。请检查浏览器存储设置，并在记录另一笔付款前重试。",
       "listError": "无法刷新发票列表。已确认的付款仍已记录。",
       "refresh": "重试",
-      "methods": { "manual": "手动", "bank_transfer": "银行转账", "cash": "现金", "card": "银行卡", "other": "其他" }
+      "methods": {
+        "manual": "手动",
+        "bank_transfer": "银行转账",
+        "cash": "现金",
+        "card": "银行卡",
+        "other": "其他"
+      }
     }
   },
   "clientInvoices": {
@@ -3470,6 +3476,8 @@
     "updated": "设计已更改。请先查看最新预览再继续。",
     "failed": "无法加载数据，请重试。",
     "retry": "重试",
-    "detailUnavailable": "部分发票详情或付款记录无法加载。请重新打开发票。"
+    "detailUnavailable": "部分发票详情或付款记录无法加载。请重新打开发票。",
+    "connectionFailed": "无法连接服务器。请检查网络后重试。",
+    "serverError": "服务器无法完成该请求。请重试。"
   }
 }

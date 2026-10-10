@@ -3296,7 +3296,13 @@
       "storageUnavailable": "De herstelgegevens van de betaling konden niet worden opgeslagen of gelezen in deze browser. Controleer de opslaginstellingen en probeer opnieuw voordat je een andere betaling vastlegt.",
       "listError": "De factuurlijst kon niet worden vernieuwd. Een bevestigde betaling blijft vastgelegd.",
       "refresh": "Opnieuw proberen",
-      "methods": { "manual": "Handmatig", "bank_transfer": "Bankoverschrijving", "cash": "Contant", "card": "Kaart", "other": "Overig" }
+      "methods": {
+        "manual": "Handmatig",
+        "bank_transfer": "Bankoverschrijving",
+        "cash": "Contant",
+        "card": "Kaart",
+        "other": "Overig"
+      }
     }
   },
   "clientInvoices": {
@@ -3470,6 +3476,8 @@
     "updated": "Het ontwerp is gewijzigd. Bekijk het nieuwste voorbeeld voordat u doorgaat.",
     "failed": "De gegevens konden niet worden geladen. Probeer het opnieuw.",
     "retry": "Opnieuw proberen",
-    "detailUnavailable": "Sommige factuurgegevens of betalingen konden niet worden geladen. Open de factuur opnieuw."
+    "detailUnavailable": "Sommige factuurgegevens of betalingen konden niet worden geladen. Open de factuur opnieuw.",
+    "connectionFailed": "De server was niet bereikbaar. Controleer uw verbinding en probeer het opnieuw.",
+    "serverError": "De server kon dat verzoek niet afronden. Probeer het opnieuw."
   }
 }

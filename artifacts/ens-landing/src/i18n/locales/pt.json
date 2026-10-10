@@ -3296,7 +3296,13 @@
       "storageUnavailable": "Não foi possível guardar ou ler os dados de recuperação do pagamento neste navegador. Verifique as definições de armazenamento e tente novamente antes de registar outro pagamento.",
       "listError": "Não foi possível atualizar a lista de faturas. Um pagamento confirmado continua registado.",
       "refresh": "Tentar novamente",
-      "methods": { "manual": "Manual", "bank_transfer": "Transferência bancária", "cash": "Numerário", "card": "Cartão", "other": "Outro" }
+      "methods": {
+        "manual": "Manual",
+        "bank_transfer": "Transferência bancária",
+        "cash": "Numerário",
+        "card": "Cartão",
+        "other": "Outro"
+      }
     }
   },
   "clientInvoices": {
@@ -3470,6 +3476,8 @@
     "updated": "O design mudou. Revise a prévia mais recente antes de continuar.",
     "failed": "Não foi possível carregar os dados. Tente novamente.",
     "retry": "Tentar novamente",
-    "detailUnavailable": "Alguns detalhes ou pagamentos da fatura não foram carregados. Abra a fatura novamente."
+    "detailUnavailable": "Alguns detalhes ou pagamentos da fatura não foram carregados. Abra a fatura novamente.",
+    "connectionFailed": "Não foi possível acessar o servidor. Verifique sua conexão e tente novamente.",
+    "serverError": "O servidor não conseguiu concluir essa solicitação. Tente novamente."
   }
 }

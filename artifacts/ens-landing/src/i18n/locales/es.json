@@ -3296,7 +3296,13 @@
       "storageUnavailable": "No se pudieron guardar o leer los datos de recuperación del pago en este navegador. Revise la configuración de almacenamiento y reintente antes de registrar otro pago.",
       "listError": "No se pudo actualizar la lista de facturas. Un pago confirmado sigue registrado.",
       "refresh": "Reintentar",
-      "methods": { "manual": "Manual", "bank_transfer": "Transferencia bancaria", "cash": "Efectivo", "card": "Tarjeta", "other": "Otro" }
+      "methods": {
+        "manual": "Manual",
+        "bank_transfer": "Transferencia bancaria",
+        "cash": "Efectivo",
+        "card": "Tarjeta",
+        "other": "Otro"
+      }
     }
   },
   "clientInvoices": {
@@ -3470,6 +3476,8 @@
     "updated": "El diseño ha cambiado. Revisa la última vista previa antes de continuar.",
     "failed": "No se pudieron cargar los datos. Inténtalo de nuevo.",
     "retry": "Reintentar",
-    "detailUnavailable": "No se pudieron cargar algunos detalles o pagos de la factura. Vuelve a abrirla."
+    "detailUnavailable": "No se pudieron cargar algunos detalles o pagos de la factura. Vuelve a abrirla.",
+    "connectionFailed": "No se pudo contactar con el servidor. Compruebe su conexión e inténtelo de nuevo.",
+    "serverError": "El servidor no pudo completar esa solicitud. Inténtelo de nuevo."
   }
 }

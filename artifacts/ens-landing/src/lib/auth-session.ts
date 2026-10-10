@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { getRequestPortal, type RequestPortal } from "@/lib/portal";
 
 export const AUTH_SESSION_EXPIRED_EVENT = "ens-auth-session-expired";
@@ -42,7 +43,27 @@ export async function fetchWithSessionRefresh(
     return new Response(null, { status: 401, statusText: "Session expired" });
   }
 
-  const response = await fetch(`${apiBaseUrl}${path}`, requestInit);
+  let response: Response;
+  try {
+    response = await fetch(`${apiBaseUrl}${path}`, requestInit);
+  } catch (reason) {
+    /**
+     * A request that never reached the server.
+     *
+     * `fetch` rejects with the browser's own `TypeError: Failed to fetch` (or
+     * a localized variant of its choosing), and this is the only choke point
+     * every API call passes through - so without this, that English string
+     * travelled all the way to the screen. Eighty-eight call sites render
+     * `reason.message` with a translated string as a fallback that a rejected
+     * fetch never reaches, which left every one of them showing browser text
+     * in all eleven languages.
+     *
+     * The original is kept as `cause` and logged, so the network detail a
+     * developer needs is not lost in making the message readable.
+     */
+    console.error(`[api] request to ${path} did not complete:`, reason);
+    throw new ApiConnectionError(connectionFailedMessage(), reason);
+  }
 
   if (response.status !== 401) {
     if (response.ok && requestPath === "/auth/me") resetSessionExpiry(portal);
@@ -62,6 +83,36 @@ export async function fetchWithSessionRefresh(
 
   resetSessionExpiry(portal);
   return fetchWithSessionRefresh(apiBaseUrl, path, requestInit, true);
+}
+
+/**
+ * A request that did not complete, as opposed to one the server refused.
+ *
+ * Separated so a caller can tell "you are offline" from "the server said no":
+ * the first is worth a retry button, the second is worth reading.
+ */
+export class ApiConnectionError extends Error {
+  constructor(message: string, cause?: unknown) {
+    super(message);
+    this.name = "ApiConnectionError";
+    this.cause = cause;
+  }
+}
+
+/**
+ * The connection message in the reader's language.
+ *
+ * i18next is a singleton, so this works outside React. It can be called
+ * before the catalogue has loaded, though - an API call during boot, for
+ * instance - and `t` then returns the key itself, so the English text is the
+ * fallback rather than letting `experience.connectionFailed` reach the screen.
+ */
+function connectionFailedMessage(): string {
+  const key = "experience.connectionFailed";
+  const fallback = "Could not reach the server. Check your connection and try again.";
+  if (!i18next.isInitialized) return fallback;
+  const translated = i18next.t(key);
+  return !translated || translated === key ? fallback : translated;
 }
 
 export function resetSessionExpiry(portal: RequestPortal = getRequestPortal()) {
