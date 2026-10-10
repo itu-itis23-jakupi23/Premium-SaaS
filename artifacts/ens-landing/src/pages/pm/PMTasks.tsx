@@ -530,7 +530,11 @@ export default function PMTasks() {
                               <Flag aria-hidden="true" className="h-2.5 w-2.5 inline mr-1" />
                               {t(`pm.common.priority.${task.priority.toLowerCase()}`)}
                             </span>
-                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                            {/* Visible by default. These were opacity-0 until hover, which
+                                left them unreachable on a tablet - and only the workspace
+                                editor is desktop-only, so this page is expected to work
+                                there. Hover now emphasises rather than reveals. */}
+                            <div className="flex items-center gap-0.5 opacity-70 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                               {isBusy && <Loader2 aria-hidden="true" className="h-3 w-3 animate-spin text-muted-foreground" />}
                               <button
                                 onClick={() => openTaskEditor(task)}

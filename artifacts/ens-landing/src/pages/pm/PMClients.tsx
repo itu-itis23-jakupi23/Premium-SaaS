@@ -241,8 +241,12 @@ export default function PMClients() {
                         </span>
                       </td>
                       <td className="px-3 py-2.5">
+                          {/* Visible by default. These were opacity-0 until hover, which
+                              left them unreachable on a tablet - and only the workspace
+                              editor is desktop-only, so this page is expected to work
+                              there. Hover now emphasises rather than reveals. */}
                         <div
-                          className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+                          className="flex items-center justify-end gap-1 opacity-70 transition-opacity group-hover:opacity-100 focus-within:opacity-100"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
