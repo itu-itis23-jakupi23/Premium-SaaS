@@ -154,6 +154,7 @@ const serviceEnv = {
   APP_URL: staffOrigin,
   CORS_ORIGIN: `${staffOrigin},${clientOrigin}`,
   VITE_API_BASE_URL: `${apiOrigin}/api`,
+  VITE_CLIENT_APP_URL: clientOrigin,
   VITE_ORGANIZATION_SLUG: `ens-e2e-${testRunId}`,
   // Public lead intake has to file website enquiries against the organization
   // this run creates, or the quote-form test submits into a slug that does not

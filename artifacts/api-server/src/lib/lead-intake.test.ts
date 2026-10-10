@@ -137,12 +137,17 @@ describe("server entrypoint refuses to start on a misconfigured slug", () => {
   }
 
   it("exits non-zero and names the problem when the slug matches no organization", async () => {
-    // `org` from the suite above guarantees the database is not empty, so this
-    // is the misconfiguration case rather than the bootstrap one.
-    const { code, output } = await boot("no-such-organization-slug");
-    expect(code).toBe(1);
-    expect(output).toMatch(/lead intake is misconfigured/i);
-    expect(output).not.toMatch(/Server listening/);
+    // This test needs its own live organization: the previous suite already
+    // cleaned up its fixture, and an empty database permits bootstrap startup.
+    const org = await createTestOrg();
+    try {
+      const { code, output } = await boot("no-such-organization-slug");
+      expect(code).toBe(1);
+      expect(output).toMatch(/lead intake is misconfigured/i);
+      expect(output).not.toMatch(/Server listening/);
+    } finally {
+      await cleanupTestOrg(org.id);
+    }
   }, 90_000);
 
   it("starts normally when the slug resolves", async () => {

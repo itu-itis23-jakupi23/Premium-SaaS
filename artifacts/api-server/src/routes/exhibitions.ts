@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@workspace/db";
+import { calendarDateToInstant } from "@workspace/api-zod";
 import { requireAuth, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
 import { leadTimeAssessment, planMilestones } from "../lib/exhibition-schedule";
@@ -82,11 +83,18 @@ async function logEvent(orgId: string, actor: string, type: string, message: str
 }
 
 /** Parse an ISO date from the request; undefined = not supplied, null = cleared. */
+/**
+ * An exhibition's opening, closing, move-in, move-out or freight date.
+ *
+ * These are calendar dates. `new Date("2026-11-20")` is UTC midnight, so the
+ * stored instant fell on the previous day for every negative offset and a show
+ * opening on the 20th was listed as the 19th in New York.
+ */
 function parseDate(value: unknown): Date | null | undefined {
   if (value === undefined) return undefined;
   if (value === null || value === "") return null;
-  const parsed = new Date(String(value));
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+  const anchored = calendarDateToInstant(value);
+  return anchored ? new Date(anchored) : undefined;
 }
 
 // ── List ─────────────────────────────────────────────────────────────────────

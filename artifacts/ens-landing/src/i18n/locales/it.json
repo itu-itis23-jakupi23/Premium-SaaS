@@ -1886,8 +1886,26 @@
         "changeStatus": "Cambia lo stato del cliente",
         "tabs": {
           "overview": "Overview",
-          "credentials": "Credentials",
+          "credentials": "Account",
           "billing": "Billing"
+        },
+        "account": {
+          "title": "Account del portale",
+          "linked": "Account attivo del portale collegato",
+          "unlinked": "Nessun account attivo del portale collegato",
+          "accountId": "ID account del portale",
+          "contactEmail": "Email di contatto",
+          "contactHint": "Questi sono i recapiti presenti nella scheda del cliente. La verifica dell’email e le impostazioni di sicurezza non sono mostrate qui.",
+          "notProvided": "Non indicata",
+          "passwordGuidance": "I clienti gestiscono autonomamente le proprie password e impostazioni di sicurezza. Il personale non può visualizzare le loro password.",
+          "recoveryGuidance": "Se il cliente non riesce ad accedere, può richiedere il ripristino della password dal portale clienti.",
+          "registrationGuidance": "Chiedi al cliente di registrarsi tramite il link di registrazione della tua agenzia. Se ha già un account, chiedi al responsabile principale di verificarne l’accesso.",
+          "openRecovery": "Apri il recupero password del cliente",
+          "copyField": "Copia {{field}}",
+          "copied": "Copiato",
+          "copiedDescription": "{{field}} copiato negli appunti.",
+          "copyError": "Impossibile copiare. Seleziona il valore e copialo manualmente.",
+          "statusError": "Impossibile aggiornare lo stato del cliente."
         },
         "credentials": {
           "title": "Account e sicurezza",
@@ -1902,6 +1920,25 @@
           "webSession": "Browser web (Chrome/Windows)"
         },
         "billing": {
+          "live": {
+            "loading": "Caricamento dei totali delle fatture…",
+            "empty": "Non ci sono ancora fatture emesse per questo cliente.",
+            "loadError": "Impossibile caricare i totali delle fatture.",
+            "retry": "Riprova",
+            "billed": "Fatture emesse",
+            "received": "Pagamenti registrati",
+            "outstanding": "Saldo da pagare",
+            "invoices": "{{count}} fatture emesse",
+            "source": "I totali provengono dalle fatture emesse. Le bozze e le fatture annullate sono escluse. I saldi mantengono le valute originali.",
+            "messageAction": "Invia il link alla pagina delle fatture",
+            "message": "Consulta le fatture e i dettagli di pagamento nel portale clienti: {{url}}",
+            "messageSuccess": "Link alla pagina delle fatture inviato.",
+            "messageFailed": "Impossibile inviare il link alla pagina delle fatture.",
+            "sending": "Invio…",
+            "portalUnavailable": "Il link al portale clienti non è disponibile. Contatta l’amministratore.",
+            "workspaceMessage": "Consulta l’ultimo progetto per {{project}} nel tuo spazio di lavoro: {{url}}",
+            "workspaceFailed": "Impossibile inviare il link allo spazio di lavoro."
+          },
           "title": "Project Billing",
           "contractValue": "Contract Value",
           "billed": "Total Billed",

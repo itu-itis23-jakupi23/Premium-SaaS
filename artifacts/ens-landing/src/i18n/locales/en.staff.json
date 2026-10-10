@@ -1381,8 +1381,26 @@
         "changeStatus": "Change client status",
         "tabs": {
           "overview": "Overview",
-          "credentials": "Credentials",
+          "credentials": "Account",
           "billing": "Billing"
+        },
+        "account": {
+          "title": "Portal account",
+          "linked": "Active portal account linked",
+          "unlinked": "No active portal account linked",
+          "accountId": "Portal account ID",
+          "contactEmail": "Contact email",
+          "contactHint": "These are the contact details from this client record. Email verification and security settings are not shown here.",
+          "notProvided": "Not provided",
+          "passwordGuidance": "Clients manage their own passwords and security settings. Staff cannot view their passwords.",
+          "recoveryGuidance": "If the client cannot sign in, they can request a password reset from the client portal.",
+          "registrationGuidance": "Ask the client to register using your agency’s registration link. If they already have an account, ask the chief manager to check their access.",
+          "openRecovery": "Open client password recovery",
+          "copyField": "Copy {{field}}",
+          "copied": "Copied",
+          "copiedDescription": "{{field}} copied to clipboard.",
+          "copyError": "Could not copy. Select the value and copy it manually.",
+          "statusError": "Client status could not be updated."
         },
         "credentials": {
           "title": "Account & Security",
@@ -1397,6 +1415,25 @@
           "webSession": "Web Browser (Chrome/Windows)"
         },
         "billing": {
+          "live": {
+            "loading": "Loading invoice totals…",
+            "empty": "No issued invoices for this client yet.",
+            "loadError": "Invoice totals could not be loaded.",
+            "retry": "Try again",
+            "billed": "Issued invoices",
+            "received": "Payments recorded",
+            "outstanding": "Outstanding balance",
+            "invoices": "{{count}} issued invoices",
+            "source": "Totals come from issued invoices. Draft and void invoices are excluded. Balances stay in their original currencies.",
+            "messageAction": "Send invoice page link",
+            "message": "Please review your invoices and payment details in the client portal: {{url}}",
+            "messageSuccess": "Invoice page link sent.",
+            "messageFailed": "The invoice page link could not be sent.",
+            "sending": "Sending…",
+            "portalUnavailable": "The client portal link is unavailable. Contact your administrator.",
+            "workspaceMessage": "Please review the latest design for {{project}} in your workspace: {{url}}",
+            "workspaceFailed": "The workspace link could not be sent."
+          },
           "title": "Project Billing",
           "contractValue": "Contract Value",
           "billed": "Total Billed",

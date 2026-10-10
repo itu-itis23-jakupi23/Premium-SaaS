@@ -1886,8 +1886,26 @@
         "changeStatus": "Kundenstatus ändern",
         "tabs": {
           "overview": "Overview",
-          "credentials": "Credentials",
+          "credentials": "Konto",
           "billing": "Billing"
+        },
+        "account": {
+          "title": "Portalkonto",
+          "linked": "Aktives Portalkonto verknüpft",
+          "unlinked": "Kein aktives Portalkonto verknüpft",
+          "accountId": "Portalkonto-ID",
+          "contactEmail": "Kontakt-E-Mail",
+          "contactHint": "Dies sind die Kontaktdaten dieses Kundeneintrags. E-Mail-Verifizierung und Sicherheitseinstellungen werden hier nicht angezeigt.",
+          "notProvided": "Nicht angegeben",
+          "passwordGuidance": "Kunden verwalten ihre Passwörter und Sicherheitseinstellungen selbst. Mitarbeiter können ihre Passwörter nicht einsehen.",
+          "recoveryGuidance": "Wenn sich der Kunde nicht anmelden kann, kann er im Kundenportal ein neues Passwort anfordern.",
+          "registrationGuidance": "Bitten Sie den Kunden, sich über den Registrierungslink Ihrer Agentur zu registrieren. Hat er bereits ein Konto, bitten Sie den Hauptmanager, seinen Zugriff zu prüfen.",
+          "openRecovery": "Passwortwiederherstellung für Kunden öffnen",
+          "copyField": "{{field}} kopieren",
+          "copied": "Kopiert",
+          "copiedDescription": "{{field}} wurde in die Zwischenablage kopiert.",
+          "copyError": "Kopieren fehlgeschlagen. Wählen Sie den Wert aus und kopieren Sie ihn manuell.",
+          "statusError": "Der Kundenstatus konnte nicht aktualisiert werden."
         },
         "credentials": {
           "title": "Konto & Sicherheit",
@@ -1902,6 +1920,25 @@
           "webSession": "Webbrowser (Chrome/Windows)"
         },
         "billing": {
+          "live": {
+            "loading": "Rechnungssummen werden geladen…",
+            "empty": "Für diesen Kunden wurden noch keine Rechnungen ausgestellt.",
+            "loadError": "Rechnungssummen konnten nicht geladen werden.",
+            "retry": "Erneut versuchen",
+            "billed": "Ausgestellte Rechnungen",
+            "received": "Erfasste Zahlungen",
+            "outstanding": "Offener Betrag",
+            "invoices": "{{count}} ausgestellte Rechnungen",
+            "source": "Die Summen stammen aus ausgestellten Rechnungen. Entwürfe und stornierte Rechnungen sind ausgeschlossen. Beträge bleiben in ihrer ursprünglichen Währung.",
+            "messageAction": "Link zur Rechnungsseite senden",
+            "message": "Bitte prüfen Sie Ihre Rechnungen und Zahlungsdetails im Kundenportal: {{url}}",
+            "messageSuccess": "Link zur Rechnungsseite gesendet.",
+            "messageFailed": "Der Link zur Rechnungsseite konnte nicht gesendet werden.",
+            "sending": "Wird gesendet…",
+            "portalUnavailable": "Der Link zum Kundenportal ist nicht verfügbar. Wenden Sie sich an Ihren Administrator.",
+            "workspaceMessage": "Bitte prüfen Sie den neuesten Entwurf für {{project}} in Ihrem Workspace: {{url}}",
+            "workspaceFailed": "Der Workspace-Link konnte nicht gesendet werden."
+          },
           "title": "Project Billing",
           "contractValue": "Contract Value",
           "billed": "Total Billed",

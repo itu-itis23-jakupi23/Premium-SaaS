@@ -1886,8 +1886,26 @@
         "changeStatus": "Klantstatus wijzigen",
         "tabs": {
           "overview": "Overview",
-          "credentials": "Credentials",
+          "credentials": "Account",
           "billing": "Billing"
+        },
+        "account": {
+          "title": "Portaalaccount",
+          "linked": "Actief portaalaccount gekoppeld",
+          "unlinked": "Geen actief portaalaccount gekoppeld",
+          "accountId": "Portaalaccount-ID",
+          "contactEmail": "Contact-e-mailadres",
+          "contactHint": "Dit zijn de contactgegevens uit dit klantrecord. E-mailverificatie en beveiligingsinstellingen worden hier niet getoond.",
+          "notProvided": "Niet opgegeven",
+          "passwordGuidance": "Klanten beheren zelf hun wachtwoorden en beveiligingsinstellingen. Medewerkers kunnen hun wachtwoorden niet bekijken.",
+          "recoveryGuidance": "Als de klant niet kan inloggen, kan die via het klantenportaal een nieuw wachtwoord aanvragen.",
+          "registrationGuidance": "Vraag de klant zich te registreren via de registratielink van uw bureau. Als er al een account is, vraag dan de hoofdmanager de toegang te controleren.",
+          "openRecovery": "Wachtwoordherstel voor de klant openen",
+          "copyField": "{{field}} kopiëren",
+          "copied": "Gekopieerd",
+          "copiedDescription": "{{field}} is naar het klembord gekopieerd.",
+          "copyError": "Kopiëren mislukt. Selecteer de waarde en kopieer deze handmatig.",
+          "statusError": "De klantstatus kon niet worden bijgewerkt."
         },
         "credentials": {
           "title": "Account en beveiliging",
@@ -1902,6 +1920,25 @@
           "webSession": "Webbrowser (Chrome/Windows)"
         },
         "billing": {
+          "live": {
+            "loading": "Factuurtotalen laden…",
+            "empty": "Er zijn nog geen uitgegeven facturen voor deze klant.",
+            "loadError": "Factuurtotalen konden niet worden geladen.",
+            "retry": "Opnieuw proberen",
+            "billed": "Uitgegeven facturen",
+            "received": "Geregistreerde betalingen",
+            "outstanding": "Openstaand saldo",
+            "invoices": "{{count}} uitgegeven facturen",
+            "source": "De totalen komen uit uitgegeven facturen. Concepten en geannuleerde facturen zijn uitgesloten. Saldi blijven in hun oorspronkelijke valuta.",
+            "messageAction": "Link naar factuurpagina sturen",
+            "message": "Bekijk uw facturen en betalingsgegevens in het klantenportaal: {{url}}",
+            "messageSuccess": "Link naar factuurpagina verzonden.",
+            "messageFailed": "De link naar de factuurpagina kon niet worden verzonden.",
+            "sending": "Verzenden…",
+            "portalUnavailable": "De link naar het klantenportaal is niet beschikbaar. Neem contact op met uw beheerder.",
+            "workspaceMessage": "Bekijk het nieuwste ontwerp voor {{project}} in uw werkruimte: {{url}}",
+            "workspaceFailed": "De link naar de werkruimte kon niet worden verzonden."
+          },
           "title": "Project Billing",
           "contractValue": "Contract Value",
           "billed": "Total Billed",

@@ -173,15 +173,21 @@ export function verifyBackupCode(code: string, hash: string): boolean {
 interface ChallengePayload {
   sub: string;
   org: string;
+  credentialVersion: string;
   exp: number;
 }
 
 const CHALLENGE_TTL_SECONDS = 5 * 60;
 
-export function issueChallengeToken(userId: string, organizationId: string): string {
+export function credentialVersionForPassword(passwordHash: string): string {
+  return createHmac("sha256", getAuthSecret()).update(`credential.v1.${passwordHash}`).digest("hex");
+}
+
+export function issueChallengeToken(userId: string, organizationId: string, passwordHash: string): string {
   const payload: ChallengePayload = {
     sub: userId,
     org: organizationId,
+    credentialVersion: credentialVersionForPassword(passwordHash),
     exp: Math.floor(Date.now() / 1000) + CHALLENGE_TTL_SECONDS,
   };
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -189,8 +195,10 @@ export function issueChallengeToken(userId: string, organizationId: string): str
   return `${body}.${signature}`;
 }
 
-export function verifyChallengeToken(token: string): { userId: string; organizationId: string } | null {
-  const [body, signature] = (token || "").split(".");
+export function verifyChallengeToken(token: string): { userId: string; organizationId: string; credentialVersion: string; expiresAt: number } | null {
+  const parts = (token || "").split(".");
+  if (parts.length !== 2) return null;
+  const [body, signature] = parts;
   if (!body || !signature) return null;
   const expected = createHmac("sha256", getAuthSecret()).update(`2fa.${body}`).digest("base64url");
   const sigBuf = Buffer.from(signature);
@@ -198,8 +206,11 @@ export function verifyChallengeToken(token: string): { userId: string; organizat
   if (sigBuf.length !== expBuf.length || !timingSafeEqual(sigBuf, expBuf)) return null;
   try {
     const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as ChallengePayload;
-    if (!payload.sub || payload.exp <= Math.floor(Date.now() / 1000)) return null;
-    return { userId: payload.sub, organizationId: payload.org };
+    if (typeof payload.sub !== "string" || !payload.sub || typeof payload.org !== "string" || !payload.org
+      || typeof payload.credentialVersion !== "string" || !/^[a-f0-9]{64}$/.test(payload.credentialVersion)
+      || typeof payload.exp !== "number" || !Number.isFinite(payload.exp)
+      || payload.exp <= Math.floor(Date.now() / 1000)) return null;
+    return { userId: payload.sub, organizationId: payload.org, credentialVersion: payload.credentialVersion, expiresAt: payload.exp };
   } catch {
     return null;
   }

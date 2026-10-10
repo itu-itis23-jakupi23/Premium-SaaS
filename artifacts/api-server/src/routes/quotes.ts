@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@workspace/db";
-import { documentTotals, lineTotalCents, normalizeCents, normalizeQuantity } from "@workspace/api-zod";
+import { calendarDateToInstant, documentTotals, lineTotalCents, normalizeCents, normalizeQuantity } from "@workspace/api-zod";
 import { requireAuth, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
 import { deliverNotification } from "../lib/notifications";
@@ -321,7 +321,9 @@ router.post("/platform/quotes", async (req, res) => {
   const title = typeof body.title === "string" ? body.title.slice(0, 200) : null;
   const notes = typeof body.notes === "string" ? body.notes.slice(0, 8000) : null;
   const terms = typeof body.terms === "string" ? body.terms.slice(0, 8000) : null;
-  const validUntil = typeof body.validUntil === "string" && body.validUntil ? body.validUntil : null;
+  // Anchored at midday UTC - see calendarDateToInstant. Stored at midnight,
+  // a quote's validity date read a day early for every client west of here.
+  const validUntil = calendarDateToInstant(body.validUntil);
 
   // Quote numbers are derived from a count, so two concurrent creates in the
   // same org can collide on the unique (organization_id, quote_number) index.
@@ -406,7 +408,9 @@ router.put("/platform/quotes/:quoteId", async (req, res) => {
   const title = typeof body.title === "string" ? body.title.slice(0, 200) : null;
   const notes = typeof body.notes === "string" ? body.notes.slice(0, 8000) : null;
   const terms = typeof body.terms === "string" ? body.terms.slice(0, 8000) : null;
-  const validUntil = typeof body.validUntil === "string" && body.validUntil ? body.validUntil : null;
+  // Anchored at midday UTC - see calendarDateToInstant. Stored at midnight,
+  // a quote's validity date read a day early for every client west of here.
+  const validUntil = calendarDateToInstant(body.validUntil);
 
   await db.execute(sql`
     update quotes set

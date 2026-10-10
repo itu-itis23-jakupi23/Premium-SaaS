@@ -16,11 +16,13 @@ import {
 import {
   Search, Mail, Building2, CalendarDays, CheckCircle2,
   Clock, AlertCircle, Layers, Users, ArrowUpRight, X, MessageSquare,
-  Key, ShieldCheck, Laptop, Copy, CreditCard, ArrowRight,
+  Key, Copy,
   type LucideIcon,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { clientPortalUrl } from "@/lib/client-portal-url";
+import { PMClientBilling } from "./PMClientBilling";
 import { useToast } from "@/hooks/use-toast";
 
 const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
@@ -360,10 +362,10 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
   const [localStatus, setLocalStatus] = useState(client.status);
   const [isSavingStatus, setIsSavingStatus] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "credentials" | "billing">("overview");
-  const [showPassword, setShowPassword] = useState(false);
   const [isSendingLink, setIsSendingLink] = useState(false);
-  const [isSendingBill, setIsSendingBill] = useState(false);
+
   const canMessageClient = !!clientMessageContactId(client);
+  const recoveryUrl = clientPortalUrl("/forgot-password");
   const { toast } = useToast();
 
   const statusCfg = STATUS_COLOR[localStatus] ?? STATUS_COLOR.Pending;
@@ -379,15 +381,19 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
       setLocalStatus(newStatus);
       onStatusChange(newStatus);
     } catch {
-      // revert on error — silent fail; page will refresh on next load
+      toast({ variant: "destructive", title: t("pm.clients.detail.account.statusError") });
     } finally {
       setIsSavingStatus(false);
     }
-  }, [client.id, isSavingStatus, localStatus, onStatusChange]);
+  }, [client.id, isSavingStatus, localStatus, onStatusChange, t, toast]);
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: "Copied!", description: `${label} copied to clipboard.` });
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: t("pm.clients.detail.account.copied"), description: t("pm.clients.detail.account.copiedDescription", { field: label }) });
+    } catch {
+      toast({ variant: "destructive", title: t("pm.clients.detail.account.copyError") });
+    }
   };
 
   const handleSendWorkspaceLink = async () => {
@@ -400,36 +406,20 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
     }
     setIsSendingLink(true);
     try {
-      const workspaceUrl = `${window.location.origin}/client/workspace?projectId=${client.projectId}`;
+      const workspaceUrl = clientPortalUrl(`/client/workspace?project=${encodeURIComponent(client.projectId)}`);
+      if (!workspaceUrl) {
+        toast({ variant: "destructive", title: t("pm.clients.detail.billing.live.portalUnavailable") });
+        return;
+      }
       await sendConversationMessage(
         contactId,
-        `Hi! I have set up the 3D design workspace for your stand (${client.exhibition || client.name}). You can access it and review the latest draft here: ${workspaceUrl}`
+        t("pm.clients.detail.billing.live.workspaceMessage", { project: client.exhibition || client.name, url: workspaceUrl })
       );
       toast({ title: "Success", description: t("pm.clients.detail.billing.linkSendSuccess") });
     } catch (err) {
-      toast({ variant: "destructive", title: "Error", description: err instanceof Error ? err.message : "Failed to send workspace link" });
+      toast({ variant: "destructive", title: t("pm.clients.detail.billing.live.workspaceFailed"), description: err instanceof Error ? err.message : undefined });
     } finally {
       setIsSendingLink(false);
-    }
-  };
-
-  const handleSendBill = async () => {
-    const contactId = clientMessageContactId(client);
-    if (isSendingBill || !contactId) {
-      if (!contactId) {
-        toast({ variant: "destructive", title: "Client account not linked", description: "This client needs a real portal account before messages can be sent." });
-      }
-      return;
-    }
-    setIsSendingBill(true);
-    try {
-      const billMessage = `Billing details for ${client.exhibition || client.name}:\n- Base booth cost: $4,500.00\n- Total billed to date: $2,800.00\n- Outstanding balance: $1,700.00\n\nPlease review the billing details and process the outstanding invoice.`;
-      await sendConversationMessage(contactId, billMessage);
-      toast({ title: "Success", description: t("pm.clients.detail.billing.sendSuccess") });
-    } catch (err) {
-      toast({ variant: "destructive", title: "Error", description: err instanceof Error ? err.message : "Failed to send bill" });
-    } finally {
-      setIsSendingBill(false);
     }
   };
 
@@ -544,124 +534,59 @@ function ClientDetailDrawer({ client, onClose, onMessage, onStatusChange, t }: {
           )}
 
           {activeTab === "credentials" && (
-            <div className="space-y-5">
+            <div className="space-y-5" data-testid="client-portal-account">
               <section className="rounded-lg border bg-card/50 p-4 space-y-4">
                 <h3 className="text-sm font-bold flex items-center gap-2">
-                  <Key className="w-4 h-4 text-primary" />
-                  {t("pm.clients.detail.credentials.title")}
+                  <Key aria-hidden="true" className="w-4 h-4 text-primary" />
+                  {t("pm.clients.detail.account.title")}
                 </h3>
+                <p data-testid="client-account-status" className={cn("rounded-md border px-3 py-2 text-xs font-semibold", client.userId ? "border-primary/20 bg-primary/5 text-primary" : "bg-muted/50 text-muted-foreground")}>
+                  {t(client.userId ? "pm.clients.detail.account.linked" : "pm.clients.detail.account.unlinked")}
+                </p>
                 <div className="space-y-3.5">
-                  <div>
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-1">
-                      {t("pm.clients.detail.credentials.accountId")}
-                    </label>
-                    <div className="flex items-center justify-between gap-2 bg-background border rounded px-3 py-1.5">
-                      <span className="font-mono text-xs text-foreground truncate">{client.id}</span>
-                      <button type="button" onClick={() => copyToClipboard(client.id, t("pm.clients.detail.credentials.accountId"))} className="text-muted-foreground hover:text-primary transition-colors p-1">
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
+                  {client.userId && (
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-1">
+                        {t("pm.clients.detail.account.accountId")}
+                      </p>
+                      <div className="flex items-center justify-between gap-2 bg-background border rounded px-3 py-1.5">
+                        <span data-testid="client-account-id" className="font-mono text-xs text-foreground break-all">{client.userId}</span>
+                        <button type="button" data-testid="copy-portal-account-id" aria-label={t("pm.clients.detail.account.copyField", { field: t("pm.clients.detail.account.accountId") })} onClick={() => { void copyToClipboard(client.userId!, t("pm.clients.detail.account.accountId")); }} className="shrink-0 rounded text-muted-foreground hover:text-primary transition-colors p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                          <Copy aria-hidden="true" className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div>
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-1">
-                      {t("pm.clients.detail.credentials.username")}
-                    </label>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-1">
+                      {t("pm.clients.detail.account.contactEmail")}
+                    </p>
                     <div className="flex items-center justify-between gap-2 bg-background border rounded px-3 py-1.5">
-                      <span className="font-mono text-xs text-foreground truncate">{client.contactEmail}</span>
-                      <button type="button" onClick={() => copyToClipboard(client.contactEmail, t("pm.clients.detail.credentials.username"))} className="text-muted-foreground hover:text-primary transition-colors p-1">
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-1">
-                      {t("pm.clients.detail.credentials.password")}
-                    </label>
-                    <div className="flex items-center justify-between gap-2 bg-background border rounded px-3 py-1.5">
-                      <span className="font-mono text-xs text-foreground font-semibold">
-                        {showPassword ? "EnsDev2026!" : "••••••••"}
-                      </span>
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-[10px] font-semibold text-primary hover:text-primary hover:underline transition-colors">
-                        {showPassword ? "Hide" : "Show"}
+                      <span data-testid="client-contact-email" className="font-mono text-xs text-foreground break-all">{client.contactEmail || t("pm.clients.detail.account.notProvided")}</span>
+                      <button type="button" data-testid="copy-client-contact-email" disabled={!client.contactEmail} aria-label={t("pm.clients.detail.account.copyField", { field: t("pm.clients.detail.account.contactEmail") })} onClick={() => { void copyToClipboard(client.contactEmail, t("pm.clients.detail.account.contactEmail")); }} className="shrink-0 rounded text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                        <Copy aria-hidden="true" className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
                 </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">{t("pm.clients.detail.account.contactHint")}</p>
               </section>
 
               <section className="rounded-lg border bg-card/50 p-4 space-y-3">
-                <h3 className="text-sm font-bold flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-green-500" />
-                  Security Configuration
-                </h3>
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between py-1.5 border-b border-border/30">
-                    <span className="text-muted-foreground">{t("pm.clients.detail.credentials.role")}</span>
-                    <span className="font-semibold text-foreground">Client Portal User</span>
-                  </div>
-                  <div className="flex items-center justify-between py-1.5 border-b border-border/30">
-                    <span className="text-muted-foreground">{t("pm.clients.detail.credentials.mfa")}</span>
-                    <span className="text-orange-500 font-medium">{t("pm.clients.detail.credentials.mfaDisabled")}</span>
-                  </div>
-                  <div className="flex items-start justify-between py-1.5">
-                    <span className="text-muted-foreground">{t("pm.clients.detail.credentials.session")}</span>
-                    <span className="font-medium text-foreground text-right flex items-center gap-1.5">
-                      <Laptop className="w-3.5 h-3.5 text-muted-foreground" />
-                      {t("pm.clients.detail.credentials.webSession")}
-                    </span>
-                  </div>
-                </div>
+                <p className="text-xs leading-relaxed">{t("pm.clients.detail.account.passwordGuidance")}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">{t(client.userId ? "pm.clients.detail.account.recoveryGuidance" : "pm.clients.detail.account.registrationGuidance")}</p>
+                {client.userId && recoveryUrl && (
+                  <a data-testid="client-password-recovery-link" href={recoveryUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded text-xs font-semibold text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    {t("pm.clients.detail.account.openRecovery")}
+                    <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" />
+                  </a>
+                )}
               </section>
             </div>
           )}
 
-          {activeTab === "billing" && (
-            <div className="space-y-5">
-              <section className="rounded-lg border bg-card/50 p-4 space-y-4">
-                <h3 className="text-sm font-bold flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-primary" />
-                  {t("pm.clients.detail.billing.title")}
-                </h3>
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between py-2 border-b border-border/30">
-                    <span className="text-muted-foreground">Exhibition Booth</span>
-                    <span className="font-semibold text-foreground truncate max-w-[200px]">{client.exhibition || "—"}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-border/30">
-                    <span className="text-muted-foreground">{t("pm.clients.detail.billing.contractValue")}</span>
-                    <span className="font-bold text-foreground">$4,500.00</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-border/30">
-                    <span className="text-muted-foreground">{t("pm.clients.detail.billing.billed")}</span>
-                    <span className="font-bold text-green-600">$2,800.00</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-border/30">
-                    <span className="text-muted-foreground">{t("pm.clients.detail.billing.outstanding")}</span>
-                    <span className="font-bold text-orange-600">$1,700.00</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-muted-foreground">{t("pm.clients.detail.billing.status")}</span>
-                    <span className="px-2 py-0.5 rounded bg-orange-500/10 text-orange-500 font-semibold text-[10px]">
-                      {t("pm.clients.detail.billing.statusPartial")}
-                    </span>
-                  </div>
-                </div>
-              </section>
-              <button
-                type="button"
-                onClick={handleSendBill}
-                disabled={isSendingBill || !canMessageClient}
-                title={canMessageClient ? undefined : "Client account is not linked yet"}
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold h-11 text-sm shadow-md transition-colors disabled:opacity-50"
-              >
-                {isSendingBill ? "Sending..." : t("pm.clients.actions.sendBill")}
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <p className="text-[10px] text-center text-muted-foreground italic">
-                * {t("pm.clients.detail.billing.detailSource")}
-              </p>
-            </div>
-          )}
+          {activeTab === "billing" && <PMClientBilling key={client.id} client={client} />}
+
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2 border-t p-4 bg-muted/20">

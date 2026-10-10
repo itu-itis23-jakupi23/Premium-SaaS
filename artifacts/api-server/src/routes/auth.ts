@@ -16,6 +16,7 @@ import {
 } from "../middlewares/session";
 import { sendPasswordResetEmail } from "../lib/email";
 import {
+  credentialVersionForPassword,
   decryptSecret,
   encryptSecret,
   generateBackupCodes,
@@ -32,8 +33,8 @@ const REFRESH_TOKEN_TTL_DAYS = 30;
 
 const router: IRouter = Router();
 
-async function queryRows<T>(statement: SQL) {
-  const result = await db.execute(statement);
+async function queryRows<T>(statement: SQL, executor: Pick<typeof db, "execute"> = db) {
+  const result = await executor.execute(statement);
   return (result as unknown as { rows: T[] }).rows;
 }
 
@@ -197,13 +198,14 @@ router.post("/auth/login", async (req, res) => {
     await clearLoginAttempts(rateLimitKey);
     res.json({
       twoFactorRequired: true,
-      challengeToken: issueChallengeToken(account.userId, account.organizationId),
+      challengeToken: issueChallengeToken(account.userId, account.organizationId, account.passwordHash),
     });
     return;
   }
 
   const auth = await createSession({
     userId: account.userId,
+    expectedPasswordHash: account.passwordHash,
     userName: account.name,
     userEmail: account.email,
     role: account.role,
@@ -217,6 +219,11 @@ router.post("/auth/login", async (req, res) => {
     ipAddress: req.ip,
   });
 
+  if (!auth) {
+    await recordFailedLogin(rateLimitKey);
+    res.status(401).json({ error: { code: "invalid_credentials", message: "Email or password is incorrect." } });
+    return;
+  }
   setAuthCookies(res, req, auth.accessToken, auth.refreshToken);
 
   await db.execute(sql`
@@ -256,11 +263,12 @@ router.post("/auth/login/2fa", async (req, res) => {
     return;
   }
 
-  const account = await findLoginAccountById(challenge.userId);
+  const account = await findLoginAccountById(challenge.userId, challenge.organizationId);
   const twoFactor = account ? readTwoFactor(account.metadata) : null;
-  if (!account || !twoFactor?.enabled || !twoFactor.secret) {
+  if (!account || !account.passwordHash || credentialVersionForPassword(account.passwordHash) !== challenge.credentialVersion
+    || !twoFactor?.enabled || !twoFactor.secret) {
     res.status(401).json({
-      error: { code: "invalid_2fa_challenge", message: "Two-factor authentication is not active for this account." },
+      error: { code: "invalid_2fa_challenge", message: "Your verification session expired. Please sign in again." },
     });
     return;
   }
@@ -297,6 +305,8 @@ router.post("/auth/login/2fa", async (req, res) => {
 
   const auth = await createSession({
     userId: account.userId,
+    expectedCredentialVersion: challenge.credentialVersion,
+    expectedChallengeExpiresAt: challenge.expiresAt,
     userName: account.name,
     userEmail: account.email,
     role: account.role,
@@ -310,6 +320,10 @@ router.post("/auth/login/2fa", async (req, res) => {
     ipAddress: req.ip,
   });
 
+  if (!auth) {
+    res.status(401).json({ error: { code: "invalid_2fa_challenge", message: "Your verification session expired. Please sign in again." } });
+    return;
+  }
   setAuthCookies(res, req, auth.accessToken, auth.refreshToken);
   await db.execute(sql`
     update users set last_login_at = now(), updated_at = now() where id = ${account.userId}::uuid
@@ -528,6 +542,7 @@ router.post("/auth/signup", async (req, res) => {
 
   const auth = await createSession({
     userId,
+    expectedPasswordHash: passwordHash,
     userName: input.value.name,
     userEmail: input.value.email,
     role: "client",
@@ -541,6 +556,10 @@ router.post("/auth/signup", async (req, res) => {
     ipAddress: req.ip,
   });
 
+  if (!auth) {
+    res.status(401).json({ error: { code: "account_unavailable", message: "This account is unavailable. Please sign in again." } });
+    return;
+  }
   setAuthCookies(res, req, auth.accessToken, auth.refreshToken);
   await auditAuthEvent(organization.id, userId, "auth_signup", "created client account");
   res.status(201).json(await enrichAuthResponse(auth.context));
@@ -659,6 +678,7 @@ router.post("/auth/signup-staff", async (req, res) => {
 
   const auth = await createSession({
     userId,
+    expectedPasswordHash: passwordHash,
     userName: input.value.name,
     userEmail: input.value.email,
     role: input.value.role,
@@ -672,6 +692,10 @@ router.post("/auth/signup-staff", async (req, res) => {
     ipAddress: req.ip,
   });
 
+  if (!auth) {
+    res.status(401).json({ error: { code: "account_unavailable", message: "This account is unavailable. Please sign in again." } });
+    return;
+  }
   setAuthCookies(res, req, auth.accessToken, auth.refreshToken);
   await auditAuthEvent(org.id, userId, "auth_signup", `created staff account (${input.value.role})`);
   res.status(201).json(authResponse(auth.context));
@@ -728,6 +752,9 @@ router.post("/auth/logout", async (req, res) => {
 
 async function createSession(input: {
   userId: string;
+  expectedPasswordHash?: string;
+  expectedCredentialVersion?: string;
+  expectedChallengeExpiresAt?: number;
   userName: string;
   userEmail: string;
   role: AuthRole;
@@ -743,35 +770,61 @@ async function createSession(input: {
   const refreshToken = createRefreshToken();
   const refreshTokenHash = hashToken(refreshToken);
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000);
+  const challengeExpired = () => input.expectedChallengeExpiresAt !== undefined
+    && input.expectedChallengeExpiresAt <= Math.floor(Date.now() / 1000);
 
-  const rows = await queryRows<{ id: string }>(sql`
-    insert into sessions (
-      user_id,
-      organization_id,
-      refresh_token_hash,
-      user_agent,
-      ip_address,
-      expires_at
-    )
-    values (
-      ${input.userId}::uuid,
-      ${input.organizationId}::uuid,
-      ${refreshTokenHash},
-      ${input.userAgent},
-      ${input.ipAddress ?? null},
-      ${expiresAt}
-    )
-    returning id::text
-  `);
-
-  const sessionId = rows[0]?.id;
-  if (!sessionId) throw new Error("Session insert did not return an id");
+  const session = await db.transaction(async (tx) => {
+    // Match password recovery's lock order. Recheck the verified credentials
+    // after waiting so an old-password login cannot outlive reset revocation.
+    const users = await queryRows<{ passwordHash: string | null }>(sql`
+      select password_hash as "passwordHash" from users
+      where id = ${input.userId}::uuid and deleted_at is null and disabled_at is null
+      limit 1 for update
+    `, tx);
+    const user = users[0];
+    if (!user || challengeExpired() || (input.expectedPasswordHash !== undefined && user.passwordHash !== input.expectedPasswordHash)
+      || (input.expectedCredentialVersion !== undefined && (!user.passwordHash
+        || credentialVersionForPassword(user.passwordHash) !== input.expectedCredentialVersion))) return null;
+    const memberships = await queryRows<{ role: AuthRole }>(sql`
+      select m.role::text as role from memberships m
+      join organizations o on o.id = m.organization_id
+      where m.user_id = ${input.userId}::uuid and m.organization_id = ${input.organizationId}::uuid
+        and m.status::text = 'active' and o.deleted_at is null
+      limit 1 for share of m, o
+    `, tx);
+    const membership = memberships[0];
+    if (!membership || challengeExpired()) return null;
+    const rows = await queryRows<{ id: string }>(sql`
+      insert into sessions (
+        user_id,
+        organization_id,
+        refresh_token_hash,
+        user_agent,
+        ip_address,
+        expires_at
+      )
+      values (
+        ${input.userId}::uuid,
+        ${input.organizationId}::uuid,
+        ${refreshTokenHash},
+        ${input.userAgent},
+        ${input.ipAddress ?? null},
+        ${expiresAt}
+      )
+      returning id::text
+    `, tx);
+    const sessionId = rows[0]?.id;
+    if (!sessionId) throw new Error("Session insert did not return an id");
+    return { id: sessionId, role: membership.role };
+  });
+  if (!session) return null;
+  const sessionId = session.id;
 
   const accessToken = signAccessToken({
     sub: input.userId,
     sid: sessionId,
     org: input.organizationId,
-    role: input.role,
+    role: session.role,
     exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_TTL_SECONDS,
   });
 
@@ -784,8 +837,8 @@ async function createSession(input: {
         id: input.userId,
         name: input.userName,
         email: input.userEmail,
-        role: input.role,
-        uiRole: toUiRole(input.role),
+        role: session.role,
+        uiRole: toUiRole(session.role),
         avatarUrl: input.avatarUrl,
         avatarTone: input.avatarTone,
       },
@@ -819,7 +872,7 @@ type LoginAccount = {
   organizationPlan: string;
 };
 
-async function findLoginAccountById(userId: string): Promise<LoginAccount | null> {
+async function findLoginAccountById(userId: string, organizationId: string): Promise<LoginAccount | null> {
   const rows = await queryRows<LoginAccount>(sql`
     select
       u.id::text as "userId",
@@ -836,6 +889,7 @@ async function findLoginAccountById(userId: string): Promise<LoginAccount | null
     join memberships m on m.user_id = u.id
     join organizations o on o.id = m.organization_id
     where u.id = ${userId}::uuid
+      and o.id = ${organizationId}::uuid
       and u.disabled_at is null
       and u.deleted_at is null
       and o.deleted_at is null
@@ -1448,14 +1502,16 @@ async function seedStaffOrganizationData(orgId: string, primaryUserId: string, p
 const APP_URL = (process.env.APP_URL ?? "http://localhost:5173").replace(/\/$/, "");
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 
-async function findUserByEmailForReset(email: string) {
+async function findUserByEmailForReset(email: string, executor: Pick<typeof db, "execute">) {
   const rows = await queryRows<{ id: string; email: string; name: string }>(sql`
     select u.id::text, u.email, u.name
     from users u
     where lower(u.email) = lower(${email})
       and u.deleted_at is null
+      and u.disabled_at is null
     limit 1
-  `);
+    for update of u
+  `, executor);
   return rows[0] ?? null;
 }
 
@@ -1496,29 +1552,33 @@ router.post("/auth/forgot-password", async (req, res) => {
   }
   await recordFailedLogin(resetRateKey);
 
-  // Find user — but always return 200 to avoid leaking which emails are registered
-  const user = await findUserByEmailForReset(email);
-
-  if (user) {
+  // Issuance and consumption both lock the user first. Concurrent requests can
+  // leave only the latest issued link active, without reviving an older link.
+  const issued = await db.transaction(async (tx) => {
+    const user = await findUserByEmailForReset(email, tx);
+    if (!user) return null;
     const token = randomBytes(32).toString("hex");
     const tokenHash = hashToken(token);
-    const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString();
 
     // Invalidate any active tokens for this user
-    await db.execute(sql`
+    await tx.execute(sql`
       update password_reset_tokens
-      set used_at = now()
+      set used_at = clock_timestamp()
       where user_id = ${user.id}::uuid
         and used_at is null
-        and expires_at > now()
+        and expires_at > clock_timestamp()
     `);
 
-    await db.execute(sql`
+    await tx.execute(sql`
       insert into password_reset_tokens (user_id, token_hash, expires_at)
-      values (${user.id}::uuid, ${tokenHash}, ${expiresAt}::timestamptz)
+      values (${user.id}::uuid, ${tokenHash}, clock_timestamp() + ${RESET_TOKEN_TTL_MS} * interval '1 millisecond')
     `);
+    return { user, token };
+  });
 
-    const resetUrl = `${APP_URL}/reset-password?token=${token}`;
+  // Registered, absent, deleted and disabled accounts share the same response.
+  if (issued) {
+    const resetUrl = `${APP_URL}/reset-password?token=${issued.token}`;
     /**
      * Not awaited, deliberately.
      *
@@ -1532,7 +1592,7 @@ router.post("/auth/forgot-password", async (req, res) => {
      * `send` already logs its own failures; this catch is the safety net that
      * stops a rejected promise becoming an unhandled rejection.
      */
-    void sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl })
+    void sendPasswordResetEmail({ to: issued.user.email, name: issued.user.name, resetUrl })
       .catch((reason: unknown) => {
         console.error("[auth] password reset email failed to dispatch:", reason);
       });
@@ -1552,42 +1612,47 @@ router.post("/auth/reset-password", async (req, res) => {
   }
 
   const tokenHash = hashToken(token);
-  const rows = await queryRows<{ id: string; userId: string }>(sql`
-    select id::text, user_id::text as "userId"
-    from password_reset_tokens
-    where token_hash = ${tokenHash}
-      and used_at is null
-      and expires_at > now()
-    limit 1
-  `);
+  const reset = await db.transaction(async (tx) => {
+    // Lock the user before any token row, matching issuance. The token's state
+    // is checked again below after waiting for this lock, in a fresh statement.
+    const users = await queryRows<{ id: string }>(sql`
+      select u.id::text
+      from users u join password_reset_tokens t on t.user_id = u.id
+      where t.token_hash = ${tokenHash}
+        and u.deleted_at is null and u.disabled_at is null
+      limit 1 for update of u
+    `, tx);
+    const userId = users[0]?.id;
+    if (!userId) return false;
+    const consumed = await queryRows<{ id: string }>(sql`
+      update password_reset_tokens set used_at = clock_timestamp()
+      where token_hash = ${tokenHash} and user_id = ${userId}::uuid
+        and used_at is null and expires_at > clock_timestamp()
+      returning id::text
+    `, tx);
+    if (!consumed[0]) return false;
 
-  if (!rows[0]) {
+    await tx.execute(sql`
+      update users set password_hash = ${hashPassword(password)}, updated_at = clock_timestamp()
+      where id = ${userId}::uuid
+    `);
+    // A successful reset supersedes every other active link for this account.
+    await tx.execute(sql`
+      update password_reset_tokens set used_at = clock_timestamp()
+      where user_id = ${userId}::uuid and used_at is null
+        and expires_at > clock_timestamp()
+    `);
+    await tx.execute(sql`
+      update sessions set revoked_at = clock_timestamp()
+      where user_id = ${userId}::uuid and revoked_at is null
+    `);
+    return true;
+  });
+
+  if (!reset) {
     res.status(400).json({ error: { code: "invalid_token", message: "This reset link is invalid or has expired. Please request a new one." } });
     return;
   }
-
-  const { id: tokenId, userId } = rows[0];
-  const passwordHash = hashPassword(password);
-
-  await db.execute(sql`
-    update users
-    set password_hash = ${passwordHash}, updated_at = now()
-    where id = ${userId}::uuid
-  `);
-
-  await db.execute(sql`
-    update password_reset_tokens
-    set used_at = now()
-    where id = ${tokenId}::uuid
-  `);
-
-  // Invalidate all active sessions so a stolen reset link can't persist access
-  await db.execute(sql`
-    update sessions
-    set revoked_at = now()
-    where user_id = ${userId}::uuid
-      and revoked_at is null
-  `);
 
   res.json({ ok: true });
 });

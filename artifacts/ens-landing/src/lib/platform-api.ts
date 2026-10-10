@@ -1939,6 +1939,21 @@ export async function getInvoice(id: string): Promise<Invoice> {
   return body.invoice;
 }
 
+export interface ClientInvoiceSummary {
+  balances: Array<{
+    currency: string;
+    billedCents: number;
+    receivedCents: number;
+    outstandingCents: number;
+    invoiceCount: number;
+  }>;
+  invoiceCount: number;
+}
+
+export async function getClientInvoiceSummary(clientId: string): Promise<ClientInvoiceSummary> {
+  return apiGet<ClientInvoiceSummary>(`/platform/invoices/summary?clientId=${encodeURIComponent(clientId)}`);
+}
+
 export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice> {
   const body = await apiJsonWithMethod<{ invoice: Invoice }>("POST", "/platform/invoices", input);
   return body.invoice;

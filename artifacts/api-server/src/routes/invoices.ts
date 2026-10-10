@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@workspace/db";
-import { documentTotals, lineTotalCents, normalizeCents, normalizeQuantity } from "@workspace/api-zod";
+import { calendarDateToInstant, documentTotals, lineTotalCents, normalizeCents, normalizeQuantity } from "@workspace/api-zod";
 import { requireAuth, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
 import { deliverNotification } from "../lib/notifications";
@@ -179,6 +179,48 @@ router.get("/platform/invoices", async (req, res) => {
 });
 
 // ── Get one ─────────────────────────────────────────────────────────────────
+// Aggregate every issued invoice rather than treating the capped list as a
+// complete client balance. Visibility matches invoice listing.
+router.get("/platform/invoices/summary", async (req, res) => {
+  const auth = req.auth!;
+  const clientId = typeof req.query.clientId === "string" ? req.query.clientId : "";
+  if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(clientId)) {
+    res.status(400).json({ error: { code: "invalid_client_id", message: "A valid client ID is required." } });
+    return;
+  }
+  let visibility: SQL;
+  if (isStaff(auth)) {
+    visibility = staffScope(auth);
+  } else {
+    const ownClientId = await callerClientId(auth);
+    if (!ownClientId) { res.json({ balances: [], invoiceCount: 0 }); return; }
+    visibility = sql`i.client_id = ${ownClientId}::uuid`;
+  }
+  const rows = await queryRows<{
+    currency: string;
+    billedCents: string;
+    receivedCents: string;
+    outstandingCents: string;
+    invoiceCount: number;
+  }>(sql`
+    select upper(i.currency) as currency,
+      sum(i.total_cents)::text as "billedCents",
+      sum(i.amount_paid_cents)::text as "receivedCents",
+      sum(case when i.status = 'open' then greatest(0, i.total_cents - i.amount_paid_cents) else 0 end)::text as "outstandingCents",
+      count(*)::int as "invoiceCount"
+    from invoices i
+    where i.organization_id = ${auth.organization.id}::uuid
+      and i.client_id = ${clientId}::uuid and i.deleted_at is null
+      and i.status in ('open', 'paid', 'uncollectible') and ${visibility}
+    group by upper(i.currency) order by upper(i.currency)
+  `);
+  const balances = rows.map((row) => ({ ...row,
+    billedCents: Number(row.billedCents), receivedCents: Number(row.receivedCents),
+    outstandingCents: Number(row.outstandingCents),
+  }));
+  res.json({ balances, invoiceCount: balances.reduce((total, row) => total + row.invoiceCount, 0) });
+});
+
 router.get("/platform/invoices/:invoiceId", async (req, res) => {
   const auth = req.auth!;
   const rows = await queryRows<{ clientId: string | null; status: string }>(sql`
@@ -294,7 +336,10 @@ router.post("/platform/invoices", async (req, res) => {
       currency: typeof body.currency === "string" ? body.currency.slice(0, 3).toUpperCase() : (projectCurrency ?? "USD"),
       items, discountCents: Math.max(0, toInt(body.discountCents)), taxCents: Math.max(0, toInt(body.taxCents)),
       notes: typeof body.notes === "string" ? body.notes.slice(0, 8000) : null,
-      dueAt: typeof body.dueAt === "string" && body.dueAt ? body.dueAt : null,
+      // A bare "2026-11-20" from <input type="date"> lands at midnight in the
+      // server's own timezone, which is a different calendar date for every
+      // reader west of it. calendarDateToInstant anchors it at midday UTC.
+      dueAt: calendarDateToInstant(body.dueAt),
     });
     const full = await queryRows(sql`select ${INVOICE_COLUMNS} from invoices i where i.id = ${id}::uuid`);
     res.status(201).json({ invoice: full[0] });

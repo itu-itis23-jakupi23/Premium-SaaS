@@ -1886,8 +1886,26 @@
         "changeStatus": "Alterar o estado do cliente",
         "tabs": {
           "overview": "Overview",
-          "credentials": "Credentials",
+          "credentials": "Conta",
           "billing": "Billing"
+        },
+        "account": {
+          "title": "Conta do portal",
+          "linked": "Conta ativa do portal associada",
+          "unlinked": "Nenhuma conta ativa do portal associada",
+          "accountId": "ID da conta do portal",
+          "contactEmail": "E-mail de contacto",
+          "contactHint": "Estes são os dados de contacto do registo deste cliente. A verificação do e-mail e as definições de segurança não são apresentadas aqui.",
+          "notProvided": "Não indicado",
+          "passwordGuidance": "Os clientes gerem as suas próprias palavras-passe e definições de segurança. A equipa não pode consultar as suas palavras-passe.",
+          "recoveryGuidance": "Se o cliente não conseguir iniciar sessão, pode solicitar a reposição da palavra-passe no portal de clientes.",
+          "registrationGuidance": "Peça ao cliente para se registar através da ligação de registo da sua agência. Se já tiver uma conta, peça ao gestor principal para verificar o seu acesso.",
+          "openRecovery": "Abrir a recuperação da palavra-passe do cliente",
+          "copyField": "Copiar {{field}}",
+          "copied": "Copiado",
+          "copiedDescription": "{{field}} foi copiado para a área de transferência.",
+          "copyError": "Não foi possível copiar. Selecione o valor e copie-o manualmente.",
+          "statusError": "Não foi possível atualizar o estado do cliente."
         },
         "credentials": {
           "title": "Conta e segurança",
@@ -1902,6 +1920,25 @@
           "webSession": "Navegador web (Chrome/Windows)"
         },
         "billing": {
+          "live": {
+            "loading": "A carregar os totais das faturas…",
+            "empty": "Ainda não há faturas emitidas para este cliente.",
+            "loadError": "Não foi possível carregar os totais das faturas.",
+            "retry": "Tentar novamente",
+            "billed": "Faturas emitidas",
+            "received": "Pagamentos registados",
+            "outstanding": "Saldo em dívida",
+            "invoices": "{{count}} faturas emitidas",
+            "source": "Os totais provêm das faturas emitidas. Rascunhos e faturas anuladas são excluídos. Os saldos mantêm as moedas originais.",
+            "messageAction": "Enviar ligação da página de faturas",
+            "message": "Consulte as suas faturas e os detalhes de pagamento no portal de clientes: {{url}}",
+            "messageSuccess": "Ligação da página de faturas enviada.",
+            "messageFailed": "Não foi possível enviar a ligação da página de faturas.",
+            "sending": "A enviar…",
+            "portalUnavailable": "A ligação do portal de clientes não está disponível. Contacte o administrador.",
+            "workspaceMessage": "Consulte o desenho mais recente de {{project}} no seu espaço de trabalho: {{url}}",
+            "workspaceFailed": "Não foi possível enviar a ligação do espaço de trabalho."
+          },
           "title": "Project Billing",
           "contractValue": "Contract Value",
           "billed": "Total Billed",

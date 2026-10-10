@@ -87,11 +87,24 @@ async function send(to: string, subject: string, html: string): Promise<EmailDel
   }
 
   try {
-    await resend.emails.send({ from: FROM, to, subject, html });
+    // The SDK resolves provider and network failures as { data: null, error }.
+    // A fulfilled promise alone does not mean the provider accepted the mail.
+    const result = await resend.emails.send({ from: FROM, to, subject, html });
+    if (result?.error) {
+      const message = safeErrorMessage(result.error.message);
+      console.error(`[email] Failed to send to ${to}:`, message);
+      return { ok: false, status: "failed", error: message };
+    }
+    if (typeof result?.data?.id !== "string" || !result.data.id.trim()) {
+      const message = "Email provider did not confirm message acceptance";
+      console.error(`[email] Failed to send to ${to}:`, message);
+      return { ok: false, status: "failed", error: message };
+    }
     return { ok: true, status: "sent" };
   } catch (err) {
-    console.error(`[email] Failed to send to ${to}:`, err);
-    return { ok: false, status: "failed", error: safeErrorMessage(err) };
+    const message = safeErrorMessage(err);
+    console.error(`[email] Failed to send to ${to}:`, message);
+    return { ok: false, status: "failed", error: message };
   }
 }
 
@@ -100,6 +113,7 @@ function safeErrorMessage(error: unknown) {
   return raw
     .replace(/re_[A-Za-z0-9_\-=]+/g, "[redacted]")
     .replace(/sk_[A-Za-z0-9_\-=]+/g, "[redacted]")
+    .replace(/[\r\n\t]+/g, " ")
     .slice(0, 500);
 }
 

@@ -1886,8 +1886,26 @@
         "changeStatus": "Müşteri durumunu değiştir",
         "tabs": {
           "overview": "Overview",
-          "credentials": "Credentials",
+          "credentials": "Hesap",
           "billing": "Billing"
+        },
+        "account": {
+          "title": "Portal hesabı",
+          "linked": "Etkin portal hesabı bağlı",
+          "unlinked": "Bağlı etkin portal hesabı yok",
+          "accountId": "Portal hesap kimliği",
+          "contactEmail": "İletişim e-postası",
+          "contactHint": "Bunlar bu müşteri kaydındaki iletişim bilgileridir. E-posta doğrulaması ve güvenlik ayarları burada gösterilmez.",
+          "notProvided": "Belirtilmemiş",
+          "passwordGuidance": "Müşteriler şifrelerini ve güvenlik ayarlarını kendileri yönetir. Personel müşterilerin şifrelerini görüntüleyemez.",
+          "recoveryGuidance": "Müşteri giriş yapamıyorsa müşteri portalından şifre sıfırlama isteğinde bulunabilir.",
+          "registrationGuidance": "Müşteriden ajansınızın kayıt bağlantısını kullanarak kaydolmasını isteyin. Zaten bir hesabı varsa baş yöneticiden erişimini kontrol etmesini isteyin.",
+          "openRecovery": "Müşterinin şifre kurtarma sayfasını aç",
+          "copyField": "{{field}} kopyala",
+          "copied": "Kopyalandı",
+          "copiedDescription": "{{field}} panoya kopyalandı.",
+          "copyError": "Kopyalanamadı. Değeri seçip elle kopyalayın.",
+          "statusError": "Müşteri durumu güncellenemedi."
         },
         "credentials": {
           "title": "Hesap ve güvenlik",
@@ -1902,6 +1920,25 @@
           "webSession": "Web tarayıcı (Chrome/Windows)"
         },
         "billing": {
+          "live": {
+            "loading": "Fatura toplamları yükleniyor…",
+            "empty": "Bu müşteri için henüz düzenlenmiş fatura yok.",
+            "loadError": "Fatura toplamları yüklenemedi.",
+            "retry": "Tekrar dene",
+            "billed": "Düzenlenen faturalar",
+            "received": "Kaydedilen ödemeler",
+            "outstanding": "Kalan borç",
+            "invoices": "{{count}} düzenlenmiş fatura",
+            "source": "Toplamlar düzenlenmiş faturalardan hesaplanır. Taslak ve iptal edilmiş faturalar hariçtir. Bakiyeler kendi para birimlerinde kalır.",
+            "messageAction": "Fatura sayfası bağlantısını gönder",
+            "message": "Lütfen müşteri portalındaki faturalarınızı ve ödeme bilgilerinizi inceleyin: {{url}}",
+            "messageSuccess": "Fatura sayfası bağlantısı gönderildi.",
+            "messageFailed": "Fatura sayfası bağlantısı gönderilemedi.",
+            "sending": "Gönderiliyor…",
+            "portalUnavailable": "Müşteri portalı bağlantısı kullanılamıyor. Yöneticinizle iletişime geçin.",
+            "workspaceMessage": "Lütfen çalışma alanınızda {{project}} için en son tasarımı inceleyin: {{url}}",
+            "workspaceFailed": "Çalışma alanı bağlantısı gönderilemedi."
+          },
           "title": "Project Billing",
           "contractValue": "Contract Value",
           "billed": "Total Billed",

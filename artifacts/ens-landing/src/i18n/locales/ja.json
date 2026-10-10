@@ -1886,8 +1886,26 @@
         "changeStatus": "顧客ステータスを変更",
         "tabs": {
           "overview": "Overview",
-          "credentials": "Credentials",
+          "credentials": "アカウント",
           "billing": "Billing"
+        },
+        "account": {
+          "title": "ポータルアカウント",
+          "linked": "有効なポータルアカウントが紐づいています",
+          "unlinked": "有効なポータルアカウントが紐づいていません",
+          "accountId": "ポータルアカウントID",
+          "contactEmail": "連絡先メールアドレス",
+          "contactHint": "この顧客レコードに登録された連絡先です。メールアドレスの確認状況やセキュリティ設定はここには表示されません。",
+          "notProvided": "未登録",
+          "passwordGuidance": "パスワードとセキュリティ設定は顧客自身が管理します。スタッフは顧客のパスワードを閲覧できません。",
+          "recoveryGuidance": "顧客がログインできない場合は、顧客ポータルからパスワードの再設定を申請できます。",
+          "registrationGuidance": "代理店の登録リンクから登録するよう顧客に案内してください。すでにアカウントがある場合は、主管理者にアクセス権の確認を依頼してください。",
+          "openRecovery": "顧客のパスワード復旧ページを開く",
+          "copyField": "{{field}}をコピー",
+          "copied": "コピーしました",
+          "copiedDescription": "{{field}}をクリップボードにコピーしました。",
+          "copyError": "コピーできませんでした。値を選択して手動でコピーしてください。",
+          "statusError": "顧客のステータスを更新できませんでした。"
         },
         "credentials": {
           "title": "アカウントとセキュリティ",
@@ -1902,6 +1920,25 @@
           "webSession": "ウェブブラウザー（Chrome/Windows）"
         },
         "billing": {
+          "live": {
+            "loading": "請求書の合計を読み込み中…",
+            "empty": "この顧客にはまだ発行済みの請求書がありません。",
+            "loadError": "請求書の合計を読み込めませんでした。",
+            "retry": "再試行",
+            "billed": "発行済み請求書",
+            "received": "記録された支払い",
+            "outstanding": "未払い残高",
+            "invoices": "発行済み請求書 {{count}}件",
+            "source": "合計は発行済みの請求書から算出しています。下書きと無効な請求書は除外されます。残高は元の通貨で表示されます。",
+            "messageAction": "請求書ページのリンクを送信",
+            "message": "顧客ポータルで請求書と支払いの詳細をご確認ください：{{url}}",
+            "messageSuccess": "請求書ページのリンクを送信しました。",
+            "messageFailed": "請求書ページのリンクを送信できませんでした。",
+            "sending": "送信中…",
+            "portalUnavailable": "顧客ポータルのリンクを利用できません。管理者にお問い合わせください。",
+            "workspaceMessage": "ワークスペースで{{project}}の最新デザインをご確認ください：{{url}}",
+            "workspaceFailed": "ワークスペースのリンクを送信できませんでした。"
+          },
           "title": "Project Billing",
           "contractValue": "Contract Value",
           "billed": "Total Billed",

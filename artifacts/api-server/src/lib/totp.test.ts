@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  credentialVersionForPassword,
   decryptSecret,
   encryptSecret,
   generateBackupCodes,
@@ -104,21 +105,32 @@ describe("backup codes", () => {
 
 describe("challenge token", () => {
   it("round-trips user and organization ids", () => {
-    const token = issueChallengeToken("user-1", "org-1");
-    expect(verifyChallengeToken(token)).toEqual({ userId: "user-1", organizationId: "org-1" });
+    const token = issueChallengeToken("user-1", "org-1", "current-password-hash");
+    expect(verifyChallengeToken(token)).toMatchObject({
+      userId: "user-1", organizationId: "org-1",
+      credentialVersion: credentialVersionForPassword("current-password-hash"),
+      expiresAt: expect.any(Number),
+    });
+    expect(Buffer.from(token.split(".")[0], "base64url").toString("utf8")).not.toContain("current-password-hash");
+  });
+
+  it("changes the opaque credential version when the password hash changes", () => {
+    expect(credentialVersionForPassword("current-password-hash")).toMatch(/^[a-f0-9]{64}$/);
+    expect(credentialVersionForPassword("new-password-hash")).not.toBe(credentialVersionForPassword("current-password-hash"));
   });
 
   it("rejects a tampered signature", () => {
-    const token = issueChallengeToken("user-1", "org-1");
+    const token = issueChallengeToken("user-1", "org-1", "current-password-hash");
     const [body] = token.split(".");
     expect(verifyChallengeToken(`${body}.deadbeef`)).toBeNull();
     expect(verifyChallengeToken("garbage")).toBeNull();
+    expect(verifyChallengeToken(`${token}.extra`)).toBeNull();
   });
 
   it("rejects an expired token", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
-    const token = issueChallengeToken("user-1", "org-1");
+    const token = issueChallengeToken("user-1", "org-1", "current-password-hash");
     // Advance past the 5-minute TTL.
     vi.setSystemTime(new Date("2026-01-01T00:06:00Z"));
     expect(verifyChallengeToken(token)).toBeNull();

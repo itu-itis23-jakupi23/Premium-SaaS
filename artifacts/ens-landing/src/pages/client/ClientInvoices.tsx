@@ -13,6 +13,7 @@ import {
   type InvoicePayment,
 } from "@/lib/platform-api";
 import { money, INVOICE_STATUS_STYLES as STATUS_STYLES } from "@/lib/quote-format";
+import { isPastCalendarDate } from "@workspace/api-zod";
 import { HelpHint } from "@/components/HelpHint";
 import { useLiveRefresh } from "@/hooks/useLiveRefresh";
 import { invoiceOutstandingBalances } from "@/lib/invoice-summary";
@@ -20,7 +21,12 @@ import { invoiceOutstandingBalances } from "@/lib/invoice-summary";
 type StatusFilter = "all" | "open" | "paid";
 
 function isOverdue(inv: Invoice): boolean {
-  return inv.status === "open" && !!inv.dueAt && new Date(inv.dueAt) < new Date();
+  // Compared as calendar dates, not instants: an invoice due on the 20th is
+  // not overdue during the 20th. The instant comparison made it overdue from
+  // whatever time of day the due date happened to be stored at - which, at
+  // midnight in the server's timezone, was the previous evening for readers
+  // west of it.
+  return inv.status === "open" && isPastCalendarDate(inv.dueAt);
 }
 
 export default function ClientInvoices() {

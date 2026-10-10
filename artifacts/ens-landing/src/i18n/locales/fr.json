@@ -1886,8 +1886,26 @@
         "changeStatus": "Modifier le statut du client",
         "tabs": {
           "overview": "Overview",
-          "credentials": "Credentials",
+          "credentials": "Compte",
           "billing": "Billing"
+        },
+        "account": {
+          "title": "Compte du portail",
+          "linked": "Compte actif du portail lié",
+          "unlinked": "Aucun compte actif du portail lié",
+          "accountId": "Identifiant du compte du portail",
+          "contactEmail": "E-mail de contact",
+          "contactHint": "Il s’agit des coordonnées de cette fiche client. La vérification de l’e-mail et les paramètres de sécurité ne sont pas affichés ici.",
+          "notProvided": "Non renseigné",
+          "passwordGuidance": "Les clients gèrent eux-mêmes leurs mots de passe et leurs paramètres de sécurité. Le personnel ne peut pas consulter leurs mots de passe.",
+          "recoveryGuidance": "Si le client ne peut pas se connecter, il peut demander une réinitialisation de son mot de passe depuis le portail client.",
+          "registrationGuidance": "Demandez au client de s’inscrire via le lien d’inscription de votre agence. S’il possède déjà un compte, demandez au responsable principal de vérifier son accès.",
+          "openRecovery": "Ouvrir la récupération du mot de passe client",
+          "copyField": "Copier {{field}}",
+          "copied": "Copié",
+          "copiedDescription": "{{field}} a été copié dans le presse-papiers.",
+          "copyError": "Impossible de copier. Sélectionnez la valeur et copiez-la manuellement.",
+          "statusError": "Impossible de mettre à jour le statut du client."
         },
         "credentials": {
           "title": "Compte et sécurité",
@@ -1902,6 +1920,25 @@
           "webSession": "Navigateur web (Chrome/Windows)"
         },
         "billing": {
+          "live": {
+            "loading": "Chargement des totaux des factures…",
+            "empty": "Aucune facture émise pour ce client pour le moment.",
+            "loadError": "Impossible de charger les totaux des factures.",
+            "retry": "Réessayer",
+            "billed": "Factures émises",
+            "received": "Paiements enregistrés",
+            "outstanding": "Solde restant dû",
+            "invoices": "{{count}} factures émises",
+            "source": "Les totaux proviennent des factures émises. Les brouillons et les factures annulées sont exclus. Les soldes restent dans leur devise d’origine.",
+            "messageAction": "Envoyer le lien de la page des factures",
+            "message": "Veuillez consulter vos factures et les détails de paiement dans le portail client : {{url}}",
+            "messageSuccess": "Lien de la page des factures envoyé.",
+            "messageFailed": "Impossible d’envoyer le lien de la page des factures.",
+            "sending": "Envoi…",
+            "portalUnavailable": "Le lien du portail client est indisponible. Contactez votre administrateur.",
+            "workspaceMessage": "Veuillez consulter la dernière conception de {{project}} dans votre espace de travail : {{url}}",
+            "workspaceFailed": "Impossible d’envoyer le lien de l’espace de travail."
+          },
           "title": "Project Billing",
           "contractValue": "Contract Value",
           "billed": "Total Billed",

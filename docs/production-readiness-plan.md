@@ -2,7 +2,10 @@
 
 Last updated: 2026-10-10
 
-The latest payment recovery, account binding, and invoice access changes are
+The latest account recovery, truthful client details, invoice summaries and
+approval enforcement changes are recorded in
+[the account and client hardening notes](account-and-client-hardening-2026-10-10.md).
+Payment recovery, account binding, and invoice access changes are
 recorded in [the October 10 hardening notes](production-hardening-2026-10-10.md).
 Earlier billing concurrency, notification isolation, dependency patching, and
 release-evidence changes are recorded in

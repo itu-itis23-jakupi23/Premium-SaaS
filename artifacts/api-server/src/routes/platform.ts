@@ -739,7 +739,6 @@ router.put(
         .json({ error: "You do not have access to update this project" });
       return;
     }
-
     res.json({
       ok: true,
       project: updated,
@@ -960,6 +959,15 @@ router.put(
       res
         .status(403)
         .json({ error: "You do not have access to update this client" });
+      return;
+    }
+    if (updated === "approval_required") {
+      res.status(409).json({
+        error: {
+          code: "approval_workflow_required",
+          message: "Pending clients must be approved or rejected by a Chief. Use the client approval workflow.",
+        },
+      });
       return;
     }
 
@@ -7304,13 +7312,7 @@ async function updateClientStatus(
   status: "lead" | "pending_approval" | "active" | "inactive" | "archived",
 ) {
   const canManage = canManageOrganization(auth);
-  const rows = await queryRows<{ id: string; companyName: string }>(sql`
-    update clients c
-    set status = ${status}::client_status, updated_at = now()
-    where c.id = ${clientId}::uuid
-      and c.organization_id = ${organizationId}::uuid
-      and c.deleted_at is null
-      and (${canManage}::boolean
+  const scope = sql`(${canManage}::boolean
         or c.assigned_pm_user_id = ${auth.user.id}::uuid
         or exists (
           select 1
@@ -7328,34 +7330,47 @@ async function updateClientStatus(
               )
             )
         )
-      )
-    returning c.id::text, c.company_name as "companyName"
-  `);
-
-  const client = rows[0];
-  if (!client) {
-    const exists = await queryRows<{ id: string }>(sql`
-      select id::text
-      from clients
-      where id = ${clientId}::uuid
-        and organization_id = ${organizationId}::uuid
-        and deleted_at is null
-      limit 1
+      )`;
+  return db.transaction(async (tx) => {
+    const executor = tx as unknown as SqlExecutor;
+    // Lock before checking the current state. A concurrent approval or intake
+    // change must not let a generic status update cross the approval boundary.
+    const rows = await queryRows<{ id: string; companyName: string; status: string }>(sql`
+      select c.id::text, c.company_name as "companyName", c.status::text
+      from clients c
+      where c.id = ${clientId}::uuid
+        and c.organization_id = ${organizationId}::uuid
+        and c.deleted_at is null and ${scope}
+      for update of c
+    `, executor);
+    const client = rows[0];
+    if (!client) {
+      const exists = await queryRows<{ id: string }>(sql`
+        select id::text from clients
+        where id = ${clientId}::uuid and organization_id = ${organizationId}::uuid
+          and deleted_at is null limit 1
+      `, executor);
+      return exists[0] ? ("not_authorized" as const) : ("not_found" as const);
+    }
+    if (client.status === status) return "updated" as const;
+    if (client.status === "pending_approval" || status === "pending_approval") {
+      return "approval_required" as const;
+    }
+    await executor.execute(sql`
+      update clients c set status = ${status}::client_status, updated_at = now()
+      where c.id = ${clientId}::uuid and c.organization_id = ${organizationId}::uuid
+        and c.status::text = ${client.status} and c.deleted_at is null
     `);
-    return exists[0] ? ("not_authorized" as const) : ("not_found" as const);
-  }
-
-  await auditEvent(
-    organizationId,
-    auth.user.id,
-    "client_status_updated",
-    `changed ${client.companyName} to ${status}`,
-    {
-      clientId,
-      status,
-    },
-  );
-  return "updated" as const;
+    await auditEvent(
+      organizationId,
+      auth.user.id,
+      "client_status_updated",
+      `changed ${client.companyName} to ${status}`,
+      { clientId, status, previousStatus: client.status },
+      executor,
+    );
+    return "updated" as const;
+  });
 }
 
 async function removeClientRecord(

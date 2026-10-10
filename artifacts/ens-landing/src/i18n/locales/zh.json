@@ -1886,8 +1886,26 @@
         "changeStatus": "更改客户状态",
         "tabs": {
           "overview": "Overview",
-          "credentials": "Credentials",
+          "credentials": "账户",
           "billing": "Billing"
+        },
+        "account": {
+          "title": "门户账户",
+          "linked": "已关联有效的门户账户",
+          "unlinked": "未关联有效的门户账户",
+          "accountId": "门户账户ID",
+          "contactEmail": "联系邮箱",
+          "contactHint": "这些是此客户记录中的联系信息。这里不显示邮箱验证状态或安全设置。",
+          "notProvided": "未提供",
+          "passwordGuidance": "客户自行管理密码和安全设置。工作人员无法查看客户的密码。",
+          "recoveryGuidance": "如果客户无法登录，可以通过客户门户申请重置密码。",
+          "registrationGuidance": "请客户使用您机构的注册链接注册。如果已有账户，请主管检查其访问权限。",
+          "openRecovery": "打开客户密码找回页面",
+          "copyField": "复制{{field}}",
+          "copied": "已复制",
+          "copiedDescription": "已将{{field}}复制到剪贴板。",
+          "copyError": "无法复制。请选中内容并手动复制。",
+          "statusError": "无法更新客户状态。"
         },
         "credentials": {
           "title": "账户与安全",
@@ -1902,6 +1920,25 @@
           "webSession": "网页浏览器（Chrome/Windows）"
         },
         "billing": {
+          "live": {
+            "loading": "正在加载发票总额…",
+            "empty": "此客户尚无已开具的发票。",
+            "loadError": "无法加载发票总额。",
+            "retry": "重试",
+            "billed": "已开具发票",
+            "received": "已记录付款",
+            "outstanding": "未付余额",
+            "invoices": "{{count}}张已开具发票",
+            "source": "总额来自已开具的发票，不包括草稿和作废发票。余额保留原币种。",
+            "messageAction": "发送发票页面链接",
+            "message": "请在客户门户查看您的发票和付款详情：{{url}}",
+            "messageSuccess": "已发送发票页面链接。",
+            "messageFailed": "无法发送发票页面链接。",
+            "sending": "正在发送…",
+            "portalUnavailable": "客户门户链接不可用。请联系管理员。",
+            "workspaceMessage": "请在工作区查看{{project}}的最新设计：{{url}}",
+            "workspaceFailed": "无法发送工作区链接。"
+          },
           "title": "Project Billing",
           "contractValue": "Contract Value",
           "billed": "Total Billed",
