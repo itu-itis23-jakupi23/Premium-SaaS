@@ -157,7 +157,10 @@ function createStaffRoutes() {
   const StaffInvoices = lazyAppPage(() => import("@/pages/staff/Invoices"));
   const ChiefInvoices = () => <StaffInvoices role="chief" />;
   const PMInvoices = () => <StaffInvoices role="pm" />;
-  const PMExtras = lazyStaffPage(() => import("@/pages/pm/PMExtras"));
+
+  const ChiefExtras = () => <StaffExtras role="chief" />;
+  const PMExtras = () => <StaffExtras role="pm" />;
+  const StaffExtras = lazyStaffPage(() => import("@/pages/staff/Extras"));
 
   const PMDashboard = lazyStaffPage(() => import("@/pages/pm/PMDashboard"));
   const PMCalendar = lazyStaffPage(() => import("@/pages/pm/PMCalendar"));
@@ -237,6 +240,15 @@ function createStaffRoutes() {
           {() => (
             <ErrorBoundary label="Chief Quotes">
               <ProtectedRoute component={ChiefQuotes} allowedRoles={["chief"]} />
+            </ErrorBoundary>
+          )}
+        </Route>
+        {/* The loading list is a whole-show job, and the chief is who signs
+            off what leaves the warehouse - same page, their own chrome. */}
+        <Route path="/chief/extras">
+          {() => (
+            <ErrorBoundary label="Chief Extras">
+              <ProtectedRoute component={ChiefExtras} allowedRoles={["chief"]} />
             </ErrorBoundary>
           )}
         </Route>

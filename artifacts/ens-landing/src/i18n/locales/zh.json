@@ -471,7 +471,8 @@
       "settings": "设置",
       "quotes": "报价单",
       "invoices": "发票",
-      "pipeline": "销售管道"
+      "pipeline": "销售管道",
+      "extras": "附加项"
     },
     "common": {
       "cancel": "取消",
@@ -2343,32 +2344,6 @@
         "standType": "Stand Type",
         "status": "Status"
       }
-    },
-    "extras": {
-      "pageTitle": "附加物品 · 家具清单",
-      "title": "家具清单",
-      "intro": "选择一个展会即可查看其中每个展台所需的家具，并打印装车清单。",
-      "shows": "展会",
-      "noShows": "暂无展会。",
-      "pickShow": "在左侧选择展会以查看其展台。",
-      "venueTbd": "场馆待定",
-      "summary": "展台：{{booths}} · 件数：{{items}}",
-      "sheetSubtitle": "家具装车清单 · 展台：{{booths}} · 件数：{{items}}",
-      "stand": "展台 {{number}}",
-      "boothEmpty": "此展台尚未安排家具。",
-      "col": {
-        "code": "编号",
-        "item": "品名",
-        "qty": "数量"
-      },
-      "print": "打印 / 另存为 PDF",
-      "loadedBy": "装车人：______________________",
-      "checkedBy": "检查人：______________________",
-      "date": "日期：____________",
-      "loadError": "无法加载您的展会。",
-      "manifestError": "无法加载此展会的家具。",
-      "standCount_one": "{{count}} 个展台",
-      "standCount_other": "{{count}} 个展台"
     }
   },
   "client": {
@@ -3218,6 +3193,42 @@
       "needLine": "请至少添加一条带说明的明细。",
       "error": "出现问题，请重试。"
     }
+  },
+  "extras": {
+    "pageTitle": "附加物品 · 家具清单",
+    "title": "家具清单",
+    "intro": "选择一个展会即可查看其中每个展台所需的家具，并打印装车清单。",
+    "shows": "展会",
+    "noShows": "暂无展会。",
+    "pickShow": "在左侧选择展会以查看其展台。",
+    "venueTbd": "场馆待定",
+    "summary": "展台：{{booths}} · 件数：{{items}}",
+    "sheetSubtitle": "家具装车清单 · 展台：{{booths}} · 件数：{{items}}",
+    "stand": "展台 {{number}}",
+    "boothEmpty": "此展台尚未安排家具。",
+    "col": {
+      "code": "编号",
+      "item": "品名",
+      "qty": "数量",
+      "stands": "展位数"
+    },
+    "loadedBy": "装车人：______________________",
+    "checkedBy": "检查人：______________________",
+    "date": "日期：____________",
+    "loadError": "无法加载您的展会。",
+    "manifestError": "无法加载此展会的家具。",
+    "standCount_one": "{{count}} 个展台",
+    "standCount_other": "{{count}} 个展台",
+    "pullTitle": "仓库拣货清单",
+    "pullNote": "本次展会所需的全部物品，仅统计一次。先据此拣货，再按展位分配。",
+    "pullSummary": "品类数: {{types}} · 总件数: {{pieces}}",
+    "pullEmpty": "本次展会的展位尚无任何家具。",
+    "printStands": "打印展位清单",
+    "printWarehouse": "打印仓库清单",
+    "sendToChief": "发送给主管",
+    "sendDone": "已发送给 {{count}} 位主管: {{names}}。他们已收到通知和邮件。",
+    "sendDoneNoEmail": "已发送给 {{count}} 位主管: {{names}}。他们已收到应用内通知；此服务器未配置邮件，因此未发送邮件。",
+    "sendError": "无法发送清单。"
   },
   "clientQuotes": {
     "title": "报价单",

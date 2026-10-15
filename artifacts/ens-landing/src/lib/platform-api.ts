@@ -2594,6 +2594,18 @@ export async function getExhibitionFurnitureManifest(
   );
 }
 
+export interface ExtrasSendResult {
+  notified: number;
+  emailed: number;
+  recipients: string[];
+  totals: { booths: number; items: number; itemTypes: number };
+}
+
+/** Post a show's furniture lists to the organization's chiefs. */
+export async function sendExtrasToChief(show: string): Promise<ExtrasSendResult> {
+  return apiJson<ExtrasSendResult>("/platform/extras/send-to-chief", { show });
+}
+
 export function getDocumentDownloadUrl(documentId: string): string {
   return `${API_BASE_URL}/platform/documents/${documentId}/download`;
 }

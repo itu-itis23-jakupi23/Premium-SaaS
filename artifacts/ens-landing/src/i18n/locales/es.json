@@ -471,7 +471,8 @@
       "settings": "Ajustes",
       "quotes": "Presupuestos",
       "invoices": "Facturas",
-      "pipeline": "Embudo de ventas"
+      "pipeline": "Embudo de ventas",
+      "extras": "Extras"
     },
     "common": {
       "cancel": "Cancelar",
@@ -2343,32 +2344,6 @@
         "standType": "Stand Type",
         "status": "Status"
       }
-    },
-    "extras": {
-      "pageTitle": "Extras · Listas de mobiliario",
-      "title": "Listas de mobiliario",
-      "intro": "Elija una feria para ver el mobiliario que necesita cada stand y luego imprima la hoja de carga.",
-      "shows": "Ferias",
-      "noShows": "Todavía no hay ferias.",
-      "pickShow": "Elija una feria a la izquierda para ver sus stands.",
-      "venueTbd": "Recinto por confirmar",
-      "summary": "Stands: {{booths}} · Artículos: {{items}}",
-      "sheetSubtitle": "Hoja de carga de mobiliario · Stands: {{booths}} · Artículos: {{items}}",
-      "stand": "Stand {{number}}",
-      "boothEmpty": "Todavía no hay mobiliario en este stand.",
-      "col": {
-        "code": "Código",
-        "item": "Artículo",
-        "qty": "Cant."
-      },
-      "print": "Imprimir / Guardar como PDF",
-      "loadedBy": "Cargado por: ______________________",
-      "checkedBy": "Revisado por: ______________________",
-      "date": "Fecha: ____________",
-      "loadError": "No se pudieron cargar sus ferias.",
-      "manifestError": "No se pudo cargar el mobiliario de esta feria.",
-      "standCount_one": "{{count}} stand",
-      "standCount_other": "{{count}} stands"
     }
   },
   "client": {
@@ -3218,6 +3193,42 @@
       "needLine": "Añada al menos una línea con descripción.",
       "error": "Algo ha salido mal. Inténtelo de nuevo."
     }
+  },
+  "extras": {
+    "pageTitle": "Extras · Listas de mobiliario",
+    "title": "Listas de mobiliario",
+    "intro": "Elija una feria para ver el mobiliario que necesita cada stand y luego imprima la hoja de carga.",
+    "shows": "Ferias",
+    "noShows": "Todavía no hay ferias.",
+    "pickShow": "Elija una feria a la izquierda para ver sus stands.",
+    "venueTbd": "Recinto por confirmar",
+    "summary": "Stands: {{booths}} · Artículos: {{items}}",
+    "sheetSubtitle": "Hoja de carga de mobiliario · Stands: {{booths}} · Artículos: {{items}}",
+    "stand": "Stand {{number}}",
+    "boothEmpty": "Todavía no hay mobiliario en este stand.",
+    "col": {
+      "code": "Código",
+      "item": "Artículo",
+      "qty": "Cant.",
+      "stands": "Stands"
+    },
+    "loadedBy": "Cargado por: ______________________",
+    "checkedBy": "Revisado por: ______________________",
+    "date": "Fecha: ____________",
+    "loadError": "No se pudieron cargar sus ferias.",
+    "manifestError": "No se pudo cargar el mobiliario de esta feria.",
+    "standCount_one": "{{count}} stand",
+    "standCount_other": "{{count}} stands",
+    "pullTitle": "Lista de preparación de almacén",
+    "pullNote": "Todo lo que necesita esta feria, contado una vez. Prepare a partir de aquí y luego repártalo por stand.",
+    "pullSummary": "Tipos de artículo: {{types}} · Piezas en total: {{pieces}}",
+    "pullEmpty": "Todavía no hay mobiliario en ningún stand de esta feria.",
+    "printStands": "Imprimir listas por stand",
+    "printWarehouse": "Imprimir lista de almacén",
+    "sendToChief": "Enviar al jefe",
+    "sendDone": "Enviado a {{count}} jefe: {{names}}. Tienen una notificación y un correo.",
+    "sendDoneNoEmail": "Enviado a {{count}} jefe: {{names}}. Tienen una notificación en la aplicación; el correo no está configurado en este servidor, así que no se envió ninguno.",
+    "sendError": "No se pudieron enviar las listas."
   },
   "clientQuotes": {
     "title": "Presupuestos",

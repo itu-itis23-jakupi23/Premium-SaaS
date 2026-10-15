@@ -471,7 +471,8 @@
       "settings": "設定",
       "quotes": "見積書",
       "invoices": "請求書",
-      "pipeline": "営業パイプライン"
+      "pipeline": "営業パイプライン",
+      "extras": "付帯品"
     },
     "common": {
       "cancel": "キャンセル",
@@ -2343,32 +2344,6 @@
         "standType": "Stand Type",
         "status": "Status"
       }
-    },
-    "extras": {
-      "pageTitle": "付帯備品 · 什器リスト",
-      "title": "什器リスト",
-      "intro": "展示会を選ぶと、各ブースに必要な什器が一覧できます。積み込みリストとして印刷できます。",
-      "shows": "展示会",
-      "noShows": "展示会はまだありません。",
-      "pickShow": "左の展示会を選ぶとブースが表示されます。",
-      "venueTbd": "会場は未定",
-      "summary": "ブース: {{booths}} · 点数: {{items}}",
-      "sheetSubtitle": "什器積み込みリスト · ブース: {{booths}} · 点数: {{items}}",
-      "stand": "ブース {{number}}",
-      "boothEmpty": "このブースにはまだ什器がありません。",
-      "col": {
-        "code": "コード",
-        "item": "品目",
-        "qty": "数量"
-      },
-      "print": "印刷 / PDF として保存",
-      "loadedBy": "積込担当: ______________________",
-      "checkedBy": "確認者: ______________________",
-      "date": "日付: ____________",
-      "loadError": "展示会を読み込めませんでした。",
-      "manifestError": "この展示会の什器を読み込めませんでした。",
-      "standCount_one": "{{count}} ブース",
-      "standCount_other": "{{count}} ブース"
     }
   },
   "client": {
@@ -3218,6 +3193,42 @@
       "needLine": "内容を入力した明細を1件以上追加してください。",
       "error": "問題が発生しました。もう一度お試しください。"
     }
+  },
+  "extras": {
+    "pageTitle": "付帯備品 · 什器リスト",
+    "title": "什器リスト",
+    "intro": "展示会を選ぶと、各ブースに必要な什器が一覧できます。積み込みリストとして印刷できます。",
+    "shows": "展示会",
+    "noShows": "展示会はまだありません。",
+    "pickShow": "左の展示会を選ぶとブースが表示されます。",
+    "venueTbd": "会場は未定",
+    "summary": "ブース: {{booths}} · 点数: {{items}}",
+    "sheetSubtitle": "什器積み込みリスト · ブース: {{booths}} · 点数: {{items}}",
+    "stand": "ブース {{number}}",
+    "boothEmpty": "このブースにはまだ什器がありません。",
+    "col": {
+      "code": "コード",
+      "item": "品目",
+      "qty": "数量",
+      "stands": "ブース数"
+    },
+    "loadedBy": "積込担当: ______________________",
+    "checkedBy": "確認者: ______________________",
+    "date": "日付: ____________",
+    "loadError": "展示会を読み込めませんでした。",
+    "manifestError": "この展示会の什器を読み込めませんでした。",
+    "standCount_one": "{{count}} ブース",
+    "standCount_other": "{{count}} ブース",
+    "pullTitle": "倉庫ピッキングリスト",
+    "pullNote": "この展示会に必要なものを一度にまとめた一覧です。まずここから出庫し、その後ブースごとに振り分けます。",
+    "pullSummary": "品目数: {{types}} · 合計点数: {{pieces}}",
+    "pullEmpty": "この展示会のどのブースにもまだ什器がありません。",
+    "printStands": "ブース別リストを印刷",
+    "printWarehouse": "倉庫リストを印刷",
+    "sendToChief": "チーフに送信",
+    "sendDone": "{{count}}名のチーフに送信しました: {{names}}。通知とメールが届いています。",
+    "sendDoneNoEmail": "{{count}}名のチーフに送信しました: {{names}}。アプリ内通知は届いています。このサーバーではメールが設定されていないため、メールは送信されていません。",
+    "sendError": "リストを送信できませんでした。"
   },
   "clientQuotes": {
     "title": "見積書",

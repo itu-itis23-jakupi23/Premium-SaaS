@@ -82,6 +82,7 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
     { icon: Briefcase,       labelKey: "chief.nav.projects",   href: "/chief/projects" },
     { icon: Receipt,         labelKey: "chief.nav.quotes",     href: "/chief/quotes" },
     { icon: CreditCard,      labelKey: "chief.nav.invoices",   href: "/chief/invoices" },
+    { icon: ClipboardList,   labelKey: "chief.nav.extras",     href: "/chief/extras" },
     { icon: CalendarDays,    labelKey: "chief.nav.calendar",   href: "/chief/calendar" },
     { icon: MessageSquare,   labelKey: "chief.nav.messages",   href: "/chief/messages" },
     { icon: Settings,        labelKey: "chief.nav.settings",   href: "/chief/settings" },

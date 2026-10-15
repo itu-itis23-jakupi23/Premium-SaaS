@@ -275,6 +275,52 @@ export function dateLabel(iso: string | null | undefined): string | null {
   return parsed.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 }
 
+export async function sendExtrasListEmail(opts: {
+  to: string;
+  name: string;
+  show: string;
+  stands: number;
+  pieces: number;
+  itemTypes: number;
+  sentBy: string;
+  lines: Array<{ sku: string; name: string; qty: number }>;
+}) {
+  const extrasUrl = `${APP_URL}/chief/extras`;
+  // The pull list is the point of the mail: a chief who has to open a browser
+  // to see what is leaving the warehouse will not check it. Long shows are
+  // truncated rather than sent as a hundred-row table nobody scrolls.
+  const shown = opts.lines.slice(0, 40);
+  const remainder = opts.lines.length - shown.length;
+
+  return send(
+    opts.to,
+    `Furniture lists for ${opts.show}`,
+    base(`
+      <h2>Furniture lists for ${esc(opts.show)}</h2>
+      <p>Hi ${esc(opts.name) || "there"},</p>
+      <p>${esc(opts.sentBy)} sent you the furniture lists for <strong>${esc(opts.show)}</strong>:
+        <strong>${esc(opts.stands)}</strong> stands, <strong>${esc(opts.itemTypes)}</strong> item types,
+        <strong>${esc(opts.pieces)}</strong> pieces in total.</p>
+      <h3>Warehouse pull list</h3>
+      <table style="border-collapse:collapse;font-size:14px">
+        ${shown
+          .map(
+            (line) => `<tr>
+              <td style="padding:2px 10px 2px 0">${esc(line.sku) || "-"}</td>
+              <td style="padding:2px 10px 2px 0">${esc(line.name)}</td>
+              <td style="padding:2px 0;text-align:right"><strong>${esc(line.qty)}</strong></td>
+            </tr>`,
+          )
+          .join("")}
+      </table>
+      ${remainder > 0 ? `<p>and ${esc(remainder)} more lines.</p>` : ""}
+      <p>The per-stand breakdown, and a printable version of both, are on the Extras page.</p>
+      <a href="${escUrl(extrasUrl)}" class="cta">Open the furniture lists</a>
+      <div class="box">${esc(extrasUrl)}</div>
+    `),
+  );
+}
+
 export async function sendQuoteReadyEmail(opts: {
   to: string;
   name: string;

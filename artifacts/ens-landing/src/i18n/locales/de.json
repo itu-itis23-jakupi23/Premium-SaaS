@@ -471,7 +471,8 @@
       "settings": "Einstellungen",
       "quotes": "Angebote",
       "invoices": "Rechnungen",
-      "pipeline": "Vertriebs-Pipeline"
+      "pipeline": "Vertriebs-Pipeline",
+      "extras": "Extras"
     },
     "common": {
       "cancel": "Abbrechen",
@@ -2343,32 +2344,6 @@
         "standType": "Stand Type",
         "status": "Status"
       }
-    },
-    "extras": {
-      "pageTitle": "Extras · Möbellisten",
-      "title": "Möbellisten",
-      "intro": "Wählen Sie eine Messe, sehen Sie die Möbel jedes Standes darauf und drucken Sie die Ladeliste.",
-      "shows": "Messen",
-      "noShows": "Noch keine Messen.",
-      "pickShow": "Wählen Sie links eine Messe, um ihre Stände zu sehen.",
-      "venueTbd": "Ort noch offen",
-      "summary": "Stände: {{booths}} · Teile: {{items}}",
-      "sheetSubtitle": "Möbel-Ladeliste · Stände: {{booths}} · Teile: {{items}}",
-      "stand": "Stand {{number}}",
-      "boothEmpty": "Auf diesem Stand ist noch kein Möbel eingeplant.",
-      "col": {
-        "code": "Code",
-        "item": "Artikel",
-        "qty": "Anz."
-      },
-      "print": "Drucken / Als PDF speichern",
-      "loadedBy": "Geladen von: ______________________",
-      "checkedBy": "Geprüft von: ______________________",
-      "date": "Datum: ____________",
-      "loadError": "Ihre Messen konnten nicht geladen werden.",
-      "manifestError": "Die Möbel für diese Messe konnten nicht geladen werden.",
-      "standCount_one": "{{count}} Stand",
-      "standCount_other": "{{count}} Stände"
     }
   },
   "client": {
@@ -3218,6 +3193,42 @@
       "needLine": "Fügen Sie mindestens eine Position mit Beschreibung hinzu.",
       "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
     }
+  },
+  "extras": {
+    "pageTitle": "Extras · Möbellisten",
+    "title": "Möbellisten",
+    "intro": "Wählen Sie eine Messe, sehen Sie die Möbel jedes Standes darauf und drucken Sie die Ladeliste.",
+    "shows": "Messen",
+    "noShows": "Noch keine Messen.",
+    "pickShow": "Wählen Sie links eine Messe, um ihre Stände zu sehen.",
+    "venueTbd": "Ort noch offen",
+    "summary": "Stände: {{booths}} · Teile: {{items}}",
+    "sheetSubtitle": "Möbel-Ladeliste · Stände: {{booths}} · Teile: {{items}}",
+    "stand": "Stand {{number}}",
+    "boothEmpty": "Auf diesem Stand ist noch kein Möbel eingeplant.",
+    "col": {
+      "code": "Code",
+      "item": "Artikel",
+      "qty": "Anz.",
+      "stands": "Stände"
+    },
+    "loadedBy": "Geladen von: ______________________",
+    "checkedBy": "Geprüft von: ______________________",
+    "date": "Datum: ____________",
+    "loadError": "Ihre Messen konnten nicht geladen werden.",
+    "manifestError": "Die Möbel für diese Messe konnten nicht geladen werden.",
+    "standCount_one": "{{count}} Stand",
+    "standCount_other": "{{count}} Stände",
+    "pullTitle": "Kommissionierliste Lager",
+    "pullNote": "Alles, was diese Messe braucht, einmal gezählt. Hiernach kommissionieren, dann auf die Stände aufteilen.",
+    "pullSummary": "Artikelarten: {{types}} · Teile gesamt: {{pieces}}",
+    "pullEmpty": "Auf keinem Stand dieser Messe ist bisher Mobiliar eingeplant.",
+    "printStands": "Standlisten drucken",
+    "printWarehouse": "Lagerliste drucken",
+    "sendToChief": "An Leitung senden",
+    "sendDone": "An {{count}} Leitung gesendet: {{names}}. Sie haben eine Benachrichtigung und eine E-Mail erhalten.",
+    "sendDoneNoEmail": "An {{count}} Leitung gesendet: {{names}}. Sie haben eine Benachrichtigung in der App; E-Mail ist auf diesem Server nicht konfiguriert, es wurde keine gesendet.",
+    "sendError": "Die Listen konnten nicht gesendet werden."
   },
   "clientQuotes": {
     "title": "Angebote",

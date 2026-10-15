@@ -43,6 +43,36 @@
   border-bottom: 1px solid currentColor;
 }
 
+/* The warehouse pull list: the whole show counted once, ahead of the stands. */
+.extras-pull {
+  margin-bottom: 18px;
+}
+
+.extras-pull h2 {
+  font-size: 11pt;
+  font-weight: 700;
+  margin: 0 0 4px;
+  padding-bottom: 2px;
+  border-bottom: 2px solid currentColor;
+}
+
+.extras-pull-note {
+  margin: 0 0 6px;
+  font-size: 9pt;
+  opacity: 0.7;
+}
+
+/* How many stands want the item - context for the count beside it, not the
+   number anybody loads, so it is set back a step. */
+.extras-muted {
+  opacity: 0.6;
+}
+
+/* The number the warehouse actually counts out. */
+.extras-total {
+  font-weight: 700;
+}
+
 .extras-stand {
   font-weight: 400;
   opacity: 0.7;
@@ -162,6 +192,33 @@
     width: auto !important;
     max-width: none !important;
     margin: 0 !important;
+  }
+
+  /* The pull list is what the warehouse works from, so it gets a page to
+     itself and the stands start on the next one. `break-after` rather than a
+     spacer: a spacer that lands near a page edge produces a blank page. */
+  .pm-extras-page .extras-pull {
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+  }
+
+  /* One document on screen, two jobs on paper.
+     Printing the warehouse list means the pull list alone, with no page break
+     after it - the break exists to separate it from the stands, and with no
+     stands following it would print a blank second page. Printing the stand
+     lists leaves the pull list out entirely. */
+  .pm-extras-page[data-print="warehouse"] .extras-booth {
+    display: none !important;
+  }
+
+  .pm-extras-page[data-print="warehouse"] .extras-pull {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .pm-extras-page[data-print="stands"] .extras-pull {
+    display: none !important;
   }
 
   .pm-extras-page .extras-booth {

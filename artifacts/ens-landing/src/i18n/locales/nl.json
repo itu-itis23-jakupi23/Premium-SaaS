@@ -471,7 +471,8 @@
       "settings": "Instellingen",
       "quotes": "Offertes",
       "invoices": "Facturen",
-      "pipeline": "Verkooppijplijn"
+      "pipeline": "Verkooppijplijn",
+      "extras": "Extra's"
     },
     "common": {
       "cancel": "Annuleren",
@@ -2343,32 +2344,6 @@
         "standType": "Stand Type",
         "status": "Status"
       }
-    },
-    "extras": {
-      "pageTitle": "Extra's · Meubellijsten",
-      "title": "Meubellijsten",
-      "intro": "Kies een beurs om te zien welk meubilair elke stand nodig heeft en druk de laadlijst af.",
-      "shows": "Beurzen",
-      "noShows": "Nog geen beurzen.",
-      "pickShow": "Kies links een beurs om de standen te zien.",
-      "venueTbd": "Locatie nog te bevestigen",
-      "summary": "Standen: {{booths}} · Stuks: {{items}}",
-      "sheetSubtitle": "Laadlijst meubilair · Standen: {{booths}} · Stuks: {{items}}",
-      "stand": "Stand {{number}}",
-      "boothEmpty": "Nog geen meubilair op deze stand.",
-      "col": {
-        "code": "Code",
-        "item": "Artikel",
-        "qty": "Aantal"
-      },
-      "print": "Afdrukken / Opslaan als PDF",
-      "loadedBy": "Geladen door: ______________________",
-      "checkedBy": "Gecontroleerd door: ______________________",
-      "date": "Datum: ____________",
-      "loadError": "Uw beurzen konden niet worden geladen.",
-      "manifestError": "Het meubilair voor deze beurs kon niet worden geladen.",
-      "standCount_one": "{{count}} stand",
-      "standCount_other": "{{count}} standen"
     }
   },
   "client": {
@@ -3218,6 +3193,42 @@
       "needLine": "Voeg minstens één regel met omschrijving toe.",
       "error": "Er is iets misgegaan. Probeer het opnieuw."
     }
+  },
+  "extras": {
+    "pageTitle": "Extra's · Meubellijsten",
+    "title": "Meubellijsten",
+    "intro": "Kies een beurs om te zien welk meubilair elke stand nodig heeft en druk de laadlijst af.",
+    "shows": "Beurzen",
+    "noShows": "Nog geen beurzen.",
+    "pickShow": "Kies links een beurs om de standen te zien.",
+    "venueTbd": "Locatie nog te bevestigen",
+    "summary": "Standen: {{booths}} · Stuks: {{items}}",
+    "sheetSubtitle": "Laadlijst meubilair · Standen: {{booths}} · Stuks: {{items}}",
+    "stand": "Stand {{number}}",
+    "boothEmpty": "Nog geen meubilair op deze stand.",
+    "col": {
+      "code": "Code",
+      "item": "Artikel",
+      "qty": "Aantal",
+      "stands": "Stands"
+    },
+    "loadedBy": "Geladen door: ______________________",
+    "checkedBy": "Gecontroleerd door: ______________________",
+    "date": "Datum: ____________",
+    "loadError": "Uw beurzen konden niet worden geladen.",
+    "manifestError": "Het meubilair voor deze beurs kon niet worden geladen.",
+    "standCount_one": "{{count}} stand",
+    "standCount_other": "{{count}} standen",
+    "pullTitle": "Magazijn-piklijst",
+    "pullNote": "Alles wat deze beurs nodig heeft, één keer geteld. Pik hiervan en verdeel het daarna per stand.",
+    "pullSummary": "Soorten artikelen: {{types}} · Stuks totaal: {{pieces}}",
+    "pullEmpty": "Nog geen meubilair op enige stand van deze beurs.",
+    "printStands": "Standlijsten afdrukken",
+    "printWarehouse": "Magazijnlijst afdrukken",
+    "sendToChief": "Naar chef sturen",
+    "sendDone": "Verstuurd naar {{count}} chef: {{names}}. Zij hebben een melding en een e-mail.",
+    "sendDoneNoEmail": "Verstuurd naar {{count}} chef: {{names}}. Zij hebben een melding in de app; e-mail is op deze server niet ingesteld, dus er is er geen verstuurd.",
+    "sendError": "De lijsten konden niet worden verstuurd."
   },
   "clientQuotes": {
     "title": "Offertes",

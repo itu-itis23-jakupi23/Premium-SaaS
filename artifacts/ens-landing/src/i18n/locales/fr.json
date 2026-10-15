@@ -471,7 +471,8 @@
       "settings": "Paramètres",
       "quotes": "Devis",
       "invoices": "Factures",
-      "pipeline": "Pipeline commercial"
+      "pipeline": "Pipeline commercial",
+      "extras": "Extras"
     },
     "common": {
       "cancel": "Annuler",
@@ -2343,32 +2344,6 @@
         "standType": "Stand Type",
         "status": "Status"
       }
-    },
-    "extras": {
-      "pageTitle": "Extras · Listes de mobilier",
-      "title": "Listes de mobilier",
-      "intro": "Choisissez un salon pour voir le mobilier dont chaque stand a besoin, puis imprimez la liste de chargement.",
-      "shows": "Salons",
-      "noShows": "Aucun salon pour le moment.",
-      "pickShow": "Choisissez un salon à gauche pour voir ses stands.",
-      "venueTbd": "Lieu à confirmer",
-      "summary": "Stands : {{booths}} · Articles : {{items}}",
-      "sheetSubtitle": "Liste de chargement mobilier · Stands : {{booths}} · Articles : {{items}}",
-      "stand": "Stand {{number}}",
-      "boothEmpty": "Aucun mobilier sur ce stand pour le moment.",
-      "col": {
-        "code": "Code",
-        "item": "Article",
-        "qty": "Qté"
-      },
-      "print": "Imprimer / Enregistrer en PDF",
-      "loadedBy": "Chargé par : ______________________",
-      "checkedBy": "Vérifié par : ______________________",
-      "date": "Date : ____________",
-      "loadError": "Vos salons n'ont pas pu être chargés.",
-      "manifestError": "Le mobilier de ce salon n'a pas pu être chargé.",
-      "standCount_one": "{{count}} stand",
-      "standCount_other": "{{count}} stands"
     }
   },
   "client": {
@@ -3218,6 +3193,42 @@
       "needLine": "Ajoutez au moins une ligne avec une description.",
       "error": "Une erreur est survenue. Veuillez réessayer."
     }
+  },
+  "extras": {
+    "pageTitle": "Extras · Listes de mobilier",
+    "title": "Listes de mobilier",
+    "intro": "Choisissez un salon pour voir le mobilier dont chaque stand a besoin, puis imprimez la liste de chargement.",
+    "shows": "Salons",
+    "noShows": "Aucun salon pour le moment.",
+    "pickShow": "Choisissez un salon à gauche pour voir ses stands.",
+    "venueTbd": "Lieu à confirmer",
+    "summary": "Stands : {{booths}} · Articles : {{items}}",
+    "sheetSubtitle": "Liste de chargement mobilier · Stands : {{booths}} · Articles : {{items}}",
+    "stand": "Stand {{number}}",
+    "boothEmpty": "Aucun mobilier sur ce stand pour le moment.",
+    "col": {
+      "code": "Code",
+      "item": "Article",
+      "qty": "Qté",
+      "stands": "Stands"
+    },
+    "loadedBy": "Chargé par : ______________________",
+    "checkedBy": "Vérifié par : ______________________",
+    "date": "Date : ____________",
+    "loadError": "Vos salons n'ont pas pu être chargés.",
+    "manifestError": "Le mobilier de ce salon n'a pas pu être chargé.",
+    "standCount_one": "{{count}} stand",
+    "standCount_other": "{{count}} stands",
+    "pullTitle": "Liste de préparation entrepôt",
+    "pullNote": "Tout ce dont ce salon a besoin, compté une seule fois. Préparez d'après cette liste, puis répartissez par stand.",
+    "pullSummary": "Types d'articles : {{types}} · Pièces au total : {{pieces}}",
+    "pullEmpty": "Aucun mobilier sur aucun stand de ce salon pour l'instant.",
+    "printStands": "Imprimer les listes par stand",
+    "printWarehouse": "Imprimer la liste entrepôt",
+    "sendToChief": "Envoyer au chef",
+    "sendDone": "Envoyé à {{count}} chef de projet : {{names}}. Ils ont une notification et un e-mail.",
+    "sendDoneNoEmail": "Envoyé à {{count}} chef de projet : {{names}}. Ils ont une notification dans l'application ; l'e-mail n'est pas configuré sur ce serveur, aucun n'a été envoyé.",
+    "sendError": "Les listes n'ont pas pu être envoyées."
   },
   "clientQuotes": {
     "title": "Devis",

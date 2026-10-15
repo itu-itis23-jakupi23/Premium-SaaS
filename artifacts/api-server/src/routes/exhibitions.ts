@@ -4,6 +4,8 @@ import { db } from "@workspace/db";
 import { calendarDateToInstant } from "@workspace/api-zod";
 import { requireAuth, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
+import { deliverNotification } from "../lib/notifications";
+import { sendExtrasListEmail } from "../lib/email";
 import { leadTimeAssessment, planMilestones } from "../lib/exhibition-schedule";
 
 /**
@@ -182,16 +184,16 @@ router.get("/platform/extras/shows", async (req, res) => {
  * kind 'furniture' - structure and lighting are part of the build, not things
  * picked off a shelf.
  */
-router.get("/platform/extras/furniture-manifest", async (req, res) => {
-  const auth = req.auth!;
-  if (!isStaff(auth)) { res.status(403).json({ error: { code: "forbidden", message: "Staff only." } }); return; }
-
-  const show = typeof req.query.show === "string" ? req.query.show.trim() : "";
-  if (!show) {
-    res.status(400).json({ error: { code: "show_required", message: "A show name is required." } });
-    return;
-  }
-
+/**
+ * The furniture every stand on a show needs, read from the saved drawings.
+ *
+ * Shared by the page that displays it and the send that posts it to the
+ * chief, because the two must not be able to disagree. A chief told that a
+ * show needs ninety pieces is going to sign off ninety pieces; recomputing
+ * that number from a second query, or trusting one the browser sent, is how
+ * the notification and the sheet drift apart.
+ */
+async function loadFurnitureManifest(auth: AuthContext, show: string) {
   const rows = await queryRows<{
     projectId: string;
     projectName: string;
@@ -269,7 +271,7 @@ router.get("/platform/extras/furniture-manifest", async (req, res) => {
   `);
 
   const boothList = [...booths.values()];
-  res.json({
+  return {
     exhibition: {
       name: show,
       venue: detail[0]?.venue ?? null,
@@ -281,6 +283,118 @@ router.get("/platform/extras/furniture-manifest", async (req, res) => {
       booths: boothList.length,
       items: boothList.reduce((sum, b) => sum + b.items.reduce((n, i) => n + i.qty, 0), 0),
     },
+  };
+}
+
+router.get("/platform/extras/furniture-manifest", async (req, res) => {
+  const auth = req.auth!;
+  if (!isStaff(auth)) { res.status(403).json({ error: { code: "forbidden", message: "Staff only." } }); return; }
+
+  const show = typeof req.query.show === "string" ? req.query.show.trim() : "";
+  if (!show) {
+    res.status(400).json({ error: { code: "show_required", message: "A show name is required." } });
+    return;
+  }
+
+  res.json(await loadFurnitureManifest(auth, show));
+});
+
+/**
+ * Send a show's furniture lists to the people who sign off what leaves.
+ *
+ * "Send to the chief" was first read as "let the chief open the page", which
+ * is not the same thing: the person who needs to act on a loading list does
+ * not know it is ready until someone tells them. This tells them.
+ *
+ * In-app notification and email both go out. The notification is what works
+ * today - email returns "skipped" until a sending key is configured - so the
+ * response reports what each did rather than claiming delivery, and the page
+ * says so. Claiming an email was sent when it was dropped on the floor is how
+ * a chief misses a show.
+ *
+ * Recipients are the organization's chiefs, owners and admins. A project
+ * manager may send; nobody outside the organization is reachable, because the
+ * recipient query is scoped to it and the show is read through the caller's
+ * own tenant.
+ */
+router.post("/platform/extras/send-to-chief", async (req, res) => {
+  const auth = req.auth!;
+  if (!isStaff(auth)) { res.status(403).json({ error: { code: "forbidden", message: "Staff only." } }); return; }
+
+  const show = typeof req.body?.show === "string" ? req.body.show.trim() : "";
+  if (!show) {
+    res.status(400).json({ error: { code: "show_required", message: "A show name is required." } });
+    return;
+  }
+
+  const manifest = await loadFurnitureManifest(auth, show);
+  if (manifest.totals.booths === 0) {
+    res.status(404).json({ error: { code: "show_not_found", message: "That show has no stands." } });
+    return;
+  }
+
+  const recipients = await queryRows<{ id: string; name: string | null; email: string }>(sql`
+    select u.id::text, u.name, u.email
+    from users u
+    join memberships m on m.user_id = u.id
+      and m.organization_id = ${auth.organization.id}::uuid
+      and m.status = 'active'
+    where u.deleted_at is null and u.disabled_at is null
+      and m.role::text in ('chief', 'owner', 'admin')
+    order by u.name asc
+  `);
+
+  if (recipients.length === 0) {
+    res.status(409).json({
+      error: { code: "no_chief", message: "This organization has no chief, owner or admin to send to." },
+    });
+    return;
+  }
+
+  // One line per catalogue item for the whole show: the same aggregate the
+  // page prints, computed here so the mail and the sheet cannot disagree.
+  const byItem = new Map<string, { sku: string; name: string; qty: number }>();
+  for (const booth of manifest.booths) {
+    for (const item of booth.items) {
+      const key = item.sku || item.name;
+      const line = byItem.get(key) ?? { sku: item.sku, name: item.name, qty: 0 };
+      line.qty += item.qty;
+      byItem.set(key, line);
+    }
+  }
+  const lines = [...byItem.values()].sort((a, b) =>
+    (a.sku || a.name).localeCompare(b.sku || b.name, undefined, { numeric: true }),
+  );
+
+  const summary = `${manifest.totals.booths} stands · ${lines.length} item types · ${manifest.totals.items} pieces`;
+  let emailed = 0;
+  for (const recipient of recipients) {
+    await deliverNotification(
+      auth.organization.id,
+      recipient.id,
+      `Furniture lists for ${show}`,
+      `${auth.user.name} sent the furniture lists for ${show}: ${summary}.`,
+      "/chief/extras",
+      "reports",
+    );
+    const delivery = await sendExtrasListEmail({
+      to: recipient.email,
+      name: recipient.name ?? "",
+      show,
+      stands: manifest.totals.booths,
+      pieces: manifest.totals.items,
+      itemTypes: lines.length,
+      sentBy: auth.user.name,
+      lines,
+    });
+    if (delivery.ok) emailed += 1;
+  }
+
+  res.json({
+    notified: recipients.length,
+    emailed,
+    recipients: recipients.map((r) => r.name || r.email),
+    totals: { ...manifest.totals, itemTypes: lines.length },
   });
 });
 

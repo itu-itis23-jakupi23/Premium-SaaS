@@ -39,7 +39,20 @@ test("the Extras sheet prints with controls hidden and leaves other routes print
   await page.goto("/pm/extras");
   await page.getByTestId(`extras-show-${showName}`).click();
   const sheet = page.locator(".extras-sheet");
-  await expect(sheet.getByText("Fixture Paper Chair", { exact: true })).toBeVisible();
+  const pullList = sheet.locator(".extras-pull");
+  const standList = sheet.locator(".extras-booth");
+  await expect(standList.getByText("Fixture Paper Chair", { exact: true })).toBeVisible();
+
+  /**
+   * The warehouse total, which is the number somebody counts onto a van.
+   *
+   * The fixture puts three chairs on one stand, so the pull list must say
+   * three. An aggregate that silently counted rows rather than pieces would
+   * say one and still look like a working page.
+   */
+  await expect(pullList.getByText("Fixture Paper Chair", { exact: true })).toBeVisible();
+  await expect(pullList.locator("tbody tr")).toHaveCount(1);
+  await expect(pullList.locator("tbody tr td.extras-total")).toHaveText("3");
   await expect(page.getByTestId("extras-print")).toBeVisible();
   await page.emulateMedia({ media: "print" });
 
@@ -73,14 +86,46 @@ test("the Extras sheet prints with controls hidden and leaves other routes print
   expect(itemInk, "the loading sheet prints in black ink").toBe("rgb(0, 0, 0)");
 
   await expect(sheet).toBeVisible();
-  await expect(sheet.getByText("Fixture Paper Chair", { exact: true })).toBeVisible();
+  await expect(standList.getByText("Fixture Paper Chair", { exact: true })).toBeVisible();
   await expect(page.getByTestId("extras-print")).toBeHidden();
   await expect(page.getByTestId(`extras-show-${showName}`)).toBeHidden();
   await expect(page.locator(".extras-layout")).toHaveCSS("display", "block");
   await expect(sheet).toHaveCSS("page", "pm-extras-sheet");
   await expect(sheet).toHaveCSS("padding", "0px");
   await expect(sheet).toHaveCSS("break-inside", "auto");
-  await expect(sheet.locator("thead")).toHaveCSS("display", "table-header-group");
+  // Both tables repeat their header on every page they span.
+  await expect(standList.locator("thead")).toHaveCSS("display", "table-header-group");
+  await expect(pullList.locator("thead")).toHaveCSS("display", "table-header-group");
+
+  /**
+   * The two sheets are one document on screen and two jobs on paper.
+   *
+   * `window.print()` is stubbed because the print dialog is modal and would
+   * hang the run; the assertion is on what the page would hand the printer,
+   * which is the part that was wrong before these existed. The count at the
+   * end proves the buttons actually printed rather than only restyling.
+   */
+  await page.emulateMedia({ media: "screen" });
+  await page.evaluate(() => {
+    (window as unknown as { __printCalls: number }).__printCalls = 0;
+    window.print = () => { (window as unknown as { __printCalls: number }).__printCalls += 1; };
+  });
+
+  await page.getByTestId("extras-print-warehouse").click();
+  await page.emulateMedia({ media: "print" });
+  await expect(pullList, "the warehouse sheet is the pull list").toBeVisible();
+  await expect(standList, "the warehouse sheet carries no stand pages").toBeHidden();
+
+  await page.emulateMedia({ media: "screen" });
+  await page.getByTestId("extras-print").click();
+  await page.emulateMedia({ media: "print" });
+  await expect(standList, "the stand sheet carries the stands").toBeVisible();
+  await expect(pullList, "the stand sheet carries no pull list").toBeHidden();
+
+  expect(
+    await page.evaluate(() => (window as unknown as { __printCalls: number }).__printCalls),
+    "both buttons reached the printer",
+  ).toBe(2);
 
   // Navigate in the SPA so the already loaded CSS chunk stays in the browser.
   await page.emulateMedia({ media: "screen" });

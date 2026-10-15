@@ -471,7 +471,8 @@
       "settings": "Ayarlar",
       "quotes": "Teklifler",
       "invoices": "Faturalar",
-      "pipeline": "Satış Hattı"
+      "pipeline": "Satış Hattı",
+      "extras": "Ekstralar"
     },
     "common": {
       "cancel": "İptal",
@@ -2343,32 +2344,6 @@
         "standType": "Stand Type",
         "status": "Status"
       }
-    },
-    "extras": {
-      "pageTitle": "Ekstralar · Mobilya listeleri",
-      "title": "Mobilya listeleri",
-      "intro": "Bir fuar seçin, üzerindeki her standın ihtiyacı olan mobilyayı görün ve yükleme listesini yazdırın.",
-      "shows": "Fuarlar",
-      "noShows": "Henüz fuar yok.",
-      "pickShow": "Standlarını görmek için soldan bir fuar seçin.",
-      "venueTbd": "Yer henüz belli değil",
-      "summary": "Stand: {{booths}} · Parça: {{items}}",
-      "sheetSubtitle": "Mobilya yükleme listesi · Stand: {{booths}} · Parça: {{items}}",
-      "stand": "Stand {{number}}",
-      "boothEmpty": "Bu standa henüz mobilya eklenmedi.",
-      "col": {
-        "code": "Kod",
-        "item": "Ürün",
-        "qty": "Adet"
-      },
-      "print": "Yazdır / PDF olarak kaydet",
-      "loadedBy": "Yükleyen: ______________________",
-      "checkedBy": "Kontrol eden: ______________________",
-      "date": "Tarih: ____________",
-      "loadError": "Fuarlarınız yüklenemedi.",
-      "manifestError": "Bu fuarın mobilyaları yüklenemedi.",
-      "standCount_one": "{{count}} stand",
-      "standCount_other": "{{count}} stand"
     }
   },
   "client": {
@@ -3218,6 +3193,42 @@
       "needLine": "Açıklaması olan en az bir kalem ekleyin.",
       "error": "Bir sorun oluştu. Lütfen tekrar deneyin."
     }
+  },
+  "extras": {
+    "pageTitle": "Ekstralar · Mobilya listeleri",
+    "title": "Mobilya listeleri",
+    "intro": "Bir fuar seçin, üzerindeki her standın ihtiyacı olan mobilyayı görün ve yükleme listesini yazdırın.",
+    "shows": "Fuarlar",
+    "noShows": "Henüz fuar yok.",
+    "pickShow": "Standlarını görmek için soldan bir fuar seçin.",
+    "venueTbd": "Yer henüz belli değil",
+    "summary": "Stand: {{booths}} · Parça: {{items}}",
+    "sheetSubtitle": "Mobilya yükleme listesi · Stand: {{booths}} · Parça: {{items}}",
+    "stand": "Stand {{number}}",
+    "boothEmpty": "Bu standa henüz mobilya eklenmedi.",
+    "col": {
+      "code": "Kod",
+      "item": "Ürün",
+      "qty": "Adet",
+      "stands": "Stant"
+    },
+    "loadedBy": "Yükleyen: ______________________",
+    "checkedBy": "Kontrol eden: ______________________",
+    "date": "Tarih: ____________",
+    "loadError": "Fuarlarınız yüklenemedi.",
+    "manifestError": "Bu fuarın mobilyaları yüklenemedi.",
+    "standCount_one": "{{count}} stand",
+    "standCount_other": "{{count}} stand",
+    "pullTitle": "Depo çekme listesi",
+    "pullNote": "Bu fuarın ihtiyacı olan her şey, bir kez sayıldı. Önce buradan çekin, sonra stantlara bölün.",
+    "pullSummary": "Ürün çeşidi: {{types}} · Toplam parça: {{pieces}}",
+    "pullEmpty": "Bu fuarın hiçbir standında henüz mobilya yok.",
+    "printStands": "Stant listelerini yazdır",
+    "printWarehouse": "Depo listesini yazdır",
+    "sendToChief": "Şefe gönder",
+    "sendDone": "{{count}} şef yöneticiye gönderildi: {{names}}. Bildirim ve e-posta aldılar.",
+    "sendDoneNoEmail": "{{count}} şef yöneticiye gönderildi: {{names}}. Uygulamada bildirim aldılar; bu sunucuda e-posta yapılandırılmadığı için e-posta gönderilmedi.",
+    "sendError": "Listeler gönderilemedi."
   },
   "clientQuotes": {
     "title": "Teklifler",
