@@ -72,9 +72,20 @@ export default tseslint.config(
   })),
   {
     files: backendFiles,
-    languageOptions: { globals: globals.node },
+    languageOptions: {
+      globals: globals.node,
+      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+    },
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
+      /**
+       * Type-aware, so this block pays for a typed lint pass: 11s to 27s on
+       * the backend. Worth it here, where an unhandled rejection takes the
+       * process with it - a dropped `await` on a payment write is the case
+       * this is guarding. The source was already clean when the rule went on,
+       * which is the point: it locks in a standard the code already meets.
+       */
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-namespace": "off",
       "@typescript-eslint/no-unused-vars": [
         "error",
@@ -167,7 +178,16 @@ export default tseslint.config(
     rules: {
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "error",
-      "@typescript-eslint/no-explicit-any": "off",
+      /**
+       * On because there is nothing left to exempt: the renderer boundary now
+       * states its real types, and the one remaining cast - a version record
+       * whose `workspace` is optional - says so instead of hiding it.
+       *
+       * Deliberately without the type-aware pass the backend takes. A floating
+       * promise in the browser does not take a process down, and the extra
+       * ~30s on every lint buys less here.
+       */
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": [
         "error",
         {

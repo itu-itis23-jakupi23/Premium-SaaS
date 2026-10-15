@@ -1,5 +1,14 @@
 import { BoothIframe, type CatalogDragItem } from './BoothIframe';
 
+import type { WorkspacePlacedItem, WorkspaceRoom } from "@/lib/platform-api";
+
+// The renderer boundary. `placedItems` and `rooms` have real types - the same
+// ones the API and the validator use - so they are typed here rather than left
+// as any[]: this is the seam the three renderers meet at, and a shape mismatch
+// across it has produced live bugs before. `detail` stays `unknown` because it
+// genuinely comes from the untyped renderer bundle and the caller has to narrow
+// it; `unknown` says that, `any` only hides it.
+
 // ─────────────────────────────────────────────────────────────────
 // Types — kept compatible with existing callers
 // ─────────────────────────────────────────────────────────────────
@@ -20,19 +29,19 @@ export interface BoothConfig3D {
   openLeft?: boolean;
   openRight?: boolean;
   openBack?: boolean;
-  placedItems?: any[];
-  rooms?: any[];
+  placedItems?: WorkspacePlacedItem[];
+  rooms?: WorkspaceRoom[];
   /** Items selected in the workspace; dragging any of them moves all of them. */
   selectedItemIds?: string[];
   /** Room selected in the workspace panel; opens that room up in the renderer. */
   activeRoomId?: string;
-  panelOverrides?: Record<string, any>;
+  panelOverrides?: Record<string, unknown>;
   frontSupportPositions?: number[];
   suppressedDefaultPositions?: number[];
   fasciaEnabled?: boolean;
   fasciaOption?: string;
   lightingPreset?: string;
-  pins?: any[];
+  pins?: unknown[];
   pinMode?: boolean;
   invalidItemIds?: string[];
   catalogDragItem?: CatalogDragItem | null;
@@ -41,12 +50,12 @@ export interface BoothConfig3D {
   onGestureEnd?: (kind: string) => void;
   /** Keyboard shortcut pressed while focus was inside the renderer. */
   onShortcut?: (action: string) => void;
-  onItemSelect?: (id: string | null, partId?: string | null, detail?: any) => void;
+  onItemSelect?: (id: string | null, partId?: string | null, detail?: unknown) => void;
   onItemDelete?: (id: string) => void;
   onItemRotate?: (id: string, patch: { rotationY: number }) => void;
-  onRoomMove?: (id: string, patch: any) => void;
+  onRoomMove?: (id: string, patch: Partial<WorkspaceRoom>) => void;
   onFrontSupportMove?: (positions: number[], suppressedDefaultPositions: number[]) => void;
-  onPinRequest?: (partId: string, detail: any) => void;
+  onPinRequest?: (partId: string, detail: unknown) => void;
   onCatalogItemDrop?: (catalogId: string, position: { x: number; z: number }) => void;
   onCatalogItemDropRejected?: (catalogId: string, reason: string) => void;
 }

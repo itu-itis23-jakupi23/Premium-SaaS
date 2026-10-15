@@ -34,6 +34,7 @@ import {
   workspaceApprovalStageLabel,
   type ProjectWorkspace,
   type WorkspaceState,
+  type WorkspaceVersion,
 } from "@/lib/platform-api";
 import {
   Lock,
@@ -218,9 +219,23 @@ export default function ClientWorkspace() {
       label: `v${v.versionNumber} - ${v.title}`,
       value: String(v.versionNumber),
     })) ?? VERSIONS;
-  const selectedVersionRecord =
+  /**
+   * The version being viewed, which may or may not carry its workspace.
+   *
+   * `versions` entries are full `WorkspaceVersion` records and include one;
+   * `currentVersion` is `Omit<WorkspaceVersion, "workspace">` and does not. The
+   * union therefore has no `workspace` property, which is why this was cast to
+   * `any` - and the cast hid the fact that reading `.workspace` off the
+   * current-version summary yields undefined and silently falls through to
+   * `workspaceRecord.workspace` below. Stating the optional property makes that
+   * fallback deliberate instead of accidental.
+   */
+  const selectedVersionRecord:
+    | (Omit<WorkspaceVersion, "workspace"> & { workspace?: WorkspaceState })
+    | null
+    | undefined =
     workspaceRecord?.versions.find((v) => String(v.versionNumber) === version) ??
-    (workspaceRecord?.currentVersion as any);
+    workspaceRecord?.currentVersion;
   const selectedWorkspace = selectedVersionRecord?.workspace ?? workspaceRecord?.workspace;
   const costEstimateCents = selectedVersionRecord?.costEstimateCents ?? 0;
   const unpricedItemCount = (selectedWorkspace as { unpricedItemCount?: number } | undefined)?.unpricedItemCount ?? 0;
