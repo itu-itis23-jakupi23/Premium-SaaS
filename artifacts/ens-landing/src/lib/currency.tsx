@@ -4,8 +4,18 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
  * Display-level currency conversion.
  *
  * All money in the system is stored in USD (cents server-side). Conversion
- * happens only at render time. Rates below are display defaults; the leasing
- * company can maintain real rates later without changing stored amounts.
+ * happens only at render time, so a rate change never rewrites a stored
+ * amount - and never changes what a client was actually invoiced, because
+ * quotes and invoices carry their own currency and are formatted from it
+ * directly, without passing through here.
+ *
+ * ── These rates are fixed, and that is a liability ──────────────────────────
+ * They are hand-maintained constants, not a feed. A lira rate in particular
+ * moves enough that a months-old constant misstates every converted figure, so
+ * `RATES_AS_OF` is published alongside them and the UI says how old they are
+ * rather than presenting a stale conversion as current. Replacing this with a
+ * daily rate fetch is the real fix; until then the staleness is at least
+ * visible instead of silent.
  */
 export const CURRENCIES = {
   USD: { symbol: "$", label: "USD", ratePerUsd: 1 },
@@ -14,7 +24,51 @@ export const CURRENCIES = {
   GBP: { symbol: "£", label: "GBP", ratePerUsd: 0.78 },
 } as const;
 
+/**
+ * When the rates above were last set by hand, as `YYYY-MM-DD`.
+ *
+ * Update this in the same edit as any rate. It is what `ratesAgeInDays` reads
+ * to decide whether to warn, so leaving it behind makes the warning lie.
+ */
+export const RATES_AS_OF = "2026-10-15";
+
+/** Beyond this, a converted figure is old enough to be worth flagging. */
+export const RATES_STALE_AFTER_DAYS = 30;
+
 export type CurrencyCode = keyof typeof CURRENCIES;
+
+/** How old the hand-maintained rates are, in whole days. */
+export function ratesAgeInDays(now: Date = new Date()): number {
+  const asOf = new Date(`${RATES_AS_OF}T12:00:00.000Z`);
+  if (Number.isNaN(asOf.getTime())) return Number.POSITIVE_INFINITY;
+  return Math.max(0, Math.floor((now.getTime() - asOf.getTime()) / 86_400_000));
+}
+
+/** Whether a converted figure should carry a caveat. */
+export function ratesAreStale(now: Date = new Date()): boolean {
+  return ratesAgeInDays(now) > RATES_STALE_AFTER_DAYS;
+}
+
+/**
+ * Convert between any two currencies, via USD as the pivot.
+ *
+ * The catalogue is genuinely mixed: the Sedef rental furniture is priced in
+ * lira, while the lighting and fascia entries that were already here are in
+ * dollars - a 15 spotlight beside a 3450 showcase only makes sense if the two
+ * are in different currencies. Leaving that implicit is how a quote total ends
+ * up forty times wrong, so every price now states its own currency and this is
+ * what reconciles them.
+ */
+export function convertCurrency(
+  amount: number,
+  from: CurrencyCode,
+  to: CurrencyCode,
+): number {
+  if (!Number.isFinite(amount)) return 0;
+  if (from === to) return amount;
+  const inUsd = amount / CURRENCIES[from].ratePerUsd;
+  return inUsd * CURRENCIES[to].ratePerUsd;
+}
 
 const STORAGE_KEY = "ens-display-currency";
 

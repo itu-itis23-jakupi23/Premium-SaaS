@@ -1,4 +1,5 @@
 import type { ElementType } from "react";
+import type { CurrencyCode } from "@/lib/currency";
 import type { BoothSystem } from "@/components/workspace/BoothCanvas";
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -34,7 +35,11 @@ export type FeedbackFilter = 'open' | 'all' | 'resolved';
 // The item data itself is shared with the client portal; see lib/furniture-catalog.
 import { ENS_FURNITURE_ITEMS as CATALOG_ITEMS } from "@/lib/furniture-catalog";
 export { catalogFurnitureProps } from "@/lib/furniture-catalog";
-export interface CatItem { id:string; name:string; sku:string; dim:string; inStand:number; icon:ElementType; family?:string; price?:number; stock?:number; lowStockAt?:number; shape?:'round_table'|'rect_table'|'counter'|'shelf'|'wall_shelf'|'cabinet'|'cube'|'chair'|'bar_stool'|'light'|'rail_light'|'box'; modelUrl?:string; previewUrl?:string; furnitureCategory?:FurnitureCategory; }
+// `priceCurrency` mirrors FurnitureCatalogItem: the catalogue is mixed, with
+// Sedef's rental furniture in lira and the lighting and fascia entries in
+// dollars. CatItem is the PM-side view of the same rows, so it has to carry
+// the currency too or the BOM reads a lira figure as dollars.
+export interface CatItem { id:string; name:string; sku:string; dim:string; inStand:number; icon:ElementType; family?:string; price?:number; priceCurrency?:CurrencyCode; stock?:number; lowStockAt?:number; shape?:'round_table'|'rect_table'|'counter'|'shelf'|'wall_shelf'|'cabinet'|'cube'|'chair'|'bar_stool'|'light'|'rail_light'|'box'; modelUrl?:string; previewUrl?:string; furnitureCategory?:FurnitureCategory; }
 export type FurnitureCategory = 'all' | 'chairs' | 'stools' | 'seating' | 'tables' | 'counters' | 'displays' | 'storage' | 'shelves' | 'appliances' | 'lighting' | 'decor' | 'parts';
 
 export const ENS_FURNITURE_ITEMS: Omit<CatItem,'icon'>[] = CATALOG_ITEMS;

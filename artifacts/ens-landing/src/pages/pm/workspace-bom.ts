@@ -1,4 +1,5 @@
 import { availableRoomWallSides } from "./workspace-geometry";
+import { convertCurrency, type CurrencyCode } from "@/lib/currency";
 import { CATALOG, ROOM_UNIT_PRICE, STRUCT_UNIT_PRICE } from "./workspace-constants";
 import type { BoothState, CatItem, WorkspacePlacedItem, WorkspaceRoom } from "./workspace-model";
 
@@ -141,6 +142,35 @@ export interface QuoteTotals {
  * `fasciaSubtotal` is passed in rather than derived: the fascia price comes
  * from the selected FASCIA_OPTIONS entry, which the component already resolves.
  */
+/**
+ * A catalogue item's price in the quote's own currency.
+ *
+ * The catalogue is mixed: Sedef's rental furniture is priced in lira, while
+ * the lighting and fascia entries are in dollars. Reading `item.price` raw
+ * treated 1450 lira as 1450 dollars and made every quote carrying that
+ * furniture about forty times too high.
+ *
+ * `undefined` still means genuinely unpriced - distinct from zero - so the
+ * unpriced count and the "Quote pending" wording keep working.
+ */
+export function catalogPriceIn(
+  catalogId: string,
+  quoteCurrency: CurrencyCode = QUOTE_BASE_CURRENCY,
+): number | undefined {
+  const item = catalogItemFor(catalogId);
+  if (!item || typeof item.price !== "number" || !Number.isFinite(item.price)) return undefined;
+  // No `priceCurrency` means the entry predates mixed pricing and is in USD.
+  return convertCurrency(item.price, item.priceCurrency ?? "USD", quoteCurrency);
+}
+
+/**
+ * The currency BOM subtotals are summed in.
+ *
+ * USD because that is what the server stores and what the structure and
+ * fascia prices are already quoted in; the lira furniture converts into it.
+ */
+export const QUOTE_BASE_CURRENCY: CurrencyCode = "USD";
+
 export function quoteTotals(input: {
   structItems: StructBomLine[];
   roomItems: RoomBomLine[];
@@ -149,7 +179,7 @@ export function quoteTotals(input: {
   priceFor?: (catalogId: string) => number | undefined;
 }): QuoteTotals {
   const { structItems, roomItems, placedItems, fasciaSubtotal } = input;
-  const priceFor = input.priceFor ?? ((catalogId: string) => catalogItemFor(catalogId)?.price);
+  const priceFor = input.priceFor ?? ((catalogId: string) => catalogPriceIn(catalogId));
 
   const sum = (lines: StructBomLine[], pick: (line: StructBomLine) => number) => lines.reduce((total, line) => total + pick(line), 0);
 
@@ -214,7 +244,7 @@ export function quoteLinesFromTakeOff(input: {
   priceFor?: (catalogId: string) => number | undefined;
   nameFor?: (catalogId: string) => string | undefined;
 }): QuoteDraft {
-  const priceFor = input.priceFor ?? ((catalogId: string) => catalogItemFor(catalogId)?.price);
+  const priceFor = input.priceFor ?? ((catalogId: string) => catalogPriceIn(catalogId));
   const nameFor = input.nameFor ?? ((catalogId: string) => catalogItemFor(catalogId)?.name);
   const cents = (value: number) => Math.round(value * 100);
 
