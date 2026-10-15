@@ -2352,8 +2352,8 @@
       "noShows": "Ainda não há feiras.",
       "pickShow": "Escolha uma feira à esquerda para ver seus stands.",
       "venueTbd": "Local a confirmar",
-      "summary": "{{booths}} stands · {{items}} itens",
-      "sheetSubtitle": "Folha de carregamento de mobiliário · {{booths}} stands · {{items}} itens",
+      "summary": "Stands: {{booths}} · Itens: {{items}}",
+      "sheetSubtitle": "Folha de carregamento de mobiliário · Stands: {{booths}} · Itens: {{items}}",
       "stand": "Stand {{number}}",
       "boothEmpty": "Ainda não há mobiliário neste stand.",
       "col": {
@@ -2367,7 +2367,8 @@
       "date": "Data: ____________",
       "loadError": "Não foi possível carregar suas feiras.",
       "manifestError": "Não foi possível carregar o mobiliário desta feira.",
-      "standCount": "{{count}} stands"
+      "standCount_one": "{{count}} stand",
+      "standCount_other": "{{count}} stands"
     }
   },
   "client": {

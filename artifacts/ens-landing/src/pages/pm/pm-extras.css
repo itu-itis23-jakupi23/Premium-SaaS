@@ -137,6 +137,33 @@
     break-inside: auto !important;
   }
 
+  /* Everything on the sheet prints black.
+     The app's body text is a tinted ink and links carry an accent, both of
+     which survived into the printed sheet - the item names came out blue.
+     On a sheet somebody prints a hundred of and marks up with a pen, coloured
+     text is wasted toner and harder to read. */
+  .pm-extras-page .extras-sheet,
+  .pm-extras-page .extras-sheet * {
+    color: #000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* The sheet is the width of the paper.
+     The dashboard reserves the fixed sidebar's width as left padding on the
+     content column and drops it for print, which DashboardLayout already did
+     correctly. Taking the sheet out of flow to escape that gutter was tried
+     here first and reverted: it was fixing a gutter that was not actually
+     there - the measurement had caught a transition mid-flight - and an
+     absolutely positioned element is not reliably broken across pages, which
+     this sheet needs once a show has more than a few stands. In flow it
+     paginates. */
+  .pm-extras-page .extras-sheet {
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
   .pm-extras-page .extras-booth {
     break-inside: avoid;
     page-break-inside: avoid;

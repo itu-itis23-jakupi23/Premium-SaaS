@@ -2352,8 +2352,8 @@
       "noShows": "Noch keine Messen.",
       "pickShow": "Wählen Sie links eine Messe, um ihre Stände zu sehen.",
       "venueTbd": "Ort noch offen",
-      "summary": "{{booths}} Stände · {{items}} Teile",
-      "sheetSubtitle": "Möbel-Ladeliste · {{booths}} Stände · {{items}} Teile",
+      "summary": "Stände: {{booths}} · Teile: {{items}}",
+      "sheetSubtitle": "Möbel-Ladeliste · Stände: {{booths}} · Teile: {{items}}",
       "stand": "Stand {{number}}",
       "boothEmpty": "Auf diesem Stand ist noch kein Möbel eingeplant.",
       "col": {
@@ -2367,7 +2367,8 @@
       "date": "Datum: ____________",
       "loadError": "Ihre Messen konnten nicht geladen werden.",
       "manifestError": "Die Möbel für diese Messe konnten nicht geladen werden.",
-      "standCount": "{{count}} Stände"
+      "standCount_one": "{{count}} Stand",
+      "standCount_other": "{{count}} Stände"
     }
   },
   "client": {

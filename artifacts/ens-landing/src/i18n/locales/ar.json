@@ -2352,8 +2352,8 @@
       "noShows": "لا توجد معارض بعد.",
       "pickShow": "اختر معرضًا من اليسار لعرض أجنحته.",
       "venueTbd": "المكان لم يُحدَّد بعد",
-      "summary": "{{booths}} جناح · {{items}} قطعة",
-      "sheetSubtitle": "قائمة تحميل الأثاث · {{booths}} جناح · {{items}} قطعة",
+      "summary": "الأجنحة: {{booths}} · القطع: {{items}}",
+      "sheetSubtitle": "قائمة تحميل الأثاث · الأجنحة: {{booths}} · القطع: {{items}}",
       "stand": "جناح {{number}}",
       "boothEmpty": "لا يوجد أثاث في هذا الجناح بعد.",
       "col": {
@@ -2367,7 +2367,8 @@
       "date": "التاريخ: ____________",
       "loadError": "تعذّر تحميل معارضك.",
       "manifestError": "تعذّر تحميل أثاث هذا المعرض.",
-      "standCount": "{{count}} جناح"
+      "standCount_one": "{{count}} جناح",
+      "standCount_other": "{{count}} أجنحة"
     }
   },
   "client": {

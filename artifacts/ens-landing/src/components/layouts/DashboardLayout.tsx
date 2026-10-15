@@ -482,6 +482,11 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           // The sidebar is fixed, so this padding is what reserves its width.
           // Hiding the sidebar for print does not reclaim it - the padding has
           // to go too, or every printed page carries a blank left margin.
+          //
+          // This rule is correct and was measured working, but it depends on
+          // the transition suppression in index.css: `transition-all` below
+          // animates this padding, so without that rule the gutter takes
+          // 300ms to reach zero and a print snapshot can catch it part-way.
           "print:!p-0",
           isCollapsed
             ? (isRtl ? "pr-[70px]" : "pl-[70px]")

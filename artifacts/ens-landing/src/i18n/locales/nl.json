@@ -2352,8 +2352,8 @@
       "noShows": "Nog geen beurzen.",
       "pickShow": "Kies links een beurs om de standen te zien.",
       "venueTbd": "Locatie nog te bevestigen",
-      "summary": "{{booths}} standen · {{items}} stuks",
-      "sheetSubtitle": "Laadlijst meubilair · {{booths}} standen · {{items}} stuks",
+      "summary": "Standen: {{booths}} · Stuks: {{items}}",
+      "sheetSubtitle": "Laadlijst meubilair · Standen: {{booths}} · Stuks: {{items}}",
       "stand": "Stand {{number}}",
       "boothEmpty": "Nog geen meubilair op deze stand.",
       "col": {
@@ -2367,7 +2367,8 @@
       "date": "Datum: ____________",
       "loadError": "Uw beurzen konden niet worden geladen.",
       "manifestError": "Het meubilair voor deze beurs kon niet worden geladen.",
-      "standCount": "{{count}} standen"
+      "standCount_one": "{{count}} stand",
+      "standCount_other": "{{count}} standen"
     }
   },
   "client": {

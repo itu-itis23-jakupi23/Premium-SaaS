@@ -2352,8 +2352,8 @@
       "noShows": "Henüz fuar yok.",
       "pickShow": "Standlarını görmek için soldan bir fuar seçin.",
       "venueTbd": "Yer henüz belli değil",
-      "summary": "{{booths}} stand · {{items}} parça",
-      "sheetSubtitle": "Mobilya yükleme listesi · {{booths}} stand · {{items}} parça",
+      "summary": "Stand: {{booths}} · Parça: {{items}}",
+      "sheetSubtitle": "Mobilya yükleme listesi · Stand: {{booths}} · Parça: {{items}}",
       "stand": "Stand {{number}}",
       "boothEmpty": "Bu standa henüz mobilya eklenmedi.",
       "col": {
@@ -2367,7 +2367,8 @@
       "date": "Tarih: ____________",
       "loadError": "Fuarlarınız yüklenemedi.",
       "manifestError": "Bu fuarın mobilyaları yüklenemedi.",
-      "standCount": "{{count}} stand"
+      "standCount_one": "{{count}} stand",
+      "standCount_other": "{{count}} stand"
     }
   },
   "client": {

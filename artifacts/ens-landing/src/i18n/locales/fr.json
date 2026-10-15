@@ -2352,8 +2352,8 @@
       "noShows": "Aucun salon pour le moment.",
       "pickShow": "Choisissez un salon à gauche pour voir ses stands.",
       "venueTbd": "Lieu à confirmer",
-      "summary": "{{booths}} stands · {{items}} articles",
-      "sheetSubtitle": "Liste de chargement mobilier · {{booths}} stands · {{items}} articles",
+      "summary": "Stands : {{booths}} · Articles : {{items}}",
+      "sheetSubtitle": "Liste de chargement mobilier · Stands : {{booths}} · Articles : {{items}}",
       "stand": "Stand {{number}}",
       "boothEmpty": "Aucun mobilier sur ce stand pour le moment.",
       "col": {
@@ -2367,7 +2367,8 @@
       "date": "Date : ____________",
       "loadError": "Vos salons n'ont pas pu être chargés.",
       "manifestError": "Le mobilier de ce salon n'a pas pu être chargé.",
-      "standCount": "{{count}} stands"
+      "standCount_one": "{{count}} stand",
+      "standCount_other": "{{count}} stands"
     }
   },
   "client": {

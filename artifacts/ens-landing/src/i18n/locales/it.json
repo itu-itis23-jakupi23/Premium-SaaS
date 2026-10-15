@@ -2352,8 +2352,8 @@
       "noShows": "Ancora nessuna fiera.",
       "pickShow": "Scegliete una fiera a sinistra per vederne gli stand.",
       "venueTbd": "Sede da confermare",
-      "summary": "{{booths}} stand · {{items}} pezzi",
-      "sheetSubtitle": "Lista di carico arredi · {{booths}} stand · {{items}} pezzi",
+      "summary": "Stand: {{booths}} · Pezzi: {{items}}",
+      "sheetSubtitle": "Lista di carico arredi · Stand: {{booths}} · Pezzi: {{items}}",
       "stand": "Stand {{number}}",
       "boothEmpty": "Nessun arredo su questo stand per ora.",
       "col": {
@@ -2367,7 +2367,8 @@
       "date": "Data: ____________",
       "loadError": "Non è stato possibile caricare le vostre fiere.",
       "manifestError": "Non è stato possibile caricare gli arredi di questa fiera.",
-      "standCount": "{{count}} stand"
+      "standCount_one": "{{count}} stand",
+      "standCount_other": "{{count}} stand"
     }
   },
   "client": {

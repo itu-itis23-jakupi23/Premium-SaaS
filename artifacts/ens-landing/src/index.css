@@ -907,6 +907,23 @@ input[type="datetime-local"] {
  * that is what the client clicked Print from.
  */
 @media print {
+  /* Nothing animates on paper.
+     The dashboard content column carries `transition-all duration-300`, so the
+     sidebar gutter it reserves does not drop to zero the instant print styles
+     apply - it animates there over 300ms. A print snapshot taken inside that
+     window captures a partial gutter, which is a 260px blank strip down the
+     left of the page. Measured in a browser under print media: the padding
+     read 260px immediately and 0px once settled.
+
+     This is also why a print rule can look broken when it is correct. Every
+     printed page is a single snapshot, so transitions can only hurt here. */
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+
   aside,
   header,
   nav,

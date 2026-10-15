@@ -2352,8 +2352,8 @@
       "noShows": "暂无展会。",
       "pickShow": "在左侧选择展会以查看其展台。",
       "venueTbd": "场馆待定",
-      "summary": "{{booths}} 个展台 · {{items}} 件",
-      "sheetSubtitle": "家具装车清单 · {{booths}} 个展台 · {{items}} 件",
+      "summary": "展台：{{booths}} · 件数：{{items}}",
+      "sheetSubtitle": "家具装车清单 · 展台：{{booths}} · 件数：{{items}}",
       "stand": "展台 {{number}}",
       "boothEmpty": "此展台尚未安排家具。",
       "col": {
@@ -2367,7 +2367,8 @@
       "date": "日期：____________",
       "loadError": "无法加载您的展会。",
       "manifestError": "无法加载此展会的家具。",
-      "standCount": "{{count}} 个展台"
+      "standCount_one": "{{count}} 个展台",
+      "standCount_other": "{{count}} 个展台"
     }
   },
   "client": {

@@ -2352,8 +2352,8 @@
       "noShows": "展示会はまだありません。",
       "pickShow": "左の展示会を選ぶとブースが表示されます。",
       "venueTbd": "会場は未定",
-      "summary": "{{booths}} ブース · {{items}} 点",
-      "sheetSubtitle": "什器積み込みリスト · {{booths}} ブース · {{items}} 点",
+      "summary": "ブース: {{booths}} · 点数: {{items}}",
+      "sheetSubtitle": "什器積み込みリスト · ブース: {{booths}} · 点数: {{items}}",
       "stand": "ブース {{number}}",
       "boothEmpty": "このブースにはまだ什器がありません。",
       "col": {
@@ -2367,7 +2367,8 @@
       "date": "日付: ____________",
       "loadError": "展示会を読み込めませんでした。",
       "manifestError": "この展示会の什器を読み込めませんでした。",
-      "standCount": "{{count}} ブース"
+      "standCount_one": "{{count}} ブース",
+      "standCount_other": "{{count}} ブース"
     }
   },
   "client": {

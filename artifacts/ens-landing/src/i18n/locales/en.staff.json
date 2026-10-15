@@ -1845,8 +1845,8 @@
       "noShows": "No shows yet.",
       "pickShow": "Pick a show on the left to see its stands.",
       "venueTbd": "Venue to be confirmed",
-      "summary": "{{booths}} stands · {{items}} items",
-      "sheetSubtitle": "Furniture loading list · {{booths}} stands · {{items}} items",
+      "summary": "Stands: {{booths}} · Items: {{items}}",
+      "sheetSubtitle": "Furniture loading list · Stands: {{booths}} · Items: {{items}}",
       "stand": "Stand {{number}}",
       "boothEmpty": "No furniture on this stand yet.",
       "col": {
@@ -1860,7 +1860,8 @@
       "date": "Date: ____________",
       "loadError": "Your shows could not be loaded.",
       "manifestError": "The furniture for this show could not be loaded.",
-      "standCount": "{{count}} stands"
+      "standCount_one": "{{count}} stand",
+      "standCount_other": "{{count}} stands"
     }
   },
   "help": {
