@@ -1038,6 +1038,11 @@ router.patch(
     const confirmOverCapacity = data.confirmOverCapacity === true;
     const overrideReason = stringValue(data.overrideReason);
 
+    if (overrideReason && overrideReason.length > 500) {
+      res.status(400).json({ error: "Capacity override reason must be at most 500 characters" });
+      return;
+    }
+
     if (managerId && !isUuid(managerId)) {
       res.status(400).json({ error: "A valid manager id is required" });
       return;
@@ -1127,7 +1132,7 @@ router.patch(
       const projectedCount = capacity.count + additionalProjectLoad;
       const projectedRatio = projectedCount / capacity.limit;
 
-      if (projectedRatio >= PM_EXTREME_THRESHOLD && !overrideReason) {
+      if (projectedRatio >= PM_EXTREME_THRESHOLD && (!confirmOverCapacity || !overrideReason)) {
         res.status(409).json({
           error: "extreme_overload",
           managerId,
@@ -1140,8 +1145,7 @@ router.patch(
 
       if (
         projectedRatio >= PM_BLOCK_THRESHOLD &&
-        !confirmOverCapacity &&
-        !overrideReason
+        (!confirmOverCapacity || !overrideReason)
       ) {
         res.status(409).json({
           error: "over_capacity",
@@ -1200,7 +1204,7 @@ router.patch(
           actorUserId,
           previousManagerId: lockedClient.previousManagerId,
           newManagerId: managerId,
-          reason: note ?? "Assigned at client approval",
+          reason: overrideReason ?? note ?? "Assigned at client approval",
         },
         executor,
       );
@@ -1221,9 +1225,29 @@ router.patch(
           clientId,
           managerId,
           note,
+          confirmOverCapacity,
+          overrideReason,
         },
         executor,
       );
+
+      // Approval and the in-app notification commit together. A notification
+      // write must not fail after approval has already been reported as failed.
+      await executor.execute(sql`
+        insert into notifications (organization_id, user_id, title, body, href)
+        select ${organization.id}::uuid, u.id,
+          'Your account has been approved',
+          ${`Welcome, ${client.companyName}! Your portal access is now active.`},
+          '/client/dashboard'
+        from users u
+        join memberships m on m.user_id = u.id
+          and m.organization_id = ${organization.id}::uuid
+          and m.role::text = 'client'
+          and m.status::text = 'active'
+        where lower(u.email) = lower(${client.contactEmail})
+          and u.deleted_at is null
+        limit 1
+      `);
 
       return { status: "approved" as const };
     });
@@ -1242,30 +1266,8 @@ router.patch(
       return;
     }
 
-    // Notify the client user if their account is linked by email
-    const userRows = await queryRows<{ id: string }>(sql`
-    select u.id::text
-    from users u
-    join memberships m on m.user_id = u.id
-      and m.organization_id = ${organization.id}::uuid
-      and m.role::text = 'client'
-    where lower(u.email) = lower(${client.contactEmail})
-    limit 1
-  `);
-    if (userRows[0]) {
-      await db.execute(sql`
-      insert into notifications (organization_id, user_id, title, body, href)
-      values (
-        ${organization.id}::uuid,
-        ${userRows[0].id}::uuid,
-        'Your account has been approved',
-        ${`Welcome, ${client.companyName}! Your portal access is now active.`},
-        '/client/dashboard'
-      )
-    `);
-    }
-
-    // Send email to the newly-activated client (non-blocking — failure is logged, never thrown)
+    // Provider acceptance is separate from the committed approval. Email and
+    // read-refresh failures cannot turn a saved approval into a failed mutation.
     const approvalEmailDelivery = await sendClientApprovedEmail({
       to: client.contactEmail,
       name: client.companyName,
@@ -1280,12 +1282,20 @@ router.patch(
         clientId,
         clientName: client.companyName,
       },
-    );
-
-    res.json({
-      ok: true,
-      clients: (await getClients(organization.id, 100, req.auth!)).clients,
+    ).catch(() => {
+      console.error("[client-approval] Email delivery incident could not be recorded", { organizationId: organization.id, clientId });
     });
+
+    try {
+      res.json({
+        ok: true,
+        approvalEmailDelivery,
+        clients: (await getClients(organization.id, 100, req.auth!)).clients,
+      });
+    } catch {
+      console.error("[client-approval] Client list could not be refreshed after approval", { organizationId: organization.id, clientId });
+      res.json({ ok: true, approvalEmailDelivery, refreshRequired: true });
+    }
   },
 );
 
@@ -2504,64 +2514,72 @@ async function updateAccountSettings(
     company?: Record<string, unknown>;
   },
 ) {
-  const current = await getUserMetadata(auth.user.id);
-  const currentProfile = objectValue(current.profile);
-  const currentSettings = objectValue(current.accountSettings);
+  const result = await db.transaction(async (tx) => {
+    const current = await getUserMetadata(auth.user.id, tx);
+    const currentProfile = objectValue(current.profile);
+    const currentSettings = objectValue(current.accountSettings);
 
-  const nextProfile = {
-    ...currentProfile,
-    ...objectValue(input.profile),
-  };
-  const nextSettings = {
-    ...currentSettings,
-    notifications: {
-      ...objectValue(currentSettings.notifications),
-      ...objectValue(input.notifications),
-    },
-    appearance: {
-      ...objectValue(currentSettings.appearance),
-      ...objectValue(input.appearance),
-    },
-    security: {
-      ...objectValue(currentSettings.security),
-      ...objectValue(input.security),
-    },
-    company: {
-      ...objectValue(currentSettings.company),
-      ...objectValue(input.company),
-    },
-  };
-  const nextMetadata = {
-    ...current,
-    profile: nextProfile,
-    accountSettings: nextSettings,
-  };
+    const nextProfile = {
+      ...currentProfile,
+      ...objectValue(input.profile),
+    };
+    const nextSettings = {
+      ...currentSettings,
+      notifications: {
+        ...objectValue(currentSettings.notifications),
+        ...objectValue(input.notifications),
+      },
+      appearance: {
+        ...objectValue(currentSettings.appearance),
+        ...objectValue(input.appearance),
+      },
+      security: {
+        ...objectValue(currentSettings.security),
+        ...objectValue(input.security),
+        // Enrollment endpoints own this flag; profile saves cannot enable or
+        // disable the actual second factor or overwrite its current status.
+        twoFactorEnabled: objectValue(current.twoFactor).enabled === true,
+      },
+      company: {
+        ...objectValue(currentSettings.company),
+        ...objectValue(input.company),
+      },
+    };
+    const nextMetadata = {
+      ...current,
+      profile: nextProfile,
+      accountSettings: nextSettings,
+    };
 
-  const profileName = stringValue(input.profile?.name);
-  const profileEmail = stringValue(input.profile?.email)?.toLowerCase() ?? null;
+    const profileName = stringValue(input.profile?.name);
+    const profileEmail = stringValue(input.profile?.email)?.toLowerCase() ?? null;
 
-  if (profileEmail) {
-    const conflict = await queryRows<{ id: string }>(sql`
-      select id::text from users
-      where lower(email) = ${profileEmail}
-        and id <> ${auth.user.id}::uuid
-        and deleted_at is null
-      limit 1
-    `);
-    if (conflict[0]) {
-      return { error: "That email address is already in use." } as never;
+    if (profileEmail) {
+      const conflict = await queryRows<{ id: string }>(sql`
+        select id::text from users
+        where lower(email) = ${profileEmail}
+          and id <> ${auth.user.id}::uuid
+          and deleted_at is null
+        limit 1
+      `, tx);
+      if (conflict[0]) {
+        return { error: "That email address is already in use." };
+      }
     }
-  }
 
-  await db.execute(sql`
-    update users
-    set
-      name = coalesce(${profileName}, name),
-      email = coalesce(${profileEmail}, email),
-      metadata = ${JSON.stringify(nextMetadata)}::jsonb,
-      updated_at = now()
-    where id = ${auth.user.id}::uuid
-  `);
+    await tx.execute(sql`
+      update users
+      set
+        name = coalesce(${profileName}, name),
+        email = coalesce(${profileEmail}, email),
+        metadata = ${JSON.stringify(nextMetadata)}::jsonb,
+        updated_at = now()
+      where id = ${auth.user.id}::uuid
+    `);
+
+    return null;
+  });
+  if (result) return result;
 
   return getAccountSettings(auth);
 }
@@ -3377,303 +3395,175 @@ async function updateAssignments(
     overrideReason: string | null;
   },
 ) {
-  const clientChanges: AssignmentChange[] = [];
-  const projectChanges: AssignmentChange[] = [];
-
-  // Capacity pre-check: count how many new assignments each target PM would gain.
-  const allTargetManagerIds = new Set(
-    [...input.clientAssignments, ...input.projectAssignments]
-      .map((a) => a.managerId)
-      .filter((id): id is string => id !== null),
-  );
-  for (const managerId of allTargetManagerIds) {
-    const capacity = await getPmCapacityInfo(organizationId, managerId);
-    if (capacity.limit === null) continue;
-    const newCount = [
-      ...input.clientAssignments,
-      ...input.projectAssignments,
-    ].filter((a) => a.managerId === managerId).length;
-    const projectedCount = capacity.count + newCount;
-    const projectedRatio = projectedCount / capacity.limit;
-    if (projectedRatio >= PM_EXTREME_THRESHOLD && !input.overrideReason) {
-      return {
-        error: "extreme_overload",
-        managerId,
-        count: projectedCount,
-        limit: capacity.limit,
-        message: `PM would reach ${Math.round(projectedRatio * 100)}% capacity. An override reason is required.`,
-      } as const;
+  const overrideReason = stringValue(input.overrideReason);
+  const notifications: Array<() => Promise<unknown>> = [];
+  const result = await db.transaction(async (tx) => {
+    await lockAssignmentOrganization(organizationId, tx);
+    const clientTargets = new Map(input.clientAssignments.map((item) => [item.clientId, item.managerId]));
+    const directTargets = new Map(input.projectAssignments.map((item) => [item.projectId, item.managerId]));
+    const managerNames = new Map<string | null, string>([[null, "Unassigned"]]);
+    const managerIds = [...new Set([...clientTargets.values(), ...directTargets.values()])]
+      .filter((id): id is string => id !== null).sort();
+    for (const managerId of managerIds) {
+      const name = await getAssignmentTargetName(organizationId, managerId, tx);
+      if (!name) return { error: "invalid_manager" as const, managerId, message: "Manager must be an active PM in this organization." };
+      managerNames.set(managerId, name);
     }
-    if (
-      projectedRatio >= PM_BLOCK_THRESHOLD &&
-      !input.confirmOverCapacity &&
-      !input.overrideReason
-    ) {
-      return {
-        error: "over_capacity",
-        managerId,
-        count: projectedCount,
-        limit: capacity.limit,
-        message: `PM would be at ${Math.round(projectedRatio * 100)}% capacity. Confirm to proceed.`,
-      } as const;
-    }
-  }
 
-  const clientIds = [
-    ...new Set(
-      input.clientAssignments.map((assignment) => assignment.clientId),
-    ),
-  ];
-  if (clientIds.length > 0) {
-    const clientIdList = sql.join(
-      clientIds.map((clientId) => sql`${clientId}::uuid`),
-      sql`, `,
-    );
-    const pendingClients = await queryRows<{ id: string; name: string }>(sql`
-      select c.id::text, c.company_name as name
-      from clients c
-      where c.organization_id = ${organizationId}::uuid
-        and c.id in (${clientIdList})
-        and c.status::text = 'pending_approval'
-        and c.deleted_at is null
-    `);
-    if (pendingClients.length > 0) {
-      return {
-        error: "pending_approval_requires_review",
-        clientIds: pendingClients.map((client) => client.id),
-        message:
-          "Pending clients must be reviewed and approved before assignment.",
-      } as const;
-    }
-  }
-
-  for (const assignment of input.clientAssignments) {
-    const targetName = await getAssignmentTargetName(
-      organizationId,
-      assignment.managerId,
-    );
-    if (assignment.managerId && !targetName) continue;
-
-    const clientRows = await queryRows<{
-      id: string;
-      name: string;
-      managerId: string | null;
-      managerName: string | null;
-      contactEmail: string;
-      intakeExhibitionName: string | null;
-      intakeBoothSizeSqm: string | null;
-      intakeCity: string | null;
-      intakeDeadlineAt: string | null;
-      intakePreferredSystem: string | null;
-    }>(sql`
-      select
-        c.id::text,
-        c.company_name as name,
-        c.assigned_pm_user_id::text as "managerId",
-        u.name as "managerName",
-        c.contact_email as "contactEmail",
-        c.intake_exhibition_name as "intakeExhibitionName",
-        c.intake_booth_size_sqm::text as "intakeBoothSizeSqm",
-        c.intake_city as "intakeCity",
-        c.intake_deadline_at::text as "intakeDeadlineAt",
+    type AssignmentClient = {
+      id: string; name: string; status: string; managerId: string | null; managerName: string | null;
+      contactEmail: string; intakeExhibitionName: string | null; intakeBoothSizeSqm: string | null;
+      intakeCity: string | null; intakeDeadlineAt: string | null; intakePreferredSystem: "octanorm" | "maxima" | "custom" | null;
+    };
+    const clientIds = [...clientTargets.keys()].sort();
+    const clients = clientIds.length ? await queryRows<AssignmentClient>(sql`
+      select c.id::text, c.company_name as name, c.status::text,
+        c.assigned_pm_user_id::text as "managerId", u.name as "managerName", c.contact_email as "contactEmail",
+        c.intake_exhibition_name as "intakeExhibitionName", c.intake_booth_size_sqm::text as "intakeBoothSizeSqm",
+        c.intake_city as "intakeCity", c.intake_deadline_at::text as "intakeDeadlineAt",
         c.intake_preferred_system::text as "intakePreferredSystem"
-      from clients c
-      left join users u on u.id = c.assigned_pm_user_id
-      where c.id = ${assignment.clientId}::uuid
-        and c.organization_id = ${organizationId}::uuid
-        and c.deleted_at is null
-      limit 1
-    `);
-    const client = clientRows[0];
-    if (!client || (client.managerId ?? null) === assignment.managerId)
-      continue;
+      from clients c left join users u on u.id = c.assigned_pm_user_id
+      where c.organization_id = ${organizationId}::uuid and c.deleted_at is null
+        and c.id in (${sql.join(clientIds.map((id) => sql`${id}::uuid`), sql`, `)})
+      order by c.id for update of c
+    `, tx) : [];
+    const pending = clients.filter((client) => client.status === "pending_approval");
+    if (pending.length) return {
+      error: "pending_approval_requires_review" as const, clientIds: pending.map((client) => client.id),
+      message: "Pending clients must be reviewed and approved before assignment.",
+    };
 
-    await db.execute(sql`
-      update clients
-      set
-        assigned_pm_user_id = ${assignment.managerId}::uuid,
-        status = 'active',
-        activated_at = coalesce(activated_at, now()),
-        updated_at = now()
-      where id = ${assignment.clientId}::uuid
-        and organization_id = ${organizationId}::uuid
-        and deleted_at is null
-    `);
-
-    if (assignment.managerId) {
-      await ensureClientIntakeProject(
-        organizationId,
-        actorUserId,
-        {
-          id: client.id,
-          companyName: client.name,
-          contactEmail: client.contactEmail,
-          intakeExhibitionName: client.intakeExhibitionName,
-          intakeBoothSizeSqm: client.intakeBoothSizeSqm,
-          intakeCity: client.intakeCity,
-          intakeDeadlineAt: client.intakeDeadlineAt,
-          intakePreferredSystem: client.intakePreferredSystem as
-            | "octanorm"
-            | "maxima"
-            | "custom"
-            | null,
-        },
-        assignment.managerId,
-      );
-
-      const clientUserRows = await queryRows<{ id: string }>(sql`
-        select u.id::text
-        from users u
-        join memberships m on m.user_id = u.id
-          and m.organization_id = ${organizationId}::uuid
-          and m.role::text = 'client'
-        where lower(u.email) = lower(${client.contactEmail})
-          and u.deleted_at is null
-        limit 1
-      `);
-      if (clientUserRows[0]?.id) {
-        const body = `A project manager (${targetName}) has been assigned to your workspace. Log in to access your booth project.`;
-        await createNotification(
-          organizationId,
-          clientUserRows[0].id,
-          "Project Manager Assigned",
-          body,
-          "/client",
-          "assignments",
-        );
+    const projectIds = [...directTargets.keys()].sort();
+    const projects = (clientIds.length || projectIds.length) ? await queryRows<AssignmentState & { clientId: string; status: string }>(sql`
+      select p.id::text, p.name, p.client_id::text as "clientId", p.status::text,
+        p.assigned_pm_user_id::text as "managerId", u.name as "managerName"
+      from projects p left join users u on u.id = p.assigned_pm_user_id
+      where p.organization_id = ${organizationId}::uuid and p.deleted_at is null and (
+        ${clientIds.length ? sql`p.client_id in (${sql.join(clientIds.map((id) => sql`${id}::uuid`), sql`, `)})` : sql`false`}
+        or ${projectIds.length ? sql`p.id in (${sql.join(projectIds.map((id) => sql`${id}::uuid`), sql`, `)})` : sql`false`}
+      ) order by p.id for update of p
+    `, tx) : [];
+    const projectTargets = new Map<string, string | null>();
+    const newIntakeClients: AssignmentClient[] = [];
+    for (const client of clients) {
+      const managerId = clientTargets.get(client.id)!;
+      const clientProjects = projects.filter((project) => project.clientId === client.id);
+      if (managerId && client.managerId !== managerId) {
+        if (clientProjects.length) projectTargets.set(clientProjects[0].id, managerId);
+        else newIntakeClients.push(client);
       }
-      await sendClientApprovedEmail({
-        to: client.contactEmail,
-        name: client.name,
+      if (input.cascadeClientProjects) {
+        for (const project of clientProjects) projectTargets.set(project.id, managerId);
+      }
+    }
+    // A direct project assignment wins over the client cascade. Count each
+    // active project once, with outgoing moves deducted from its old manager.
+    for (const project of projects) {
+      if (directTargets.has(project.id)) projectTargets.set(project.id, directTargets.get(project.id)!);
+    }
+    const deltas = new Map<string, number>();
+    const addDelta = (managerId: string | null, amount: number) => {
+      if (managerId) deltas.set(managerId, (deltas.get(managerId) ?? 0) + amount);
+    };
+    for (const project of projects) {
+      if (!projectTargets.has(project.id) || ["completed", "archived", "cancelled"].includes(project.status)) continue;
+      const managerId = projectTargets.get(project.id)!;
+      if (managerId === project.managerId) continue;
+      addDelta(project.managerId, -1);
+      addDelta(managerId, 1);
+    }
+    for (const client of newIntakeClients) addDelta(clientTargets.get(client.id)!, 1);
+    for (const [managerId, delta] of [...deltas].sort(([left], [right]) => left.localeCompare(right))) {
+      if (delta <= 0) continue;
+      const capacity = await getPmCapacityInfo(organizationId, managerId, tx);
+      if (capacity.limit === null) continue;
+      const projectedCount = capacity.count + delta;
+      const projectedRatio = projectedCount / capacity.limit;
+      if (projectedRatio >= PM_BLOCK_THRESHOLD && (!input.confirmOverCapacity || !overrideReason)) return {
+        error: projectedRatio >= PM_EXTREME_THRESHOLD ? "extreme_overload" as const : "over_capacity" as const,
+        managerId, count: projectedCount, limit: capacity.limit,
+        message: `PM would be at ${Math.round(projectedRatio * 100)}% capacity. Confirmation and an override reason are required.`,
+      };
+    }
+
+    const clientChanges: AssignmentChange[] = [];
+    const projectChanges: AssignmentChange[] = [];
+    for (const client of clients) {
+      const managerId = clientTargets.get(client.id)!;
+      if (client.managerId === managerId) continue;
+      const targetName = managerNames.get(managerId)!;
+      await tx.execute(sql`
+        update clients set assigned_pm_user_id = ${managerId}::uuid,
+          status = 'active', activated_at = coalesce(activated_at, now()), updated_at = now()
+        where id = ${client.id}::uuid and organization_id = ${organizationId}::uuid and deleted_at is null
+      `);
+      await recordAssignmentHistory(organizationId, {
+        targetType: "client_pm", projectId: null, clientId: client.id, actorUserId,
+        previousManagerId: client.managerId, newManagerId: managerId, reason: overrideReason ?? input.reason,
+      }, tx);
+      clientChanges.push({ id: client.id, name: client.name, fromManagerId: client.managerId, toManagerId: managerId,
+        from: client.managerName ?? "Unassigned", to: targetName });
+      if (managerId) {
+        const clientUsers = await queryRows<{ id: string }>(sql`
+          select u.id::text from users u join memberships m on m.user_id = u.id
+            and m.organization_id = ${organizationId}::uuid and m.role::text = 'client' and m.status::text = 'active'
+          where lower(u.email) = lower(${client.contactEmail}) and u.deleted_at is null and u.disabled_at is null limit 1
+        `, tx);
+        if (clientUsers[0]) notifications.push(() => createNotification(organizationId, clientUsers[0].id,
+          "Project Manager Assigned", `A project manager (${targetName}) has been assigned to your workspace. Log in to access your booth project.`,
+          "/client", "assignments"));
+        notifications.push(() => sendClientApprovedEmail({ to: client.contactEmail, name: client.name }));
+      }
+    }
+    // Existing project rows were locked in id order before any mutation.
+    for (const project of projects) {
+      if (!projectTargets.has(project.id)) continue;
+      const managerId = projectTargets.get(project.id)!;
+      await reassignProjectManager(organizationId, actorUserId, project.id, managerId, overrideReason ?? input.reason, tx);
+      if (managerId !== project.managerId) projectChanges.push({
+        id: project.id, name: project.name, fromManagerId: project.managerId, toManagerId: managerId,
+        from: project.managerName ?? "Unassigned", to: managerNames.get(managerId)!,
       });
     }
+    for (const client of newIntakeClients) {
+      await ensureClientIntakeProject(organizationId, actorUserId, {
+        ...client, companyName: client.name,
+      }, clientTargets.get(client.id)!, tx);
+    }
+    if (clientChanges.length || projectChanges.length) await auditEvent(organizationId, actorUserId,
+      "manager_assignments_updated", "updated manager assignments", {
+        changedClients: clientChanges.length, changedProjects: projectChanges.length,
+        cascadeClientProjects: input.cascadeClientProjects, confirmOverCapacity: input.confirmOverCapacity,
+        overrideReason, clientChanges: clientChanges.slice(0, 20), projectChanges: projectChanges.slice(0, 20),
+      }, tx);
+    return { clientChanges, projectChanges };
+  });
+  if ("error" in result) return result;
 
-    await recordAssignmentHistory(organizationId, {
-      targetType: "client_pm",
-      projectId: null,
-      clientId: assignment.clientId,
-      actorUserId,
-      previousManagerId: client.managerId,
-      newManagerId: assignment.managerId,
-      reason: input.reason ?? null,
-    });
-    clientChanges.push({
-      id: client.id,
-      name: client.name,
-      fromManagerId: client.managerId,
-      toManagerId: assignment.managerId,
-      from: client.managerName ?? "Unassigned",
-      to: targetName ?? "Unassigned",
-    });
-
-    if (input.cascadeClientProjects) {
-      const clientProjects = await queryRows<AssignmentState>(sql`
-        select
-          p.id::text,
-          p.name,
-          p.assigned_pm_user_id::text as "managerId",
-          u.name as "managerName"
-        from projects p
-        left join users u on u.id = p.assigned_pm_user_id
-        where p.client_id = ${assignment.clientId}::uuid
-          and p.organization_id = ${organizationId}::uuid
-          and p.deleted_at is null
-      `);
-
-      for (const project of clientProjects) {
-        if ((project.managerId ?? null) === assignment.managerId) continue;
-        await reassignProjectManager(
-          organizationId,
-          actorUserId,
-          project.id,
-          assignment.managerId,
-          input.reason,
-        );
-        projectChanges.push({
-          id: project.id,
-          name: project.name,
-          fromManagerId: project.managerId,
-          toManagerId: assignment.managerId,
-          from: project.managerName ?? "Unassigned",
-          to: targetName ?? "Unassigned",
-        });
-      }
+  let deliveryWarnings = false;
+  for (const deliver of notifications) {
+    try {
+      const delivery = await deliver();
+      if (delivery && typeof delivery === "object" && "ok" in delivery && delivery.ok === false) deliveryWarnings = true;
+    } catch {
+      deliveryWarnings = true;
+      console.error("[manager-assignments] Post-commit client notification failed", { organizationId });
     }
   }
-
-  for (const assignment of input.projectAssignments) {
-    const targetName = await getAssignmentTargetName(
-      organizationId,
-      assignment.managerId,
-    );
-    if (assignment.managerId && !targetName) continue;
-
-    const projectRows = await queryRows<AssignmentState>(sql`
-      select
-        p.id::text,
-        p.name,
-        p.assigned_pm_user_id::text as "managerId",
-        u.name as "managerName"
-      from projects p
-      left join users u on u.id = p.assigned_pm_user_id
-      where p.id = ${assignment.projectId}::uuid
-        and p.organization_id = ${organizationId}::uuid
-        and p.deleted_at is null
-      limit 1
-    `);
-    const project = projectRows[0];
-    if (!project || (project.managerId ?? null) === assignment.managerId)
-      continue;
-
-    await reassignProjectManager(
-      organizationId,
-      actorUserId,
-      project.id,
-      assignment.managerId,
-      input.reason,
-    );
-    projectChanges.push({
-      id: project.id,
-      name: project.name,
-      fromManagerId: project.managerId,
-      toManagerId: assignment.managerId,
-      from: project.managerName ?? "Unassigned",
-      to: targetName ?? "Unassigned",
-    });
+  try { await notifyManagerAssignmentChanges(organizationId, result.clientChanges, result.projectChanges); }
+  catch {
+    deliveryWarnings = true;
+    console.error("[manager-assignments] Post-commit manager notification failed", { organizationId });
   }
-
-  const changedClients = clientChanges.length;
-  const changedProjects = projectChanges.length;
-
-  if (changedClients || changedProjects) {
-    await auditEvent(
-      organizationId,
-      actorUserId,
-      "manager_assignments_updated",
-      "updated manager assignments",
-      {
-        changedClients,
-        changedProjects,
-        cascadeClientProjects: input.cascadeClientProjects,
-        clientChanges: clientChanges.slice(0, 20),
-        projectChanges: projectChanges.slice(0, 20),
-      },
-    );
-    await notifyManagerAssignmentChanges(
-      organizationId,
-      clientChanges,
-      projectChanges,
-    );
+  const saved = { ok: true as const, changedClients: result.clientChanges.length,
+    changedProjects: result.projectChanges.length, deliveryWarnings };
+  try {
+    return { ...saved, managers: await getManagers(organizationId), clients: await getManagedClients(organizationId),
+      projects: await getManagedProjects(organizationId), audit: await getManagerAudit(organizationId, 30) };
+  } catch {
+    console.error("[manager-assignments] Workspace refresh failed after commit", { organizationId });
+    return { ...saved, refreshRequired: true as const };
   }
-
-  return {
-    changedClients,
-    changedProjects,
-    managers: await getManagers(organizationId),
-    clients: await getManagedClients(organizationId),
-    projects: await getManagedProjects(organizationId),
-    audit: await getManagerAudit(organizationId, 30),
-  };
 }
 
 interface AssignmentState {
@@ -3745,6 +3635,7 @@ function assignmentSummary(names: string[], action: string) {
 async function getAssignmentTargetName(
   organizationId: string,
   managerId: string | null,
+  executor: SqlExecutor = databaseExecutor,
 ) {
   if (!managerId) return "Unassigned";
 
@@ -3757,8 +3648,9 @@ async function getAssignmentTargetName(
       and m.role::text = 'pm'
       and m.status::text = 'active'
       and u.deleted_at is null
+      and u.disabled_at is null
     limit 1
-  `);
+  `, executor);
 
   return rows[0]?.name ?? null;
 }
@@ -3767,7 +3659,7 @@ const PM_WARN_THRESHOLD = 0.8;
 const PM_BLOCK_THRESHOLD = 1.0;
 const PM_EXTREME_THRESHOLD = 1.5;
 
-async function getPmCapacityInfo(organizationId: string, managerId: string) {
+async function getPmCapacityInfo(organizationId: string, managerId: string, executor: SqlExecutor = databaseExecutor) {
   const rows = await queryRows<{ count: number; limit: number | null }>(sql`
     select
       count(p.id)::int as count,
@@ -3783,7 +3675,7 @@ async function getPmCapacityInfo(organizationId: string, managerId: string) {
       and p.status::text not in ('completed', 'archived', 'cancelled')
     where u.id = ${managerId}::uuid
     group by u.pm_capacity_limit
-  `);
+  `, executor);
   const count = rows[0]?.count ?? 0;
   const limit = rows[0]?.limit ?? null;
   if (limit === null) return { count, limit: null, status: "ok" as const };
@@ -3805,8 +3697,15 @@ async function reassignProjectManager(
   projectId: string,
   managerId: string | null,
   reason?: string | null,
-  executor: SqlExecutor = databaseExecutor,
-) {
+  executor?: SqlExecutor,
+): Promise<void> {
+  if (!executor) {
+    await db.transaction(async (tx) => {
+      await lockAssignmentOrganization(organizationId, tx);
+      await reassignProjectManager(organizationId, actorUserId, projectId, managerId, reason, tx);
+    });
+    return;
+  }
   const previous = await queryRows<{ managerId: string | null }>(
     sql`
     select assigned_pm_user_id::text as "managerId"
@@ -3814,14 +3713,13 @@ async function reassignProjectManager(
     where id = ${projectId}::uuid
       and organization_id = ${organizationId}::uuid
       and deleted_at is null
-    limit 1
+    limit 1 for update
   `,
     executor,
   );
+  if (!previous[0]) return;
   const previousManagerId = previous[0]?.managerId ?? null;
-  if (previousManagerId === managerId) return;
-
-  await executor.execute(sql`
+  if (previousManagerId !== managerId) await executor.execute(sql`
     update projects
     set assigned_pm_user_id = ${managerId}::uuid, updated_at = now()
     where id = ${projectId}::uuid
@@ -3843,7 +3741,7 @@ async function reassignProjectManager(
     `);
   }
 
-  await recordAssignmentHistory(
+  if (previousManagerId !== managerId) await recordAssignmentHistory(
     organizationId,
     {
       targetType: "project_pm",
@@ -3856,6 +3754,12 @@ async function reassignProjectManager(
     },
     executor,
   );
+}
+
+async function lockAssignmentOrganization(organizationId: string, executor: SqlExecutor) {
+  // Every assignment writer acquires this before locking clients or projects.
+  // It serializes capacity plans and prevents inconsistent PM memberships.
+  await executor.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`manager-assignment:${organizationId}`}, 0))`);
 }
 
 async function recordAssignmentHistory(
@@ -4365,6 +4269,7 @@ async function getChiefReport(organizationId: string, rawRange: string) {
     health: string;
     system: string;
     budgetCents: number;
+    invoicedCents: number;
     projectDate: string;
     updatedAt: string;
   }>(sql`
@@ -4376,6 +4281,12 @@ async function getChiefReport(organizationId: string, rawRange: string) {
       p.health::text as health,
       coalesce(bd.booth_system::text, p.metadata ->> 'standType', 'custom') as system,
       p.budget_cents as "budgetCents",
+      -- What this project has actually been invoiced. budget_cents is
+      -- hardcoded to 0 on every project the app creates - no route sets it and
+      -- no screen edits it - so a leaderboard summing it reported every
+      -- manager as having earned nothing. Drafts and voids are excluded
+      -- because neither is money asked for.
+      coalesce(inv.invoiced_cents, 0) as "invoicedCents",
       coalesce(p.starts_at, p.deadline_at, p.created_at)::text as "projectDate",
       p.updated_at::text as "updatedAt"
     from projects p
@@ -4387,6 +4298,13 @@ async function getChiefReport(organizationId: string, rawRange: string) {
       order by bd.updated_at desc
       limit 1
     ) bd on true
+    left join lateral (
+      select sum(i.total_cents)::bigint as invoiced_cents
+      from invoices i
+      where i.project_id = p.id
+        and i.deleted_at is null
+        and i.status::text in ('open', 'paid')
+    ) inv on true
     where p.organization_id = ${organizationId}::uuid
       and p.deleted_at is null
       and coalesce(p.starts_at, p.deadline_at, p.created_at) >= ${since}::timestamptz
@@ -4879,12 +4797,25 @@ function pmStatusPie(rows: Array<{ bucket: string; count: number }>) {
     .filter((item) => item.value > 0);
 }
 
+/**
+ * Per-manager totals for the chief's leaderboard.
+ *
+ * Revenue comes from invoices. It used to sum `projects.budget_cents`, which
+ * is hardcoded to 0 on every project the app creates - no route sets it, no
+ * screen edits it - so the revenue column read zero for every real manager and
+ * showed figures only for seeded demo data. The monthly chart already
+ * preferred invoices and fell back to the budget; this had no such fallback.
+ *
+ * The budget is kept as that same fallback, for an organization that has not
+ * invoiced anything yet.
+ */
 function buildPmPerformance(
   projects: Array<{
     pm: string | null;
     status: string;
     health: string;
     budgetCents: number;
+    invoicedCents: number;
   }>,
 ) {
   const grouped = new Map<
@@ -4899,7 +4830,9 @@ function buildPmPerformance(
       ["delayed", "blocked", "at_risk"].includes(project.health);
     current.projects += 1;
     current.onTime += delayed ? 0 : 1;
-    current.revenue += centsToCurrency(project.budgetCents);
+    current.revenue += centsToCurrency(
+      Number(project.invoicedCents) > 0 ? Number(project.invoicedCents) : project.budgetCents,
+    );
     grouped.set(name, current);
   }
 
@@ -7838,13 +7771,13 @@ function numberFromMetadata(value: unknown, fallback: number) {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
-async function getUserMetadata(userId: string) {
+async function getUserMetadata(userId: string, executor: SqlExecutor) {
   const rows = await queryRows<{ metadata: Record<string, unknown> }>(sql`
     select metadata
     from users
     where id = ${userId}::uuid
-    limit 1
-  `);
+    limit 1 for update
+  `, executor);
 
   return rows[0]?.metadata ?? {};
 }
