@@ -92,8 +92,16 @@ router.post(
           workspace_editor_subscription_updated_at = now()
         where id = ${access.clientId}::uuid
       `);
-      const appBase = (req.headers.referer as string) || process.env.APP_URL || "http://localhost:5173";
-      const checkoutUrl = `${req.protocol}://${req.get("host")}/api/platform/workspace/billing/simulation?reference=${paymentReference}&plan=${plan}&client_id=${access.clientId}&redirect=${encodeURIComponent(appBase)}`;
+      /**
+       * The return link is a path on this site, not a URL from the request.
+       *
+       * It was built from the Referer header, which the caller controls, and
+       * ended up in an `href` on the simulation page. The simulation now
+       * accepts only a site-relative path, and this is the page the client
+       * came from anyway - the same one the Stripe branch returns to below.
+       */
+      const returnPath = `/client/workspace?projectId=${encodeURIComponent(projectId)}&checkout=success`;
+      const checkoutUrl = `${req.protocol}://${req.get("host")}/api/platform/workspace/billing/simulation?reference=${paymentReference}&plan=${plan}&client_id=${access.clientId}&redirect=${encodeURIComponent(returnPath)}`;
       res.status(202).json({ checkout_url: checkoutUrl, payment_provider: "simulation" });
       return;
     }

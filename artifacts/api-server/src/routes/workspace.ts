@@ -931,6 +931,27 @@ router.post(
 // Real checkout-session creation lives in routes/billing.ts (Stripe-backed, with
 // a simulation fallback for dev/staging). This route only serves the dev-mode
 // simulation landing page that billing.ts's fallback redirects to.
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * A return link that cannot leave this site or run script.
+ *
+ * The caller chooses this value - billing.ts builds it from the Referer header,
+ * and it arrives here as a query parameter either way - so it reached an
+ * `href` as a string the visitor controlled. That is a `javascript:` URI and an
+ * attribute escape waiting to happen, and an open redirect besides.
+ *
+ * Only a site-relative path is allowed through. A protocol-relative `//host`
+ * is rejected because it is a different site wearing a path's clothing.
+ */
+function safeReturnPath(value: unknown): string {
+  if (typeof value !== "string") return "#";
+  if (!value.startsWith("/") || value.startsWith("//")) return "#";
+  return value.replace(/[&<>"']/g, (character) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!,
+  );
+}
+
 router.get("/platform/workspace/billing/simulation", requireRoles(["admin", "owner", "chief", "pm", "client"]), async (req, res) => {
   if (process.env.NODE_ENV === "production") {
     res.status(404).json({ error: "Not found" });
@@ -944,33 +965,68 @@ router.get("/platform/workspace/billing/simulation", requireRoles(["admin", "own
     return;
   }
 
-  const isUnlimited = plan === "unlimited";
-  const extraRounds = plan === "starter" ? 3 : plan === "pro" ? 8 : 0;
+  /**
+   * Everything below treats the query string as hostile, even though this
+   * route answers 404 in production.
+   *
+   * It is a GET that grants a paid plan, so the usual reasons not to bother on
+   * a development stub do not apply: `client_id` arrived unchecked and named
+   * any client in any organization, and `plan` was written to the row and
+   * reflected into the HTML as it came. Staging environments are reachable and
+   * share a cookie with the people who have staff accounts.
+   */
+  const planName = String(plan);
+  if (!["starter", "pro", "unlimited"].includes(planName)) {
+    res.status(400).send("Unknown plan for checkout simulation.");
+    return;
+  }
+
+  const clientId = String(client_id);
+  if (!UUID_PATTERN.test(clientId)) {
+    res.status(400).send("Invalid client for checkout simulation.");
+    return;
+  }
+
+  // The client must be one of the caller's own. Without this the simulation
+  // credits a subscription to any client id a caller cares to type, including
+  // one belonging to another organization.
+  const ownRows = await queryRows<{ id: string }>(sql`
+    select id::text from clients
+    where id = ${clientId}::uuid and organization_id = ${req.auth!.organization.id}::uuid
+    limit 1
+  `);
+  if (ownRows.length === 0) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  const isUnlimited = planName === "unlimited";
+  const extraRounds = planName === "starter" ? 3 : planName === "pro" ? 8 : 0;
 
   await db.execute(sql`
     update clients
     set
       workspace_editor_subscription_active = ${isUnlimited},
-      workspace_editor_subscription_plan = ${plan as string},
+      workspace_editor_subscription_plan = ${planName},
       workspace_editor_subscription_status = 'active',
       workspace_editor_extra_revision_rounds = workspace_editor_extra_revision_rounds + ${extraRounds},
       workspace_editor_subscription_updated_at = now()
-    where id = ${client_id as string}::uuid
+    where id = ${clientId}::uuid
   `);
 
   const projRows = await queryRows<{ id: string }>(sql`
-    select id::text from projects where client_id = ${client_id as string}::uuid limit 1
+    select id::text from projects where client_id = ${clientId}::uuid limit 1
   `);
   const projectId = projRows[0]?.id;
   if (projectId) {
     await db.execute(sql`
       insert into activity_events (organization_id, actor_user_id, project_id, event_type, message, metadata)
       values (
-        (select organization_id from clients where id = ${client_id as string}::uuid),
+        (select organization_id from clients where id = ${clientId}::uuid),
         null,
         ${projectId}::uuid,
         'workspace_saved',
-        ${`Payment verified for ${plan} revision plan`},
+        ${`Payment verified for ${planName} revision plan`},
         '{}'::jsonb
       )
     `);
@@ -989,9 +1045,9 @@ router.get("/platform/workspace/billing/simulation", requireRoles(["admin", "own
       <body>
         <div class="card">
           <h1 style="color: #2f7d3a;">✓ Payment Successful!</h1>
-          <p>Your simulated checkout of the <strong>${plan}</strong> plan has completed successfully.</p>
+          <p>Your simulated checkout of the <strong>${planName}</strong> plan has completed successfully.</p>
           <p>Extra revisions have been credited to your client profile.</p>
-          <a class="btn" href="${redirect as string || '#'}">Return to Workspace</a>
+          <a class="btn" href="${safeReturnPath(redirect)}">Return to Workspace</a>
         </div>
       </body>
     </html>

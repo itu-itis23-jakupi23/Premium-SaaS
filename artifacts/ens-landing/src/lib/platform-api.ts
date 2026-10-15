@@ -1571,7 +1571,7 @@ export async function uploadWorkspaceAsset(
 
 export async function createWorkspaceSubscriptionRequest(projectId: string, plan: string): Promise<{ checkout_url: string; already_active?: boolean }> {
   if (USE_MOCK_API) {
-    return { checkout_url: `http://localhost:5000/api/platform/workspace/billing/simulation?reference=mock-${projectId}&plan=${plan}&client_id=demo-client-id&redirect=${encodeURIComponent(window.location.href)}` };
+    return { checkout_url: `http://localhost:5000/api/platform/workspace/billing/simulation?reference=mock-${projectId}&plan=${plan}&client_id=demo-client-id&redirect=${encodeURIComponent(window.location.pathname + window.location.search)}` };
   }
   return apiJson<{ checkout_url: string; already_active?: boolean }>(`/platform/projects/${projectId}/workspace/subscription-request`, { plan });
 }
