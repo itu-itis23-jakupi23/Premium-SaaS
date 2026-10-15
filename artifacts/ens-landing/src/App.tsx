@@ -157,6 +157,7 @@ function createStaffRoutes() {
   const StaffInvoices = lazyAppPage(() => import("@/pages/staff/Invoices"));
   const ChiefInvoices = () => <StaffInvoices role="chief" />;
   const PMInvoices = () => <StaffInvoices role="pm" />;
+  const PMExtras = lazyStaffPage(() => import("@/pages/pm/PMExtras"));
 
   const PMDashboard = lazyStaffPage(() => import("@/pages/pm/PMDashboard"));
   const PMCalendar = lazyStaffPage(() => import("@/pages/pm/PMCalendar"));
@@ -341,6 +342,17 @@ function createStaffRoutes() {
           {() => (
             <ErrorBoundary label="PM Invoices">
               <ProtectedRoute component={PMInvoices} allowedRoles={["pm"]} />
+            </ErrorBoundary>
+          )}
+        </Route>
+        {/* Furniture loading lists for a whole show. A page in the main
+            navigation, not a panel in the workspace: it is a job for a show
+            rather than for one stand, and the workspace is desktop-only while
+            this is a sheet somebody prints from wherever they are. */}
+        <Route path="/pm/extras">
+          {() => (
+            <ErrorBoundary label="PM Extras">
+              <ProtectedRoute component={PMExtras} allowedRoles={["pm"]} />
             </ErrorBoundary>
           )}
         </Route>

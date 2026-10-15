@@ -116,6 +116,174 @@ router.get("/platform/exhibitions", async (req, res) => {
   });
 });
 
+/**
+ * The shows that actually have stands, by name.
+ *
+ * Keyed on `projects.exhibition_name` rather than the `exhibitions` table,
+ * because that is where the data is: in this database 48 of 49 projects record
+ * their show as a name and *none* carries an `exhibition_id`. The foreign key
+ * exists in the schema and nothing populates it, so a list built from the
+ * exhibitions table shows nothing a manager recognises - the first version of
+ * this listed one test row and none of the real work.
+ *
+ * Rows in the exhibitions table are unioned in so a show that has been set up
+ * properly but has no stands yet still appears.
+ */
+router.get("/platform/extras/shows", async (req, res) => {
+  const auth = req.auth!;
+  if (!isStaff(auth)) { res.status(403).json({ error: { code: "forbidden", message: "Staff only." } }); return; }
+
+  const rows = await queryRows<{ name: string; boothCount: number; venue: string | null; city: string | null }>(sql`
+    select
+      show.name as "name",
+      count(p.id)::int as "boothCount",
+      max(e.venue) as "venue",
+      max(e.city) as "city"
+    from (
+      select distinct coalesce(nullif(trim(p.exhibition_name), ''), e.name) as name
+      from projects p
+      left join exhibitions e on e.id = p.exhibition_id
+      where p.organization_id = ${auth.organization.id}::uuid and p.deleted_at is null
+      union
+      select e.name from exhibitions e
+      where e.organization_id = ${auth.organization.id}::uuid and e.deleted_at is null
+    ) show
+    left join projects p
+      on p.organization_id = ${auth.organization.id}::uuid
+     and p.deleted_at is null
+     and coalesce(nullif(trim(p.exhibition_name), ''), '') = show.name
+    left join exhibitions e
+      on e.organization_id = ${auth.organization.id}::uuid
+     and e.deleted_at is null
+     and e.name = show.name
+    where show.name is not null and show.name <> ''
+    group by show.name
+    order by count(p.id) desc, show.name asc
+  `);
+
+  res.json({ shows: rows });
+});
+
+/**
+ * Every booth's furniture for one show, as one manifest.
+ *
+ * This replaces a job done by hand: before each show someone writes out, per
+ * stand, what furniture it needs, and that sheet is what the warehouse loads
+ * from. Reading it out of the drawings removes the transcription, and the
+ * transcription is where a missing chair comes from.
+ *
+ * Matched on the show's name, for the same reason the list above is - the
+ * `exhibition_id` foreign key is unpopulated in practice. A project that does
+ * carry the id is matched through it as well, so both shapes work.
+ *
+ * One query rather than one per stand: the furniture lives in each booth
+ * version's layout_json, so this unrolls `placedItems` in SQL and aggregates by
+ * SKU there. Only the latest version of each stand counts, and only items of
+ * kind 'furniture' - structure and lighting are part of the build, not things
+ * picked off a shelf.
+ */
+router.get("/platform/extras/furniture-manifest", async (req, res) => {
+  const auth = req.auth!;
+  if (!isStaff(auth)) { res.status(403).json({ error: { code: "forbidden", message: "Staff only." } }); return; }
+
+  const show = typeof req.query.show === "string" ? req.query.show.trim() : "";
+  if (!show) {
+    res.status(400).json({ error: { code: "show_required", message: "A show name is required." } });
+    return;
+  }
+
+  const rows = await queryRows<{
+    projectId: string;
+    projectName: string;
+    clientName: string | null;
+    standNumber: string | null;
+    sku: string | null;
+    itemName: string | null;
+    qty: number | null;
+  }>(sql`
+    with latest_version as (
+      select distinct on (bv.project_id)
+        bv.project_id, bv.layout_json
+      from booth_versions bv
+      where bv.organization_id = ${auth.organization.id}::uuid
+      order by bv.project_id, bv.version_number desc
+    )
+    select
+      p.id::text as "projectId",
+      coalesce(p.name, 'Untitled stand') as "projectName",
+      c.company_name as "clientName",
+      p.metadata ->> 'standNumber' as "standNumber",
+      item ->> 'sku' as "sku",
+      item ->> 'name' as "itemName",
+      sum(coalesce((item ->> 'qty')::int, 1))::int as "qty"
+    from projects p
+    left join clients c on c.id = p.client_id
+    left join exhibitions e on e.id = p.exhibition_id
+    left join latest_version lv on lv.project_id = p.id
+    left join lateral jsonb_array_elements(
+      case when jsonb_typeof(lv.layout_json -> 'placedItems') = 'array'
+        then lv.layout_json -> 'placedItems' else '[]'::jsonb end
+    ) as item on true
+    where p.organization_id = ${auth.organization.id}::uuid
+      and p.deleted_at is null
+      and (trim(coalesce(p.exhibition_name, '')) = ${show} or e.name = ${show})
+      and (item is null or item ->> 'kind' = 'furniture')
+    group by p.id, p.name, c.company_name, p.metadata ->> 'standNumber',
+             item ->> 'sku', item ->> 'name'
+    order by coalesce(c.company_name, p.name) asc, item ->> 'sku' asc
+  `);
+
+  // Stands with no furniture still appear, with an empty list. A stand missing
+  // from the sheet reads as "nothing to load"; a stand listed as empty reads as
+  // "someone has not furnished this yet", which is the useful difference.
+  const booths = new Map<string, {
+    projectId: string;
+    projectName: string;
+    clientName: string | null;
+    standNumber: string | null;
+    items: Array<{ sku: string; name: string; qty: number }>;
+  }>();
+
+  for (const row of rows) {
+    const booth = booths.get(row.projectId) ?? {
+      projectId: row.projectId,
+      projectName: row.projectName,
+      clientName: row.clientName,
+      standNumber: row.standNumber,
+      items: [],
+    };
+    if (row.sku || row.itemName) {
+      booth.items.push({
+        sku: row.sku ?? "",
+        name: row.itemName ?? "",
+        qty: Number(row.qty ?? 0),
+      });
+    }
+    booths.set(row.projectId, booth);
+  }
+
+  const detail = await queryRows<{ venue: string | null; city: string | null; country: string | null }>(sql`
+    select venue, city, country from exhibitions
+    where organization_id = ${auth.organization.id}::uuid and deleted_at is null and name = ${show}
+    limit 1
+  `);
+
+  const boothList = [...booths.values()];
+  res.json({
+    exhibition: {
+      name: show,
+      venue: detail[0]?.venue ?? null,
+      city: detail[0]?.city ?? null,
+      country: detail[0]?.country ?? null,
+    },
+    booths: boothList,
+    totals: {
+      booths: boothList.length,
+      items: boothList.reduce((sum, b) => sum + b.items.reduce((n, i) => n + i.qty, 0), 0),
+    },
+  });
+});
+
 // ── Read one, with its projects and the planned chain ────────────────────────
 router.get("/platform/exhibitions/:exhibitionId", async (req, res) => {
   const auth = req.auth!;

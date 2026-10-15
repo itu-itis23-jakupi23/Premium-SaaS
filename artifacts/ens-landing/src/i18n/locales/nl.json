@@ -1036,6 +1036,33 @@
         "reason": "Reden",
         "placeholder": "Leg uit wat er moet worden gecorrigeerd voordat de klant zich opnieuw registreert.",
         "submit": "Aanvraag afwijzen"
+      },
+      "invite": {
+        "button": "Klant uitnodigen",
+        "organizationUnavailable": "Uw organisatiecode is niet beschikbaar. Meld u af en opnieuw aan.",
+        "portalUnavailable": "Het adres van het klantenportaal is niet beschikbaar. Neem contact op met uw beheerder.",
+        "copied": "Registratielink voor klant gekopieerd",
+        "copyFailed": "Kopiëren mislukt. Selecteer de registratielink en kopieer deze handmatig.",
+        "manualLabel": "Registratielink voor klant"
+      },
+      "capacity": {
+        "title": "Capaciteitsoverschrijding bevestigen",
+        "projected": "{{manager}} zou {{count}} actieve projecten hebben bij een limiet van {{limit}} ({{percent}}% capaciteit).",
+        "help": "Controleer deze verwachte werklast voordat u doorgaat. Voer een reden van 1–500 tekens in; deze wordt vastgelegd in de toewijzingsgeschiedenis.",
+        "reason": "Reden voor capaciteitsoverschrijding",
+        "selectedManager": "De geselecteerde manager",
+        "confirm": "Overschrijding bevestigen"
+      },
+      "approvalDelivery": {
+        "sent": "De e-mailprovider heeft de goedkeuringsmelding geaccepteerd. Ontvangst in het postvak is niet bevestigd.",
+        "failed": "De goedkeuringsmail kon niet worden verzonden. Vraag de klant rechtstreeks in te loggen.",
+        "skipped": "De goedkeuringsmail is overgeslagen omdat e-mailverzending niet beschikbaar is.",
+        "unknown": "De bezorging van de goedkeuringsmail kon niet worden bevestigd."
+      },
+      "refresh": {
+        "savedButStale": "De toewijzing is opgeslagen, maar sommige getoonde gegevens konden niet worden vernieuwd. Vernieuw de gegevens zonder de toewijzing opnieuw in te dienen.",
+        "retry": "Toewijzingsgegevens vernieuwen",
+        "loading": "Bezig met vernieuwen…"
       }
     },
     "projects": {
@@ -1628,7 +1655,8 @@
       "settings": "Instellingen",
       "quotes": "Offertes",
       "invoices": "Facturen",
-      "pipeline": "Verkooppijplijn"
+      "pipeline": "Verkooppijplijn",
+      "extras": "Extra's"
     },
     "common": {
       "noDeadline": "Geen deadline",
@@ -2315,6 +2343,31 @@
         "standType": "Stand Type",
         "status": "Status"
       }
+    },
+    "extras": {
+      "pageTitle": "Extra's · Meubellijsten",
+      "title": "Meubellijsten",
+      "intro": "Kies een beurs om te zien welk meubilair elke stand nodig heeft en druk de laadlijst af.",
+      "shows": "Beurzen",
+      "noShows": "Nog geen beurzen.",
+      "pickShow": "Kies links een beurs om de standen te zien.",
+      "venueTbd": "Locatie nog te bevestigen",
+      "summary": "{{booths}} standen · {{items}} stuks",
+      "sheetSubtitle": "Laadlijst meubilair · {{booths}} standen · {{items}} stuks",
+      "stand": "Stand {{number}}",
+      "boothEmpty": "Nog geen meubilair op deze stand.",
+      "col": {
+        "code": "Code",
+        "item": "Artikel",
+        "qty": "Aantal"
+      },
+      "print": "Afdrukken / Opslaan als PDF",
+      "loadedBy": "Geladen door: ______________________",
+      "checkedBy": "Gecontroleerd door: ______________________",
+      "date": "Datum: ____________",
+      "loadError": "Uw beurzen konden niet worden geladen.",
+      "manifestError": "Het meubilair voor deze beurs kon niet worden geladen.",
+      "standCount": "{{count}} standen"
     }
   },
   "client": {
@@ -3497,6 +3550,13 @@
       "activity": {
         "title": "Recente activiteit",
         "body": "De laatste acties van uw bureau op uw account, de nieuwste eerst. Het verrist zichzelf zolang deze pagina open is."
+      }
+    },
+    "extras": {
+      "sheet": {
+        "title": "Wat deze lijst is",
+        "body": "Eén pagina per beurs, gegroepeerd per stand, met een vakje om af te vinken bij het laden. Hij wordt uit de opgeslagen tekeningen gelezen en komt dus overeen met het ontwerp, niet met iemands geheugen.",
+        "note": "Een stand zonder meubilair staat als leeg vermeld in plaats van weggelaten, zodat \"niets te laden\" te onderscheiden is van \"nog niet ingericht\"."
       }
     }
   },

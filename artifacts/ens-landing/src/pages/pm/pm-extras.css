@@ -1,0 +1,154 @@
+@media (min-width: 48rem) {
+  .pm-extras-page .extras-layout {
+    grid-template-columns: 280px 1fr;
+  }
+}
+
+.extras-sheet {
+  padding: 14px;
+}
+
+.extras-sheet-head {
+  border-bottom: 2px solid currentColor;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+
+.extras-sheet-head h1 {
+  font-size: 15pt;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.extras-sheet-head p {
+  margin: 2px 0 0;
+  font-size: 9.5pt;
+  opacity: 0.75;
+}
+
+.extras-sheet-sub {
+  font-variant-numeric: tabular-nums;
+}
+
+.extras-booth {
+  margin-bottom: 14px;
+}
+
+.extras-booth h2 {
+  font-size: 11pt;
+  font-weight: 700;
+  margin: 0 0 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid currentColor;
+}
+
+.extras-stand {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.extras-empty {
+  margin: 0;
+  font-size: 9.5pt;
+  font-style: italic;
+  opacity: 0.6;
+}
+
+.extras-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+}
+
+.extras-table th {
+  text-align: left;
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+  padding: 2px 4px;
+  font-weight: 600;
+}
+
+.extras-table td {
+  padding: 3px 4px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+  vertical-align: middle;
+}
+
+/* Tabular figures so quantities line up down the column when scanned. */
+.extras-qty {
+  text-align: right;
+  width: 42px;
+  font-variant-numeric: tabular-nums;
+}
+
+.extras-code {
+  width: 58px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.extras-tick {
+  width: 22px;
+  text-align: center;
+}
+
+.extras-box {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+}
+
+.extras-sheet-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 18px;
+  padding-top: 8px;
+  border-top: 1px solid currentColor;
+  font-size: 9pt;
+}
+
+/* Loaded with PMExtras. Named pages and route markers keep print rules local
+   even after the browser retains this lazy stylesheet during navigation. */
+@media print {
+  .pm-extras-page .extras-chrome {
+    display: none !important;
+  }
+
+  .pm-extras-page .extras-layout {
+    display: block !important;
+    margin: 0 !important;
+  }
+
+  .pm-extras-page .extras-sheet {
+    page: pm-extras-sheet;
+    border: 0 !important;
+    border-radius: 0;
+    padding: 0;
+    color: #000;
+    background: #fff;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 10.5pt;
+    break-inside: auto !important;
+  }
+
+  .pm-extras-page .extras-booth {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .pm-extras-page .extras-table thead {
+    display: table-header-group;
+  }
+
+  @page pm-extras-sheet {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+}
+

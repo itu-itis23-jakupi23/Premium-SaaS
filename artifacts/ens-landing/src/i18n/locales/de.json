@@ -1036,6 +1036,33 @@
         "reason": "Grund",
         "placeholder": "Erklären Sie, was korrigiert werden muss, bevor sich der Kunde erneut registriert.",
         "submit": "Anfrage ablehnen"
+      },
+      "invite": {
+        "button": "Kunden einladen",
+        "organizationUnavailable": "Ihr Organisationscode ist nicht verfügbar. Melden Sie sich ab und erneut an.",
+        "portalUnavailable": "Die Adresse des Kundenportals ist nicht verfügbar. Wenden Sie sich an die Administration.",
+        "copied": "Registrierungslink für Kunden kopiert",
+        "copyFailed": "Kopieren fehlgeschlagen. Markieren Sie den Registrierungslink und kopieren Sie ihn manuell.",
+        "manualLabel": "Registrierungslink für Kunden"
+      },
+      "capacity": {
+        "title": "Überschreitung der Managerkapazität bestätigen",
+        "projected": "{{manager}} hätte {{count}} aktive Projekte bei einem Limit von {{limit}} ({{percent}} % Auslastung).",
+        "help": "Prüfen Sie die geplante Auslastung vor dem Fortfahren. Geben Sie eine Begründung mit 1–500 Zeichen ein; sie wird im Zuweisungsverlauf gespeichert.",
+        "reason": "Begründung für die Kapazitätsüberschreitung",
+        "selectedManager": "Der ausgewählte Manager",
+        "confirm": "Kapazitätsüberschreitung bestätigen"
+      },
+      "approvalDelivery": {
+        "sent": "Der E-Mail-Anbieter hat die Freigabebenachrichtigung angenommen. Die Zustellung im Posteingang ist nicht bestätigt.",
+        "failed": "Die Freigabe-E-Mail konnte nicht gesendet werden. Bitten Sie den Kunden, sich direkt anzumelden.",
+        "skipped": "Die Freigabe-E-Mail wurde übersprungen, da der E-Mail-Versand nicht verfügbar ist.",
+        "unknown": "Die Zustellung der Freigabe-E-Mail konnte nicht bestätigt werden."
+      },
+      "refresh": {
+        "savedButStale": "Die Zuweisung wurde gespeichert, aber einige angezeigte Daten konnten nicht aktualisiert werden. Aktualisieren Sie die Daten, ohne die Zuweisung erneut zu senden.",
+        "retry": "Zuweisungsdaten aktualisieren",
+        "loading": "Wird aktualisiert…"
       }
     },
     "projects": {
@@ -1628,7 +1655,8 @@
       "settings": "Einstellungen",
       "quotes": "Angebote",
       "invoices": "Rechnungen",
-      "pipeline": "Vertriebs-Pipeline"
+      "pipeline": "Vertriebs-Pipeline",
+      "extras": "Extras"
     },
     "common": {
       "noDeadline": "Kein Termin",
@@ -2315,6 +2343,31 @@
         "standType": "Stand Type",
         "status": "Status"
       }
+    },
+    "extras": {
+      "pageTitle": "Extras · Möbellisten",
+      "title": "Möbellisten",
+      "intro": "Wählen Sie eine Messe, sehen Sie die Möbel jedes Standes darauf und drucken Sie die Ladeliste.",
+      "shows": "Messen",
+      "noShows": "Noch keine Messen.",
+      "pickShow": "Wählen Sie links eine Messe, um ihre Stände zu sehen.",
+      "venueTbd": "Ort noch offen",
+      "summary": "{{booths}} Stände · {{items}} Teile",
+      "sheetSubtitle": "Möbel-Ladeliste · {{booths}} Stände · {{items}} Teile",
+      "stand": "Stand {{number}}",
+      "boothEmpty": "Auf diesem Stand ist noch kein Möbel eingeplant.",
+      "col": {
+        "code": "Code",
+        "item": "Artikel",
+        "qty": "Anz."
+      },
+      "print": "Drucken / Als PDF speichern",
+      "loadedBy": "Geladen von: ______________________",
+      "checkedBy": "Geprüft von: ______________________",
+      "date": "Datum: ____________",
+      "loadError": "Ihre Messen konnten nicht geladen werden.",
+      "manifestError": "Die Möbel für diese Messe konnten nicht geladen werden.",
+      "standCount": "{{count}} Stände"
     }
   },
   "client": {
@@ -3497,6 +3550,13 @@
       "activity": {
         "title": "Letzte Aktivität",
         "body": "Die letzten Schritte Ihrer Agentur an Ihrem Konto, neueste zuerst. Aktualisiert sich selbst, solange diese Seite offen ist."
+      }
+    },
+    "extras": {
+      "sheet": {
+        "title": "Was diese Liste ist",
+        "body": "Eine Seite je Messe, nach Stand gruppiert, mit einem Kästchen zum Abhaken beim Laden. Sie wird aus den gespeicherten Zeichnungen gelesen und entspricht damit dem Entwurf, nicht jemandes Erinnerung.",
+        "note": "Ein Stand ohne Möbel wird als leer aufgeführt statt weggelassen, damit \"nichts zu laden\" von \"noch nicht eingerichtet\" unterscheidbar bleibt."
       }
     }
   },

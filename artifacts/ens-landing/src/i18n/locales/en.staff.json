@@ -563,6 +563,33 @@
         "pm": "PM",
         "exhibition": "Exhibition",
         "status": "Status"
+      },
+      "invite": {
+        "button": "Invite client",
+        "organizationUnavailable": "Your organization code is unavailable. Sign out and sign in again.",
+        "portalUnavailable": "The client portal address is unavailable. Contact your administrator.",
+        "copied": "Client registration link copied",
+        "copyFailed": "Could not copy. Select the registration link and copy it manually.",
+        "manualLabel": "Client registration link"
+      },
+      "capacity": {
+        "title": "Confirm manager capacity override",
+        "projected": "{{manager}} would have {{count}} active projects against a limit of {{limit}} ({{percent}}% capacity).",
+        "help": "Proceed only after reviewing this projected workload. Enter a reason of 1–500 characters; it will be recorded in the assignment history.",
+        "reason": "Reason for overriding capacity",
+        "selectedManager": "The selected manager",
+        "confirm": "Confirm capacity override"
+      },
+      "approvalDelivery": {
+        "sent": "The email provider accepted the approval notification. Inbox delivery is not confirmed.",
+        "failed": "The approval email could not be sent. Ask the client to sign in directly.",
+        "skipped": "The approval email was skipped because email delivery is unavailable.",
+        "unknown": "Approval email delivery could not be confirmed."
+      },
+      "refresh": {
+        "savedButStale": "The assignment was saved, but some displayed data could not be refreshed. Refresh the data without submitting the assignment again.",
+        "retry": "Refresh assignment data",
+        "loading": "Refreshing…"
       }
     },
     "projects": {
@@ -1805,6 +1832,43 @@
         "end": "End Date",
         "standType": "Stand Type",
         "status": "Status"
+      }
+    },
+    "nav": {
+      "extras": "Extras"
+    },
+    "extras": {
+      "pageTitle": "Extras · Furniture lists",
+      "title": "Furniture lists",
+      "intro": "Pick a show to see the furniture every stand on it needs, then print the loading sheet.",
+      "shows": "Shows",
+      "noShows": "No shows yet.",
+      "pickShow": "Pick a show on the left to see its stands.",
+      "venueTbd": "Venue to be confirmed",
+      "summary": "{{booths}} stands · {{items}} items",
+      "sheetSubtitle": "Furniture loading list · {{booths}} stands · {{items}} items",
+      "stand": "Stand {{number}}",
+      "boothEmpty": "No furniture on this stand yet.",
+      "col": {
+        "code": "Code",
+        "item": "Item",
+        "qty": "Qty"
+      },
+      "print": "Print / Save as PDF",
+      "loadedBy": "Loaded by: ______________________",
+      "checkedBy": "Checked by: ______________________",
+      "date": "Date: ____________",
+      "loadError": "Your shows could not be loaded.",
+      "manifestError": "The furniture for this show could not be loaded.",
+      "standCount": "{{count}} stands"
+    }
+  },
+  "help": {
+    "extras": {
+      "sheet": {
+        "title": "What this sheet is",
+        "body": "One page per show, grouped by stand, with a box to tick as each item is loaded. It is read from the saved drawings, so it matches what was designed rather than what someone remembered.",
+        "note": "A stand with no furniture is listed as empty rather than left out, so you can tell \"nothing to load\" from \"nobody has furnished it yet\"."
       }
     }
   }

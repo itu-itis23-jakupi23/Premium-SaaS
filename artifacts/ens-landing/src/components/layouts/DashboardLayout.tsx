@@ -29,8 +29,7 @@ import {
   ChevronUp,
   Receipt,
   CreditCard,
-  KanbanSquare,
-} from "lucide-react";
+  KanbanSquare, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -93,6 +92,7 @@ const sidebarItems: Record<DashboardLayoutProps["role"], SidebarItem[]> = {
     { icon: Briefcase,       labelKey: "pm.nav.projects",   href: "/pm/projects" },
     { icon: Receipt,         labelKey: "pm.nav.quotes",     href: "/pm/quotes" },
     { icon: CreditCard,      labelKey: "pm.nav.invoices",   href: "/pm/invoices" },
+    { icon: ClipboardList,   labelKey: "pm.nav.extras",     href: "/pm/extras" },
     { icon: CalendarDays,    labelKey: "pm.nav.calendar",   href: "/pm/calendar" },
     { icon: MessageSquare,   labelKey: "pm.nav.messages",   href: "/pm/messages" },
     { icon: Layers,          labelKey: "pm.nav.tasks",      href: "/pm/tasks" },

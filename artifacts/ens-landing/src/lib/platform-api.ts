@@ -300,6 +300,31 @@ export class ClientArchiveBlockedError extends Error {
   }
 }
 
+export class ManagerCapacityError extends Error {
+  constructor(
+    public readonly code: "over_capacity" | "extreme_overload",
+    public readonly managerId: string,
+    public readonly count: number,
+    public readonly limit: number,
+    public readonly status: 409 | 422,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ManagerCapacityError";
+  }
+}
+
+export type ApprovalEmailDelivery =
+  | { ok: true; status: "sent" }
+  | { ok: false; status: "failed" | "skipped"; error?: string };
+
+export interface ClientApprovalResult {
+  ok: boolean;
+  clients?: PlatformClient[];
+  approvalEmailDelivery?: ApprovalEmailDelivery;
+  refreshRequired?: boolean;
+}
+
 export interface PlatformActivity {
   id: string;
   type: string;
@@ -812,6 +837,13 @@ export interface ManagerWorkspace {
   audit: PlatformActivity[];
   invitations: ManagerInvitation[];
 }
+
+export type ManagerAssignmentResult = ManagerWorkspace | {
+  ok: true;
+  changedClients: number;
+  changedProjects: number;
+  refreshRequired: true;
+};
 
 export interface ManagerAssignmentItemsParams {
   managerId?: string | null;
@@ -1383,7 +1415,7 @@ export async function approvePlatformClient(clientId: string, input: {
   note?: string;
   confirmOverCapacity?: boolean;
   overrideReason?: string | null;
-}) {
+}): Promise<ClientApprovalResult> {
   if (USE_MOCK_API) {
     const manager = mockManagerWorkspace().managers.find((item) => item.id === input.managerId);
     return {
@@ -1393,7 +1425,7 @@ export async function approvePlatformClient(clientId: string, input: {
         : client),
     };
   }
-  return apiPatch<{ ok: boolean; clients: PlatformClient[] }>(`/platform/clients/${clientId}/approve`, input);
+  return apiJsonWithMethod<ClientApprovalResult>("PATCH", `/platform/clients/${clientId}/approve`, input, 409);
 }
 
 export async function rejectPlatformClient(clientId: string, reason: string) {
@@ -2267,7 +2299,8 @@ export async function updateManagerAssignments(input: {
   cascadeClientProjects: boolean;
   confirmOverCapacity?: boolean;
   overrideReason?: string | null;
-}) {
+  reason?: string | null;
+}): Promise<ManagerAssignmentResult> {
   if (USE_MOCK_API) {
     const workspace = mockManagerWorkspace();
     const clients = workspace.clients.map((client) => {
@@ -2290,7 +2323,7 @@ export async function updateManagerAssignments(input: {
     saveMockManagerWorkspace(next);
     return next;
   }
-  return apiJsonWithMethod<ManagerWorkspace>("PUT", "/platform/managers/assignments", input);
+  return apiJsonWithMethod<ManagerAssignmentResult>("PUT", "/platform/managers/assignments", input, 422);
 }
 
 export async function updateManagerStatus(managerId: string, status: "active" | "suspended") {
@@ -2516,6 +2549,51 @@ export async function getClientDocuments(projectId?: string): Promise<ClientDocu
   return data.documents;
 }
 
+/**
+ * The shows that actually have stands, and the furniture on each.
+ *
+ * Keyed on the show's *name*, not an exhibition id. The `exhibition_id`
+ * foreign key exists in the schema and nothing populates it: in a real
+ * database 48 of 49 projects recorded their show as a name and none carried
+ * the id, so a list built from the exhibitions table showed nothing a manager
+ * recognised.
+ */
+export interface ExtrasShow {
+  name: string;
+  boothCount: number;
+  venue: string | null;
+  city: string | null;
+}
+
+export interface ExhibitionFurnitureManifest {
+  exhibition: {
+    name: string;
+    venue: string | null;
+    city: string | null;
+    country: string | null;
+  };
+  booths: Array<{
+    projectId: string;
+    projectName: string;
+    clientName: string | null;
+    standNumber: string | null;
+    items: Array<{ sku: string; name: string; qty: number }>;
+  }>;
+  totals: { booths: number; items: number };
+}
+
+export async function getExtrasShows(): Promise<{ shows: ExtrasShow[] }> {
+  return apiGet<{ shows: ExtrasShow[] }>("/platform/extras/shows");
+}
+
+export async function getExhibitionFurnitureManifest(
+  showName: string,
+): Promise<ExhibitionFurnitureManifest> {
+  return apiGet<ExhibitionFurnitureManifest>(
+    `/platform/extras/furniture-manifest?show=${encodeURIComponent(showName)}`,
+  );
+}
+
 export function getDocumentDownloadUrl(documentId: string): string {
   return `${API_BASE_URL}/platform/documents/${documentId}/download`;
 }
@@ -2578,7 +2656,7 @@ async function apiJson<T>(path: string, body: unknown): Promise<T> {
   return apiJsonWithMethod<T>("POST", path, body);
 }
 
-async function apiJsonWithMethod<T>(method: "POST" | "PUT" | "PATCH" | "DELETE", path: string, body: unknown): Promise<T> {
+async function apiJsonWithMethod<T>(method: "POST" | "PUT" | "PATCH" | "DELETE", path: string, body: unknown, capacityStatus?: 409 | 422): Promise<T> {
   const response = await apiFetch(path, {
     method,
     credentials: "include",
@@ -2591,6 +2669,18 @@ async function apiJsonWithMethod<T>(method: "POST" | "PUT" | "PATCH" | "DELETE",
   });
 
   if (!response.ok) {
+    if (capacityStatus) {
+      const error = await readApiBody<{ error?: string | { message?: string }; message?: string; managerId?: unknown; count?: unknown; limit?: unknown }>(response);
+      if (response.status === capacityStatus &&
+          (error?.error === "over_capacity" || error?.error === "extreme_overload") &&
+          typeof error.managerId === "string" && error.managerId.length > 0 &&
+          typeof error.count === "number" && Number.isSafeInteger(error.count) && error.count >= 0 &&
+          typeof error.limit === "number" && Number.isSafeInteger(error.limit) && error.limit > 0) {
+        throw new ManagerCapacityError(error.error, error.managerId, error.count, error.limit, capacityStatus,
+          typeof error.message === "string" ? error.message : error.error);
+      }
+      throw new Error(apiErrorMessage(error, response));
+    }
     throw new Error(await readApiError(response));
   }
 

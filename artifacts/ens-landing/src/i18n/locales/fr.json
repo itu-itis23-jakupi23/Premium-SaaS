@@ -1036,6 +1036,33 @@
         "reason": "Motif",
         "placeholder": "Expliquez ce qui doit être corrigé avant que le client ne s'inscrive à nouveau.",
         "submit": "Refuser la demande"
+      },
+      "invite": {
+        "button": "Inviter un client",
+        "organizationUnavailable": "Le code de votre organisation est indisponible. Déconnectez-vous puis reconnectez-vous.",
+        "portalUnavailable": "L’adresse du portail client est indisponible. Contactez votre administrateur.",
+        "copied": "Lien d’inscription client copié",
+        "copyFailed": "Copie impossible. Sélectionnez le lien d’inscription et copiez-le manuellement.",
+        "manualLabel": "Lien d’inscription client"
+      },
+      "capacity": {
+        "title": "Confirmer le dépassement de capacité",
+        "projected": "{{manager}} aurait {{count}} projets actifs pour une limite de {{limit}} ({{percent}} % de capacité).",
+        "help": "Vérifiez cette charge prévue avant de continuer. Saisissez un motif de 1 à 500 caractères ; il sera conservé dans l’historique des affectations.",
+        "reason": "Motif du dépassement de capacité",
+        "selectedManager": "Le responsable sélectionné",
+        "confirm": "Confirmer le dépassement"
+      },
+      "approvalDelivery": {
+        "sent": "Le fournisseur d’e-mails a accepté la notification d’approbation. Sa réception n’est pas confirmée.",
+        "failed": "L’e-mail d’approbation n’a pas pu être envoyé. Demandez au client de se connecter directement.",
+        "skipped": "L’e-mail d’approbation a été ignoré car l’envoi d’e-mails est indisponible.",
+        "unknown": "La réception de l’e-mail d’approbation n’a pas pu être confirmée."
+      },
+      "refresh": {
+        "savedButStale": "L’affectation a été enregistrée, mais certaines données affichées n’ont pas pu être actualisées. Actualisez les données sans soumettre à nouveau l’affectation.",
+        "retry": "Actualiser les affectations",
+        "loading": "Actualisation…"
       }
     },
     "projects": {
@@ -1628,7 +1655,8 @@
       "settings": "Paramètres",
       "quotes": "Devis",
       "invoices": "Factures",
-      "pipeline": "Pipeline commercial"
+      "pipeline": "Pipeline commercial",
+      "extras": "Extras"
     },
     "common": {
       "noDeadline": "Pas d'échéance",
@@ -2315,6 +2343,31 @@
         "standType": "Stand Type",
         "status": "Status"
       }
+    },
+    "extras": {
+      "pageTitle": "Extras · Listes de mobilier",
+      "title": "Listes de mobilier",
+      "intro": "Choisissez un salon pour voir le mobilier dont chaque stand a besoin, puis imprimez la liste de chargement.",
+      "shows": "Salons",
+      "noShows": "Aucun salon pour le moment.",
+      "pickShow": "Choisissez un salon à gauche pour voir ses stands.",
+      "venueTbd": "Lieu à confirmer",
+      "summary": "{{booths}} stands · {{items}} articles",
+      "sheetSubtitle": "Liste de chargement mobilier · {{booths}} stands · {{items}} articles",
+      "stand": "Stand {{number}}",
+      "boothEmpty": "Aucun mobilier sur ce stand pour le moment.",
+      "col": {
+        "code": "Code",
+        "item": "Article",
+        "qty": "Qté"
+      },
+      "print": "Imprimer / Enregistrer en PDF",
+      "loadedBy": "Chargé par : ______________________",
+      "checkedBy": "Vérifié par : ______________________",
+      "date": "Date : ____________",
+      "loadError": "Vos salons n'ont pas pu être chargés.",
+      "manifestError": "Le mobilier de ce salon n'a pas pu être chargé.",
+      "standCount": "{{count}} stands"
     }
   },
   "client": {
@@ -3497,6 +3550,13 @@
       "activity": {
         "title": "Activité récente",
         "body": "Les dernières actions de votre agence sur votre compte, les plus récentes d'abord. Mise à jour automatique tant que cette page est ouverte."
+      }
+    },
+    "extras": {
+      "sheet": {
+        "title": "Ce qu'est cette liste",
+        "body": "Une page par salon, groupée par stand, avec une case à cocher au chargement de chaque article. Elle est lue depuis les plans enregistrés : elle correspond donc à ce qui a été conçu, pas à un souvenir.",
+        "note": "Un stand sans mobilier est listé comme vide plutôt qu'omis, pour distinguer « rien à charger » de « personne ne l'a encore aménagé »."
       }
     }
   },

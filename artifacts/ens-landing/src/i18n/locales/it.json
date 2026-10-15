@@ -1036,6 +1036,33 @@
         "reason": "Motivo",
         "placeholder": "Spiega cosa deve essere corretto prima che il cliente si registri di nuovo.",
         "submit": "Rifiuta richiesta"
+      },
+      "invite": {
+        "button": "Invita cliente",
+        "organizationUnavailable": "Il codice della tua organizzazione non è disponibile. Esci e accedi di nuovo.",
+        "portalUnavailable": "L’indirizzo del portale clienti non è disponibile. Contatta l’amministratore.",
+        "copied": "Link di registrazione del cliente copiato",
+        "copyFailed": "Impossibile copiare. Seleziona il link di registrazione e copialo manualmente.",
+        "manualLabel": "Link di registrazione del cliente"
+      },
+      "capacity": {
+        "title": "Conferma il superamento della capacità",
+        "projected": "{{manager}} avrebbe {{count}} progetti attivi rispetto a un limite di {{limit}} ({{percent}}% di capacità).",
+        "help": "Esamina questo carico previsto prima di continuare. Inserisci un motivo di 1–500 caratteri; sarà registrato nella cronologia delle assegnazioni.",
+        "reason": "Motivo del superamento della capacità",
+        "selectedManager": "Il responsabile selezionato",
+        "confirm": "Conferma il superamento"
+      },
+      "approvalDelivery": {
+        "sent": "Il fornitore e-mail ha accettato la notifica di approvazione. La consegna nella posta in arrivo non è confermata.",
+        "failed": "Impossibile inviare l’e-mail di approvazione. Chiedi al cliente di accedere direttamente.",
+        "skipped": "L’e-mail di approvazione è stata saltata perché l’invio e-mail non è disponibile.",
+        "unknown": "Non è stato possibile confermare la consegna dell’e-mail di approvazione."
+      },
+      "refresh": {
+        "savedButStale": "L’assegnazione è stata salvata, ma alcuni dati visualizzati non sono stati aggiornati. Aggiorna i dati senza inviare nuovamente l’assegnazione.",
+        "retry": "Aggiorna i dati di assegnazione",
+        "loading": "Aggiornamento…"
       }
     },
     "projects": {
@@ -1628,7 +1655,8 @@
       "settings": "Impostazioni",
       "quotes": "Preventivi",
       "invoices": "Fatture",
-      "pipeline": "Pipeline commerciale"
+      "pipeline": "Pipeline commerciale",
+      "extras": "Extra"
     },
     "common": {
       "noDeadline": "Nessuna scadenza",
@@ -2315,6 +2343,31 @@
         "standType": "Stand Type",
         "status": "Status"
       }
+    },
+    "extras": {
+      "pageTitle": "Extra · Elenchi arredi",
+      "title": "Elenchi arredi",
+      "intro": "Scegliete una fiera per vedere gli arredi di cui ha bisogno ogni stand, poi stampate la lista di carico.",
+      "shows": "Fiere",
+      "noShows": "Ancora nessuna fiera.",
+      "pickShow": "Scegliete una fiera a sinistra per vederne gli stand.",
+      "venueTbd": "Sede da confermare",
+      "summary": "{{booths}} stand · {{items}} pezzi",
+      "sheetSubtitle": "Lista di carico arredi · {{booths}} stand · {{items}} pezzi",
+      "stand": "Stand {{number}}",
+      "boothEmpty": "Nessun arredo su questo stand per ora.",
+      "col": {
+        "code": "Codice",
+        "item": "Articolo",
+        "qty": "Qtà"
+      },
+      "print": "Stampa / Salva come PDF",
+      "loadedBy": "Caricato da: ______________________",
+      "checkedBy": "Controllato da: ______________________",
+      "date": "Data: ____________",
+      "loadError": "Non è stato possibile caricare le vostre fiere.",
+      "manifestError": "Non è stato possibile caricare gli arredi di questa fiera.",
+      "standCount": "{{count}} stand"
     }
   },
   "client": {
@@ -3497,6 +3550,13 @@
       "activity": {
         "title": "Attività recente",
         "body": "Le ultime azioni dell'agenzia sul vostro account, dalla più recente. Si aggiorna da sé mentre questa pagina è aperta."
+      }
+    },
+    "extras": {
+      "sheet": {
+        "title": "Che cos'è questo elenco",
+        "body": "Una pagina per fiera, raggruppata per stand, con una casella da spuntare al carico di ogni pezzo. È letta dai disegni salvati, quindi corrisponde al progetto e non ai ricordi di qualcuno.",
+        "note": "Uno stand senza arredi è elencato come vuoto anziché omesso, così \"niente da caricare\" si distingue da \"nessuno lo ha ancora arredato\"."
       }
     }
   },

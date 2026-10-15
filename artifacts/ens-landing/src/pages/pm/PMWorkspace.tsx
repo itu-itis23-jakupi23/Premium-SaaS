@@ -28,8 +28,7 @@ import {
   // resolves to a React component instead of throwing.
   Square, Layers, Map as MapIcon, X,
   CheckCircle2, Package, StickyNote, Settings2, Copy, MessageSquare, ImagePlus, Lock, Unlock,
-  AlertTriangle,
-} from "lucide-react";
+  AlertTriangle } from "lucide-react";
 import {
   clampNumber,
   snapNumber,

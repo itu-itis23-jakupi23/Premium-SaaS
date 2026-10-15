@@ -1036,6 +1036,33 @@
         "reason": "Motivo",
         "placeholder": "Explique o que deve ser corrigido antes de o cliente se registar novamente.",
         "submit": "Recusar pedido"
+      },
+      "invite": {
+        "button": "Convidar cliente",
+        "organizationUnavailable": "O código da sua organização está indisponível. Termine a sessão e inicie-a novamente.",
+        "portalUnavailable": "O endereço do portal do cliente está indisponível. Contacte o administrador.",
+        "copied": "Ligação de registo do cliente copiada",
+        "copyFailed": "Não foi possível copiar. Selecione a ligação de registo e copie-a manualmente.",
+        "manualLabel": "Ligação de registo do cliente"
+      },
+      "capacity": {
+        "title": "Confirmar exceção de capacidade",
+        "projected": "{{manager}} teria {{count}} projetos ativos para um limite de {{limit}} ({{percent}}% da capacidade).",
+        "help": "Reveja esta carga prevista antes de continuar. Introduza um motivo de 1 a 500 caracteres; será guardado no histórico de atribuições.",
+        "reason": "Motivo para exceder a capacidade",
+        "selectedManager": "O gestor selecionado",
+        "confirm": "Confirmar exceção"
+      },
+      "approvalDelivery": {
+        "sent": "O fornecedor de e-mail aceitou a notificação de aprovação. A entrega na caixa de entrada não está confirmada.",
+        "failed": "Não foi possível enviar o e-mail de aprovação. Peça ao cliente para iniciar sessão diretamente.",
+        "skipped": "O e-mail de aprovação foi ignorado porque o envio de e-mail está indisponível.",
+        "unknown": "Não foi possível confirmar a entrega do e-mail de aprovação."
+      },
+      "refresh": {
+        "savedButStale": "A atribuição foi guardada, mas alguns dados apresentados não puderam ser atualizados. Atualize os dados sem voltar a enviar a atribuição.",
+        "retry": "Atualizar dados de atribuição",
+        "loading": "A atualizar…"
       }
     },
     "projects": {
@@ -1628,7 +1655,8 @@
       "settings": "Configurações",
       "quotes": "Orçamentos",
       "invoices": "Faturas",
-      "pipeline": "Funil de vendas"
+      "pipeline": "Funil de vendas",
+      "extras": "Extras"
     },
     "common": {
       "noDeadline": "Sem prazo",
@@ -2315,6 +2343,31 @@
         "standType": "Stand Type",
         "status": "Status"
       }
+    },
+    "extras": {
+      "pageTitle": "Extras · Listas de mobiliário",
+      "title": "Listas de mobiliário",
+      "intro": "Escolha uma feira para ver o mobiliário que cada stand precisa e imprima a folha de carregamento.",
+      "shows": "Feiras",
+      "noShows": "Ainda não há feiras.",
+      "pickShow": "Escolha uma feira à esquerda para ver seus stands.",
+      "venueTbd": "Local a confirmar",
+      "summary": "{{booths}} stands · {{items}} itens",
+      "sheetSubtitle": "Folha de carregamento de mobiliário · {{booths}} stands · {{items}} itens",
+      "stand": "Stand {{number}}",
+      "boothEmpty": "Ainda não há mobiliário neste stand.",
+      "col": {
+        "code": "Código",
+        "item": "Item",
+        "qty": "Qtd"
+      },
+      "print": "Imprimir / Salvar como PDF",
+      "loadedBy": "Carregado por: ______________________",
+      "checkedBy": "Conferido por: ______________________",
+      "date": "Data: ____________",
+      "loadError": "Não foi possível carregar suas feiras.",
+      "manifestError": "Não foi possível carregar o mobiliário desta feira.",
+      "standCount": "{{count}} stands"
     }
   },
   "client": {
@@ -3497,6 +3550,13 @@
       "activity": {
         "title": "Atividade recente",
         "body": "As últimas ações da sua agência na sua conta, as mais recentes primeiro. Atualiza-se sozinho enquanto esta página estiver aberta."
+      }
+    },
+    "extras": {
+      "sheet": {
+        "title": "O que é esta folha",
+        "body": "Uma página por feira, agrupada por stand, com uma caixa para marcar ao carregar cada item. É lida dos desenhos salvos, por isso corresponde ao que foi projetado e não ao que alguém lembrou.",
+        "note": "Um stand sem mobiliário aparece como vazio em vez de ser omitido, para distinguir \"nada a carregar\" de \"ninguém o mobiliou ainda\"."
       }
     }
   },

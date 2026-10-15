@@ -1036,6 +1036,33 @@
         "reason": "Gerekçe",
         "placeholder": "Müşteri tekrar kayıt olmadan önce nelerin düzeltilmesi gerektiğini açıklayın.",
         "submit": "Talebi reddet"
+      },
+      "invite": {
+        "button": "Müşteriyi davet et",
+        "organizationUnavailable": "Kuruluş kodunuz kullanılamıyor. Oturumu kapatıp tekrar giriş yapın.",
+        "portalUnavailable": "Müşteri portalı adresi kullanılamıyor. Yöneticinizle iletişime geçin.",
+        "copied": "Müşteri kayıt bağlantısı kopyalandı",
+        "copyFailed": "Kopyalanamadı. Kayıt bağlantısını seçip elle kopyalayın.",
+        "manualLabel": "Müşteri kayıt bağlantısı"
+      },
+      "capacity": {
+        "title": "Yönetici kapasite aşımını onayla",
+        "projected": "{{manager}}, {{limit}} sınırına karşılık {{count}} aktif projeye sahip olacak (%{{percent}} kapasite).",
+        "help": "Devam etmeden önce öngörülen iş yükünü inceleyin. 1–500 karakterlik bir gerekçe girin; atama geçmişine kaydedilecektir.",
+        "reason": "Kapasite aşımı gerekçesi",
+        "selectedManager": "Seçilen yönetici",
+        "confirm": "Kapasite aşımını onayla"
+      },
+      "approvalDelivery": {
+        "sent": "E-posta sağlayıcısı onay bildirimini kabul etti. Gelen kutusuna teslim edildiği doğrulanmadı.",
+        "failed": "Onay e-postası gönderilemedi. Müşteriden doğrudan giriş yapmasını isteyin.",
+        "skipped": "E-posta gönderimi kullanılamadığı için onay e-postası atlandı.",
+        "unknown": "Onay e-postasının teslimi doğrulanamadı."
+      },
+      "refresh": {
+        "savedButStale": "Atama kaydedildi, ancak görüntülenen bazı veriler yenilenemedi. Atamayı yeniden göndermeden verileri yenileyin.",
+        "retry": "Atama verilerini yenile",
+        "loading": "Yenileniyor…"
       }
     },
     "projects": {
@@ -1628,7 +1655,8 @@
       "settings": "Ayarlar",
       "quotes": "Teklifler",
       "invoices": "Faturalar",
-      "pipeline": "Satış Hattı"
+      "pipeline": "Satış Hattı",
+      "extras": "Ekstralar"
     },
     "common": {
       "noDeadline": "Son tarih yok",
@@ -2315,6 +2343,31 @@
         "standType": "Stand Type",
         "status": "Status"
       }
+    },
+    "extras": {
+      "pageTitle": "Ekstralar · Mobilya listeleri",
+      "title": "Mobilya listeleri",
+      "intro": "Bir fuar seçin, üzerindeki her standın ihtiyacı olan mobilyayı görün ve yükleme listesini yazdırın.",
+      "shows": "Fuarlar",
+      "noShows": "Henüz fuar yok.",
+      "pickShow": "Standlarını görmek için soldan bir fuar seçin.",
+      "venueTbd": "Yer henüz belli değil",
+      "summary": "{{booths}} stand · {{items}} parça",
+      "sheetSubtitle": "Mobilya yükleme listesi · {{booths}} stand · {{items}} parça",
+      "stand": "Stand {{number}}",
+      "boothEmpty": "Bu standa henüz mobilya eklenmedi.",
+      "col": {
+        "code": "Kod",
+        "item": "Ürün",
+        "qty": "Adet"
+      },
+      "print": "Yazdır / PDF olarak kaydet",
+      "loadedBy": "Yükleyen: ______________________",
+      "checkedBy": "Kontrol eden: ______________________",
+      "date": "Tarih: ____________",
+      "loadError": "Fuarlarınız yüklenemedi.",
+      "manifestError": "Bu fuarın mobilyaları yüklenemedi.",
+      "standCount": "{{count}} stand"
     }
   },
   "client": {
@@ -3497,6 +3550,13 @@
       "activity": {
         "title": "Son hareketler",
         "body": "Ajansınızın hesabınızda yaptığı son işlemler, en yenisi önce. Bu sayfa açıkken kendiliğinden yenilenir."
+      }
+    },
+    "extras": {
+      "sheet": {
+        "title": "Bu liste nedir",
+        "body": "Fuar başına tek sayfa, standlara göre gruplanmış ve her parça yüklendikçe işaretlenecek kutularla. Kaydedilmiş çizimlerden okunur; yani birinin hatırladığına değil, tasarlanana uyar.",
+        "note": "Mobilyası olmayan stand listeden çıkarılmaz, boş olarak gösterilir; böylece \"yüklenecek bir şey yok\" ile \"henüz kimse döşemedi\" ayırt edilir."
       }
     }
   },

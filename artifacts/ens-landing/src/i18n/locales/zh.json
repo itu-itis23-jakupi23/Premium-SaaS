@@ -1036,6 +1036,33 @@
         "reason": "原因",
         "placeholder": "说明客户再次注册前需要修正的内容。",
         "submit": "拒绝申请"
+      },
+      "invite": {
+        "button": "邀请客户",
+        "organizationUnavailable": "无法获取您的组织代码。请退出后重新登录。",
+        "portalUnavailable": "客户门户地址不可用。请联系管理员。",
+        "copied": "客户注册链接已复制",
+        "copyFailed": "无法复制。请选择注册链接并手动复制。",
+        "manualLabel": "客户注册链接"
+      },
+      "capacity": {
+        "title": "确认超出经理容量",
+        "projected": "{{manager}} 将有 {{count}} 个进行中的项目，容量上限为 {{limit}}（使用率 {{percent}}%）。",
+        "help": "请先审核预计工作量再继续。请输入 1–500 个字符的原因；该原因将记录在分配历史中。",
+        "reason": "超出容量的原因",
+        "selectedManager": "所选经理",
+        "confirm": "确认超出容量"
+      },
+      "approvalDelivery": {
+        "sent": "邮件服务商已接受审批通知，但尚未确认邮件已送达收件箱。",
+        "failed": "无法发送审批邮件。请让客户直接登录。",
+        "skipped": "由于邮件发送服务不可用，已跳过审批邮件。",
+        "unknown": "无法确认审批邮件的送达情况。"
+      },
+      "refresh": {
+        "savedButStale": "分配已保存，但部分显示数据无法刷新。请刷新数据，无需再次提交分配。",
+        "retry": "刷新分配数据",
+        "loading": "正在刷新…"
       }
     },
     "projects": {
@@ -1628,7 +1655,8 @@
       "settings": "设置",
       "quotes": "报价单",
       "invoices": "发票",
-      "pipeline": "销售管道"
+      "pipeline": "销售管道",
+      "extras": "附加物品"
     },
     "common": {
       "noDeadline": "无截止日期",
@@ -2315,6 +2343,31 @@
         "standType": "Stand Type",
         "status": "Status"
       }
+    },
+    "extras": {
+      "pageTitle": "附加物品 · 家具清单",
+      "title": "家具清单",
+      "intro": "选择一个展会即可查看其中每个展台所需的家具，并打印装车清单。",
+      "shows": "展会",
+      "noShows": "暂无展会。",
+      "pickShow": "在左侧选择展会以查看其展台。",
+      "venueTbd": "场馆待定",
+      "summary": "{{booths}} 个展台 · {{items}} 件",
+      "sheetSubtitle": "家具装车清单 · {{booths}} 个展台 · {{items}} 件",
+      "stand": "展台 {{number}}",
+      "boothEmpty": "此展台尚未安排家具。",
+      "col": {
+        "code": "编号",
+        "item": "品名",
+        "qty": "数量"
+      },
+      "print": "打印 / 另存为 PDF",
+      "loadedBy": "装车人：______________________",
+      "checkedBy": "检查人：______________________",
+      "date": "日期：____________",
+      "loadError": "无法加载您的展会。",
+      "manifestError": "无法加载此展会的家具。",
+      "standCount": "{{count}} 个展台"
     }
   },
   "client": {
@@ -3497,6 +3550,13 @@
       "activity": {
         "title": "近期动态",
         "body": "代理商在您账户上的最近若干操作，最新的在前。本页打开期间会自动刷新。"
+      }
+    },
+    "extras": {
+      "sheet": {
+        "title": "这份清单是什么",
+        "body": "每个展会一页，按展台分组，每行附勾选框供装车时打勾。内容取自已保存的图纸，因此与设计一致，而非凭记忆。",
+        "note": "没有家具的展台会列为空白而非略去，以便区分“无需装车”与“尚未有人布置”。"
       }
     }
   },
