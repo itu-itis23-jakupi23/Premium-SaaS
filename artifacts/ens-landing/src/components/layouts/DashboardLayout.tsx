@@ -51,6 +51,7 @@ import {
 import { RoleGuide } from "@/components/dashboard/RoleGuide";
 import { ConnectionNotice } from "@/components/dashboard/ConnectionNotice";
 import { preloadPortalRoute } from "@/lib/route-preload";
+import "./dashboard-print.css";
 
 interface SidebarItem {
   icon: ElementType;
@@ -484,8 +485,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           // to go too, or every printed page carries a blank left margin.
           //
           // This rule is correct and was measured working, but it depends on
-          // the transition suppression in index.css: `transition-all` below
-          // animates this padding, so without that rule the gutter takes
+          // the transition suppression in dashboard-print.css: `transition-all`
+          // below animates this padding, so without that rule the gutter takes
           // 300ms to reach zero and a print snapshot can catch it part-way.
           "print:!p-0",
           isCollapsed

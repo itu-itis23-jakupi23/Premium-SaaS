@@ -1,0 +1,25 @@
+/**
+ * Print rules for the dashboard chrome.
+ *
+ * Loaded with DashboardLayout, which travels in each page's own chunk, so the
+ * marketing entry never pays for it. That is the whole reason this is a file
+ * rather than four lines in index.css: it went there first and pushed the
+ * marketing entry stylesheet 15 bytes past the CS-14 gzip ratchet. Marketing
+ * has no dashboard to print.
+ */
+@media print {
+  /* Nothing animates on paper.
+     The content column carries `transition-all duration-300`, so the sidebar
+     gutter it reserves does not drop to zero the instant print styles apply -
+     it animates there over 300ms. A print snapshot taken inside that window
+     captures a partial gutter, a blank strip down the left of every page.
+     Measured in a browser under print media: the padding read 260px
+     immediately and 0px only once settled.
+
+     This is also why a print rule can look broken when it is correct. Every
+     printed page is one snapshot, so a transition can only hurt here. */
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
