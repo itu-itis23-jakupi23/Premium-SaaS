@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@workspace/db";
+import { staffVisibilityScope } from "../lib/staff-scope";
 import { calendarDateToInstant, documentTotals, lineTotalCents, normalizeCents, normalizeQuantity } from "@workspace/api-zod";
 import { requireAuth, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
@@ -42,10 +43,6 @@ async function queryRows<T>(statement: SQL): Promise<T[]> {
   return (result as unknown as { rows: T[] }).rows;
 }
 
-function canManage(auth: AuthContext): boolean {
-  return ["admin", "owner", "chief"].includes(auth.user.role);
-}
-
 function isStaff(auth: AuthContext): boolean {
   return ["admin", "owner", "chief", "pm"].includes(auth.user.role);
 }
@@ -84,18 +81,18 @@ function computeTotals(items: NormalizedLineItem[], discountCents: number, taxCe
 
 // SQL predicate: which quotes a staff member may see (chief: all; PM: their
 // projects or their assigned clients).
+/**
+ * Thin wrapper over the shared predicate, supplying this table's columns.
+ *
+ * Keeps all nine call sites reading `staffScope(auth)` while the logic itself
+ * lives in one place - invoices.ts had a byte-identical copy of it, and the
+ * money formula showed what happens when two copies of a rule drift.
+ */
 function staffScope(auth: AuthContext): SQL {
-  if (canManage(auth)) return sql`true`;
-  const uid = auth.user.id;
-  return sql`(
-    exists (
-      select 1 from projects p
-      where p.id = q.project_id
-        and (p.assigned_pm_user_id = ${uid}::uuid
-          or exists (select 1 from project_members pm where pm.project_id = p.id and pm.user_id = ${uid}::uuid))
-    )
-    or exists (select 1 from clients c where c.id = q.client_id and c.assigned_pm_user_id = ${uid}::uuid)
-  )`;
+  return staffVisibilityScope(auth, {
+    projectId: sql`q.project_id`,
+    clientId: sql`q.client_id`,
+  });
 }
 
 async function callerClientId(auth: AuthContext): Promise<string | null> {

@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@workspace/db";
+import { staffVisibilityScope } from "../lib/staff-scope";
 import { calendarDateToInstant, documentTotals, lineTotalCents, normalizeCents, normalizeQuantity } from "@workspace/api-zod";
 import { requireAuth, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
@@ -50,7 +51,6 @@ async function queryRows<T>(statement: SQL, executor: InvoiceExecutor = db): Pro
   return (result as unknown as { rows: T[] }).rows;
 }
 
-function canManage(auth: AuthContext): boolean { return ["admin", "owner", "chief"].includes(auth.user.role); }
 function isStaff(auth: AuthContext): boolean { return ["admin", "owner", "chief", "pm"].includes(auth.user.role); }
 function normalizeLineItems(raw: unknown): NormalizedLineItem[] {
   if (!Array.isArray(raw)) return [];
@@ -76,14 +76,12 @@ function computeTotals(items: NormalizedLineItem[], discountCents: number, taxCe
   return { subtotalCents: totals.subtotalCents, totalCents: totals.totalCents };
 }
 
+/** Thin wrapper over the shared predicate - see quotes.ts. */
 function staffScope(auth: AuthContext): SQL {
-  if (canManage(auth)) return sql`true`;
-  const uid = auth.user.id;
-  return sql`(
-    exists (select 1 from projects p where p.id = i.project_id and (p.assigned_pm_user_id = ${uid}::uuid
-      or exists (select 1 from project_members pm where pm.project_id = p.id and pm.user_id = ${uid}::uuid)))
-    or exists (select 1 from clients c where c.id = i.client_id and c.assigned_pm_user_id = ${uid}::uuid)
-  )`;
+  return staffVisibilityScope(auth, {
+    projectId: sql`i.project_id`,
+    clientId: sql`i.client_id`,
+  });
 }
 
 async function callerClientId(auth: AuthContext): Promise<string | null> {
