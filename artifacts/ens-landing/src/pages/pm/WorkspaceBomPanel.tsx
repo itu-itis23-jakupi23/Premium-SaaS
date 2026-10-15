@@ -1,4 +1,4 @@
-import { Download, FileText, Lock, Unlock, Copy, Trash2 } from "lucide-react";
+import { Download, FileText, Lock, Unlock, Copy, Trash2, Receipt } from "lucide-react";
 import { C, MONO } from "./workspace-constants";
 import { MonoLabel, DimInput, formatUsd } from "./workspace-ui";
 import { catalogItemFor, type QuoteTotals, type RoomBomLine, type StructBomLine } from "./workspace-bom";
@@ -14,6 +14,7 @@ export function WorkspaceBomPanel({
   booth, rooms, placedItems, structItems, roomItems, totals,
   totalParts, totalWeight, floorArea, placementIssueByItem, activePlacedId,
   onExportCsv, onExportChecklist, onCreateQuote, creatingQuote, canCreateQuote,
+  onCreateInvoice, creatingInvoice,
   onSelectRoom, onSelectPlaced,
   onToggleLock, onDuplicate, onRemove, onTransform, onRotate,
 }: {
@@ -33,6 +34,9 @@ export function WorkspaceBomPanel({
   /** Raise a draft quote from this take-off. */
   onCreateQuote: () => void;
   creatingQuote: boolean;
+  /** Take-off straight to a draft invoice, raising the quote behind it. */
+  onCreateInvoice: () => void;
+  creatingInvoice: boolean;
   /** False until the stand has been saved: a quote needs a version to cite. */
   canCreateQuote: boolean;
   /** Room BOM line click: focus that room in the Properties tab. */
@@ -93,6 +97,21 @@ export function WorkspaceBomPanel({
               cursor:canCreateQuote && !creatingQuote ? 'pointer' : 'not-allowed',
               display:'flex',alignItems:'center',gap:6,fontFamily:MONO,fontSize:9,fontWeight:700,padding:'0 9px',whiteSpace:'nowrap'}}>
             <FileText size={11}/> {creatingQuote ? 'QUOTING…' : 'QUOTE'}
+          </button>
+          {/* The whole job in one press. It raises the quote too - that is the
+              audit trail, and it is what carries the client and the project
+              onto the invoice, which an invoice typed into the staff form
+              never gets. */}
+          <button onClick={onCreateInvoice} disabled={!canCreateQuote || creatingInvoice}
+            title={canCreateQuote ? 'Create a draft invoice from this take-off, raising its quote too' : 'Save the stand first — an invoice cites the version it was priced from'}
+            aria-label="Create a draft invoice from this bill of materials"
+            data-testid="bom-create-invoice"
+            style={{height:30,border:`1px solid ${canCreateQuote && !creatingInvoice ? C.blue : C.hair}`,borderRadius:4,
+              background:canCreateQuote && !creatingInvoice ? `${C.blue}12` : C.panel,
+              color:canCreateQuote && !creatingInvoice ? C.blue : C.muted,
+              cursor:canCreateQuote && !creatingInvoice ? 'pointer' : 'not-allowed',
+              display:'flex',alignItems:'center',gap:6,fontFamily:MONO,fontSize:9,fontWeight:700,padding:'0 9px',whiteSpace:'nowrap'}}>
+            <Receipt size={11}/> {creatingInvoice ? 'INVOICING…' : 'INVOICE'}
           </button>
         </div>
       </div>

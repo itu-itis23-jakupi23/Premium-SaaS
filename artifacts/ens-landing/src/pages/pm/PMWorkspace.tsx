@@ -6,6 +6,7 @@ import type { BoothSystem } from "@/components/workspace/BoothCanvas";
 import {
   createProjectWorkspaceVersion,
   createQuote,
+  createInvoice,
   getCurrentWorkspace,
   getProjectWorkspace,
   getWorkspaceComments,
@@ -1892,6 +1893,56 @@ export default function PMWorkspace() {
     }
   };
 
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
+  /**
+   * One button: take-off straight to an invoice.
+   *
+   * The quote is still raised, and deliberately. It is the audit trail behind
+   * the invoice, and it is also what carries the client and the project onto
+   * it - the server copies both from the quote. An invoice created from the
+   * staff form sends no project at all, which is why those invoices are
+   * attributed to no manager and never reach the revenue leaderboard.
+   *
+   * So this is not a shortcut past the quote; it is the quote step stopping
+   * being a separate thing the manager has to remember.
+   */
+  const createInvoiceFromBom = async () => {
+    if (!boothVersionId || creatingInvoice) return;
+    setCreatingInvoice(true);
+    try {
+      const draft = quoteLinesFromTakeOff({
+        structItems, roomItems, placedItems,
+        fasciaSubtotal: booth.fasciaEnabled ? fasciaMeta.price : 0,
+        fasciaLabel: fasciaMeta.label,
+      });
+      if (!draft.lines.length) {
+        setToast('Nothing to invoice yet — the take-off is empty');
+        return;
+      }
+      const quote = await createQuote({
+        boothVersionId,
+        title: `${booth.companyName || 'Stand'} — ${booth.width} x ${booth.depth} m`,
+        lineItems: draft.lines,
+        notes: totals.unpricedItems > 0
+          ? `${totals.unpricedItems} item(s) on this stand have no catalogue price and are quoted at zero.`
+          : undefined,
+      });
+      const invoice = await createInvoice({ quoteId: quote.id });
+      // Same cross-check the quote button makes: if the server's total and the
+      // panel's disagree, say so rather than letting a manager send a number
+      // they never saw.
+      if (invoice.totalCents !== draft.totalCents) {
+        setToast(`Invoice ${invoice.invoiceNumber} created, but its total differs from the take-off — check it`);
+      } else {
+        setToast(`Invoice ${invoice.invoiceNumber} created as a draft, from quote ${quote.quoteNumber}`);
+      }
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : 'Could not create the invoice');
+    } finally {
+      setCreatingInvoice(false);
+    }
+  };
+
   const csvCell = (value:string|number) => `"${String(value).replace(/"/g,'""')}"`;
   const exportBomCsv = () => {
     const rows = [
@@ -3105,6 +3156,7 @@ export default function PMWorkspace() {
               placementIssueByItem={placementIssueByItem} activePlacedId={activePlacedId}
               onExportCsv={exportBomCsv} onExportChecklist={exportProductionChecklist}
               onCreateQuote={createQuoteFromBom} creatingQuote={creatingQuote}
+              onCreateInvoice={createInvoiceFromBom} creatingInvoice={creatingInvoice}
               canCreateQuote={Boolean(boothVersionId)}
               onSelectRoom={roomId=>{setActiveRoomId(roomId);setActivePlacedId('');setActiveTab('props');}}
               onSelectPlaced={id=>{setActivePlacedId(id);setActiveRoomId('');}}
