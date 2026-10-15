@@ -71,12 +71,19 @@ export function WorkspaceBomPanel({
 
   return (
     <div style={{flex:1,overflowY:'auto',padding:'0 16px'}}>
-      <div style={{padding:'10px 0',borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
-        <div>
+      {/* Stacked, not side by side.
+          The rail is 281px. This row held the take-off summary beside two
+          export buttons and fitted; adding QUOTE and INVOICE took it to 325px
+          and it clipped - the last button and part of the summary ran off the
+          edge of a panel that does not scroll sideways. Four buttons and a
+          line of figures do not share 281px, so they take a row each and the
+          buttons wrap within theirs. */}
+      <div style={{padding:'10px 0',borderBottom:`1px solid ${C.hair}`,display:'flex',flexDirection:'column',gap:8}}>
+        <div style={{minWidth:0}}>
           <div style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:'0.08em'}}>BOM Export</div>
           <div style={{fontFamily:MONO,fontSize:8.5,color:C.muted,marginTop:2}}>{structPartCount + totalParts} parts / {roomItems.length} room lines / {formatUsd(quoteTotal)}</div>
         </div>
-        <div style={{display:'flex',gap:6,flexShrink:0}}>
+        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
           <button onClick={onExportCsv}
             style={{height:30,border:`1px solid ${C.blue}`,borderRadius:4,background:`${C.blue}10`,color:C.blue,cursor:'pointer',display:'flex',alignItems:'center',gap:6,fontFamily:MONO,fontSize:9,fontWeight:700,padding:'0 9px',whiteSpace:'nowrap'}}>
             <Download size={11}/> CSV
