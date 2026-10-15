@@ -277,3 +277,49 @@ describe("form preview and stored document", () => {
     }
   });
 });
+
+/**
+ * The integer ceiling, which is a database constraint rather than a nicety.
+ *
+ * Every money column is `integer`, so 2,147,483,647 cents - about 21.5 million
+ * in the major unit - is the most any single field holds. Values above it do
+ * not round or saturate: Postgres raises "integer out of range" and the insert
+ * fails, which reached the user as a 500.
+ *
+ * Quote and invoice line totals were already clamped through documentTotals,
+ * but the discount, the tax and a CRM lead value were written from a bare
+ * `Math.max(0, ...)` straight into those columns. A mistyped figure with a few
+ * extra zeros was enough.
+ */
+describe("integer column ceiling", () => {
+  it("is the largest value a Postgres integer holds", () => {
+    expect(MAX_CENTS).toBe(2 ** 31 - 1);
+  });
+
+  it("saturates rather than letting an over-range value reach the column", () => {
+    expect(normalizeCents(3_000_000_000)).toBe(MAX_CENTS);
+    expect(normalizeCents(Number.MAX_SAFE_INTEGER)).toBe(MAX_CENTS);
+  });
+
+  it("keeps a document's stored discount equal to the one its total used", () => {
+    // The subtler half: the total was computed from a clamped discount while
+    // the raw one was stored, so even had the column accepted it the document
+    // would not have added up.
+    const totals = documentTotals({
+      lineItems: [{ quantity: 1, unitPriceCents: MAX_CENTS }],
+      discountCents: 3_000_000_000,
+      taxCents: 3_000_000_000,
+    });
+    expect(totals.discountCents).toBe(MAX_CENTS);
+    expect(totals.taxCents).toBe(MAX_CENTS);
+    expect(totals.subtotalCents - totals.discountCents + totals.taxCents).toBe(totals.totalCents);
+  });
+
+  it("leaves ordinary amounts untouched", () => {
+    // 21.5 million is far above any real stand, so the clamp must be invisible
+    // in practice.
+    for (const cents of [0, 1, 125_050, 1_200_000, 500_000_000]) {
+      expect(normalizeCents(cents), String(cents)).toBe(cents);
+    }
+  });
+});

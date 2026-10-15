@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@workspace/db";
+import { normalizeCents } from "@workspace/api-zod";
 import { requireAuth, type AuthContext } from "../middlewares/session";
 import { requireTenant } from "../middlewares/tenant";
 
@@ -27,8 +28,6 @@ async function queryRows<T>(statement: SQL): Promise<T[]> {
 
 function canManage(auth: AuthContext): boolean { return ["admin", "owner", "chief"].includes(auth.user.role); }
 function isStaff(auth: AuthContext): boolean { return ["admin", "owner", "chief", "pm"].includes(auth.user.role); }
-function toInt(value: unknown): number { const n = Math.round(Number(value)); return Number.isFinite(n) ? n : 0; }
-
 // PMs only see leads they own; chief/owner/admin see the whole board.
 function scope(auth: AuthContext): SQL {
   if (canManage(auth)) return sql`true`;
@@ -124,7 +123,10 @@ router.patch("/platform/leads/:clientId", async (req, res) => {
   if (!rows[0]) { res.status(404).json({ error: { code: "lead_not_found", message: "Lead not found." } }); return; }
 
   const sets: SQL[] = [];
-  if (body.leadValueCents !== undefined) sets.push(sql`lead_value_cents = ${Math.max(0, toInt(body.leadValueCents))}`);
+  // Clamped to what an `integer` column holds. A mistyped lead value with a
+  // few extra zeros otherwise reached Postgres as "integer out of range" and
+  // came back to the user as a 500 rather than a saved - if large - number.
+  if (body.leadValueCents !== undefined) sets.push(sql`lead_value_cents = ${normalizeCents(body.leadValueCents)}`);
   if (body.nextFollowUpAt !== undefined) {
     sets.push(body.nextFollowUpAt ? sql`next_follow_up_at = ${String(body.nextFollowUpAt)}::timestamptz` : sql`next_follow_up_at = null`);
   }

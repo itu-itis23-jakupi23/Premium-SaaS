@@ -50,11 +50,6 @@ function isStaff(auth: AuthContext): boolean {
   return ["admin", "owner", "chief", "pm"].includes(auth.user.role);
 }
 
-function toInt(value: unknown): number {
-  const n = Math.round(Number(value));
-  return Number.isFinite(n) ? n : 0;
-}
-
 function normalizeLineItems(raw: unknown): NormalizedLineItem[] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -308,8 +303,13 @@ router.post("/platform/quotes", async (req, res) => {
     res.status(400).json({ error: { code: "no_line_items", message: "A quote needs at least one line item." } });
     return;
   }
-  const discountCents = Math.max(0, toInt(body.discountCents));
-  const taxCents = Math.max(0, toInt(body.taxCents));
+  // normalizeCents, not a bare Math.max: these are written straight to
+  // `integer` columns, so an unbounded value raised "integer out of range" at
+  // the database and surfaced as a 500. The line totals were already clamped
+  // by documentTotals; the discount and tax were not, which also meant the
+  // total could be computed from a different figure than the one stored.
+  const discountCents = normalizeCents(body.discountCents);
+  const taxCents = normalizeCents(body.taxCents);
   const { subtotalCents, totalCents } = computeTotals(items, discountCents, taxCents);
   // Quotes defaulted to USD while projects and invoices default to EUR, so a
   // quote raised against a euro project came out in dollars from the defaults
@@ -402,8 +402,13 @@ router.put("/platform/quotes/:quoteId", async (req, res) => {
     res.status(400).json({ error: { code: "no_line_items", message: "A quote needs at least one line item." } });
     return;
   }
-  const discountCents = Math.max(0, toInt(body.discountCents));
-  const taxCents = Math.max(0, toInt(body.taxCents));
+  // normalizeCents, not a bare Math.max: these are written straight to
+  // `integer` columns, so an unbounded value raised "integer out of range" at
+  // the database and surfaced as a 500. The line totals were already clamped
+  // by documentTotals; the discount and tax were not, which also meant the
+  // total could be computed from a different figure than the one stored.
+  const discountCents = normalizeCents(body.discountCents);
+  const taxCents = normalizeCents(body.taxCents);
   const { subtotalCents, totalCents } = computeTotals(items, discountCents, taxCents);
   const title = typeof body.title === "string" ? body.title.slice(0, 200) : null;
   const notes = typeof body.notes === "string" ? body.notes.slice(0, 8000) : null;

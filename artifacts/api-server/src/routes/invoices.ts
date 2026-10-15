@@ -52,8 +52,6 @@ async function queryRows<T>(statement: SQL, executor: InvoiceExecutor = db): Pro
 
 function canManage(auth: AuthContext): boolean { return ["admin", "owner", "chief"].includes(auth.user.role); }
 function isStaff(auth: AuthContext): boolean { return ["admin", "owner", "chief", "pm"].includes(auth.user.role); }
-function toInt(value: unknown): number { const n = Math.round(Number(value)); return Number.isFinite(n) ? n : 0; }
-
 function normalizeLineItems(raw: unknown): NormalizedLineItem[] {
   if (!Array.isArray(raw)) return [];
   return raw.slice(0, 200).map((entry) => {
@@ -334,7 +332,9 @@ router.post("/platform/invoices", async (req, res) => {
       clientId, projectId, quoteId: null,
       title: typeof body.title === "string" ? body.title.slice(0, 200) : null,
       currency: typeof body.currency === "string" ? body.currency.slice(0, 3).toUpperCase() : (projectCurrency ?? "USD"),
-      items, discountCents: Math.max(0, toInt(body.discountCents)), taxCents: Math.max(0, toInt(body.taxCents)),
+      // Clamped to the integer column's ceiling: these are stored raw, so an
+      // unbounded discount failed the whole insert with a 500. See quotes.ts.
+      items, discountCents: normalizeCents(body.discountCents), taxCents: normalizeCents(body.taxCents),
       notes: typeof body.notes === "string" ? body.notes.slice(0, 8000) : null,
       // A bare "2026-11-20" from <input type="date"> lands at midnight in the
       // server's own timezone, which is a different calendar date for every
