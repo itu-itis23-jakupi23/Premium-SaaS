@@ -96,6 +96,42 @@ export function redactAddress(address: string): string {
   return `${local[0]}***@${domain}`;
 }
 
+/**
+ * How long the provider gets to answer before the caller is released.
+ *
+ * Nothing bounded this. A provider that accepts a connection and then stops
+ * answering holds the request handler until Node's own 300-second request
+ * timeout, and the routes that mail several people do it in a loop, so one
+ * unresponsive call could hold a connection open for minutes while the person
+ * who pressed the button watches a spinner. Ten seconds is far longer than a
+ * transactional mail API needs and far shorter than a user will wait.
+ */
+export const EMAIL_TIMEOUT_MS = 10_000;
+
+/**
+ * Bound a promise that has no timeout of its own.
+ *
+ * Two details that are easy to get wrong and both bite in production. The
+ * timer is cleared and unref'd, so a guard that never fires cannot hold the
+ * process open at shutdown. And the original promise gets a catch attached
+ * up front: once the race is decided by the timeout, a later rejection from
+ * the abandoned work has no handler, which under Node's default for unhandled
+ * rejections terminates the process.
+ */
+export async function withTimeout<T>(work: Promise<T>, ms: number, label: string): Promise<T> {
+  work.catch(() => undefined);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expiry = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} did not respond within ${ms}ms`)), ms);
+    timer.unref?.();
+  });
+  try {
+    return await Promise.race([work, expiry]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function send(to: string, subject: string, html: string): Promise<EmailDeliveryResult> {
   const resend = getResend();
   if (!resend) {
@@ -106,7 +142,13 @@ async function send(to: string, subject: string, html: string): Promise<EmailDel
   try {
     // The SDK resolves provider and network failures as { data: null, error }.
     // A fulfilled promise alone does not mean the provider accepted the mail.
-    const result = await resend.emails.send({ from: FROM, to, subject, html });
+    // The existing catch turns a timeout into the same reported failure as any
+    // other provider error, so no caller has to learn a new shape.
+    const result = await withTimeout(
+      resend.emails.send({ from: FROM, to, subject, html }),
+      EMAIL_TIMEOUT_MS,
+      "Email provider",
+    );
     if (result?.error) {
       const message = safeErrorMessage(result.error.message);
       console.error(`[email] Failed to send to ${redactAddress(to)}:`, message);

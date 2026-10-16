@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { dateLabel, esc, escUrl, moneyLabel, redactAddress } from "./email";
+import { EMAIL_TIMEOUT_MS, dateLabel, esc, escUrl, moneyLabel, redactAddress, withTimeout } from "./email";
 
 const emailSource = readFileSync(
   resolve(fileURLToPath(new URL(".", import.meta.url)), "email.ts"),
@@ -276,5 +276,46 @@ describe("redactAddress", () => {
     for (const bad of ["", "not-an-address", "@example.com"]) {
       expect(redactAddress(bad), bad).toBe("[redacted]");
     }
+  });
+});
+
+describe("withTimeout", () => {
+  it("releases the caller when the provider never answers", async () => {
+    // The case this exists for: a connection accepted and then silence. Before
+    // this, the request handler waited on it until Node's 300s request timeout.
+    const neverSettles = new Promise<string>(() => undefined);
+    await expect(withTimeout(neverSettles, 20, "Email provider")).rejects.toThrow(/did not respond within 20ms/);
+  });
+
+  it("passes a result straight through when the provider answers", async () => {
+    await expect(withTimeout(Promise.resolve("accepted"), 1_000, "Email provider")).resolves.toBe("accepted");
+  });
+
+  it("reports the provider's own failure rather than a timeout", async () => {
+    const refused = Promise.reject(new Error("provider refused"));
+    await expect(withTimeout(refused, 1_000, "Email provider")).rejects.toThrow("provider refused");
+  });
+
+  it("survives work that rejects after the timeout has already decided it", async () => {
+    /**
+     * The subtle one. Once the race is lost, the abandoned promise still
+     * settles; with no handler attached that is an unhandled rejection, which
+     * terminates the process under Node's default. Attaching the catch up
+     * front is what makes a slow provider a failed email rather than a dead
+     * API.
+     */
+    let rejectLate: (error: Error) => void = () => undefined;
+    const late = new Promise<string>((_, reject) => { rejectLate = reject; });
+    await expect(withTimeout(late, 10, "Email provider")).rejects.toThrow(/did not respond/);
+
+    rejectLate(new Error("arrived after everyone stopped waiting"));
+    // If that rejection were unhandled the process would be gone before here.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(true).toBe(true);
+  });
+
+  it("waits long enough for a real provider, and not longer than a person will", () => {
+    expect(EMAIL_TIMEOUT_MS).toBeGreaterThanOrEqual(5_000);
+    expect(EMAIL_TIMEOUT_MS).toBeLessThanOrEqual(30_000);
   });
 });
