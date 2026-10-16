@@ -2814,6 +2814,11 @@ function buildFascia() {
       signText: true,
       signLabel,
       signColor: override.brandColor || '#4b5563',
+      // The mounted plate takes the board's colour too, not just the
+      // lettering. Recolouring one without the other is how a dark fascia
+      // ended up with white type on a white plate - the sign vanished while
+      // every control said it was set.
+      signPlate: override.color ? String(override.color) : '',
       signScale: override.brandScale != null ? Math.max(0.08, Math.min(0.45, parseFloat(override.brandScale) || 0.2)) : 0.2,
       designImageUrl,
       designOpacity: override.designOpacity != null ? Math.max(0.15, Math.min(1, parseFloat(override.designOpacity) || 1)) : 1,
@@ -3876,7 +3881,10 @@ function renderBooth() {
 
         if (FASCIA_OPTION === 'classic') {
           // Centred plate at a real width: 38% of the stand, clamped to 2.15-3.4 m.
-          addCenteredNamePlate(fasciaSignWidthM(BW), '#fbfcfd', '#c7ccd4', '#4b5563');
+          // The plate follows the board when one has been chosen, so a dark
+          // fascia reads as a dark sign rather than a white rectangle stuck
+          // to it.
+          addCenteredNamePlate(fasciaSignWidthM(BW), face.signPlate || '#fbfcfd', '#c7ccd4', '#4b5563');
 
         } else if (FASCIA_OPTION === 'custom') {
           // The oval is real geometry now - an ellipse extruded to a plate, built

@@ -1,13 +1,14 @@
 import { catalogFurnitureProps } from "@/lib/furniture-catalog";
+import { furnitureCategoryFor } from "@/lib/furniture-presentation";
 import { Square, LayoutTemplate, Box, Lightbulb } from "lucide-react";
 import {
   SEDEF_FURNITURE_ITEMS,
   type CatItem,
   type FasciaOption,
-  type FurnitureCategory,
   type LightingPreset,
   type RoomTemplateKey,
 } from "./workspace-model";
+export { furnitureCategoryFor, FURNITURE_CATEGORY_ORDER } from "@/lib/furniture-presentation";
 
 // Static configuration for the booth workspace — palette, finishes, pricing,
 // catalog, and room templates. Pure data, split out of PMWorkspace.tsx.
@@ -28,25 +29,6 @@ export const C = {
 export const MONO = 'var(--app-font-mono)';
 export const UI   = 'var(--app-font-samsung)';
 
-export const FURNITURE_CATEGORY_ORDER: FurnitureCategory[] = ['all','chairs','stools','seating','tables','counters','displays','storage','shelves','appliances','lighting','decor','parts'];
-export function furnitureCategoryFor(item: Pick<CatItem,'name'|'sku'|'shape'>): FurnitureCategory {
-  const text = `${item.name} ${item.sku}`.toLowerCase();
-  if (item.shape === 'bar_stool' || text.includes('tabure') || text.includes('bar stool') || text.includes('bar chair')) return 'stools';
-  if (item.shape === 'chair' || text.includes('sandalye') || text.includes('chair')) {
-    if (text.includes('koltuk') || text.includes('armchair') || text.includes('sofa')) return 'seating';
-    return 'chairs';
-  }
-  if (text.includes('koltuk') || text.includes('sofa') || text.includes('puf') || text.includes('pouffe')) return 'seating';
-  if (item.shape === 'round_table' || item.shape === 'rect_table' || text.includes('masa') || text.includes('table')) return 'tables';
-  if (item.shape === 'counter' || text.includes('banko') || text.includes('counter')) return 'counters';
-  if (item.shape === 'cube' || text.includes('vitrin') || text.includes('showcase') || text.includes('teshir') || text.includes('display')) return 'displays';
-  if (item.shape === 'shelf' || item.shape === 'wall_shelf' || text.includes('raf') || text.includes('shelf') || text.includes('brosurluk') || text.includes('brochure')) return 'shelves';
-  if (text.includes('buzdolabi') || text.includes('refrigerator') || text.includes('sebil') || text.includes('water fountain') || text.includes('evye') || text.includes('sink')) return 'appliances';
-  if (item.shape === 'cabinet' || text.includes('dolap') || text.includes('cabinet') || text.includes('rack')) return 'storage';
-  if (item.shape === 'rail_light' || item.shape === 'light' || text.includes('lamba') || text.includes('lamp') || text.includes('spotlight')) return 'lighting';
-  if (text.includes('bitki') || text.includes('plant') || text.includes('ciceklik') || text.includes('floral')) return 'decor';
-  return 'parts';
-}
 export const SEDEF_ITEM_PROPS: Record<string,{w:number;d:number;h:number;color:string;weight:number}> = Object.fromEntries(
   // catalogFurnitureProps is shared with the client portal so a proposed chair
   // and a PM-placed chair are the same box.
@@ -107,6 +89,28 @@ export const FASCIA_FINISHES = [{label:'White',color:'#ffffff'},{label:'Ice Grey
 export const CARPETS = [{label:'Black',color:'#1a1a1a'},{label:'Bone',color:'#dde0e4'},{label:'Gray',color:'#7a7e84'},{label:'Navy',color:'#1a2640'},{label:'Forest',color:'#1e3a28'},{label:'Terracotta',color:'#5a2316'}];
 export const NOTE_COLORS = ['#1d4ed8','#c2410c','#2f7d3a','#7c3aed','#b45309'];
 export const CAT_TOTAL: Record<string,number> = { Structure:4, Fascia:2, Furniture:SEDEF_FURNITURE_ITEMS.length, Lighting:3 };
+/**
+ * Ready-made fascia treatments.
+ *
+ * The board already takes a colour, a wordmark colour and a wordmark size
+ * independently, which is three decisions to make before a stand has a sign
+ * on it. These are the combinations a stand actually gets built in, so the
+ * common case is one click and the three controls underneath stay there for
+ * the case that is not common.
+ *
+ * A template sets the board and the lettering. It deliberately leaves the
+ * text and any uploaded artwork alone: picking a different treatment should
+ * restyle the sign, not clear the company's name off it.
+ */
+export const FASCIA_TEMPLATES: { label: string; board: string; text: string; scale: number; note: string }[] = [
+  { label: 'Classic',  board: '#ffffff', text: '#23262c', scale: 0.20, note: 'White board, charcoal wordmark' },
+  { label: 'Charcoal', board: '#23262c', text: '#ffffff', scale: 0.20, note: 'Dark board, reversed wordmark' },
+  { label: 'Navy',     board: '#1a2640', text: '#ffffff', scale: 0.20, note: 'Navy board, reversed wordmark' },
+  { label: 'Accent',   board: '#1d4ed8', text: '#ffffff', scale: 0.20, note: 'Brand blue board, reversed wordmark' },
+  { label: 'Bold',     board: '#ffffff', text: '#111317', scale: 0.32, note: 'White board, oversized wordmark' },
+  { label: 'Soft',     board: '#eef2f7', text: '#5b6270', scale: 0.16, note: 'Ice grey board, quiet wordmark' },
+];
+
 export const FASCIA_OPTIONS: {value:FasciaOption; label:string; price:number; minWidth:number; note:string; boardMm:number}[] = [
   {value:'classic', label:'Standard rail sign', price:1200, minWidth:2, note:'Front and rear fascia integrated into the top rail.', boardMm:110},
   {value:'full', label:'Full length rail sign', price:1800, minWidth:2, note:'Longer rail-integrated fascia with continuous front/rear branding.', boardMm:110},

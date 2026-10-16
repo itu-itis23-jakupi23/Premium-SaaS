@@ -61,7 +61,7 @@ import {
 import {
   C, MONO, UI, furnitureCategoryFor, CATALOG, ITEM_PROPS,
   catalogItemProps, ENS_MODEL_URLS, KNOWN_CATALOG_IDS, THEMES, WALL_FINISHES, FRAME_FINISHES,
-  FASCIA_FINISHES, CARPETS, NOTE_COLORS, FASCIA_OPTIONS, LIGHTING_PRESETS,
+  FASCIA_FINISHES, FASCIA_TEMPLATES, CARPETS, NOTE_COLORS, FASCIA_OPTIONS, LIGHTING_PRESETS,
   ROOM_TEMPLATES,
 } from "./workspace-constants";
 // Leaf presentational components live in a dedicated UI module.
@@ -2726,6 +2726,17 @@ export default function PMWorkspace() {
                   style={{width:'100%',height:30,marginTop:8,border:`1px solid ${fasciaValid?C.hair:C.orange}`,borderRadius:4,background:booth.fasciaEnabled?C.bg:'#f2f0eb',fontFamily:UI,fontSize:12,color:C.ink,paddingLeft:8,boxSizing:'border-box',outline:'none',cursor:booth.fasciaEnabled?'pointer':'not-allowed',opacity:booth.fasciaEnabled?1:0.55}}>
                   {FASCIA_OPTIONS.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
+                {/* The fascia's own controls - templates, artwork, wordmark
+                    colour - live under the Panel tab and only appear once the
+                    board itself is selected. Two hops, neither signposted,
+                    which is why people who knew the feature existed still
+                    could not find it. This does both. */}
+                {booth.fasciaEnabled&&<button type="button" onClick={()=>{setActiveShellPartId('fascia-front');setActiveTab('panel');}}
+                  title="Templates, logo artwork and wordmark colour for the fascia board"
+                  style={{width:'100%',height:30,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,
+                    cursor:'pointer',fontFamily:UI,fontSize:12,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                  <ImagePlus size={13}/> Fascia design &amp; logo
+                </button>}
                 <div style={{marginTop:7,fontFamily:MONO,fontSize:8.7,color:fasciaValid?C.muted:C.orange,lineHeight:1.45}}>
                   {booth.fasciaEnabled ? `${fasciaMeta.note} Price impact: ${formatUsd(fasciaMeta.price)}.` : 'Fascia board removed from rail and BOM.'}
                   {!fasciaValid && ` Minimum width for this fascia is ${fasciaMeta.minWidth.toFixed(1)} m.`}
@@ -3069,6 +3080,30 @@ export default function PMWorkspace() {
                       </div>
                     </PropBlock>
                     <Hairline/>
+                    <PropBlock label="Fascia Design" right={`${FASCIA_TEMPLATES.length} templates`}>
+                      {/* One click for the combination a stand is usually
+                          built in; the three controls below stay for the
+                          times it is not. Deliberately leaves the wordmark
+                          and any uploaded artwork alone - restyling a sign
+                          must not wipe the company's name off it. */}
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:6}}>
+                        {FASCIA_TEMPLATES.map(template=>{
+                          const active = (activeFasciaOverride.color || fasciaFinish.color) === template.board
+                            && (activeFasciaOverride.brandColor || '#23262c') === template.text
+                            && (activeFasciaOverride.brandScale ?? 0.2) === template.scale;
+                          return (
+                            <button key={template.label} type="button" disabled={!activeFasciaId}
+                              title={template.note} aria-pressed={active}
+                              onClick={()=>activeFasciaId&&updatePanelOverride(activeFasciaId,{color:template.board,brandColor:template.text,brandScale:template.scale})}
+                              style={{height:38,border:`1px solid ${active?C.blue:C.hair}`,borderRadius:4,background:template.board,
+                                color:template.text,cursor:activeFasciaId?'pointer':'not-allowed',fontFamily:MONO,fontSize:8.5,fontWeight:800,
+                                letterSpacing:'0.06em',textTransform:'uppercase',outline:active?`1px solid ${C.blue}`:'none',padding:0}}>
+                              {template.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </PropBlock>
                     <PropBlock label="Fascia Graphics" right={activeFasciaOverride.designImageUrl ? 'Image' : activeFasciaOverride.brandText ? 'Text' : 'None'}>
                       <label htmlFor={`${uid}-fascia-text`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:4}}>Text / logo wordmark</label>
                       <input id={`${uid}-fascia-text`} value={activeFasciaOverride.brandText || ''} disabled={!activeFasciaId} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandText:e.target.value.slice(0,40)})}
