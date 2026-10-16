@@ -495,11 +495,31 @@ function normalizeModel(root, item) {
   return wrapper;
 }
 
+/**
+ * A model, fetched once and shared.
+ *
+ * A failure must not be cached. The map was keyed on the url and never
+ * cleared, so a rejected promise stayed under that key for the life of the
+ * page: one dropped request - a flaky connection, a sleeping laptop, a
+ * refused range request - and that piece of furniture never appeared again,
+ * however many times the stand was reopened or the item re-added. It drew as
+ * a grey placeholder box forever, which looks like a model the designer chose
+ * rather than one that failed to arrive.
+ *
+ * So a rejection evicts its own entry and the next attempt genuinely retries.
+ * The guard matters: by the time the rejection lands the entry may already
+ * have been replaced by a newer attempt, or cleared by disposal, and deleting
+ * blindly would throw away a good model.
+ */
 function loadModel(url) {
   if (!modelCache.has(url)) {
-    modelCache.set(url, new Promise((resolve, reject) => {
+    const pending = new Promise((resolve, reject) => {
       loader.load(url, gltf => resolve(gltf.scene), undefined, reject);
-    }));
+    });
+    pending.catch(() => {
+      if (modelCache.get(url) === pending) modelCache.delete(url);
+    });
+    modelCache.set(url, pending);
   }
   return modelCache.get(url);
 }
