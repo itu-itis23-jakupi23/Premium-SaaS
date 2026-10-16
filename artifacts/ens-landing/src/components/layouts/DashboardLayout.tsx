@@ -526,7 +526,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                   {/* Name and address are the widest thing in the header and
                       the least needed on a small screen - the avatar already
                       says who is signed in. Shown from lg, not sm. */}
-                  <div className="hidden min-w-0 text-left lg:block">
+                  <div className="hidden min-w-0 text-start lg:block">
                     <p className="max-w-[160px] truncate text-xs font-medium">{profile?.name ?? user.name}</p>
                     <p className="max-w-[160px] truncate text-[11px] text-muted-foreground">{profile?.email ?? user.email}</p>
                   </div>
