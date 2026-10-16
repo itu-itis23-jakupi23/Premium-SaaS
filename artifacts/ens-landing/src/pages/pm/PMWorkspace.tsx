@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo, useId } from "react";
-import { CurrencySwitcher, useCurrency } from "@/lib/currency";
-import { Link } from "wouter";
+import { useCurrency } from "@/lib/currency";
+import { WorkspaceToolbar } from "./WorkspaceToolbar";
 import { Booth3D } from "@/components/workspace/Booth3D";
 import type { BoothSystem } from "@/components/workspace/BoothCanvas";
 import {
@@ -21,12 +21,7 @@ import {
   type WorkspaceComment,
 } from "@/lib/platform-api";
 import {
-  ChevronLeft, ChevronRight, Undo2, Redo2, Save, Camera, History, Send,
-  Maximize2, Plus, Trash2,
-  // Aliased: lucide-react exports an icon called Map, and importing it bare
-  // shadows the Map constructor for this whole file - `new Map()` silently
-  // resolves to a React component instead of throwing.
-  Square, Layers, Map as MapIcon, X,
+  ChevronLeft, ChevronRight, Send, Plus, Trash2, Square, X,
   CheckCircle2, Package, StickyNote, Settings2, Copy, MessageSquare, ImagePlus, Lock, Unlock,
   AlertTriangle } from "lucide-react";
 import {
@@ -529,6 +524,7 @@ export default function PMWorkspace() {
 
   const [showSendDlg,   setShowSendDlg]   = useState(false);
   const [showSnapDlg,   setShowSnapDlg]   = useState(false);
+  const [isSnapshotSaving, setIsSnapshotSaving] = useState(false);
   const [showHistPanel, setShowHistPanel] = useState(false);
   const [showGrid,      setShowGrid]      = useState(true);
   const [previewMode,   setPreviewMode]   = useState(false);
@@ -686,6 +682,15 @@ export default function PMWorkspace() {
       'Manual save',
     );
     setToast(saved ? 'Design saved' : 'Save failed');
+  };
+  const openProjectPicker = async () => {
+    if(saveInFlightRef.current) return;
+    if(hasUnsavedChanges && workspaceRecord) {
+      const saved = await persistWorkspace(workspaceRecord.project.id, wsRef.current, workspaceRevisionRef.current, 'Before switching project');
+      if(!saved) { setToast('Save failed. Your current project is still open.'); return; }
+    }
+    setPickerSearch('');
+    setShowProjectPicker(true);
   };
 
   useEffect(()=>{
@@ -850,23 +855,32 @@ export default function PMWorkspace() {
   },[hasUnsavedChanges]);
 
   const createSnapshot = async () => {
-    if(!snapName.trim() || !workspaceRecord) return;
+    if(!snapName.trim() || !workspaceRecord || saveInFlightRef.current) return;
     const name = snapName.trim();
+    const revision = workspaceRevisionRef.current;
+    const projectId = workspaceRecord.project.id;
+    saveInFlightRef.current = true;
+    setIsSnapshotSaving(true);
     try {
-      const saved = await createProjectWorkspaceVersion(workspaceRecord.project.id, ws, name);
+      const saved = await createProjectWorkspaceVersion(projectId, ws, name);
+      if(activeProjectIdRef.current !== projectId) return;
       setWorkspaceRecord(saved);
       setSnapshots(workspaceSnapshots(saved));
       setSnapName('');
       setShowSnapDlg(false);
       setLastSaved(`v${saved.currentVersion?.versionNumber ?? saved.design.currentVersionNumber}`);
-      setHasUnsavedChanges(false);
-      setSaveStatus('saved');
+      const dirty = workspaceRevisionRef.current !== revision;
+      setHasUnsavedChanges(dirty);
+      setSaveStatus(dirty ? 'dirty' : 'saved');
       setWorkspaceError('');
       setToast(`Snapshot "${name}" saved`);
     } catch (err) {
       setWorkspaceError(err instanceof Error ? err.message : 'Could not save snapshot');
       setSaveStatus('error');
       setToast('Snapshot failed');
+    } finally {
+      saveInFlightRef.current = false;
+      setIsSnapshotSaving(false);
     }
   };
   const restoreSnapshot = (snap:Snapshot) => {
@@ -877,11 +891,12 @@ export default function PMWorkspace() {
   };
 
   const sendToClient = async () => {
-    if(!workspaceRecord || isSending) return;
+    if(!workspaceRecord || isSending || saveInFlightRef.current) return;
     if(!workspaceRecord.permissions?.can_send_arrangement) {
       setWorkspaceError('This workspace has already been sent or cannot be sent in its current state.');
       return;
     }
+    saveInFlightRef.current = true;
     setIsSending(true);
     try {
       const title = `Client review - ${new Date().toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}`;
@@ -898,6 +913,7 @@ export default function PMWorkspace() {
       setSaveStatus('error');
       setToast('Send failed');
     } finally {
+      saveInFlightRef.current = false;
       setIsSending(false);
     }
   };
@@ -1374,7 +1390,18 @@ export default function PMWorkspace() {
   // Enter on the notes field. Shortcuts arrive from two places - this window,
   // and the renderer, which forwards them because clicking the booth moves
   // focus into its iframe and the parent stops seeing key events.
+  const saveWorkspaceRef = useRef(save);
+  saveWorkspaceRef.current = save;
   const runShortcut = useCallback((action:string)=>{
+    if(action === 'save') { void saveWorkspaceRef.current(); return; }
+    if(action === 'search') {
+      setPreviewMode(false);
+      requestAnimationFrame(()=>{
+        const input = document.getElementById('furniture-search') as HTMLInputElement | null;
+        input?.focus(); input?.select();
+      });
+      return;
+    }
     if(previewMode) return;
     if(action === 'undo') { undoRef.current(); return; }
     if(action === 'redo') { redoRef.current(); return; }
@@ -1426,6 +1453,12 @@ export default function PMWorkspace() {
   useEffect(()=>{
     const onKeyDown = (event:KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
+      if(target?.closest('[role="dialog"]')) return;
+      if((event.ctrlKey || event.metaKey) && ['s','k'].includes(event.key.toLowerCase())) {
+        event.preventDefault();
+        runShortcut(event.key.toLowerCase() === 's' ? 'save' : 'search');
+        return;
+      }
       // Never take a key away from someone typing.
       if(target && (target.isContentEditable || ['INPUT','TEXTAREA','SELECT'].includes(target.tagName))) return;
       const mod = event.ctrlKey || event.metaKey;
@@ -2066,21 +2099,13 @@ export default function PMWorkspace() {
     setToast('Production checklist exported');
   };
 
-  const iconBtn = (Icon:React.ComponentType<{size?:number}>,tooltip:string,onClick?:()=>void,disabled?:boolean,style?:React.CSSProperties) => {
-    const IconComponent = Icon;
-    return (
-      <button title={tooltip} onClick={onClick} disabled={disabled}
-        style={{background:'none',border:'none',cursor:disabled?'not-allowed':'pointer',padding:'5px 7px',color:disabled?C.hair:C.muted,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:3,opacity:disabled?0.4:1,...style}}>
-        <IconComponent size={13}/>
-      </button>
-    );
-  };
-
   // ── Project picker ────────────────────────────────────────────
   const saveStatusMeta = workspaceError || saveStatus === 'error'
     ? {label:'SAVE ISSUE', detail:lastSaved, color:C.orange}
     : isWorkspaceLoading
       ? {label:'LOADING WORKSPACE', detail:'Loading...', color:C.muted}
+      : isSnapshotSaving || isSending
+        ? {label:isSnapshotSaving?'SAVING SNAPSHOT…':'SENDING…', detail:'Saving...', color:C.blue}
       : saveStatus === 'saving'
         ? {label:'SAVING...', detail:'Saving...', color:C.blue}
         : hasUnsavedChanges || saveStatus === 'dirty'
@@ -2109,69 +2134,23 @@ export default function PMWorkspace() {
     <div style={{display:'flex',flexDirection:'column',height:'100vh',background:C.bg,color:C.ink,fontFamily:UI,overflow:'hidden',userSelect:'none'}}>
 
       {/* ── Top Bar ─────────────────────────────────────────────── */}
-      <header style={{height:46,borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px',background:C.panel,flexShrink:0,gap:8}}>
-        <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
-          <Link href="/pm" style={{background:'none',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:4,color:C.muted,padding:'4px 6px',borderRadius:4,flexShrink:0}}>
-              <ChevronLeft size={13}/><span style={{fontFamily:MONO,fontSize:10}}>Back</span>
-            </Link>
-          <div style={{width:1,height:18,background:C.hair,flexShrink:0}}/>
-          <div style={{display:'flex',flexDirection:'column',lineHeight:1.2,minWidth:0}}>
-            <span style={{fontFamily:MONO,fontSize:8.5,color:C.muted,letterSpacing:'0.1em',textTransform:'uppercase'}}>Project</span>
-            <span style={{fontSize:12.5,fontWeight:700,letterSpacing:'-0.01em',whiteSpace:'nowrap'}}>{workspaceRecord?.project.name ?? 'Loading workspace'}</span>
-          </div>
-          <span style={{fontFamily:MONO,fontSize:9.5,background:`${C.blue}12`,color:C.blue,border:`1px solid ${C.blue}28`,borderRadius:4,padding:'2px 7px',flexShrink:0}}>
-            v{workspaceRecord?.currentVersion?.versionNumber ?? workspaceRecord?.design.currentVersionNumber ?? 1}
-          </span>
-          <span style={{fontFamily:MONO,fontSize:9.5,background:`${approvalStageColor}12`,color:approvalStageColor,border:`1px solid ${approvalStageColor}28`,borderRadius:4,padding:'2px 7px',flexShrink:0,textTransform:'uppercase'}}>
-            {approvalStageLabel}
-          </span>
-          <div style={{width:1,height:18,background:C.hair,flexShrink:0}}/>
-          <span style={{fontFamily:MONO,fontSize:9.5,display:'flex',alignItems:'center',gap:5,color:saveStatusMeta.color,flexShrink:0}}>
-            <span style={{width:6,height:6,borderRadius:'50%',background:saveStatusMeta.color,display:'inline-block',flexShrink:0}}/>{saveStatusMeta.label}
-          </span>
-          <button
-            onClick={()=>{ setPickerSearch(''); setShowProjectPicker(true); }}
-            title="Switch project"
-            style={{background:'none',border:`1px solid ${C.hair}`,borderRadius:4,padding:'4px 9px',cursor:'pointer',fontFamily:MONO,fontSize:9,color:C.muted,display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
-            <Layers size={10}/> Switch
-          </button>
-        </div>
+      <WorkspaceToolbar
+        projectName={workspaceRecord?.project.name ?? 'Loading workspace'}
+        version={workspaceRecord?.currentVersion?.versionNumber ?? workspaceRecord?.design.currentVersionNumber ?? 1}
+        stage={approvalStageLabel} stageColor={approvalStageColor} saveStatus={saveStatusMeta}
+        busy={isWorkspaceLoading || saveStatus === 'saving' || isSending || isSnapshotSaving}
+        saving={saveStatus === 'saving'} canUndo={canUndo} canRedo={canRedo}
+        historyOpen={showHistPanel} snapshotCount={snapshots.length}
+        showGrid={showGrid} preview={previewMode} canSend={canSendToClient}
+        sent={approvalStage === 'sent' || approvalStage === 'viewed'} sendDisabledReason={sendDisabledReason}
+        onSwitch={()=>{void openProjectPicker();}}
+        onUndo={undo} onRedo={redo} onSave={()=>{void save();}}
+        onSnapshot={()=>setShowSnapDlg(true)} onHistory={()=>setShowHistPanel(value=>!value)}
+        onGrid={()=>setShowGrid(value=>!value)} onPreview={()=>{setPreviewMode(value=>!value);setShowHistPanel(false);}}
+        onSend={()=>{if(canSendToClient) setShowSendDlg(true);}}
+      />
 
-        <div style={{display:'flex',alignItems:'center',gap:5,flexShrink:0}}>
-          <div style={{display:'flex',border:`1px solid ${C.hair}`,borderRadius:4,overflow:'hidden'}}>
-            {iconBtn(Undo2,'Undo (Ctrl+Z)',undo,!canUndo,{borderRight:`1px solid ${C.hair}`})}
-            {iconBtn(Redo2,'Redo (Ctrl+Y)',redo,!canRedo)}
-          </div>
-          <div style={{width:1,height:18,background:C.hair}}/>
-          <button onClick={save} disabled={saveStatus === 'saving'} title="Save" style={{background:'none',border:`1px solid ${hasUnsavedChanges || saveStatus === 'dirty' ? C.orange : C.hair}`,borderRadius:4,padding:'5px 10px',cursor:saveStatus === 'saving'?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:hasUnsavedChanges || saveStatus === 'dirty' ? C.orange : C.ink,opacity:saveStatus === 'saving'?0.7:1}}>
-            <Save size={12}/> {saveStatus === 'saving' ? 'Saving...' : 'Save'}
-          </button>
-          <button onClick={()=>setShowSnapDlg(true)} title="Save snapshot" style={{background:'none',border:`1px solid ${C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:C.ink}}>
-            <Camera size={12}/> Snapshot
-          </button>
-          <button onClick={()=>setShowHistPanel(h=>!h)} style={{background:showHistPanel?C.bg:'none',border:`1px solid ${showHistPanel?C.ink:C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:C.ink}}>
-            <History size={12}/> History
-            <span style={{fontFamily:MONO,fontSize:9,background:`${C.blue}15`,color:C.blue,borderRadius:3,padding:'1px 5px'}}>{snapshots.length}</span>
-          </button>
-          <button onClick={()=>setShowGrid(value=>!value)} title="Toggle grid" style={{background:showGrid?`${C.blue}10`:'none',border:`1px solid ${showGrid?C.blue:C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:showGrid?C.blue:C.ink}}>
-            <MapIcon size={12}/> Grid
-          </button>
-          <CurrencySwitcher variant="toolbar" />
-          <button onClick={()=>setPreviewMode(value=>!value)} title="Preview workspace" style={{background:previewMode?`${C.orange}12`:'none',border:`1px solid ${previewMode?C.orange:C.hair}`,borderRadius:4,padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,fontSize:11.5,fontFamily:UI,color:previewMode?C.orange:C.ink}}>
-            <Maximize2 size={12}/> Preview
-          </button>
-          <button
-            onClick={()=>canSendToClient && setShowSendDlg(true)}
-            disabled={!canSendToClient}
-            title={sendDisabledReason || 'Send workspace to client'}
-            style={{background:canSendToClient?C.blue:`${C.muted}22`,border:'none',color:canSendToClient?'#fff':C.muted,borderRadius:4,padding:'6px 14px',cursor:canSendToClient?'pointer':'not-allowed',display:'flex',alignItems:'center',gap:6,fontSize:12,fontWeight:600,fontFamily:UI}}
-          >
-            <Send size={12}/> {approvalStage === 'sent' || approvalStage === 'viewed' ? 'Sent to Client' : 'Send to Client'}
-          </button>
-        </div>
-      </header>
-
-      <div style={{display:'flex',flex:1,overflow:'hidden'}}>
+      <div style={{display:'flex',flex:1,overflow:'hidden',position:'relative'}}>
 
         {/* ── Left — Component Catalog ────────────────────────── */}
         {!previewMode&&(
@@ -2199,13 +2178,14 @@ export default function PMWorkspace() {
         )}
 
         {/* ── Center — Canvas (Booth3D iframe renderer) ────────── */}
-        <main style={{flex:1,position:'relative',overflow:'hidden',backgroundColor:C.bg,
-          backgroundImage:showGrid?'repeating-linear-gradient(0deg,transparent,transparent 39px,#d8d3c9 39px,#d8d3c9 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,#d8d3c9 39px,#d8d3c9 40px)':'none'}}>
+        <main style={{flex:1,position:'relative',overflow:'hidden',backgroundColor:C.bg}}>
 
           {/* Booth3D fills canvas — iframe handles orbit/zoom internally */}
           <div style={{position:'absolute',inset:0}}>
             <Booth3D config={{
               width:booth.width, depth:booth.depth, height:booth.height,
+              showGrid,
+              onSystemChange:previewMode || proposalPreview ? undefined : system=>set('system',system),
               system:booth.system, companyName:booth.companyName,
               primaryColor:THEMES[themeIdx].color,
               wallColor: wallFinish.color,
@@ -2747,7 +2727,7 @@ export default function PMWorkspace() {
                   {FASCIA_OPTIONS.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
                 <div style={{marginTop:7,fontFamily:MONO,fontSize:8.7,color:fasciaValid?C.muted:C.orange,lineHeight:1.45}}>
-                  {booth.fasciaEnabled ? `${fasciaMeta.note} Price impact: USD ${fasciaMeta.price.toLocaleString()}.` : 'Fascia board removed from rail and BOM.'}
+                  {booth.fasciaEnabled ? `${fasciaMeta.note} Price impact: ${formatUsd(fasciaMeta.price)}.` : 'Fascia board removed from rail and BOM.'}
                   {!fasciaValid && ` Minimum width for this fascia is ${fasciaMeta.minWidth.toFixed(1)} m.`}
                 </div>
               </PropBlock>
@@ -3264,10 +3244,10 @@ export default function PMWorkspace() {
 
         {/* ── History Panel (slide-over) ────────────────────────── */}
         {showHistPanel&&(
-          <div style={{position:'absolute',top:0,bottom:0,right:previewMode?0:282,width:240,background:C.panel,borderLeft:`1px solid ${C.hair}`,zIndex:20,display:'flex',flexDirection:'column',boxShadow:'-4px 0 20px rgba(0,0,0,0.08)'}}>
+          <div id="workspace-history" aria-label="Version history" style={{position:'absolute',top:0,bottom:0,right:previewMode?0:inspectorOpen?282:34,width:240,background:C.panel,borderLeft:`1px solid ${C.hair}`,zIndex:20,display:'flex',flexDirection:'column',boxShadow:'-4px 0 20px rgba(0,0,0,0.08)'}}>
             <div style={{padding:'8px 14px',borderBottom:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
               <span style={{fontFamily:MONO,fontSize:9.5,fontWeight:700,letterSpacing:'0.1em',color:C.muted,textTransform:'uppercase'}}>§ Snapshots</span>
-              <button onClick={()=>setShowHistPanel(false)} style={{background:'none',border:'none',cursor:'pointer',padding:4,color:C.muted,display:'flex'}}><X size={12}/></button>
+              <button type="button" aria-label="Close history" onClick={()=>setShowHistPanel(false)} style={{background:'none',border:'none',cursor:'pointer',padding:4,color:C.muted,display:'flex'}}><X size={12}/></button>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:'8px 12px'}}>
               {snapshots.length===0&&(
@@ -3291,18 +3271,18 @@ export default function PMWorkspace() {
       </div>
 
       {/* ── Status Bar ─────────────────────────────────────────────── */}
-      <footer style={{height:26,background:'#1a1815',borderTop:'1px solid #111',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px',flexShrink:0}}>
+      <footer style={{height:26,background:C.panel,borderTop:`1px solid ${C.hair}`,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px',flexShrink:0}}>
         <div style={{display:'flex',alignItems:'center',gap:3,overflow:'hidden'}}>
-          <span style={{fontFamily:MONO,fontSize:9.5,color:'#4a8a5e',display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
-            <span style={{width:5,height:5,borderRadius:'50%',background:'#4a8a5e',display:'inline-block'}}/>Connected
+          <span style={{fontFamily:MONO,fontSize:9.5,color:C.green,display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
+            <span style={{width:5,height:5,borderRadius:'50%',background:C.green,display:'inline-block'}}/>Connected
           </span>
           {[projectLabel,approvalStageLabel,`${booth.system==='maxima'?'Maxima':'Octanorm'}`,`Floor ${floorArea} m²`,`${booth.width}×${booth.depth}×${booth.height}m`,`${totalParts} placed`,`${(structWeight+totalWeight).toFixed(0)} kg`].map((s,i)=>(
-            <span key={i} style={{fontFamily:MONO,fontSize:9.5,color:'#6b6058',marginLeft:4,whiteSpace:'nowrap'}}>· {s}</span>
+            <span key={i} style={{fontFamily:MONO,fontSize:9.5,color:C.muted,marginLeft:4,whiteSpace:'nowrap'}}>· {s}</span>
           ))}
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
-          <span style={{fontFamily:MONO,fontSize:9.5,color:'#d8d3c9'}}>{formatUsd(quoteTotal)}</span>
-          <span style={{fontFamily:MONO,fontSize:9.5,color:'#6b6058'}}>History: {histIdx+1}/{histLen}</span>
+          <span style={{fontFamily:MONO,fontSize:9.5,color:C.ink}}>{formatUsd(quoteTotal)}</span>
+          <span style={{fontFamily:MONO,fontSize:9.5,color:C.muted}}>History: {histIdx+1}/{histLen}</span>
           <span style={{fontFamily:MONO,fontSize:9.5,color:saveStatusMeta.color}}>{saveStatusMeta.detail}</span>
         </div>
       </footer>
@@ -3379,6 +3359,7 @@ export default function PMWorkspace() {
       {showSnapDlg&&(
         <WorkspaceSnapshotDialog
           name={snapName}
+          saving={isSnapshotSaving}
           onName={setSnapName}
           onSave={createSnapshot}
           onClose={()=>setShowSnapDlg(false)}

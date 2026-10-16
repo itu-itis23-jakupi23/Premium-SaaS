@@ -503,6 +503,26 @@ test.describe("Three-role workflow", () => {
     await currency.selectOption("EUR");
     await expect(currency).toHaveValue("EUR");
     await expect(page.getByText(/^EUR \d[\d,]*$/).last()).toBeVisible();
+
+    /**
+     * Every price on screen, not just one of them.
+     *
+     * Asserting that something somewhere reads "EUR" is what let the
+     * catalogue cards go on showing the currency the catalogue happened to
+     * store. The catalogue is deliberately mixed, so a card sat at TRY 1,450
+     * while the toolbar, the stand total and the BOM all said EUR - about
+     * forty euros, read as one thousand four hundred and fifty of them.
+     */
+    const foreignPrices = await page.evaluate(() =>
+      [...document.querySelectorAll(".furniture-card__price")]
+        .map((el) => (el.textContent || "").trim())
+        .filter((text) => /[A-Z]{3}/.test(text) && !text.startsWith("EUR")),
+    );
+    expect(
+      foreignPrices,
+      "catalogue cards priced in a currency the user did not pick: " + foreignPrices.join(", "),
+    ).toEqual([]);
+
     await expect.poll(() => page.evaluate(() => localStorage.getItem("ens-display-currency"))).toBe("EUR");
 
     await page.reload({ waitUntil: "networkidle" });
