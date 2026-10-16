@@ -1,4 +1,5 @@
 // @ts-check
+/* global ENSPlacement */
 /**
  * ─── The bridge contract ──────────────────────────────────────────────────
  *
@@ -265,6 +266,9 @@ let FASCIA_COLOR = _P.get('fasciaColor') || '#ffffff';
 let placedItems = [];
 let rooms = [];
 let FASCIA_ENABLED = _P.get('fascia') !== '0';
+let SHOW_GRID = _P.get('grid') !== '0';
+let CAN_CHANGE_SYSTEM = window.parent === window;
+document.documentElement.dataset.theme = _P.get('theme') === 'dark' ? 'dark' : 'light';
 // Read from the query string like every other render setting, so the option
 // can be previewed and tested standalone; postMessage still overrides it.
 let FASCIA_OPTION = (function () {
@@ -383,9 +387,19 @@ function applyFinishColors() {
   WALL_COLOR = normalizeHex(WALL_COLOR, '#f8fafc');
   FRAME_COLOR = normalizeHex(FRAME_COLOR, '#b8bdc3');
   FASCIA_COLOR = normalizeHex(FASCIA_COLOR, '#ffffff');
-  setGradientStops('panel', [shadeColor(WALL_COLOR, 0.08), shadeColor(WALL_COLOR, -0.08)]);
-  setGradientStops('panel-side', [shadeColor(WALL_COLOR, 0.02), shadeColor(WALL_COLOR, -0.18)]);
-  setGradientStops('panel-shade', [shadeColor(WALL_COLOR, -0.12), shadeColor(WALL_COLOR, -0.30)]);
+  // Panels are separated by which way they face, not just shaded a little.
+  //
+  // These three ran +8/-8, +2/-18 and -12/-30, so a wall facing the light and
+  // a wall facing away from it arrived at nearly the same value and the stand
+  // read as one flat box. Widening the gap between the sets is what makes it
+  // a lit volume: the front catches the key light, the returns fall away, and
+  // the face in shade is clearly darker rather than slightly.
+  //
+  // Each set also ends darker than it starts, which is the floor bounce being
+  // weaker than the overhead light - the vertical falloff a real panel has.
+  setGradientStops('panel', [shadeColor(WALL_COLOR, 0.12), shadeColor(WALL_COLOR, -0.10)]);
+  setGradientStops('panel-side', [shadeColor(WALL_COLOR, -0.06), shadeColor(WALL_COLOR, -0.28)]);
+  setGradientStops('panel-shade', [shadeColor(WALL_COLOR, -0.22), shadeColor(WALL_COLOR, -0.42)]);
   setGradientStops('alu', [shadeColor(FRAME_COLOR, -0.20), shadeColor(FRAME_COLOR, 0.10), shadeColor(FRAME_COLOR, 0.28), shadeColor(FRAME_COLOR, -0.10), shadeColor(FRAME_COLOR, -0.28)]);
   setGradientStops('alu-h', [shadeColor(FRAME_COLOR, 0.20), shadeColor(FRAME_COLOR, 0.02), shadeColor(FRAME_COLOR, -0.22)]);
   setGradientStops('alu-cap', [shadeColor(FRAME_COLOR, 0.25), shadeColor(FRAME_COLOR, -0.05)]);
@@ -2525,10 +2539,6 @@ function itemCollisionReason(excludeId, cx, cz, w, d, rotationY = 0) {
   });
 }
 
-function checkItemCollision(excludeId, cx, cz, w, d, rotationY = 0) {
-  return Boolean(itemCollisionReason(excludeId, cx, cz, w, d, rotationY));
-}
-
 /** Why a room cannot stand where it is being dragged, or '' when it can. */
 function roomPlacementCollisionReason(excludeId, candidateRoom) {
   return PLACEMENT.roomPlacementReason(
@@ -3231,6 +3241,7 @@ function buildGrid() {
   const g = document.getElementById('gridGroup');
   if (!g) return;
   g.innerHTML = '';
+  if (!SHOW_GRID) return;
 
   const GX0 = -BW / 2, GX1 = BW / 2, GZ0 = 0, GZ1 = BD;
 
@@ -4565,6 +4576,8 @@ window.addEventListener('keydown', (e) => {
   if (mod && key === 'z') action = e.shiftKey ? 'redo' : 'undo';
   else if (mod && key === 'y') action = 'redo';
   else if (mod && key === 'd') action = 'duplicate';
+  else if (mod && key === 's') action = 'save';
+  else if (mod && key === 'k') action = 'search';
   else if (key === 'delete' || key === 'backspace') action = 'delete';
   else if (key === 'escape') action = 'deselect';
   else if (key === '[') action = 'rotate-ccw';
@@ -4606,14 +4619,22 @@ function animateTo(target, ms = 600) {
   requestAnimationFrame(step);
 }
 document.querySelectorAll('#view-toolbar button[data-view]').forEach(btn => {
+  btn.setAttribute('aria-pressed', String(btn.classList.contains('active')));
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#view-toolbar button[data-view]').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('#view-toolbar button[data-view]').forEach(b=>{
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
     btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
     animateTo(VIEWS[btn.dataset.view]);
   });
 });
 document.getElementById('btn-reset').addEventListener('click', () => {
-  document.querySelectorAll('#view-toolbar button[data-view]').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#view-toolbar button[data-view]').forEach(b=>{
+    b.classList.remove('active');
+    b.setAttribute('aria-pressed', String(b.dataset.view === '3q'));
+  });
   document.querySelector('#view-toolbar button[data-view="3q"]').classList.add('active');
   camState.target = defaultTarget();
   animateTo(VIEWS['3q']);
@@ -4621,12 +4642,24 @@ document.getElementById('btn-reset').addEventListener('click', () => {
 
 // ── Column profile toggle ─────────────────────────────────────────────────────
 // Sync button active state to initial columnStyle param
+document.getElementById('profile-toolbar').hidden = !CAN_CHANGE_SYSTEM;
 document.querySelectorAll('#profile-toolbar button[data-prof]').forEach(btn => {
   btn.classList.toggle('active', btn.dataset.prof === columnStyle);
+  btn.setAttribute('aria-pressed', String(btn.dataset.prof === columnStyle));
   btn.addEventListener('click', () => {
-    if (btn.classList.contains('active')) return;
-    document.querySelectorAll('#profile-toolbar button[data-prof]').forEach(b=>b.classList.remove('active'));
+    if (!CAN_CHANGE_SYSTEM || btn.classList.contains('active')) return;
+    if (window.parent !== window) {
+      // React owns the design, undo history and save. Do not change only the
+      // picture and leave the workspace's system/quote behind.
+      window.parent.postMessage({ type: 'workspaceSystemChangeRequested', system: btn.dataset.prof === 'maxima' ? 'maxima' : 'octanorm' }, location.origin);
+      return;
+    }
+    document.querySelectorAll('#profile-toolbar button[data-prof]').forEach(b=>{
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
     btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
     columnStyle = btn.dataset.prof;
     buildBoothGeometry(); renderAll();
   });
@@ -4748,7 +4781,22 @@ function placeAnnotations() {
 window.addEventListener('resize', renderAll);
 
 // ── Live config via postMessage ───────────────────────────────────────────────
+/** @param {{showGrid?: boolean, theme?: string, canChangeSystem?: boolean}} view */
+function applyViewOptions(view) {
+  if (typeof view.showGrid === 'boolean') SHOW_GRID = view.showGrid;
+  if (view.theme === 'light' || view.theme === 'dark') document.documentElement.dataset.theme = view.theme;
+  if (typeof view.canChangeSystem === 'boolean') {
+    CAN_CHANGE_SYSTEM = view.canChangeSystem;
+    document.getElementById('profile-toolbar').hidden = !CAN_CHANGE_SYSTEM;
+  }
+}
+
 window.addEventListener('message', (e) => {
+  if (e.data?.type === 'boothViewOptions') {
+    applyViewOptions(e.data);
+    buildGrid();
+    return;
+  }
   if (!e.data) return;
   if (e.data.type === 'catalogDragCancel') {
     catalogDropPreview = null;
@@ -4794,6 +4842,7 @@ window.addEventListener('message', (e) => {
   }
   if (e.data.type !== 'boothUpdate') return;
   const d = e.data;
+  applyViewOptions(d);
   if (d.w      != null) BW = Math.max(1, parseFloat(d.w));
   if (d.d      != null) BD = Math.max(1, parseFloat(d.d));
   if (d.h      != null) BH = Math.max(0.8, parseFloat(d.h));
@@ -4841,6 +4890,7 @@ window.addEventListener('message', (e) => {
     columnStyle = d.style === 'maxima' ? 'maxima' : 'octa';
     document.querySelectorAll('#profile-toolbar button[data-prof]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.prof === columnStyle);
+      btn.setAttribute('aria-pressed', String(btn.dataset.prof === columnStyle));
     });
   }
   PANELS_BACK = Math.max(1, Math.round(BW));
