@@ -1,4 +1,4 @@
-import { useEffect, useId, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { Box, CheckCircle2 } from "lucide-react";
 import { formatMoneyUSD } from "@/lib/currency";
 import type { CatItem } from "./workspace-model";
@@ -51,10 +51,17 @@ function catalogPreviewUrl(item: CatItem) {
 }
 function CatalogImagePreview({item,active,height}:{item:CatItem;active:boolean;height:number}) {
   const previewUrl = catalogPreviewUrl(item);
+  // A picture that does not arrive falls back to the same placeholder an
+  // un-pictured item shows, rather than the browser's broken-image icon -
+  // which reads as a broken product inside an otherwise normal card. A unit
+  // gate asserts every referenced preview is shipped, so this covers the
+  // network rather than the build: a dropped request, not a missing file.
+  const [previewFailed,setPreviewFailed] = useState(false);
+  useEffect(() => { setPreviewFailed(false); }, [previewUrl]);
   return (
     <div style={{width:'100%',height,border:`1px solid ${active?C.ink:'rgba(156,163,175,0.32)'}`,borderRadius:4,background:active?'#f8fafc':'#ffffff',overflow:'hidden',display:'grid',placeItems:'center'}}>
-      {previewUrl ? (
-        <img src={previewUrl} alt={`${item.name} preview`} loading="lazy" style={{width:'100%',height:'100%',objectFit:'contain',objectPosition:'center',display:'block',padding:2}}/>
+      {previewUrl && !previewFailed ? (
+        <img src={previewUrl} alt={`${item.name} preview`} loading="lazy" onError={()=>setPreviewFailed(true)} style={{width:'100%',height:'100%',objectFit:'contain',objectPosition:'center',display:'block',padding:2}}/>
       ) : (
         <Box size={Math.max(12, Math.round(height * 0.3))} color={C.muted}/>
       )}

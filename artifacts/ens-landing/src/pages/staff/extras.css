@@ -92,7 +92,8 @@
 }
 
 .extras-table th {
-  text-align: left;
+  /* Logical, so the sheet flips with the document in Arabic. */
+  text-align: start;
   font-size: 8pt;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -109,7 +110,7 @@
 
 /* Tabular figures so quantities line up down the column when scanned. */
 .extras-qty {
-  text-align: right;
+  text-align: end;
   width: 42px;
   font-variant-numeric: tabular-nums;
 }

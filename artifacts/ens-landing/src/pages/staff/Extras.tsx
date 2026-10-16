@@ -241,7 +241,7 @@ export default function Extras({ role }: { role: "chief" | "pm" }) {
                   onClick={() => void openShow(show.name)}
                   aria-pressed={active}
                   data-testid={`extras-show-${show.name}`}
-                  className={`flex w-full items-center gap-2 rounded-lg border p-3 text-left transition-colors ${
+                  className={`flex w-full items-center gap-2 rounded-lg border p-3 text-start transition-colors ${
                     active ? "border-primary bg-primary/5" : "hover:border-foreground/30"
                   }`}
                 >
