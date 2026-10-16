@@ -4,6 +4,7 @@ import { grantStaffAccess } from "./helpers";
 test("the Extras sheet prints with controls hidden and leaves other routes printable", async ({ page }) => {
   const showName = "Fixture Loading Expo";
   const unexpected: string[] = [];
+  const sendPayloads: Array<{ show?: string }> = [];
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await grantStaffAccess(page);
@@ -13,6 +14,13 @@ test("the Extras sheet prints with controls hidden and leaves other routes print
     const request = route.request();
     const path = new URL(request.url()).pathname;
     if (request.method() === "OPTIONS") return route.fulfill({ status: 204 });
+    if (request.method() === "POST" && path === "/api/platform/extras/send-to-chief") {
+      sendPayloads.push(JSON.parse(request.postData() || "{}"));
+      return route.fulfill({ json: {
+        notified: 1, emailed: 0, recipients: ["Fixture Chief"],
+        totals: { booths: 1, items: 3, itemTypes: 1 },
+      } });
+    }
     if (request.method() === "GET") {
       if (path === "/api/auth/me") return route.fulfill({ json: {
         user: { id: "00000000-0000-4000-8000-000000000101", name: "Print Fixture PM", email: "print.pm@example.test", role: "pm", systemRole: "pm" },
@@ -126,6 +134,21 @@ test("the Extras sheet prints with controls hidden and leaves other routes print
     await page.evaluate(() => (window as unknown as { __printCalls: number }).__printCalls),
     "both buttons reached the printer",
   ).toBe(2);
+
+  /**
+   * Sending the lists to the chief.
+   *
+   * The confirmation has to say what actually happened. This server has no
+   * sending key, so the fixture answers the way the real one does - notified,
+   * nothing emailed - and the page must say so rather than claiming an email
+   * went out. A chief who believes a mail is coming does not go looking.
+   */
+  await page.emulateMedia({ media: "screen" });
+  await page.getByTestId("extras-send-chief").click();
+  const confirmation = page.getByRole("status");
+  await expect(confirmation).toContainText("Fixture Chief");
+  await expect(confirmation, "it must not claim an email was sent").toContainText(/email is not configured/i);
+  expect(sendPayloads, "the send names the show it was pressed for").toEqual([{ show: showName }]);
 
   // Navigate in the SPA so the already loaded CSS chunk stays in the browser.
   await page.emulateMedia({ media: "screen" });
