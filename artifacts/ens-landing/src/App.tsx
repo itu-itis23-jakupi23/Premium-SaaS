@@ -158,9 +158,9 @@ function createStaffRoutes() {
   const ChiefInvoices = () => <StaffInvoices role="chief" />;
   const PMInvoices = () => <StaffInvoices role="pm" />;
 
+  const StaffExtras = lazyStaffPage(() => import("@/pages/staff/Extras"));
   const ChiefExtras = () => <StaffExtras role="chief" />;
   const PMExtras = () => <StaffExtras role="pm" />;
-  const StaffExtras = lazyStaffPage(() => import("@/pages/staff/Extras"));
 
   const PMDashboard = lazyStaffPage(() => import("@/pages/pm/PMDashboard"));
   const PMCalendar = lazyStaffPage(() => import("@/pages/pm/PMCalendar"));
