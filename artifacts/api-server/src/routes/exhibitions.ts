@@ -368,8 +368,9 @@ router.post("/platform/extras/send-to-chief", async (req, res) => {
 
   const summary = `${manifest.totals.booths} stands · ${lines.length} item types · ${manifest.totals.items} pieces`;
   let emailed = 0;
+  let notified = 0;
   for (const recipient of recipients) {
-    await deliverNotification(
+    const delivered = await deliverNotification(
       auth.organization.id,
       recipient.id,
       `Furniture lists for ${show}`,
@@ -377,6 +378,7 @@ router.post("/platform/extras/send-to-chief", async (req, res) => {
       "/chief/extras",
       "reports",
     );
+    if (delivered) notified += 1;
     const delivery = await sendExtrasListEmail({
       to: recipient.email,
       name: recipient.name ?? "",
@@ -391,7 +393,9 @@ router.post("/platform/extras/send-to-chief", async (req, res) => {
   }
 
   res.json({
-    notified: recipients.length,
+    // What was delivered, not who was asked: a chief who has turned these
+    // notifications off is not someone this reached.
+    notified,
     emailed,
     recipients: recipients.map((r) => r.name || r.email),
     totals: { ...manifest.totals, itemTypes: lines.length },

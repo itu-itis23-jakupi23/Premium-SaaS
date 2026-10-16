@@ -26,6 +26,15 @@ async function shouldDeliver(organizationId: string, userId: string, category: N
   return pref === undefined || pref === null || pref === true;
 }
 
+/**
+ * Returns whether a row was actually written.
+ *
+ * This used to return nothing, which made "notified" unknowable: a recipient
+ * who has turned this category off, or whose membership has lapsed, is
+ * skipped silently and indistinguishably from one who was reached. A caller
+ * that then tells somebody "sent to 2 managers" may have sent to none. Every
+ * existing caller ignores the result, so they are unaffected.
+ */
 export async function deliverNotification(
   organizationId: string,
   userId: string,
@@ -33,9 +42,9 @@ export async function deliverNotification(
   body: string,
   href: string | null,
   category: NotificationCategory = "system",
-): Promise<void> {
-  if (!(await shouldDeliver(organizationId, userId, category))) return;
-  await db.execute(sql`
+): Promise<boolean> {
+  if (!(await shouldDeliver(organizationId, userId, category))) return false;
+  const result = await db.execute(sql`
     insert into notifications (organization_id, user_id, title, body, href)
     select
       ${organizationId}::uuid,
@@ -48,4 +57,7 @@ export async function deliverNotification(
       and exists (select 1 from memberships m where m.user_id = u.id
         and m.organization_id = ${organizationId}::uuid and m.status = 'active')
   `);
+  // The insert is a `select ... where`, so it writes no row when the user has
+  // been deleted, disabled or removed from the organization since.
+  return ((result as unknown as { rowCount?: number }).rowCount ?? 0) > 0;
 }

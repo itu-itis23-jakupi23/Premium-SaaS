@@ -114,6 +114,47 @@ describe("POST /api/platform/extras/send-to-chief", () => {
     expect(response.body.notified).toBeGreaterThanOrEqual(1);
   });
 
+  it("does not count a chief who has turned these notifications off", async () => {
+    /**
+     * The count is a claim made to whoever pressed send.
+     *
+     * `deliverNotification` honours each recipient's own preference and skips
+     * them silently, so counting recipients rather than deliveries would tell
+     * a project manager the lists reached two managers when they reached
+     * none - and nobody would chase the show.
+     */
+    const muted = await createTestUser(org.id, "chief");
+    // Merged rather than `jsonb_set`, which only creates the final key: with
+    // no accountSettings object already there it silently changes nothing,
+    // and the test passes while proving the opposite of what it claims.
+    await db.execute(sql`
+      update users
+      set metadata = coalesce(metadata, '{}'::jsonb)
+        || '{"accountSettings":{"notifications":{"reports":false}}}'::jsonb
+      where id = ${muted.id}::uuid
+    `);
+
+    const stored = await db.execute<{ pref: boolean | null }>(sql`
+      select (metadata #> '{accountSettings,notifications,reports}')::boolean as pref
+      from users where id = ${muted.id}::uuid
+    `);
+    expect(
+      (stored as unknown as { rows: Array<{ pref: boolean | null }> }).rows[0]?.pref,
+      "the preference must actually be stored or this test proves nothing",
+    ).toBe(false);
+
+    const before = (await notificationsFor(muted.id)).length;
+    const response = await request(app)
+      .post("/api/platform/extras/send-to-chief")
+      .set("Cookie", cookies)
+      .send({ show: SHOW });
+
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(await notificationsFor(muted.id)).toHaveLength(before);
+    // They are listed as a recipient but not counted as notified.
+    expect(response.body.recipients.length).toBeGreaterThan(response.body.notified);
+  });
+
   it("refuses a show with no stands rather than sending an empty list", async () => {
     const response = await request(app)
       .post("/api/platform/extras/send-to-chief")

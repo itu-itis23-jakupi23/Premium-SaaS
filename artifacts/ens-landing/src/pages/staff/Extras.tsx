@@ -47,6 +47,8 @@ export default function Extras({ role }: { role: "chief" | "pm" }) {
   const [manifest, setManifest] = useState<ExhibitionFurnitureManifest | null>(null);
   const [loadingManifest, setLoadingManifest] = useState(false);
   const [manifestError, setManifestError] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   useEffect(() => {
     document.title = t("extras.pageTitle");
@@ -87,8 +89,19 @@ export default function Extras({ role }: { role: "chief" | "pm" }) {
     window.print();
   }, []);
 
-  const [sending, setSending] = useState(false);
-  const [sendResult, setSendResult] = useState<{ ok: boolean; message: string } | null>(null);
+  /**
+   * Narrowing the sheet lasts for that one print.
+   *
+   * Each button is a deliberate choice about one job. Leaving the choice in
+   * place afterwards means the next Ctrl+P - which says nothing about
+   * warehouses, and plainly means "print what I am looking at" - quietly
+   * prints half the document instead.
+   */
+  useEffect(() => {
+    const restore = () => setPrintMode("all");
+    window.addEventListener("afterprint", restore);
+    return () => window.removeEventListener("afterprint", restore);
+  }, []);
 
   /**
    * Post the lists to whoever signs off what leaves the warehouse.
@@ -121,6 +134,9 @@ export default function Extras({ role }: { role: "chief" | "pm" }) {
     setSelectedShow(name);
     setManifest(null);
     setManifestError("");
+    // The confirmation names a show. Carrying it to the next one claims that
+    // show was sent to the chief as well, which is worse than saying nothing.
+    setSendResult(null);
     setLoadingManifest(true);
     try {
       setManifest(await getExhibitionFurnitureManifest(name));
