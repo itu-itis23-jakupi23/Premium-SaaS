@@ -13,6 +13,7 @@ import {
 } from "./lib/lead-intake";
 import { deploymentProfile } from "./lib/env";
 import { createShutdownHandler, resolveGraceMs } from "./lib/shutdown";
+import { applyConnectionTimeouts, resolveKeepAliveMs } from "./lib/connection-timeouts";
 
 const rawPort = process.env.PORT || "5000";
 const port = Number(rawPort);
@@ -66,10 +67,16 @@ async function start() {
       process.exit(1);
     }
 
-    logger.info({ port }, "Server listening");
+    logger.info({ port, keepAliveTimeout: timeouts.keepAliveTimeout }, "Server listening");
     startTaskReminderWorker();
     startAutomationSweeps();
   });
+
+  // Hold idle connections open for longer than anything in front of us, so
+  // the proxy is always the side that closes. Node's five-second default
+  // loses a race with any client that pools connections, and the caller sees
+  // an unexplained ECONNRESET.
+  const timeouts = applyConnectionTimeouts(server, resolveKeepAliveMs(process.env.KEEP_ALIVE_MS));
 
   const shutdown = createShutdownHandler({
     server,
