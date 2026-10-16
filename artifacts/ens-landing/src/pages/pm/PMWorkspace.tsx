@@ -1548,6 +1548,17 @@ export default function PMWorkspace() {
   };
   const updatePanelOverride = (id:string, patch:PanelOverride) => updatePanelOverrides([id], patch);
   /**
+   * Every board on the stand's fascia.
+   *
+   * A treatment or a logo applied to one side only is almost never what was
+   * meant: the sign band runs round the stand and a visitor sees three of
+   * its four faces. Applying to the selected board alone looked, from the
+   * floor, exactly like nothing had happened - the front changed and the
+   * returns stayed white. Individual boards can still be overridden
+   * afterwards with the colour and artwork controls.
+   */
+  const FASCIA_BOARD_IDS = ['fascia-front','fascia-back','fascia-left','fascia-right'];
+  /**
    * `targets` is the set the finished image is written to. The upload itself
    * happens once - the same asset url lands on every selected bay - so putting
    * one graphic across a wall is one upload, not one per bay.
@@ -3094,7 +3105,7 @@ export default function PMWorkspace() {
                           return (
                             <button key={template.label} type="button" disabled={!activeFasciaId}
                               title={template.note} aria-pressed={active}
-                              onClick={()=>activeFasciaId&&updatePanelOverride(activeFasciaId,{color:template.board,brandColor:template.text,brandScale:template.scale})}
+                              onClick={()=>activeFasciaId&&updatePanelOverrides(FASCIA_BOARD_IDS,{color:template.board,brandColor:template.text,brandScale:template.scale})}
                               style={{height:38,border:`1px solid ${active?C.blue:C.hair}`,borderRadius:4,background:template.board,
                                 color:template.text,cursor:activeFasciaId?'pointer':'not-allowed',fontFamily:MONO,fontSize:8.5,fontWeight:800,
                                 letterSpacing:'0.06em',textTransform:'uppercase',outline:active?`1px solid ${C.blue}`:'none',padding:0}}>
@@ -3124,7 +3135,7 @@ export default function PMWorkspace() {
                       <label style={{height:34,marginTop:10,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:7,fontFamily:MONO,fontSize:9.5,fontWeight:800,padding:'0 10px',overflow:'hidden'}}>
                         <ImagePlus size={13}/>
                         <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{activeFasciaOverride.designImageName || 'Choose logo or fascia design'}</span>
-                        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" disabled={!activeFasciaId} onChange={e=>{if(activeFasciaId) uploadPanelDesign(activeFasciaId,e.target.files?.[0]); e.currentTarget.value='';}} style={{display:'none'}}/>
+                        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" disabled={!activeFasciaId} onChange={e=>{if(activeFasciaId) uploadPanelDesign(activeFasciaId,e.target.files?.[0],FASCIA_BOARD_IDS); e.currentTarget.value='';}} style={{display:'none'}}/>
                       </label>
                       {activeFasciaOverride.designImageUrl&&<>
                         <div style={{height:62,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>

@@ -2766,6 +2766,19 @@ function buildFascia() {
     return override && override.color ? String(override.color) : boardFill;
   }
 
+  /**
+   * The mounted sign plate follows the board it is mounted on.
+   *
+   * This was a hard-coded near-white in three places, so recolouring a fascia
+   * left a white rectangle stuck to the middle of it, and a light wordmark
+   * chosen to suit the new board became invisible against the plate that had
+   * not changed. The board and the plate are one sign.
+   */
+  function namePlateFill(side) {
+    const override = getFasciaOverride(side);
+    return override && override.color ? String(override.color) : '#fbfcfd';
+  }
+
   function hasMountedNamePlate(side) {
     return side === 'front' || wallsVisible[side] === false;
   }
@@ -2897,7 +2910,7 @@ function buildFascia() {
     // overlaps nothing, where the painted-on oval overlapped the plate beneath
     // it and stood taller than the board.
     const plateProps = {
-      fill: '#fbfcfd',
+      fill: namePlateFill(side),
       isFascia: side,
       partId: `fascia-${side}-name-plate`,
       partLabel: `${side} fascia company name plate`,
@@ -2911,7 +2924,7 @@ function buildFascia() {
         Math.min(z0, z1), Math.max(z0, z1), 'z', 48, plateProps);
     } else {
     pushBox([x0, y0, Math.min(z0, z1)], [x1, y1, Math.max(z0, z1)], {
-      fill: '#fbfcfd',
+      fill: namePlateFill(side),
       isFascia: side,
       partId: `fascia-${side}-name-plate`,
       partLabel: `${side} fascia company name plate`,
@@ -2937,7 +2950,7 @@ function buildFascia() {
     const x0 = exteriorX + outward * geo.near;
     const x1 = exteriorX + outward * geo.far;
     const plateProps = {
-      fill: '#fbfcfd',
+      fill: namePlateFill(side),
       isFascia: side,
       partId: `fascia-${side}-name-plate`,
       partLabel: `${side} fascia company name plate`,
@@ -2951,7 +2964,7 @@ function buildFascia() {
         Math.min(x0, x1), Math.max(x0, x1), 'x', 48, plateProps);
     } else {
     pushBox([Math.min(x0, x1), y0, z0], [Math.max(x0, x1), y1, z1], {
-      fill: '#fbfcfd',
+      fill: namePlateFill(side),
       isFascia: side,
       partId: `fascia-${side}-name-plate`,
       partLabel: `${side} fascia company name plate`,

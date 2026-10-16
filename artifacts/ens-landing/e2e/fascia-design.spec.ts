@@ -60,6 +60,29 @@ test("a fascia template restyles the sign and keeps the wordmark legible", async
   const boardHex = await page.getByRole("textbox", { name: /fascia color hex value/i }).inputValue();
   expect(boardHex.toLowerCase()).toBe("#23262c");
 
+  /**
+   * Every board on the band, not just the one that was selected.
+   *
+   * The first version applied the treatment to the selected board alone. A
+   * visitor sees three of the fascia's four faces, so the front changed, the
+   * returns stayed white, and from the floor it looked exactly as though
+   * nothing had happened - which is how it was reported.
+   */
+  const boards = await page.evaluate(() => {
+    const doc = (document.querySelector('iframe[title="Booth Renderer"]') as HTMLIFrameElement | null)?.contentDocument;
+    const fills: Record<string, string> = {};
+    doc?.querySelectorAll("[data-pid*='-body']").forEach((node) => {
+      const id = node.getAttribute("data-pid") || "";
+      const side = id.match(/^fascia-(front|back|left|right)-body/)?.[1];
+      if (side) fills[side] = (node as SVGElement).getAttribute("fill") || "";
+    });
+    return fills;
+  });
+  expect(Object.keys(boards).sort(), "all four fascia boards are drawn").toEqual(["back", "front", "left", "right"]);
+  for (const [side, fill] of Object.entries(boards)) {
+    expect(fill.toLowerCase(), `the ${side} fascia board kept its default fill`).toBe("#23262c");
+  }
+
   const frame = page.frameLocator('iframe[title="Booth Renderer"]');
   const wordmark = frame.locator("text", { hasText: "FASCIA CO" }).first();
   await expect(wordmark, "the wordmark is drawn on the stand").toBeVisible();
