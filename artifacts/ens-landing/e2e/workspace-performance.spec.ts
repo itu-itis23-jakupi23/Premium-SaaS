@@ -3,6 +3,54 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { ENS_FURNITURE_ITEMS, catalogFurnitureProps } from "../src/lib/furniture-catalog";
 
+/**
+ * A warm update budget, expressed in machine speed rather than milliseconds.
+ *
+ * The budget was a flat 1500ms and it measured the machine as much as the
+ * renderer. Run on its own the hundred-object case takes about 1100-1270ms;
+ * run last in the full suite, on a host also carrying a database and two
+ * preview servers, the whole distribution shifts up and it takes about
+ * 1580-1600ms. Nothing about the renderer changed between those two numbers.
+ *
+ * Raising the flat budget until the slow case fits would blunt it for the
+ * fast case, which is where a real regression would have shown first. So the
+ * run measures how fast this machine is right now - the same arithmetic, in
+ * the same page, under the same 4x CPU throttle - and scales the budget by
+ * what it finds. A renderer that got slower still fails, on any machine; a
+ * machine that is busy no longer fails on the renderer's behalf.
+ *
+ * The scaling is capped. Past that the host is too loaded for the number to
+ * mean anything, and a budget that grows without limit is not a budget.
+ */
+const WARM_UPDATE_BUDGET_MS = 1_500;
+/**
+ * What the calibration costs on an unloaded machine, under the same 4x
+ * throttle. Measured here twice at 68.8ms and 74.4ms, so 70 sits in the
+ * middle of the quiet case: a faster host scales nothing (the factor floors
+ * at 1 and the budget stays strict), a busier one is given proportionate
+ * room. Re-measure this if the hardware changes; it is a property of the
+ * machine, not of the product.
+ */
+const CALIBRATION_REFERENCE_MS = 70;
+const MAX_SLOWDOWN = 2.5;
+
+/** Deterministic arithmetic, returned so it cannot be optimised away. */
+async function measureMachineSpeed(page: import("@playwright/test").Page): Promise<number> {
+  const samples: number[] = [];
+  for (let run = 0; run < 3; run++) {
+    const { ms } = await page.evaluate(() => {
+      const started = performance.now();
+      let total = 0;
+      for (let i = 1; i < 4_000_000; i++) total += Math.sqrt(i);
+      return { ms: performance.now() - started, total };
+    });
+    samples.push(ms);
+  }
+  // The median of three: one sample can be interrupted, three rarely agree
+  // on being wrong.
+  return samples.sort((a, b) => a - b)[1];
+}
+
 test("large scenes stay within resolution and update budgets on a throttled CPU", async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const cdp = await page.context().newCDPSession(page);
@@ -10,6 +58,11 @@ test("large scenes stay within resolution and update budgets on a throttled CPU"
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.goto("/booth-render.html?w=20&d=10&renderer=performance-check");
   await page.waitForFunction(() => typeof (window as unknown as { __updateGlbLayer?: unknown }).__updateGlbLayer === "function", undefined, { timeout: 10_000 });
+  const machineSpeedMs = await measureMachineSpeed(page);
+  const slowdown = CALIBRATION_REFERENCE_MS > 0
+    ? Math.min(MAX_SLOWDOWN, Math.max(1, machineSpeedMs / CALIBRATION_REFERENCE_MS))
+    : 1;
+  const warmBudgetMs = WARM_UPDATE_BUDGET_MS * slowdown;
   const measurements = [];
   const evidence = resolve(import.meta.dirname, "../../../.release-evidence");
   mkdirSync(evidence, { recursive: true });
@@ -48,14 +101,19 @@ test("large scenes stay within resolution and update budgets on a throttled CPU"
       return { count, cold, coldElapsedMs, warm, warmShadowUpdates, maxWarmMs: Math.max(...warm) };
     }, { count, started });
     measurements.push(result);
-    writeFileSync(resolve(evidence, "workspace-performance.json"), JSON.stringify({ measuredAt: new Date().toISOString(), cpuSlowdown: 4, measurements }, null, 2));
+    writeFileSync(resolve(evidence, "workspace-performance.json"), JSON.stringify({ measuredAt: new Date().toISOString(), cpuSlowdown: 4, machineSpeedMs, slowdown, warmBudgetMs, measurements }, null, 2));
     expect(result.cold.objects).toBe(count);
     expect(result.cold.shadowUpdates).toBeGreaterThan(0);
     expect(result.warmShadowUpdates).toEqual(Array(5).fill(result.cold.shadowUpdates));
     expect(result.cold.pixels).toBeLessThanOrEqual(4_000_000);
     expect(result.coldElapsedMs).toBeLessThan(15_000);
     // This detects severe stalls, rather than claiming a real-device FPS target.
-    expect(result.maxWarmMs).toBeLessThan(1500);
+    expect(
+      result.maxWarmMs,
+      `warm update budget ${warmBudgetMs.toFixed(0)}ms `
+        + `(${WARM_UPDATE_BUDGET_MS}ms x ${slowdown.toFixed(2)} for a machine measuring `
+        + `${machineSpeedMs.toFixed(0)}ms against a ${CALIBRATION_REFERENCE_MS}ms reference)`,
+    ).toBeLessThan(warmBudgetMs);
   }
   // Cached bounds must invalidate after an edit, and model removal must still work.
   const beforeEdit = await page.evaluate(() => (window as unknown as { __rendererPerformance: { shadowUpdates: number } }).__rendererPerformance.shadowUpdates);
@@ -75,7 +133,7 @@ test("large scenes stay within resolution and update budgets on a throttled CPU"
   await page.evaluate(() => window.postMessage({ type: "boothUpdate", placedItems: [] }, "*"));
   await page.waitForFunction(() => (window as unknown as { __rendererPerformance?: { objects: number } }).__rendererPerformance?.objects === 0);
   await page.waitForFunction((before) => (window as unknown as { __rendererPerformance: { shadowUpdates: number } }).__rendererPerformance.shadowUpdates > before, beforeRemoval);
-  const report = JSON.stringify({ measuredAt: new Date().toISOString(), cpuSlowdown: 4, measurements }, null, 2);
+  const report = JSON.stringify({ measuredAt: new Date().toISOString(), cpuSlowdown: 4, machineSpeedMs, slowdown, warmBudgetMs, measurements }, null, 2);
   writeFileSync(resolve(evidence, "workspace-performance.json"), report);
   await testInfo.attach("workspace-performance", { body: report, contentType: "application/json" });
 });
