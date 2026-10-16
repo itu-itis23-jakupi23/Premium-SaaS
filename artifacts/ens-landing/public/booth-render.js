@@ -2743,6 +2743,12 @@ function ensFasciaProfile() {
   };
 }
 
+/** A 0..1 placement value, falling back when absent or unparseable. */
+function clamp01(value, fallback) {
+  const parsed = parseFloat(value);
+  return Number.isFinite(parsed) ? Math.max(0, Math.min(1, parsed)) : fallback;
+}
+
 function buildFascia() {
   if (!FASCIA_ENABLED) return;
   const P = ensFasciaProfile();
@@ -2833,6 +2839,14 @@ function buildFascia() {
       // every control said it was set.
       signPlate: override.color ? String(override.color) : '',
       signScale: override.brandScale != null ? Math.max(0.08, Math.min(0.45, parseFloat(override.brandScale) || 0.2)) : 0.2,
+      // Where along the board each element sits, 0 at the left edge and 1 at
+      // the right. Centred is the default the fascia has always drawn, so a
+      // stand saved before these existed renders identically.
+      signX: clamp01(override.brandX, 0.5),
+      designX: clamp01(override.designX, 0.5),
+      designWidth: override.designWidth != null
+        ? Math.max(0.15, Math.min(1, parseFloat(override.designWidth) || 1))
+        : 1,
       designImageUrl,
       designOpacity: override.designOpacity != null ? Math.max(0.15, Math.min(1, parseFloat(override.designOpacity) || 1)) : 1,
       graphicFit: 'contain',
@@ -2899,8 +2913,19 @@ function buildFascia() {
     const geo = signBoardGeometry(BW);
     const signW = geo.width;
     const signH = geo.height;
-    const x0 = -signW / 2;
-    const x1 = signW / 2;
+    /**
+     * The sign slides along the board rather than sitting dead centre.
+     *
+     * A fascia carries more than one thing - a stand number at one end, a
+     * logo at the other - and the plate is a fixed share of the stand, so the
+     * space either side of it is the only room there is. The shift is bounded
+     * by exactly that room: at 0 the plate's left edge meets the board's, at
+     * 1 its right edge does, and it can never overhang the stand.
+     */
+    const signTravel = Math.max(0, BW - signW);
+    const signShift = (clamp01(getFasciaOverride(side).brandX, 0.5) - 0.5) * signTravel;
+    const x0 = -signW / 2 + signShift;
+    const x1 = signW / 2 + signShift;
     const y0 = BH + (FH - signH) * 0.50;   // centred on the whole assembly
     const y1 = y0 + signH;
     const z0 = exteriorZ + outward * geo.near;
@@ -2943,8 +2968,10 @@ function buildFascia() {
     const geo = signBoardGeometry(usableDepth);
     const signW = geo.width;
     const signH = geo.height;
-    const z0 = BD * 0.5 - signW * 0.5;
-    const z1 = BD * 0.5 + signW * 0.5;
+    const sideTravel = Math.max(0, usableDepth - signW);
+    const sideShift = (clamp01(getFasciaOverride(side).brandX, 0.5) - 0.5) * sideTravel;
+    const z0 = BD * 0.5 - signW * 0.5 + sideShift;
+    const z1 = BD * 0.5 + signW * 0.5 + sideShift;
     const y0 = BH + (FH - signH) * 0.50;   // centred on the whole assembly
     const y1 = y0 + signH;
     const x0 = exteriorX + outward * geo.near;
@@ -3735,11 +3762,19 @@ function renderBooth() {
         printed.setAttribute('transform', surface.transform);
         printed.setAttribute('pointer-events', 'none');
 
+        // The artwork occupies a share of the board and slides along it, so a
+        // logo can sit at one end with the wordmark at the other. Full width
+        // and centred is the default, which is the whole board as before.
+        const artworkW = surface.w * (face.designWidth != null ? face.designWidth : 1);
+        const artworkX = (surface.w - artworkW) * (face.designX != null ? face.designX : 0.5);
+
         if (face.designImageUrl && (face.signOnly || face.graphicFit === 'contain')) {
+          // The backing follows the artwork. Left at full width it painted a
+          // white band across a board the artwork no longer covers.
           const backing = document.createElementNS(SVG_NS, 'rect');
-          backing.setAttribute('x', '0');
+          backing.setAttribute('x', artworkX.toFixed(2));
           backing.setAttribute('y', '0');
-          backing.setAttribute('width', surface.w.toFixed(2));
+          backing.setAttribute('width', artworkW.toFixed(2));
           backing.setAttribute('height', surface.h.toFixed(2));
           backing.setAttribute('fill', face.signOnly ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.12)');
           printed.appendChild(backing);
@@ -3749,9 +3784,9 @@ function renderBooth() {
           const img = document.createElementNS(SVG_NS, 'image');
           img.setAttribute('href', face.designImageUrl);
           img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', face.designImageUrl);
-          img.setAttribute('x', '0');
+          img.setAttribute('x', artworkX.toFixed(2));
           img.setAttribute('y', '0');
-          img.setAttribute('width', surface.w.toFixed(2));
+          img.setAttribute('width', artworkW.toFixed(2));
           img.setAttribute('height', surface.h.toFixed(2));
           // An <image> establishes its own viewport and `slice` is clipped to
           // it, so filling the panel needs no clip path. The screen-space
@@ -3876,7 +3911,12 @@ function renderBooth() {
           const halfU = fullBleed
             ? 0.5
             : Math.max(0.06, Math.min(0.49, requestedW / Math.max(0.001, faceWm) / 2));
-          const u0 = 0.5 - halfU, u1 = 0.5 + halfU;
+          // Centred within its own face. The face is what moves along the
+          // board - see addFrontBackNamePlate - because the plate is nearly
+          // as wide as the face it sits on, so sliding it inside gave four
+          // pixels of travel and looked like the setting did nothing.
+          const centreU = 0.5;
+          const u0 = centreU - halfU, u1 = centreU + halfU;
           const widthU = u1 - u0;
 
           if (!fullBleed) {
@@ -3889,7 +3929,11 @@ function renderBooth() {
             ? Math.max(10, Math.min(44, screenH * 0.60, (screenW * widthU) / Math.max(5, label.length) * 1.85))
             : Math.max(9, Math.min(28, screenH * Math.max(0.52, scale * 3.1),
                                    (screenW * widthU) / Math.max(5, label.length) * 1.65, faceWm * 16));
-          addText(pM.x, pM.y + fs*0.34, label, fs.toFixed(1), face.signColor || textColor || '#4b5563');
+          // Centred on the plate, which is no longer always the middle of the
+          // board. uvP projects the point so the type stays on the face at
+          // any camera angle rather than being nudged in screen space.
+          const anchor = uvP(centreU, 0.5) || pM;
+          addText(anchor.x, anchor.y + fs*0.34, label, fs.toFixed(1), face.signColor || textColor || '#4b5563');
         };
 
         if (FASCIA_OPTION === 'classic') {

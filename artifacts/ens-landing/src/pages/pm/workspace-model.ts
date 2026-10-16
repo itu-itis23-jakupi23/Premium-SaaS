@@ -24,7 +24,12 @@ export const ROOM_SIDE_OPTIONS: { value: DoorSide; label: string }[] = [
 export interface BoothState { width:number; depth:number; height:number; system:BoothSystem; companyName:string; openFront:boolean; openBack:boolean; openLeft:boolean; openRight:boolean; fasciaEnabled:boolean; fasciaOption:FasciaOption; }
 export interface WorkspacePlacedItem { id:string; catalogId:string; name:string; sku:string; qty:number; w:number; d:number; h:number; color:string; weight:number; x:number; y?:number; z:number; rotation:number; rotationX?:number; rotationY?:number; rotationZ?:number; locked?:boolean; kind:'furniture'|'light'|'structure'|'fascia'|'asset'; shape?:CatItem['shape']; modelUrl?:string; source?:string; }
 export interface WorkspaceRoom { id:string; name:string; width:number; depth:number; height:number; x:number; z:number; hasDoor:boolean; hasCeiling:boolean; doorSide:DoorSide; doorWidth:number; doorPosition:DoorPosition; doorSwing:DoorSwing; doorOpen:boolean; wallFinish:RoomWallFinish; floorColor:string; locked:boolean; designImageUrl?:string; designImageName?:string; designOpacity?:number; designWall:DoorSide; designFit:RoomGraphicFit; }
-export interface PanelOverride { color?:string; brandText?:string; brandColor?:string; brandScale?:number; designImageUrl?:string; designImageName?:string; designOpacity?:number; }
+// `brandX` and `designX` place the wordmark and the artwork along the board,
+// 0 at the left edge and 1 at the right, so a stand number can sit at one end
+// and a logo at the other. `designWidth` is the share of the board the
+// artwork occupies. All three default to the centred, full-width layout the
+// fascia had before they existed, so a stand saved without them is unchanged.
+export interface PanelOverride { color?:string; brandText?:string; brandColor?:string; brandScale?:number; brandX?:number; designImageUrl?:string; designImageName?:string; designOpacity?:number; designX?:number; designWidth?:number; }
 export interface Note { id:string; text:string; color:string; createdAt:string; }
 export interface Snapshot { id:string; name:string; data:WSData; createdAt:string; }
 export interface WSData { booth:BoothState; themeIdx:number; wallFinishIdx:number; frameFinishIdx:number; fasciaFinishIdx:number; carpetIdx:number; lightingPreset:LightingPreset; placedItems:WorkspacePlacedItem[]; rooms:WorkspaceRoom[]; notes:Note[]; panelOverrides:Record<string,PanelOverride>; frontSupportPositions:number[]; suppressedDefaultPositions:number[]; }

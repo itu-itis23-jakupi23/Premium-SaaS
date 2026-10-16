@@ -116,4 +116,53 @@ test("a fascia template restyles the sign and keeps the wordmark legible", async
     contrast,
     `the wordmark (${textFill}) is invisible against the plate it is mounted on (${plateFill})`,
   ).toBeGreaterThan(0.3);
+
+  /**
+   * The wordmark moves along the board.
+   *
+   * A fascia carries more than one thing - a stand number at one end, a logo
+   * at the other - so the sign cannot be permanently centred. Measured from
+   * the rendered text rather than the slider, because the control moving and
+   * the sign moving are different claims, and only the second one matters.
+   */
+  const wordmarkX = async () => {
+    const value = await frame.locator("text", { hasText: "FASCIA CO" }).first().getAttribute("x");
+    return Number(value);
+  };
+  const centred = await wordmarkX();
+
+  const position = page.getByLabel("Fascia text position across the board");
+  const at = async (value: string) => {
+    await position.fill(value);
+    await page.waitForTimeout(500);
+    return wordmarkX();
+  };
+  const atLeft = await at("0");
+  const atRight = await at("1");
+
+  expect(atLeft, `moving the wordmark left did not move it (${centred} -> ${atLeft})`).toBeLessThan(centred);
+  expect(atRight, `moving the wordmark right did not move it (${centred} -> ${atRight})`).toBeGreaterThan(centred);
+
+  /**
+   * And moved far enough to be worth having.
+   *
+   * The first version of this feature nudged the lettering inside its own
+   * plate, which is nearly as wide as the face it sits on: the sign travelled
+   * four pixels end to end. Every assertion above passed on it. A control
+   * that technically moves something is not a control anybody can use, so the
+   * distance is the assertion. The viewport is fixed, so this is stable.
+   */
+  const travel = atRight - atLeft;
+  expect(
+    travel,
+    `the wordmark only travels ${travel.toFixed(0)}px across the whole board, which reads as the control doing nothing`,
+  ).toBeGreaterThan(120);
+
+  // Evenly, rather than jumping between two clamped extremes.
+  const quarter = await at("0.25");
+  const threeQuarter = await at("0.75");
+  expect(quarter).toBeGreaterThan(atLeft);
+  expect(quarter).toBeLessThan(centred);
+  expect(threeQuarter).toBeGreaterThan(centred);
+  expect(threeQuarter).toBeLessThan(atRight);
 });

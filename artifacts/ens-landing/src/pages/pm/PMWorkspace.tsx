@@ -3131,6 +3131,21 @@ export default function PMWorkspace() {
                         <label htmlFor={`${uid}-fascia-scale`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Scale</label>
                         <input id={`${uid}-fascia-scale`} type="range" min={0.08} max={0.45} step={0.01} value={activeFasciaOverride.brandScale ?? 0.2} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandScale:Number(e.target.value)})}
                           style={{width:'100%',accentColor:C.blue}}/>
+                        {/* Along the board, so a stand number can sit at one
+                            end with the logo at the other. Per board, not the
+                            whole band: the sides rarely want what the front
+                            wants. */}
+                        <label htmlFor={`${uid}-fascia-text-x`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Position</label>
+                        <div style={{display:'flex',alignItems:'center',gap:7}}>
+                          <input id={`${uid}-fascia-text-x`} type="range" min={0} max={1} step={0.01} value={activeFasciaOverride.brandX ?? 0.5}
+                            disabled={!activeFasciaId} aria-label="Fascia text position across the board"
+                            onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandX:Number(e.target.value)})}
+                            style={{flex:1,accentColor:C.blue}}/>
+                          <button type="button" disabled={!activeFasciaId} title="Centre the wordmark"
+                            onClick={()=>activeFasciaId&&updatePanelOverride(activeFasciaId,{brandX:0.5})}
+                            style={{height:24,padding:'0 7px',border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,
+                              cursor:activeFasciaId?'pointer':'not-allowed',fontFamily:MONO,fontSize:8.5,fontWeight:800}}>MID</button>
+                        </div>
                       </div>
                       <label style={{height:34,marginTop:10,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:7,fontFamily:MONO,fontSize:9.5,fontWeight:800,padding:'0 10px',overflow:'hidden'}}>
                         <ImagePlus size={13}/>
@@ -3145,6 +3160,25 @@ export default function PMWorkspace() {
                           <label htmlFor={`${uid}-fascia-design-opacity`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Opacity</label>
                           <input id={`${uid}-fascia-design-opacity`} type="range" min={0.15} max={1} step={0.05} value={activeFasciaOverride.designOpacity ?? 1} onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{designOpacity:Number(e.target.value)})}
                             style={{width:'100%',accentColor:C.blue}}/>
+                          {/* Narrow the artwork before moving it: at full
+                              width there is nowhere for it to go, which is
+                              why these two sit together. */}
+                          <label htmlFor={`${uid}-fascia-design-width`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Width</label>
+                          <input id={`${uid}-fascia-design-width`} type="range" min={0.15} max={1} step={0.01} value={activeFasciaOverride.designWidth ?? 1}
+                            aria-label="Fascia artwork width across the board"
+                            onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{designWidth:Number(e.target.value)})}
+                            style={{width:'100%',accentColor:C.blue}}/>
+                          <label htmlFor={`${uid}-fascia-design-x`} style={{fontFamily:MONO,fontSize:9,color:C.muted,textTransform:'uppercase'}}>Position</label>
+                          <div style={{display:'flex',alignItems:'center',gap:7}}>
+                            <input id={`${uid}-fascia-design-x`} type="range" min={0} max={1} step={0.01} value={activeFasciaOverride.designX ?? 0.5}
+                              aria-label="Fascia artwork position across the board"
+                              onChange={e=>activeFasciaId&&updatePanelOverride(activeFasciaId,{designX:Number(e.target.value)})}
+                              style={{flex:1,accentColor:C.blue}}/>
+                            <button type="button" title="Centre the artwork"
+                              onClick={()=>activeFasciaId&&updatePanelOverride(activeFasciaId,{designX:0.5})}
+                              style={{height:24,padding:'0 7px',border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,
+                                cursor:'pointer',fontFamily:MONO,fontSize:8.5,fontWeight:800}}>MID</button>
+                          </div>
                         </div>
                         <button onClick={()=>activeFasciaId&&updatePanelOverride(activeFasciaId,{designImageUrl:'',designImageName:'',designOpacity:undefined})}
                           style={{width:'100%',height:30,marginTop:8,border:`1px solid ${C.hair}`,borderRadius:4,background:C.bg,color:C.ink,cursor:'pointer',fontFamily:UI,fontSize:12,fontWeight:700}}>
