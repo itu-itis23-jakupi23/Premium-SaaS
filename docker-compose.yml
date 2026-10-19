@@ -1,14 +1,37 @@
+# Shared limits for every service.
+#
+# Two properties that only matter on the day something goes wrong:
+#
+# `logging` caps container logs. Docker's default json-file driver has NO
+# limit, so a loop that logs on every request writes until the disk is full -
+# and a full disk takes down Postgres, which takes down everything. Three
+# files of 10 MB is plenty to debug a recent incident and cannot grow without
+# bound.
+#
+# `mem_limit`/`cpus` stop one runaway container starving the others. Without
+# them a single pathological request can consume the host and the database
+# dies alongside the thing that caused it. The numbers suit a small VPS and
+# are meant to be raised deliberately, not discovered under load.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:17-alpine
     container_name: ens-postgres
     restart: unless-stopped
+    logging: *default-logging
+    mem_limit: 1g
+    cpus: 1.0
     environment:
       POSTGRES_DB: "${POSTGRES_DB:?POSTGRES_DB must be set}"
       POSTGRES_USER: "${POSTGRES_USER:?POSTGRES_USER must be set}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}"
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - ens_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,12 +41,34 @@ services:
       timeout: 5s
       retries: 5
 
+  # Explicit release job: docker compose --profile maintenance run --rm migrate.
+  # Back up first, run this once, then start API/frontend. No replica runs DDL.
+  migrate:
+    profiles: [maintenance]
+    build:
+      context: .
+      dockerfile: artifacts/api-server/Dockerfile
+      target: migrator
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "${DATABASE_URL:?DATABASE_URL must be set, using the postgres service hostname}"
+    restart: "no"
+    logging: *default-logging
+    mem_limit: 512m
+
   api:
     build:
       context: .
       dockerfile: artifacts/api-server/Dockerfile
     container_name: ens-api
     restart: unless-stopped
+    logging: *default-logging
+    mem_limit: 1g
+    cpus: 1.0
+    # The API drains in-flight requests for up to 15s after SIGTERM.
+    stop_grace_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,7 +99,7 @@ services:
     volumes:
       - ens_api_data:/app/data
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
     healthcheck:
       test:
         [
@@ -74,13 +119,19 @@ services:
         VITE_API_BASE_URL: /api
     container_name: ens-frontend
     restart: unless-stopped
+    logging: *default-logging
+    mem_limit: 256m
+    cpus: 0.5
+    environment:
+      # Direct local HTTP does not trust headers from the Docker host/gateway.
+      TRUSTED_INGRESS_CIDR: "127.0.0.1/32"
     depends_on:
       api:
         condition: service_healthy
     ports:
-      - "80:80"
+      - "127.0.0.1:80:80"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/health.txt || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health.txt || exit 1"]
       interval: 15s
       timeout: 5s
       start_period: 10s

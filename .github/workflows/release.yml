@@ -1,0 +1,102 @@
+name: Publish images
+
+# CI verified the code and then stopped. There was no registry, no artefact,
+# nothing to deploy - so "passing CI" and "deployable" were separate facts
+# with nothing connecting them. This builds the two images and publishes them
+# to the repository's own container registry, tagged with the exact commit.
+#
+# It does NOT deploy. No host has been chosen, and a workflow that pretends
+# to deploy to somewhere that does not exist is worse than none: it reports
+# success for nothing. When a host exists, add a deploy job that pulls these
+# tags - the images will already be there, built from a commit that passed.
+#
+# Runs only on the default branch and on tags, so a feature branch cannot
+# publish something that looks releasable.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: publish-images-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  images:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    strategy:
+      # One failing image should not hide the state of the other.
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            dockerfile: artifacts/api-server/Dockerfile
+          - name: frontend
+            dockerfile: artifacts/ens-landing/Dockerfile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Sign in to the registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Work out the tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.name }}
+          # The commit SHA is the tag that matters: `latest` tells you nothing
+          # about which code is running, and that is the question asked at
+          # three in the morning.
+          tags: |
+            type=sha,format=long
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Layer cache in the registry, so a rebuild of an unchanged
+          # dependency layer does not run install again.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Record what was published
+        run: |
+          {
+            echo "### ${{ matrix.name }}"
+            echo ""
+            echo "Published from commit \`${{ github.sha }}\`:"
+            echo ""
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+            echo ""
+            echo "Deployment is manual: no host is configured yet."
+          } >> "$GITHUB_STEP_SUMMARY"

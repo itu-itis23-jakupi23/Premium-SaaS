@@ -1,0 +1,112 @@
+name: Database backup
+
+# A proven restore procedure that runs zero times a week is a document, not a
+# backup. `verify-backup-restore.mjs` already proves a dump can be restored
+# and its tables and row counts match; nothing was running it on a schedule,
+# and nothing was keeping a copy off this machine.
+#
+# This does both. It runs nightly, keeps the artefact in GitHub (off the
+# application host, which is the point of a backup), and fails loudly if the
+# dump or the restore is not sound.
+#
+# Deliberately NOT pointed at production yet: no host has been chosen, so it
+# backs up a database it builds from the committed migrations. That proves the
+# mechanism end to end every night. When a production host exists, give the
+# repository a `PRODUCTION_DATABASE_URL` secret and the job uses it instead -
+# the only change needed is adding the secret.
+
+on:
+  schedule:
+    # 02:15 UTC. Off the hour, because every cron in the world fires at :00
+    # and shared runners queue behind them.
+    - cron: "15 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Dump, verify the restore, retain
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: ens_backup_check
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # A real production URL arrives as a secret; until one exists this uses
+      # the service above so the job still proves the procedure works.
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/ens_backup_check' }}
+      TARGET: ${{ secrets.PRODUCTION_DATABASE_URL && 'production' || 'a scratch database built from the committed migrations' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Say what is being backed up
+        run: echo "Backing up ${TARGET}."
+
+      - name: Apply migrations when backing up the scratch database
+        if: ${{ !secrets.PRODUCTION_DATABASE_URL }}
+        run: pnpm --filter @workspace/db run migrate
+
+      - name: Dump, restore into a second database, and compare
+        # The existing script is the verification: it restores the dump and
+        # checks every table name and row count against the source. A dump
+        # that has never been restored is an assumption.
+        run: node scripts/verify-backup-restore.mjs
+
+      - name: Create the retained dump
+        run: |
+          mkdir -p .backups
+          STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+          pg_dump --format=custom --no-owner --no-acl \
+            --file=".backups/ens-${STAMP}.dump" "${DATABASE_URL}"
+          ls -lh .backups
+
+      - name: Retain it off the application host
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup
+          path: .backups/*.dump
+          # Long enough to notice a slow corruption, short enough that the
+          # retained set stays a sensible size.
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Report
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "Backup verified and retained for ${TARGET}." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "BACKUP FAILED for ${TARGET}. The restore could not be proven." >> "$GITHUB_STEP_SUMMARY"
+          fi
